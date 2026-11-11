@@ -435,41 +435,8 @@ class DBAComplianceGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
-
-	/**
-	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-	 *
-	 * @return string The register slug.
-	 */
-	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end resolveRegister()
 }//end class

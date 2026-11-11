@@ -64,26 +64,30 @@ class EmuSubmissionGuard {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function requireApproval(array $emuReport): bool {
-		$status = (string)($emuReport['status'] ?? '');
-		$balanceComputed = array_key_exists('emuBalanceCalculated', $emuReport)
-			&& $emuReport['emuBalanceCalculated'] !== null;
-		$reconciliation = (string)($emuReport['bbvReconciliationCheck'] ?? 'non-executed');
-
-		$permitted = $status === 'draft'
-			&& $balanceComputed === true
-			&& $reconciliation !== 'failed';
+		$facts     = self::submissionFacts(emuReport: $emuReport);
+		$permitted = $facts['status'] === 'draft'
+			&& $facts['saldoComputed'] === true
+			&& $facts['aansluitingscontrole'] !== 'failed';
 
 		if ($permitted === false) {
-			$this->logger->info(
-				'EmuSubmissionGuard: indiening blocked',
-				[
-					'status' => $status,
-					'saldoComputed' => $balanceComputed,
-					'aansluitingscontrole' => $reconciliation,
-				]
-			);
+			$this->logger->info('EmuSubmissionGuard: indiening blocked', $facts);
 		}
 
 		return $permitted;
 	}//end requireApproval()
+
+	/**
+	 * What the decision reads from the report: its status, whether a saldo was computed, and the reconciliation result.
+	 *
+	 * @param array<string, mixed> $emuReport The EMU report payload.
+	 *
+	 * @return array{status: string, saldoComputed: bool, aansluitingscontrole: string}
+	 */
+	private static function submissionFacts(array $emuReport): array {
+		return [
+			'status' => (string)($emuReport['status'] ?? ''),
+			'saldoComputed' => array_key_exists('emuBalanceCalculated', $emuReport) && $emuReport['emuBalanceCalculated'] !== null,
+			'aansluitingscontrole' => (string)($emuReport['bbvReconciliationCheck'] ?? 'non-executed'),
+		];
+	}//end submissionFacts()
 }//end class

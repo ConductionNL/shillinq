@@ -119,28 +119,7 @@ class IntercompanyToleranceGuard {
 				administrationId: (string)($match['administrationId'] ?? '')
 			);
 
-			$absolute = (float)($rule['toleranceAbsolute'] ?? 10.0);
-			$relative = (float)($rule['toleranceRelative'] ?? 0.5);
-			$method = (string)($rule['toleranceMethod'] ?? 'max-of-absolute-relative');
-
-			$largerSide = max(
-				abs((float)($match['totalAmountA'] ?? 0.0)),
-				abs((float)($match['totalAmountB'] ?? 0.0))
-			);
-
-			$relativePercentage = (float)($match['mismatchPercentage'] ?? 0.0);
-			if ($relativePercentage === 0.0 && $largerSide > 0.0) {
-				$relativePercentage = (abs($mismatchAmount) / $largerSide) * 100.0;
-			}
-
-			$absolutePass = abs($mismatchAmount) <= $absolute;
-			$relativePass = $relativePercentage <= $relative;
-
-			return $this->combine(
-				method: $method,
-				absolutePass: $absolutePass,
-				relativePass: $relativePass
-			);
+			return $this->withinRule(match: $match, rule: $rule);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'IntercompanyToleranceGuard: tolerance evaluation failed — denying within-tolerance (fail-closed)',
@@ -150,6 +129,52 @@ class IntercompanyToleranceGuard {
 		}//end try
 
 	}//end isWithinTolerance()
+
+	/**
+	 * Evaluate the mismatch against the rule's thresholds and combination method.
+	 *
+	 * Missing rule fields fall back to the conservative defaults: absolute
+	 * EUR 10, relative 0.5%, max-of.
+	 *
+	 * @param array<string, mixed> $match The IntercompanyMatch object array.
+	 * @param array<string, mixed> $rule The applicable ToleranceRule, or an empty array.
+	 *
+	 * @return bool True when the mismatch is within tolerance.
+	 */
+	private function withinRule(array $match, array $rule): bool {
+		$absolute = (float)($rule['toleranceAbsolute'] ?? 10.0);
+		$relative = (float)($rule['toleranceRelative'] ?? 0.5);
+		$method = (string)($rule['toleranceMethod'] ?? 'max-of-absolute-relative');
+		$mismatchAmount = (float)($match['mismatchAmount'] ?? 0.0);
+
+		return $this->combine(
+			method: $method,
+			absolutePass: abs($mismatchAmount) <= $absolute,
+			relativePass: $this->mismatchPercentage(match: $match) <= $relative
+		);
+
+	}//end withinRule()
+
+	/**
+	 * The mismatch as a percentage: the recorded one, else derived from the larger side.
+	 *
+	 * @param array<string, mixed> $match The IntercompanyMatch object array.
+	 *
+	 * @return float The mismatch percentage (0.0 when it cannot be derived).
+	 */
+	private function mismatchPercentage(array $match): float {
+		$relativePercentage = (float)($match['mismatchPercentage'] ?? 0.0);
+		$largerSide = max(
+			abs((float)($match['totalAmountA'] ?? 0.0)),
+			abs((float)($match['totalAmountB'] ?? 0.0))
+		);
+		if ($relativePercentage === 0.0 && $largerSide > 0.0) {
+			$relativePercentage = (abs((float)($match['mismatchAmount'] ?? 0.0)) / $largerSide) * 100.0;
+		}
+
+		return $relativePercentage;
+
+	}//end mismatchPercentage()
 
 	/**
 	 * Combine the absolute and relative pass flags per the rule's method.

@@ -242,5 +242,94 @@ final class DocumentArchiveCronTest extends TestCase {
 		$this->invokeRun($this->makeJob());
 	}//end testRunCatchesContainerException()
 
+	/**
+	 * The query, the fallback fields, the archive arguments, the skip order
+	 * and the exact log lines.
+	 *
+	 * @return void
+	 */
+	public function testQueryFallbacksArgumentsAndLogLines(): void {
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturn('books');
+		$calls = [];
+		$this->documents->method('isRetentionElapsed')->willReturnCallback(
+			static function (string $filedAt) use (&$calls): bool {
+				$calls[] = 'elapsed:' . $filedAt;
+				return $filedAt !== '2026-01-01';
+			}
+		);
+		$this->documents->method('archiveDocument')->willReturnCallback(
+			static function (string $administrationId, string $documentId, string $reason, bool $allowEarly) use (&$calls): array {
+				$calls[] = 'archive:' . json_encode([$administrationId, $documentId, $reason, $allowEarly]);
+				if ($documentId === 'DOC-9') {
+					throw new \RuntimeException('locked');
+				}
+
+				return [];
+			}
+		);
+		$objectService = new class($calls) {
+			/**
+			 * @param array<int,string> $calls The call log.
+			 */
+			public function __construct(
+				private array &$calls,
+			) {
+			}
+
+			public function setRegister(string $r): self {
+				$this->calls[] = 'register:' . $r;
+				return $this;
+			}
+
+			public function setSchema(string $s): self {
+				return $this;
+			}
+
+			public function findAll(array $opts): array {
+				$this->calls[] = 'findAll:' . json_encode($opts);
+				return [
+					['documentNumber' => 'DOC-1', 'administrationId' => 'adm-1', 'documentDate' => '2015-01-01'],
+					['id' => 'doc-2', 'administrationId' => 'adm-1', 'filedAt' => '2026-01-01', 'documentDate' => '2015-01-01'],
+					['id' => '', 'administrationId' => 'adm-1'],
+					['id' => 'doc-3'],
+					['id' => 'DOC-9', 'administrationId' => 'adm-2', 'filedAt' => '2010-01-01'],
+				];
+			}
+		};
+		$this->container->method('get')->willReturn($objectService);
+		$logged = [];
+		foreach (['info', 'warning'] as $level) {
+			$this->logger->method($level)->willReturnCallback(
+				static function (string $message, array $context = []) use (&$logged, $level): void {
+					$logged[] = $level . ':' . $message . json_encode($context);
+				}
+			);
+		}
+
+		$this->invokeRun($this->makeJob());
+
+		$reason = 'Automatic archival after 7-year Archiefwet retention boundary.';
+		self::assertSame(
+			[
+				'register:books',
+				'findAll:{"filters":{"status":"filed"},"limit":5000}',
+				'elapsed:2015-01-01',
+				'archive:' . json_encode(['adm-1', 'DOC-1', $reason, false]),
+				'elapsed:2026-01-01',
+				'elapsed:2010-01-01',
+				'archive:' . json_encode(['adm-2', 'DOC-9', $reason, false]),
+			],
+			array_values(array_filter($calls, static fn (string $c): bool => str_starts_with($c, 'register:') === false || $c === 'register:books'))
+		);
+		self::assertSame(
+			[
+				'warning:DocumentArchiveCron: failed to archive document DOC-9{"administrationId":"adm-2","exception":"locked"}',
+				'info:DocumentArchiveCron: archived=1 skipped=3 failed=1 (sampled 5 filed documents).[]',
+			],
+			$logged
+		);
+	}//end testQueryFallbacksArgumentsAndLogLines()
+
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

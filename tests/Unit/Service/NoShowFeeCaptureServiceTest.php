@@ -258,4 +258,86 @@ final class NoShowFeeCaptureServiceTest extends TestCase {
 		);
 
 	}//end testComputeClampsAndGuards()
+
+	/**
+	 * Pin every outcome of captureNoShowFee: the exact provider payloads on
+	 * both rails, the stamped appointment, the returned envelope, the failed
+	 * status and every audit log line.
+	 *
+	 * @return void
+	 */
+	public function testCaptureOutcomesThroughEveryRail(): void {
+		$calls = [];
+		$logs = [];
+		$states = ['captured', 'refused', 'pending'];
+		$adapter = $this->createMock(DepositPaymentAdapterInterface::class);
+		$adapter->method('requestPayment')->willReturnCallback(
+			function (array $payload) use (&$calls, &$states): DepositPaymentResult {
+				$calls[] = ['request', $payload];
+				return new DepositPaymentResult(array_shift($states), 'S', 'pi_req', '', 'GW', false);
+			}
+		);
+		$adapter->method('capturePayment')->willReturnCallback(
+			function (string $intent, array $payload) use (&$calls, &$states): DepositPaymentResult {
+				$calls[] = ['capture', $intent, $payload];
+				return new DepositPaymentResult(array_shift($states), 'S', $intent, '', 'GW', true);
+			}
+		);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('info')->willReturnCallback(
+			function (string $message, array $context) use (&$logs): void {
+				$logs[] = [$message, $context];
+			}
+		);
+		$service = new NoShowFeeCaptureService($adapter, $logger);
+		$at = new \DateTimeImmutable('2026-03-04 10:20:30', new \DateTimeZone('Europe/Amsterdam'));
+
+		$none = $service->captureNoShowFee(['appointmentCost' => 500], $at);
+		$fresh = $service->captureNoShowFee(
+			['appointmentId' => 'a1', 'administrationId' => 'adm', 'appointmentCost' => 999, 'appliedPolicy' => ['noShowFee' => 50]],
+			$at
+		);
+		$failed = $service->captureNoShowFee(
+			['appointmentCost' => 1000, 'currency' => 'USD', 'appliedPolicy' => ['noShowFee' => 10], 'depositPaymentIntentId' => 'pi_h'],
+			$at
+		);
+		$pending = $service->captureNoShowFee(['appointmentId' => 'a3', 'appointmentCost' => 300, 'appliedPolicy' => ['noShowFee' => 100]], $at);
+
+		self::assertSame(
+			['appointment' => ['appointmentCost' => 500, 'noShowFeeAmount' => 0, 'noShowFeeStatus' => 'none'], 'feeCents' => 0, 'charged' => false, 'result' => null],
+			$none
+		);
+		$meta1 = ['appointmentId' => 'a1', 'administrationId' => 'adm', 'correlationId' => 'noshow-a1'];
+		$meta2 = ['appointmentId' => '', 'administrationId' => '', 'correlationId' => 'noshow-unknown'];
+		$meta3 = ['appointmentId' => 'a3', 'administrationId' => '', 'correlationId' => 'noshow-a3'];
+		self::assertSame(
+			[
+				['request', ['amount' => ['value' => 500, 'currency' => 'EUR'], 'description' => 'No-show fee', 'methodHint' => 'creditcard', 'metadata' => $meta1]],
+				['capture', 'pi_h', ['amount' => ['value' => 100, 'currency' => 'USD'], 'reason' => 'noShowFee', 'metadata' => $meta2]],
+				['request', ['amount' => ['value' => 300, 'currency' => 'EUR'], 'description' => 'No-show fee', 'methodHint' => 'creditcard', 'metadata' => $meta3]],
+			],
+			$calls
+		);
+		self::assertSame(
+			['noShowFeeAmount' => 500, 'noShowFeeStatus' => 'captured', 'noShowFeePaymentIntentId' => 'pi_req', 'noShowFeeCapturedAt' => '2026-03-04T09:20:30Z'],
+			array_slice($fresh['appointment'], 4)
+		);
+		self::assertSame([500, true, 'captured'], [$fresh['feeCents'], $fresh['charged'], $fresh['result']->lifecycleState]);
+		self::assertSame(['failed', 'pi_h', 100, true], [$failed['appointment']['noShowFeeStatus'], $failed['appointment']['noShowFeePaymentIntentId'], $failed['feeCents'], $failed['charged']]);
+		self::assertSame('captured', $pending['appointment']['noShowFeeStatus']);
+		$ctx = static fn (string $id, int $fee, string $state, bool $dormant, string $pi): array => [
+			'appointmentId' => $id, 'feeCents' => $fee, 'gateway' => 'GW', 'lifecycleState' => $state, 'dormant' => $dormant, 'paymentIntentId' => $pi,
+		];
+		$captured = 'Shillinq: no-show fee captured via payment provider';
+		self::assertSame(
+			[
+				['Shillinq: no-show recorded but no fee defined — no charge dispatched', ['appointmentId' => '']],
+				[$captured, $ctx('a1', 500, 'captured', false, 'pi_req')],
+				[$captured, $ctx('', 100, 'refused', true, 'pi_h')],
+				[$captured, $ctx('a3', 300, 'pending', false, 'pi_req')],
+			],
+			$logs
+		);
+
+	}//end testCaptureOutcomesThroughEveryRail()
 }//end class

@@ -62,36 +62,60 @@ class DepreciationPlanner {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function plan(string $fromMonth, int $bookCents, int $residualCents, int $months, string $method, float $rate = 0.0): array {
-		if (in_array($method, self::METHODS, true) === false) {
-			throw new DomainException(sprintf('Depreciation method %s cannot be planned.', $method));
-		}
-
-		if ($months < 1) {
-			throw new DomainException('An asset needs at least one month of useful life left.');
-		}
-
-		if ($method === 'degressive' && $rate <= 0.0) {
-			throw new DomainException('Degressive depreciation needs a rate above zero.');
-		}
-
+		$run = new DepreciationPlanRun(
+			fromMonth: $fromMonth,
+			bookCents: $bookCents,
+			residualCents: $residualCents,
+			months: $months,
+			method: $method,
+			rate: $rate
+		);
+		$this->assertPlannable(run: $run);
 		$first = DateTimeImmutable::createFromFormat('!Y-m', $fromMonth);
 		if ($first === false) {
 			throw new DomainException(sprintf('%s is not a month.', $fromMonth));
 		}
 
-		$depreciable = max(0, ($bookCents - $residualCents));
+		return $this->planLines(run: $run, first: $first);
+
+	}//end plan()
+
+	/**
+	 * Refuse an unknown method, no months left, or a degressive plan without a rate.
+	 *
+	 * @param DepreciationPlanRun $run The plan's inputs.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the inputs cannot make a plan.
+	 */
+	private function assertPlannable(DepreciationPlanRun $run): void {
+		if (in_array($run->method, self::METHODS, true) === false) {
+			throw new DomainException(sprintf('Depreciation method %s cannot be planned.', $run->method));
+		}
+
+		if ($run->months < 1) {
+			throw new DomainException('An asset needs at least one month of useful life left.');
+		}
+
+		if ($run->method === 'degressive' && $run->rate <= 0.0) {
+			throw new DomainException('Degressive depreciation needs a rate above zero.');
+		}
+
+	}//end assertPlannable()
+
+	/**
+	 * One line per month from the first month, with the book value after it.
+	 *
+	 * @param DepreciationPlanRun $run   The plan's inputs.
+	 * @param DateTimeImmutable   $first The first month.
+	 *
+	 * @return list<array{month: string, start: string, end: string, cents: int, bookCents: int}>
+	 */
+	private function planLines(DepreciationPlanRun $run, DateTimeImmutable $first): array {
 		$lines = [];
-		$book = $bookCents;
-		for ($index = 0; $index < $months; $index++) {
-			$cents = $this->monthCents(
-				method: $method,
-				depreciable: $depreciable,
-				book: $book,
-				residual: $residualCents,
-				months: $months,
-				index: $index,
-				rate: $rate
-			);
+		$book = $run->bookCents;
+		foreach ($this->monthAmounts(run: $run) as $index => $cents) {
 			$book -= $cents;
 			$month = $first->modify(sprintf('+%d month', $index));
 			$lines[] = [
@@ -105,39 +129,50 @@ class DepreciationPlanner {
 
 		return $lines;
 
-	}//end plan()
+	}//end planLines()
 
 	/**
-	 * One month's amount.
+	 * Each month's amount in cents. The last month takes what is left above
+	 * the residual value, so the plan ends exactly on it.
 	 *
-	 * @param string $method      The method.
-	 * @param int    $depreciable The depreciable amount at the start of the plan.
-	 * @param int    $book        The book value at the start of this month.
-	 * @param int    $residual    The residual value.
-	 * @param int    $months      The months in the plan.
-	 * @param int    $index       This month's index, from zero.
-	 * @param float  $rate        The annual degressive rate.
+	 * @param DepreciationPlanRun $run The plan's inputs.
+	 *
+	 * @return list<int>
+	 */
+	private function monthAmounts(DepreciationPlanRun $run): array {
+		$amounts = [];
+		$book = $run->bookCents;
+		for ($index = 0; $index < ($run->months - 1); $index++) {
+			$cents = $this->monthCents(run: $run, book: $book);
+			$book -= $cents;
+			$amounts[] = $cents;
+		}
+
+		$amounts[] = max(0, ($book - $run->residualCents));
+		return $amounts;
+
+	}//end monthAmounts()
+
+	/**
+	 * One month's amount before the last month, capped at what is left above
+	 * the residual value.
+	 *
+	 * Degressive takes the annual rate on the current book value; straight
+	 * line and units of production planned evenly over the months left give
+	 * the same monthly share.
+	 *
+	 * @param DepreciationPlanRun $run  The plan's inputs.
+	 * @param int                 $book The book value at the start of this month.
 	 *
 	 * @return int The amount in cents.
 	 */
-	private function monthCents(string $method, int $depreciable, int $book, int $residual, int $months, int $index, float $rate): int {
-		$room = max(0, ($book - $residual));
-		if ($method === 'degressive') {
-			if ($index === ($months - 1)) {
-				return $room;
-			}
-
-			return min($room, (int)round($book * $rate / 12));
+	private function monthCents(DepreciationPlanRun $run, int $book): int {
+		$room = max(0, ($book - $run->residualCents));
+		if ($run->method === 'degressive') {
+			return min($room, (int)round($book * $run->rate / 12));
 		}
 
-		// Straight line and units of production planned evenly over the
-		// months left give the same monthly share; the last month takes the
-		// rounding so the plan ends exactly on the residual value.
-		if ($index === ($months - 1)) {
-			return $room;
-		}
-
-		return min($room, intdiv($depreciable, $months));
+		return min($room, intdiv($run->depreciableCents(), $run->months));
 
 	}//end monthCents()
 }//end class

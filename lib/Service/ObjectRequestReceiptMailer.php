@@ -69,37 +69,71 @@ class ObjectRequestReceiptMailer {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-005)
 	 */
 	public function send(array $request): bool {
-		$debtor = ($request['debtor'] ?? null);
-		if ((string)($request['subjectKind'] ?? '') !== 'object'
-			|| (string)($request['settledAt'] ?? '') === ''
-			|| is_array($debtor) === false
-		) {
+		$email = $this->recipientOf(request: $request);
+		if ($email === '') {
 			return false;
+		}
+
+		return $this->deliver(request: $request, email: $email);
+	}//end send()
+
+	/**
+	 * The debtor's address when the request is a settled object request with a
+	 * valid one, otherwise ''.
+	 *
+	 * @param array<string, mixed> $request The settled PaymentRequest.
+	 *
+	 * @return string
+	 */
+	private function recipientOf(array $request): string {
+		$debtor = ($request['debtor'] ?? null);
+		if ($this->isSettledObjectRequest(request: $request) === false || is_array($debtor) === false) {
+			return '';
 		}
 
 		$email = trim((string)($debtor['email'] ?? ''));
 		if ($email === '' || $this->mailer->validateMailAddress($email) === false) {
-			return false;
+			return '';
 		}
 
-		$l10n = $this->l10nFactory->get('shillinq', $this->l10nFactory->findGenericLanguage('shillinq'));
+		return $email;
+	}//end recipientOf()
 
+	/**
+	 * Whether a request is on an object and settled.
+	 *
+	 * @param array<string, mixed> $request The PaymentRequest.
+	 *
+	 * @return boolean
+	 */
+	private function isSettledObjectRequest(array $request): bool {
+		return (string)($request['subjectKind'] ?? '') === 'object' && (string)($request['settledAt'] ?? '') !== '';
+	}//end isSettledObjectRequest()
+
+	/**
+	 * Mail the receipt, in the instance's default language; a failure is logged.
+	 *
+	 * @param array<string, mixed> $request The settled PaymentRequest.
+	 * @param string               $email   The debtor's valid address.
+	 *
+	 * @return boolean True when the mailer accepted the mail.
+	 */
+	private function deliver(array $request, string $email): bool {
+		$l10n = $this->l10nFactory->get('shillinq', $this->l10nFactory->findGenericLanguage('shillinq'));
 		try {
 			$message = $this->mailer->createMessage();
-			$message->setTo([$email => (string)($debtor['name'] ?? $email)]);
+			$message->setTo([$email => (string)($request['debtor']['name'] ?? $email)]);
 			$message->setSubject($l10n->t('Payment received'));
 			$message->setPlainBody($this->body(request: $request, l10n: $l10n));
 			$this->mailer->send($message);
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'Shillinq: could not mail the receipt for a settled payment request',
-				['request' => (string)($request['id'] ?? ''), 'exception' => $e->getMessage()]
-			);
+			$context = ['request' => (string)($request['id'] ?? ''), 'exception' => $e->getMessage()];
+			$this->logger->warning('Shillinq: could not mail the receipt for a settled payment request', $context);
 			return false;
 		}
 
 		return true;
-	}//end send()
+	}//end deliver()
 
 	/**
 	 * The receipt text: what was paid, how much, when, the reference and the
@@ -116,19 +150,39 @@ class ObjectRequestReceiptMailer {
 			$what = $l10n->t('Your payment');
 		}
 
-		$amount = sprintf(
-			'%s %s',
-			(string)($request['currency'] ?? 'EUR'),
-			number_format((float)($request['amount'] ?? 0), 2, ',', '.')
-		);
 		$lines = [
 			$l10n->t('We received your payment.'),
 			'',
 			$what,
-			$l10n->t('Amount: %s', [$amount]),
+			$l10n->t('Amount: %s', [$this->amountText(request: $request)]),
 			$l10n->t('Paid on: %s', [substr((string)$request['settledAt'], 0, 10)]),
 		];
+		$lines = array_merge($lines, $this->optionalLines(request: $request, l10n: $l10n), ['', $l10n->t('Keep this mail as your receipt.')]);
 
+		return implode("\n", $lines)."\n";
+	}//end body()
+
+	/**
+	 * The amount as "EUR 1.234,50".
+	 *
+	 * @param array<string, mixed> $request The settled PaymentRequest.
+	 *
+	 * @return string
+	 */
+	private function amountText(array $request): string {
+		return sprintf('%s %s', (string)($request['currency'] ?? 'EUR'), number_format((float)($request['amount'] ?? 0), 2, ',', '.'));
+	}//end amountText()
+
+	/**
+	 * The reference and confirmation-summary lines, when present.
+	 *
+	 * @param array<string, mixed> $request The settled PaymentRequest.
+	 * @param IL10N                $l10n    The translations to write in.
+	 *
+	 * @return array<int, string>
+	 */
+	private function optionalLines(array $request, IL10N $l10n): array {
+		$lines = [];
 		$reference = (string)($request['paymentReference'] ?? '');
 		if ($reference !== '') {
 			$lines[] = $l10n->t('Reference: %s', [$reference]);
@@ -139,9 +193,6 @@ class ObjectRequestReceiptMailer {
 			$lines[] = $summary;
 		}
 
-		$lines[] = '';
-		$lines[] = $l10n->t('Keep this mail as your receipt.');
-
-		return implode("\n", $lines)."\n";
-	}//end body()
+		return $lines;
+	}//end optionalLines()
 }//end class

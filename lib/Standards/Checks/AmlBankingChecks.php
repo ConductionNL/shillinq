@@ -67,6 +67,206 @@ use DateTimeImmutable;
  */
 final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		// The seeded GLTransactions are balanced postings without an electronic
+		// payment method (so ledger-electronic-payment-records is vacuously
+		// satisfied) in an open period (so ledger-no-post-to-closed-period holds).
+		'GLTransaction' => [
+			'periodState' => 'open',
+		],
+		// The default seeded Account is an ordinary (non-trust) account, so the
+		// segregation predicates are vacuously satisfied (not in scope).
+		'Account' => [
+			'isTrustAccount' => false,
+		],
+	];
+
+	/**
+	 * The data seedObjects() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_OBJECTS = [
+		'CashTransaction' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'transactionDate' => '2026-01-15',
+				'amount' => 800.00,
+				'currency' => 'EUR',
+				'counterpartyType' => 'business',
+				'partyCapacity' => 'professional',
+				'paymentMethod' => 'cash',
+				'appliedCashLimit' => 1000.00,
+				'cddPerformed' => true,
+				'goodsCategory' => 'general',
+				'linkedTransactionsTotal' => 800.00,
+				'aggregate12mTotal' => 800.00,
+				'form8300Required' => false,
+			],
+		],
+		'AmlReport' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'reportType' => 'CTR',
+				'amount' => 12500.00,
+				'currency' => 'USD',
+				'thresholdAmount' => 10000.00,
+				'transactionDate' => '2026-02-01',
+				'detectionDate' => '2026-02-01',
+				'filedDate' => '2026-02-10',
+				'eFiled' => true,
+				'sameDayAggregate' => 12500.00,
+				'payerStatementDate' => null,
+				'retentionUntil' => '2099-12-31',
+				'period' => '2026-Q1',
+			],
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'reportType' => 'SAR',
+				'amount' => 25000.00,
+				'currency' => 'USD',
+				'thresholdAmount' => 0.00,
+				'transactionDate' => '2026-03-01',
+				'detectionDate' => '2026-03-05',
+				'filedDate' => '2026-03-20',
+				'eFiled' => true,
+				'sameDayAggregate' => 25000.00,
+				'payerStatementDate' => null,
+				'retentionUntil' => '2099-12-31',
+				'period' => '2026-Q1',
+			],
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'reportType' => '8300',
+				'amount' => 11000.00,
+				'currency' => 'USD',
+				'thresholdAmount' => 10000.00,
+				'transactionDate' => '2026-01-10',
+				'detectionDate' => '2026-01-10',
+				'filedDate' => '2026-01-20',
+				'eFiled' => true,
+				'sameDayAggregate' => 11000.00,
+				'payerStatementDate' => '2027-01-15',
+				'retentionUntil' => '2099-12-31',
+				'period' => '2026-Q1',
+			],
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'reportType' => 'CMIR',
+				'amount' => 18000.00,
+				'currency' => 'USD',
+				'thresholdAmount' => 10000.00,
+				'transactionDate' => '2026-04-01',
+				'detectionDate' => '2026-04-01',
+				'filedDate' => '2026-04-01',
+				'eFiled' => true,
+				'sameDayAggregate' => 18000.00,
+				'payerStatementDate' => null,
+				'retentionUntil' => '2099-12-31',
+				'period' => '2026-Q2',
+			],
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'reportType' => 'FBAR',
+				'amount' => 60000.00,
+				'currency' => 'USD',
+				'thresholdAmount' => 10000.00,
+				'transactionDate' => '2026-12-31',
+				'detectionDate' => '2026-12-31',
+				'filedDate' => '2027-04-15',
+				'eFiled' => true,
+				'sameDayAggregate' => 60000.00,
+				'payerStatementDate' => null,
+				'retentionUntil' => '2099-12-31',
+				'period' => '2026',
+			],
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'reportType' => 'unusual',
+				'amount' => 14000.00,
+				'currency' => 'EUR',
+				'thresholdAmount' => 10000.00,
+				'transactionDate' => '2026-05-01',
+				'detectionDate' => '2026-05-01',
+				'filedDate' => '2026-05-03',
+				'eFiled' => true,
+				'sameDayAggregate' => 14000.00,
+				'payerStatementDate' => null,
+				'retentionUntil' => '2099-12-31',
+				'period' => '2026-Q2',
+			],
+		],
+		'SanctionsScreening' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'subjectType' => 'customer',
+				'subjectName' => 'Acme Trading B.V.',
+				'screenedDate' => '2026-01-10',
+				'transactionDate' => '2026-01-15',
+				'listName' => 'OFAC-SDN',
+				'listsScreened' => ['OFAC-SDN', 'EU-CFSP', 'NL-Sanctiewet'],
+				'matched' => false,
+				'reportedDate' => null,
+			],
+		],
+		'CddRecord' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'customerId' => 'cust-shillinq-1',
+				'cddType' => 'occasional',
+				'performed' => true,
+				'transactionAmount' => 16000.00,
+				'currency' => 'EUR',
+				'uboOwnershipPct' => 30.0,
+				'uboIdentified' => true,
+				'recordedDate' => '2026-01-20',
+				'retentionUntil' => '2099-12-31',
+			],
+		],
+		'FundsTransfer' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'transferDate' => '2026-02-01',
+				'amount' => 5000.00,
+				'currency' => 'EUR',
+				'originatorName' => 'Acme Trading B.V.',
+				'originatorAccount' => 'NL00BANK0123456789',
+				'beneficiaryName' => 'Beta Supplies GmbH',
+				'beneficiaryAccount' => 'DE00BANK0123456789012',
+			],
+		],
+		'TrustLedger' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'accountType' => 'escrow',
+				'segregated' => true,
+				'asOfDate' => '2026-03-31',
+				'clientBalances' => [
+					['clientId' => 'client-a', 'balance' => 1500.00],
+					['clientId' => 'client-b', 'balance' => 0.00],
+					['clientId' => 'client-c', 'balance' => 7250.50],
+				],
+			],
+		],
+		'CashCount' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'countDate' => '2026-01-31',
+				'countedAmount' => 1250.00,
+				'bookBalance' => 1250.00,
+				'runningBalance' => 1250.00,
+				'zReportTotal' => 980.00,
+				'recordedTakings' => 980.00,
+				'currency' => 'EUR',
+			],
+		],
+	];
+
+	/**
 	 * AML / banking predicates keyed by object type then rule id. Each value is
 	 * `fn(array $object, array $context): bool` — true = satisfied. Every key is a
 	 * real id in banking-aml.json with machineCheckable=true and is not enforced by
@@ -79,159 +279,712 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			// ---------------------------------------------------------------
 			// Ledger integrity over the EXISTING GLTransaction (with `lines`).
 			// ---------------------------------------------------------------
-			'GLTransaction' => [
-				// Every journal entry must balance: Σ debits = Σ credits (to the cent).
-				'ledger-double-entry-balance' => static fn (array $o): bool => self::balanced($o),
-				// An electronic payment posting must carry a matching bank / payment-service
-				// record: a reference, a counterparty and a value date. Non-electronic
-				// postings (no electronic payment method) are out of scope and pass.
-				'ledger-electronic-payment-records' => static fn (array $o): bool => self::electronicPaymentSupported($o),
-				// An entry must not be posted to a formally closed period: a posted/reversed
-				// entry whose period is closed must evidence a controlled reopening.
-				'ledger-no-post-to-closed-period' => static fn (array $o): bool => self::notInClosedPeriod($o),
-			],
-
+			'GLTransaction' => self::glTransactionChecks(),
 			// ---------------------------------------------------------------
 			// Escrow / trust segregation flag on the EXISTING Account.
 			// ---------------------------------------------------------------
-			'Account' => [
-				// NL: third-party client monies (derdengelden) sit in a separate, never
-				// commingled foundation account. Only a trust/escrow account is in scope.
-				'nl-derdengelden-segregation' => static fn (array $o): bool => self::accountSegregated($o),
-				// US: client/third-party funds sit in a separate IOLTA/escrow trust account,
-				// kept distinct from the firm's own property.
-				'us-iolta-escrow-segregation' => static fn (array $o): bool => self::accountSegregated($o),
-			],
-
+			'Account' => self::accountChecks(),
 			// ---------------------------------------------------------------
 			// Cash-payment limits + cash-CDD + Form 8300 cash (CashTransaction).
 			// ---------------------------------------------------------------
-			'CashTransaction' => [
-				// EU: no professional cash payment may exceed EUR 10 000 (single or linked).
-				'eu-cash-limit-10000' => static fn (array $o): bool => self::cashWithinLimit($o, 10000.0),
-				// EU: a stricter national ceiling, where set, is applied — the effective
-				// applied limit must not exceed the EUR 10 000 EU ceiling.
-				'eu-cash-limit-member-state-lower' => static fn (array $o): bool => self::strictestLimitApplied($o, 10000.0),
-				// EU: the limit does not apply between non-professional natural persons —
-				// either both parties are private (exempt) or the payment is within limit.
-				'eu-cash-limit-private-exemption' => static fn (array $o): bool => (self::isPrivateToPrivate($o) === true || self::cashWithinLimit($o, 10000.0) === true),
-				// EU: CDD on occasional cash transactions of EUR 3 000 or more.
-				'eu-cash-large-occasional-cdd' => static fn (array $o): bool => self::cddAtOrAbove($o, 3000.0),
-				// DE: traders in goods perform CDD on cash of EUR 10 000 or more (incl. linked).
-				'de-cash-dealer-cdd-10000' => static fn (array $o): bool => self::cddAtOrAbove($o, 10000.0),
-				// DE: dealers in precious metals perform CDD on cash of EUR 2 000 or more.
-				'de-precious-metals-cash-2000' => static fn (array $o): bool => self::preciousMetalsCdd($o, 2000.0),
-				// FR: a professional / French-domiciled debtor may not settle in cash above EUR 1 000.
-				'fr-cash-limit-1000' => static fn (array $o): bool => self::cashWithinLimit($o, 1000.0),
-				// IT: cash transfers between different parties of EUR 5 000 or more are barred.
-				'it-cash-limit-5000' => static fn (array $o): bool => self::cashBelow($o, 5000.0),
-				// ES: professional cash payments of EUR 1 000 or more are prohibited.
-				'es-cash-limit-1000' => static fn (array $o): bool => self::cashBelow($o, 1000.0),
-				// US: a trade/business receiving more than USD 10 000 cash files Form 8300.
-				'us-form8300-cash' => static fn (array $o): bool => self::form8300Filed($o, 10000.0),
-				// US: related cash payments aggregating to more than USD 10 000 in 12 months
-				// from the same payer are treated as related and reported on Form 8300.
-				'us-form8300-related-transactions' => static fn (array $o): bool => self::form8300Aggregate($o, 10000.0),
-			],
-
+			'CashTransaction' => self::cashTransactionChecks(),
 			// ---------------------------------------------------------------
 			// Currency / suspicious / large-cash reporting (AmlReport).
 			// ---------------------------------------------------------------
-			'AmlReport' => [
-				// US: a CTR is filed for a currency transaction of more than USD 10 000.
-				'us-ctr-10000' => static fn (array $o): bool => self::reportOverThreshold($o, 'CTR', 10000.0),
-				// US: a CTR must be e-filed within 15 calendar days of the transaction.
-				'us-ctr-15-day-efile' => static fn (array $o): bool => self::filedWithinDays($o, 'CTR', 'transactionDate', 15) && self::isTrue($o, 'eFiled'),
-				// US: same-day currency transactions by/for one person over USD 10 000 aggregate.
-				'us-ctr-aggregate-same-day' => static fn (array $o): bool => self::ctrAggregate($o, 10000.0),
-				// US: a SAR is filed no later than 30 days after initial detection.
-				'us-sar-30-day-filing' => static fn (array $o): bool => self::filedWithinDays($o, 'SAR', 'detectionDate', 30),
-				// US: Form 8300 is filed by the 15th day after the cash payment.
-				'us-form8300-15-day-filing' => static fn (array $o): bool => self::filedWithinDays($o, '8300', 'transactionDate', 15),
-				// US: the filer furnishes a written payer statement by 31 Jan of the next year.
-				'us-form8300-payer-statement' => static fn (array $o): bool => self::payerStatementByJan31($o),
-				// US: physical transport of currency over USD 10 000 in/out is reported on a CMIR.
-				'us-cmir-10000' => static fn (array $o): bool => self::reportOverThreshold($o, 'CMIR', 10000.0),
-				// US: foreign financial accounts over USD 10 000 aggregate are reported on an FBAR.
-				'us-fbar-foreign-accounts' => static fn (array $o): bool => self::reportAtOrOver($o, 'FBAR', 10000.0),
-				// NL: traders report cash transactions of EUR 10 000 or more as unusual to FIU-NL.
-				'nl-cash-no-general-limit' => static fn (array $o): bool => self::unusualReportAtOrOver($o, 10000.0),
-				// NL: reported/considered-unusual-transaction data is retained five years.
-				'nl-wwft-report-retention-5yr' => static fn (array $o): bool => self::retainsYearsFrom($o, 'filedDate', 5),
-			],
-
+			'AmlReport' => self::amlReportChecks(),
 			// ---------------------------------------------------------------
 			// Sanctions screening (SanctionsScreening).
 			// ---------------------------------------------------------------
-			'SanctionsScreening' => [
-				// EU: verify customer/UBO against targeted sanctions before the transaction.
-				'eu-amlr-targeted-sanctions-screening' => static fn (array $o): bool => self::screenedBeforeTransaction($o),
-				// NL: screen relations against EU and national lists; report matches without delay.
-				'nl-wwft-sanctions-sanctiewet' => static fn (array $o): bool => self::screenedAndMatchReported($o),
-				// US: screen against the OFAC SDN list; report blocked/rejected matches to OFAC.
-				'us-ofac-sanctions-screening' => static fn (array $o): bool => self::ofacScreened($o),
-			],
-
+			'SanctionsScreening' => self::sanctionsScreeningChecks(),
 			// ---------------------------------------------------------------
 			// CDD records, UBO and retention (CddRecord).
 			// ---------------------------------------------------------------
-			'CddRecord' => [
-				// EU: CDD on occasional transactions of EUR 15 000 or more.
-				'eu-amlr-cdd-occasional-15000' => static fn (array $o): bool => self::cddRecordPerformedAt($o, 15000.0),
-				// EU: a beneficial owner holds 25% or more of ownership/voting rights.
-				'eu-amlr-ubo-25-percent' => static fn (array $o): bool => self::uboThresholdRecorded($o, 25.0),
-				// EU: CDD + transaction records retained five years after the relationship ends.
-				'eu-amlr-record-keeping-5yr' => static fn (array $o): bool => self::retainsYearsFrom($o, 'recordedDate', 5),
-				// NL: CDD data retained five years after the transaction / relationship end.
-				'nl-wwft-cdd-retention-5yr' => static fn (array $o): bool => self::retainsYearsFrom($o, 'recordedDate', 5),
-				// DE: due-diligence records and documents retained five years.
-				'de-gwg-record-retention-5yr' => static fn (array $o): bool => self::retainsYearsFrom($o, 'recordedDate', 5),
-				// global (FATF R.11): records on transactions and CDD kept at least five years.
-				'fatf-rec11-record-keeping' => static fn (array $o): bool => self::retainsYearsFrom($o, 'recordedDate', 5),
-			],
-
+			'CddRecord' => self::cddRecordChecks(),
 			// ---------------------------------------------------------------
 			// Travel rule: payer/payee information accompanies transfers.
 			// ---------------------------------------------------------------
-			'FundsTransfer' => [
-				// global (FATF R.16): originator + beneficiary info accompanies the transfer.
-				'fatf-rec16-travel-rule' => static fn (array $o): bool => self::travelRuleComplete($o),
-				// EU (TFR): payer + payee information accompanies the transfer of funds.
-				'eu-tfr-travel-rule' => static fn (array $o): bool => self::travelRuleComplete($o),
-			],
-
+			'FundsTransfer' => self::fundsTransferChecks(),
 			// ---------------------------------------------------------------
 			// Pooled trust / escrow per-client segregation (TrustLedger).
 			// ---------------------------------------------------------------
-			'TrustLedger' => [
-				// global: an individual client's balance in a pooled trust/escrow account
-				// must never go negative (no client funded with another client's money).
-				'ledger-escrow-no-overdraw' => static fn (array $o): bool => self::noClientOverdraw($o),
-			],
-
+			'TrustLedger' => self::trustLedgerChecks(),
 			// ---------------------------------------------------------------
 			// Cash administration: count, Z-report, non-negative balance (CashCount).
 			// ---------------------------------------------------------------
-			'CashCount' => [
-				// global: physical cash counted and reconciled to the cash-book balance.
-				'ledger-cash-count-kasadministratie' => static fn (array $o): bool => self::cashCountReconciled($o),
-				// global: the running cash-account balance is never negative.
-				'ledger-cash-balance-non-negative' => static fn (array $o): bool => self::cashBalanceNonNegative($o),
-				// global: the daily Z-report total reconciles to the recorded cash takings.
-				'ledger-daily-z-report' => static fn (array $o): bool => self::zReportReconciled($o),
-			],
-
+			'CashCount' => self::cashCountChecks(),
 			// ---------------------------------------------------------------
 			// Bank reconciliation over the EXISTING BankReconciliation type.
 			// ---------------------------------------------------------------
-			'BankReconciliation' => [
-				// global: each bank-account balance is periodically reconciled to the bank
-				// statement, with reconciling items (variance) documented and cleared.
-				'ledger-bank-reconciliation' => static fn (array $o): bool => self::bankReconciled($o),
-			],
+			'BankReconciliation' => self::bankReconciliationChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The GLTransaction predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function glTransactionChecks(): array {
+		return [
+			'ledger-double-entry-balance' => self::ledgerDoubleEntryBalance(...),
+			'ledger-electronic-payment-records' => self::ledgerElectronicPaymentRecords(...),
+			'ledger-no-post-to-closed-period' => self::ledgerNoPostToClosedPeriod(...),
+		];
+
+	}//end glTransactionChecks()
+
+	/**
+	 * The Account predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function accountChecks(): array {
+		return [
+			'nl-derdengelden-segregation' => self::nlDerdengeldenSegregation(...),
+			'us-iolta-escrow-segregation' => self::usIoltaEscrowSegregation(...),
+		];
+
+	}//end accountChecks()
+
+	/**
+	 * The CashTransaction predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function cashTransactionChecks(): array {
+		return [
+			'eu-cash-limit-10000' => self::euCashLimit10000(...),
+			'eu-cash-limit-member-state-lower' => self::euCashLimitMemberStateLower(...),
+			'eu-cash-limit-private-exemption' => self::euCashLimitPrivateExemption(...),
+			'eu-cash-large-occasional-cdd' => self::euCashLargeOccasionalCdd(...),
+			'de-cash-dealer-cdd-10000' => self::deCashDealerCdd10000(...),
+			'de-precious-metals-cash-2000' => self::dePreciousMetalsCash2000(...),
+			'fr-cash-limit-1000' => self::frCashLimit1000(...),
+			'it-cash-limit-5000' => self::itCashLimit5000(...),
+			'es-cash-limit-1000' => self::esCashLimit1000(...),
+			'us-form8300-cash' => self::usForm8300Cash(...),
+			'us-form8300-related-transactions' => self::usForm8300RelatedTransactions(...),
+		];
+
+	}//end cashTransactionChecks()
+
+	/**
+	 * The AmlReport predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function amlReportChecks(): array {
+		return [
+			'us-ctr-10000' => self::usCtr10000(...),
+			'us-ctr-15-day-efile' => self::usCtr15DayEfile(...),
+			'us-ctr-aggregate-same-day' => self::usCtrAggregateSameDay(...),
+			'us-sar-30-day-filing' => self::usSar30DayFiling(...),
+			'us-form8300-15-day-filing' => self::usForm830015DayFiling(...),
+			'us-form8300-payer-statement' => self::usForm8300PayerStatement(...),
+			'us-cmir-10000' => self::usCmir10000(...),
+			'us-fbar-foreign-accounts' => self::usFbarForeignAccounts(...),
+			'nl-cash-no-general-limit' => self::nlCashNoGeneralLimit(...),
+			'nl-wwft-report-retention-5yr' => self::nlWwftReportRetention5yr(...),
+		];
+
+	}//end amlReportChecks()
+
+	/**
+	 * The SanctionsScreening predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function sanctionsScreeningChecks(): array {
+		return [
+			'eu-amlr-targeted-sanctions-screening' => self::euAmlrTargetedSanctionsScreening(...),
+			'nl-wwft-sanctions-sanctiewet' => self::nlWwftSanctionsSanctiewet(...),
+			'us-ofac-sanctions-screening' => self::usOfacSanctionsScreening(...),
+		];
+
+	}//end sanctionsScreeningChecks()
+
+	/**
+	 * The CddRecord predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function cddRecordChecks(): array {
+		return [
+			'eu-amlr-cdd-occasional-15000' => self::euAmlrCddOccasional15000(...),
+			'eu-amlr-ubo-25-percent' => self::euAmlrUbo25Percent(...),
+			'eu-amlr-record-keeping-5yr' => self::euAmlrRecordKeeping5yr(...),
+			'nl-wwft-cdd-retention-5yr' => self::nlWwftCddRetention5yr(...),
+			'de-gwg-record-retention-5yr' => self::deGwgRecordRetention5yr(...),
+			'fatf-rec11-record-keeping' => self::fatfRec11RecordKeeping(...),
+		];
+
+	}//end cddRecordChecks()
+
+	/**
+	 * The FundsTransfer predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function fundsTransferChecks(): array {
+		return [
+			'fatf-rec16-travel-rule' => self::fatfRec16TravelRule(...),
+			'eu-tfr-travel-rule' => self::euTfrTravelRule(...),
+		];
+
+	}//end fundsTransferChecks()
+
+	/**
+	 * The TrustLedger predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function trustLedgerChecks(): array {
+		return [
+			'ledger-escrow-no-overdraw' => self::ledgerEscrowNoOverdraw(...),
+		];
+
+	}//end trustLedgerChecks()
+
+	/**
+	 * The CashCount predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function cashCountChecks(): array {
+		return [
+			'ledger-cash-count-kasadministratie' => self::ledgerCashCountKasadministratie(...),
+			'ledger-cash-balance-non-negative' => self::ledgerCashBalanceNonNegative(...),
+			'ledger-daily-z-report' => self::ledgerDailyZReport(...),
+		];
+
+	}//end cashCountChecks()
+
+	/**
+	 * The BankReconciliation predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function bankReconciliationChecks(): array {
+		return [
+			'ledger-bank-reconciliation' => self::ledgerBankReconciliation(...),
+		];
+
+	}//end bankReconciliationChecks()
+
+	/**
+	 * Every journal entry must balance: Σ debits = Σ credits (to the cent).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerDoubleEntryBalance(array $o): bool {
+		return self::balanced($o);
+
+	}//end ledgerDoubleEntryBalance()
+
+	/**
+	 * An electronic payment posting must carry a matching bank / payment-service
+	 * record: a reference, a counterparty and a value date. Non-electronic
+	 * postings (no electronic payment method) are out of scope and pass.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerElectronicPaymentRecords(array $o): bool {
+		return self::electronicPaymentSupported($o);
+
+	}//end ledgerElectronicPaymentRecords()
+
+	/**
+	 * An entry must not be posted to a formally closed period: a posted/reversed
+	 * entry whose period is closed must evidence a controlled reopening.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerNoPostToClosedPeriod(array $o): bool {
+		return self::notInClosedPeriod($o);
+
+	}//end ledgerNoPostToClosedPeriod()
+
+	/**
+	 * NL: third-party client monies (derdengelden) sit in a separate, never
+	 * commingled foundation account. Only a trust/escrow account is in scope.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function nlDerdengeldenSegregation(array $o): bool {
+		return self::accountSegregated($o);
+
+	}//end nlDerdengeldenSegregation()
+
+	/**
+	 * US: client/third-party funds sit in a separate IOLTA/escrow trust account,
+	 * kept distinct from the firm's own property.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usIoltaEscrowSegregation(array $o): bool {
+		return self::accountSegregated($o);
+
+	}//end usIoltaEscrowSegregation()
+
+	/**
+	 * EU: no professional cash payment may exceed EUR 10 000 (single or linked).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euCashLimit10000(array $o): bool {
+		return self::cashWithinLimit($o, 10000.0);
+
+	}//end euCashLimit10000()
+
+	/**
+	 * EU: a stricter national ceiling, where set, is applied — the effective
+	 * applied limit must not exceed the EUR 10 000 EU ceiling.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euCashLimitMemberStateLower(array $o): bool {
+		return self::strictestLimitApplied($o, 10000.0);
+
+	}//end euCashLimitMemberStateLower()
+
+	/**
+	 * EU: the limit does not apply between non-professional natural persons —
+	 * either both parties are private (exempt) or the payment is within limit.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euCashLimitPrivateExemption(array $o): bool {
+		return (self::isPrivateToPrivate($o) === true || self::cashWithinLimit($o, 10000.0) === true);
+
+	}//end euCashLimitPrivateExemption()
+
+	/**
+	 * EU: CDD on occasional cash transactions of EUR 3 000 or more.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euCashLargeOccasionalCdd(array $o): bool {
+		return self::cddAtOrAbove($o, 3000.0);
+
+	}//end euCashLargeOccasionalCdd()
+
+	/**
+	 * DE: traders in goods perform CDD on cash of EUR 10 000 or more (incl. linked).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function deCashDealerCdd10000(array $o): bool {
+		return self::cddAtOrAbove($o, 10000.0);
+
+	}//end deCashDealerCdd10000()
+
+	/**
+	 * DE: dealers in precious metals perform CDD on cash of EUR 2 000 or more.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function dePreciousMetalsCash2000(array $o): bool {
+		return self::preciousMetalsCdd($o, 2000.0);
+
+	}//end dePreciousMetalsCash2000()
+
+	/**
+	 * FR: a professional / French-domiciled debtor may not settle in cash above EUR 1 000.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frCashLimit1000(array $o): bool {
+		return self::cashWithinLimit($o, 1000.0);
+
+	}//end frCashLimit1000()
+
+	/**
+	 * IT: cash transfers between different parties of EUR 5 000 or more are barred.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCashLimit5000(array $o): bool {
+		return self::cashBelow($o, 5000.0);
+
+	}//end itCashLimit5000()
+
+	/**
+	 * ES: professional cash payments of EUR 1 000 or more are prohibited.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esCashLimit1000(array $o): bool {
+		return self::cashBelow($o, 1000.0);
+
+	}//end esCashLimit1000()
+
+	/**
+	 * US: a trade/business receiving more than USD 10 000 cash files Form 8300.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usForm8300Cash(array $o): bool {
+		return self::form8300Filed($o, 10000.0);
+
+	}//end usForm8300Cash()
+
+	/**
+	 * US: related cash payments aggregating to more than USD 10 000 in 12 months
+	 * from the same payer are treated as related and reported on Form 8300.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usForm8300RelatedTransactions(array $o): bool {
+		return self::form8300Aggregate($o, 10000.0);
+
+	}//end usForm8300RelatedTransactions()
+
+	/**
+	 * US: a CTR is filed for a currency transaction of more than USD 10 000.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usCtr10000(array $o): bool {
+		return self::reportOverThreshold($o, 'CTR', 10000.0);
+
+	}//end usCtr10000()
+
+	/**
+	 * US: a CTR must be e-filed within 15 calendar days of the transaction.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usCtr15DayEfile(array $o): bool {
+		return self::filedWithinDays($o, 'CTR', 'transactionDate', 15) && self::isTrue($o, 'eFiled');
+
+	}//end usCtr15DayEfile()
+
+	/**
+	 * US: same-day currency transactions by/for one person over USD 10 000 aggregate.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usCtrAggregateSameDay(array $o): bool {
+		return self::ctrAggregate($o, 10000.0);
+
+	}//end usCtrAggregateSameDay()
+
+	/**
+	 * US: a SAR is filed no later than 30 days after initial detection.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usSar30DayFiling(array $o): bool {
+		return self::filedWithinDays($o, 'SAR', 'detectionDate', 30);
+
+	}//end usSar30DayFiling()
+
+	/**
+	 * US: Form 8300 is filed by the 15th day after the cash payment.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usForm830015DayFiling(array $o): bool {
+		return self::filedWithinDays($o, '8300', 'transactionDate', 15);
+
+	}//end usForm830015DayFiling()
+
+	/**
+	 * US: the filer furnishes a written payer statement by 31 Jan of the next year.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usForm8300PayerStatement(array $o): bool {
+		return self::payerStatementByJan31($o);
+
+	}//end usForm8300PayerStatement()
+
+	/**
+	 * US: physical transport of currency over USD 10 000 in/out is reported on a CMIR.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usCmir10000(array $o): bool {
+		return self::reportOverThreshold($o, 'CMIR', 10000.0);
+
+	}//end usCmir10000()
+
+	/**
+	 * US: foreign financial accounts over USD 10 000 aggregate are reported on an FBAR.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usFbarForeignAccounts(array $o): bool {
+		return self::reportAtOrOver($o, 'FBAR', 10000.0);
+
+	}//end usFbarForeignAccounts()
+
+	/**
+	 * NL: traders report cash transactions of EUR 10 000 or more as unusual to FIU-NL.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function nlCashNoGeneralLimit(array $o): bool {
+		return self::unusualReportAtOrOver($o, 10000.0);
+
+	}//end nlCashNoGeneralLimit()
+
+	/**
+	 * NL: reported/considered-unusual-transaction data is retained five years.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function nlWwftReportRetention5yr(array $o): bool {
+		return self::retainsYearsFrom($o, 'filedDate', 5);
+
+	}//end nlWwftReportRetention5yr()
+
+	/**
+	 * EU: verify customer/UBO against targeted sanctions before the transaction.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euAmlrTargetedSanctionsScreening(array $o): bool {
+		return self::screenedBeforeTransaction($o);
+
+	}//end euAmlrTargetedSanctionsScreening()
+
+	/**
+	 * NL: screen relations against EU and national lists; report matches without delay.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function nlWwftSanctionsSanctiewet(array $o): bool {
+		return self::screenedAndMatchReported($o);
+
+	}//end nlWwftSanctionsSanctiewet()
+
+	/**
+	 * US: screen against the OFAC SDN list; report blocked/rejected matches to OFAC.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function usOfacSanctionsScreening(array $o): bool {
+		return self::ofacScreened($o);
+
+	}//end usOfacSanctionsScreening()
+
+	/**
+	 * EU: CDD on occasional transactions of EUR 15 000 or more.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euAmlrCddOccasional15000(array $o): bool {
+		return self::cddRecordPerformedAt($o, 15000.0);
+
+	}//end euAmlrCddOccasional15000()
+
+	/**
+	 * EU: a beneficial owner holds 25% or more of ownership/voting rights.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euAmlrUbo25Percent(array $o): bool {
+		return self::uboThresholdRecorded($o, 25.0);
+
+	}//end euAmlrUbo25Percent()
+
+	/**
+	 * EU: CDD + transaction records retained five years after the relationship ends.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euAmlrRecordKeeping5yr(array $o): bool {
+		return self::retainsYearsFrom($o, 'recordedDate', 5);
+
+	}//end euAmlrRecordKeeping5yr()
+
+	/**
+	 * NL: CDD data retained five years after the transaction / relationship end.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function nlWwftCddRetention5yr(array $o): bool {
+		return self::retainsYearsFrom($o, 'recordedDate', 5);
+
+	}//end nlWwftCddRetention5yr()
+
+	/**
+	 * DE: due-diligence records and documents retained five years.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function deGwgRecordRetention5yr(array $o): bool {
+		return self::retainsYearsFrom($o, 'recordedDate', 5);
+
+	}//end deGwgRecordRetention5yr()
+
+	/**
+	 * global (FATF R.11): records on transactions and CDD kept at least five years.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function fatfRec11RecordKeeping(array $o): bool {
+		return self::retainsYearsFrom($o, 'recordedDate', 5);
+
+	}//end fatfRec11RecordKeeping()
+
+	/**
+	 * global (FATF R.16): originator + beneficiary info accompanies the transfer.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function fatfRec16TravelRule(array $o): bool {
+		return self::travelRuleComplete($o);
+
+	}//end fatfRec16TravelRule()
+
+	/**
+	 * EU (TFR): payer + payee information accompanies the transfer of funds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function euTfrTravelRule(array $o): bool {
+		return self::travelRuleComplete($o);
+
+	}//end euTfrTravelRule()
+
+	/**
+	 * global: an individual client's balance in a pooled trust/escrow account
+	 * must never go negative (no client funded with another client's money).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerEscrowNoOverdraw(array $o): bool {
+		return self::noClientOverdraw($o);
+
+	}//end ledgerEscrowNoOverdraw()
+
+	/**
+	 * global: physical cash counted and reconciled to the cash-book balance.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerCashCountKasadministratie(array $o): bool {
+		return self::cashCountReconciled($o);
+
+	}//end ledgerCashCountKasadministratie()
+
+	/**
+	 * global: the running cash-account balance is never negative.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerCashBalanceNonNegative(array $o): bool {
+		return self::cashBalanceNonNegative($o);
+
+	}//end ledgerCashBalanceNonNegative()
+
+	/**
+	 * global: the daily Z-report total reconciles to the recorded cash takings.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerDailyZReport(array $o): bool {
+		return self::zReportReconciled($o);
+
+	}//end ledgerDailyZReport()
+
+	/**
+	 * global: each bank-account balance is periodically reconciled to the bank
+	 * statement, with reconciling items (variance) documented and cleared.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ledgerBankReconciliation(array $o): bool {
+		return self::bankReconciled($o);
+
+	}//end ledgerBankReconciliation()
 
 	/**
 	 * Test-data field defaults this provider's checks expect on EXISTING object
@@ -241,19 +994,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			// The seeded GLTransactions are balanced postings without an electronic
-			// payment method (so ledger-electronic-payment-records is vacuously
-			// satisfied) in an open period (so ledger-no-post-to-closed-period holds).
-			'GLTransaction' => [
-				'periodState' => 'open',
-			],
-			// The default seeded Account is an ordinary (non-trust) account, so the
-			// segregation predicates are vacuously satisfied (not in scope).
-			'Account' => [
-				'isTrustAccount' => false,
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
@@ -264,181 +1005,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'CashTransaction' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'transactionDate' => '2026-01-15',
-					'amount' => 800.00,
-					'currency' => 'EUR',
-					'counterpartyType' => 'business',
-					'partyCapacity' => 'professional',
-					'paymentMethod' => 'cash',
-					'appliedCashLimit' => 1000.00,
-					'cddPerformed' => true,
-					'goodsCategory' => 'general',
-					'linkedTransactionsTotal' => 800.00,
-					'aggregate12mTotal' => 800.00,
-					'form8300Required' => false,
-				],
-			],
-			'AmlReport' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'reportType' => 'CTR',
-					'amount' => 12500.00,
-					'currency' => 'USD',
-					'thresholdAmount' => 10000.00,
-					'transactionDate' => '2026-02-01',
-					'detectionDate' => '2026-02-01',
-					'filedDate' => '2026-02-10',
-					'eFiled' => true,
-					'sameDayAggregate' => 12500.00,
-					'payerStatementDate' => null,
-					'retentionUntil' => '2099-12-31',
-					'period' => '2026-Q1',
-				],
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'reportType' => 'SAR',
-					'amount' => 25000.00,
-					'currency' => 'USD',
-					'thresholdAmount' => 0.00,
-					'transactionDate' => '2026-03-01',
-					'detectionDate' => '2026-03-05',
-					'filedDate' => '2026-03-20',
-					'eFiled' => true,
-					'sameDayAggregate' => 25000.00,
-					'payerStatementDate' => null,
-					'retentionUntil' => '2099-12-31',
-					'period' => '2026-Q1',
-				],
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'reportType' => '8300',
-					'amount' => 11000.00,
-					'currency' => 'USD',
-					'thresholdAmount' => 10000.00,
-					'transactionDate' => '2026-01-10',
-					'detectionDate' => '2026-01-10',
-					'filedDate' => '2026-01-20',
-					'eFiled' => true,
-					'sameDayAggregate' => 11000.00,
-					'payerStatementDate' => '2027-01-15',
-					'retentionUntil' => '2099-12-31',
-					'period' => '2026-Q1',
-				],
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'reportType' => 'CMIR',
-					'amount' => 18000.00,
-					'currency' => 'USD',
-					'thresholdAmount' => 10000.00,
-					'transactionDate' => '2026-04-01',
-					'detectionDate' => '2026-04-01',
-					'filedDate' => '2026-04-01',
-					'eFiled' => true,
-					'sameDayAggregate' => 18000.00,
-					'payerStatementDate' => null,
-					'retentionUntil' => '2099-12-31',
-					'period' => '2026-Q2',
-				],
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'reportType' => 'FBAR',
-					'amount' => 60000.00,
-					'currency' => 'USD',
-					'thresholdAmount' => 10000.00,
-					'transactionDate' => '2026-12-31',
-					'detectionDate' => '2026-12-31',
-					'filedDate' => '2027-04-15',
-					'eFiled' => true,
-					'sameDayAggregate' => 60000.00,
-					'payerStatementDate' => null,
-					'retentionUntil' => '2099-12-31',
-					'period' => '2026',
-				],
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'reportType' => 'unusual',
-					'amount' => 14000.00,
-					'currency' => 'EUR',
-					'thresholdAmount' => 10000.00,
-					'transactionDate' => '2026-05-01',
-					'detectionDate' => '2026-05-01',
-					'filedDate' => '2026-05-03',
-					'eFiled' => true,
-					'sameDayAggregate' => 14000.00,
-					'payerStatementDate' => null,
-					'retentionUntil' => '2099-12-31',
-					'period' => '2026-Q2',
-				],
-			],
-			'SanctionsScreening' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'subjectType' => 'customer',
-					'subjectName' => 'Acme Trading B.V.',
-					'screenedDate' => '2026-01-10',
-					'transactionDate' => '2026-01-15',
-					'listName' => 'OFAC-SDN',
-					'listsScreened' => ['OFAC-SDN', 'EU-CFSP', 'NL-Sanctiewet'],
-					'matched' => false,
-					'reportedDate' => null,
-				],
-			],
-			'CddRecord' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'customerId' => 'cust-shillinq-1',
-					'cddType' => 'occasional',
-					'performed' => true,
-					'transactionAmount' => 16000.00,
-					'currency' => 'EUR',
-					'uboOwnershipPct' => 30.0,
-					'uboIdentified' => true,
-					'recordedDate' => '2026-01-20',
-					'retentionUntil' => '2099-12-31',
-				],
-			],
-			'FundsTransfer' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'transferDate' => '2026-02-01',
-					'amount' => 5000.00,
-					'currency' => 'EUR',
-					'originatorName' => 'Acme Trading B.V.',
-					'originatorAccount' => 'NL00BANK0123456789',
-					'beneficiaryName' => 'Beta Supplies GmbH',
-					'beneficiaryAccount' => 'DE00BANK0123456789012',
-				],
-			],
-			'TrustLedger' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'accountType' => 'escrow',
-					'segregated' => true,
-					'asOfDate' => '2026-03-31',
-					'clientBalances' => [
-						['clientId' => 'client-a', 'balance' => 1500.00],
-						['clientId' => 'client-b', 'balance' => 0.00],
-						['clientId' => 'client-c', 'balance' => 7250.50],
-					],
-				],
-			],
-			'CashCount' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'countDate' => '2026-01-31',
-					'countedAmount' => 1250.00,
-					'bookBalance' => 1250.00,
-					'runningBalance' => 1250.00,
-					'zReportTotal' => 980.00,
-					'recordedTakings' => 980.00,
-					'currency' => 'EUR',
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 

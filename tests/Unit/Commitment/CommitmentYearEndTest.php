@@ -23,6 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Commitment;
 
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\AppInfo\CommitmentGuardServices;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -139,7 +142,7 @@ final class CommitmentYearEndTest extends TestCase {
 		$entity->setObject($this->get('SupplierInvoice', $this->ids['invoice']));
 		$entity->setSchema($schemaId);
 		$entity->setRegister('7');
-		return new ObjectTransitionedEvent($entity, 'approveMatched', 'matched', $to, 'k.dewit', '7', $schemaId);
+		return new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: 'approveMatched', from: 'matched', to: $to), scope: new RegisterSchemaRef(register: '7', schema: $schemaId), actor: new TransitionActor(userId: 'k.dewit'));
 	}//end approval()
 
 	/**

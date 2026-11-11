@@ -111,49 +111,58 @@ class IntercompanyLinkService {
 		}
 
 		$counter = $this->findCounterSide(entry: $entry);
-		$mirrorCreated = false;
-
+		$mirrorCreated = ($counter === null);
 		if ($counter === null) {
-			$mirror = $this->journalService->buildMirror(source: $entry);
-			$mirror['intercompanyNumber'] = $intercompanyNumber;
-			$mirror['description'] = (string)($entry['description'] ?? '');
-			$counter = $this->saveEntry(data: $mirror);
-			$mirrorCreated = true;
+			$counter = $this->createMirror(entry: $entry, intercompanyNumber: $intercompanyNumber);
 		}
 
-		$sourceAmount = ($entry['amount'] ?? 0);
-		$destinationAmount = ($counter['amount'] ?? 0);
-		$variance = $this->journalService->reconcileVariance(
-			sourceAmount: $sourceAmount,
-			destinationAmount: $destinationAmount
-		);
-		$balanced = $this->journalService->isBalanced(
-			sourceAmount: $sourceAmount,
-			destinationAmount: $destinationAmount
-		);
-
-		$this->persistVariance(entry: $entry, variance: $variance);
-		$this->persistVariance(entry: $counter, variance: $variance);
-
-		if ($balanced === false) {
-			$this->logger->warning(
-				'IntercompanyLinkService: intercompany pair does not reconcile',
-				[
-					'intercompanyNumber' => $intercompanyNumber,
-					'varianceAmount' => $variance,
-				]
-			);
-		}
-
-		return [
-			'linked' => true,
-			'mirrorCreated' => $mirrorCreated,
-			'varianceAmount' => $variance,
-			'balanced' => $balanced,
-			'message' => 'Intercompany pair linked and reconciled',
-		];
+		return ['linked' => true, 'mirrorCreated' => $mirrorCreated]
+			+ $this->reconcilePair(entry: $entry, counter: $counter)
+			+ ['message' => 'Intercompany pair linked and reconciled'];
 
 	}//end linkAndReconcile()
+
+	/**
+	 * Create the counter-side entry mirroring the source.
+	 *
+	 * @param array<string,mixed> $entry              The source-side entry.
+	 * @param string              $intercompanyNumber Its trimmed intercompanyNumber.
+	 *
+	 * @return array<string,mixed> The saved mirror.
+	 */
+	private function createMirror(array $entry, string $intercompanyNumber): array {
+		$mirror = $this->journalService->buildMirror(source: $entry);
+		$mirror['intercompanyNumber'] = $intercompanyNumber;
+		$mirror['description'] = (string)($entry['description'] ?? '');
+
+		return $this->saveEntry(data: $mirror);
+
+	}//end createMirror()
+
+	/**
+	 * Compute the pair's variance, write it on both sides, and warn when the
+	 * pair does not reconcile.
+	 *
+	 * @param array<string,mixed> $entry   The source-side entry.
+	 * @param array<string,mixed> $counter The counter-side entry.
+	 *
+	 * @return array{varianceAmount:float, balanced:bool}
+	 */
+	private function reconcilePair(array $entry, array $counter): array {
+		$sourceAmount = ($entry['amount'] ?? 0);
+		$destinationAmount = ($counter['amount'] ?? 0);
+		$variance = $this->journalService->reconcileVariance(sourceAmount: $sourceAmount, destinationAmount: $destinationAmount);
+		$balanced = $this->journalService->isBalanced(sourceAmount: $sourceAmount, destinationAmount: $destinationAmount);
+		$this->persistVariance(entry: $entry, variance: $variance);
+		$this->persistVariance(entry: $counter, variance: $variance);
+		if ($balanced === false) {
+			$context = ['intercompanyNumber' => trim((string)($entry['intercompanyNumber'] ?? '')), 'varianceAmount' => $variance];
+			$this->logger->warning('IntercompanyLinkService: intercompany pair does not reconcile', $context);
+		}
+
+		return ['varianceAmount' => $variance, 'balanced' => $balanced];
+
+	}//end reconcilePair()
 
 	/**
 	 * Resolve the counter-side entry of an intercompany pair.
@@ -175,29 +184,45 @@ class IntercompanyLinkService {
 			return null;
 		}
 
-		$sourceId = trim((string)($entry['sourceAdministrationId'] ?? ''));
-		$destinationId = trim((string)($entry['destinationAdministrationId'] ?? ''));
-		$selfId = $this->entryId(entry: $entry);
-
-		$rows = $this->findAll(
-			schema: self::SCHEMA_ENTRY,
-			filters: ['intercompanyNumber' => $intercompanyNumber]
-		);
-
-		foreach ($rows as $row) {
-			if ($this->entryId(entry: $row) === $selfId && $selfId !== '') {
-				continue;
-			}
-
-			$rowSource = trim((string)($row['sourceAdministrationId'] ?? ''));
-			$rowDestination = trim((string)($row['destinationAdministrationId'] ?? ''));
-			if ($rowSource === $destinationId && $rowDestination === $sourceId) {
+		foreach ($this->findAll(schema: self::SCHEMA_ENTRY, filters: ['intercompanyNumber' => $intercompanyNumber]) as $row) {
+			if ($this->isCounterSide(row: $row, entry: $entry) === true) {
 				return $row;
 			}
 		}
 
 		return null;
 	}//end findCounterSide()
+
+	/**
+	 * Whether a stored row is the other side of the entry: not the entry
+	 * itself, with source and destination administrations swapped.
+	 *
+	 * @param array<string,mixed> $row   A stored entry with the same intercompanyNumber.
+	 * @param array<string,mixed> $entry Either side of the pair.
+	 *
+	 * @return boolean
+	 */
+	private function isCounterSide(array $row, array $entry): bool {
+		$selfId = $this->entryId(entry: $entry);
+		if ($selfId !== '' && $this->entryId(entry: $row) === $selfId) {
+			return false;
+		}
+
+		return $this->field(record: $row, name: 'sourceAdministrationId') === $this->field(record: $entry, name: 'destinationAdministrationId')
+			&& $this->field(record: $row, name: 'destinationAdministrationId') === $this->field(record: $entry, name: 'sourceAdministrationId');
+	}//end isCounterSide()
+
+	/**
+	 * A trimmed string field of a record.
+	 *
+	 * @param array<string,mixed> $record The record.
+	 * @param string              $name   The field.
+	 *
+	 * @return string
+	 */
+	private function field(array $record, string $name): string {
+		return trim((string)($record[$name] ?? ''));
+	}//end field()
 
 	/**
 	 * Persist the computed variance on one side of the pair.
@@ -285,26 +310,13 @@ class IntercompanyLinkService {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
+			$rows = $this->objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'IntercompanyLinkService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
+			$this->logger->error('IntercompanyLinkService: failed to query OpenRegister', ['schema' => $schema, 'exception' => $e->getMessage()]);
 			return [];
 		}
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
+		return array_values(array_filter($rows, 'is_array'));
 	}//end findAll()
 
 	/**

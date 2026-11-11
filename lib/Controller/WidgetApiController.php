@@ -64,6 +64,22 @@ use Psr\Log\LoggerInterface;
  */
 class WidgetApiController extends Controller {
 	/**
+	 * Refusals of the write path that the widget explains to the visitor.
+	 *
+	 * @var array<int,array{error:string,message:string}>
+	 */
+	private const APPOINTMENT_REFUSALS = [
+		Http::STATUS_NOT_FOUND => [
+			'error' => 'service-not-found',
+			'message' => 'This service is not available for online booking.',
+		],
+		Http::STATUS_CONFLICT => [
+			'error' => 'slot-unavailable',
+			'message' => 'This slot was just booked. Please select another time.',
+		],
+	];
+
+	/**
 	 * The administration of the widget key guard() accepted; every read and
 	 * write of the request is scoped to it.
 	 *
@@ -293,27 +309,20 @@ class WidgetApiController extends Controller {
 		?string $phone = null,
 		?string $notes = null,
 	): JSONResponse {
-		$authResult = $this->guard();
-		if ($authResult instanceof JSONResponse) {
-			return $authResult;
-		}
+		$payload = [
+			'serviceId' => $serviceId,
+			'resourceId' => $resourceId,
+			'startTime' => $startTime,
+			'endTime' => $endTime,
+			'customerName' => $customerName,
+			'customerEmail' => $email,
+			'customerPhone' => ($phone ?? ''),
+			'notes' => ($notes ?? ''),
+		];
 
-		$validation = $this->validateAppointmentPayload(
-			serviceId: $serviceId,
-			resourceId: $resourceId,
-			startTime: $startTime,
-			endTime: $endTime,
-			customerName: $customerName,
-			email: $email,
-			phone: $phone,
-			notes: $notes,
-		);
-		if ($validation !== null) {
-			return $validation;
-		}
-
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return $this->serverError(message: 'Booking unavailable.');
+		$refusal = $this->refuseAppointment(payload: $payload);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		// ONE write path. This endpoint used to re-implement the booking inline
@@ -331,56 +340,10 @@ class WidgetApiController extends Controller {
 		// messages, and the mapping from the service's result code to HTTP.
 		$result = $this->widgetService->createAppointment(
 			administrationId: $this->keyAdministrationId,
-			payload: [
-				'serviceId' => $serviceId,
-				'resourceId' => $resourceId,
-				'startTime' => $startTime,
-				'endTime' => $endTime,
-				'customerName' => $customerName,
-				'customerEmail' => $email,
-				'customerPhone' => ($phone ?? ''),
-				'notes' => ($notes ?? ''),
-			],
+			payload: $payload,
 		);
 
-		$code = (int)($result['code'] ?? Http::STATUS_INTERNAL_SERVER_ERROR);
-
-		if ($code === Http::STATUS_NOT_FOUND) {
-			return new JSONResponse(
-				data: [
-					'error' => 'service-not-found',
-					'message' => 'This service is not available for online booking.',
-				],
-				statusCode: Http::STATUS_NOT_FOUND,
-			);
-		}
-
-		if ($code === Http::STATUS_CONFLICT) {
-			return new JSONResponse(
-				data: [
-					'error' => 'slot-unavailable',
-					'message' => 'This slot was just booked. Please select another time.',
-				],
-				statusCode: Http::STATUS_CONFLICT,
-			);
-		}
-
-		if ($code !== Http::STATUS_CREATED) {
-			$this->logger->error(
-				'Shillinq widget: appointment create failed',
-				['error' => (string)($result['error'] ?? 'unknown')]
-			);
-			return $this->serverError(message: 'Booking failed. Please try again later.');
-		}
-
-		return new JSONResponse(
-			data: [
-				'appointmentId' => (string)($result['appointmentId'] ?? ''),
-				'status' => (string)($result['status'] ?? 'pending_confirmation'),
-				'confirmationMessage' => (string)($result['confirmationMessage'] ?? ''),
-			],
-			statusCode: Http::STATUS_CREATED,
-		);
+		return $this->appointmentResponse(result: $result);
 
 	}//end appointments()
 
@@ -439,66 +402,219 @@ class WidgetApiController extends Controller {
 	}//end guard()
 
 	/**
-	 * Validate the POST /appointments payload (REQ-WSW-006).
+	 * Refuse a booking request before anything is written.
 	 *
-	 * Returns null when the payload passes; a JSONResponse with a structured
-	 * error otherwise.
+	 * Runs the widget guard, then the payload checks, then the OpenRegister
+	 * availability check, and returns the first refusal; null when the
+	 * booking may go ahead.
 	 *
-	 * @param string $serviceId Service id.
-	 * @param string $resourceId Resource id.
-	 * @param string $startTime Start time ISO UTC.
-	 * @param string $endTime End time ISO UTC.
-	 * @param string $customerName Display name (1-255).
-	 * @param string $email Email (RFC 5322).
-	 * @param string|null $phone Phone (E.164, optional).
-	 * @param string|null $notes Notes (≤500 chars, optional).
+	 * @param array<string,string> $payload The booking payload.
 	 *
 	 * @return JSONResponse|null
 	 */
-	private function validateAppointmentPayload(
-		string $serviceId,
-		string $resourceId,
-		string $startTime,
-		string $endTime,
-		string $customerName,
-		string $email,
-		?string $phone,
-		?string $notes,
-	): ?JSONResponse {
-		if ($serviceId === '' || $resourceId === '' || $startTime === '' || $endTime === '') {
-			return $this->badRequest(message: 'serviceId, resourceId, startTime and endTime are required.');
+	private function refuseAppointment(array $payload): ?JSONResponse {
+		$authResult = $this->guard();
+		if ($authResult instanceof JSONResponse) {
+			return $authResult;
 		}
 
-		$isoPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/';
-		if ((bool)preg_match($isoPattern, $startTime) === false
-			|| (bool)preg_match($isoPattern, $endTime) === false
-		) {
-			return $this->badRequest(message: 'startTime and endTime must be ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ).');
+		$message = $this->appointmentPayloadError(payload: $payload);
+		if ($message !== null) {
+			return $this->badRequest(message: $message);
 		}
 
-		$nameLength = strlen(trim($customerName));
-		if ($nameLength < 1 || $nameLength > 255) {
-			return $this->badRequest(message: 'customerName must be 1-255 characters.');
-		}
-
-		if ((bool)preg_match('/^[\p{L}\p{Mn}\s\'\-\.]+$/u', $customerName) === false) {
-			return $this->badRequest(message: 'customerName contains invalid characters.');
-		}
-
-		if ($email === '' || (filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
-			return $this->badRequest(message: 'Please enter a valid email address.');
-		}
-
-		if ($phone !== null && $phone !== '' && (bool)preg_match('/^\+?[1-9]\d{1,14}$/', $phone) === false) {
-			return $this->badRequest(message: 'Phone number must be E.164 (e.g. +31612345678).');
-		}
-
-		if ($notes !== null && strlen($notes) > 500) {
-			return $this->badRequest(message: 'notes must be at most 500 characters.');
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return $this->serverError(message: 'Booking unavailable.');
 		}
 
 		return null;
-	}//end validateAppointmentPayload()
+
+	}//end refuseAppointment()
+
+	/**
+	 * Validate the POST /appointments payload (REQ-WSW-006).
+	 *
+	 * Returns null when the payload passes; otherwise the message of the
+	 * first check that fails, in the order slot, name, contact, notes.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return string|null
+	 */
+	private function appointmentPayloadError(array $payload): ?string {
+		return $this->slotError(payload: $payload)
+			?? $this->customerNameError(customerName: $payload['customerName'])
+			?? $this->contactError(payload: $payload)
+			?? $this->notesError(notes: $payload['notes']);
+
+	}//end appointmentPayloadError()
+
+	/**
+	 * Check the service, resource and ISO 8601 UTC start and end time.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return string|null
+	 */
+	private function slotError(array $payload): ?string {
+		if ($this->missesSlotField(payload: $payload) === true) {
+			return 'serviceId, resourceId, startTime and endTime are required.';
+		}
+
+		if ($this->isIsoUtc(time: $payload['startTime']) === false
+			|| $this->isIsoUtc(time: $payload['endTime']) === false
+		) {
+			return 'startTime and endTime must be ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ).';
+		}
+
+		return null;
+
+	}//end slotError()
+
+	/**
+	 * Whether the service, resource, start or end time is empty.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return bool
+	 */
+	private function missesSlotField(array $payload): bool {
+		foreach (['serviceId', 'resourceId', 'startTime', 'endTime'] as $field) {
+			if ($payload[$field] === '') {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end missesSlotField()
+
+	/**
+	 * Whether a time is ISO 8601 UTC to the second (YYYY-MM-DDTHH:MM:SSZ).
+	 *
+	 * @param string $time The time to check.
+	 *
+	 * @return bool
+	 */
+	private function isIsoUtc(string $time): bool {
+		return (bool)preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $time);
+
+	}//end isIsoUtc()
+
+	/**
+	 * Check the customer display name (1-255 characters, letters only).
+	 *
+	 * @param string $customerName Display name.
+	 *
+	 * @return string|null
+	 */
+	private function customerNameError(string $customerName): ?string {
+		$nameLength = strlen(trim($customerName));
+		if ($nameLength < 1 || $nameLength > 255) {
+			return 'customerName must be 1-255 characters.';
+		}
+
+		if ((bool)preg_match('/^[\p{L}\p{Mn}\s\'\-\.]+$/u', $customerName) === false) {
+			return 'customerName contains invalid characters.';
+		}
+
+		return null;
+
+	}//end customerNameError()
+
+	/**
+	 * Check the email (RFC 5322) and the optional phone (E.164).
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return string|null
+	 */
+	private function contactError(array $payload): ?string {
+		$email = $payload['customerEmail'];
+		if ($email === '' || (filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+			return 'Please enter a valid email address.';
+		}
+
+		return $this->phoneError(phone: $payload['customerPhone']);
+
+	}//end contactError()
+
+	/**
+	 * Check the optional phone number (E.164).
+	 *
+	 * @param string $phone Customer phone, '' when not given.
+	 *
+	 * @return string|null
+	 */
+	private function phoneError(string $phone): ?string {
+		if ($phone !== '' && (bool)preg_match('/^\+?[1-9]\d{1,14}$/', $phone) === false) {
+			return 'Phone number must be E.164 (e.g. +31612345678).';
+		}
+
+		return null;
+
+	}//end phoneError()
+
+	/**
+	 * Check the optional notes (at most 500 characters).
+	 *
+	 * @param string $notes Customer notes.
+	 *
+	 * @return string|null
+	 */
+	private function notesError(string $notes): ?string {
+		if (strlen($notes) > 500) {
+			return 'notes must be at most 500 characters.';
+		}
+
+		return null;
+
+	}//end notesError()
+
+	/**
+	 * Map the write path's result to the HTTP response.
+	 *
+	 * @param array<string,mixed> $result Result of WidgetService::createAppointment().
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentResponse(array $result): JSONResponse {
+		$code = (int)($result['code'] ?? Http::STATUS_INTERNAL_SERVER_ERROR);
+
+		if (isset(self::APPOINTMENT_REFUSALS[$code]) === true) {
+			return new JSONResponse(data: self::APPOINTMENT_REFUSALS[$code], statusCode: $code);
+		}
+
+		if ($code !== Http::STATUS_CREATED) {
+			$this->logger->error(
+				'Shillinq widget: appointment create failed',
+				['error' => (string)($result['error'] ?? 'unknown')]
+			);
+			return $this->serverError(message: 'Booking failed. Please try again later.');
+		}
+
+		return $this->appointmentCreated(result: $result);
+
+	}//end appointmentResponse()
+
+	/**
+	 * Build the 201 Created response; never echoes customer PII.
+	 *
+	 * @param array<string,mixed> $result Result of WidgetService::createAppointment().
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentCreated(array $result): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'appointmentId' => (string)($result['appointmentId'] ?? ''),
+				'status' => (string)($result['status'] ?? 'pending_confirmation'),
+				'confirmationMessage' => (string)($result['confirmationMessage'] ?? ''),
+			],
+			statusCode: Http::STATUS_CREATED,
+		);
+
+	}//end appointmentCreated()
 
 	/**
 	 * Build a 400 Bad Request JSON response.

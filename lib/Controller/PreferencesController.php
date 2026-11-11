@@ -30,6 +30,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IConfig;
 use OCP\IRequest;
+use OCP\IUser;
 use OCP\IUserSession;
 
 /**
@@ -80,17 +81,12 @@ class PreferencesController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function getPreference(string $key): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+		$caller = $this->caller(key: $key);
+		if ($caller instanceof JSONResponse) {
+			return $caller;
 		}
 
-		$keyResult = $this->sanitizeKey(key: $key);
-		if ($keyResult['error'] !== null) {
-			return new JSONResponse(data: ['message' => $keyResult['error']], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		$safeKey = $keyResult['key'];
+		[$user, $safeKey] = $caller;
 
 		$value = $this->config->getUserValue(
 			userId: $user->getUID(),
@@ -99,12 +95,7 @@ class PreferencesController extends Controller {
 			default: ''
 		);
 
-		$stored = null;
-		if ($value !== '') {
-			$stored = $value;
-		}
-
-		return new JSONResponse(data: ['key' => $safeKey, 'value' => $stored]);
+		return new JSONResponse(data: ['key' => $safeKey, 'value' => self::storedOrNull(value: $value)]);
 	}//end getPreference()
 
 	/**
@@ -129,6 +120,46 @@ class PreferencesController extends Controller {
 	 * @NoAdminRequired
 	 */
 	public function setPreference(string $key, string $value = ''): JSONResponse {
+		$caller = $this->caller(key: $key);
+		if ($caller instanceof JSONResponse) {
+			return $caller;
+		}
+
+		return $this->savedPreference(caller: $caller, value: $value);
+	}//end setPreference()
+
+	/**
+	 * Store the caller's value for the key, or delete it when the value is empty.
+	 *
+	 * @param array{0:IUser,1:string} $caller The user and the canonical key.
+	 * @param string                  $value  The value to store.
+	 *
+	 * @return JSONResponse
+	 */
+	private function savedPreference(array $caller, string $value): JSONResponse {
+		if ($value === '') {
+			return $this->clearedPreference(caller: $caller);
+		}
+
+		[$user, $safeKey] = $caller;
+		$this->config->setUserValue(
+			userId: $user->getUID(),
+			appName: AppIdentity::APP_ID,
+			key: $safeKey,
+			value: $value
+		);
+
+		return new JSONResponse(data: ['key' => $safeKey, 'value' => $value]);
+	}//end savedPreference()
+
+	/**
+	 * The logged-in user and the canonical key, or the 401 or the 400.
+	 *
+	 * @param string $key The raw key.
+	 *
+	 * @return array{0:IUser,1:string}|JSONResponse
+	 */
+	private function caller(string $key): array|JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -139,26 +170,41 @@ class PreferencesController extends Controller {
 			return new JSONResponse(data: ['message' => $keyResult['error']], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
-		$safeKey = $keyResult['key'];
+		return [$user, $keyResult['key']];
+	}//end caller()
 
-		if ($value === '') {
-			$this->config->deleteUserValue(
-				userId: $user->getUID(),
-				appName: AppIdentity::APP_ID,
-				key: $safeKey
-			);
-			return new JSONResponse(data: ['key' => $safeKey, 'value' => null]);
-		}
-
-		$this->config->setUserValue(
+	/**
+	 * Delete the caller's value for the key and answer null.
+	 *
+	 * @param array{0:IUser,1:string} $caller The user and the canonical key.
+	 *
+	 * @return JSONResponse
+	 */
+	private function clearedPreference(array $caller): JSONResponse {
+		[$user, $safeKey] = $caller;
+		$this->config->deleteUserValue(
 			userId: $user->getUID(),
 			appName: AppIdentity::APP_ID,
-			key: $safeKey,
-			value: $value
+			key: $safeKey
 		);
 
-		return new JSONResponse(data: ['key' => $safeKey, 'value' => $value]);
-	}//end setPreference()
+		return new JSONResponse(data: ['key' => $safeKey, 'value' => null]);
+	}//end clearedPreference()
+
+	/**
+	 * The stored value, or null when it is blank.
+	 *
+	 * @param string $value The stored value.
+	 *
+	 * @return string|null
+	 */
+	private static function storedOrNull(string $value): string|null {
+		if ($value === '') {
+			return null;
+		}
+
+		return $value;
+	}//end storedOrNull()
 
 	/**
 	 * Restrict keys to a safe charset and enforce a 64-character limit.

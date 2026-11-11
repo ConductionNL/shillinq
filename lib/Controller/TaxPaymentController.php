@@ -103,6 +103,24 @@ class TaxPaymentController extends Controller {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 		$paymentId = trim($id);
 
+		$refusal = self::administrationRefusal(administrationId: $administrationId)
+			?? self::paymentRefusal(paymentId: $paymentId)
+			?? $this->accessRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->reconciled(administrationId: $administrationId, paymentId: $paymentId);
+	}//end reconcile()
+
+	/**
+	 * The 400 for a blank or malformed administration id.
+	 *
+	 * @param string $administrationId The trimmed administration_id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when it is a short slug.
+	 */
+	private static function administrationRefusal(string $administrationId): ?JSONResponse {
 		if ($administrationId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
 			return new JSONResponse(
 				['error' => 'administration_id must be a valid administration identifier'],
@@ -110,41 +128,63 @@ class TaxPaymentController extends Controller {
 			);
 		}
 
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The 400 for a blank or malformed payment id.
+	 *
+	 * @param string $paymentId The trimmed path id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when it is a slug of up to 128 characters.
+	 */
+	private static function paymentRefusal(string $paymentId): ?JSONResponse {
 		if ($paymentId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,128}$/', $paymentId) !== 1) {
-			return new JSONResponse(
-				['error' => 'id must be a valid payment identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return new JSONResponse(['error' => 'id must be a valid payment identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
-		// ⚠️ Both checks above are character-class tests. The reconciliation
-		// WRITES against the administration named on the wire, so the membership
-		// check has to happen before it (ADR-005 / REQ-MA-001).
+		return null;
+	}//end paymentRefusal()
+
+	/**
+	 * The masked 404 unless the caller is a member of the administration.
+	 *
+	 * ⚠️ The input checks are character-class tests. The reconciliation WRITES
+	 * against the administration named on the wire, so the membership check has
+	 * to happen before it (ADR-005 / REQ-MA-001).
+	 *
+	 * @param string $administrationId The well-formed administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null for a member.
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
 		if ($this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return null;
+	}//end accessRefusal()
+
+	/**
+	 * Run the reconciliation; a failure is logged and answered 500 without detail.
+	 *
+	 * @param string $administrationId The authorised administration id.
+	 * @param string $paymentId        The well-formed payment id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function reconciled(string $administrationId, string $paymentId): JSONResponse {
 		try {
-			$result = $this->reconciliation->reconcile(
-				administrationId: $administrationId,
-				paymentId: $paymentId
-			);
+			$result = $this->reconciliation->reconcile(administrationId: $administrationId, paymentId: $paymentId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'TaxPaymentController: failed to reconcile payment',
-				[
-					'administrationId' => $administrationId,
-					'paymentId' => $paymentId,
-					'exception' => $e->getMessage(),
-				]
+				['administrationId' => $administrationId, 'paymentId' => $paymentId, 'exception' => $e->getMessage()]
 			);
 
-			return new JSONResponse(
-				['error' => 'Failed to reconcile payment'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return new JSONResponse(['error' => 'Failed to reconcile payment'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end reconcile()
+	}//end reconciled()
 }//end class

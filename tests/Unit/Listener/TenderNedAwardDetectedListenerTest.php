@@ -872,4 +872,43 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			}
 		};
 	}//end deferral()
+
+	/**
+	 * Every write and every emitted event of a promotion, field for field,
+	 * against a recorded golden; a commitment save that fails writes nothing
+	 * else and emits nothing.
+	 *
+	 * Regenerate (only for an intended change) with
+	 * `TENDERNED_GOLDEN_WRITE=1 vendor/bin/phpunit -c phpunit-unit.xml tests/Unit/Listener/TenderNedAwardDetectedListenerTest.php`.
+	 *
+	 * @return void
+	 */
+	public function testThePromotionWritesMatchTheGolden(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$listener->handle(
+			new ObjectCreatedEvent(
+				$this->entity('1090', [
+					'status' => 'gegund',
+					'contractValue' => '1250.5',
+					'awardedSupplier' => '30280353 Conduction B.V.',
+					'tenderId' => 'TN-2026-0009',
+					'assignmentType' => 'subscription',
+					'termStart' => '2026-03-01',
+					'termEnd' => 'not-a-date',
+					'administrationId' => 'adm-y',
+				])
+			)
+		);
+
+		$actual = json_encode(['saves' => $recorder->saves, 'events' => $dispatcher->events], JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION) . "\n";
+		$golden = __DIR__ . '/fixtures/tenderned-promotion-golden.json';
+		if (getenv('TENDERNED_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, $actual);
+		}
+
+		$this->assertSame(file_get_contents($golden), $actual);
+
+	}//end testThePromotionWritesMatchTheGolden()
 }//end class

@@ -159,141 +159,802 @@ final class InvoicingExtraChecks implements CheckProvider {
 	public static function checks(): array {
 		return [
 			'ARInvoice' => [
-				// --- Buyer postal address country code + country-code coding (BT-55, BR-CL-14). ---
-				'en16931-br-11' => static fn (array $o): bool => self::present($o, 'buyerCountryCode'),
-				'en16931-br-cl-14' => static fn (array $o): bool => self::countryCodesValid($o),
-
-				// --- Currency-code ISO 4217 coding (BT-5, BR-CL-04 — same obligation as BR-CL-03). ---
-				'en16931-br-cl-04' => static fn (array $o): bool => self::isIsoCurrency((string)($o['currency'] ?? '')),
-				// Tax currency code (BT-6) ISO 4217 when present (BR-CL-05).
-				'en16931-br-cl-05' => static fn (array $o): bool => self::optionalIsoCurrency($o, 'taxCurrencyCode'),
-
-				// --- Invoice type code in UNTDID 1001 (BT-3, BR-CL-01). ---
-				'en16931-br-cl-01' => static fn (array $o): bool => in_array(
-					(string)($o['invoiceTypeCode'] ?? ''),
-					self::INVOICE_TYPE_CODES,
-					true
-				),
-
-				// --- VAT categories coded with UNCL5305, across lines + breakdown (BR-CL-17). ---
-				'en16931-br-cl-17' => static fn (array $o): bool => self::vatCategoriesValid($o),
-				// --- Unit-of-measure code present on every line (BT-130, BR-CL-23). ---
-				'en16931-br-cl-23' => static fn (array $o): bool => self::allLinesPresent($o, 'unitCode'),
-
-				// --- Item net price (BT-146) / gross price (BT-148) shall not be negative (BR-27/28). ---
-				'en16931-br-27' => static fn (array $o): bool => self::allLinesNonNegative($o, 'netPrice'),
-				'en16931-br-28' => static fn (array $o): bool => self::allLinesNonNegative($o, 'grossPrice'),
-
-				// --- Invoicing / line period date order (BR-29/30) and use-implies-filled (BR-CO-19/20). ---
-				'en16931-br-29' => static fn (array $o): bool => self::periodOrdered(
-					(string)($o['invoicingPeriodStart'] ?? ''),
-					(string)($o['invoicingPeriodEnd'] ?? '')
-				),
-				'en16931-br-30' => static fn (array $o): bool => self::allLinePeriodsOrdered($o),
-
-				// --- Document allowance/charge reason present (BR-CO-21/22, same as BR-33/38). ---
-				'en16931-br-co-21' => static fn (array $o): bool => self::allItemsHaveReason($o, 'allowances'),
-				'en16931-br-co-22' => static fn (array $o): bool => self::allItemsHaveReason($o, 'charges'),
-				// --- Line allowance/charge reason present (BR-CO-23/24, same as BR-42/44). ---
-				'en16931-br-co-23' => static fn (array $o): bool => self::allLineItemsHaveReason($o, 'lineAllowances'),
-				'en16931-br-co-24' => static fn (array $o): bool => self::allLineItemsHaveReason($o, 'lineCharges'),
-
-				// --- Amount due for payment (BT-115): presence, decimals, arithmetic. ---
-				// BR-15/DEC-18 are conditional on the field being present, so the minimal
-				// seeded corpus (no amountDue) is vacuously satisfied while a populated
-				// invoice is checked for real.
-				'en16931-br-15' => static fn (array $o): bool => (self::present($o, 'amountDue') === false
-					|| self::numericPresent($o, 'amountDue')),
-				'en16931-br-dec-18' => static fn (array $o): bool => self::maxDecimals($o['amountDue'] ?? null, 2),
-				'en16931-br-dec-16' => static fn (array $o): bool => self::maxDecimals($o['paidAmount'] ?? null, 2),
-				'en16931-br-dec-17' => static fn (array $o): bool => self::maxDecimals($o['roundingAmount'] ?? null, 2),
-				'en16931-br-dec-15' => static fn (array $o): bool => self::maxDecimals($o['taxAmountAccountingCurrency'] ?? null, 2),
-				// BR-CO-16: amount due = total with VAT - paid + rounding (checked only when stated).
-				'en16931-br-co-16' => static fn (array $o): bool => (self::present($o, 'amountDue') === false
-					|| self::centsEqual(
-						(float)$o['amountDue'],
-						(((float)($o['grossAmount'] ?? 0)) - ((float)($o['paidAmount'] ?? 0)) + ((float)($o['roundingAmount'] ?? 0)))
-					)),
-				// BR-53: if a VAT accounting currency code is present, the VAT amount in that currency must be stated.
-				'en16931-br-53' => static fn (array $o): bool => (self::present($o, 'taxCurrencyCode') === false
-					|| self::numericPresent($o, 'taxAmountAccountingCurrency')),
-
-				// --- Payment instruction (BG-16) / credit transfer (BG-17) (BR-49/50/61, BR-CL-16). ---
-				// A payment means type code is required once any payment-instruction field is given.
-				'en16931-br-49' => static fn (array $o): bool => (self::hasPaymentInstruction($o) === false
-					|| self::present($o, 'paymentMeansTypeCode')),
-				'en16931-br-cl-16' => static fn (array $o): bool => (self::present($o, 'paymentMeansTypeCode') === false
-					|| in_array((string)$o['paymentMeansTypeCode'], self::PAYMENT_MEANS_CODES, true)),
-				'en16931-br-50' => static fn (array $o): bool => self::creditTransferAccountPresent($o),
-				'en16931-br-61' => static fn (array $o): bool => self::creditTransferAccountPresent($o),
-
-				// --- Electronic address scheme identifiers (BT-34-1 / BT-49-1, BR-62/63, BR-CL-25). ---
-				'en16931-br-62' => static fn (array $o): bool => self::endpointSchemePresent($o, 'sellerElectronicAddress', 'sellerElectronicAddressScheme'),
-				'en16931-br-63' => static fn (array $o): bool => self::endpointSchemePresent($o, 'buyerElectronicAddress', 'buyerElectronicAddressScheme'),
-
-				// --- Additional supporting documents (BG-24) each carry a reference (BR-52). ---
-				'en16931-br-52' => static fn (array $o): bool => self::allItemsPresent($o, 'supportingDocuments', 'reference'),
-				// --- Preceding invoice references (BG-3) each carry a reference (BR-55). ---
-				'en16931-br-55' => static fn (array $o): bool => self::allItemsPresent($o, 'precedingInvoiceReferences', 'reference'),
-				// --- Item attributes (BG-32) carry both a name and a value (BR-54). ---
-				'en16931-br-54' => static fn (array $o): bool => self::allLineItemAttributesNamed($o),
-
-				// --- Seller tax representative party (BG-11) completeness (BR-18/19/20/56). ---
-				// When a tax representative is present (name/address/VAT id any one set),
-				// the representative's name, address, country code and VAT id are required.
-				'en16931-br-18' => static fn (array $o): bool => (self::hasTaxRepresentative($o) === false
-					|| self::present($o, 'sellerTaxRepName')),
-				'en16931-br-19' => static fn (array $o): bool => (self::hasTaxRepresentative($o) === false
-					|| self::present($o, 'sellerTaxRepAddress')),
-				'en16931-br-20' => static fn (array $o): bool => (self::hasTaxRepresentative($o) === false
-					|| self::present($o, 'sellerTaxRepCountryCode')),
-				'en16931-br-56' => static fn (array $o): bool => (self::hasTaxRepresentative($o) === false
-					|| self::present($o, 'sellerTaxRepVatId')),
-
-				// --- Payee name required when a payee is given and differs from the seller (BR-17). ---
-				'en16931-br-17' => static fn (array $o): bool => (self::hasPayee($o) === false
-					|| self::present($o, 'payeeName')),
-
-				// --- Deliver-to address (BG-15) carries a country code (BR-57). ---
-				'en16931-br-57' => static fn (array $o): bool => (self::present($o, 'deliverToAddress') === false
-					|| self::present($o, 'deliverToCountryCode')),
-
-				// --- VAT-category breakdown existence: a line/allowance/charge of a category
-				// requires a matching VAT breakdown group of that category (BR-{S,Z,E,AE,IC,G,O}-01). ---
-				'en16931-br-s-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'S'),
-				'en16931-br-z-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'Z'),
-				'en16931-br-e-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'E'),
-				'en16931-br-ae-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'AE'),
-				'en16931-br-ic-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'K'),
-				'en16931-br-g-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'G'),
-				'en16931-br-o-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'O'),
-
-				// --- 'Not subject to VAT' exclusivity (BR-O-11/12/13/14). ---
-				// A not-subject breakdown forbids any other breakdown group and forbids any
-				// line / allowance / charge of a different VAT category.
-				'en16931-br-o-11' => static fn (array $o): bool => (self::breakdownHasCategory($o, 'O') === false
-					|| self::breakdownOnlyCategory($o, 'O')),
-				'en16931-br-o-12' => static fn (array $o): bool => (self::breakdownHasCategory($o, 'O') === false
-					|| self::allLinesAreCategory($o, 'O')),
-				'en16931-br-o-13' => static fn (array $o): bool => (self::breakdownHasCategory($o, 'O') === false
-					|| self::allCollectionItemsCategory($o, 'allowances', 'O')),
-				'en16931-br-o-14' => static fn (array $o): bool => (self::breakdownHasCategory($o, 'O') === false
-					|| self::allCollectionItemsCategory($o, 'charges', 'O')),
-
-				// --- Intra-community supply requires delivery info (BR-IC-11/12). ---
-				'en16931-br-ic-11' => static fn (array $o): bool => (self::breakdownHasCategory($o, 'K') === false
-					|| self::present($o, 'actualDeliveryDate') || self::present($o, 'invoicingPeriodStart')
-					|| self::present($o, 'invoicingPeriodEnd')),
-				'en16931-br-ic-12' => static fn (array $o): bool => (self::breakdownHasCategory($o, 'K') === false
-					|| self::present($o, 'deliverToCountryCode')),
-
-				// --- VAT Directive art. 226(4): customer's VAT id well-formed when stated. ---
-				'vatdir-art226-4' => static fn (array $o): bool => (self::present($o, 'buyerVatId') === false
-					|| preg_match('/^[A-Z]{2}/', trim((string)$o['buyerVatId'])) === 1),
+				...self::headerCodingAndPeriodChecks(),
+				...self::allowanceChargeAndAmountDueChecks(),
+				...self::paymentReferenceAndPartyChecks(),
+				...self::payeeDeliveryAndBreakdownChecks(),
+				...self::notSubjectAndIntraCommunityChecks(),
 			],
 		];
 
 	}//end checks()
+
+	/**
+	 * The header coding, price and period predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function headerCodingAndPeriodChecks(): array {
+		return [
+			// --- Buyer postal address country code + country-code coding (BT-55, BR-CL-14). ---
+			'en16931-br-11' => self::en16931Br11(...),
+			'en16931-br-cl-14' => self::en16931BrCl14(...),
+
+			// --- Currency-code ISO 4217 coding (BT-5, BR-CL-04 — same obligation as BR-CL-03). ---
+			'en16931-br-cl-04' => self::en16931BrCl04(...),
+			'en16931-br-cl-05' => self::en16931BrCl05(...),
+
+			// --- Invoice type code in UNTDID 1001 (BT-3, BR-CL-01). ---
+			'en16931-br-cl-01' => self::en16931BrCl01(...),
+
+			// --- VAT categories coded with UNCL5305, across lines + breakdown (BR-CL-17). ---
+			'en16931-br-cl-17' => self::en16931BrCl17(...),
+			// --- Unit-of-measure code present on every line (BT-130, BR-CL-23). ---
+			'en16931-br-cl-23' => self::en16931BrCl23(...),
+
+			// --- Item net price (BT-146) / gross price (BT-148) shall not be negative (BR-27/28). ---
+			'en16931-br-27' => self::en16931Br27(...),
+			'en16931-br-28' => self::en16931Br28(...),
+
+			// --- Invoicing / line period date order (BR-29/30) and use-implies-filled (BR-CO-19/20). ---
+			'en16931-br-29' => self::en16931Br29(...),
+			'en16931-br-30' => self::en16931Br30(...),
+		];
+
+	}//end headerCodingAndPeriodChecks()
+
+	/**
+	 * The allowance, charge and amount-due predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function allowanceChargeAndAmountDueChecks(): array {
+		return [
+			// --- Document allowance/charge reason present (BR-CO-21/22, same as BR-33/38). ---
+			'en16931-br-co-21' => self::en16931BrCo21(...),
+			'en16931-br-co-22' => self::en16931BrCo22(...),
+			// --- Line allowance/charge reason present (BR-CO-23/24, same as BR-42/44). ---
+			'en16931-br-co-23' => self::en16931BrCo23(...),
+			'en16931-br-co-24' => self::en16931BrCo24(...),
+
+			// --- Amount due for payment (BT-115): presence, decimals, arithmetic. ---
+			'en16931-br-15' => self::en16931Br15(...),
+			'en16931-br-dec-18' => self::en16931BrDec18(...),
+			'en16931-br-dec-16' => self::en16931BrDec16(...),
+			'en16931-br-dec-17' => self::en16931BrDec17(...),
+			'en16931-br-dec-15' => self::en16931BrDec15(...),
+			'en16931-br-co-16' => self::en16931BrCo16(...),
+			'en16931-br-53' => self::en16931Br53(...),
+		];
+
+	}//end allowanceChargeAndAmountDueChecks()
+
+	/**
+	 * The payment, reference, item-attribute and tax-representative predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function paymentReferenceAndPartyChecks(): array {
+		return [
+			// --- Payment instruction (BG-16) / credit transfer (BG-17) (BR-49/50/61, BR-CL-16). ---
+			'en16931-br-49' => self::en16931Br49(...),
+			'en16931-br-cl-16' => self::en16931BrCl16(...),
+			'en16931-br-50' => self::en16931Br50(...),
+			'en16931-br-61' => self::en16931Br61(...),
+
+			// --- Electronic address scheme identifiers (BT-34-1 / BT-49-1, BR-62/63, BR-CL-25). ---
+			'en16931-br-62' => self::en16931Br62(...),
+			'en16931-br-63' => self::en16931Br63(...),
+
+			// --- Additional supporting documents (BG-24) each carry a reference (BR-52). ---
+			'en16931-br-52' => self::en16931Br52(...),
+			// --- Preceding invoice references (BG-3) each carry a reference (BR-55). ---
+			'en16931-br-55' => self::en16931Br55(...),
+			// --- Item attributes (BG-32) carry both a name and a value (BR-54). ---
+			'en16931-br-54' => self::en16931Br54(...),
+
+			// --- Seller tax representative party (BG-11) completeness (BR-18/19/20/56). ---
+			'en16931-br-18' => self::en16931Br18(...),
+			'en16931-br-19' => self::en16931Br19(...),
+		];
+
+	}//end paymentReferenceAndPartyChecks()
+
+	/**
+	 * The payee, deliver-to and VAT-breakdown predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function payeeDeliveryAndBreakdownChecks(): array {
+		return [
+			'en16931-br-20' => self::en16931Br20(...),
+			'en16931-br-56' => self::en16931Br56(...),
+
+			// --- Payee name required when a payee is given and differs from the seller (BR-17). ---
+			'en16931-br-17' => self::en16931Br17(...),
+
+			// --- Deliver-to address (BG-15) carries a country code (BR-57). ---
+			'en16931-br-57' => self::en16931Br57(...),
+
+			// --- VAT-category breakdown existence: a line/allowance/charge of a category
+			'en16931-br-s-01' => self::en16931BrS01(...),
+			'en16931-br-z-01' => self::en16931BrZ01(...),
+			'en16931-br-e-01' => self::en16931BrE01(...),
+			'en16931-br-ae-01' => self::en16931BrAe01(...),
+			'en16931-br-ic-01' => self::en16931BrIc01(...),
+			'en16931-br-g-01' => self::en16931BrG01(...),
+			'en16931-br-o-01' => self::en16931BrO01(...),
+		];
+
+	}//end payeeDeliveryAndBreakdownChecks()
+
+	/**
+	 * The not-subject-to-VAT, intra-community and customer VAT id predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function notSubjectAndIntraCommunityChecks(): array {
+		return [
+			// --- 'Not subject to VAT' exclusivity (BR-O-11/12/13/14). ---
+			'en16931-br-o-11' => self::en16931BrO11(...),
+			'en16931-br-o-12' => self::en16931BrO12(...),
+			'en16931-br-o-13' => self::en16931BrO13(...),
+			'en16931-br-o-14' => self::en16931BrO14(...),
+
+			// --- Intra-community supply requires delivery info (BR-IC-11/12). ---
+			'en16931-br-ic-11' => self::en16931BrIc11(...),
+			'en16931-br-ic-12' => self::en16931BrIc12(...),
+
+			// --- VAT Directive art. 226(4): customer's VAT id well-formed when stated. ---
+			'vatdir-art226-4' => self::vatdirArt2264(...),
+		];
+
+	}//end notSubjectAndIntraCommunityChecks()
+
+	/**
+	 * Rule en16931-br-11 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br11(array $o): bool {
+		return self::present($o, 'buyerCountryCode');
+
+	}//end en16931Br11()
+
+	/**
+	 * Rule en16931-br-cl-14 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl14(array $o): bool {
+		return self::countryCodesValid($o);
+
+	}//end en16931BrCl14()
+
+	/**
+	 * Rule en16931-br-cl-04 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl04(array $o): bool {
+		return self::isIsoCurrency((string)($o['currency'] ?? ''));
+
+	}//end en16931BrCl04()
+
+	/**
+	 * Tax currency code (BT-6) ISO 4217 when present (BR-CL-05).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl05(array $o): bool {
+		return self::optionalIsoCurrency($o, 'taxCurrencyCode');
+
+	}//end en16931BrCl05()
+
+	/**
+	 * Rule en16931-br-cl-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl01(array $o): bool {
+		return in_array(
+			(string)($o['invoiceTypeCode'] ?? ''),
+			self::INVOICE_TYPE_CODES,
+			true
+			);
+
+	}//end en16931BrCl01()
+
+	/**
+	 * Rule en16931-br-cl-17 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl17(array $o): bool {
+		return self::vatCategoriesValid($o);
+
+	}//end en16931BrCl17()
+
+	/**
+	 * Rule en16931-br-cl-23 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl23(array $o): bool {
+		return self::allLinesPresent($o, 'unitCode');
+
+	}//end en16931BrCl23()
+
+	/**
+	 * Rule en16931-br-27 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br27(array $o): bool {
+		return self::allLinesNonNegative($o, 'netPrice');
+
+	}//end en16931Br27()
+
+	/**
+	 * Rule en16931-br-28 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br28(array $o): bool {
+		return self::allLinesNonNegative($o, 'grossPrice');
+
+	}//end en16931Br28()
+
+	/**
+	 * Rule en16931-br-29 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br29(array $o): bool {
+		return self::periodOrdered(
+			(string)($o['invoicingPeriodStart'] ?? ''),
+			(string)($o['invoicingPeriodEnd'] ?? '')
+			);
+
+	}//end en16931Br29()
+
+	/**
+	 * Rule en16931-br-30 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br30(array $o): bool {
+		return self::allLinePeriodsOrdered($o);
+
+	}//end en16931Br30()
+
+	/**
+	 * Rule en16931-br-co-21 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCo21(array $o): bool {
+		return self::allItemsHaveReason($o, 'allowances');
+
+	}//end en16931BrCo21()
+
+	/**
+	 * Rule en16931-br-co-22 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCo22(array $o): bool {
+		return self::allItemsHaveReason($o, 'charges');
+
+	}//end en16931BrCo22()
+
+	/**
+	 * Rule en16931-br-co-23 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCo23(array $o): bool {
+		return self::allLineItemsHaveReason($o, 'lineAllowances');
+
+	}//end en16931BrCo23()
+
+	/**
+	 * Rule en16931-br-co-24 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCo24(array $o): bool {
+		return self::allLineItemsHaveReason($o, 'lineCharges');
+
+	}//end en16931BrCo24()
+
+	/**
+	 * BR-15/DEC-18 are conditional on the field being present, so the minimal
+	 * seeded corpus (no amountDue) is vacuously satisfied while a populated
+	 * invoice is checked for real.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br15(array $o): bool {
+		return (self::present($o, 'amountDue') === false
+			|| self::numericPresent($o, 'amountDue'));
+
+	}//end en16931Br15()
+
+	/**
+	 * Rule en16931-br-dec-18 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrDec18(array $o): bool {
+		return self::maxDecimals($o['amountDue'] ?? null, 2);
+
+	}//end en16931BrDec18()
+
+	/**
+	 * Rule en16931-br-dec-16 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrDec16(array $o): bool {
+		return self::maxDecimals($o['paidAmount'] ?? null, 2);
+
+	}//end en16931BrDec16()
+
+	/**
+	 * Rule en16931-br-dec-17 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrDec17(array $o): bool {
+		return self::maxDecimals($o['roundingAmount'] ?? null, 2);
+
+	}//end en16931BrDec17()
+
+	/**
+	 * Rule en16931-br-dec-15 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrDec15(array $o): bool {
+		return self::maxDecimals($o['taxAmountAccountingCurrency'] ?? null, 2);
+
+	}//end en16931BrDec15()
+
+	/**
+	 * BR-CO-16: amount due = total with VAT - paid + rounding (checked only when stated).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCo16(array $o): bool {
+		return (self::present($o, 'amountDue') === false
+			|| self::centsEqual(
+			(float)$o['amountDue'],
+			(((float)($o['grossAmount'] ?? 0)) - ((float)($o['paidAmount'] ?? 0)) + ((float)($o['roundingAmount'] ?? 0)))
+			));
+
+	}//end en16931BrCo16()
+
+	/**
+	 * BR-53: if a VAT accounting currency code is present, the VAT amount in that currency must be stated.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br53(array $o): bool {
+		return (self::present($o, 'taxCurrencyCode') === false
+			|| self::numericPresent($o, 'taxAmountAccountingCurrency'));
+
+	}//end en16931Br53()
+
+	/**
+	 * A payment means type code is required once any payment-instruction field is given.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br49(array $o): bool {
+		return (self::hasPaymentInstruction($o) === false
+			|| self::present($o, 'paymentMeansTypeCode'));
+
+	}//end en16931Br49()
+
+	/**
+	 * Rule en16931-br-cl-16 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl16(array $o): bool {
+		return (self::present($o, 'paymentMeansTypeCode') === false
+			|| in_array((string)$o['paymentMeansTypeCode'], self::PAYMENT_MEANS_CODES, true));
+
+	}//end en16931BrCl16()
+
+	/**
+	 * Rule en16931-br-50 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br50(array $o): bool {
+		return self::creditTransferAccountPresent($o);
+
+	}//end en16931Br50()
+
+	/**
+	 * Rule en16931-br-61 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br61(array $o): bool {
+		return self::creditTransferAccountPresent($o);
+
+	}//end en16931Br61()
+
+	/**
+	 * Rule en16931-br-62 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br62(array $o): bool {
+		return self::endpointSchemePresent($o, 'sellerElectronicAddress', 'sellerElectronicAddressScheme');
+
+	}//end en16931Br62()
+
+	/**
+	 * Rule en16931-br-63 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br63(array $o): bool {
+		return self::endpointSchemePresent($o, 'buyerElectronicAddress', 'buyerElectronicAddressScheme');
+
+	}//end en16931Br63()
+
+	/**
+	 * Rule en16931-br-52 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br52(array $o): bool {
+		return self::allItemsPresent($o, 'supportingDocuments', 'reference');
+
+	}//end en16931Br52()
+
+	/**
+	 * Rule en16931-br-55 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br55(array $o): bool {
+		return self::allItemsPresent($o, 'precedingInvoiceReferences', 'reference');
+
+	}//end en16931Br55()
+
+	/**
+	 * Rule en16931-br-54 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br54(array $o): bool {
+		return self::allLineItemAttributesNamed($o);
+
+	}//end en16931Br54()
+
+	/**
+	 * When a tax representative is present (name/address/VAT id any one set),
+	 * the representative's name, address, country code and VAT id are required.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br18(array $o): bool {
+		return (self::hasTaxRepresentative($o) === false
+			|| self::present($o, 'sellerTaxRepName'));
+
+	}//end en16931Br18()
+
+	/**
+	 * Rule en16931-br-19 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br19(array $o): bool {
+		return (self::hasTaxRepresentative($o) === false
+			|| self::present($o, 'sellerTaxRepAddress'));
+
+	}//end en16931Br19()
+
+	/**
+	 * Rule en16931-br-20 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br20(array $o): bool {
+		return (self::hasTaxRepresentative($o) === false
+			|| self::present($o, 'sellerTaxRepCountryCode'));
+
+	}//end en16931Br20()
+
+	/**
+	 * Rule en16931-br-56 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br56(array $o): bool {
+		return (self::hasTaxRepresentative($o) === false
+			|| self::present($o, 'sellerTaxRepVatId'));
+
+	}//end en16931Br56()
+
+	/**
+	 * Rule en16931-br-17 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br17(array $o): bool {
+		return (self::hasPayee($o) === false
+			|| self::present($o, 'payeeName'));
+
+	}//end en16931Br17()
+
+	/**
+	 * Rule en16931-br-57 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931Br57(array $o): bool {
+		return (self::present($o, 'deliverToAddress') === false
+			|| self::present($o, 'deliverToCountryCode'));
+
+	}//end en16931Br57()
+
+	/**
+	 * requires a matching VAT breakdown group of that category (BR-{S,Z,E,AE,IC,G,O}-01). ---
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrS01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'S');
+
+	}//end en16931BrS01()
+
+	/**
+	 * Rule en16931-br-z-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrZ01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'Z');
+
+	}//end en16931BrZ01()
+
+	/**
+	 * Rule en16931-br-e-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrE01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'E');
+
+	}//end en16931BrE01()
+
+	/**
+	 * Rule en16931-br-ae-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAe01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'AE');
+
+	}//end en16931BrAe01()
+
+	/**
+	 * Rule en16931-br-ic-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrIc01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'K');
+
+	}//end en16931BrIc01()
+
+	/**
+	 * Rule en16931-br-g-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrG01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'G');
+
+	}//end en16931BrG01()
+
+	/**
+	 * Rule en16931-br-o-01 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrO01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'O');
+
+	}//end en16931BrO01()
+
+	/**
+	 * A not-subject breakdown forbids any other breakdown group and forbids any
+	 * line / allowance / charge of a different VAT category.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrO11(array $o): bool {
+		return (self::breakdownHasCategory($o, 'O') === false
+			|| self::breakdownOnlyCategory($o, 'O'));
+
+	}//end en16931BrO11()
+
+	/**
+	 * Rule en16931-br-o-12 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrO12(array $o): bool {
+		return (self::breakdownHasCategory($o, 'O') === false
+			|| self::allLinesAreCategory($o, 'O'));
+
+	}//end en16931BrO12()
+
+	/**
+	 * Rule en16931-br-o-13 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrO13(array $o): bool {
+		return (self::breakdownHasCategory($o, 'O') === false
+			|| self::allCollectionItemsCategory($o, 'allowances', 'O'));
+
+	}//end en16931BrO13()
+
+	/**
+	 * Rule en16931-br-o-14 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrO14(array $o): bool {
+		return (self::breakdownHasCategory($o, 'O') === false
+			|| self::allCollectionItemsCategory($o, 'charges', 'O'));
+
+	}//end en16931BrO14()
+
+	/**
+	 * Rule en16931-br-ic-11 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrIc11(array $o): bool {
+		return (self::breakdownHasCategory($o, 'K') === false
+			|| self::present($o, 'actualDeliveryDate') || self::present($o, 'invoicingPeriodStart')
+			|| self::present($o, 'invoicingPeriodEnd'));
+
+	}//end en16931BrIc11()
+
+	/**
+	 * Rule en16931-br-ic-12 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrIc12(array $o): bool {
+		return (self::breakdownHasCategory($o, 'K') === false
+			|| self::present($o, 'deliverToCountryCode'));
+
+	}//end en16931BrIc12()
+
+	/**
+	 * Rule vatdir-art226-4 holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt2264(array $o): bool {
+		return (self::present($o, 'buyerVatId') === false
+			|| preg_match('/^[A-Z]{2}/', trim((string)$o['buyerVatId'])) === 1);
+
+	}//end vatdirArt2264()
 
 	/**
 	 * Scalar test-data defaults so the mandatory rules in this provider are

@@ -1,0 +1,37 @@
+{
+    "full": {
+        "mail": {
+            "subject": "[Payment plan PP-7: your schedule]",
+            "body": "[Dear Ada,]\n\n[You agreed to pay the invoices below in instalments. This is the schedule.]\n\n[Invoices:]\n- VF-1: EUR 1,000.00\n- : EUR 234.50\n\n[Instalments:]\n1. 2026-04-01: EUR 617.25\n2. : EUR 617.25\n\n[Total: EUR 1,234.50]\n[Pay each instalment to NL91ABNA0417164300 and state the reference PP-7.]\n[Reminders for these invoices stop while you keep to the schedule.]\n[If an instalment is more than 10 days late, the arrangement ends.]"
+        },
+        "lookups": [
+            "Dear %s,",
+            "You agreed to pay the invoices below in instalments. This is the schedule.",
+            "Invoices:",
+            "Instalments:",
+            "Total: %s",
+            "Pay each instalment to %1$s and state the reference %2$s.",
+            "Reminders for these invoices stop while you keep to the schedule.",
+            "If an instalment is more than %s days late, the arrangement ends.",
+            "Payment plan %s: your schedule"
+        ]
+    },
+    "bare": {
+        "mail": {
+            "subject": "[Payment plan : your schedule]",
+            "body": "[Dear [customer],]\n\n[You agreed to pay the invoices below in instalments. This is the schedule.]\n\n[Invoices:]\n\n[Instalments:]\n\n[Total: EUR 0.00]\n[Pay each instalment to NL91ABNA0417164300 and state the reference .]\n[Reminders for these invoices stop while you keep to the schedule.]\n[If an instalment is more than 14 days late, the arrangement ends.]"
+        },
+        "lookups": [
+            "customer",
+            "Dear %s,",
+            "You agreed to pay the invoices below in instalments. This is the schedule.",
+            "Invoices:",
+            "Instalments:",
+            "Total: %s",
+            "Pay each instalment to %1$s and state the reference %2$s.",
+            "Reminders for these invoices stop while you keep to the schedule.",
+            "If an instalment is more than %s days late, the arrangement ends.",
+            "Payment plan %s: your schedule"
+        ]
+    }
+}

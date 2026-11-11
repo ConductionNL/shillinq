@@ -256,6 +256,75 @@ class PurchaseOrderService {
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
+		$order              = $this->checkedOrder(administrationId: $administrationId, payload: $payload);
+		$frameworkAgreement = $this->assertCreationPolicies(order: $order);
+		$persisted          = $this->persistNewPurchaseOrder(order: $order);
+
+		// Record the framework-agreement call-off drawdown now the PO is persisted
+		// (REQ-PG-004). The guard already verified this fits the remaining ceiling.
+		if ($frameworkAgreement !== null) {
+			$frameworkAgreement['drawnAmount'] = ((int)($frameworkAgreement['drawnAmount'] ?? 0) + $order['totalCents']);
+			$this->saveObject(schema: 'FrameworkAgreement', object: $frameworkAgreement);
+		}
+
+		return $persisted;
+	}//end createPurchaseOrder()
+
+	/**
+	 * The checked parties, lines and total of a new order, refused in that
+	 * order when one is missing or invalid.
+	 *
+	 * @param string              $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $payload          Caller payload.
+	 *
+	 * @return array{administrationId:string,requesterId:string,supplierId:string,costCenter:string,lines:array<int,array<string,mixed>>,totalCents:int,payload:array<string,mixed>}
+	 *
+	 * @throws \RuntimeException When the requester lacks access or a field is missing or invalid.
+	 */
+	private function checkedOrder(string $administrationId, array $payload): array {
+		$order = $this->orderParties(administrationId: $administrationId, payload: $payload);
+
+		$order['lines']      = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []));
+		$order['totalCents'] = $this->totalCents(lines: $order['lines']);
+		if ($order['totalCents'] <= 0) {
+			throw new RuntimeException('Purchase order total must be positive');
+		}
+
+		$order['payload'] = $payload;
+		return $order;
+	}//end checkedOrder()
+
+	/**
+	 * The administration, the authenticated requester, the supplier and the
+	 * cost center of a new order.
+	 *
+	 * @param string              $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $payload          Caller payload.
+	 *
+	 * @return array{administrationId:string,requesterId:string,supplierId:string,costCenter:string}
+	 *
+	 * @throws \RuntimeException When the requester lacks access or a party is missing.
+	 */
+	private function orderParties(string $administrationId, array $payload): array {
+		return [
+			'administrationId' => $administrationId,
+			'requesterId' => $this->authorisedRequester(administrationId: $administrationId),
+			'supplierId' => $this->requiredText(payload: $payload, field: 'supplierId'),
+			'costCenter' => $this->requiredText(payload: $payload, field: 'costCenter'),
+		];
+	}//end orderParties()
+
+	/**
+	 * The authenticated requester in an accessible administration; the
+	 * requester is never trusted from the request body (ADR-005).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the administration is missing or inaccessible, or nobody is signed in.
+	 */
+	private function authorisedRequester(string $administrationId): string {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -270,66 +339,103 @@ class PurchaseOrderService {
 			throw new RuntimeException('Authenticated requester is required');
 		}
 
-		$supplierId = trim((string)($payload['supplierId'] ?? ''));
-		if ($supplierId === '') {
-			throw new RuntimeException('supplierId is required');
+		return $requesterId;
+	}//end authorisedRequester()
+
+	/**
+	 * A trimmed required payload field.
+	 *
+	 * @param array<string,mixed> $payload Caller payload.
+	 * @param string              $field   The field, also the refusal's label.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the field is empty.
+	 */
+	private function requiredText(array $payload, string $field): string {
+		$value = trim((string)($payload[$field] ?? ''));
+		if ($value === '') {
+			throw new RuntimeException($field . ' is required');
 		}
 
-		$costCenter = trim((string)($payload['costCenter'] ?? ''));
-		$projectCode = trim((string)($payload['projectCode'] ?? ''));
-		if ($costCenter === '') {
-			throw new RuntimeException('costCenter is required');
+		return $value;
+	}//end requiredText()
+
+	/**
+	 * Refuse an order over its cost-center budget, without a required
+	 * requisition, to an unqualified supplier (REQ-PG-002), or over the
+	 * remaining ceiling of the framework agreement it calls off (REQ-PG-004).
+	 *
+	 * @param array<string,mixed> $order The checked order.
+	 *
+	 * @return array<string,mixed>|null The framework agreement called off, or null.
+	 *
+	 * @throws \RuntimeException When a policy refuses the order.
+	 */
+	private function assertCreationPolicies(array $order): ?array {
+		$administrationId = $order['administrationId'];
+		$this->assertCostCenterBudget(administrationId: $administrationId, costCenter: $order['costCenter'], addCents: $order['totalCents']);
+		$this->assertRequisitionPolicy(administrationId: $administrationId, requisitionId: trim((string)($order['payload']['requisitionId'] ?? '')));
+		$this->assertSupplierQualificationPolicy(administrationId: $administrationId, supplierId: $order['supplierId']);
+
+		$frameworkAgreementId = trim((string)($order['payload']['frameworkAgreementId'] ?? ''));
+		if ($frameworkAgreementId === '') {
+			return null;
 		}
 
-		$lines = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []));
-		$totalCent = $this->totalCents(lines: $lines);
-		if ($totalCent <= 0) {
-			throw new RuntimeException('Purchase order total must be positive');
-		}
-
-		$totalAmount = $this->fromCents(cents: $totalCent);
-		$this->assertCostCenterBudget(
+		return $this->frameworkAgreementDrawdownGuard->assertWithinCeiling(
 			administrationId: $administrationId,
-			costCenter: $costCenter,
-			addCents: $totalCent
+			frameworkAgreementId: $frameworkAgreementId,
+			addCents: $order['totalCents']
+		);
+	}//end assertCreationPolicies()
+
+	/**
+	 * Save the new order with its approval chain and raise an ApprovalTask
+	 * per required approver.
+	 *
+	 * @param array<string,mixed> $order The checked, policy-cleared order.
+	 *
+	 * @return array<string,mixed> The persisted PurchaseOrder payload.
+	 */
+	private function persistNewPurchaseOrder(array $order): array {
+		$order['approvalChain'] = $this->determineApprovalChain(amount: $this->fromCents(cents: $order['totalCents']));
+		$order['poNumber']      = $this->generatePoNumber(administrationId: $order['administrationId']);
+
+		$persisted = $this->saveObject(schema: 'PurchaseOrder', object: $this->purchaseOrderRecord(order: $order));
+		$this->assignApprovalTasks(
+			administrationId: $order['administrationId'],
+			purchaseOrderId: (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $order['poNumber'])),
+			poNumber: $order['poNumber'],
+			chain: $order['approvalChain']
 		);
 
-		$requisitionId = trim((string)($payload['requisitionId'] ?? ''));
-		$this->assertRequisitionPolicy(administrationId: $administrationId, requisitionId: $requisitionId);
+		return $persisted;
+	}//end persistNewPurchaseOrder()
 
-		// Procurement-governance gate (REQ-PG-002): block a PO to an unqualified
-		// supplier when the require_supplier_qualification_for_po policy is on.
-		$this->assertSupplierQualificationPolicy(administrationId: $administrationId, supplierId: $supplierId);
+	/**
+	 * The new PurchaseOrder record.
+	 *
+	 * @param array<string,mixed> $order The order with its number and approval chain.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function purchaseOrderRecord(array $order): array {
+		$payload = $order['payload'];
 
-		// Procurement-governance gate (REQ-PG-004): when the PO is a call-off
-		// against a framework agreement, block it if it exceeds the remaining
-		// ceiling. The resolved agreement is drawn down after the PO persists.
-		$frameworkAgreement = null;
-		$frameworkAgreementId = trim((string)($payload['frameworkAgreementId'] ?? ''));
-		if ($frameworkAgreementId !== '') {
-			$frameworkAgreement = $this->frameworkAgreementDrawdownGuard->assertWithinCeiling(
-				administrationId: $administrationId,
-				frameworkAgreementId: $frameworkAgreementId,
-				addCents: $totalCent
-			);
-		}
-
-		$approvalChain = $this->determineApprovalChain(amount: $totalAmount);
-		$poNumber = $this->generatePoNumber(administrationId: $administrationId);
-
-		$purchaseOrder = [
-			'poNumber' => $poNumber,
-			'administrationId' => $administrationId,
-			'supplierId' => $supplierId,
-			'requesterId' => $requesterId,
-			'costCenter' => $costCenter,
-			'projectCode' => $projectCode,
-			'requisitionId' => $requisitionId,
-			'frameworkAgreementId' => $frameworkAgreementId,
-			'lines' => $lines,
-			'totalAmount' => $totalAmount,
+		return [
+			'poNumber' => $order['poNumber'],
+			'administrationId' => $order['administrationId'],
+			'supplierId' => $order['supplierId'],
+			'requesterId' => $order['requesterId'],
+			'costCenter' => $order['costCenter'],
+			'projectCode' => trim((string)($payload['projectCode'] ?? '')),
+			'requisitionId' => trim((string)($payload['requisitionId'] ?? '')),
+			'frameworkAgreementId' => trim((string)($payload['frameworkAgreementId'] ?? '')),
+			'lines' => $order['lines'],
+			'totalAmount' => $this->fromCents(cents: $order['totalCents']),
 			'currency' => (string)($payload['currency'] ?? 'EUR'),
-			'approvalChain' => $this->initialiseApprovalChainEntries(chain: $approvalChain),
+			'approvalChain' => $this->initialiseApprovalChainEntries(chain: $order['approvalChain']),
 			// The schema's lifecycle field (#1753). A PO waiting for its approval
 			// chain stays in `draft` (the lifecycle's initial state); the chain
 			// entries carry the pending decisions.
@@ -337,26 +443,7 @@ class PurchaseOrderService {
 			'createdAt' => $this->nowIso(),
 			'notes' => trim((string)($payload['notes'] ?? '')),
 		];
-
-		$persisted = $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
-		$poId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $poNumber));
-
-		$this->assignApprovalTasks(
-			administrationId: $administrationId,
-			purchaseOrderId: $poId,
-			poNumber: $poNumber,
-			chain: $approvalChain
-		);
-
-		// Record the framework-agreement call-off drawdown now the PO is persisted
-		// (REQ-PG-004). The guard already verified this fits the remaining ceiling.
-		if ($frameworkAgreement !== null) {
-			$frameworkAgreement['drawnAmount'] = ((int)($frameworkAgreement['drawnAmount'] ?? 0) + $totalCent);
-			$this->saveObject(schema: 'FrameworkAgreement', object: $frameworkAgreement);
-		}
-
-		return $persisted;
-	}//end createPurchaseOrder()
+	}//end purchaseOrderRecord()
 
 	/**
 	 * Determine the ordered list of required approvers for a PO total.
@@ -411,38 +498,10 @@ class PurchaseOrderService {
 	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
 	 *                           is incomplete.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
-	 *  is a pure check on one chain entry, shared with the approval service so the
-	 *  send check and the signing read one shape (#1716).
-	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array {
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Purchase order not found');
-		}
-
-		$po = $this->findOne(
-			schema: 'PurchaseOrder',
-			filters: [
-				'id' => $purchaseOrderId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($po === null) {
-			throw new RuntimeException('Purchase order not found');
-		}
-
-		$chain = (array)($po['approvalChain'] ?? []);
-		if ($chain === []) {
-			throw new RuntimeException('Purchase order has no approval chain');
-		}
-
-		foreach ($chain as $entry) {
-			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
-				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
-			}
-		}
+		$po = $this->loadPurchaseOrderForTransmission(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId);
 
 		$po['statusCode'] = 'sent';
 		$po['sentAt'] = $this->nowIso();
@@ -602,10 +661,6 @@ class PurchaseOrderService {
 	 * @return array<string,mixed> The persisted PurchaseOrder record.
 	 *
 	 * @throws \RuntimeException When the PO is missing or the chain is incomplete.
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
-	 *  is a pure check on one chain entry, shared with the approval service so the
-	 *  send check and the signing read one shape (#1716).
 	 */
 	private function loadPurchaseOrderForTransmission(
 		string $administrationId,
@@ -626,7 +681,26 @@ class PurchaseOrderService {
 			throw new RuntimeException('Purchase order not found');
 		}
 
-		$chain = (array)($po['approvalChain'] ?? []);
+		$this->assertFullyApproved(purchaseOrder: $po);
+		return $po;
+	}//end loadPurchaseOrderForTransmission()
+
+	/**
+	 * Refuse an order without an approval chain, or with an entry that is not
+	 * approved and stamped.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The persisted PurchaseOrder record.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the chain is empty or incomplete.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
+	 */
+	private function assertFullyApproved(array $purchaseOrder): void {
+		$chain = (array)($purchaseOrder['approvalChain'] ?? []);
 		if ($chain === []) {
 			throw new RuntimeException('Purchase order has no approval chain');
 		}
@@ -636,9 +710,7 @@ class PurchaseOrderService {
 				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
 			}
 		}
-
-		return $po;
-	}//end loadPurchaseOrderForTransmission()
+	}//end assertFullyApproved()
 
 	/**
 	 * Resolve the buyer's Peppol participant id from the administration record.
@@ -874,57 +946,77 @@ class PurchaseOrderService {
 		}
 
 		$lines = [];
-		$lineNumber = 0;
-		foreach ($rawLines as $raw) {
+		foreach (array_values($rawLines) as $index => $raw) {
 			if (is_array($raw) === false) {
 				throw new RuntimeException('Line item must be an object');
 			}
 
-			$lineNumber++;
-			$productCode = trim((string)($raw['productCode'] ?? ''));
-			$glAccount = trim((string)($raw['glAccount'] ?? ''));
-			$quantity = (float)($raw['quantity'] ?? 0);
-			$unitPrice = (float)($raw['unitPrice'] ?? 0);
-			$vatRate = (float)($raw['vatRate'] ?? 0);
-
-			if ($productCode === '') {
-				throw new RuntimeException('Line ' . $lineNumber . ' is missing productCode');
-			}
-
-			if ($glAccount === '') {
-				throw new RuntimeException('Line ' . $lineNumber . ' is missing glAccount');
-			}
-
-			if ($quantity <= 0.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' must have positive quantity');
-			}
-
-			if ($unitPrice < 0.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' must have non-negative unitPrice');
-			}
-
-			if ($vatRate < 0.0 || $vatRate > 1.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' vatRate must be a fraction between 0 and 1');
-			}
-
-			$unitCents = $this->toCents(amount: $unitPrice);
-			$lineCents = (int)round(($unitCents * $quantity), 0, PHP_ROUND_HALF_UP);
-			$vatCents = (int)round(($lineCents * $vatRate), 0, PHP_ROUND_HALF_UP);
-
-			$lines[] = [
-				'lineNumber' => ((int)($raw['lineNumber'] ?? $lineNumber)),
-				'productCode' => $productCode,
-				'quantity' => $quantity,
-				'unitPrice' => $this->fromCents(cents: $unitCents),
-				'lineTotal' => $this->fromCents(cents: $lineCents),
-				'vatRate' => $vatRate,
-				'vatAmount' => $this->fromCents(cents: $vatCents),
-				'glAccount' => $glAccount,
-			];
-		}//end foreach
+			$lines[] = $this->pricedLine(line: $this->checkedLine(raw: $raw, lineNumber: ($index + 1)));
+		}
 
 		return $lines;
 	}//end normaliseLines()
+
+	/**
+	 * One raw line's fields, refused when the product code or GL account is
+	 * missing, the quantity is not positive, the price is negative or the VAT
+	 * rate is not a fraction.
+	 *
+	 * @param array<string,mixed> $raw        The raw line.
+	 * @param int                 $lineNumber The line's position.
+	 *
+	 * @return array{lineNumber:int,productCode:string,glAccount:string,quantity:float,unitPrice:float,vatRate:float}
+	 *
+	 * @throws \RuntimeException When the line is malformed.
+	 */
+	private function checkedLine(array $raw, int $lineNumber): array {
+		$line = [
+			'lineNumber' => ((int)($raw['lineNumber'] ?? $lineNumber)),
+			'productCode' => trim((string)($raw['productCode'] ?? '')),
+			'glAccount' => trim((string)($raw['glAccount'] ?? '')),
+			'quantity' => (float)($raw['quantity'] ?? 0),
+			'unitPrice' => (float)($raw['unitPrice'] ?? 0),
+			'vatRate' => (float)($raw['vatRate'] ?? 0),
+		];
+
+		$refusal = match (true) {
+			$line['productCode'] === '' => 'is missing productCode',
+			$line['glAccount'] === '' => 'is missing glAccount',
+			$line['quantity'] <= 0.0 => 'must have positive quantity',
+			$line['unitPrice'] < 0.0 => 'must have non-negative unitPrice',
+			($line['vatRate'] < 0.0 || $line['vatRate'] > 1.0) => 'vatRate must be a fraction between 0 and 1',
+			default => '',
+		};
+		if ($refusal !== '') {
+			throw new RuntimeException('Line ' . $lineNumber . ' ' . $refusal);
+		}
+
+		return $line;
+	}//end checkedLine()
+
+	/**
+	 * A checked line with its unit price, total and VAT rounded in cents.
+	 *
+	 * @param array{lineNumber:int,productCode:string,glAccount:string,quantity:float,unitPrice:float,vatRate:float} $line The checked line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function pricedLine(array $line): array {
+		$unitCents = $this->toCents(amount: $line['unitPrice']);
+		$lineCents = (int)round(($unitCents * $line['quantity']), 0, PHP_ROUND_HALF_UP);
+		$vatCents  = (int)round(($lineCents * $line['vatRate']), 0, PHP_ROUND_HALF_UP);
+
+		return [
+			'lineNumber' => $line['lineNumber'],
+			'productCode' => $line['productCode'],
+			'quantity' => $line['quantity'],
+			'unitPrice' => $this->fromCents(cents: $unitCents),
+			'lineTotal' => $this->fromCents(cents: $lineCents),
+			'vatRate' => $line['vatRate'],
+			'vatAmount' => $this->fromCents(cents: $vatCents),
+			'glAccount' => $line['glAccount'],
+		];
+	}//end pricedLine()
 
 	/**
 	 * Sum the lineTotal of every line as integer cents.

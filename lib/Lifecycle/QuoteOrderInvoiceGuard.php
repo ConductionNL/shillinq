@@ -442,42 +442,68 @@ class QuoteOrderInvoiceGuard {
 		$allowNegative = $this->allowNegativeStockOnDispatch(administrationId: $administrationId);
 
 		foreach ($lines as $line) {
-			if (is_array($line) === false) {
-				continue;
-			}
-
-			$sku = trim((string)($line['productReference'] ?? ''));
-			$quantity = (float)($line['quantityShipped'] ?? 0);
-			if ($sku === '' || $quantity <= 0) {
-				continue;
-			}
-
-			$stockRows = $this->findChildren(schema: 'InventoryStock', field: 'sku', parentId: $sku);
-			$stockRows = array_values(
-				array_filter(
-					$stockRows,
-					static fn (array $row): bool => ((string)($row['administrationId'] ?? '')) === $administrationId
-				)
-			);
-
-			if (count($stockRows) === 0) {
-				// Not stock-tracked (service line) — nothing to check.
-				continue;
-			}
-
-			$locationId = trim(
-				(string)($line['sourceLocationId'] ?? ($delivery['sourceLocationId'] ?? ''))
-			);
-
-			$available = $this->availableForLocation(rows: $stockRows, locationId: $locationId);
-
-			if ($available < $quantity && $allowNegative === false) {
+			if (is_array($line) === true
+				&& $this->lineShortOfStock(delivery: $delivery, line: $line) === true
+				&& $allowNegative === false
+			) {
 				return false;
 			}
-		}//end foreach
+		}
 
 		return true;
 	}//end deliveryStockAvailable()
+
+	/**
+	 * Whether a stock-tracked line ships more than is available at its location.
+	 *
+	 * A line without SKU or positive quantity, or one whose SKU has no
+	 * InventoryStock row in the delivery's administration (a service line),
+	 * is never short.
+	 *
+	 * @param array<string,mixed> $delivery The delivery.
+	 * @param array<string,mixed> $line The delivery line.
+	 *
+	 * @return bool True when the line is short of stock.
+	 */
+	private function lineShortOfStock(array $delivery, array $line): bool {
+		$sku = trim((string)($line['productReference'] ?? ''));
+		$quantity = (float)($line['quantityShipped'] ?? 0);
+		if ($sku === '' || $quantity <= 0) {
+			return false;
+		}
+
+		$stockRows = $this->stockRowsFor(sku: $sku, administrationId: trim((string)($delivery['administrationId'] ?? '')));
+		if (count($stockRows) === 0) {
+			// Not stock-tracked (service line) — nothing to check.
+			return false;
+		}
+
+		$locationId = trim(
+			(string)($line['sourceLocationId'] ?? ($delivery['sourceLocationId'] ?? ''))
+		);
+
+		return $this->availableForLocation(rows: $stockRows, locationId: $locationId) < $quantity;
+
+	}//end lineShortOfStock()
+
+	/**
+	 * The SKU's InventoryStock rows within the administration.
+	 *
+	 * @param string $sku The product reference.
+	 * @param string $administrationId The delivery's administration.
+	 *
+	 * @return array<int,array<string,mixed>> The stock rows.
+	 */
+	private function stockRowsFor(string $sku, string $administrationId): array {
+		$stockRows = $this->findChildren(schema: 'InventoryStock', field: 'sku', parentId: $sku);
+		return array_values(
+			array_filter(
+				$stockRows,
+				static fn (array $row): bool => ((string)($row['administrationId'] ?? '')) === $administrationId
+			)
+		);
+
+	}//end stockRowsFor()
 
 	/**
 	 * Resolve available quantity (quantity - reservedQuantity) for the given

@@ -38,6 +38,7 @@ use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\Notification\IManager as INotificationManager;
+use OCP\Notification\INotification;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -88,62 +89,103 @@ class ViesOutageRetryJob extends TimedJob {
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
 	protected function run($argument): void {
-		$administrationId = '';
-		if (is_array($argument) === true) {
-			$administrationId = (string)($argument['administrationId'] ?? '');
-		}
-
+		$administrationId = self::administrationOf(argument: $argument);
 		if ($administrationId === '') {
 			return;
 		}
 
-		$pending = $this->filingService->pendingOutages(administrationId: $administrationId);
-		foreach ($pending as $outage) {
-			$vatId = $outage['vatId'];
-			if ($vatId === '') {
-				continue;
-			}
-
-			if ($outage['escalate'] === true) {
-				$this->escalate(administrationId: $administrationId, vatId: $vatId, ageDays: $outage['ageDays']);
-				continue;
-			}
-
-			$result = $this->viesService->validate(administrationId: $administrationId, vatId: $vatId);
-			if ($result['outage'] === false) {
-				$this->logger->info(
-					'ViesOutageRetryJob: VIES returned a definitive answer for a pending VAT-ID',
-					['administrationId' => $administrationId, 'valid' => $result['valid']]
-				);
-			}
-		}//end foreach
-
+		foreach ($this->filingService->pendingOutages(administrationId: $administrationId) as $outage) {
+			$this->retry(administrationId: $administrationId, outage: $outage);
+		}
 	}//end run()
+
+	/**
+	 * The administration the job was enqueued for, '' when the argument names none.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return string
+	 */
+	private static function administrationOf(mixed $argument): string {
+		if (is_array($argument) === false) {
+			return '';
+		}
+
+		return (string)($argument['administrationId'] ?? '');
+	}//end administrationOf()
+
+	/**
+	 * Handle one pending outage: skip a blank VAT-ID, escalate an old outage, or re-query VIES and log a definitive answer.
+	 *
+	 * @param string              $administrationId Administration scope.
+	 * @param array<string,mixed> $outage           The pending outage: vatId, escalate, ageDays.
+	 *
+	 * @return void
+	 */
+	private function retry(string $administrationId, array $outage): void {
+		if ($outage['vatId'] === '') {
+			return;
+		}
+
+		if ($outage['escalate'] === true) {
+			$this->escalate(administrationId: $administrationId, outage: $outage);
+			return;
+		}
+
+		$this->revalidate(administrationId: $administrationId, vatId: $outage['vatId']);
+	}//end retry()
+
+	/**
+	 * Re-query VIES for one VAT-ID and log a definitive answer.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $vatId            The pending VAT-ID.
+	 *
+	 * @return void
+	 */
+	private function revalidate(string $administrationId, string $vatId): void {
+		$result = $this->viesService->validate(administrationId: $administrationId, vatId: $vatId);
+		if ($result['outage'] === false) {
+			$this->logger->info(
+				'ViesOutageRetryJob: VIES returned a definitive answer for a pending VAT-ID',
+				['administrationId' => $administrationId, 'valid' => $result['valid']]
+			);
+		}
+	}//end revalidate()
 
 	/**
 	 * Raise a bookkeeper escalation for an outage that persisted beyond 14 days.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $vatId The unresolved VAT-ID.
-	 * @param int $ageDays Days the outage has persisted.
+	 * @param string              $administrationId Administration scope.
+	 * @param array<string,mixed> $outage           The outage: vatId, ageDays.
 	 *
 	 * @return void
 	 */
-	private function escalate(string $administrationId, string $vatId, int $ageDays): void {
+	private function escalate(string $administrationId, array $outage): void {
 		try {
-			$notification = $this->notifications->createNotification();
-			$notification->setApp('shillinq')
-				->setUser($administrationId)
-				->setDateTime(new DateTime())
-				->setObject('icp_vies_outage', $vatId)
-				->setSubject('icp.vies.outage_escalated', ['vatId' => $vatId, 'ageDays' => $ageDays]);
-			$this->notifications->notify($notification);
+			$this->notifications->notify($this->escalation(administrationId: $administrationId, outage: $outage));
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'ViesOutageRetryJob: failed to deliver outage escalation',
 				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
 		}
-
 	}//end escalate()
+
+	/**
+	 * The escalation notification for one outage.
+	 *
+	 * @param string              $administrationId Administration scope.
+	 * @param array<string,mixed> $outage           The outage: vatId, ageDays.
+	 *
+	 * @return INotification
+	 */
+	private function escalation(string $administrationId, array $outage): INotification {
+		$notification = $this->notifications->createNotification();
+		return $notification->setApp('shillinq')
+			->setUser($administrationId)
+			->setDateTime(new DateTime())
+			->setObject('icp_vies_outage', $outage['vatId'])
+			->setSubject('icp.vies.outage_escalated', ['vatId' => $outage['vatId'], 'ageDays' => $outage['ageDays']]);
+	}//end escalation()
 }//end class

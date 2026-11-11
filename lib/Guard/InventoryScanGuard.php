@@ -112,46 +112,47 @@ class InventoryScanGuard {
 	 */
 	public function validateOperation(array $operation): bool {
 		try {
+			// Outcome already decided by the controller; let the record persist
+			// for the audit trail without re-running ledger checks.
 			$state = (string)($operation['state'] ?? 'pending');
 			if ($state === 'rejected' || $state === 'duplicate') {
-				// Outcome already decided by the controller; let the record persist
-				// for the audit trail without re-running ledger checks.
 				return $this->hasIdentity(operation: $operation);
 			}
 
-			if ($this->hasIdentity(operation: $operation) === false) {
-				return false;
-			}
-
-			if ($this->hasValidType(operation: $operation) === false) {
-				return false;
-			}
-
-			if ($this->hasRequiredFields(operation: $operation) === false) {
-				return false;
-			}
-
-			if ($this->hasNonNegativeQuantity(operation: $operation) === false) {
-				return false;
-			}
-
-			if ($this->hasSufficientStock(operation: $operation) === false) {
-				return false;
-			}
-
-			return $this->hasConsistentVariance(operation: $operation);
+			return $this->passesShapeChecks(operation: $operation) && $this->passesLedgerChecks(operation: $operation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InventoryScanGuard: validateOperation failed — denying save (fail-closed)',
-				[
-					'transactionId' => ($operation['transactionId'] ?? 'unknown'),
-					'exception' => $e->getMessage(),
-				]
+				['transactionId' => ($operation['transactionId'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end validateOperation()
+
+	/**
+	 * The shape checks, in order: identity, type, required fields, quantity.
+	 *
+	 * @param array<string, mixed> $operation Operation array.
+	 *
+	 * @return bool True when all pass; stops at the first that fails.
+	 */
+	private function passesShapeChecks(array $operation): bool {
+		return $this->hasIdentity(operation: $operation)
+			&& $this->hasValidType(operation: $operation)
+			&& $this->hasRequiredFields(operation: $operation)
+			&& $this->hasNonNegativeQuantity(operation: $operation);
+	}//end passesShapeChecks()
+
+	/**
+	 * The ledger checks, in order: sufficient stock, consistent variance.
+	 *
+	 * @param array<string, mixed> $operation Operation array.
+	 *
+	 * @return bool True when both pass.
+	 */
+	private function passesLedgerChecks(array $operation): bool {
+		return $this->hasSufficientStock(operation: $operation) && $this->hasConsistentVariance(operation: $operation);
+	}//end passesLedgerChecks()
 
 	/**
 	 * Verify the operation carries a non-empty transactionId — the idempotency key.
@@ -201,22 +202,31 @@ class InventoryScanGuard {
 		$type = (string)($operation['type'] ?? '');
 		$sku = trim((string)($operation['sku'] ?? ''));
 		$location = trim((string)($operation['location'] ?? ''));
-
 		if ($sku === '' || $location === '') {
 			$this->logger->info('InventoryScanGuard: missing sku/location — denying save', ['type' => $type]);
 			return false;
 		}
 
-		if ($type === 'transfer') {
-			$toLocation = trim((string)($operation['toLocation'] ?? ''));
-			if ($toLocation === '' || $toLocation === $location) {
-				$this->logger->info('InventoryScanGuard: transfer needs a distinct toLocation — denying save');
-				return false;
-			}
+		return $type !== 'transfer' || $this->hasDistinctDestination(operation: $operation, location: $location);
+	}//end hasRequiredFields()
+
+	/**
+	 * A transfer needs a toLocation other than its source; a refusal is logged.
+	 *
+	 * @param array<string, mixed> $operation Operation array.
+	 * @param string               $location  The trimmed source location.
+	 *
+	 * @return bool
+	 */
+	private function hasDistinctDestination(array $operation, string $location): bool {
+		$toLocation = trim((string)($operation['toLocation'] ?? ''));
+		if ($toLocation === '' || $toLocation === $location) {
+			$this->logger->info('InventoryScanGuard: transfer needs a distinct toLocation — denying save');
+			return false;
 		}
 
 		return true;
-	}//end hasRequiredFields()
+	}//end hasDistinctDestination()
 
 	/**
 	 * Verify the operation quantity is present and non-negative.
@@ -259,14 +269,7 @@ class InventoryScanGuard {
 			return true;
 		}
 
-		$stock = $this->findOne(
-			schema: 'InventoryStock',
-			filters: [
-				'sku' => (string)($operation['sku'] ?? ''),
-				'location' => (string)($operation['location'] ?? ''),
-			]
-		);
-
+		$stock = $this->sourceStock(operation: $operation);
 		if ($stock === null || isset($stock['quantity']) === false) {
 			$this->logger->warning(
 				'InventoryScanGuard: stock record unavailable for outbound op — skipping availability check (T1 state)',
@@ -275,7 +278,32 @@ class InventoryScanGuard {
 			return true;
 		}
 
-		$available = (float)$stock['quantity'];
+		return $this->withinStock(available: (float)$stock['quantity'], operation: $operation);
+	}//end hasSufficientStock()
+
+	/**
+	 * The InventoryStock record of the operation's SKU at its source location.
+	 *
+	 * @param array<string, mixed> $operation Operation array.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function sourceStock(array $operation): ?array {
+		return $this->findOne(
+			schema: 'InventoryStock',
+			filters: ['sku' => (string)($operation['sku'] ?? ''), 'location' => (string)($operation['location'] ?? '')]
+		);
+	}//end sourceStock()
+
+	/**
+	 * Whether the requested quantity fits in the available stock; a refusal is logged.
+	 *
+	 * @param float                $available The on-hand quantity at the source.
+	 * @param array<string, mixed> $operation Operation array.
+	 *
+	 * @return bool
+	 */
+	private function withinStock(float $available, array $operation): bool {
 		$requested = (float)($operation['quantity'] ?? 0);
 		if ($requested > $available) {
 			$this->logger->info(
@@ -286,7 +314,7 @@ class InventoryScanGuard {
 		}
 
 		return true;
-	}//end hasSufficientStock()
+	}//end withinStock()
 
 	/**
 	 * For count operations, verify the recorded variance equals
@@ -320,12 +348,7 @@ class InventoryScanGuard {
 	 */
 	private function findOne(string $schema, array $filters): ?array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: $schema)
-				->findAll(['filters' => $filters, 'limit' => 1]);
-
+			$result = $this->lookup(schema: $schema, filters: $filters);
 			if (is_array($result) === false || count($result) === 0) {
 				return null;
 			}
@@ -337,7 +360,23 @@ class InventoryScanGuard {
 				['schema' => $schema, 'exception' => $e->getMessage()]
 			);
 			return null;
-		}//end try
-
+		}
 	}//end findOne()
+
+	/**
+	 * Run one limited findAll on the configured register.
+	 *
+	 * @param string               $schema  Schema name.
+	 * @param array<string, mixed> $filters Exact-match filters.
+	 *
+	 * @return mixed What findAll answers.
+	 */
+	private function lookup(string $schema, array $filters): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+		return $objectService
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: $schema)
+			->findAll(['filters' => $filters, 'limit' => 1]);
+	}//end lookup()
 }//end class

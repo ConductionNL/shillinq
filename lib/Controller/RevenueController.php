@@ -101,64 +101,135 @@ class RevenueController extends Controller {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 		$periodEnd = trim((string)$this->request->getParam('period_end', ''));
 
+		$refusal = $this->inputRefusal(administrationId: $administrationId, periodEnd: $periodEnd)
+			?? $this->accessRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->computed(administrationId: $administrationId, periodEnd: $periodEnd);
+	}//end cutoff()
+
+	/**
+	 * The 400 for a missing administration or period end, then for a malformed one.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 * @param string $periodEnd        The trimmed period end.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function inputRefusal(string $administrationId, string $periodEnd): ?JSONResponse {
 		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administration_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'administration_id is required');
 		}
 
 		if ($periodEnd === '') {
-			return new JSONResponse(
-				['error' => 'period_end is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'period_end is required');
 		}
 
-		// Reject obviously malformed identifiers before touching the data layer
-		// (ADR-005 input validation) — administration ids are short slugs.
+		return $this->shapeRefusal(administrationId: $administrationId, periodEnd: $periodEnd);
+	}//end inputRefusal()
+
+	/**
+	 * The 400 for a malformed administration id or a non-ISO period end.
+	 *
+	 * Reject obviously malformed identifiers before touching the data layer
+	 * (ADR-005 input validation) — administration ids are short slugs; the
+	 * period_end must be an ISO date (YYYY-MM-DD).
+	 *
+	 * @param string $administrationId The administration id.
+	 * @param string $periodEnd        The period end.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function shapeRefusal(string $administrationId, string $periodEnd): ?JSONResponse {
 		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administration_id must be a valid administration identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'administration_id must be a valid administration identifier');
 		}
 
-		// The period_end must be an ISO date (YYYY-MM-DD).
 		if (preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $periodEnd) !== 1) {
-			return new JSONResponse(
-				['error' => 'period_end must be an ISO date (YYYY-MM-DD)'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'period_end must be an ISO date (YYYY-MM-DD)');
 		}
 
-		// ⚠️ The checks above are INPUT VALIDATION. The docblock's "ADR-005
-		// IDOR-safety" needs a membership check, which is this (REQ-MA-001).
+		return null;
+	}//end shapeRefusal()
+
+	/**
+	 * ⚠️ The checks before are INPUT VALIDATION. The docblock's "ADR-005
+	 * IDOR-safety" needs a membership check, which is this (REQ-MA-001):
+	 * a masked 404.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
 		if ($this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return null;
+	}//end accessRefusal()
+
+	/**
+	 * A 400 with an error.
+	 *
+	 * @param string $error The error.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $error): JSONResponse {
+		return new JSONResponse(
+			['error' => $error],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end badRequest()
+
+	/**
+	 * Compute the revenue cut-off; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param string $periodEnd        The period end.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
+	 */
+	private function computed(string $administrationId, string $periodEnd): JSONResponse {
 		try {
 			$result = $this->cutoffService->compute(
 				administrationId: $administrationId,
 				periodEnd: $periodEnd
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RevenueController: failed to compute revenue cut-off',
-				[
-					'administrationId' => $administrationId,
-					'periodEnd' => $periodEnd,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute revenue cut-off'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
+			return $this->computeFailed(
+				context: ['administrationId' => $administrationId, 'periodEnd' => $periodEnd],
+				e: $e
 			);
 		}//end try
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end cutoff()
+	}//end computed()
+
+	/**
+	 * Log a failed computation and answer 500 without a stack trace.
+	 *
+	 * @param array<string, string> $context The administration and period end, as log context.
+	 * @param \Throwable            $e       The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function computeFailed(array $context, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'RevenueController: failed to compute revenue cut-off',
+			$context + ['exception' => $e->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute revenue cut-off'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end computeFailed()
 }//end class

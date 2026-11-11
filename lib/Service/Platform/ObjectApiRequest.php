@@ -65,31 +65,12 @@ class ObjectApiRequest {
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function isPersonSaving(array $schemaNames, string $uuid): bool {
-		try {
-			$method = strtoupper((string)$this->request->getMethod());
-			$uri = (string)$this->request->getRequestUri();
-		} catch (Throwable $e) {
+		$parts = $this->savePathParts();
+		if ($parts === null) {
 			return false;
 		}
 
-		if (in_array($method, ['POST', 'PUT', 'PATCH'], true) === false) {
-			return false;
-		}
-
-		$path = (string)strtok($uri, '?');
-		if (preg_match(self::PATH, $path, $parts) !== 1) {
-			return false;
-		}
-
-		$schema = rawurldecode($parts[2]);
-		$named = false;
-		foreach ($schemaNames as $name) {
-			if ($name !== '' && strcasecmp($name, $schema) === 0) {
-				$named = true;
-			}
-		}
-
-		if ($named === false) {
+		if ($this->namesSchema(schemaNames: $schemaNames, schema: rawurldecode($parts[2])) === false) {
 			return false;
 		}
 
@@ -98,4 +79,48 @@ class ObjectApiRequest {
 		return $id === '' || $id === $uuid;
 
 	}//end isPersonSaving()
+
+	/**
+	 * The register, schema and optional id of a create or update on the object API, or null for any other request.
+	 *
+	 * @return array<int, string>|null The path's matches.
+	 */
+	private function savePathParts(): ?array {
+		try {
+			$method = strtoupper((string)$this->request->getMethod());
+			$uri = (string)$this->request->getRequestUri();
+		} catch (Throwable $e) {
+			return null;
+		}
+
+		if (in_array($method, ['POST', 'PUT', 'PATCH'], true) === false) {
+			return null;
+		}
+
+		if (preg_match(self::PATH, (string)strtok($uri, '?'), $parts) !== 1) {
+			return null;
+		}
+
+		return $parts;
+
+	}//end savePathParts()
+
+	/**
+	 * Whether one of the schema's non-empty names is the path's schema, ignoring case.
+	 *
+	 * @param list<string> $schemaNames The schema's slug and id.
+	 * @param string       $schema      The schema in the path.
+	 *
+	 * @return bool
+	 */
+	private function namesSchema(array $schemaNames, string $schema): bool {
+		foreach ($schemaNames as $name) {
+			if ($name !== '' && strcasecmp($name, $schema) === 0) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end namesSchema()
 }//end class

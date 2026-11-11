@@ -272,4 +272,43 @@ class CommitmentMaterialisationListenerTest extends TestCase {
 		self::assertTrue(true);
 
 	}//end testGenericEventIgnored()
+
+	/**
+	 * A contract created directly as active (status fallback) forwards; a
+	 * namespaced slug still matches; a contract reaching another state and a
+	 * purchase order that is merely active do not.
+	 *
+	 * @return void
+	 */
+	public function testContractTriggersAndNonTriggers(): void {
+		$this->resolvesTo(' shillinq/Contract ');
+		$payload = ['contractNumber' => 'C-2026-008', 'status' => 'active'];
+		$this->materialiser->expects(self::once())->method('materialiseFromContract')->with($payload);
+		$this->materialiser->expects(self::never())->method('materialiseFromPurchaseOrder');
+
+		$this->listener->handle($this->createConfiguredMock(ObjectCreatedEvent::class, ['getObject' => $this->entity('2012', $payload)]));
+		$this->listener->handle(
+			$this->createConfiguredMock(ObjectTransitionedEvent::class, ['getObject' => $this->entity('2012', $payload), 'getTo' => 'approved'])
+		);
+		$this->listener->handle(
+			$this->createConfiguredMock(ObjectCreatedEvent::class, ['getObject' => $this->entity('2012', ['statusCode' => 'draft', 'status' => 'active'])])
+		);
+
+	}//end testContractTriggersAndNonTriggers()
+
+	/**
+	 * A purchase order that becomes active, not approved, is not materialised.
+	 *
+	 * @return void
+	 */
+	public function testPurchaseOrderNeedsApproved(): void {
+		$this->resolvesTo('PurchaseOrder');
+		$this->materialiser->expects(self::never())->method('materialiseFromPurchaseOrder');
+		$this->materialiser->expects(self::never())->method('materialiseFromContract');
+
+		$this->listener->handle(
+			$this->createConfiguredMock(ObjectTransitionedEvent::class, ['getObject' => $this->entity('2011', ['poNumber' => 'PO-1']), 'getTo' => 'active'])
+		);
+
+	}//end testPurchaseOrderNeedsApproved()
 }//end class

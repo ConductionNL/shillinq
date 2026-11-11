@@ -389,31 +389,60 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 			$writer->writeElement('companyIdent', $kvk);
 		}
 
-		$vat = (string)($row['vatNumber'] ?? ($row['vatID'] ?? ($row['vatId'] ?? '')));
-		if ($vat !== '') {
-			$writer->startElement('taxRegistration');
-			$writer->writeElement('taxRegIdent', $vat);
-			$writer->endElement();
-		}
-
-		$email = (string)($row['email'] ?? '');
-		$phone = (string)($row['phone'] ?? ($row['telephone'] ?? ''));
-		if ($email !== '' || $phone !== '') {
-			$writer->startElement('contact');
-			if ($email !== '') {
-				$writer->writeElement('eMail', $email);
-			}
-
-			if ($phone !== '') {
-				$writer->writeElement('telephone', $phone);
-			}
-
-			$writer->endElement();
-		}
+		$this->writeTaxRegistration(writer: $writer, row: $row);
+		$this->writeContact(writer: $writer, row: $row);
 
 		$writer->endElement();
 		// End customerSupplier.
 	}//end writeCustomerSupplier()
+
+	/**
+	 * Write the taxRegistration element when the row carries a VAT number.
+	 *
+	 * @param XMLWriter $writer The writer.
+	 * @param array<string,mixed> $row The customer or supplier row.
+	 *
+	 * @return void
+	 */
+	private function writeTaxRegistration(XMLWriter $writer, array $row): void {
+		$vat = (string)($row['vatNumber'] ?? ($row['vatID'] ?? ($row['vatId'] ?? '')));
+		if ($vat === '') {
+			return;
+		}
+
+		$writer->startElement('taxRegistration');
+		$writer->writeElement('taxRegIdent', $vat);
+		$writer->endElement();
+
+	}//end writeTaxRegistration()
+
+	/**
+	 * Write the contact element when the row carries an e-mail address or phone number.
+	 *
+	 * @param XMLWriter $writer The writer.
+	 * @param array<string,mixed> $row The customer or supplier row.
+	 *
+	 * @return void
+	 */
+	private function writeContact(XMLWriter $writer, array $row): void {
+		$email = (string)($row['email'] ?? '');
+		$phone = (string)($row['phone'] ?? ($row['telephone'] ?? ''));
+		if ($email === '' && $phone === '') {
+			return;
+		}
+
+		$writer->startElement('contact');
+		if ($email !== '') {
+			$writer->writeElement('eMail', $email);
+		}
+
+		if ($phone !== '') {
+			$writer->writeElement('telephone', $phone);
+		}
+
+		$writer->endElement();
+
+	}//end writeContact()
 
 	/**
 	 * Keep only rows belonging to the context administration.

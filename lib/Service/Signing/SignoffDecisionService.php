@@ -113,10 +113,31 @@ class SignoffDecisionService {
 			return $financeObject;
 		}
 
-		// Fail closed when decidesk is not installed — never auto-approve.
-		// Resolved across every namespace decidiq has shipped this event under.
-		// This guard THROWS, so a stale name here blocks sign-off outright
-		// rather than failing silently the way the listener side did.
+		$request = new SignoffRequest(subjectSchema: $subjectSchema, decisionType: $decisionType);
+		$event = $this->buildDecisionEvent(financeObject: $financeObject, request: $request);
+		$this->eventDispatcher->dispatchTyped($event);
+
+		$financeObject['decisionRef'] = $this->acceptedDecisionId(event: $event, request: $request);
+		$financeObject['decisionOutcome'] = 'pending';
+
+		$this->logDecisionRaised(decisionRef: $financeObject['decisionRef'], request: $request);
+
+		return $financeObject;
+	}//end requestSignoff()
+
+	/**
+	 * Resolve decidiq's decision-request event class, or fail closed.
+	 *
+	 * Fail closed when decidesk is not installed — never auto-approve.
+	 * Resolved across every namespace decidiq has shipped this event under.
+	 * This guard THROWS, so a stale name here blocks sign-off outright
+	 * rather than failing silently the way the listener side did.
+	 *
+	 * @return string The event class name.
+	 *
+	 * @throws RuntimeException When decidiq is not installed.
+	 */
+	private function requireDecisionEventClass(): string {
 		$eventClass = FleetAppId::resolveClass('decidiq', 'Event\\DecisionRequestedEvent');
 		if ($eventClass === null) {
 			$this->logger->warning(
@@ -125,51 +146,99 @@ class SignoffDecisionService {
 			throw new RuntimeException('decidiq is not installed; sign-off decision cannot be raised.');
 		}
 
-		$subjectId = (string)($financeObject['id'] ?? $financeObject['_id'] ?? '');
-		$subjectLabel = (string)($financeObject['name'] ?? $financeObject['title'] ?? $subjectId);
+		return $eventClass;
 
-		$event = new $eventClass(
+	}//end requireDecisionEventClass()
+
+	/**
+	 * Build decidiq's decision-request event for the finance object.
+	 *
+	 * @param array<string,mixed> $financeObject The finance object to decide on.
+	 * @param SignoffRequest      $request       The request; its subject id and label are filled in.
+	 *
+	 * @return object The DecisionRequestedEvent.
+	 *
+	 * @throws RuntimeException When decidiq is not installed (fail closed).
+	 */
+	private function buildDecisionEvent(array $financeObject, SignoffRequest $request): object {
+		$eventClass = $this->requireDecisionEventClass();
+
+		$request->subjectId = (string)($financeObject['id'] ?? $financeObject['_id'] ?? '');
+		$request->subjectLabel = (string)($financeObject['name'] ?? $financeObject['title'] ?? $request->subjectId);
+
+		return new $eventClass(
 			sourceApp: 'shillinq',
 			subjectRegister: $this->settingsService->getRegisterSlug(),
-			subjectSchema: $subjectSchema,
-			subjectId: $subjectId,
-			subjectLabel: $subjectLabel,
-			decisionType: $decisionType,
+			subjectSchema: $request->subjectSchema,
+			subjectId: $request->subjectId,
+			subjectLabel: $request->subjectLabel,
+			decisionType: $request->decisionType,
 			actorId: '',
-			payload: [
-				'title' => $subjectLabel,
-				'text' => 'Governance sign-off requested by shillinq for ' . $subjectSchema . ' ' . $subjectId . '.',
-				'decisionDate' => gmdate('Y-m-d\TH:i:s\Z'),
-			],
-			externalReference: $subjectId,
+			payload: $this->decisionPayload(request: $request),
+			externalReference: $request->subjectId,
 			correlationId: '',
 		);
 
-		$this->eventDispatcher->dispatchTyped($event);
+	}//end buildDecisionEvent()
 
-		// Read back the synchronous result the decidesk listener wrote.
+	/**
+	 * The governance payload of the decision request, dated now (UTC).
+	 *
+	 * @param SignoffRequest $request The request, with its subject id and label.
+	 *
+	 * @return array<string,string>
+	 */
+	private function decisionPayload(SignoffRequest $request): array {
+		return [
+			'title' => $request->subjectLabel,
+			'text' => 'Governance sign-off requested by shillinq for ' . $request->subjectSchema . ' ' . $request->subjectId . '.',
+			'decisionDate' => gmdate('Y-m-d\TH:i:s\Z'),
+		];
+
+	}//end decisionPayload()
+
+	/**
+	 * Read back the decision id the decidesk listener wrote, or fail closed.
+	 *
+	 * @param object         $event   The dispatched decision-request event.
+	 * @param SignoffRequest $request The request, for the warning context.
+	 *
+	 * @return string The decision id.
+	 *
+	 * @throws RuntimeException When the event was not handled or carries no id.
+	 */
+	private function acceptedDecisionId(object $event, SignoffRequest $request): string {
 		$decisionId = $event->getDecisionId();
 		if ($event->isHandled() === false || $decisionId === null || $decisionId === '') {
 			$this->logger->warning(
 				'SignoffDecisionService: decidesk did not handle the decision request (fail closed)',
-				['subjectSchema' => $subjectSchema, 'subjectId' => $subjectId]
+				['subjectSchema' => $request->subjectSchema, 'subjectId' => $request->subjectId]
 			);
 			throw new RuntimeException('decidesk did not handle the sign-off decision request.');
 		}
 
-		$financeObject['decisionRef'] = $decisionId;
-		$financeObject['decisionOutcome'] = 'pending';
+		return $decisionId;
 
+	}//end acceptedDecisionId()
+
+	/**
+	 * Log the raised decision.
+	 *
+	 * @param string         $decisionRef The id decidesk returned.
+	 * @param SignoffRequest $request     The request.
+	 *
+	 * @return void
+	 */
+	private function logDecisionRaised(string $decisionRef, SignoffRequest $request): void {
 		$this->logger->info(
 			'SignoffDecisionService: Decision raised via decidesk event',
 			[
-				'decisionRef' => $decisionId,
-				'decisionType' => $decisionType,
+				'decisionRef' => $decisionRef,
+				'decisionType' => $request->decisionType,
 			]
 		);
 
-		return $financeObject;
-	}//end requestSignoff()
+	}//end logDecisionRaised()
 
 	/**
 	 * Consume a decidesk approved/rejected decision outcome (REQ-SIGN-005).
@@ -204,50 +273,91 @@ class SignoffDecisionService {
 		?callable $consequenceCallback = null,
 		string $subjectSchema = '',
 	): array {
-		if (in_array($outcome, self::TERMINAL_OUTCOMES, true) === false) {
-			throw new InvalidArgumentException('Unknown decision outcome: ' . $outcome);
-		}
+		$conclusion = new DecisionConclusion(outcome: $outcome, decisionRef: $decisionRef);
+		$conclusion->consequence   = $consequenceCallback;
+		$conclusion->subjectSchema = $subjectSchema;
 
-		$currentOutcome = (string)($financeObject['decisionOutcome'] ?? '');
+		return $this->applyDecision(financeObject: $financeObject, conclusion: $conclusion);
+	}//end onDecisionCallback()
+
+	/**
+	 * Write the decision onto the finance object, unless it is already in that state.
+	 *
+	 * @param array<string,mixed> $financeObject The finance object to update.
+	 * @param DecisionConclusion  $conclusion    What decidesk concluded.
+	 *
+	 * @return array<string,mixed> Updated finance object.
+	 *
+	 * @throws InvalidArgumentException When the outcome is not a terminal outcome.
+	 */
+	private function applyDecision(array $financeObject, DecisionConclusion $conclusion): array {
+		$outcome = $conclusion->outcome;
+		$this->assertTerminalOutcome(outcome: $outcome);
 
 		// Idempotency guard.
-		if ($currentOutcome === $outcome) {
+		if ((string)($financeObject['decisionOutcome'] ?? '') === $outcome) {
 			$this->logger->info('SignoffDecisionService: idempotent callback — already ' . $outcome . ', no-op.');
 			return $financeObject;
 		}
 
-		$financeObject['decisionRef'] = $decisionRef;
+		$financeObject['decisionRef'] = $conclusion->decisionRef;
 		$financeObject['decisionOutcome'] = $outcome;
+		$this->fireDecisionConsequences(financeObject: $financeObject, conclusion: $conclusion);
 
-		if ($outcome === 'approved' && $consequenceCallback !== null) {
+		$this->logger->info(
+			'SignoffDecisionService: callback consumed',
+			['outcome' => $outcome, 'decisionRef' => $conclusion->decisionRef]
+		);
+
+		return $financeObject;
+
+	}//end applyDecision()
+
+	/**
+	 * Refuse an outcome that is not approved or rejected.
+	 *
+	 * @param string $outcome The reported outcome.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the outcome is unknown.
+	 */
+	private function assertTerminalOutcome(string $outcome): void {
+		if (in_array($outcome, self::TERMINAL_OUTCOMES, true) === false) {
+			throw new InvalidArgumentException('Unknown decision outcome: ' . $outcome);
+		}
+
+	}//end assertTerminalOutcome()
+
+	/**
+	 * Fire the accounting consequence on 'approved', then record the decision Activity.
+	 *
+	 * @param array<string,mixed> $financeObject The updated finance object.
+	 * @param DecisionConclusion  $conclusion    What decidesk concluded.
+	 *
+	 * @return void
+	 */
+	private function fireDecisionConsequences(array $financeObject, DecisionConclusion $conclusion): void {
+		if ($conclusion->outcome === 'approved' && $conclusion->consequence !== null) {
 			// Fire the accounting consequence exactly once (REQ-SIGN-006).
-			$consequenceCallback($financeObject);
+			($conclusion->consequence)($financeObject);
 		}
 
 		// REQ-RAP-006 row 5 (`decision_made`): "Decision status changed".
 		// Both terminal outcomes are reported (approved AND rejected) — the
 		// event carries the new status as a subject parameter, so suppressing
 		// the rejection would leave the audit feed showing only the decisions
-		// that went through. Placed after the idempotency guard above, so a
+		// that went through. Placed after the idempotency guard, so a
 		// repeated decidesk conclusion cannot publish a duplicate entry.
-		if ($subjectSchema !== '' && $this->activityEmitter !== null) {
+		if ($conclusion->subjectSchema !== '' && $this->activityEmitter !== null) {
 			$this->activityEmitter->emitDecisionMade(
-				objectType:  $subjectSchema,
+				objectType:  $conclusion->subjectSchema,
 				objectId:    (string)($financeObject['id'] ?? ''),
 				actorUid:    '',
-				newStatus:   $outcome,
-				summaryHint: sprintf('%s %s', $subjectSchema, (string)($financeObject['id'] ?? ''))
+				newStatus:   $conclusion->outcome,
+				summaryHint: sprintf('%s %s', $conclusion->subjectSchema, (string)($financeObject['id'] ?? ''))
 			);
 		}
 
-		$this->logger->info(
-			'SignoffDecisionService: callback consumed',
-			[
-				'outcome' => $outcome,
-				'decisionRef' => $decisionRef,
-			]
-		);
-
-		return $financeObject;
-	}//end onDecisionCallback()
+	}//end fireDecisionConsequences()
 }//end class

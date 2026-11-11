@@ -51,8 +51,8 @@ use Psr\Log\LoggerInterface;
  * AdministrationContextService::canAccess() (ADR-005, REQ-MA-001).
  *
  * ⚠️ Read-only is not the same as harmless: these three endpoints return
- * payslips, wage-tax remittance totals and the payroll journal. `scopeParam()`
- * below is a FORMAT check — it proves the administration id is a safe slug, not
+ * payslips, wage-tax remittance totals and the payroll journal. `PayrollScope`
+ * is a FORMAT check — it proves the administration id is a safe slug, not
  * that the caller may have it — and PayrollService uses the id purely as a
  * query term. This app declares no `authorization` block on its schemas, and
  * OpenRegister treats an absent block as open to every authenticated user (see
@@ -62,13 +62,6 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
 class PayrollController extends Controller {
-
-	/**
-	 * Identifier pattern shared by all scope parameters (short slugs only).
-	 *
-	 * @var string
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
 	/**
 	 * Constructor for the PayrollController.
@@ -106,56 +99,12 @@ class PayrollController extends Controller {
 	#[NoAdminRequired]
 	public function loonstrook(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		$administrationId = $this->scopeParam(name: 'administration_id');
-		$employeeId = $this->scopeParam(name: 'werknemer_id');
-		$periodId = $this->scopeParam(name: 'periode_id');
+		$scope = PayrollScope::forEmployeePeriod(request: $this->request);
 
-		$error = $this->firstBlank(
-			values: [
-				'administration_id' => $administrationId,
-				'werknemer_id' => $employeeId,
-				'periode_id' => $periodId,
-			]
-		);
-		if ($error !== null) {
-			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($refusal !== null) {
-			return $refusal;
-		}
-
-		try {
-			$slip = $this->payrollService->berekenLoonStrook(
-				administrationId: $administrationId,
-				employeeId: $employeeId,
-				periodId: $periodId
-			);
-		} catch (\RuntimeException $e) {
-			$this->logger->error(
-				'PayrollController: loonstrook not found',
-				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Payslip not found for the given employee and period'),
-					'error' => 'payroll-loonstrook-not-found',
-				],
-				Http::STATUS_NOT_FOUND,
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PayrollController: failed to compute loonstrook',
-				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Kon loonstrook niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
-
-		return new JSONResponse($slip, Http::STATUS_OK);
+		return $this->scopeRefusal(scope: $scope) ?? $this->computedSlip(scope: $scope);
 	}//end loonstrook()
 
 	/**
@@ -170,42 +119,12 @@ class PayrollController extends Controller {
 	#[NoAdminRequired]
 	public function lhAfdracht(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		$administrationId = $this->scopeParam(name: 'administration_id');
-		$periodId = $this->scopeParam(name: 'periode_id');
+		$scope = PayrollScope::forPeriod(request: $this->request);
 
-		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodId]);
-		if ($error !== null) {
-			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($refusal !== null) {
-			return $refusal;
-		}
-
-		$wkr = (float)$this->request->getParam('eindheffingen_wkr', 0);
-		if ($wkr < 0.0) {
-			$wkr = 0.0;
-		}
-
-		try {
-			$remittance = $this->payrollService->berekenLHAfdracht(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				finalLeviesWKR: $wkr
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PayrollController: failed to compute LH-afdracht',
-				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Kon LH-afdracht niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($remittance, Http::STATUS_OK);
+		return $this->scopeRefusal(scope: $scope) ?? $this->computedRemittance(scope: $scope);
 	}//end lhAfdracht()
 
 	/**
@@ -220,53 +139,141 @@ class PayrollController extends Controller {
 	#[NoAdminRequired]
 	public function journaalpost(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		$administrationId = $this->scopeParam(name: 'administration_id');
-		$periodId = $this->scopeParam(name: 'periode_id');
+		$scope = PayrollScope::forPeriod(request: $this->request);
 
-		$error = $this->firstBlank(values: ['administration_id' => $administrationId, 'periode_id' => $periodId]);
+		return $this->scopeRefusal(scope: $scope) ?? $this->builtJournal(scope: $scope);
+	}//end journaalpost()
+
+	/**
+	 * The 401 answer for a request without a session user.
+	 *
+	 * @return JSONResponse
+	 */
+	private function notLoggedIn(): JSONResponse {
+		return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+	}//end notLoggedIn()
+
+	/**
+	 * Refuse a scope with a blank or malformed value (400), then one the caller
+	 * holds no membership for (404).
+	 *
+	 * @param PayrollScope $scope The scope read from the request.
+	 *
+	 * @return JSONResponse|null A refusal, or null when the scope may be computed.
+	 */
+	private function scopeRefusal(PayrollScope $scope): JSONResponse|null {
+		$error = $scope->firstBlank();
 		if ($error !== null) {
 			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
 		}
 
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($refusal !== null) {
-			return $refusal;
+		return $this->requireAccessibleAdministration(administrationId: $scope->administrationId());
+	}//end scopeRefusal()
+
+	/**
+	 * Compute the payslip; a missing record answers 404, any other failure 500.
+	 *
+	 * @param PayrollScope $scope The authorised scope.
+	 *
+	 * @return JSONResponse
+	 */
+	private function computedSlip(PayrollScope $scope): JSONResponse {
+		try {
+			$slip = $this->payrollService->berekenLoonStrook(
+				administrationId: $scope->administrationId(),
+				employeeId: $scope->employeeId(),
+				periodId: $scope->periodId()
+			);
+		} catch (\RuntimeException $e) {
+			return $this->slipNotFound(context: $scope->logContext(e: $e));
+		} catch (\Throwable $e) {
+			$this->logger->error('PayrollController: failed to compute loonstrook', $scope->logContext(e: $e));
+			return new JSONResponse(['error' => 'Kon loonstrook niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
+		return new JSONResponse($slip, Http::STATUS_OK);
+	}//end computedSlip()
+
+	/**
+	 * Log and answer a payslip whose records are missing (404).
+	 *
+	 * @param array<string,string> $context The log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function slipNotFound(array $context): JSONResponse {
+		$this->logger->error('PayrollController: loonstrook not found', $context);
+
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Payslip not found for the given employee and period'),
+				'error' => 'payroll-loonstrook-not-found',
+			],
+			Http::STATUS_NOT_FOUND,
+		);
+	}//end slipNotFound()
+
+	/**
+	 * Compute the LH-afdracht with the optional WKR final levies.
+	 *
+	 * @param PayrollScope $scope The authorised scope.
+	 *
+	 * @return JSONResponse
+	 */
+	private function computedRemittance(PayrollScope $scope): JSONResponse {
+		$wkr = $this->finalLeviesWkr();
+
 		try {
-			$journaal = $this->payrollService->bouwLoonjournaalpost(
-				administrationId: $administrationId,
-				periodId: $periodId
+			$remittance = $this->payrollService->berekenLHAfdracht(
+				administrationId: $scope->administrationId(),
+				periodId: $scope->periodId(),
+				finalLeviesWKR: $wkr
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PayrollController: failed to build journaalpost',
-				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
+			$this->logger->error('PayrollController: failed to compute LH-afdracht', $scope->logContext(e: $e));
+			return new JSONResponse(['error' => 'Kon LH-afdracht niet berekenen'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($remittance, Http::STATUS_OK);
+	}//end computedRemittance()
+
+	/**
+	 * The optional eindheffingen_wkr parameter as a float, a negative value read as 0.
+	 *
+	 * @return float
+	 */
+	private function finalLeviesWkr(): float {
+		$wkr = (float)$this->request->getParam('eindheffingen_wkr', 0);
+		if ($wkr < 0.0) {
+			$wkr = 0.0;
+		}
+
+		return $wkr;
+	}//end finalLeviesWkr()
+
+	/**
+	 * Build the payroll journal.
+	 *
+	 * @param PayrollScope $scope The authorised scope.
+	 *
+	 * @return JSONResponse
+	 */
+	private function builtJournal(PayrollScope $scope): JSONResponse {
+		try {
+			$journaal = $this->payrollService->bouwLoonjournaalpost(
+				administrationId: $scope->administrationId(),
+				periodId: $scope->periodId()
 			);
+		} catch (\Throwable $e) {
+			$this->logger->error('PayrollController: failed to build journaalpost', $scope->logContext(e: $e));
 			return new JSONResponse(['error' => 'Kon loonjournaalpost niet opbouwen'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		return new JSONResponse($journaal, Http::STATUS_OK);
-	}//end journaalpost()
-
-	/**
-	 * Read and validate a scope parameter, returning '' when blank or malformed.
-	 *
-	 * @param string $name Query-parameter name.
-	 *
-	 * @return string The validated value or '' (blank/malformed).
-	 */
-	private function scopeParam(string $name): string {
-		$value = trim((string)$this->request->getParam($name, ''));
-		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-			return '';
-		}
-
-		return $value;
-	}//end scopeParam()
+	}//end builtJournal()
 
 	/**
 	 * Refuse the request unless the caller holds a membership for the
@@ -289,21 +296,4 @@ class PayrollController extends Controller {
 
 		return null;
 	}//end requireAccessibleAdministration()
-
-	/**
-	 * Return a validation error message for the first blank/invalid scope value.
-	 *
-	 * @param array<string,string> $values Name => value map.
-	 *
-	 * @return string|null Error message or null when all values are valid.
-	 */
-	private function firstBlank(array $values): ?string {
-		foreach ($values as $name => $value) {
-			if ($value === '') {
-				return sprintf('%s is verplicht en moet een geldige identifier zijn', $name);
-			}
-		}
-
-		return null;
-	}//end firstBlank()
 }//end class

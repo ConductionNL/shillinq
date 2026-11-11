@@ -145,4 +145,38 @@ final class LinkedObjectsLockListenerTest extends TestCase {
 
 		self::assertSame([], $this->errors('Contract', $issued, ['lifecycleState' => 'issued', 'linkedObjects' => []]));
 	}//end testAnotherSchemaIsLeftAlone()
+
+	public function testOnlyAPaymentRequestWithAnEmptyListMayTakeItsSubject(): void {
+		$kept = ['state' => 'pending', 'subject' => self::CASE_1, 'linkedObjects' => [self::CASE_2]];
+		self::assertSame(
+			LinkedObjectsLockListener::MESSAGE,
+			$this->errors('PaymentRequest', $kept, ['linkedObjects' => [self::CASE_1]] + $kept)['message'] ?? null,
+			'a kept list is not replaced by the subject'
+		);
+
+		$payable = ['state' => 'requested', 'subject' => self::CASE_1];
+		self::assertSame(
+			LinkedObjectsLockListener::MESSAGE,
+			$this->errors('InboundPayable', $payable, $payable + ['linkedObjects' => [self::CASE_1]])['message'] ?? null,
+			'only a payment request may take its subject'
+		);
+	}//end testOnlyAPaymentRequestWithAnEmptyListMayTakeItsSubject()
+
+	public function testAMissingStateIsNotOpenAndAMalformedKeptListCountsAsEmpty(): void {
+		self::assertSame(
+			LinkedObjectsLockListener::MESSAGE,
+			$this->errors('Quote', ['linkedObjects' => []], ['linkedObjects' => [self::CASE_1]])['message'] ?? null
+		);
+		self::assertSame([], $this->errors('ARInvoice', ['lifecycleState' => 'issued', 'linkedObjects' => [['register' => 'x']]], ['lifecycleState' => 'issued']));
+		self::assertSame([], $this->errors('ARInvoice', ['lifecycleState' => 'draft', 'linkedObjects' => [self::CASE_1]], ['lifecycleState' => 'draft']));
+	}//end testAMissingStateIsNotOpenAndAMalformedKeptListCountsAsEmpty()
+
+	public function testAMalformedListIsRefusedBeforeTheStateIsRead(): void {
+		$issued = ['lifecycleState' => 'issued', 'linkedObjects' => [self::CASE_1]];
+
+		self::assertSame(
+			['message' => LinkedObjectsLockListener::MALFORMED, 'field' => 'linkedObjects'],
+			$this->errors('ARInvoice', $issued, ['lifecycleState' => 'issued', 'linkedObjects' => [['id' => 'c-1']]])
+		);
+	}//end testAMalformedListIsRefusedBeforeTheStateIsRead()
 }//end class

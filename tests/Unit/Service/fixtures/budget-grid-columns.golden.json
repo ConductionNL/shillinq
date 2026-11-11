@@ -1,0 +1,297 @@
+{
+    "monthsCrossYear": [
+        {
+            "key": "2023-11",
+            "label": "November 2023",
+            "granularity": "month",
+            "startDate": "2023-11-01",
+            "endDate": "2023-11-30",
+            "monthKeys": [
+                "2023-11"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2023
+            ]
+        },
+        {
+            "key": "2023-12",
+            "label": "December 2023",
+            "granularity": "month",
+            "startDate": "2023-12-01",
+            "endDate": "2023-12-31",
+            "monthKeys": [
+                "2023-12"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2023
+            ]
+        },
+        {
+            "key": "2024-01",
+            "label": "January 2024",
+            "granularity": "month",
+            "startDate": "2024-01-01",
+            "endDate": "2024-01-31",
+            "monthKeys": [
+                "2024-01"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2024-02",
+            "label": "February 2024",
+            "granularity": "month",
+            "startDate": "2024-02-01",
+            "endDate": "2024-02-29",
+            "monthKeys": [
+                "2024-02"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2024-03",
+            "label": "March 2024",
+            "granularity": "month",
+            "startDate": "2024-03-01",
+            "endDate": "2024-03-31",
+            "monthKeys": [
+                "2024-03"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        }
+    ],
+    "singleMonth": [
+        {
+            "key": "2024-02",
+            "label": "February 2024",
+            "granularity": "month",
+            "startDate": "2024-02-01",
+            "endDate": "2024-02-29",
+            "monthKeys": [
+                "2024-02"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        }
+    ],
+    "quartersUnaligned": [
+        {
+            "key": "2024-Q1",
+            "label": "Q1 2024",
+            "granularity": "quarter",
+            "startDate": "2024-01-01",
+            "endDate": "2024-03-31",
+            "monthKeys": [
+                "2024-01",
+                "2024-02",
+                "2024-03"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2024-Q2",
+            "label": "Q2 2024",
+            "granularity": "quarter",
+            "startDate": "2024-04-01",
+            "endDate": "2024-06-30",
+            "monthKeys": [
+                "2024-04",
+                "2024-05",
+                "2024-06"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2024-Q3",
+            "label": "Q3 2024",
+            "granularity": "quarter",
+            "startDate": "2024-07-01",
+            "endDate": "2024-09-30",
+            "monthKeys": [
+                "2024-07",
+                "2024-08",
+                "2024-09"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2024-Q4",
+            "label": "Q4 2024",
+            "granularity": "quarter",
+            "startDate": "2024-10-01",
+            "endDate": "2024-12-31",
+            "monthKeys": [
+                "2024-10",
+                "2024-11",
+                "2024-12"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        }
+    ],
+    "quartersCrossYear": [
+        {
+            "key": "2024-Q4",
+            "label": "Q4 2024",
+            "granularity": "quarter",
+            "startDate": "2024-10-01",
+            "endDate": "2024-12-31",
+            "monthKeys": [
+                "2024-10",
+                "2024-11",
+                "2024-12"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2025-Q1",
+            "label": "Q1 2025",
+            "granularity": "quarter",
+            "startDate": "2025-01-01",
+            "endDate": "2025-03-31",
+            "monthKeys": [
+                "2025-01",
+                "2025-02",
+                "2025-03"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2025
+            ]
+        }
+    ],
+    "years": [
+        {
+            "key": "2023",
+            "label": "2023",
+            "granularity": "year",
+            "startDate": "2023-01-01",
+            "endDate": "2023-12-31",
+            "monthKeys": [
+                "2023-01",
+                "2023-02",
+                "2023-03",
+                "2023-04",
+                "2023-05",
+                "2023-06",
+                "2023-07",
+                "2023-08",
+                "2023-09",
+                "2023-10",
+                "2023-11",
+                "2023-12"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2023
+            ]
+        },
+        {
+            "key": "2024",
+            "label": "2024",
+            "granularity": "year",
+            "startDate": "2024-01-01",
+            "endDate": "2024-12-31",
+            "monthKeys": [
+                "2024-01",
+                "2024-02",
+                "2024-03",
+                "2024-04",
+                "2024-05",
+                "2024-06",
+                "2024-07",
+                "2024-08",
+                "2024-09",
+                "2024-10",
+                "2024-11",
+                "2024-12"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2024
+            ]
+        },
+        {
+            "key": "2025",
+            "label": "2025",
+            "granularity": "year",
+            "startDate": "2025-01-01",
+            "endDate": "2025-12-31",
+            "monthKeys": [
+                "2025-01",
+                "2025-02",
+                "2025-03",
+                "2025-04",
+                "2025-05",
+                "2025-06",
+                "2025-07",
+                "2025-08",
+                "2025-09",
+                "2025-10",
+                "2025-11",
+                "2025-12"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2025
+            ]
+        }
+    ],
+    "unknownGranularity": [
+        {
+            "key": "2025-01",
+            "label": "January 2025",
+            "granularity": "week",
+            "startDate": "2025-01-01",
+            "endDate": "2025-01-31",
+            "monthKeys": [
+                "2025-01"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2025
+            ]
+        },
+        {
+            "key": "2025-02",
+            "label": "February 2025",
+            "granularity": "week",
+            "startDate": "2025-02-01",
+            "endDate": "2025-02-28",
+            "monthKeys": [
+                "2025-02"
+            ],
+            "isPast": false,
+            "fiscalYears": [
+                2025
+            ]
+        }
+    ]
+}

@@ -229,14 +229,13 @@ import {
 	FINANCIAL_DOCUMENTS_DATA_LEAF,
 	formatAmount,
 	hostIdentity,
-	isResolvable,
 	issueInvoice,
 	raisePayout,
-	readLeaf,
 	requestInvoicePayment,
 	sendPaymentLink,
 	settleByOtherMeans,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
 import { leafReportMixin } from './leafReport.js'
 
 /**
@@ -272,6 +271,16 @@ export const ALL_ACTIONS = [
 ]
 
 /**
+ * The row acts in the order they are offered: the row kind and payment
+ * states they apply to, and the grant that must be exactly true.
+ */
+const ROW_ACTS = [
+	{ kind: 'invoice', states: ['outstanding'], grant: 'requestPayment', acts: ['request-payment'] },
+	{ kind: 'invoice', states: ['outstanding', 'paid'], grant: 'creditInvoice', acts: ['credit-invoice'] },
+	{ kind: 'payment-request', states: ['outstanding'], grant: 'administerPayments', acts: ['send-link', 'record-payment'] },
+]
+
+/**
  * Which acts a row offers, given the caller's grants and the placement's actions.
  *
  * @param {object} row One row of the leaf.
@@ -286,29 +295,12 @@ export function actsForRow(row, acts, allowed) {
 	if (!row || row.restricted === true) {
 		return []
 	}
-	const offered = []
-	if (
-		row.kind === 'invoice'
-		&& row.paymentState === 'outstanding'
-		&& acts.requestPayment === true
-	) {
-		offered.push('request-payment')
-	}
-	if (
-		row.kind === 'invoice'
-		&& ['outstanding', 'paid'].includes(row.paymentState)
-		&& acts.creditInvoice === true
-	) {
-		offered.push('credit-invoice')
-	}
-	if (
-		row.kind === 'payment-request'
-		&& row.paymentState === 'outstanding'
-		&& acts.administerPayments === true
-	) {
-		offered.push('send-link', 'record-payment')
-	}
-	return offered.filter((act) => allowed.includes(act))
+	return ROW_ACTS
+		.filter((rule) => rule.kind === row.kind
+			&& rule.states.includes(row.paymentState)
+			&& acts[rule.grant] === true)
+		.flatMap((rule) => rule.acts)
+		.filter((act) => allowed.includes(act))
 }
 
 /**
@@ -324,17 +316,9 @@ export default {
 		NcLoadingIcon,
 	},
 
-	mixins: [leafReportMixin],
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the documents are linked to. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
 		/** The kinds this placement shows. */
 		kinds: { type: Array, default: () => ALL_KINDS },
 		/** The acts this placement offers. */
@@ -554,29 +538,16 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(
-					identity,
-					FINANCIAL_DOCUMENTS_DATA_LEAF,
-				)
-				this.rows = Array.isArray(envelope.items) ? envelope.items : []
-				this.acts = { ...this.acts, ...(envelope.acts || {}) }
-			} catch {
-				this.error = t(
+			await this.readHostLeaf(FINANCIAL_DOCUMENTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.rows = Array.isArray(envelope.items) ? envelope.items : []
+					this.acts = { ...this.acts, ...(envelope.acts || {}) }
+				},
+				failedText: () => t(
 					'shillinq',
 					'The financial documents could not be read.',
-				)
-			} finally {
-				this.loading = false
-			}
+				),
+			})
 		},
 
 		/**
@@ -867,22 +838,6 @@ export default {
 			}
 		},
 
-		/**
-		 * The server's own words for a refusal.
-		 *
-		 * @param {object} e The axios error.
-		 * @return {string} The message.
-		 *
-		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
-		 */
-		refusal(e) {
-			const message =
-				e && e.response && e.response.data && e.response.data.error
-			if (typeof message === 'string' && message !== '') {
-				return message
-			}
-			return t('shillinq', 'That did not go through.')
-		},
 	},
 }
 </script>

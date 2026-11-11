@@ -11,9 +11,7 @@
  * explicit `(debitAccount, creditAccount, amountCents)` triple. Money
  * discipline is integer cents throughout; the debit and credit legs are
  * derived from the same `amountCents` so `debitCents === creditCents` holds
- * by construction. A defensive `balanceCheck` re-asserts the invariant
- * before persisting — an unbalanced request is refused (logged, never
- * posted), so a caller bug can never emit a lopsided journal.
+ * by construction — a caller can never emit a lopsided journal.
  *
  * Persists `GLTransaction` (header) + two `GLLine` rows via OpenRegister's
  * ObjectService (ADR-022 — no app tables, no SQL). Mirrors the shape
@@ -76,45 +74,84 @@ class InventoryGlAdjustmentPoster {
 	 * Post one balanced GLTransaction (debit leg + credit leg of the same
 	 * integer-cent amount).
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $debitAccount Account number debited.
-	 * @param string $creditAccount Account number credited.
-	 * @param int $amountCents Amount in integer cents (both legs).
-	 * @param string $journalCode Journal code (e.g. 'LAND', 'NRV').
-	 * @param string $description Human-readable line description.
-	 * @param string $sourceReference Originating document reference.
-	 * @param string $postingDate ISO yyyy-mm-dd posting date.
-	 * @param string $periodId Period identifier (e.g. 2026-Q4).
+	 * @param GlAdjustmentPosting $posting The adjustment to post.
 	 *
 	 * @return array<string,mixed> Result envelope with 'posted', 'balanced', 'transaction', 'debitCents', 'creditCents'.
 	 *
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
-	public function post(
-		string $administrationId,
-		string $debitAccount,
-		string $creditAccount,
-		int $amountCents,
-		string $journalCode,
-		string $description,
-		string $sourceReference,
-		string $postingDate,
-		string $periodId,
-	): array {
-		if ($amountCents <= 0) {
+	public function postAdjustment(GlAdjustmentPosting $posting): array {
+		$refusal = $this->refusal(posting: $posting);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		try {
+			return $this->persist(posting: $posting);
+		} catch (\Throwable $e) {
+			return $this->failure(posting: $posting, error: $e);
+		}
+
+	}//end postAdjustment()
+
+	/**
+	 * Log a failed post and report it in the envelope.
+	 *
+	 * @param GlAdjustmentPosting $posting The adjustment that failed.
+	 * @param \Throwable          $error   What the store raised.
+	 *
+	 * @return array<string,mixed> The not-posted envelope.
+	 */
+	private function failure(GlAdjustmentPosting $posting, \Throwable $error): array {
+		$this->logger->error(
+			'InventoryGlAdjustmentPoster: failed to post inventory adjustment',
+			[
+				'journalCode' => $posting->journalCode,
+				'amountCents' => $posting->amountCents,
+				'exception' => $error->getMessage(),
+			]
+		);
+
+		return [
+			'posted' => false,
+			'message' => 'posting raised: ' . $error->getMessage(),
+		];
+	}//end failure()
+
+	/**
+	 * The not-posted envelope for a non-positive amount or unconfigured
+	 * accounts, or null when the posting may proceed.
+	 *
+	 * @param GlAdjustmentPosting $posting The adjustment to post.
+	 *
+	 * @return array<string,mixed>|null The refusal envelope, or null.
+	 */
+	private function refusal(GlAdjustmentPosting $posting): ?array {
+		if ($posting->amountCents <= 0) {
 			return [
 				'posted' => false,
 				'message' => 'amountCents non-positive — nothing to post',
 			];
 		}
 
-		if ($debitAccount === '' || $creditAccount === '') {
+		return $this->missingAccountRefusal(posting: $posting);
+	}//end refusal()
+
+	/**
+	 * The not-posted envelope when an account is not configured, or null.
+	 *
+	 * @param GlAdjustmentPosting $posting The adjustment to post.
+	 *
+	 * @return array<string,mixed>|null The refusal envelope, or null.
+	 */
+	private function missingAccountRefusal(GlAdjustmentPosting $posting): ?array {
+		if ($posting->debitAccount === '' || $posting->creditAccount === '') {
 			$this->logger->warning(
 				'InventoryGlAdjustmentPoster: GL accounts not configured — skipping post',
 				[
-					'journalCode' => $journalCode,
-					'debitAccount' => $debitAccount,
-					'creditAccount' => $creditAccount,
+					'journalCode' => $posting->journalCode,
+					'debitAccount' => $posting->debitAccount,
+					'creditAccount' => $posting->creditAccount,
 				]
 			);
 			return [
@@ -123,107 +160,104 @@ class InventoryGlAdjustmentPoster {
 			];
 		}
 
-		// Balance invariant: both legs are the same amount by construction.
-		$debitCents = $amountCents;
-		$creditCents = $amountCents;
-		if ($debitCents !== $creditCents) {
-			$this->logger->error(
-				'InventoryGlAdjustmentPoster: refusing to post an unbalanced transaction',
-				[
-					'journalCode' => $journalCode,
-					'debitCents' => $debitCents,
-					'creditCents' => $creditCents,
-				]
-			);
-			return [
-				'posted' => false,
-				'balanced' => false,
-				'message' => 'debitCents !== creditCents',
-			];
-		}
+		return null;
+	}//end missingAccountRefusal()
 
-		$amount = round(($amountCents / 100), 2);
-		$year = (int)substr($postingDate, 0, 4);
+	/**
+	 * Persist the header and both legs. Both legs carry the same amount by
+	 * construction, so debitCents === creditCents.
+	 *
+	 * @param GlAdjustmentPosting $posting The adjustment to post.
+	 *
+	 * @return array<string,mixed> The posted envelope.
+	 */
+	private function persist(GlAdjustmentPosting $posting): array {
+		$transaction = $this->saveOnSchema(schema: 'GLTransaction', data: $this->transactionHeader(posting: $posting));
+		$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+		$this->saveLegs(posting: $posting, transactionId: $transactionId);
+
+		return [
+			'posted' => true,
+			'balanced' => true,
+			'transaction' => $transaction,
+			'debitCents' => $posting->amountCents,
+			'creditCents' => $posting->amountCents,
+			'message' => 'inventory adjustment posted',
+		];
+	}//end persist()
+
+	/**
+	 * The GLTransaction header; the transaction number carries the posting
+	 * year, or the current year when the posting date has none.
+	 *
+	 * @param GlAdjustmentPosting $posting The adjustment to post.
+	 *
+	 * @return array<string,mixed> The header.
+	 */
+	private function transactionHeader(GlAdjustmentPosting $posting): array {
+		$year = (int)substr($posting->postingDate, 0, 4);
 		if ($year === 0) {
 			$year = (int)date('Y');
 		}
 
-		try {
-			$transaction = $this->saveOnSchema(
-				schema: 'GLTransaction',
-				data: [
-					'transactionNumber' => sprintf('%s-%04d-%s', $journalCode, $year, $sourceReference),
-					'postingDate' => $postingDate,
-					'periodId' => $periodId,
-					'currency' => 'EUR',
-					'description' => $description,
-					'sourceReference' => $sourceReference,
-					'state' => 'draft',
-					'administrationId' => $administrationId,
-				]
-			);
+		return [
+			'transactionNumber' => sprintf('%s-%04d-%s', $posting->journalCode, $year, $posting->sourceReference),
+			'postingDate' => $posting->postingDate,
+			'periodId' => $posting->periodId,
+			'currency' => 'EUR',
+			'description' => $posting->description,
+			'sourceReference' => $posting->sourceReference,
+			'state' => 'draft',
+			'administrationId' => $posting->administrationId,
+		];
+	}//end transactionHeader()
 
-			$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+	/**
+	 * Save the debit leg (line 1) and the credit leg (line 2).
+	 *
+	 * The administrationId is DENORMALISED onto every line from the header
+	 * (REQ-GLS-001). GLLine declares the property, and SpendAnalyticsService
+	 * filters the category / cost-centre / period aggregations on it — a
+	 * line written without it would be invisible to its own administration's
+	 * totals while the backfill completeness gate flipped red for the whole
+	 * instance.
+	 *
+	 * @param GlAdjustmentPosting $posting       The adjustment to post.
+	 * @param string              $transactionId The saved header's id.
+	 *
+	 * @return void
+	 */
+	private function saveLegs(GlAdjustmentPosting $posting, string $transactionId): void {
+		$legs = [
+			['transactionId' => $transactionId, 'lineNumber' => 1, 'accountNumber' => $posting->debitAccount, 'side' => 'debit'],
+			['transactionId' => $transactionId, 'lineNumber' => 2, 'accountNumber' => $posting->creditAccount, 'side' => 'credit'],
+		];
+		foreach ($legs as $leg) {
+			$this->saveOnSchema(schema: 'GLLine', data: $this->legLine(posting: $posting, leg: $leg));
+		}
+	}//end saveLegs()
 
-			// The administrationId is DENORMALISED onto every line from the header
-			// above (REQ-GLS-001). GLLine now declares the property, and
-			// SpendAnalyticsService filters the category / cost-centre /
-			// period aggregations on it — a line written without it would be
-			// invisible to its own administration's totals while the backfill
-			// completeness gate flipped red for the whole instance.
-			$this->saveOnSchema(
-				schema: 'GLLine',
-				data: [
-					'transactionId' => $transactionId,
-					'administrationId' => $administrationId,
-					'lineNumber' => 1,
-					'accountNumber' => $debitAccount,
-					'side' => 'debit',
-					'amount' => $amount,
-					'currency' => 'EUR',
-					'description' => $description,
-				]
-			);
-
-			$this->saveOnSchema(
-				schema: 'GLLine',
-				data: [
-					'transactionId' => $transactionId,
-					'administrationId' => $administrationId,
-					'lineNumber' => 2,
-					'accountNumber' => $creditAccount,
-					'side' => 'credit',
-					'amount' => $amount,
-					'currency' => 'EUR',
-					'description' => $description,
-				]
-			);
-
-			return [
-				'posted' => true,
-				'balanced' => true,
-				'transaction' => $transaction,
-				'debitCents' => $debitCents,
-				'creditCents' => $creditCents,
-				'message' => 'inventory adjustment posted',
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'InventoryGlAdjustmentPoster: failed to post inventory adjustment',
-				[
-					'journalCode' => $journalCode,
-					'amountCents' => $amountCents,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return [
-				'posted' => false,
-				'message' => 'posting raised: ' . $e->getMessage(),
-			];
-		}//end try
-
-	}//end post()
+	/**
+	 * One GLLine: the leg's header id, line number, account and side, with
+	 * the posting's administration, amount and description.
+	 *
+	 * @param GlAdjustmentPosting $posting The adjustment to post.
+	 * @param array<string,mixed> $leg     transactionId, lineNumber, accountNumber and side.
+	 *
+	 * @return array<string,mixed> The GLLine body.
+	 */
+	private function legLine(GlAdjustmentPosting $posting, array $leg): array {
+		return [
+			'transactionId' => $leg['transactionId'],
+			'administrationId' => $posting->administrationId,
+			'lineNumber' => $leg['lineNumber'],
+			'accountNumber' => $leg['accountNumber'],
+			'side' => $leg['side'],
+			'amount' => $posting->amount(),
+			'currency' => 'EUR',
+			'description' => $posting->description,
+		];
+	}//end legLine()
 
 	/**
 	 * Generic ObjectService::saveObject helper bound to the configured register.

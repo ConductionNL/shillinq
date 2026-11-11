@@ -270,6 +270,44 @@ class PipelinqContactAdapter {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
 	 */
 	public function getContact(string $externalId): PipelinqContact {
+		$id = $this->requireContactId(externalId: $externalId);
+
+		$cached = $this->readCachedContact(key: self::CONTACT_CACHE_KEY_PREFIX . $id);
+		if ($cached !== null) {
+			return $this->serveCachedContact(id: $id, contact: $cached);
+		}
+
+		try {
+			$payload = $this->request(method: 'GET', path: $this->contactPath(id: $id));
+		} catch (PipelinqTransportException $e) {
+			return $this->recoverContactLookup(id: $id, error: $e);
+		}
+
+		return $this->storeFetchedContact(id: $id, payload: $payload);
+	}//end getContact()
+
+	/**
+	 * The Contact path for an external id, relative to the endpoint.
+	 *
+	 * @param string $id The trimmed external id.
+	 *
+	 * @return string
+	 */
+	private function contactPath(string $id): string {
+		return sprintf(self::CONTACT_PATH_TEMPLATE, rawurlencode($id));
+
+	}//end contactPath()
+
+	/**
+	 * Trim the external id and refuse an empty one.
+	 *
+	 * @param string $externalId The caller-supplied external Contact id.
+	 *
+	 * @return string The trimmed id.
+	 *
+	 * @throws PipelinqTransportException When the id is empty after trimming.
+	 */
+	private function requireContactId(string $externalId): string {
 		$id = trim($externalId);
 		if ($id === '') {
 			throw new PipelinqTransportException(
@@ -278,85 +316,151 @@ class PipelinqContactAdapter {
 			);
 		}
 
-		$cacheKey = self::CONTACT_CACHE_KEY_PREFIX . $id;
-		$cached = $this->readCachedContact(key: $cacheKey);
-		if ($cached !== null) {
-			$this->logger->debug(
-				'pipelinq contact cache hit',
-				[
-					'app' => AppIdentity::APP_ID,
-					'externalId' => $id,
-				]
-			);
-			$this->metrics?->recordContactSuccess(fromCache: true);
-			return $cached;
-		}
+		return $id;
 
-		try {
-			$payload = $this->request(
-				method: 'GET',
-				path: sprintf(self::CONTACT_PATH_TEMPLATE, rawurlencode($id))
-			);
-		} catch (PipelinqTransportException $e) {
-			// 404 is an expected "not found" outcome — return the
-			// fallback without escalating the log severity.
-			if ($e->statusCode() === 404) {
-				$this->logger->debug(
-					'pipelinq contact not found',
-					[
-						'app' => AppIdentity::APP_ID,
-						'externalId' => $id,
-					]
-				);
-				$contact = PipelinqContact::notFound(externalId: $id);
-				$this->writeCachedContact(key: $cacheKey, contact: $contact);
-				$this->metrics?->recordContactFallback(reason: 'not_found');
-				return $contact;
-			}
+	}//end requireContactId()
 
-			// Malformed JSON arrives wrapped in a TransportException
-			// with a JsonException previous; surface a WARNING + a
-			// fallback DTO and DO NOT retry (client-side classification).
-			$previous = $e->getPrevious();
-			if ($previous instanceof \JsonException) {
-				$this->logger->warning(
-					'pipelinq contact response malformed',
-					[
-						'app' => AppIdentity::APP_ID,
-						'externalId' => $id,
-						'status' => $e->statusCode(),
-						'reason' => $previous->getMessage(),
-					]
-				);
-				$this->metrics?->recordContactFallback(reason: 'malformed');
-				return PipelinqContact::notFound(externalId: $id);
-			}
+	/**
+	 * Log and count a cache hit, then serve the cached Contact.
+	 *
+	 * @param string          $id      The trimmed external id.
+	 * @param PipelinqContact $contact The cached Contact.
+	 *
+	 * @return PipelinqContact
+	 */
+	private function serveCachedContact(string $id, PipelinqContact $contact): PipelinqContact {
+		$this->logger->debug(
+			'pipelinq contact cache hit',
+			[
+				'app' => AppIdentity::APP_ID,
+				'externalId' => $id,
+			]
+		);
+		$this->metrics?->recordContactSuccess(fromCache: true);
+		return $contact;
 
-			// Anything else (open breaker, transport error, 5xx) → try
-			// to serve a still-valid cache entry; otherwise propagate.
-			$stale = $this->readCachedContact(key: $cacheKey);
-			if ($stale !== null) {
-				$this->logger->warning(
-					'pipelinq unavailable; serving cached contact',
-					[
-						'app' => AppIdentity::APP_ID,
-						'externalId' => $id,
-						'status' => $e->statusCode(),
-					]
-				);
-				$this->metrics?->recordContactStaleServed();
-				return $stale;
-			}
+	}//end serveCachedContact()
 
-			throw $e;
-		}//end try
-
+	/**
+	 * Build the Contact from a fetched payload, cache it and count the success.
+	 *
+	 * @param string               $id      The trimmed external id.
+	 * @param array<string, mixed> $payload The decoded pipelinq response body.
+	 *
+	 * @return PipelinqContact
+	 */
+	private function storeFetchedContact(string $id, array $payload): PipelinqContact {
 		$contact = PipelinqContact::fromApiPayload(externalId: $id, payload: $payload);
-		$this->writeCachedContact(key: $cacheKey, contact: $contact);
+		$this->writeCachedContact(key: self::CONTACT_CACHE_KEY_PREFIX . $id, contact: $contact);
 		$this->metrics?->recordContactSuccess(fromCache: false);
 
 		return $contact;
-	}//end getContact()
+
+	}//end storeFetchedContact()
+
+	/**
+	 * Answer a failed Contact lookup: not-found, malformed or unavailable.
+	 *
+	 * @param string                     $id    The trimmed external id.
+	 * @param PipelinqTransportException $error The lookup failure.
+	 *
+	 * @return PipelinqContact
+	 *
+	 * @throws PipelinqTransportException When pipelinq is unavailable and no cache entry can be served.
+	 */
+	private function recoverContactLookup(string $id, PipelinqTransportException $error): PipelinqContact {
+		// 404 is an expected "not found" outcome — return the
+		// fallback without escalating the log severity.
+		if ($error->statusCode() === 404) {
+			return $this->cacheNotFoundContact(id: $id);
+		}
+
+		// Malformed JSON arrives wrapped in a TransportException
+		// with a JsonException previous; surface a WARNING + a
+		// fallback DTO and DO NOT retry (client-side classification).
+		if ($error->getPrevious() instanceof \JsonException) {
+			return $this->malformedContactFallback(id: $id, error: $error);
+		}
+
+		// Anything else (open breaker, transport error, 5xx) → try
+		// to serve a still-valid cache entry; otherwise propagate.
+		return $this->serveStaleContact(id: $id, error: $error);
+
+	}//end recoverContactLookup()
+
+	/**
+	 * Log, cache and count a not-found Contact.
+	 *
+	 * @param string $id The trimmed external id.
+	 *
+	 * @return PipelinqContact The fallback DTO.
+	 */
+	private function cacheNotFoundContact(string $id): PipelinqContact {
+		$this->logger->debug(
+			'pipelinq contact not found',
+			[
+				'app' => AppIdentity::APP_ID,
+				'externalId' => $id,
+			]
+		);
+		$contact = PipelinqContact::notFound(externalId: $id);
+		$this->writeCachedContact(key: self::CONTACT_CACHE_KEY_PREFIX . $id, contact: $contact);
+		$this->metrics?->recordContactFallback(reason: 'not_found');
+		return $contact;
+
+	}//end cacheNotFoundContact()
+
+	/**
+	 * Log and count a malformed Contact response; return the fallback DTO.
+	 *
+	 * @param string                     $id    The trimmed external id.
+	 * @param PipelinqTransportException $error The failure wrapping a JsonException.
+	 *
+	 * @return PipelinqContact The fallback DTO.
+	 */
+	private function malformedContactFallback(string $id, PipelinqTransportException $error): PipelinqContact {
+		$this->logger->warning(
+			'pipelinq contact response malformed',
+			[
+				'app' => AppIdentity::APP_ID,
+				'externalId' => $id,
+				'status' => $error->statusCode(),
+				'reason' => $error->getPrevious()?->getMessage(),
+			]
+		);
+		$this->metrics?->recordContactFallback(reason: 'malformed');
+		return PipelinqContact::notFound(externalId: $id);
+
+	}//end malformedContactFallback()
+
+	/**
+	 * Serve a still-valid cached Contact while pipelinq is unavailable.
+	 *
+	 * @param string                     $id    The trimmed external id.
+	 * @param PipelinqTransportException $error The unavailability failure.
+	 *
+	 * @return PipelinqContact The cached Contact.
+	 *
+	 * @throws PipelinqTransportException When no cache entry can be served.
+	 */
+	private function serveStaleContact(string $id, PipelinqTransportException $error): PipelinqContact {
+		$stale = $this->readCachedContact(key: self::CONTACT_CACHE_KEY_PREFIX . $id);
+		if ($stale === null) {
+			throw $error;
+		}
+
+		$this->logger->warning(
+			'pipelinq unavailable; serving cached contact',
+			[
+				'app' => AppIdentity::APP_ID,
+				'externalId' => $id,
+				'status' => $error->statusCode(),
+			]
+		);
+		$this->metrics?->recordContactStaleServed();
+		return $stale;
+
+	}//end serveStaleContact()
 
 	/**
 	 * Invalidate every cached Contact entry.
@@ -457,131 +561,259 @@ class PipelinqContactAdapter {
 	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
 	 */
 	protected function request(string $method, string $path, ?array $payload = null): array {
-		if ($this->circuitBreaker->allowRequest() === false) {
-			$this->logger->warning(
-				'pipelinq request short-circuited (breaker open)',
-				[
-					'app' => AppIdentity::APP_ID,
-					'method' => $method,
-					'path' => $path,
-				]
-			);
-			throw new PipelinqTransportException(
-				message: 'pipelinq circuit breaker open; failing fast',
-				statusCode: 0
-			);
+		$run = new PipelinqRequestRun(method: $method, path: $path);
+		$this->assertBreakerAllows(run: $run);
+		$this->prepareTransport(run: $run, payload: $payload);
+
+		while ($run->attempt < RetryPolicy::MAX_ATTEMPTS) {
+			$run->attempt += 1;
+			$body = $this->attemptRequest(run: $run);
+			if ($body !== null) {
+				return $body;
+			}
+
+			$this->backOffOrAbandon(run: $run);
 		}
 
-		$endpoint = $this->resolveEndpoint();
-		$url = $this->joinUrl(endpoint: $endpoint, path: $path);
-		$options = $this->buildOptions(payload: $payload);
+		$this->abandonExhaustedBudget(run: $run);
 
-		$attempt = 0;
-		$lastException = null;
-		$lastStatusCode = 0;
+	}//end request()
 
-		while ($attempt < RetryPolicy::MAX_ATTEMPTS) {
-			$attempt += 1;
-			$transient = false;
+	/**
+	 * Fail fast, without issuing the request, while the breaker is open.
+	 *
+	 * @param PipelinqRequestRun $run The request in progress.
+	 *
+	 * @return void
+	 *
+	 * @throws PipelinqTransportException When the breaker refuses the request.
+	 */
+	private function assertBreakerAllows(PipelinqRequestRun $run): void {
+		if ($this->circuitBreaker->allowRequest() === true) {
+			return;
+		}
 
-			try {
-				$response = $this->dispatch(method: $method, url: $url, options: $options);
-				$status = $response->getStatusCode();
+		$this->logger->warning(
+			'pipelinq request short-circuited (breaker open)',
+			$run->logContext(appId: AppIdentity::APP_ID)
+		);
+		throw new PipelinqTransportException(
+			message: 'pipelinq circuit breaker open; failing fast',
+			statusCode: 0
+		);
 
-				if ($status >= 200 && $status < 300) {
-					$this->circuitBreaker->recordSuccess();
-					$this->logger->debug(
-						'pipelinq request succeeded',
-						[
-							'app' => AppIdentity::APP_ID,
-							'method' => $method,
-							'path' => $path,
-							'attempt' => $attempt,
-							'status' => $status,
-						]
-					);
-					return $this->decodeBody(response: $response);
-				}
+	}//end assertBreakerAllows()
 
-				$lastStatusCode = $status;
-				$transient = $this->retryPolicy->isTransientStatus(statusCode: $status);
-				$lastException = new PipelinqTransportException(
-					message: sprintf('pipelinq request failed with HTTP %d', $status),
-					statusCode: $status
-				);
-			} catch (PipelinqTransportException $e) {
-				throw $e;
-			} catch (\Throwable $e) {
-				// Network-level failure (DNS, connect, timeout). Always transient.
-				$transient = true;
-				$lastStatusCode = 0;
-				$lastException = new PipelinqTransportException(
-					message: 'pipelinq request failed at transport layer',
-					statusCode: 0,
-					previous: $e
-				);
-			}//end try
+	/**
+	 * Resolve the URL and build the client options for the run.
+	 *
+	 * @param PipelinqRequestRun        $run     The request in progress.
+	 * @param array<string, mixed>|null $payload Optional JSON-serialisable body.
+	 *
+	 * @return void
+	 */
+	private function prepareTransport(PipelinqRequestRun $run, ?array $payload): void {
+		$endpoint     = $this->resolveEndpoint();
+		$run->url     = $this->joinUrl(endpoint: $endpoint, path: $run->path);
+		$run->options = $this->buildOptions(payload: $payload);
 
-			$this->logger->warning(
-				'pipelinq request attempt failed',
+	}//end prepareTransport()
+
+	/**
+	 * Issue one attempt; return the decoded body, or null when it failed.
+	 *
+	 * @param PipelinqRequestRun $run The request in progress.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @throws PipelinqTransportException When the transport raises one itself.
+	 */
+	private function attemptRequest(PipelinqRequestRun $run): ?array {
+		$run->transient = false;
+
+		try {
+			$response = $this->dispatch(method: $run->method, url: $run->url, options: $run->options);
+			return $this->handleResponse(run: $run, response: $response);
+		} catch (PipelinqTransportException $e) {
+			throw $e;
+		} catch (\Throwable $e) {
+			// Network-level failure (DNS, connect, timeout). Always transient.
+			$this->recordTransportFailure(run: $run, error: $e);
+		}
+
+		return null;
+
+	}//end attemptRequest()
+
+	/**
+	 * Accept a 2xx response, or record the failed status on the run.
+	 *
+	 * @param PipelinqRequestRun $run      The request in progress.
+	 * @param IResponse          $response The response of this attempt.
+	 *
+	 * @return array<string, mixed>|null The decoded body, or null on a non-2xx status.
+	 */
+	private function handleResponse(PipelinqRequestRun $run, IResponse $response): ?array {
+		$status = $response->getStatusCode();
+
+		if ($status >= 200 && $status < 300) {
+			$run->successStatus = $status;
+			return $this->acceptResponse(run: $run, response: $response);
+		}
+
+		$run->lastStatusCode = $status;
+		$run->transient      = $this->retryPolicy->isTransientStatus(statusCode: $status);
+		$run->lastException  = new PipelinqTransportException(
+			message: sprintf('pipelinq request failed with HTTP %d', $status),
+			statusCode: $status
+		);
+		return null;
+
+	}//end handleResponse()
+
+	/**
+	 * Record the success on the breaker, log it and decode the body.
+	 *
+	 * @param PipelinqRequestRun $run      The request in progress.
+	 * @param IResponse          $response The 2xx response.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function acceptResponse(PipelinqRequestRun $run, IResponse $response): array {
+		$this->circuitBreaker->recordSuccess();
+		$this->logger->debug(
+			'pipelinq request succeeded',
+			[
+				...$run->logContext(appId: AppIdentity::APP_ID),
+				'attempt' => $run->attempt,
+				'status' => $run->successStatus,
+			]
+		);
+		return $this->decodeBody(response: $response);
+
+	}//end acceptResponse()
+
+	/**
+	 * Record a transport-layer failure on the run.
+	 *
+	 * @param PipelinqRequestRun $run   The request in progress.
+	 * @param \Throwable         $error The transport failure.
+	 *
+	 * @return void
+	 */
+	private function recordTransportFailure(PipelinqRequestRun $run, \Throwable $error): void {
+		$run->transient      = true;
+		$run->lastStatusCode = 0;
+		$run->lastException  = new PipelinqTransportException(
+			message: 'pipelinq request failed at transport layer',
+			statusCode: 0,
+			previous: $error
+		);
+
+	}//end recordTransportFailure()
+
+	/**
+	 * Log the failed attempt, then give up or wait for the next one.
+	 *
+	 * @param PipelinqRequestRun $run The request in progress.
+	 *
+	 * @return void
+	 *
+	 * @throws PipelinqTransportException When the retry policy gives up.
+	 */
+	private function backOffOrAbandon(PipelinqRequestRun $run): void {
+		$this->logFailedAttempt(run: $run);
+
+		if ($this->retryPolicy->shouldRetry(attempt: $run->attempt, isTransient: $run->transient) === false) {
+			$this->abandonRequest(run: $run);
+		}
+
+		$this->metrics?->recordRetryAttempt(attempt: $run->attempt);
+		$this->sleep(seconds: $this->retryPolicy->backoffSeconds(attempt: $run->attempt));
+
+	}//end backOffOrAbandon()
+
+	/**
+	 * Log one failed attempt with its status and transient flag.
+	 *
+	 * @param PipelinqRequestRun $run The request in progress.
+	 *
+	 * @return void
+	 */
+	private function logFailedAttempt(PipelinqRequestRun $run): void {
+		$this->logger->warning(
+			'pipelinq request attempt failed',
+			[
+				...$run->logContext(appId: AppIdentity::APP_ID),
+				'attempt' => $run->attempt,
+				'status' => $run->lastStatusCode,
+				'transient' => $run->transient,
+			]
+		);
+
+	}//end logFailedAttempt()
+
+	/**
+	 * Record the failure on the breaker and raise the last failure.
+	 *
+	 * @param PipelinqRequestRun $run The request in progress.
+	 *
+	 * @return never
+	 *
+	 * @throws PipelinqTransportException Always.
+	 */
+	private function abandonRequest(PipelinqRequestRun $run): never {
+		$this->circuitBreaker->recordFailure();
+
+		// ADR-005 ops contract: a 401 from pipelinq means the token
+		// is rejected — every subsequent call will fail the same
+		// way until an admin updates the credentials. Surface this
+		// at ERROR so it crosses the "needs human attention"
+		// threshold of the nextcloud.log subscribers.
+		if ($run->lastStatusCode === 401) {
+			$this->logger->error(
+				'pipelinq authentication rejected — admin must rotate the bearer token',
 				[
-					'app' => AppIdentity::APP_ID,
-					'method' => $method,
-					'path' => $path,
-					'attempt' => $attempt,
-					'status' => $lastStatusCode,
-					'transient' => $transient,
+					...$run->logContext(appId: AppIdentity::APP_ID),
+					'status' => $run->lastStatusCode,
 				]
 			);
+			$this->metrics?->recordPermanentFailure(reason: 'auth');
+		}
 
-			if ($this->retryPolicy->shouldRetry(attempt: $attempt, isTransient: $transient) === false) {
-				$this->circuitBreaker->recordFailure();
+		throw $run->lastException;
 
-				// ADR-005 ops contract: a 401 from pipelinq means the token
-				// is rejected — every subsequent call will fail the same
-				// way until an admin updates the credentials. Surface this
-				// at ERROR so it crosses the "needs human attention"
-				// threshold of the nextcloud.log subscribers.
-				if ($lastStatusCode === 401) {
-					$this->logger->error(
-						'pipelinq authentication rejected — admin must rotate the bearer token',
-						[
-							'app' => AppIdentity::APP_ID,
-							'method' => $method,
-							'path' => $path,
-							'status' => $lastStatusCode,
-						]
-					);
-					$this->metrics?->recordPermanentFailure(reason: 'auth');
-				}
+	}//end abandonRequest()
 
-				throw $lastException;
-			}//end if
-
-			$this->metrics?->recordRetryAttempt(attempt: $attempt);
-			$this->sleep(seconds: $this->retryPolicy->backoffSeconds(attempt: $attempt));
-		}//end while
-
-		// Loop exits only via the throws inside it; reaching here would mean
-		// the retry budget was somehow exhausted without a failure being
-		// recorded -- defensive fallback for the type checker.
+	/**
+	 * Dead-letter a request whose retry budget ran out.
+	 *
+	 * The loop exits only via the throws inside it; reaching here would mean
+	 * the retry budget was somehow exhausted without a failure being
+	 * recorded -- defensive fallback for the type checker.
+	 *
+	 * @param PipelinqRequestRun $run The request in progress.
+	 *
+	 * @return never
+	 *
+	 * @throws PipelinqTransportException Always.
+	 */
+	private function abandonExhaustedBudget(PipelinqRequestRun $run): never {
 		$this->circuitBreaker->recordFailure();
 		$this->logger->error(
 			'pipelinq retry budget exhausted — request abandoned',
 			[
-				'app' => AppIdentity::APP_ID,
-				'method' => $method,
-				'path' => $path,
-				'status' => $lastStatusCode,
+				...$run->logContext(appId: AppIdentity::APP_ID),
+				'status' => $run->lastStatusCode,
 			]
 		);
 		$this->metrics?->recordPermanentFailure(reason: 'dead_letter');
 		throw new PipelinqTransportException(
 			message: 'pipelinq retry budget exhausted',
-			statusCode: $lastStatusCode
+			statusCode: $run->lastStatusCode
 		);
 
-	}//end request()
+	}//end abandonExhaustedBudget()
 
 	/**
 	 * Fetch the klantbeeld transaction history for a contact.
@@ -631,51 +863,83 @@ class PipelinqContactAdapter {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
 	 */
 	public function fetchKlantbeeld(string $externalId, int $limit = 5, int $offset = 0): KlantbeeldResult {
-		$safeLimit = $this->clampLimit(limit: $limit);
-		$safeOffset = max(0, $offset);
-
-		$path = sprintf(
-			'/api/v1/contacts/%s/klantbeeld?limit=%d&offset=%d',
-			rawurlencode($externalId),
-			$safeLimit,
-			$safeOffset
-		);
+		$query         = new KlantbeeldPageQuery(externalId: $externalId);
+		$query->limit  = $this->clampLimit(limit: $limit);
+		$query->offset = max(0, $offset);
 
 		try {
-			$body = $this->request(method: 'GET', path: $path);
+			$body = $this->request(method: 'GET', path: $query->path());
 		} catch (PipelinqTransportException $e) {
-			if ($e->statusCode() === 404) {
-				// Treat "contact has no klantbeeld" as a valid empty page;
-				// the profile fetch (slice 03) is the canonical "contact
-				// missing" check.
-				return KlantbeeldResult::available(transactions: [], limit: $safeLimit, offset: $safeOffset);
-			}
+			return $this->klantbeeldOnFailure(query: $query, error: $e);
+		}
 
-			$this->logger->warning(
-				'pipelinq klantbeeld unavailable',
-				[
-					'app' => AppIdentity::APP_ID,
-					'externalId' => $externalId,
-					'status' => $e->statusCode(),
-					'breaker' => $this->circuitBreaker->state(),
-				]
-			);
+		return $this->klantbeeldFromBody(query: $query, body: $body);
 
-			return KlantbeeldResult::unavailable(limit: $safeLimit, offset: $safeOffset);
-		}//end try
+	}//end fetchKlantbeeld()
 
+	/**
+	 * Answer a failed klantbeeld read: an empty page on 404, else unavailable.
+	 *
+	 * @param KlantbeeldPageQuery        $query The page that was requested.
+	 * @param PipelinqTransportException $error The read failure.
+	 *
+	 * @return KlantbeeldResult
+	 */
+	private function klantbeeldOnFailure(KlantbeeldPageQuery $query, PipelinqTransportException $error): KlantbeeldResult {
+		if ($error->statusCode() === 404) {
+			// Treat "contact has no klantbeeld" as a valid empty page;
+			// the profile fetch (slice 03) is the canonical "contact
+			// missing" check.
+			return $query->available(transactions: []);
+		}
+
+		$this->logger->warning(
+			'pipelinq klantbeeld unavailable',
+			[
+				'app' => AppIdentity::APP_ID,
+				'externalId' => $query->externalId,
+				'status' => $error->statusCode(),
+				'breaker' => $this->circuitBreaker->state(),
+			]
+		);
+
+		return $query->unavailable();
+
+	}//end klantbeeldOnFailure()
+
+	/**
+	 * Build the page from a decoded klantbeeld body.
+	 *
+	 * @param KlantbeeldPageQuery  $query The page that was requested.
+	 * @param array<string, mixed> $body  The decoded response body.
+	 *
+	 * @return KlantbeeldResult
+	 */
+	private function klantbeeldFromBody(KlantbeeldPageQuery $query, array $body): KlantbeeldResult {
 		$rows = ($body['transactions'] ?? null);
 		if (is_array($rows) === false) {
 			$this->logger->warning(
 				'pipelinq klantbeeld response missing transactions array',
 				[
 					'app' => AppIdentity::APP_ID,
-					'externalId' => $externalId,
+					'externalId' => $query->externalId,
 				]
 			);
-			return KlantbeeldResult::unavailable(limit: $safeLimit, offset: $safeOffset);
+			return $query->unavailable();
 		}
 
+		return $query->available(transactions: $this->parseTransactions(rows: $rows));
+
+	}//end klantbeeldFromBody()
+
+	/**
+	 * Parse the array rows of a klantbeeld page; other rows are skipped.
+	 *
+	 * @param array<mixed> $rows The raw `transactions` array.
+	 *
+	 * @return array<int, KlantbeeldTransaction>
+	 */
+	private function parseTransactions(array $rows): array {
 		$transactions = [];
 		foreach ($rows as $row) {
 			if (is_array($row) === false) {
@@ -685,13 +949,9 @@ class PipelinqContactAdapter {
 			$transactions[] = KlantbeeldTransaction::fromArray(row: $row);
 		}
 
-		return KlantbeeldResult::available(
-			transactions: $transactions,
-			limit: $safeLimit,
-			offset: $safeOffset
-		);
+		return $transactions;
 
-	}//end fetchKlantbeeld()
+	}//end parseTransactions()
 
 	/**
 	 * Publish a timeline event to pipelinq.
@@ -768,60 +1028,116 @@ class PipelinqContactAdapter {
 				payload: $payload
 			);
 		} catch (PipelinqTransportException $e) {
-			// 401 is a permanent failure — the configured token is
-			// invalid / revoked. Log ERROR with the *config key* (not
-			// the token value, ADR-005) so an operator can rotate the
-			// secret. Slice 08's spec REQ also requires no retry; the
-			// listener honours that by NOT enqueueing on AuthRejected.
-			if ($e->statusCode() === 401) {
-				$this->logger->error(
-					'Invalid pipelinq API token; check config',
-					[
-						'app' => AppIdentity::APP_ID,
-						'configKey' => self::CONFIG_KEY_TOKEN,
-						'type' => $event->type(),
-						'externalId' => $event->externalId(),
-						'contactId' => $event->contactId(),
-						'status' => 401,
-					]
-				);
-				return TimelinePublishOutcome::AuthRejected;
-			}
+			return $this->publishFailureOutcome(event: $event, error: $e);
+		}
 
-			if ($e->isCircuitOpen() === true) {
-				$reason = 'breaker_open';
-			} else {
-				$reason = 'transport';
-			}
+		return $this->recordPublishSuccess(event: $event);
+	}//end publishWithOutcome()
 
-			$this->logger->warning(
-				'pipelinq timeline publish failed',
-				[
-					'app' => AppIdentity::APP_ID,
-					'type' => $event->type(),
-					'externalId' => $event->externalId(),
-					'contactId' => $event->contactId(),
-					'status' => $e->statusCode(),
-					'breaker' => $this->circuitBreaker->state(),
-					'reason' => $reason,
-				]
-			);
-			return TimelinePublishOutcome::Transient;
-		}//end try
-
+	/**
+	 * Log and count a successful publish.
+	 *
+	 * @param TimelineEventDto $event The published event.
+	 *
+	 * @return TimelinePublishOutcome
+	 */
+	private function recordPublishSuccess(TimelineEventDto $event): TimelinePublishOutcome {
 		$this->logger->info(
 			'pipelinq timeline publish succeeded',
-			[
-				'app' => AppIdentity::APP_ID,
-				'type' => $event->type(),
-				'externalId' => $event->externalId(),
-				'contactId' => $event->contactId(),
-			]
+			$this->timelineLogContext(event: $event)
 		);
 		$this->metrics?->recordTimelinePublishSuccess();
 
 		return TimelinePublishOutcome::Success;
-	}//end publishWithOutcome()
+
+	}//end recordPublishSuccess()
+
+	/**
+	 * Log a failed publish and classify it as auth-rejected or transient.
+	 *
+	 * @param TimelineEventDto           $event The event that failed to publish.
+	 * @param PipelinqTransportException $error The publish failure.
+	 *
+	 * @return TimelinePublishOutcome
+	 */
+	private function publishFailureOutcome(TimelineEventDto $event, PipelinqTransportException $error): TimelinePublishOutcome {
+		// 401 is a permanent failure — the configured token is
+		// invalid / revoked. Log ERROR with the *config key* (not
+		// the token value, ADR-005) so an operator can rotate the
+		// secret. Slice 08's spec REQ also requires no retry; the
+		// listener honours that by NOT enqueueing on AuthRejected.
+		if ($error->statusCode() === 401) {
+			return $this->rejectInvalidToken(event: $event);
+		}
+
+		$this->logger->warning(
+			'pipelinq timeline publish failed',
+			[
+				...$this->timelineLogContext(event: $event),
+				'status' => $error->statusCode(),
+				'breaker' => $this->circuitBreaker->state(),
+				'reason' => $this->publishFailureReason(error: $error),
+			]
+		);
+		return TimelinePublishOutcome::Transient;
+
+	}//end publishFailureOutcome()
+
+	/**
+	 * Log a 401 publish at ERROR, naming the config key and never the token.
+	 *
+	 * @param TimelineEventDto $event The event that was refused.
+	 *
+	 * @return TimelinePublishOutcome
+	 */
+	private function rejectInvalidToken(TimelineEventDto $event): TimelinePublishOutcome {
+		$this->logger->error(
+			'Invalid pipelinq API token; check config',
+			[
+				'app' => AppIdentity::APP_ID,
+				'configKey' => self::CONFIG_KEY_TOKEN,
+				'type' => $event->type(),
+				'externalId' => $event->externalId(),
+				'contactId' => $event->contactId(),
+				'status' => 401,
+			]
+		);
+		return TimelinePublishOutcome::AuthRejected;
+
+	}//end rejectInvalidToken()
+
+	/**
+	 * The failure reason logged for a transient publish failure.
+	 *
+	 * @param PipelinqTransportException $error The publish failure.
+	 *
+	 * @return string 'breaker_open' or 'transport'.
+	 */
+	private function publishFailureReason(PipelinqTransportException $error): string {
+		if ($error->isCircuitOpen() === true) {
+			return 'breaker_open';
+		}
+
+		return 'transport';
+
+	}//end publishFailureReason()
+
+	/**
+	 * Log context naming a timeline event: app, type, externalId, contactId.
+	 *
+	 * @param TimelineEventDto $event The event.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function timelineLogContext(TimelineEventDto $event): array {
+		return [
+			'app' => AppIdentity::APP_ID,
+			'type' => $event->type(),
+			'externalId' => $event->externalId(),
+			'contactId' => $event->contactId(),
+		];
+
+	}//end timelineLogContext()
 
 	/**
 	 * Clamp the caller-supplied limit to the spec range (1..100, default 5).

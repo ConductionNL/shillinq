@@ -64,6 +64,25 @@ final class EInvoiceValidationService {
 	private const VAT_PATTERN = '/^NL\d{9}B\d{2}$/';
 
 	/**
+	 * Every finding: code => [field, message].
+	 *
+	 * @var array<string,array{0:string,1:string}>
+	 */
+	private const ISSUES = [
+		'kvk_invalid' => ['buyerLegalRegId', 'KvK number must be exactly 8 digits'],
+		'vat_format_invalid' => ['buyerVatId', 'BTW-nummer must match the NL pattern (NL999999999B99)'],
+		'vies_outage' => [
+			'buyerVatId',
+			'VIES is temporarily unavailable — BTW-nummer format is valid; proceeding without live confirmation',
+		],
+		'vat_vies_invalid' => ['buyerVatId', 'BTW-nummer failed VIES verification'],
+		'peppol_participant_not_found' => [
+			'buyerPeppolParticipantId',
+			'No Peppol participant found for this debtor — falling back to PDF + email',
+		],
+	];
+
+	/**
 	 * Construct the validation service.
 	 *
 	 * @param ViesService $vies VIES VAT-ID validator (reused, REQ-EINV-003).
@@ -90,64 +109,100 @@ final class EInvoiceValidationService {
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 	 */
 	public function validate(string $administrationId, array $arInvoice): array {
-		$errors = [];
-		$warnings = [];
-
-		$kvk = trim((string)($arInvoice['buyerLegalRegId'] ?? ''));
-		if (preg_match(self::KVK_PATTERN, $kvk) !== 1) {
-			$errors[] = [
-				'field' => 'buyerLegalRegId',
-				'code' => 'kvk_invalid',
-				'message' => 'KvK number must be exactly 8 digits',
-			];
-		}
-
-		$vatId = trim((string)($arInvoice['buyerVatId'] ?? ''));
-		if (preg_match(self::VAT_PATTERN, $vatId) !== 1) {
-			$errors[] = [
-				'field' => 'buyerVatId',
-				'code' => 'vat_format_invalid',
-				'message' => 'BTW-nummer must match the NL pattern (NL999999999B99)',
-			];
-		} else {
-			$viesResult = $this->vies->validate(administrationId: $administrationId, vatId: $vatId);
-			if ($viesResult['outage'] === true && $viesResult['valid'] !== true) {
-				$warnings[] = [
-					'field' => 'buyerVatId',
-					'code' => 'vies_outage',
-					'message' => 'VIES is temporarily unavailable — BTW-nummer format is valid; proceeding without live confirmation',
-				];
-			} elseif ($viesResult['valid'] !== true) {
-				$errors[] = [
-					'field' => 'buyerVatId',
-					'code' => 'vat_vies_invalid',
-					'message' => 'BTW-nummer failed VIES verification',
-				];
-			}
-		}//end if
-
+		$check = new DebtorCheck();
+		$check->administrationId = $administrationId;
+		$this->checkKvk(check: $check, arInvoice: $arInvoice);
+		$this->checkVatId(check: $check, arInvoice: $arInvoice);
 		$participantId = null;
-		if ($errors === []) {
-			$customerId = trim((string)($arInvoice['customerId'] ?? ''));
-			$participantId = $this->peppolPort->lookupParticipant(
-				administrationId: $administrationId,
-				partyId: $customerId
-			);
-			if ($participantId === null) {
-				$warnings[] = [
-					'field' => 'buyerPeppolParticipantId',
-					'code' => 'peppol_participant_not_found',
-					'message' => 'No Peppol participant found for this debtor — falling back to PDF + email',
-				];
-			}
+		if ($check->errors === []) {
+			$participantId = $this->peppolParticipant(check: $check, arInvoice: $arInvoice);
 		}
 
-		return [
-			'valid' => ($errors === []),
-			'errors' => $errors,
-			'warnings' => $warnings,
-			'peppolParticipantId' => $participantId,
-		];
+		return ['valid' => ($check->errors === []), 'errors' => $check->errors, 'warnings' => $check->warnings, 'peppolParticipantId' => $participantId];
 
 	}//end validate()
+
+	/**
+	 * Refuse a KvK number that is not exactly 8 digits.
+	 *
+	 * @param DebtorCheck         $check     The findings so far.
+	 * @param array<string,mixed> $arInvoice The ARInvoice record.
+	 *
+	 * @return void
+	 */
+	private function checkKvk(DebtorCheck $check, array $arInvoice): void {
+		if (preg_match(self::KVK_PATTERN, trim((string)($arInvoice['buyerLegalRegId'] ?? ''))) !== 1) {
+			$check->errors[] = $this->issue(code: 'kvk_invalid');
+		}
+	}//end checkKvk()
+
+	/**
+	 * Refuse a malformed BTW-nummer; confirm a well-formed one with VIES, which
+	 * only warns while it is down.
+	 *
+	 * @param DebtorCheck         $check     The findings so far.
+	 * @param array<string,mixed> $arInvoice The ARInvoice record.
+	 *
+	 * @return void
+	 */
+	private function checkVatId(DebtorCheck $check, array $arInvoice): void {
+		$vatId = trim((string)($arInvoice['buyerVatId'] ?? ''));
+		if (preg_match(self::VAT_PATTERN, $vatId) !== 1) {
+			$check->errors[] = $this->issue(code: 'vat_format_invalid');
+			return;
+		}
+
+		$this->confirmWithVies(check: $check, vatId: $vatId);
+	}//end checkVatId()
+
+	/**
+	 * Confirm a well-formed BTW-nummer with VIES: an outage only warns.
+	 *
+	 * @param DebtorCheck $check The findings so far.
+	 * @param string      $vatId The well-formed BTW-nummer.
+	 *
+	 * @return void
+	 */
+	private function confirmWithVies(DebtorCheck $check, string $vatId): void {
+		$viesResult = $this->vies->validate(administrationId: $check->administrationId, vatId: $vatId);
+		if ($viesResult['valid'] === true) {
+			return;
+		}
+
+		if ($viesResult['outage'] === true) {
+			$check->warnings[] = $this->issue(code: 'vies_outage');
+			return;
+		}
+
+		$check->errors[] = $this->issue(code: 'vat_vies_invalid');
+	}//end confirmWithVies()
+
+	/**
+	 * The debtor's Peppol participant id, warning when there is none.
+	 *
+	 * @param DebtorCheck         $check     The findings so far.
+	 * @param array<string,mixed> $arInvoice The ARInvoice record.
+	 *
+	 * @return string|null
+	 */
+	private function peppolParticipant(DebtorCheck $check, array $arInvoice): string|null {
+		$customerId = trim((string)($arInvoice['customerId'] ?? ''));
+		$participantId = $this->peppolPort->lookupParticipant(administrationId: $check->administrationId, partyId: $customerId);
+		if ($participantId === null) {
+			$check->warnings[] = $this->issue(code: 'peppol_participant_not_found');
+		}
+
+		return $participantId;
+	}//end peppolParticipant()
+
+	/**
+	 * One finding, by code.
+	 *
+	 * @param string $code The finding code (a key of ISSUES).
+	 *
+	 * @return array{field:string,code:string,message:string}
+	 */
+	private function issue(string $code): array {
+		return ['field' => self::ISSUES[$code][0], 'code' => $code, 'message' => self::ISSUES[$code][1]];
+	}//end issue()
 }//end class

@@ -64,6 +64,17 @@ class WmoComplianceCalculator {
 	public const REVIEW_INTERVAL_DAYS = 365;
 
 	/**
+	 * The verdict for an activity without a recorded tarief: not compliant, no marge.
+	 *
+	 * @var array{compliant: bool, marge: float, margePercentage: float}
+	 */
+	private const NO_TARIFF_VERDICT = [
+		'compliant' => false,
+		'marge' => 0.0,
+		'margePercentage' => 0.0,
+	];
+
+	/**
 	 * Convert a money amount to integer cents (precision rule).
 	 *
 	 * @param mixed $amount Money amount (float|int|numeric-string|null).
@@ -198,30 +209,16 @@ class WmoComplianceCalculator {
 	 */
 	public function complianceVerdict(?float $appliedRate, float $totalCost, ?float $costPricePerUnit = null): array {
 		if ($appliedRate === null) {
-			return [
-				'compliant' => false,
-				'marge' => 0.0,
-				'margePercentage' => 0.0,
-			];
+			return self::NO_TARIFF_VERDICT;
 		}
 
-		$reference = $totalCost;
-		if ($costPricePerUnit !== null) {
-			$reference = $costPricePerUnit;
-		}
-
+		$reference = ($costPricePerUnit ?? $totalCost);
 		$margeCents = ($this->toCents(amount: $appliedRate) - $this->toCents(amount: $reference));
-		$referenceCents = $this->toCents(amount: $reference);
-
-		$margePercentage = 0.0;
-		if ($referenceCents > 0) {
-			$margePercentage = round((($margeCents / $referenceCents) * 100), 2);
-		}
 
 		return [
 			'compliant' => ($margeCents >= 0),
 			'marge' => $this->fromCents(cents: $margeCents),
-			'margePercentage' => $margePercentage,
+			'margePercentage' => $this->margePercentage(margeCents: $margeCents, referenceCents: $this->toCents(amount: $reference)),
 		];
 
 	}//end complianceVerdict()
@@ -245,38 +242,77 @@ class WmoComplianceCalculator {
 	 */
 	public function splitTransaction(float $originalAmount, array $ruleTargets): array {
 		$originalCents = $this->toCents(amount: $originalAmount);
-		$splits = [];
-		$assignedCents = 0;
-		$largestIndex = 0;
-		$largestCents = -1;
-
-		foreach (array_values($ruleTargets) as $index => $target) {
-			$ratio = (float)($target['ratio'] ?? 0);
-			$cents = (int)round($originalCents * $ratio);
-			$assignedCents += $cents;
-			if ($cents > $largestCents) {
-				$largestCents = $cents;
-				$largestIndex = $index;
-			}
-
-			$splits[] = [
-				'costObject' => (string)($target['costObject'] ?? ''),
-				'ratio' => $ratio,
-				'amount' => $this->fromCents(cents: $cents),
-				'generalLedger' => ($target['generalLedger'] ?? null),
-				'dimension' => (string)($target['dimension'] ?? ''),
-			];
-		}
+		$targets = array_values($ruleTargets);
+		$cents = array_map(static fn ($target): int => (int)round($originalCents * (float)($target['ratio'] ?? 0)), $targets);
+		$splits = array_map(fn ($target, int $amountCents): array => $this->splitLine(target: $target, cents: $amountCents), $targets, $cents);
 
 		// Conserve the total: push any rounding remainder onto the largest split.
-		$remainder = ($originalCents - $assignedCents);
+		$remainder = ($originalCents - array_sum($cents));
 		if ($remainder !== 0 && $splits !== []) {
+			$largestIndex = $this->largestIndex(cents: $cents);
 			$correctedCents = ($this->toCents(amount: $splits[$largestIndex]['amount']) + $remainder);
 			$splits[$largestIndex]['amount'] = $this->fromCents(cents: $correctedCents);
 		}
 
 		return $splits;
 	}//end splitTransaction()
+
+	/**
+	 * The marge as a percentage of the reference, 0 when the reference is not positive.
+	 *
+	 * @param int $margeCents     The marge in cents.
+	 * @param int $referenceCents The reference price in cents.
+	 *
+	 * @return float The percentage, rounded to 2 decimals.
+	 */
+	private function margePercentage(int $margeCents, int $referenceCents): float {
+		if ($referenceCents > 0) {
+			return round((($margeCents / $referenceCents) * 100), 2);
+		}
+
+		return 0.0;
+
+	}//end margePercentage()
+
+	/**
+	 * One split line of an allocation target.
+	 *
+	 * @param mixed $target The allocation target.
+	 * @param int   $cents  The target's share in cents.
+	 *
+	 * @return array<string,mixed> The split line.
+	 */
+	private function splitLine(mixed $target, int $cents): array {
+		return [
+			'costObject' => (string)($target['costObject'] ?? ''),
+			'ratio' => (float)($target['ratio'] ?? 0),
+			'amount' => $this->fromCents(cents: $cents),
+			'generalLedger' => ($target['generalLedger'] ?? null),
+			'dimension' => (string)($target['dimension'] ?? ''),
+		];
+
+	}//end splitLine()
+
+	/**
+	 * The index of the first largest share; the first index when no share is above -1 cent.
+	 *
+	 * @param list<int> $cents The shares in cents.
+	 *
+	 * @return int The index.
+	 */
+	private function largestIndex(array $cents): int {
+		$largestIndex = 0;
+		$largestCents = -1;
+		foreach ($cents as $index => $share) {
+			if ($share > $largestCents) {
+				$largestCents = $share;
+				$largestIndex = $index;
+			}
+		}
+
+		return $largestIndex;
+
+	}//end largestIndex()
 
 	/**
 	 * Verify split amounts conserve the original transaction total to the cent.

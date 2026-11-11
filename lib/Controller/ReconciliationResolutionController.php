@@ -123,65 +123,107 @@ class ReconciliationResolutionController extends Controller {
 			);
 		}
 
-		$resolutionStatus = trim((string)$this->request->getParam('resolutionStatus', ''));
-		$resolutionReason = trim((string)$this->request->getParam('resolutionReason', ''));
+		return $this->resolveOne(reconId: $reconId, matchId: $matchId);
+	}//end resolve()
 
-		$validation = $this->validatePayload(
-			resolutionStatus: $resolutionStatus,
-			resolutionReason: $resolutionReason,
-		);
+	/**
+	 * Validate the posted decision, require a session and resolve one match.
+	 *
+	 * @param string $reconId The reconciliation.
+	 * @param string $matchId The match.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+	 */
+	private function resolveOne(string $reconId, string $matchId): JSONResponse {
+		$decision = new ResolutionDecision(request: $this->request);
+		$validation = $this->validatePayload(decision: $decision);
 		if ($validation !== null) {
 			return $validation;
 		}
 
-		$this->requireAuthenticatedSession();
-		$actor = $this->resolveActor();
+		return $this->resolvedMatch(run: $this->resolutionRun(reconId: $reconId, decision: $decision), matchId: $matchId);
+	}//end resolveOne()
 
+	/**
+	 * Resolve one match: 200 with the updated match, or the failure's answer.
+	 *
+	 * @param ResolutionRun $run     The run.
+	 * @param string        $matchId The match.
+	 *
+	 * @return JSONResponse
+	 */
+	private function resolvedMatch(ResolutionRun $run, string $matchId): JSONResponse {
 		try {
-			$updated = $this->service->resolveMatch(
-				reconId: $reconId,
-				matchId: $matchId,
-				resolutionStatus: $resolutionStatus,
-				resolutionReason: $resolutionReason,
-				actor: $actor,
-			);
-		} catch (\OutOfBoundsException $e) {
-			$this->logger->error(
-				'ReconciliationResolutionController: resolve target not found',
-				['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to find the reconciliation match'),
-					'error' => 'reconciliation-match-not-found',
-				],
-				Http::STATUS_NOT_FOUND,
-			);
-		} catch (\DomainException $e) {
-			$this->logger->error(
-				'ReconciliationResolutionController: resolve rejected by domain rule',
-				['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to resolve a match on a locked reconciliation'),
-					'error' => 'reconciliation-match-locked',
-				],
-				Http::STATUS_CONFLICT,
-			);
+			$updated = $this->applyTo(run: $run, matchId: $matchId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ReconciliationResolutionController: resolve failed',
-				['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['error' => 'resolution failed; see server log'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return $this->resolveFailed(e: $e, context: $run->logContext(matchId: $matchId, e: $e));
+		}
 
 		return new JSONResponse($updated, Http::STATUS_OK);
-	}//end resolve()
+	}//end resolvedMatch()
+
+	/**
+	 * Answer a failed resolve: 404 when the match is missing, 409 when a
+	 * domain rule (a locked reconciliation) refuses it, else a 500. Each is logged.
+	 *
+	 * @param \Throwable            $e       The failure.
+	 * @param array<string, string> $context The reconciliation and match, as log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function resolveFailed(\Throwable $e, array $context): JSONResponse {
+		if ($e instanceof \OutOfBoundsException) {
+			return $this->matchNotFound(context: $context);
+		}
+
+		if ($e instanceof \DomainException) {
+			return $this->matchLocked(context: $context);
+		}
+
+		$this->logger->error('ReconciliationResolutionController: resolve failed', $context);
+		return new JSONResponse(
+			['error' => 'resolution failed; see server log'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end resolveFailed()
+
+	/**
+	 * Log and answer a match that cannot be found.
+	 *
+	 * @param array<string, string> $context The reconciliation and match, as log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function matchNotFound(array $context): JSONResponse {
+		$this->logger->error('ReconciliationResolutionController: resolve target not found', $context);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to find the reconciliation match'),
+				'error' => 'reconciliation-match-not-found',
+			],
+			Http::STATUS_NOT_FOUND,
+		);
+	}//end matchNotFound()
+
+	/**
+	 * Log and answer a match a domain rule refuses to resolve.
+	 *
+	 * @param array<string, string> $context The reconciliation and match, as log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function matchLocked(array $context): JSONResponse {
+		$this->logger->error('ReconciliationResolutionController: resolve rejected by domain rule', $context);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to resolve a match on a locked reconciliation'),
+				'error' => 'reconciliation-match-locked',
+			],
+			Http::STATUS_CONFLICT,
+		);
+	}//end matchLocked()
 
 	/**
 	 * Bulk-resolve a list of unmatched items (REQ-REC-008 scenario "Unmatched
@@ -218,58 +260,117 @@ class ReconciliationResolutionController extends Controller {
 		}
 
 		$matchIdsParam = $this->request->getParam('matchIds');
-		if (is_array($matchIdsParam) === false || empty($matchIdsParam) === true) {
+		$refusal = $this->matchIdsRefusal(matchIds: $matchIdsParam);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->resolveMany(reconId: $reconId, matchIds: $matchIdsParam);
+
+	}//end bulkResolve()
+
+	/**
+	 * The 400 unless the posted match ids are a non-empty array.
+	 *
+	 * @param mixed $matchIds The posted match ids.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function matchIdsRefusal(mixed $matchIds): ?JSONResponse {
+		if (is_array($matchIds) === false || empty($matchIds) === true) {
 			return new JSONResponse(
 				['error' => 'matchIds must be a non-empty array'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		$resolutionStatus = trim((string)$this->request->getParam('resolutionStatus', ''));
-		$resolutionReason = trim((string)$this->request->getParam('resolutionReason', ''));
+		return null;
+	}//end matchIdsRefusal()
 
-		$validation = $this->validatePayload(
-			resolutionStatus: $resolutionStatus,
-			resolutionReason: $resolutionReason,
-		);
+	/**
+	 * Validate the posted decision, require a session and resolve every match.
+	 *
+	 * @param string            $reconId  The reconciliation.
+	 * @param array<int, mixed> $matchIds The posted match ids.
+	 *
+	 * @return JSONResponse 200 with the applied count and the per-match failures.
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+	 */
+	private function resolveMany(string $reconId, array $matchIds): JSONResponse {
+		$decision = new ResolutionDecision(request: $this->request);
+		$validation = $this->validatePayload(decision: $decision);
 		if ($validation !== null) {
 			return $validation;
 		}
 
-		$this->requireAuthenticatedSession();
-		$actor = $this->resolveActor();
-		$applied = 0;
-		$failed = [];
-		foreach ($matchIdsParam as $rawId) {
-			$matchId = trim((string)$rawId);
-			if ($matchId === '') {
-				continue;
-			}
-
-			try {
-				$this->service->resolveMatch(
-					reconId: $reconId,
-					matchId: $matchId,
-					resolutionStatus: $resolutionStatus,
-					resolutionReason: $resolutionReason,
-					actor: $actor,
-				);
-				$applied++;
-			} catch (\Throwable $e) {
-				$this->logger->error(
-					'ReconciliationResolutionController: bulk resolve failed for one match',
-					['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
-				);
-				$failed[$matchId] = $this->safeFailureMessage(exception: $e);
-			}
+		$run = $this->resolutionRun(reconId: $reconId, decision: $decision);
+		foreach ($matchIds as $rawId) {
+			$this->resolveEach(run: $run, matchId: trim((string)$rawId));
 		}
 
 		return new JSONResponse(
-			['applied' => $applied, 'failed' => $failed],
+			['applied' => $run->applied, 'failed' => $run->failed],
 			Http::STATUS_OK
 		);
+	}//end resolveMany()
 
-	}//end bulkResolve()
+	/**
+	 * Resolve one match of a bulk request, isolating its failure (logged,
+	 * with a safe message). A blank id is skipped.
+	 *
+	 * @param ResolutionRun $run     The run, tallying the outcome.
+	 * @param string        $matchId The trimmed match id.
+	 *
+	 * @return void
+	 */
+	private function resolveEach(ResolutionRun $run, string $matchId): void {
+		if ($matchId === '') {
+			return;
+		}
+
+		try {
+			$this->applyTo(run: $run, matchId: $matchId);
+			$run->applied++;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ReconciliationResolutionController: bulk resolve failed for one match',
+				$run->logContext(matchId: $matchId, e: $e)
+			);
+			$run->failed[$matchId] = $this->safeFailureMessage(exception: $e);
+		}
+	}//end resolveEach()
+
+	/**
+	 * Require a session (403 otherwise) and start the run as its user.
+	 *
+	 * @param string             $reconId  The reconciliation.
+	 * @param ResolutionDecision $decision The validated decision.
+	 *
+	 * @return ResolutionRun
+	 */
+	private function resolutionRun(string $reconId, ResolutionDecision $decision): ResolutionRun {
+		$this->requireAuthenticatedSession();
+		return new ResolutionRun(reconId: $reconId, decision: $decision, actor: $this->resolveActor());
+	}//end resolutionRun()
+
+	/**
+	 * Resolve one match through the service.
+	 *
+	 * @param ResolutionRun $run     The run.
+	 * @param string        $matchId The match.
+	 *
+	 * @return array<string, mixed> The updated match.
+	 */
+	private function applyTo(ResolutionRun $run, string $matchId): array {
+		return $this->service->resolveMatch(
+			reconId: $run->reconId,
+			matchId: $matchId,
+			resolutionStatus: $run->decision->status,
+			resolutionReason: $run->decision->reason,
+			actor: $run->actor,
+		);
+	}//end applyTo()
 
 	/**
 	 * Map a per-id bulk failure onto a message that is safe to return to the
@@ -302,20 +403,19 @@ class ReconciliationResolutionController extends Controller {
 	 * JSONResponse when validation fails, null when the payload is
 	 * acceptable.
 	 *
-	 * @param string $resolutionStatus The submitted classification.
-	 * @param string $resolutionReason The submitted operator note.
+	 * @param ResolutionDecision $decision The submitted classification and operator note.
 	 *
 	 * @return JSONResponse|null
 	 */
-	private function validatePayload(string $resolutionStatus, string $resolutionReason): ?JSONResponse {
-		if (in_array($resolutionStatus, self::ALLOWED_STATUSES, true) === false) {
+	private function validatePayload(ResolutionDecision $decision): ?JSONResponse {
+		if (in_array($decision->status, self::ALLOWED_STATUSES, true) === false) {
 			return new JSONResponse(
 				['error' => 'resolutionStatus must be one of: ' . implode(', ', self::ALLOWED_STATUSES)],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		if ($resolutionReason === '') {
+		if ($decision->reason === '') {
 			return new JSONResponse(
 				['error' => 'resolutionReason is required (audit-trailed per REQ-REC-004)'],
 				Http::STATUS_BAD_REQUEST

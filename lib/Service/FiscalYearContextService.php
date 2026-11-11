@@ -103,15 +103,8 @@ class FiscalYearContextService {
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
-	public function resolveActiveWindow(
-		string $administrationId,
-		?DateTimeInterface $now = null,
-	): ?array {
-		if ($administrationId === '') {
-			return null;
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+	public function resolveActiveWindow(string $administrationId, ?DateTimeInterface $now = null): ?array {
+		if ($this->isReadable(administrationId: $administrationId) === false) {
 			return null;
 		}
 
@@ -122,13 +115,21 @@ class FiscalYearContextService {
 
 		$reference = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
 
-		return $this->windowFor(
-			administrationId: $administrationId,
-			administration: $administration,
-			reference: $reference
-		);
+		return ['administrationId' => $administrationId] + $this->windowFor(administration: $administration, reference: $reference);
 
 	}//end resolveActiveWindow()
+
+	/**
+	 * Whether an administration id is given and the caller may read it.
+	 *
+	 * @param string $administrationId Administration id (REQ-MA-001).
+	 *
+	 * @return boolean
+	 */
+	private function isReadable(string $administrationId): bool {
+		return $administrationId !== '' && $this->administrationContext->canAccess(administrationId: $administrationId) === true;
+
+	}//end isReadable()
 
 	/**
 	 * Resolve the active fiscal-year window for the user's default administration.
@@ -169,14 +170,8 @@ class FiscalYearContextService {
 	 */
 	public function fiscalYearFor(array $administration, ?DateTimeInterface $now = null): int {
 		$reference = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-		$startMonth = $this->coerceMonth(value: ($administration['fiscalYearStartMonth'] ?? 1));
-		$startDay = $this->coerceDay(value: ($administration['fiscalYearStartDay'] ?? 1));
 
-		return $this->computeFiscalYear(
-			reference: $reference,
-			startMonth: $startMonth,
-			startDay: $startDay
-		);
+		return $this->computeFiscalYear(reference: $reference, start: $this->fiscalYearStart(administration: $administration));
 
 	}//end fiscalYearFor()
 
@@ -191,8 +186,7 @@ class FiscalYearContextService {
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
 	public function windowForFiscalYear(array $administration, int $fiscalYear): array {
-		$startMonth = $this->coerceMonth(value: ($administration['fiscalYearStartMonth'] ?? 1));
-		$startDay = $this->coerceDay(value: ($administration['fiscalYearStartDay'] ?? 1));
+		[$startMonth, $startDay] = $this->fiscalYearStart(administration: $administration);
 
 		// For calendar-year (1/1), startDate=FY-01-01, endDate=(FY+1)-01-01.
 		// For July-start, startMonth=7: the FY "ends" in $fiscalYear so it
@@ -202,40 +196,42 @@ class FiscalYearContextService {
 			$startYear = ($fiscalYear - 1);
 		}
 
-		$start = sprintf('%04d-%02d-%02d', $startYear, $startMonth, $startDay);
-		$end = sprintf('%04d-%02d-%02d', ($startYear + 1), $startMonth, $startDay);
-
 		return [
 			'fiscalYear' => $fiscalYear,
-			'startDate' => $start,
-			'endDate' => $end,
+			'startDate' => sprintf('%04d-%02d-%02d', $startYear, $startMonth, $startDay),
+			'endDate' => sprintf('%04d-%02d-%02d', ($startYear + 1), $startMonth, $startDay),
 		];
 
 	}//end windowForFiscalYear()
 
 	/**
-	 * Build the active window dictionary for an administration.
+	 * The administration's fiscal-year start month and day, each falling back
+	 * to 1 when absent or out of range.
 	 *
-	 * @param string $administrationId Administration id.
+	 * @param array<string,mixed> $administration Administration record.
+	 *
+	 * @return array{0:int,1:int} [month, day].
+	 */
+	private function fiscalYearStart(array $administration): array {
+		return [
+			$this->coerceBounded(value: ($administration['fiscalYearStartMonth'] ?? 1), max: 12),
+			$this->coerceBounded(value: ($administration['fiscalYearStartDay'] ?? 1), max: 31),
+		];
+
+	}//end fiscalYearStart()
+
+	/**
+	 * Build the active window for an administration record.
+	 *
 	 * @param array<string,mixed> $administration Administration record.
 	 * @param DateTimeInterface $reference Reference instant.
 	 *
-	 * @return array{fiscalYear:int,startDate:string,endDate:string,administrationId:string}
+	 * @return array{fiscalYear:int,startDate:string,endDate:string}
 	 */
-	private function windowFor(
-		string $administrationId,
-		array $administration,
-		DateTimeInterface $reference,
-	): array {
+	private function windowFor(array $administration, DateTimeInterface $reference): array {
 		$fiscalYear = $this->fiscalYearFor(administration: $administration, now: $reference);
-		$window = $this->windowForFiscalYear(administration: $administration, fiscalYear: $fiscalYear);
 
-		return [
-			'administrationId' => $administrationId,
-			'fiscalYear' => $window['fiscalYear'],
-			'startDate' => $window['startDate'],
-			'endDate' => $window['endDate'],
-		];
+		return $this->windowForFiscalYear(administration: $administration, fiscalYear: $fiscalYear);
 
 	}//end windowFor()
 
@@ -247,32 +243,39 @@ class FiscalYearContextService {
 	 * to the *upcoming* fiscal year (which ends in calendar year+1).
 	 *
 	 * @param DateTimeInterface $reference Reference instant.
-	 * @param int $startMonth Fiscal year start month (1-12).
-	 * @param int $startDay Fiscal year start day (1-31).
+	 * @param array{0:int,1:int} $start Fiscal year start [month (1-12), day (1-31)].
 	 *
 	 * @return int
 	 */
-	private function computeFiscalYear(
-		DateTimeInterface $reference,
-		int $startMonth,
-		int $startDay,
-	): int {
+	private function computeFiscalYear(DateTimeInterface $reference, array $start): int {
 		$year = (int)$reference->format('Y');
-		$month = (int)$reference->format('n');
-		$day = (int)$reference->format('j');
-
-		if ($startMonth === 1 && $startDay === 1) {
+		if ($start === [1, 1]) {
 			return $year;
 		}
 
 		// Non-calendar fiscal year: if reference is past the start date this
 		// calendar year, the FY ends next year; otherwise it ends this year.
-		if ($month > $startMonth || ($month === $startMonth && $day >= $startDay)) {
+		if ($this->reachedStart(reference: $reference, start: $start) === true) {
 			return ($year + 1);
 		}
 
 		return $year;
 	}//end computeFiscalYear()
+
+	/**
+	 * Whether the reference lies on or after this calendar year's start date.
+	 *
+	 * @param DateTimeInterface  $reference Reference instant.
+	 * @param array{0:int,1:int} $start     Fiscal year start [month, day].
+	 *
+	 * @return boolean
+	 */
+	private function reachedStart(DateTimeInterface $reference, array $start): bool {
+		$month = (int)$reference->format('n');
+		$day = (int)$reference->format('j');
+
+		return $month > $start[0] || ($month === $start[0] && $day >= $start[1]);
+	}//end reachedStart()
 
 	/**
 	 * Load an Administration record by id from OpenRegister.
@@ -304,43 +307,50 @@ class FiscalYearContextService {
 	 */
 	private function loadAdministration(string $administrationId): ?array {
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$scoped = $objectService
-				->setRegister($this->register())
-				->setSchema('Administration');
-
-			// Its own try/catch, deliberately: find() THROWS
-			// DoesNotExistException for anything that is not a uuid — it does
-			// not return null — so a shared catch would swallow the fallback.
-			try {
-				$single = $this->asRecord(candidate: ObjectIdentifier::findScoped(
-					scoped: $scoped,
-					id: $administrationId
-				));
-				if ($single !== null) {
-					return $single;
-				}
-			} catch (Throwable $notAUuid) {
-				// Fall through to the administrationCode lookup below.
+			$scoped = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService')->setRegister($this->register())->setSchema('Administration');
+			$single = $this->findByUuid(scoped: $scoped, administrationId: $administrationId);
+			if ($single !== null) {
+				return $single;
 			}
 
-			$matches = $scoped->findAll(
-				[
-					'filters' => ['administrationCode' => $administrationId],
-					'limit' => 1,
-				]
-			);
+			$matches = $scoped->findAll(['filters' => ['administrationCode' => $administrationId], 'limit' => 1]);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'FiscalYearContextService: failed to load administration',
-				[
-					'administrationId' => $administrationId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$context = ['administrationId' => $administrationId, 'exception' => $e->getMessage()];
+			$this->logger->error('FiscalYearContextService: failed to load administration', $context);
 			return null;
-		}//end try
+		}
 
+		return ($this->firstRecord(matches: $matches) ?? $this->unmatched(administrationId: $administrationId));
+	}//end loadAdministration()
+
+	/**
+	 * The single-object lookup, which handles a real uuid.
+	 *
+	 * Its own try/catch, deliberately: find() THROWS DoesNotExistException for
+	 * anything that is not a uuid — it does not return null — so a shared
+	 * catch would swallow the administrationCode fallback.
+	 *
+	 * @param object $scoped           ObjectService set to the Administration schema.
+	 * @param string $administrationId Administration id or administrationCode.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findByUuid(object $scoped, string $administrationId): array|null {
+		try {
+			return $this->asRecord(candidate: ObjectIdentifier::findScoped(scoped: $scoped, id: $administrationId));
+		} catch (Throwable $notAUuid) {
+			return null;
+		}
+	}//end findByUuid()
+
+	/**
+	 * The first usable record among the administrationCode matches.
+	 *
+	 * @param iterable<mixed> $matches findAll() result.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstRecord(iterable $matches): array|null {
 		foreach ($matches as $match) {
 			$record = $this->asRecord(candidate: $match);
 			if ($record !== null) {
@@ -348,16 +358,26 @@ class FiscalYearContextService {
 			}
 		}
 
-		// Reaching here means the administration genuinely is not resolvable.
-		// Log it: the caller turns this into a null fiscal-year window, which
-		// the UI renders as a missing label rather than as an error.
+		return null;
+	}//end firstRecord()
+
+	/**
+	 * Log that the administration genuinely is not resolvable; the caller
+	 * turns this into a null fiscal-year window, which the UI renders as a
+	 * missing label rather than as an error.
+	 *
+	 * @param string $administrationId Administration id or administrationCode.
+	 *
+	 * @return null
+	 */
+	private function unmatched(string $administrationId): null {
 		$this->logger->warning(
 			'FiscalYearContextService: no Administration matched; fiscal-year scope will be null',
 			['administrationId' => $administrationId]
 		);
 
 		return null;
-	}//end loadAdministration()
+	}//end unmatched()
 
 	/**
 	 * Normalise an OpenRegister result entry to a plain record array.
@@ -371,23 +391,32 @@ class FiscalYearContextService {
 	 * @return array<string,mixed>|null Record, or null when not usable.
 	 */
 	private function asRecord(mixed $candidate): ?array {
-		if (is_array($candidate) === true) {
-			if ($candidate === []) {
-				return null;
-			}
-
-			return $candidate;
+		$record = $candidate;
+		if (is_array($candidate) === false) {
+			$record = $this->payloadOf(candidate: $candidate);
 		}
 
-		if (is_object($candidate) === true && method_exists($candidate, 'getObject') === true) {
-			$payload = $candidate->getObject();
-			if (is_array($payload) === true && $payload !== []) {
-				return $payload;
-			}
+		if (is_array($record) === true && $record !== []) {
+			return $record;
 		}
 
 		return null;
 	}//end asRecord()
+
+	/**
+	 * An ObjectEntity's getObject() payload, or null for anything else.
+	 *
+	 * @param mixed $candidate Result entry or single object.
+	 *
+	 * @return mixed
+	 */
+	private function payloadOf(mixed $candidate): mixed {
+		if (is_object($candidate) === true && method_exists($candidate, 'getObject') === true) {
+			return $candidate->getObject();
+		}
+
+		return null;
+	}//end payloadOf()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
@@ -404,46 +433,40 @@ class FiscalYearContextService {
 	}//end register()
 
 	/**
-	 * Coerce a value to a valid fiscal-year start month (1-12).
+	 * Coerce a value to a whole number in 1..$max (a fiscal-year start month
+	 * or day), falling back to 1.
 	 *
 	 * @param mixed $value Raw input.
+	 * @param int   $max   Upper bound (12 for a month, 31 for a day).
 	 *
 	 * @return int
 	 */
-	private function coerceMonth(mixed $value): int {
-		if (is_int($value) === true && $value >= 1 && $value <= 12) {
-			return $value;
-		}
-
-		if (is_string($value) === true && ctype_digit($value) === true) {
-			$coerced = (int)$value;
-			if ($coerced >= 1 && $coerced <= 12) {
-				return $coerced;
-			}
+	private function coerceBounded(mixed $value, int $max): int {
+		$number = $this->wholeNumber(value: $value);
+		if ($number !== null && $number >= 1 && $number <= $max) {
+			return $number;
 		}
 
 		return 1;
-	}//end coerceMonth()
+	}//end coerceBounded()
 
 	/**
-	 * Coerce a value to a valid fiscal-year start day (1-31).
+	 * An int, or a string of digits read as one; null for anything else.
 	 *
 	 * @param mixed $value Raw input.
 	 *
-	 * @return int
+	 * @return integer|null
 	 */
-	private function coerceDay(mixed $value): int {
-		if (is_int($value) === true && $value >= 1 && $value <= 31) {
+	private function wholeNumber(mixed $value): int|null {
+		if (is_int($value) === true) {
 			return $value;
 		}
 
 		if (is_string($value) === true && ctype_digit($value) === true) {
-			$coerced = (int)$value;
-			if ($coerced >= 1 && $coerced <= 31) {
-				return $coerced;
-			}
+			return (int)$value;
 		}
 
-		return 1;
-	}//end coerceDay()
+		return null;
+	}//end wholeNumber()
+
 }//end class

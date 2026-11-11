@@ -104,58 +104,48 @@ class TrialBalanceController extends Controller {
 			);
 		}
 
-		$periodId = trim((string)$this->request->getParam('period_id', ''));
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$priorPeriodId = trim((string)$this->request->getParam('prior_period_id', ''));
-
-		if ($periodId === '') {
-			return new JSONResponse(
-				['error' => 'period_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+		// Reject missing and obviously malformed identifiers before touching
+		// the data layer (REQ-TB-015).
+		$query = new TrialBalanceQuery(request: $this->request);
+		$refusal = self::inputRefusal(query: $query) ?? $this->accessRefusal(administrationId: $query->administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administration_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+		return $this->compute(query: $query);
+	}//end index()
+
+	/**
+	 * A 400 for a missing or malformed identifier, otherwise null.
+	 *
+	 * @param TrialBalanceQuery $query The query.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private static function inputRefusal(TrialBalanceQuery $query): ?JSONResponse {
+		$inputError = $query->inputError();
+		if ($inputError !== null) {
+			return new JSONResponse(['error' => $inputError], Http::STATUS_BAD_REQUEST);
 		}
 
-		// Reject obviously malformed identifiers before touching the data layer
-		// (REQ-TB-015) — period/administration identifiers are short slugs.
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $periodId) !== 1) {
-			return new JSONResponse(
-				['error' => 'period_id must be a valid period identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
+		return null;
 
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administration_id must be a valid administration identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
+	}//end inputRefusal()
 
-		// Per-administration IDOR guard (REQ-TB-016, REQ-TB-017): the user must
-		// be a member of the administration. We mask non-membership as a 404 so
-		// foreign administration ids are not enumerable via a 403 oracle.
+	/**
+	 * Per-administration IDOR guard (REQ-TB-016, REQ-TB-017): the user must be
+	 * a member of the administration. Non-membership is masked as a 404 so
+	 * foreign administration ids are not enumerable via a 403 oracle.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
 		try {
 			$allowed = $this->context->canAccess(administrationId: $administrationId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'TrialBalanceController: failed to check administration access',
-				[
-					'administrationId' => $administrationId,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to authorise trial balance'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->accessCheckFailure(administrationId: $administrationId, failure: $e);
 		}
 
 		if ($allowed === false) {
@@ -165,33 +155,78 @@ class TrialBalanceController extends Controller {
 			);
 		}
 
-		$filters = [];
-		if ($priorPeriodId !== '' && preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $priorPeriodId) === 1) {
-			$filters['priorPeriodId'] = $priorPeriodId;
-		}
+		return null;
 
+	}//end accessRefusal()
+
+	/**
+	 * Log an access check that failed and answer a 500.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function accessCheckFailure(string $administrationId, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'TrialBalanceController: failed to check administration access',
+			[
+				'administrationId' => $administrationId,
+				'exception' => $failure->getMessage(),
+			]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to authorise trial balance'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end accessCheckFailure()
+
+	/**
+	 * Compute the trial balance; a failure is a logged 500.
+	 *
+	 * @param TrialBalanceQuery $query The query.
+	 *
+	 * @return JSONResponse
+	 */
+	private function compute(TrialBalanceQuery $query): JSONResponse {
 		try {
 			$result = $this->trialBalanceService->compute(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				filters: $filters
+				administrationId: $query->administrationId,
+				periodId: $query->periodId,
+				filters: $query->filters()
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'TrialBalanceController: failed to compute trial balance',
-				[
-					'administrationId' => $administrationId,
-					'periodId' => $periodId,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute trial balance'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return $this->computeFailure(query: $query, failure: $e);
+		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end index()
+
+	}//end compute()
+
+	/**
+	 * Log a computation that failed and answer a 500.
+	 *
+	 * @param TrialBalanceQuery $query The query.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function computeFailure(TrialBalanceQuery $query, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'TrialBalanceController: failed to compute trial balance',
+			[
+				'administrationId' => $query->administrationId,
+				'periodId' => $query->periodId,
+				'exception' => $failure->getMessage(),
+			]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute trial balance'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end computeFailure()
 }//end class

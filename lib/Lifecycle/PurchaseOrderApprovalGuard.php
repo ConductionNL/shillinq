@@ -30,16 +30,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
-use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
-use OCA\Shillinq\Service\ServerWriteAuthority;
 
 /**
  * Lets a purchase order become approved only through its approval chain.
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
  */
-final class PurchaseOrderApprovalGuard implements LifecycleGuardInterface {
+final class PurchaseOrderApprovalGuard extends ServerWriteGrantGuard {
 
 	/**
 	 * The grant PurchaseOrderApprovalService holds while it saves a decision.
@@ -63,16 +61,6 @@ final class PurchaseOrderApprovalGuard implements LifecycleGuardInterface {
 	public const MESSAGE_CHAIN_INCOMPLETE = 'The purchase order cannot be approved: not every approver in its chain has approved it.';
 
 	/**
-	 * Construct the guard.
-	 *
-	 * @param ServerWriteAuthority $authority The request-scoped write grants.
-	 */
-	public function __construct(
-		private readonly ServerWriteAuthority $authority,
-	) {
-	}//end __construct()
-
-	/**
 	 * Allow the approve transition only for a fully signed chain saved by the approval service.
 	 *
 	 * @param array<string, mixed> $object The purchase order as it would be saved.
@@ -88,8 +76,7 @@ final class PurchaseOrderApprovalGuard implements LifecycleGuardInterface {
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {
-		$id = (string)($object['id'] ?? ($object['@self']['id'] ?? ''));
-		if ($this->authority->holds(purpose: self::PURPOSE, objectId: $id) === false) {
+		if ($this->savedUnderGrant(object: $object, purpose: self::PURPOSE) === false) {
 			return GuardResult::deny(self::MESSAGE_NOT_SIGNED);
 		}
 

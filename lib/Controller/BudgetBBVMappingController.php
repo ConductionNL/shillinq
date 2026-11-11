@@ -50,6 +50,19 @@ use OCP\IUserSession;
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/tasks.md
  */
 class BudgetBBVMappingController extends Controller {
+
+	/**
+	 * The scope when there is no active administration or no active fiscal window.
+	 *
+	 * @var array<string,null>
+	 */
+	private const EMPTY_SCOPE = [
+		'administrationId' => null,
+		'fiscalYear' => null,
+		'startDate' => null,
+		'endDate' => null,
+	];
+
 	/**
 	 * Constructor for BudgetBBVMappingController.
 	 *
@@ -183,31 +196,33 @@ class BudgetBBVMappingController extends Controller {
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 	 */
 	private function resolveScope(): array {
-		$context = $this->administrationContext->buildContext();
-		$administrationId = ($context['activeAdministrationId'] ?? null);
-
-		$empty = [
-			'administrationId' => null,
-			'fiscalYear' => null,
-			'startDate' => null,
-			'endDate' => null,
-		];
-
+		$administrationId = ($this->administrationContext->buildContext()['activeAdministrationId'] ?? null);
 		if (is_string($administrationId) === false || $administrationId === '') {
-			return $empty;
+			return self::EMPTY_SCOPE;
 		}
 
 		$window = $this->fiscalYearContext->resolveActiveWindow(administrationId: $administrationId);
 		if ($window === null) {
-			return $empty;
+			return self::EMPTY_SCOPE;
 		}
 
+		return self::windowScope(administrationId: $administrationId, window: $window);
+	}//end resolveScope()
+
+	/**
+	 * The scope for the administration's active fiscal window: its year and dates, nothing more.
+	 *
+	 * @param string                                                $administrationId The active administration.
+	 * @param array{fiscalYear:int,startDate:string,endDate:string} $window           The active window.
+	 *
+	 * @return array{administrationId:string,fiscalYear:int,startDate:string,endDate:string}
+	 */
+	private static function windowScope(string $administrationId, array $window): array {
 		return [
 			'administrationId' => $administrationId,
 			'fiscalYear' => $window['fiscalYear'],
 			'startDate' => $window['startDate'],
 			'endDate' => $window['endDate'],
 		];
-
-	}//end resolveScope()
+	}//end windowScope()
 }//end class

@@ -186,36 +186,51 @@ class BudgetChartSeriesService {
 		);
 		$projectionContext = $this->projectionReader->loadContext(administrationId: $administrationId, includeLedgerGroups: true);
 
-		$accountNumbers = $this->inScopeAccountNumbers(vsActualsContext: $vsActualsContext);
+		$run = new ChartSeriesRun(
+			months: $months,
+			vsActualsContext: $vsActualsContext,
+			projectionContext: $projectionContext,
+			annualBudgetIdsByYear: $annualBudgetIdsByYear
+		);
+		$run = $run->withAccountEnvelopes(envelopesByAccount: $this->accountEnvelopes(run: $run));
 
-		$accounts = [];
-		$envelopesByAccount = [];
-		foreach ($accountNumbers as $accountNumber) {
-			$envelope = $this->buildAccountEnvelope(
-				accountNumber: $accountNumber,
-				months: $months,
-				vsActualsContext: $vsActualsContext,
-				projectionContext: $projectionContext,
-				annualBudgetIdsByYear: $annualBudgetIdsByYear
-			);
-			$envelopesByAccount[$accountNumber] = $envelope;
-			$accounts[] = $envelope;
-		}
-
-		$ledgerGroups = [];
-		foreach ($vsActualsContext['ledgerGroupEntries'] as $entry) {
-			$ledgerGroups[] = $this->buildLedgerGroupEnvelope(
-				entry: $entry,
-				months: $months,
-				vsActualsContext: $vsActualsContext,
-				annualBudgetIdsByYear: $annualBudgetIdsByYear,
-				envelopesByAccount: $envelopesByAccount
-			);
-		}
-
-		return ['months' => $months, 'accounts' => $accounts, 'ledgerGroups' => $ledgerGroups];
+		return ['months' => $months, 'accounts' => array_values($run->envelopesByAccount), 'ledgerGroups' => $this->ledgerGroupEnvelopes(run: $run)];
 
 	}//end resolveSeries()
+
+	/**
+	 * The envelope of every in-scope account, keyed by account number.
+	 *
+	 * @param ChartSeriesRun $run The request.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function accountEnvelopes(ChartSeriesRun $run): array {
+		$envelopesByAccount = [];
+		foreach ($this->inScopeAccountNumbers(vsActualsContext: $run->vsActualsContext) as $accountNumber) {
+			$envelopesByAccount[$accountNumber] = $this->buildAccountEnvelope(run: $run, accountNumber: $accountNumber);
+		}
+
+		return $envelopesByAccount;
+
+	}//end accountEnvelopes()
+
+	/**
+	 * The envelope of every LedgerGroup, in context order.
+	 *
+	 * @param ChartSeriesRun $run The request, with its account envelopes.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function ledgerGroupEnvelopes(ChartSeriesRun $run): array {
+		$ledgerGroups = [];
+		foreach ($run->vsActualsContext['ledgerGroupEntries'] as $entry) {
+			$ledgerGroups[] = $this->buildLedgerGroupEnvelope(run: $run, entry: $entry);
+		}
+
+		return $ledgerGroups;
+
+	}//end ledgerGroupEnvelopes()
 
 	/**
 	 * Build the chronological `YYYY-MM` month list from `$from` to `$to`, inclusive.
@@ -366,152 +381,202 @@ class BudgetChartSeriesService {
 	}//end inScopeAccountNumbers()
 
 	/**
-	 * Build one account's response envelope: `accountType`, a combined
+	 * Build one account's response envelope: `accountType`, the combined
 	 * `trend` (actual/projected/unprojectable per month, REQ-BPE-006 seam),
 	 * `cumulative` (REQ-BPE-008), and `budgeted` (own resolved
 	 * `LedgerGroup`'s `BudgetLine`, per the class docblock's "no per-account
 	 * schema field" note).
 	 *
-	 * @param string $accountNumber The account number.
-	 * @param list<string> $months The requested months.
-	 * @param array<string,mixed> $vsActualsContext The {@see BudgetVsActualsReader} context.
-	 * @param array<string,mixed> $projectionContext The {@see BudgetProjectionReader} context.
-	 * @param array<int,string|null> $annualBudgetIdsByYear Fiscal year => resolved AnnualBudget id.
+	 * @param ChartSeriesRun $run           The request.
+	 * @param string         $accountNumber The account number.
 	 *
 	 * @return array<string,mixed> The account's envelope.
 	 */
-	private function buildAccountEnvelope(
-		string $accountNumber,
-		array $months,
-		array $vsActualsContext,
-		array $projectionContext,
-		array $annualBudgetIdsByYear
-	): array {
-		$account = ($projectionContext['accounts'][$accountNumber] ?? null);
-		$accountType = (string)($account['accountType'] ?? 'expenses');
-
-		$trend = $this->accountTrend(
-			accountNumber: $accountNumber,
-			accountType: $accountType,
-			months: $months,
-			vsActualsContext: $vsActualsContext,
-			projectionContext: $projectionContext
-		);
-		$cumulative = $this->cumulativeFromTrend(trend: $trend, accountType: $accountType);
-
-		$owningLedgerGroupKey = $this->owningLedgerGroupKey(accountNumber: $accountNumber, vsActualsContext: $vsActualsContext);
-		$budgeted = [];
-		if ($owningLedgerGroupKey !== null) {
-			$budgeted = $this->budgetedSeries(
-				ledgerGroupKey: $owningLedgerGroupKey,
-				months: $months,
-				vsActualsContext: $vsActualsContext,
-				annualBudgetIdsByYear: $annualBudgetIdsByYear
-			);
-		}
+	private function buildAccountEnvelope(ChartSeriesRun $run, string $accountNumber): array {
+		$accountType = $this->accountTypeOf(run: $run, accountNumber: $accountNumber);
+		$trend = $this->accountTrend(run: $run, accountNumber: $accountNumber);
+		$budgeted = $this->accountBudgeted(run: $run, accountNumber: $accountNumber);
 
 		return [
 			'accountNumber' => $accountNumber,
 			'accountType' => $accountType,
 			'trend' => $trend,
-			'cumulative' => $cumulative,
+			'cumulative' => $this->cumulativeFromTrend(trend: $trend, accountType: $accountType),
 			'budgeted' => $budgeted,
-			'budgetedCumulative' => $this->cumulativeFromFlatSeries(series: $budgeted, months: $months, accountType: $accountType),
+			'budgetedCumulative' => $this->cumulativeFromFlatSeries(series: $budgeted, months: $run->months, accountType: $accountType),
 		];
 
 	}//end buildAccountEnvelope()
 
 	/**
+	 * The account's type from the projection context, defaulting to expenses.
+	 *
+	 * @param ChartSeriesRun $run           The request.
+	 * @param string         $accountNumber The account number.
+	 *
+	 * @return string
+	 */
+	private function accountTypeOf(ChartSeriesRun $run, string $accountNumber): string {
+		$account = ($run->projectionContext['accounts'][$accountNumber] ?? null);
+		return (string)($account['accountType'] ?? 'expenses');
+
+	}//end accountTypeOf()
+
+	/**
+	 * The budgeted series of the LedgerGroup that owns the account, or [] when none does.
+	 *
+	 * @param ChartSeriesRun $run           The request.
+	 * @param string         $accountNumber The account number.
+	 *
+	 * @return array<string,int>
+	 */
+	private function accountBudgeted(ChartSeriesRun $run, string $accountNumber): array {
+		$owningLedgerGroupKey = $this->owningLedgerGroupKey(accountNumber: $accountNumber, vsActualsContext: $run->vsActualsContext);
+		if ($owningLedgerGroupKey === null) {
+			return [];
+		}
+
+		return $this->budgetedSeries(run: $run, ledgerGroupKey: $owningLedgerGroupKey);
+
+	}//end accountBudgeted()
+
+	/**
 	 * Combined actual/projected/unprojectable trend for one account
 	 * (REQ-BPE-006's seam, REQ-BCH-003's actual-sourcing rule).
 	 *
-	 * @param string $accountNumber The account number.
-	 * @param string $accountType The account's type.
-	 * @param list<string> $months The requested months.
-	 * @param array<string,mixed> $vsActualsContext The {@see BudgetVsActualsReader} context.
-	 * @param array<string,mixed> $projectionContext The {@see BudgetProjectionReader} context.
+	 * @param ChartSeriesRun $run           The request.
+	 * @param string         $accountNumber The account number.
 	 *
 	 * @return array<string,array<string,mixed>> Month => typed result (`kind: actual|projected|unprojectable`).
 	 */
-	private function accountTrend(
-		string $accountNumber,
-		string $accountType,
-		array $months,
-		array $vsActualsContext,
-		array $projectionContext
-	): array {
-		$metric = $this->projectionCalculator->projectionMetric(accountType: $accountType);
+	private function accountTrend(ChartSeriesRun $run, string $accountNumber): array {
+		$basis = $this->trendBasis(run: $run, accountNumber: $accountNumber);
+
+		$trend = [];
+		foreach ($run->months as $month) {
+			$trend[$month] = $this->monthTrend(basis: $basis, month: $month);
+		}
+
+		return $trend;
+
+	}//end accountTrend()
+
+	/**
+	 * What the account's trend is classified and projected from.
+	 *
+	 * @param ChartSeriesRun $run           The request.
+	 * @param string         $accountNumber The account number.
+	 *
+	 * @return ChartTrendBasis
+	 */
+	private function trendBasis(ChartSeriesRun $run, string $accountNumber): ChartTrendBasis {
+		$metric = $this->projectionCalculator->projectionMetric(accountType: $this->accountTypeOf(run: $run, accountNumber: $accountNumber));
 
 		// SEAM classification: the projection engine's own window + last
 		// actual month, so `actual`/`projected`/`unprojectable` here always
 		// matches what BudgetProjectionService would independently report
 		// (REQ-BCH-003 scenario 2).
-		$window = ($projectionContext['windowByAccount'][$accountNumber] ?? ['months' => [], 'values' => []]);
-		$lastActualMonth = ($projectionContext['lastActualMonthByAccount'][$accountNumber] ?? null);
+		$window = ($run->projectionContext['windowByAccount'][$accountNumber] ?? ['months' => [], 'values' => []]);
 		$projectionSeries = $this->projectionCalculator->metricSeries(orderedNetMovementCents: $window['values'], metric: $metric);
-		$actualMetricByMonth = array_combine($window['months'], $projectionSeries);
-
 		$growth = null;
 		if (count($projectionSeries) > 0) {
 			$growth = $this->projectionCalculator->growthRate(values: $projectionSeries);
 		}
 
-		$baseValue = ($projectionSeries[count($projectionSeries) - 1] ?? null);
-
 		// DISPLAYED VALUE for `actual`-kind months: BudgetVsActualsReader's
 		// own bucket, reduced through the SAME public metricSeries() so a
 		// stock account's actual series is a running closing balance too
 		// (REQ-BCH-003: the value equals BudgetVsActualsReader's own figure).
-		$actualDisplayByMonth = $this->actualDisplaySeries(
-			accountNumber: $accountNumber,
-			metric: $metric,
-			vsActualsContext: $vsActualsContext
+		return new ChartTrendBasis(
+			actualMetricByMonth: array_combine($window['months'], $projectionSeries),
+			actualDisplayByMonth: $this->actualDisplaySeries(accountNumber: $accountNumber, metric: $metric, vsActualsContext: $run->vsActualsContext),
+			lastActualMonth: ($run->projectionContext['lastActualMonthByAccount'][$accountNumber] ?? null),
+			growth: $growth,
+			baseValue: ($projectionSeries[count($projectionSeries) - 1] ?? null),
 		);
 
-		$trend = [];
-		foreach ($months as $month) {
-			$hasActual = array_key_exists($month, $actualMetricByMonth);
-			$kind = $this->projectionCalculator->seam(hasActual: $hasActual, month: $month, lastActualMonth: $lastActualMonth);
+	}//end trendBasis()
 
-			if ($kind === 'actual') {
-				$trend[$month] = [
-					'kind' => 'actual',
-					'amount' => (int)($actualDisplayByMonth[$month] ?? $actualMetricByMonth[$month]),
-				];
-				continue;
-			}
+	/**
+	 * One month of an account's trend: its displayed actual, an
+	 * unprojectable month before the seam, or a projection.
+	 *
+	 * @param ChartTrendBasis $basis The account's basis.
+	 * @param string          $month The `YYYY-MM` month.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function monthTrend(ChartTrendBasis $basis, string $month): array {
+		$hasActual = array_key_exists($month, $basis->actualMetricByMonth);
+		$kind = $this->projectionCalculator->seam(hasActual: $hasActual, month: $month, lastActualMonth: $basis->lastActualMonth);
 
-			if ($kind === 'unprojectable') {
-				$trend[$month] = ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => 0];
-				continue;
-			}
-
-			if ($growth === null || isset($growth['reason']) === true || $baseValue === null) {
-				$trend[$month] = [
-					'kind' => 'unprojectable',
-					'reason' => ($growth['reason'] ?? 'no-history'),
-					'validSteps' => (int)($growth['validSteps'] ?? 0),
-				];
-				continue;
-			}
-
-			$k = $this->projectionCalculator->monthOffset(fromMonth: (string)$lastActualMonth, toMonth: $month);
-			if ($k < 1 || $k > BudgetProjectionCalculator::PROJECTION_HORIZON_MONTHS) {
-				$trend[$month] = ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => $growth['validSteps']];
-				continue;
-			}
-
-			$trend[$month] = [
-				'kind' => 'projected',
-				'amount' => $this->projectionCalculator->extrapolate(v0: (int)$baseValue, rate: $growth['rate'], k: $k),
-				'rate' => $growth['rate'],
-				'validSteps' => $growth['validSteps'],
+		if ($kind === 'actual') {
+			return [
+				'kind' => 'actual',
+				'amount' => (int)($basis->actualDisplayByMonth[$month] ?? $basis->actualMetricByMonth[$month]),
 			];
-		}//end foreach
+		}
 
-		return $trend;
+		if ($kind === 'unprojectable') {
+			return ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => 0];
+		}
 
-	}//end accountTrend()
+		return $this->projectedMonth(basis: $basis, month: $month);
+
+	}//end monthTrend()
+
+	/**
+	 * A month after the seam: extrapolated within the horizon from a usable
+	 * growth rate, else unprojectable with the reason.
+	 *
+	 * @param ChartTrendBasis $basis The account's basis.
+	 * @param string          $month The `YYYY-MM` month.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function projectedMonth(ChartTrendBasis $basis, string $month): array {
+		$unusable = $this->unusableGrowth(basis: $basis);
+		if ($unusable !== null) {
+			return $unusable;
+		}
+
+		$growth = $basis->growth;
+		$k = $this->projectionCalculator->monthOffset(fromMonth: (string)$basis->lastActualMonth, toMonth: $month);
+		if ($k < 1 || $k > BudgetProjectionCalculator::PROJECTION_HORIZON_MONTHS) {
+			return ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => $growth['validSteps']];
+		}
+
+		return [
+			'kind' => 'projected',
+			'amount' => $this->projectionCalculator->extrapolate(v0: (int)$basis->baseValue, rate: $growth['rate'], k: $k),
+			'rate' => $growth['rate'],
+			'validSteps' => $growth['validSteps'],
+		];
+
+	}//end projectedMonth()
+
+	/**
+	 * The unprojectable entry when there is no usable growth rate or base
+	 * value, with the calculator's reason; null when the account can be
+	 * extrapolated.
+	 *
+	 * @param ChartTrendBasis $basis The account's basis.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function unusableGrowth(ChartTrendBasis $basis): array|null {
+		$growth = $basis->growth;
+		if ($growth !== null && isset($growth['reason']) === false && $basis->baseValue !== null) {
+			return null;
+		}
+
+		return [
+			'kind' => 'unprojectable',
+			'reason' => ($growth['reason'] ?? 'no-history'),
+			'validSteps' => (int)($growth['validSteps'] ?? 0),
+		];
+
+	}//end unusableGrowth()
 
 	/**
 	 * Reduce {@see BudgetVsActualsReader}'s raw net-movement bucket for one
@@ -637,62 +702,112 @@ class BudgetChartSeriesService {
 	 * its own `cumulative`, and `budgeted` (REQ-BCS-008's "own wins over
 	 * children" rule, via {@see BudgetVsActualsCalculator::budgetedAmount()}).
 	 *
+	 * @param ChartSeriesRun      $run   The request, with its account envelopes.
 	 * @param array<string,mixed> $entry One `ledgerGroupEntries` row.
-	 * @param list<string> $months The requested months.
-	 * @param array<string,mixed> $vsActualsContext The {@see BudgetVsActualsReader} context.
-	 * @param array<int,string|null> $annualBudgetIdsByYear Fiscal year => resolved AnnualBudget id.
-	 * @param array<string,array<string,mixed>> $envelopesByAccount Every already-built account envelope, keyed by account number.
 	 *
 	 * @return array<string,mixed> The LedgerGroup's envelope.
 	 */
-	private function buildLedgerGroupEnvelope(
-		array $entry,
-		array $months,
-		array $vsActualsContext,
-		array $annualBudgetIdsByYear,
-		array $envelopesByAccount
-	): array {
-		$ledgerGroupKey = (string)($entry['slug'] ?? '');
+	private function buildLedgerGroupEnvelope(ChartSeriesRun $run, array $entry): array {
+		$ledgerGroupKey = $this->ledgerGroupKeyOf(entry: $entry);
+		$memberEnvelopes = $this->memberEnvelopes(run: $run, entry: $entry);
+		$accountTypes = $this->memberAccountTypes(memberEnvelopes: $memberEnvelopes);
+		$predominantAccountType = ($accountTypes[0] ?? 'expenses');
+		$trend = $this->groupTrend(run: $run, memberEnvelopes: $memberEnvelopes);
+		$budgeted = $this->budgetedSeries(run: $run, ledgerGroupKey: $ledgerGroupKey);
+
+		return [
+			'ledgerGroupKey' => $ledgerGroupKey,
+			'name' => (string)($entry['name'] ?? $ledgerGroupKey),
+			'memberAccountNumbers' => ($entry['memberAccountNumbers'] ?? []),
+			'accountTypes' => $accountTypes,
+			'trend' => $trend,
+			'cumulative' => $this->cumulativeFromTrend(trend: $trend, accountType: $predominantAccountType),
+			'budgeted' => $budgeted,
+			'budgetedCumulative' => $this->cumulativeFromFlatSeries(series: $budgeted, months: $run->months, accountType: $predominantAccountType),
+		];
+
+	}//end buildLedgerGroupEnvelope()
+
+	/**
+	 * The LedgerGroup's key: its id, else its slug.
+	 *
+	 * @param array<string,mixed> $entry One `ledgerGroupEntries` row.
+	 *
+	 * @return string
+	 */
+	private function ledgerGroupKeyOf(array $entry): string {
 		$ledgerGroupId = (string)($entry['id'] ?? '');
 		if ($ledgerGroupId !== '') {
-			$ledgerGroupKey = $ledgerGroupId;
+			return $ledgerGroupId;
 		}
-		$memberAccountNumbers = ($entry['memberAccountNumbers'] ?? []);
 
+		return (string)($entry['slug'] ?? '');
+
+	}//end ledgerGroupKeyOf()
+
+	/**
+	 * The envelopes of the group's members that have one, in member order.
+	 *
+	 * @param ChartSeriesRun      $run   The request, with its account envelopes.
+	 * @param array<string,mixed> $entry One `ledgerGroupEntries` row.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function memberEnvelopes(ChartSeriesRun $run, array $entry): array {
 		$memberEnvelopes = [];
-		$accountTypes = [];
-		foreach ($memberAccountNumbers as $memberAccountNumber) {
-			$memberEnvelope = ($envelopesByAccount[$memberAccountNumber] ?? null);
-			if ($memberEnvelope === null) {
-				continue;
+		foreach (($entry['memberAccountNumbers'] ?? []) as $memberAccountNumber) {
+			$memberEnvelope = ($run->envelopesByAccount[$memberAccountNumber] ?? null);
+			if ($memberEnvelope !== null) {
+				$memberEnvelopes[] = $memberEnvelope;
 			}
+		}
 
-			$memberEnvelopes[] = $memberEnvelope;
+		return $memberEnvelopes;
+
+	}//end memberEnvelopes()
+
+	/**
+	 * The distinct account types of the members, in first-seen order.
+	 *
+	 * @param list<array<string,mixed>> $memberEnvelopes The members' envelopes.
+	 *
+	 * @return list<string>
+	 */
+	private function memberAccountTypes(array $memberEnvelopes): array {
+		$accountTypes = [];
+		foreach ($memberEnvelopes as $memberEnvelope) {
 			$accountTypes[(string)$memberEnvelope['accountType']] = true;
 		}
 
-		$accountTypes = array_keys($accountTypes);
-		$predominantAccountType = ($accountTypes[0] ?? 'expenses');
+		return array_keys($accountTypes);
 
+	}//end memberAccountTypes()
+
+	/**
+	 * The group's trend: per month the members' sum, relabelled `actual`
+	 * when every contributing member's month was actual.
+	 *
+	 * The groupProjected() method itself only ever returns `unprojectable` or
+	 * `projected` — it deliberately does not distinguish a month
+	 * where EVERY member's own kind was `actual` (real GL data)
+	 * from one where members are a mix, or all `projected`
+	 * (REQ-BPE-007's own contract: sum members, tag `partial`, no
+	 * third `actual` case). REQ-BCH-006 needs that distinction at
+	 * the GROUP level too, so it is added HERE as a thin
+	 * relabelling over the already-computed sum/partial-tag — the
+	 * amount itself is untouched, taken verbatim from
+	 * `groupProjected()`.
+	 *
+	 * @param ChartSeriesRun            $run             The request.
+	 * @param list<array<string,mixed>> $memberEnvelopes The members' envelopes.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function groupTrend(ChartSeriesRun $run, array $memberEnvelopes): array {
 		$trend = [];
-		foreach ($months as $month) {
-			$membersForMonth = [];
-			foreach ($memberEnvelopes as $memberEnvelope) {
-				$membersForMonth[] = $memberEnvelope['trend'][$month];
-			}
-
+		foreach ($run->months as $month) {
+			$membersForMonth = array_map(static fn (array $memberEnvelope): array => $memberEnvelope['trend'][$month], $memberEnvelopes);
 			$grouped = $this->projectionCalculator->groupProjected(members: $membersForMonth);
-
-			// The groupProjected() method itself only ever returns `unprojectable` or
-			// `projected` — it deliberately does not distinguish a month
-			// where EVERY member's own kind was `actual` (real GL data)
-			// from one where members are a mix, or all `projected`
-			// (REQ-BPE-007's own contract: sum members, tag `partial`, no
-			// third `actual` case). REQ-BCH-006 needs that distinction at
-			// the GROUP level too, so it is added HERE as a thin
-			// relabelling over the already-computed sum/partial-tag — the
-			// amount itself is untouched, taken verbatim from
-			// `groupProjected()`.
 			if ($grouped['kind'] === 'projected') {
 				$grouped['kind'] = $this->groupMonthKind(membersForMonth: $membersForMonth);
 			}
@@ -700,27 +815,9 @@ class BudgetChartSeriesService {
 			$trend[$month] = $grouped;
 		}
 
-		$cumulative = $this->cumulativeFromTrend(trend: $trend, accountType: $predominantAccountType);
+		return $trend;
 
-		$budgeted = $this->budgetedSeries(
-			ledgerGroupKey: $ledgerGroupKey,
-			months: $months,
-			vsActualsContext: $vsActualsContext,
-			annualBudgetIdsByYear: $annualBudgetIdsByYear
-		);
-
-		return [
-			'ledgerGroupKey' => $ledgerGroupKey,
-			'name' => (string)($entry['name'] ?? $ledgerGroupKey),
-			'memberAccountNumbers' => $memberAccountNumbers,
-			'accountTypes' => $accountTypes,
-			'trend' => $trend,
-			'cumulative' => $cumulative,
-			'budgeted' => $budgeted,
-			'budgetedCumulative' => $this->cumulativeFromFlatSeries(series: $budgeted, months: $months, accountType: $predominantAccountType),
-		];
-
-	}//end buildLedgerGroupEnvelope()
+	}//end groupTrend()
 
 	/**
 	 * Classify a `LedgerGroup` month as `actual` (every resolved member's
@@ -762,42 +859,26 @@ class BudgetChartSeriesService {
 	 * rather than letting {@see BudgetVsActualsCalculator::ownBudgetLine()}
 	 * match the first same-`ledgerGroupId` row regardless of year.
 	 *
-	 * @param string $ledgerGroupKey The LedgerGroup's id or slug.
-	 * @param list<string> $months The requested months.
-	 * @param array<string,mixed> $vsActualsContext The {@see BudgetVsActualsReader} context.
-	 * @param array<int,string|null> $annualBudgetIdsByYear Fiscal year => resolved AnnualBudget id.
+	 * @param ChartSeriesRun $run            The request.
+	 * @param string         $ledgerGroupKey The LedgerGroup's id or slug.
 	 *
 	 * @return array<string,int> Month => budgeted cents.
 	 */
-	private function budgetedSeries(string $ledgerGroupKey, array $months, array $vsActualsContext, array $annualBudgetIdsByYear): array {
+	private function budgetedSeries(ChartSeriesRun $run, string $ledgerGroupKey): array {
 		$byYearContext = [];
 		$series = [];
-
-		foreach ($months as $month) {
+		foreach ($run->months as $month) {
 			$year = (int)substr($month, 0, 4);
-			$monthNumber = (int)substr($month, 5, 2);
-			$annualBudgetId = ($annualBudgetIdsByYear[$year] ?? null);
+			$annualBudgetId = ($run->annualBudgetIdsByYear[$year] ?? null);
 			if ($annualBudgetId === null) {
 				$series[$month] = 0;
 				continue;
 			}
 
-			if (isset($byYearContext[$year]) === false) {
-				$yearContext = $vsActualsContext;
-				$yearContext['budgetLines'] = array_values(
-					array_filter(
-						$vsActualsContext['budgetLines'],
-						static function (array $line) use ($annualBudgetId): bool {
-							return (string)($line['annualBudgetId'] ?? '') === $annualBudgetId;
-						}
-					)
-				);
-				$byYearContext[$year] = $yearContext;
-			}
-
+			$byYearContext[$year] ??= $this->yearContext(run: $run, annualBudgetId: $annualBudgetId);
 			$series[$month] = $this->vsActualsCalculator->budgetedAmount(
 				ledgerGroupKey: $ledgerGroupKey,
-				monthNumber: $monthNumber,
+				monthNumber: (int)substr($month, 5, 2),
 				context: $byYearContext[$year]
 			);
 		}//end foreach
@@ -805,6 +886,29 @@ class BudgetChartSeriesService {
 		return $series;
 
 	}//end budgetedSeries()
+
+	/**
+	 * The context with only one AnnualBudget's budget lines.
+	 *
+	 * @param ChartSeriesRun $run            The request.
+	 * @param string         $annualBudgetId The fiscal year's AnnualBudget.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function yearContext(ChartSeriesRun $run, string $annualBudgetId): array {
+		$yearContext = $run->vsActualsContext;
+		$yearContext['budgetLines'] = array_values(
+			array_filter(
+				$run->vsActualsContext['budgetLines'],
+				static function (array $line) use ($annualBudgetId): bool {
+					return (string)($line['annualBudgetId'] ?? '') === $annualBudgetId;
+				}
+			)
+		);
+
+		return $yearContext;
+
+	}//end yearContext()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config.

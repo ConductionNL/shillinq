@@ -187,18 +187,7 @@ class TenderNedProcurementGuard {
 	 */
 	private function hasApprovedEindoplevering(string $commitmentId, array $tender): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$records = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'OrderFulfilment')
-				->findAll(
-					[
-						'filters' => [
-							'commitmentId' => $commitmentId,
-							'deliveryType' => 'eindoplevering',
-						],
-					]
-				);
+			$records = $this->eindopleveringen(commitmentId: $commitmentId);
 		} catch (\Throwable $e) {
 			// OrderFulfilment schema not available (T1 state) — permit completion.
 			$this->logger->debug(
@@ -212,16 +201,8 @@ class TenderNedProcurementGuard {
 			return false;
 		}
 
-		foreach ($records as $record) {
-			if (is_array($record) === false) {
-				continue;
-			}
-
-			if (($record['status'] ?? '') === 'completed'
-				&& ((bool)($record['approved'] ?? false)) === true
-			) {
-				return true;
-			}
+		if ($this->anyApproved(records: $records) === true) {
+			return true;
 		}
 
 		$this->logger->info(
@@ -233,4 +214,48 @@ class TenderNedProcurementGuard {
 		);
 		return false;
 	}//end hasApprovedEindoplevering()
+
+	/**
+	 * The eindoplevering OrderFulfilments recorded for the obligation.
+	 *
+	 * @param string $commitmentId The linked obligation id.
+	 *
+	 * @return mixed The store's answer.
+	 */
+	private function eindopleveringen(string $commitmentId): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $objectService
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: 'OrderFulfilment')
+			->findAll(
+				[
+					'filters' => [
+						'commitmentId' => $commitmentId,
+						'deliveryType' => 'eindoplevering',
+					],
+				]
+			);
+
+	}//end eindopleveringen()
+
+	/**
+	 * Whether any fulfilment is completed and approved.
+	 *
+	 * @param array<int|string,mixed> $records The OrderFulfilments.
+	 *
+	 * @return bool True when one is.
+	 */
+	private function anyApproved(array $records): bool {
+		foreach ($records as $record) {
+			if (is_array($record) === true
+				&& ($record['status'] ?? '') === 'completed'
+				&& ((bool)($record['approved'] ?? false)) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end anyApproved()
 }//end class

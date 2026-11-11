@@ -96,61 +96,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			if ($entity === null || $entity->getSchema() === null) {
-				return;
-			}
-
-			if ($this->isAppointmentSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
-				return;
-			}
-
-			$appointment = $entity->getObject();
-			if (is_array($appointment) === false) {
-				return;
-			}
-
-			$pipelinqContactId = trim((string)($appointment['pipelinqContactId'] ?? ''));
-			if ($pipelinqContactId === '') {
-				// Slice 06 already labels these "not linked"; nothing to
-				// publish to pipelinq.
-				return;
-			}
-
-			$externalId = trim((string)($appointment['appointmentId'] ?? ''));
-			if ($externalId === '') {
-				$this->logger->warning(
-					'BookingCreatedTimelinePublishListener: missing appointmentId — skipping publish',
-					[
-						'app' => AppIdentity::APP_ID,
-					]
-				);
-				return;
-			}
-
-			$dto = $this->buildEvent(
-				externalId: $externalId,
-				contactId: $pipelinqContactId,
-				appointment: $appointment
-			);
-
-			$ok = $this->pipelinq->publishTimelineEvent(event: $dto);
-			if ($ok === true) {
-				$this->logger->debug(
-					'BookingCreatedTimelinePublishListener: published',
-					[
-						'app' => AppIdentity::APP_ID,
-						'externalId' => $externalId,
-						'contactId' => $pipelinqContactId,
-					]
-				);
-				return;
-			}
-
-			// Synchronous publish failed; hand off to the async retry
-			// queue so the booking commit can proceed regardless (D3).
-			$this->retryQueue->enqueue(event: $dto);
-			$this->metrics?->recordTimelinePublishDeferred();
+			$this->publishCreated(event: $event);
 		} catch (Throwable $e) {
 			// The booking commit must NEVER fail because of a downstream
 			// publish issue. Log + continue; the queue+adapter already
@@ -168,54 +114,111 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Whether the supplied schema string identifies the Appointment schema.
+	 * The Appointment fields shared with the other booking timeline listener.
 	 *
-	 * Mirrors {@see AppointmentCreatedListener::isAppointmentSchema()};
-	 * schema strings may be plain slugs or numeric ids depending on OR
-	 * config so the comparison is permissive on both fronts.
-	 *
-	 * @param string $schema Schema identifier from the entity.
-	 *
-	 * @return bool TRUE when the schema is "Appointment".
+	 * @return BookingTimelineFields
 	 */
-	private function isAppointmentSchema(string $schema): bool {
-		$normalised = strtolower(trim($schema));
-		return ($normalised === 'appointment' || str_ends_with($normalised, '/appointment'));
-	}//end isAppointmentSchema()
+	private function fields(): BookingTimelineFields {
+		return new BookingTimelineFields();
+
+	}//end fields()
 
 	/**
-	 * Compose a {@see TimelineEventDto} from the persisted appointment row.
+	 * Publish the created appointment when it is linked to a pipelinq contact.
 	 *
-	 * The metadata payload is fixed (giant Risk 3): only scalar fields
-	 * the pipelinq timeline consumer is documented to render are passed
-	 * through, and absent fields are emitted as empty strings (NOT
-	 * dropped) so the contract stays stable across boolean-falsy
-	 * absences.
+	 * @param ObjectCreatedEvent $event The creation event.
 	 *
-	 * @param string $externalId Booking id used as the timeline externalId.
-	 * @param string $contactId Linked pipelinq Contact id.
+	 * @return void
+	 */
+	private function publishCreated(ObjectCreatedEvent $event): void {
+		$appointment = $this->createdAppointment(event: $event);
+		// Without a linked contact (slice 06 labels these "not linked")
+		// there is nothing to publish to pipelinq.
+		if ($appointment === null || $this->fields()->contactId(appointment: $appointment) === '') {
+			return;
+		}
+
+		if ($this->fields()->externalId(appointment: $appointment) === '') {
+			$this->logger->warning(
+				'BookingCreatedTimelinePublishListener: missing appointmentId — skipping publish',
+				[
+					'app' => AppIdentity::APP_ID,
+				]
+			);
+			return;
+		}
+
+		$this->publish(dto: $this->buildEvent(appointment: $appointment));
+
+	}//end publishCreated()
+
+	/**
+	 * The created object when it is an Appointment row, else null.
+	 *
+	 * @param ObjectCreatedEvent $event The creation event.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function createdAppointment(ObjectCreatedEvent $event): array|null {
+		$entity = $event->getObject();
+		if ($entity === null || $entity->getSchema() === null) {
+			return null;
+		}
+
+		if ($this->fields()->isAppointmentSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+			return null;
+		}
+
+		$appointment = $entity->getObject();
+		if (is_array($appointment) === false) {
+			return null;
+		}
+
+		return $appointment;
+
+	}//end createdAppointment()
+
+	/**
+	 * Publish synchronously; on failure hand off to the async retry queue so
+	 * the booking commit can proceed regardless (D3).
+	 *
+	 * @param TimelineEventDto $dto The event.
+	 *
+	 * @return void
+	 */
+	private function publish(TimelineEventDto $dto): void {
+		if ($this->pipelinq->publishTimelineEvent(event: $dto) === true) {
+			$this->logger->debug(
+				'BookingCreatedTimelinePublishListener: published',
+				[
+					'app' => AppIdentity::APP_ID,
+					'externalId' => $dto->externalId(),
+					'contactId' => $dto->contactId(),
+				]
+			);
+			return;
+		}
+
+		$this->retryQueue->enqueue(event: $dto);
+		$this->metrics?->recordTimelinePublishDeferred();
+
+	}//end publish()
+
+	/**
+	 * Compose a {@see TimelineEventDto} from the persisted appointment row,
+	 * with the fixed metadata of {@see $this->fields()->metadata()}.
+	 *
 	 * @param array<string, mixed> $appointment Persisted appointment row.
 	 *
 	 * @return TimelineEventDto
 	 */
-	private function buildEvent(string $externalId, string $contactId, array $appointment): TimelineEventDto {
-		$timestamp = $this->resolveTimestamp(appointment: $appointment);
-
-		$metadata = [
-			'bookingNumber' => $externalId,
-			'service' => (string)($appointment['serviceId'] ?? ''),
-			'startTime' => (string)($appointment['startTime'] ?? ''),
-			'endTime' => (string)($appointment['endTime'] ?? ''),
-			'resourceId' => (string)($appointment['resourceId'] ?? ''),
-			'status' => (string)($appointment['status'] ?? ''),
-		];
-
+	private function buildEvent(array $appointment): TimelineEventDto {
 		return new TimelineEventDto(
 			type: TimelineEventDto::TYPE_BOOKING_CREATED,
-			externalId: $externalId,
-			timestamp: $timestamp,
-			contactId: $contactId,
-			metadata: $metadata
+			externalId: $this->fields()->externalId(appointment: $appointment),
+			timestamp: $this->resolveTimestamp(appointment: $appointment),
+			contactId: $this->fields()->contactId(appointment: $appointment),
+			metadata: $this->fields()->metadata(appointment: $appointment)
 		);
 
 	}//end buildEvent()

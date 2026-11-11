@@ -106,59 +106,95 @@ class RevenueRecognitionService {
 	 * @spec openspec/changes/order-revenue-recognition-engine/tasks.md#task-1
 	 */
 	public function computeRecurring(string $administrationId, string $from, string $to): array {
-		$orders = $this->fetchOrders(administrationId: $administrationId);
-		$lines = $this->fetchLines(administrationId: $administrationId);
-
-		$recognizedCents = 0;
-		$oneOffCents = 0;
-		$arrCents = 0;
-		$lineCount = 0;
-		$currency = 'EUR';
-
-		foreach ($lines as $line) {
-			$orderId = (string)($line['orderId'] ?? '');
-			$order = ($orders[$orderId] ?? []);
-			if ($order !== [] && isset($order['currency']) === true && (string)$order['currency'] !== '') {
-				$currency = (string)$order['currency'];
-			}
-
-			[$termStart, $termEnd] = $this->effectiveTerm(line: $line, order: $order, periodTo: $to);
-
-			$nature = (string)($line['nature'] ?? '');
-			if ($nature === 'RECURRING') {
-				$monthlyRateCents = $this->monthlyRateCents(line: $line);
-				$overlap = $this->overlapMonths(termStart: $termStart, termEnd: $termEnd, periodFrom: $from, periodTo: $to);
-				$recognizedCents += ($monthlyRateCents * $overlap);
-				$lineCount++;
-
-				// ARR: annualized run-rate of lines whose term contains the period end.
-				if ($this->contains(start: $termStart, end: $termEnd, date: $to) === true) {
-					$arrCents += $monthlyRateCents;
-				}
-
-				continue;
-			}
-
-			if ($nature === 'ONE_OFF') {
-				$oneOffCents += $this->oneOffCents(
-					line: $line,
-					termStart: $termStart,
-					termEnd: $termEnd,
-					from: $from,
-					to: $to
-				);
-			}
-		}//end foreach
+		$run = new RecognitionRun();
+		$run->period = $this->term(start: $from, end: $to);
+		$run->orders = $this->fetchOrders(administrationId: $administrationId);
+		foreach ($this->fetchLines(administrationId: $administrationId) as $line) {
+			$this->foldLine(run: $run, line: $line);
+		}
 
 		return [
-			'recognized' => $this->fromCents(cents: $recognizedCents),
-			'oneOff' => $this->fromCents(cents: $oneOffCents),
-			'arr' => $this->fromCents(cents: ($arrCents * 12)),
-			'currency' => $currency,
-			'lineCount' => $lineCount,
+			'recognized' => $this->fromCents(cents: $run->recognizedCents),
+			'oneOff' => $this->fromCents(cents: $run->oneOffCents),
+			'arr' => $this->fromCents(cents: ($run->arrCents * 12)),
+			'currency' => $run->currency,
+			'lineCount' => $run->lineCount,
 		];
-
 	}//end computeRecurring()
+
+	/**
+	 * Fold one line into the run: take its order's currency, resolve its term
+	 * and add it as RECURRING or ONE_OFF revenue (any other nature adds nothing).
+	 *
+	 * @param RecognitionRun      $run  The run.
+	 * @param array<string,mixed> $line One SalesOrderLine.
+	 *
+	 * @return void
+	 */
+	private function foldLine(RecognitionRun $run, array $line): void {
+		$order = ($run->orders[(string)($line['orderId'] ?? '')] ?? []);
+		$run->currency = ($this->orderCurrency(order: $order) ?? $run->currency);
+		$item = new RecognitionLine();
+		$item->line = $line;
+		$item->term = $this->effectiveTerm(line: $line, order: $order, periodTo: $run->period->end);
+		$nature = (string)($line['nature'] ?? '');
+		if ($nature === 'RECURRING') {
+			$this->foldRecurring(run: $run, item: $item);
+		}
+
+		if ($nature === 'ONE_OFF') {
+			$run->oneOffCents += $this->oneOffCents(item: $item, period: $run->period);
+		}
+	}//end foldLine()
+
+	/**
+	 * An order's currency, or null when it names none.
+	 *
+	 * @param array<string,mixed> $order The parent SalesOrder (may be empty).
+	 *
+	 * @return string|null
+	 */
+	private function orderCurrency(array $order): string|null {
+		if (isset($order['currency']) === true && (string)$order['currency'] !== '') {
+			return (string)$order['currency'];
+		}
+
+		return null;
+	}//end orderCurrency()
+
+	/**
+	 * Add a RECURRING line: its monthly rate times the months of overlap, and
+	 * — when its term contains the period end — to the ARR run-rate.
+	 *
+	 * @param RecognitionRun  $run  The run.
+	 * @param RecognitionLine $item The line and its term.
+	 *
+	 * @return void
+	 */
+	private function foldRecurring(RecognitionRun $run, RecognitionLine $item): void {
+		$monthlyRateCents = $this->monthlyRateCents(line: $item->line);
+		$run->recognizedCents += ($monthlyRateCents * $this->overlapMonths(term: $item->term, period: $run->period));
+		$run->lineCount++;
+		if ($this->contains(term: $item->term, date: $run->period->end) === true) {
+			$run->arrCents += $monthlyRateCents;
+		}
+	}//end foldRecurring()
+
+	/**
+	 * A date interval.
+	 *
+	 * @param string $start Interval start (ISO date), or ''.
+	 * @param string $end   Interval end (ISO date), or ''.
+	 *
+	 * @return RecognitionTerm
+	 */
+	private function term(string $start, string $end): RecognitionTerm {
+		$term = new RecognitionTerm();
+		$term->start = $start;
+		$term->end = $end;
+
+		return $term;
+	}//end term()
 
 	/**
 	 * Fetch the administration's SalesOrders keyed by orderId (ADR-022).
@@ -209,24 +245,15 @@ class RevenueRecognitionService {
 	private function findAll(string $schema, string $administrationId): array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => ['administrationId' => $administrationId]]);
+			$rows = $objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 			return array_values((array)$rows);
 		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'RevenueRecognitionService: SalesOrder data unavailable; treating as empty',
-				[
-					'schema' => $schema,
-					'administrationId' => $administrationId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$context = ['schema' => $schema, 'administrationId' => $administrationId, 'exception' => $e->getMessage()];
+			$this->logger->warning('RevenueRecognitionService: SalesOrder data unavailable; treating as empty', $context);
 
 			return [];
-		}//end try
+		}
 
 	}//end findAll()
 
@@ -240,9 +267,9 @@ class RevenueRecognitionService {
 	 * @param array<string,mixed> $order The parent SalesOrder (may be empty).
 	 * @param string $periodTo ISO period end used to bound an indefinite term.
 	 *
-	 * @return array{0:string,1:string} [termStart, termEnd] as ISO dates.
+	 * @return RecognitionTerm [termStart, termEnd] as ISO dates.
 	 */
-	private function effectiveTerm(array $line, array $order, string $periodTo): array {
+	private function effectiveTerm(array $line, array $order, string $periodTo): RecognitionTerm {
 		$termStart = $this->firstDate(values: [($line['termStart'] ?? null), ($order['termStart'] ?? null)]);
 		$termEnd = $this->firstDate(values: [($line['termEnd'] ?? null), ($order['termEnd'] ?? null)]);
 
@@ -251,7 +278,7 @@ class RevenueRecognitionService {
 			$termEnd = $periodTo;
 		}
 
-		return [$termStart, $termEnd];
+		return $this->term(start: $termStart, end: $termEnd);
 	}//end effectiveTerm()
 
 	/**
@@ -308,37 +335,44 @@ class RevenueRecognitionService {
 	 * OVER_TIME → amount × overlapMonths(term, period) / totalTermMonths(term); 0 when the
 	 * total term length is 0 (degenerate).
 	 *
-	 * @param array<string,mixed> $line The ONE_OFF SalesOrderLine.
-	 * @param string $termStart Effective term start.
-	 * @param string $termEnd Effective term end.
-	 * @param string $from ISO period start.
-	 * @param string $to ISO period end.
+	 * @param RecognitionLine $item The ONE_OFF line and its effective term.
+	 * @param RecognitionTerm $period The reporting period.
 	 *
 	 * @return int Recognized one-off amount in whole cents.
 	 */
-	private function oneOffCents(array $line, string $termStart, string $termEnd, string $from, string $to): int {
-		$method = (string)($line['recognitionMethod'] ?? '');
-		$amountCents = $this->toCents(amount: ($line['amount'] ?? 0));
-
-		if ($method === 'POINT_IN_TIME') {
-			$recognitionDate = trim((string)($line['recognitionDate'] ?? ''));
-			if ($recognitionDate !== '' && $recognitionDate >= $from && $recognitionDate <= $to) {
-				return $amountCents;
-			}
-
-			return 0;
+	private function oneOffCents(RecognitionLine $item, RecognitionTerm $period): int {
+		if ((string)($item->line['recognitionMethod'] ?? '') === 'POINT_IN_TIME') {
+			return $this->pointInTimeCents(line: $item->line, period: $period);
 		}
 
 		// OVER_TIME: prorate across the line's own term.
-		$totalTerm = $this->overlapMonths(termStart: $termStart, termEnd: $termEnd, periodFrom: $termStart, periodTo: $termEnd);
+		$totalTerm = $this->overlapMonths(term: $item->term, period: $item->term);
 		if ($totalTerm <= 0) {
 			return 0;
 		}
 
-		$overlap = $this->overlapMonths(termStart: $termStart, termEnd: $termEnd, periodFrom: $from, periodTo: $to);
+		$amountCents = $this->toCents(amount: ($item->line['amount'] ?? 0));
 
-		return (int)round(($amountCents * $overlap) / $totalTerm);
+		return (int)round(($amountCents * $this->overlapMonths(term: $item->term, period: $period)) / $totalTerm);
 	}//end oneOffCents()
+
+	/**
+	 * A POINT_IN_TIME line's full amount when its recognitionDate lies in the
+	 * period, else 0.
+	 *
+	 * @param array<string,mixed> $line   The ONE_OFF SalesOrderLine.
+	 * @param RecognitionTerm     $period The reporting period.
+	 *
+	 * @return int Whole cents.
+	 */
+	private function pointInTimeCents(array $line, RecognitionTerm $period): int {
+		$recognitionDate = trim((string)($line['recognitionDate'] ?? ''));
+		if ($recognitionDate !== '' && $recognitionDate >= $period->start && $recognitionDate <= $period->end) {
+			return $this->toCents(amount: ($line['amount'] ?? 0));
+		}
+
+		return 0;
+	}//end pointInTimeCents()
 
 	/**
 	 * Count whole calendar months of intersection between a term and a period (D5).
@@ -346,50 +380,62 @@ class RevenueRecognitionService {
 	 * Whole-month proration: a term touching any part of a calendar month counts that
 	 * whole month. Returns 0 when the intervals do not overlap or a bound is missing.
 	 *
-	 * @param string $termStart Term start (ISO date).
-	 * @param string $termEnd Term end (ISO date).
-	 * @param string $periodFrom Period start (ISO date).
-	 * @param string $periodTo Period end (ISO date).
+	 * @param RecognitionTerm $term The term.
+	 * @param RecognitionTerm $period The period.
 	 *
 	 * @return int Whole calendar months of overlap (>= 0).
 	 */
-	private function overlapMonths(string $termStart, string $termEnd, string $periodFrom, string $periodTo): int {
-		if ($termStart === '' || $termEnd === '' || $periodFrom === '' || $periodTo === '') {
+	private function overlapMonths(RecognitionTerm $term, RecognitionTerm $period): int {
+		if ($this->isUnbounded(term: $term) === true || $this->isUnbounded(term: $period) === true) {
 			return 0;
 		}
 
-		$intersectStart = max($termStart, $periodFrom);
-		$intersectEnd = min($termEnd, $periodTo);
-		if ($intersectStart > $intersectEnd) {
-			return 0;
-		}
-
-		$start = $this->yearMonth(date: $intersectStart);
-		$end = $this->yearMonth(date: $intersectEnd);
-		if ($start === null || $end === null) {
-			return 0;
-		}
-
-		$months = ((($end['year'] - $start['year']) * 12) + ($end['month'] - $start['month']) + 1);
-
-		return max(0, $months);
+		return $this->monthsSpanned(term: $this->term(start: max($term->start, $period->start), end: min($term->end, $period->end)));
 	}//end overlapMonths()
+
+	/**
+	 * Whether an interval misses a bound.
+	 *
+	 * @param RecognitionTerm $term The interval.
+	 *
+	 * @return boolean
+	 */
+	private function isUnbounded(RecognitionTerm $term): bool {
+		return $term->start === '' || $term->end === '';
+	}//end isUnbounded()
+
+	/**
+	 * Whole calendar months an interval touches; 0 when it is empty or a bound
+	 * does not parse.
+	 *
+	 * @param RecognitionTerm $term The intersection.
+	 *
+	 * @return int
+	 */
+	private function monthsSpanned(RecognitionTerm $term): int {
+		$start = $this->yearMonth(date: $term->start);
+		$end = $this->yearMonth(date: $term->end);
+		if ($term->start > $term->end || $start === null || $end === null) {
+			return 0;
+		}
+
+		return max(0, ((($end['year'] - $start['year']) * 12) + ($end['month'] - $start['month']) + 1));
+	}//end monthsSpanned()
 
 	/**
 	 * Whether an ISO date falls within [start, end] inclusive.
 	 *
-	 * @param string $start Interval start (ISO date).
-	 * @param string $end Interval end (ISO date).
+	 * @param RecognitionTerm $term The interval.
 	 * @param string $date Candidate date (ISO date).
 	 *
 	 * @return bool True when start <= date <= end and all bounds are present.
 	 */
-	private function contains(string $start, string $end, string $date): bool {
-		if ($start === '' || $end === '' || $date === '') {
+	private function contains(RecognitionTerm $term, string $date): bool {
+		if ($date === '' || $this->isUnbounded(term: $term) === true) {
 			return false;
 		}
 
-		return ($date >= $start && $date <= $end);
+		return ($date >= $term->start && $date <= $term->end);
 	}//end contains()
 
 	/**

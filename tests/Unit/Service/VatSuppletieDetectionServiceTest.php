@@ -634,4 +634,106 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		$detectionService->prepare(vatCorrectionId: 'corr-3');
 
 	}//end testPrepareRefusesAlreadyPreparedCorrection()
+
+	/**
+	 * Golden: the detected correction record of a late sale, field by field.
+	 *
+	 * @return void
+	 */
+	public function testDetectedCorrectionRecordGolden(): void {
+		$entries = $this->q1Sale();
+		$entries['gl-2'] = ['2026-03-01', [['8000', 'credit', 500.0, 'high', '1a', 'base'], ['2110', 'credit', 105.0, 'high', '1a', 'vat']]];
+		$stub = $this->fakeObjectService($this->ledger($entries) + $this->filedQ1());
+		[, $detectionService] = $this->buildServices($stub);
+
+		$correction = $detectionService->detect(vatReturnId: 'vat-1');
+
+		self::assertIsString($correction['detectedAt']);
+		unset($correction['detectedAt'], $correction['id'], $correction['filedSnapshot'], $correction['currentSnapshot']);
+		self::assertSame(
+			[
+				'administrationId' => 'adm-1',
+				'originalVatReturnId' => 'vat-1',
+				'originalReturnId' => 'vat-1',
+				'periodType' => 'quarter',
+				'periodYear' => 2026,
+				'correctionAmount' => 0.0,
+				'adjustmentAmount' => 0.0,
+				'reason' => 'Automatisch gedetecteerde afwijking tussen de ingediende aangifte en het grootboek.',
+				'correctionReason' => 'late-discovery',
+				'currency' => 'EUR',
+				'state' => 'draft',
+				'categoryDeltas' => [],
+				'preparedAt' => null,
+				'thresholdExceeded' => null,
+				'filingDeadline' => null,
+				'glCorrectionTransactionId' => null,
+				'periodQuarter' => 1,
+			],
+			$correction
+		);
+
+	}//end testDetectedCorrectionRecordGolden()
+
+	/**
+	 * Golden: a mixed correction posts one line per non-zero delta (its own
+	 * account, else the clearing account) and a balancing clearing line.
+	 *
+	 * @return void
+	 */
+	public function testCorrectionPostingLinesGolden(): void {
+		$correction = [
+			'id' => 'corr-golden-0001',
+			'administrationId' => 'adm-7',
+			'originalVatReturnId' => 'vat-7',
+			'state' => 'draft',
+			'preparedAt' => null,
+			'filedSnapshot' => [
+				['type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'totalVATAmount' => 210.0, 'totalTaxableAmount' => 1000.0],
+				['type' => 'paid', 'taxRate' => 21.0, 'returnBox' => '5b', 'totalVATAmount' => 100.0, 'totalTaxableAmount' => 0.0],
+				['type' => 'collected', 'taxRate' => 9.0, 'returnBox' => '1b', 'totalVATAmount' => 90.0, 'totalTaxableAmount' => 1000.0],
+			],
+			'currentSnapshot' => [
+				['type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'totalVATAmount' => 252.0, 'totalTaxableAmount' => 1200.0],
+				['type' => 'paid', 'taxRate' => 21.0, 'returnBox' => '5b', 'totalVATAmount' => 130.0, 'totalTaxableAmount' => 0.0],
+				['type' => 'collected', 'taxRate' => 9.0, 'returnBox' => '1b', 'totalVATAmount' => 81.0, 'totalTaxableAmount' => 900.0],
+			],
+		];
+		$lines = [
+			['id' => 'l-1', 'returnId' => 'vat-7', 'returnBox' => '1a', 'vatAmount' => 210.0, 'glAccountNumber' => '1500'],
+			['id' => 'l-2', 'returnId' => 'vat-7', 'returnBox' => '1b', 'vatAmount' => 0.0, 'glAccountNumber' => '1510'],
+		];
+		$stub = $this->fakeObjectService(['VatCorrection' => [$correction], 'VATLine' => $lines]);
+		[, $detectionService] = $this->buildServices($stub);
+		$this->logger->expects(self::exactly(2))->method('warning');
+
+		$prepared = $detectionService->prepare(vatCorrectionId: 'corr-golden-0001');
+
+		self::assertSame(3.0, $prepared['correctionAmount']);
+		self::assertSame(['1500', null, null], array_column($prepared['categoryDeltas'], 'glAccountNumber'));
+		$transactions = $stub->dump('GLTransaction');
+		self::assertCount(1, $transactions);
+		self::assertSame('GLCORR-corr-golden-', $transactions[0]['transactionNumber']);
+		self::assertSame('BTW-suppletie correctie voor VatCorrection corr-golden-0001', $transactions[0]['description']);
+		self::assertSame(['corr-golden-0001', 'draft', 'adm-7', 'EUR'], [$transactions[0]['sourceReference'], $transactions[0]['state'], $transactions[0]['administrationId'], $transactions[0]['currency']]);
+		self::assertSame($transactions[0]['postingDate'], $transactions[0]['periodId']);
+		$txId = $prepared['glCorrectionTransactionId'];
+		$posted = array_map(
+			static function (array $line): array {
+				unset($line['id']);
+				return $line;
+			},
+			$stub->dump('GLLine')
+		);
+		self::assertEquals(
+			[
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 1, 'accountNumber' => '1500', 'side' => 'credit', 'amount' => 42.0, 'currency' => 'EUR', 'description' => 'Suppletie rubriek 1a delta'],
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 2, 'accountNumber' => 'shillinq', 'side' => 'debit', 'amount' => 30.0, 'currency' => 'EUR', 'description' => 'Suppletie rubriek 5b delta'],
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 3, 'accountNumber' => 'shillinq', 'side' => 'debit', 'amount' => 9.0, 'currency' => 'EUR', 'description' => 'Suppletie rubriek 1b delta'],
+				['transactionId' => $txId, 'administrationId' => 'adm-7', 'lineNumber' => 4, 'accountNumber' => 'shillinq', 'side' => 'debit', 'amount' => 3.0, 'currency' => 'EUR', 'description' => 'Suppletie clearing balans'],
+			],
+			$posted
+		);
+
+	}//end testCorrectionPostingLinesGolden()
 }//end class

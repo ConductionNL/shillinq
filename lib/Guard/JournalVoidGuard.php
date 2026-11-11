@@ -94,10 +94,10 @@ class JournalVoidGuard {
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md (REQ-JE-010)
 	 */
 	public function requireReversedGLTransaction(array $journal): bool {
+		// A posted journal must carry a glTransactionId; without one there
+		// is nothing to reverse and the state is inconsistent — deny.
 		$glTransactionId = (string)($journal['glTransactionId'] ?? '');
 		if ($glTransactionId === '') {
-			// A posted journal must carry a glTransactionId; without one there
-			// is nothing to reverse and the state is inconsistent — deny.
 			$this->logger->info(
 				'JournalVoidGuard: void denied — journal has no materialised glTransactionId',
 				['journalNumber' => ($journal['journalNumber'] ?? 'unknown')]
@@ -106,41 +106,48 @@ class JournalVoidGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-			// Look for an offsetting GLTransaction that reverses this one
-			// (REQ-GL-004's reversal mechanism sets reversesTransactionId).
-			$reversals = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('GLTransaction')
-				->findAll(
-					[
-						'filters' => [
-							'reversesTransactionId' => $glTransactionId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			$reversed = is_array($reversals) === true && count($reversals) > 0;
-			if ($reversed === false) {
-				$this->logger->info(
-					'JournalVoidGuard: void denied — storneer eerst de grootboektransactie',
-					[
-						'journalNumber' => ($journal['journalNumber'] ?? 'unknown'),
-						'glTransactionId' => $glTransactionId,
-					]
-				);
-			}
-
-			return $reversed;
+			return $this->reversedOrLogged(journal: $journal, glTransactionId: $glTransactionId);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'JournalVoidGuard: reversal check failed — denying void (fail-closed)',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('JournalVoidGuard: reversal check failed — denying void (fail-closed)', ['exception' => $e->getMessage()]);
 			return false;
-		}//end try
-
+		}
 	}//end requireReversedGLTransaction()
+
+	/**
+	 * Whether the transaction is reversed; when it is not, the refusal is logged.
+	 *
+	 * @param array<string, mixed> $journal         JournalEntry object array.
+	 * @param string               $glTransactionId Its materialised GLTransaction.
+	 *
+	 * @return bool
+	 */
+	private function reversedOrLogged(array $journal, string $glTransactionId): bool {
+		$reversed = $this->hasReversal(glTransactionId: $glTransactionId);
+		if ($reversed === false) {
+			$this->logger->info(
+				'JournalVoidGuard: void denied — storneer eerst de grootboektransactie',
+				['journalNumber' => ($journal['journalNumber'] ?? 'unknown'), 'glTransactionId' => $glTransactionId]
+			);
+		}
+
+		return $reversed;
+	}//end reversedOrLogged()
+
+	/**
+	 * Whether an offsetting GLTransaction reverses this one (REQ-GL-004's
+	 * reversal mechanism sets reversesTransactionId).
+	 *
+	 * @param string $glTransactionId The GLTransaction to look for a reversal of.
+	 *
+	 * @return bool
+	 */
+	private function hasReversal(string $glTransactionId): bool {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$reversals = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['reversesTransactionId' => $glTransactionId], 'limit' => 1]);
+
+		return is_array($reversals) === true && count($reversals) > 0;
+	}//end hasReversal()
 }//end class

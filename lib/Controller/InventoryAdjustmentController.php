@@ -50,11 +50,6 @@ use Psr\Log\LoggerInterface;
 class InventoryAdjustmentController extends Controller {
 
 	/**
-	 * Identifier validation pattern shared across parameters.
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-:\\/ ]{1,128}$/';
-
-	/**
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
@@ -101,53 +96,13 @@ class InventoryAdjustmentController extends Controller {
 			return $guard;
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$receiptReference = trim((string)$this->request->getParam('receipt_reference', ''));
-		$landedCostCents = (int)$this->request->getParam('landed_cost_cents', 0);
-		$basis = trim((string)$this->request->getParam('basis', 'value'));
-
-		if ($administrationId === '' || $receiptReference === '') {
-			return new JSONResponse(
-				['error' => 'administration_id and receipt_reference are required'],
-				Http::STATUS_BAD_REQUEST
-			);
+		$allocation = new LandedCostRequest(request: $this->request);
+		$refusal = $this->landedCostRefusal(allocation: $allocation);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-			|| preg_match(self::ID_PATTERN, $receiptReference) !== 1
-			|| $landedCostCents <= 0
-			|| in_array($basis, ['value', 'quantity'], true) === false
-		) {
-			return new JSONResponse(
-				['error' => 'Invalid administration_id, receipt_reference, landed_cost_cents or basis'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		try {
-			if ($this->context->canAccess(administrationId: $administrationId) === false) {
-				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$result = $this->landedCost->allocate(
-				administrationId: $administrationId,
-				receiptReference: $receiptReference,
-				landedCostCents: $landedCostCents,
-				basis: $basis
-			);
-
-			return new JSONResponse($result, Http::STATUS_OK);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'InventoryAdjustmentController: landed-cost allocation failed',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to allocate landed cost'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		return $this->allocateOrFail(allocation: $allocation);
 
 	}//end landedCost()
 
@@ -177,62 +132,13 @@ class InventoryAdjustmentController extends Controller {
 			return $guard;
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$periodId = trim((string)$this->request->getParam('period_id', ''));
-		$nrvBySkuRaw = $this->request->getParam('nrv_by_sku', []);
-
-		if ($administrationId === '' || $periodId === '' || is_array($nrvBySkuRaw) === false || $nrvBySkuRaw === []) {
-			return new JSONResponse(
-				['error' => 'administration_id, period_id and a non-empty nrv_by_sku map are required'],
-				Http::STATUS_BAD_REQUEST
-			);
+		$writeDown = new NrvWriteDownRequest(request: $this->request);
+		$refusal = $this->nrvRefusal(writeDown: $writeDown);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1
-			|| preg_match('/^[A-Za-z0-9_.\\-]{1,32}$/', $periodId) !== 1
-		) {
-			return new JSONResponse(
-				['error' => 'Invalid administration_id or period_id'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		$nrvBySku = [];
-		foreach ($nrvBySkuRaw as $sku => $nrv) {
-			$skuKey = trim((string)$sku);
-			if ($skuKey === '' || preg_match(self::ID_PATTERN, $skuKey) !== 1 || is_numeric($nrv) === false) {
-				return new JSONResponse(
-					['error' => 'nrv_by_sku must map valid SKUs to numeric NRV-per-unit values'],
-					Http::STATUS_BAD_REQUEST
-				);
-			}
-
-			$nrvBySku[$skuKey] = (float)$nrv;
-		}
-
-		try {
-			if ($this->context->canAccess(administrationId: $administrationId) === false) {
-				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$result = $this->nrv->runForAdministration(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				nrvBySku: $nrvBySku
-			);
-
-			return new JSONResponse($result, Http::STATUS_OK);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'InventoryAdjustmentController: NRV write-down run failed',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to run NRV write-down'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		return $this->writeDownOrFail(writeDown: $writeDown);
 
 	}//end nrvWriteDown()
 
@@ -249,4 +155,212 @@ class InventoryAdjustmentController extends Controller {
 
 		return null;
 	}//end guard()
+
+	/**
+	 * A 400 for a missing or malformed allocation, otherwise null.
+	 *
+	 * @param LandedCostRequest $allocation The allocation.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function landedCostRefusal(LandedCostRequest $allocation): ?JSONResponse {
+		if ($allocation->isComplete() === false) {
+			return new JSONResponse(
+				['error' => 'administration_id and receipt_reference are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		if ($allocation->isWellFormed() === false) {
+			return new JSONResponse(
+				['error' => 'Invalid administration_id, receipt_reference, landed_cost_cents or basis'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		return null;
+
+	}//end landedCostRefusal()
+
+	/**
+	 * Allocate the landed cost; any failure is a logged 500.
+	 *
+	 * @param LandedCostRequest $allocation The allocation.
+	 *
+	 * @return JSONResponse
+	 */
+	private function allocateOrFail(LandedCostRequest $allocation): JSONResponse {
+		try {
+			return $this->allocate(allocation: $allocation);
+		} catch (\Throwable $e) {
+			return $this->landedCostFailure(allocation: $allocation, failure: $e);
+		}
+
+	}//end allocateOrFail()
+
+	/**
+	 * Allocate the landed cost in an administration the caller may access.
+	 *
+	 * @param LandedCostRequest $allocation The allocation.
+	 *
+	 * @return JSONResponse
+	 */
+	private function allocate(LandedCostRequest $allocation): JSONResponse {
+		$refusal = $this->accessRefusal(administrationId: $allocation->administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$result = $this->landedCost->allocate(
+			administrationId: $allocation->administrationId,
+			receiptReference: $allocation->receiptReference,
+			landedCostCents: $allocation->landedCostCents,
+			basis: $allocation->basis
+		);
+
+		return new JSONResponse($result, Http::STATUS_OK);
+
+	}//end allocate()
+
+	/**
+	 * Log a failed allocation and answer a 500 without its details.
+	 *
+	 * @param LandedCostRequest $allocation The allocation.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function landedCostFailure(LandedCostRequest $allocation, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'InventoryAdjustmentController: landed-cost allocation failed',
+			['administrationId' => $allocation->administrationId, 'exception' => $failure->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to allocate landed cost'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end landedCostFailure()
+
+	/**
+	 * A 400 for a missing or malformed write-down, otherwise null.
+	 *
+	 * @param NrvWriteDownRequest $writeDown The write-down.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function nrvRefusal(NrvWriteDownRequest $writeDown): ?JSONResponse {
+		if ($writeDown->isComplete() === false) {
+			return new JSONResponse(
+				['error' => 'administration_id, period_id and a non-empty nrv_by_sku map are required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		if ($writeDown->isWellFormed() === false) {
+			return new JSONResponse(
+				['error' => 'Invalid administration_id or period_id'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		return $this->nrvMapRefusal(writeDown: $writeDown);
+
+	}//end nrvRefusal()
+
+	/**
+	 * A 400 when an NRV entry has an invalid SKU or a non-numeric value.
+	 *
+	 * @param NrvWriteDownRequest $writeDown The write-down.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function nrvMapRefusal(NrvWriteDownRequest $writeDown): ?JSONResponse {
+		if ($writeDown->nrvBySku() === null) {
+			return new JSONResponse(
+				['error' => 'nrv_by_sku must map valid SKUs to numeric NRV-per-unit values'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		return null;
+
+	}//end nrvMapRefusal()
+
+	/**
+	 * Run the write-down; any failure is a logged 500.
+	 *
+	 * @param NrvWriteDownRequest $writeDown The write-down.
+	 *
+	 * @return JSONResponse
+	 */
+	private function writeDownOrFail(NrvWriteDownRequest $writeDown): JSONResponse {
+		try {
+			return $this->writeDown(writeDown: $writeDown);
+		} catch (\Throwable $e) {
+			return $this->nrvFailure(writeDown: $writeDown, failure: $e);
+		}
+
+	}//end writeDownOrFail()
+
+	/**
+	 * Run the write-down in an administration the caller may access.
+	 *
+	 * @param NrvWriteDownRequest $writeDown The write-down.
+	 *
+	 * @return JSONResponse
+	 */
+	private function writeDown(NrvWriteDownRequest $writeDown): JSONResponse {
+		$refusal = $this->accessRefusal(administrationId: $writeDown->administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$result = $this->nrv->runForAdministration(
+			administrationId: $writeDown->administrationId,
+			periodId: $writeDown->periodId,
+			nrvBySku: (array)$writeDown->nrvBySku()
+		);
+
+		return new JSONResponse($result, Http::STATUS_OK);
+
+	}//end writeDown()
+
+	/**
+	 * Log a failed write-down and answer a 500 without its details.
+	 *
+	 * @param NrvWriteDownRequest $writeDown The write-down.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function nrvFailure(NrvWriteDownRequest $writeDown, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'InventoryAdjustmentController: NRV write-down run failed',
+			['administrationId' => $writeDown->administrationId, 'exception' => $failure->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to run NRV write-down'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end nrvFailure()
+
+	/**
+	 * A masked 404 for an administration the caller may not access.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+
+	}//end accessRefusal()
 }//end class

@@ -137,39 +137,21 @@ class KnownCostReader {
 	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-008
 	 */
 	public function loadContext(string $administrationId): array {
-		$recurring = $this->query(
-			schema: self::SCHEMA_CASHFLOW_RECURRING,
-			filters: ['administrationId' => $administrationId]
-		);
-
-		$accounts = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
-		$ledgerGroups = $this->query(schema: self::SCHEMA_LEDGER_GROUP, filters: ['administrationId' => $administrationId]);
+		$recurring    = $this->forAdministration(schema: self::SCHEMA_CASHFLOW_RECURRING, administrationId: $administrationId);
+		$accounts     = $this->forAdministration(schema: self::SCHEMA_ACCOUNT, administrationId: $administrationId);
+		$ledgerGroups = $this->forAdministration(schema: self::SCHEMA_LEDGER_GROUP, administrationId: $administrationId);
 		$ledgerGroupIdByAccount = $this->buildLedgerGroupMembershipIndex(ledgerGroups: $ledgerGroups, accounts: $accounts);
 
-		$annualBudgets = $this->query(schema: self::SCHEMA_ANNUAL_BUDGET, filters: ['administrationId' => $administrationId]);
+		$annualBudgets        = $this->forAdministration(schema: self::SCHEMA_ANNUAL_BUDGET, administrationId: $administrationId);
 		$annualBudgetIdByYear = $this->buildDefaultAnnualBudgetIndex(annualBudgets: $annualBudgets);
-
-		$annualBudgetIds = array_values($annualBudgetIdByYear);
-
-		$budgetLines = [];
-		$derivations = [];
-		if ($annualBudgetIds !== []) {
-			$budgetLines = $this->query(
-				schema: self::SCHEMA_BUDGET_LINE,
-				filters: ['annualBudgetId' => ['in' => $annualBudgetIds]]
-			);
-			$derivations = $this->query(
-				schema: self::SCHEMA_BUDGET_LINE_DERIVATION,
-				filters: ['annualBudgetId' => ['in' => $annualBudgetIds]]
-			);
-		}
+		$annualBudgetIds      = array_values($annualBudgetIdByYear);
 
 		return [
 			'recurring' => $recurring,
 			'ledgerGroupIdByAccount' => $ledgerGroupIdByAccount,
 			'annualBudgetIdByYear' => $annualBudgetIdByYear,
-			'budgetLines' => $budgetLines,
-			'derivations' => $derivations,
+			'budgetLines' => $this->forAnnualBudgets(schema: self::SCHEMA_BUDGET_LINE, annualBudgetIds: $annualBudgetIds),
+			'derivations' => $this->forAnnualBudgets(schema: self::SCHEMA_BUDGET_LINE_DERIVATION, annualBudgetIds: $annualBudgetIds),
 		];
 
 	}//end loadContext()
@@ -218,12 +200,7 @@ class KnownCostReader {
 	 * @return string The id or slug, or an empty string when neither is set.
 	 */
 	private function ledgerGroupKey(array $ledgerGroup): string {
-		$id = (string)($ledgerGroup['@self']['id'] ?? $ledgerGroup['id'] ?? '');
-		if ($id !== '') {
-			return $id;
-		}
-
-		return (string)($ledgerGroup['@self']['slug'] ?? $ledgerGroup['slug'] ?? '');
+		return $this->recordKey(record: $ledgerGroup);
 
 	}//end ledgerGroupKey()
 
@@ -240,49 +217,28 @@ class KnownCostReader {
 	 * @return list<string> The resolved, deduplicated member account numbers.
 	 */
 	private function resolveMembers(array $ledgerGroup, array $accounts): array {
-		$ranges = [];
-		if (is_array($ledgerGroup['accountRanges'] ?? null) === true) {
-			$ranges = $ledgerGroup['accountRanges'];
-		}
-
-		$included = [];
-		if (is_array($ledgerGroup['includedAccountNumbers'] ?? null) === true) {
-			$included = $ledgerGroup['includedAccountNumbers'];
-		}
-
-		$excludedRaw = [];
-		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
-			$excludedRaw = $ledgerGroup['excludedAccountNumbers'];
-		}
-
-		$excluded = array_flip(array_map('strval', $excludedRaw));
+		$ranges   = $this->listField(record: $ledgerGroup, field: 'accountRanges');
+		$excluded = array_flip(array_map('strval', $this->listField(record: $ledgerGroup, field: 'excludedAccountNumbers')));
 
 		$members = [];
 		foreach ($accounts as $account) {
 			$number = (string)($account['accountNumber'] ?? '');
-			if ($number === '' || isset($excluded[$number]) === true) {
-				continue;
-			}
-
 			if ($this->inAnyRange(accountNumber: $number, ranges: $ranges) === true) {
 				$members[$number] = true;
 			}
 		}
 
-		foreach ($included as $number) {
-			$number = (string)$number;
-			if ($number === '' || isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			$members[$number] = true;
+		foreach ($this->listField(record: $ledgerGroup, field: 'includedAccountNumbers') as $number) {
+			$members[(string)$number] = true;
 		}
+
+		unset($members['']);
 
 		// PHP casts a purely-numeric string array key to an int key, so
 		// array_keys() would silently hand back integers here — cast back
 		// to string explicitly, since every caller compares account
 		// numbers as strings.
-		return array_values(array_map('strval', array_keys($members)));
+		return array_values(array_map('strval', array_keys(array_diff_key($members, $excluded))));
 
 	}//end resolveMembers()
 
@@ -301,15 +257,8 @@ class KnownCostReader {
 			return false;
 		}
 
-		$value = (int)$accountNumber;
 		foreach ($ranges as $range) {
-			$from = (string)($range['from'] ?? '');
-			$to = (string)($range['to'] ?? '');
-			if ($from === '' || $to === '' || is_numeric($from) === false || is_numeric($to) === false) {
-				continue;
-			}
-
-			if ($value >= (int)$from && $value <= (int)$to) {
+			if ($this->isWithin(value: (int)$accountNumber, range: $range) === true) {
 				return true;
 			}
 		}
@@ -333,21 +282,9 @@ class KnownCostReader {
 	private function buildDefaultAnnualBudgetIndex(array $annualBudgets): array {
 		$index = [];
 		foreach ($annualBudgets as $annualBudget) {
-			if (($annualBudget['isDefault'] ?? false) !== true) {
-				continue;
-			}
-
-			$year = (int)($annualBudget['fiscalYear'] ?? 0);
-			if ($year <= 0 || isset($index[$year]) === true) {
-				continue;
-			}
-
-			$id = (string)($annualBudget['@self']['id'] ?? $annualBudget['id'] ?? '');
-			if ($id === '') {
-				$id = (string)($annualBudget['@self']['slug'] ?? $annualBudget['slug'] ?? '');
-			}
-
-			if ($id !== '') {
+			$year = $this->defaultBudgetYear(annualBudget: $annualBudget);
+			$id   = $this->recordKey(record: $annualBudget);
+			if ($year > 0 && isset($index[$year]) === false && $id !== '') {
 				$index[$year] = $id;
 			}
 		}
@@ -384,22 +321,145 @@ class KnownCostReader {
 
 		$result = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
+			$payload = $this->rowArray(row: $row);
+			if ($payload !== null) {
+				$result[] = $payload;
 			}
 		}
 
 		return $result;
 
 	}//end query()
+
+	/**
+	 * The records of a schema in one administration.
+	 *
+	 * @param string $schema           The schema slug.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function forAdministration(string $schema, string $administrationId): array {
+		return $this->query(schema: $schema, filters: ['administrationId' => $administrationId]);
+
+	}//end forAdministration()
+
+	/**
+	 * The records of a schema under the given annual budgets; none, without
+	 * a query, when there are no budgets.
+	 *
+	 * @param string       $schema          The schema slug.
+	 * @param list<string> $annualBudgetIds The AnnualBudget ids.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function forAnnualBudgets(string $schema, array $annualBudgetIds): array {
+		if ($annualBudgetIds === []) {
+			return [];
+		}
+
+		return $this->query(schema: $schema, filters: ['annualBudgetId' => ['in' => $annualBudgetIds]]);
+
+	}//end forAnnualBudgets()
+
+	/**
+	 * One findAll() row as an array: as given, else its getObject() payload;
+	 * null when neither is an array.
+	 *
+	 * @param mixed $row One row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function rowArray(mixed $row): ?array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === false || method_exists($row, 'getObject') === false) {
+			return null;
+		}
+
+		$payload = $row->getObject();
+		if (is_array($payload) === false) {
+			return null;
+		}
+
+		return $payload;
+
+	}//end rowArray()
+
+	/**
+	 * A record's stable lookup key: its object id, falling back to its
+	 * `@self.slug` — the `BudgetVsActualsReader` dual-key convention.
+	 *
+	 * @param array<string,mixed> $record The record.
+	 *
+	 * @return string The id or slug, or an empty string when neither is set.
+	 */
+	private function recordKey(array $record): string {
+		$id = (string)($record['@self']['id'] ?? $record['id'] ?? '');
+		if ($id !== '') {
+			return $id;
+		}
+
+		return (string)($record['@self']['slug'] ?? $record['slug'] ?? '');
+
+	}//end recordKey()
+
+	/**
+	 * A list field of a record, or [] when it is absent or not an array.
+	 *
+	 * @param array<string,mixed> $record The record.
+	 * @param string              $field  The field name.
+	 *
+	 * @return array<int|string,mixed>
+	 */
+	private function listField(array $record, string $field): array {
+		$value = ($record[$field] ?? null);
+		if (is_array($value) === false) {
+			return [];
+		}
+
+		return $value;
+
+	}//end listField()
+
+	/**
+	 * Whether a value lies inside one numeric range pair; a pair with an
+	 * empty or non-numeric bound matches nothing.
+	 *
+	 * @param int                             $value The account number as an integer.
+	 * @param array{from?:string,to?:string}  $range The range pair.
+	 *
+	 * @return bool
+	 */
+	private function isWithin(int $value, array $range): bool {
+		$from = (string)($range['from'] ?? '');
+		$to   = (string)($range['to'] ?? '');
+		if (is_numeric($from) === false || is_numeric($to) === false) {
+			return false;
+		}
+
+		return $value >= (int)$from && $value <= (int)$to;
+
+	}//end isWithin()
+
+	/**
+	 * The fiscal year of a default AnnualBudget, or 0 when the row is not
+	 * the default (`isDefault` must be exactly true) or has no year.
+	 *
+	 * @param array<string,mixed> $annualBudget The AnnualBudget row.
+	 *
+	 * @return int
+	 */
+	private function defaultBudgetYear(array $annualBudget): int {
+		if (($annualBudget['isDefault'] ?? false) !== true) {
+			return 0;
+		}
+
+		return (int)($annualBudget['fiscalYear'] ?? 0);
+
+	}//end defaultBudgetYear()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config.

@@ -162,27 +162,61 @@ class ProgrammabegrotingController extends Controller {
 	 * @return JSONResponse
 	 */
 	private function dispatch(callable $handler, string $failure): JSONResponse {
-		$budgetId = trim((string)$this->request->getParam('begroting_id', ''));
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-
-		if ($budgetId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $budgetId) !== 1) {
-			return new JSONResponse(['error' => 'begroting_id is required and must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($administrationId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id is required and must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+		$ids     = $this->ids();
+		$refusal = self::idRefusal(ids: $ids);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
-			$result = $handler($administrationId, $budgetId);
+			$result = $handler($ids['administrationId'], $ids['budgetId']);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ProgrammabegrotingController: ' . $failure,
-				['budgetId' => $budgetId, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
+			$this->logger->error('ProgrammabegrotingController: ' . $failure, ($ids + ['exception' => $e->getMessage()]));
 			return new JSONResponse(['error' => $failure], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
 	}//end dispatch()
+
+	/**
+	 * The trimmed begroting_id and administration_id parameters, read in that order.
+	 *
+	 * @return array{budgetId: string, administrationId: string}
+	 */
+	private function ids(): array {
+		return [
+			'budgetId' => trim((string)$this->request->getParam('begroting_id', '')),
+			'administrationId' => trim((string)$this->request->getParam('administration_id', '')),
+		];
+	}//end ids()
+
+	/**
+	 * The 400 for a blank or malformed budget id, then for the administration id, or null.
+	 *
+	 * @param array{budgetId: string, administrationId: string} $ids The ids.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private static function idRefusal(array $ids): JSONResponse|null {
+		if (self::isId(value: $ids['budgetId']) === false) {
+			return new JSONResponse(['error' => 'begroting_id is required and must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if (self::isId(value: $ids['administrationId']) === false) {
+			return new JSONResponse(['error' => 'administration_id is required and must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
+	}//end idRefusal()
+
+	/**
+	 * Whether the value is a short slug identifier.
+	 *
+	 * @param string $value The value.
+	 *
+	 * @return bool
+	 */
+	private static function isId(string $value): bool {
+		return $value !== '' && preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $value) === 1;
+	}//end isId()
 }//end class

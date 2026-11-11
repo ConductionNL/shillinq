@@ -74,40 +74,83 @@ class InterestAllocationService {
 			throw new DomainException('Enter the year and the pooled interest rate before calculating.');
 		}
 
-		$administrationId = (string)($run['administrationId'] ?? '');
+		$lines = $this->investmentLines(run: $run);
+		$reserveLines = $this->reserveLines(run: $run);
+
+		$run['lines'] = $lines;
+		$run['reserveLines'] = $reserveLines;
+		$run['investmentInterestTotal'] = self::interestTotal(lines: $lines);
+		$run['reserveInterestTotal'] = self::interestTotal(lines: $reserveLines);
+		return $run;
+
+	}//end calculate()
+
+	/**
+	 * One line per investment of the run's administration.
+	 *
+	 * @param array<string,mixed> $run The run, with its year and pooled rate.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function investmentLines(array $run): array {
+		$year = (int)($run['year'] ?? 0);
+		$rate = (float)($run['omslagrentePercentage'] ?? 0);
+
 		$lines = [];
-		$investmentTotal = 0;
-		foreach ($this->records->records(schema: 'Investering', filters: ['administrationId' => $administrationId]) as $investment) {
-			$line = $this->investmentLine(investment: $investment, year: $year, rate: $rate);
-			$investmentTotal += (int)round($line['interest'] * 100);
-			$lines[] = $line;
+		foreach ($this->records->records(schema: 'Investering', filters: ['administrationId' => (string)($run['administrationId'] ?? '')]) as $investment) {
+			$lines[] = $this->investmentLine(investment: $investment, year: $year, rate: $rate);
 		}
 
-		$reserveLines = [];
-		$reserveTotal = 0;
-		foreach ($this->records->records(schema: 'Reserve', filters: ['administrationId' => $administrationId]) as $reserve) {
+		return $lines;
+
+	}//end investmentLines()
+
+	/**
+	 * One line per reserve marked for interest: its 1 January balance and its interest.
+	 *
+	 * @param array<string,mixed> $run The run, with its year and pooled rate.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function reserveLines(array $run): array {
+		$year = (int)($run['year'] ?? 0);
+		$rate = (float)($run['omslagrentePercentage'] ?? 0);
+
+		$lines = [];
+		foreach ($this->records->records(schema: 'Reserve', filters: ['administrationId' => (string)($run['administrationId'] ?? '')]) as $reserve) {
 			if (($reserve['rentetoerekening'] ?? false) !== true) {
 				continue;
 			}
 
 			$balance = $this->balances->balanceOnFirstJanuary(reserve: $reserve, year: $year);
-			$interest = self::interest(amount: $balance, rate: $rate);
-			$reserveTotal += (int)round($interest * 100);
-			$reserveLines[] = [
+			$lines[] = [
 				'reserveId' => (string)($reserve['id'] ?? ''),
 				'name'      => (string)($reserve['name'] ?? ''),
 				'balance'   => $balance,
-				'interest'  => $interest,
+				'interest'  => self::interest(amount: $balance, rate: $rate),
 			];
 		}
 
-		$run['lines'] = $lines;
-		$run['reserveLines'] = $reserveLines;
-		$run['investmentInterestTotal'] = (float)($investmentTotal / 100);
-		$run['reserveInterestTotal'] = (float)($reserveTotal / 100);
-		return $run;
+		return $lines;
 
-	}//end calculate()
+	}//end reserveLines()
+
+	/**
+	 * The lines' interest summed in cents, in euros.
+	 *
+	 * @param list<array<string,mixed>> $lines Investment or reserve lines.
+	 *
+	 * @return float
+	 */
+	private static function interestTotal(array $lines): float {
+		$cents = 0;
+		foreach ($lines as $line) {
+			$cents += (int)round($line['interest'] * 100);
+		}
+
+		return (float)($cents / 100);
+
+	}//end interestTotal()
 
 	/**
 	 * Post a calculated run: one journal entry, and a realised addition per reserve.
@@ -165,43 +208,96 @@ class InterestAllocationService {
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function journalFor(array $run): array {
-		$year = (int)($run['year'] ?? 0);
+		$this->assertJournalAccounts(run: $run);
+
+		$lines = array_merge(
+			$this->taskFieldLines(run: $run, perTaskField: $this->interestPerTaskField(run: $run)),
+			$this->reserveBookings(run: $run)
+		);
+		if ($lines === []) {
+			throw new DomainException('There is no interest to post. Calculate the run first.');
+		}
+
+		return $this->journalEntry(run: $run, lines: $lines);
+
+	}//end journalFor()
+
+	/**
+	 * Refuse a run without its interest cost account or its Treasury account.
+	 *
+	 * @param array<string,mixed> $run The calculated run.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When either account is missing.
+	 */
+	private function assertJournalAccounts(array $run): void {
 		$costAccount = trim((string)($run['interestCostAccountNumber'] ?? ''));
 		$treasuryAccount = trim((string)($run['treasuryAccountNumber'] ?? ''));
 		if ($costAccount === '' || $treasuryAccount === '') {
 			throw new DomainException('Enter the interest cost account and the Treasury account on the run.');
 		}
 
+	}//end assertJournalAccounts()
+
+	/**
+	 * The investment interest in cents per task field, in natural order.
+	 *
+	 * @param array<string,mixed> $run The calculated run.
+	 *
+	 * @return array<string,int>
+	 */
+	private function interestPerTaskField(array $run): array {
 		$perTaskField = [];
 		foreach ((array)($run['lines'] ?? []) as $line) {
 			$cents = (int)round((float)($line['interest'] ?? 0) * 100);
-			if ($cents <= 0 || (string)($line['taskFieldCode'] ?? '') === '') {
-				continue;
+			if ($cents > 0 && (string)($line['taskFieldCode'] ?? '') !== '') {
+				$code = (string)$line['taskFieldCode'];
+				$perTaskField[$code] = (($perTaskField[$code] ?? 0) + $cents);
 			}
-
-			$code = (string)$line['taskFieldCode'];
-			$perTaskField[$code] = (($perTaskField[$code] ?? 0) + $cents);
 		}
 
 		ksort($perTaskField, SORT_NATURAL);
+		return $perTaskField;
+
+	}//end interestPerTaskField()
+
+	/**
+	 * A cost line per task field, then the Treasury line that credits their sum.
+	 *
+	 * @param array<string,mixed> $run          The calculated run.
+	 * @param array<string,int>   $perTaskField Cents per task field.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function taskFieldLines(array $run, array $perTaskField): array {
+		$year = (int)($run['year'] ?? 0);
+		$costAccount = trim((string)($run['interestCostAccountNumber'] ?? ''));
 		$lines = [];
-		$treasury = 0;
 		foreach ($perTaskField as $code => $cents) {
-			$treasury += $cents;
 			$lines[] = self::line(account: $costAccount, side: 'debit', cents: $cents, description: sprintf('Rente %d taakveld %s', $year, $code));
 		}
 
+		$treasury = array_sum($perTaskField);
 		if ($treasury > 0) {
+			$treasuryAccount = trim((string)($run['treasuryAccountNumber'] ?? ''));
 			$lines[] = self::line(account: $treasuryAccount, side: 'credit', cents: $treasury, description: sprintf('Rente %d taakveld 0.5 Treasury', $year));
 		}
 
-		foreach ($this->reserveBookings(run: $run) as $booking) {
-			$lines[] = $booking;
-		}
+		return $lines;
 
-		if ($lines === []) {
-			throw new DomainException('There is no interest to post. Calculate the run first.');
-		}
+	}//end taskFieldLines()
+
+	/**
+	 * The draft JournalEntry payload of a run's lines.
+	 *
+	 * @param array<string,mixed>       $run   The calculated run.
+	 * @param list<array<string,mixed>> $lines The journal lines.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function journalEntry(array $run, array $lines): array {
+		$year = (int)($run['year'] ?? 0);
 
 		return [
 			'journalNumber'    => sprintf('RENTE-%d-%s', $year, substr(hash('sha256', (string)($run['administrationId'] ?? '') . '|' . $year), 0, 8)),
@@ -214,7 +310,7 @@ class InterestAllocationService {
 			'state'            => 'draft',
 		];
 
-	}//end journalFor()
+	}//end journalEntry()
 
 	/**
 	 * An investment's book value on 1 January of a year, or null when it cannot be told.
