@@ -71,13 +71,8 @@ class KlantLadderOverrideApprovalGuard {
 	 */
 	public function isApprovedForElevatedStages(string $overrideId): bool {
 		try {
-			$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-			if ($register === '') {
-				$register = 'shillinq';
-			}
-
 			$rows = $this->objectService
-				->setRegister($register)
+				->setRegister($this->registerSlug())
 				->setSchema('KlantLadderOverride')
 				->findAll(['filters' => ['id' => $overrideId]]);
 
@@ -86,29 +81,67 @@ class KlantLadderOverrideApprovalGuard {
 				return false;
 			}
 
-			$override = $rows[0];
-			$stages = (array)($override['overrides']['stages'] ?? []);
-			$touchesElevated = false;
-			foreach ($stages as $stage) {
-				$nr = (int)($stage['nr'] ?? 0);
-				if ($nr >= 4) {
-					$touchesElevated = true;
-					break;
-				}
-			}
-
-			if ($touchesElevated === false) {
-				return true;
-			}
-
-			$approvedBy = (string)($override['approvedBy'] ?? '');
-			$approvedAt = (string)($override['approvedAt'] ?? '');
-
-			return ($approvedBy !== '' && $approvedAt !== '');
+			return $this->overrideIsApproved(override: $rows[0]);
 		} catch (\Throwable $e) {
 			$this->logger->warning('Shillinq: KlantLadderOverrideApprovalGuard failed: ' . $e->getMessage());
 			return false;
 		}//end try
 
 	}//end isApprovedForElevatedStages()
+
+	/**
+	 * The configured register, defaulting to 'shillinq' when empty.
+	 *
+	 * @return string
+	 */
+	private function registerSlug(): string {
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
+
+		return $register;
+
+	}//end registerSlug()
+
+	/**
+	 * Whether an override may activate: it touches no elevated stage, or it
+	 * carries both an approver and an approval date.
+	 *
+	 * Untyped on purpose: a non-array row must fail exactly where it did
+	 * before (an Error caught by the caller, fail-closed).
+	 *
+	 * @param mixed $override The override row.
+	 *
+	 * @return bool
+	 */
+	private function overrideIsApproved(mixed $override): bool {
+		if ($this->touchesElevatedStage(override: $override) === false) {
+			return true;
+		}
+
+		$approvedBy = (string)($override['approvedBy'] ?? '');
+		$approvedAt = (string)($override['approvedAt'] ?? '');
+
+		return ($approvedBy !== '' && $approvedAt !== '');
+
+	}//end overrideIsApproved()
+
+	/**
+	 * Whether any overridden stage is number 4 or higher.
+	 *
+	 * @param mixed $override The override row.
+	 *
+	 * @return bool
+	 */
+	private function touchesElevatedStage(mixed $override): bool {
+		foreach ((array)($override['overrides']['stages'] ?? []) as $stage) {
+			if ((int)($stage['nr'] ?? 0) >= 4) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end touchesElevatedStage()
 }//end class
