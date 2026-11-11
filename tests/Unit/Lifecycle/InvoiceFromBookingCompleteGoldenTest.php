@@ -53,6 +53,7 @@ final class InvoiceFromBookingCompleteGoldenTest extends TestCase {
 			'storeBroken' => ['ord-stored', null, true],
 			'notCompleted' => ['ord-1', $order(['completedAt' => null]), false],
 			'blankCompleted' => ['ord-1', $order(['completedAt' => '']), false],
+			'askedForOtherId' => ['ord-asked', $order(['completedAt' => null]), false],
 			'alreadyInvoiced' => ['ord-1', $order(['invoiceId' => 'inv-9']), false],
 			'blankInvoice' => ['ord-1', $order(['invoiceId' => '']), false],
 			'noDepositNeeded' => ['ord-1', $order(['depositRequired' => false]), false],

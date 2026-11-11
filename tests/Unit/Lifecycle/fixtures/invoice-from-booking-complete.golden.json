@@ -85,6 +85,19 @@
             ]
         ]
     },
+    "askedForOtherId": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: completedAt not set \u2014 denying completion",
+                {
+                    "orderId": "ord-asked"
+                }
+            ]
+        ]
+    },
     "alreadyInvoiced": {
         "allowed": false,
         "calls": [
