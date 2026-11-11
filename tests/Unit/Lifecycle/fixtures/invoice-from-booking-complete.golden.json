@@ -1,0 +1,244 @@
+{
+    "storedComplete": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "BookingOrder",
+                {
+                    "filters": {
+                        "orderId": "ord-stored"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "notFound": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "BookingOrder",
+                {
+                    "filters": {
+                        "orderId": "ord-404"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: order not found \u2014 denying completion",
+                {
+                    "orderId": "ord-404"
+                }
+            ]
+        ]
+    },
+    "storeBroken": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "debug",
+                "InvoiceFromBookingGuard: schema lookup unavailable \u2014 treating as absent",
+                {
+                    "schema": "BookingOrder",
+                    "exception": "no object service"
+                }
+            ],
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: order not found \u2014 denying completion",
+                {
+                    "orderId": "ord-stored"
+                }
+            ]
+        ]
+    },
+    "notCompleted": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: completedAt not set \u2014 denying completion",
+                {
+                    "orderId": "ord-1"
+                }
+            ]
+        ]
+    },
+    "blankCompleted": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: completedAt not set \u2014 denying completion",
+                {
+                    "orderId": "ord-1"
+                }
+            ]
+        ]
+    },
+    "alreadyInvoiced": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: order already invoiced \u2014 denying duplicate completion",
+                {
+                    "orderId": "ord-1",
+                    "invoiceId": "inv-9"
+                }
+            ]
+        ]
+    },
+    "blankInvoice": {
+        "allowed": true,
+        "calls": []
+    },
+    "noDepositNeeded": {
+        "allowed": true,
+        "calls": []
+    },
+    "depositNoPayment": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: deposit required but no depositPaymentId \u2014 denying completion",
+                {
+                    "orderId": "ord-1"
+                }
+            ]
+        ]
+    },
+    "depositNoOrderId": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: deposit required but no depositPaymentId \u2014 denying completion",
+                {
+                    "orderId": "unknown"
+                }
+            ]
+        ]
+    },
+    "depositAuthorised": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "DepositPayment",
+                {
+                    "filters": {
+                        "depositPaymentId": "dp-ok",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "depositPending": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "DepositPayment",
+                {
+                    "filters": {
+                        "depositPaymentId": "dp-pending",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: deposit not authorised \u2014 denying completion",
+                {
+                    "orderId": "ord-1",
+                    "depositPaymentId": "dp-pending",
+                    "state": "pending"
+                }
+            ]
+        ]
+    },
+    "depositMissing": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "DepositPayment",
+                {
+                    "filters": {
+                        "depositPaymentId": "dp-none",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: deposit not authorised \u2014 denying completion",
+                {
+                    "orderId": "ord-1",
+                    "depositPaymentId": "dp-none",
+                    "state": "missing"
+                }
+            ]
+        ]
+    },
+    "depositOtherAdmin": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "DepositPayment",
+                {
+                    "filters": {
+                        "depositPaymentId": "dp-ok",
+                        "administrationId": "adm-2"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "InvoiceFromBookingGuard: deposit not authorised \u2014 denying completion",
+                {
+                    "orderId": "ord-1",
+                    "depositPaymentId": "dp-ok",
+                    "state": "missing"
+                }
+            ]
+        ]
+    },
+    "throws": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "error",
+                "InvoiceFromBookingGuard: canComplete failed \u2014 denying completion (fail-closed)",
+                {
+                    "orderId": "ord-1",
+                    "exception": "Object of class stdClass could not be converted to string"
+                }
+            ]
+        ]
+    }
+}
