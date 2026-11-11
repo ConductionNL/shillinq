@@ -308,22 +308,17 @@ class SettlementGuard {
 		}
 
 		try {
-			$filters = ['administrationId' => $administrationId];
-			if ($fiscalYear > 0) {
-				$filters['effectiveFromYear'] = ['lte' => $fiscalYear];
-			}
-
 			$rules = $objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'PassThroughMarkupRule')
-				->findAll(['filters' => $filters]);
+				->findAll(['filters' => self::markupRuleFilters(administrationId: $administrationId, fiscalYear: $fiscalYear)]);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'SettlementGuard: markup-rule lookup failed',
 				['customerId' => $customerId, 'exception' => $e->getMessage()]
 			);
 			return null;
-		}//end try
+		}
 
 		if (is_array(value: $rules) === false || count($rules) === 0) {
 			return null;
@@ -331,6 +326,25 @@ class SettlementGuard {
 
 		return $this->selectByPriority(rules: $rules, customerId: $customerId, category: $category);
 	}//end matchMarkupRule()
+
+	/**
+	 * The markup-rule filters: the administration, and for a known fiscal
+	 * year only the rules effective from that year or earlier.
+	 *
+	 * @param string $administrationId The administration id.
+	 * @param int    $fiscalYear       The fiscal year, 0 or less when unknown.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function markupRuleFilters(string $administrationId, int $fiscalYear): array {
+		$filters = ['administrationId' => $administrationId];
+		if ($fiscalYear > 0) {
+			$filters['effectiveFromYear'] = ['lte' => $fiscalYear];
+		}
+
+		return $filters;
+
+	}//end markupRuleFilters()
 
 	/**
 	 * Score a single rule against a target by specificity (REQ-ERP-005).
