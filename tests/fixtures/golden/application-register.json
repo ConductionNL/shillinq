@@ -1046,6 +1046,14 @@
     [
         "registerService",
         [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\APTransactionSettlementGuard'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\FourEyesPaymentRunGuard'",
             "Closure",
             "true"
