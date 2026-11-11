@@ -96,6 +96,59 @@ class BbvProgrammeBudgetService {
 	];
 
 	/**
+	 * The scope of an envelope with nothing to report.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const EMPTY_SCOPE = [
+		'administrationIds' => [],
+		'fiscalYear' => null,
+		'startDate' => null,
+		'endDate' => null,
+		'currency' => 'EUR',
+	];
+
+	/**
+	 * The totals of an envelope with nothing to report.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const EMPTY_TOTALS = [
+		'totalBudget' => 0.0,
+		'committed' => 0.0,
+		'spent' => 0.0,
+		'remaining' => 0.0,
+		'remainingRatio' => 0.0,
+		'utilisation' => 0.0,
+		'status' => 'green',
+		'programmeCount' => 0,
+	];
+
+	/**
+	 * The programme series of an envelope with nothing to report.
+	 *
+	 * @var array<string, list<mixed>>
+	 */
+	private const EMPTY_PROGRAMMES = [
+		'labels' => [],
+		'budget' => [],
+		'spent' => [],
+		'committed' => [],
+		'rows' => [],
+	];
+
+	/**
+	 * The trend of an envelope with nothing to report.
+	 *
+	 * @var array<string, list<mixed>>
+	 */
+	private const EMPTY_TREND = [
+		'months' => [],
+		'cumulativeSpend' => [],
+		'budgetReference' => [],
+	];
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param AdministrationContextService $adminContext Membership guard (REQ-MA-001).
@@ -430,35 +483,10 @@ class BbvProgrammeBudgetService {
 	 */
 	private function emptyEnvelope(): array {
 		return [
-			'scope' => [
-				'administrationIds' => [],
-				'fiscalYear' => null,
-				'startDate' => null,
-				'endDate' => null,
-				'currency' => 'EUR',
-			],
-			'totals' => [
-				'totalBudget' => 0.0,
-				'committed' => 0.0,
-				'spent' => 0.0,
-				'remaining' => 0.0,
-				'remainingRatio' => 0.0,
-				'utilisation' => 0.0,
-				'status' => 'green',
-				'programmeCount' => 0,
-			],
-			'programmes' => [
-				'labels' => [],
-				'budget' => [],
-				'spent' => [],
-				'committed' => [],
-				'rows' => [],
-			],
-			'trend' => [
-				'months' => [],
-				'cumulativeSpend' => [],
-				'budgetReference' => [],
-			],
+			'scope' => self::EMPTY_SCOPE,
+			'totals' => self::EMPTY_TOTALS,
+			'programmes' => self::EMPTY_PROGRAMMES,
+			'trend' => self::EMPTY_TREND,
 			'exceptions' => [],
 			'fiscalYears' => [],
 			'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
