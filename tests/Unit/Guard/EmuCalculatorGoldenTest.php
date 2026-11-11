@@ -50,12 +50,12 @@ class EmuCalculatorGoldenTest extends TestCase {
 			['account' => [], 'debit' => 100],
 			['esaClassifier' => 'S13', 'emuInclusionRule' => 'excluded', 'debit' => 1000],
 			['esaClassifier' => 'S13', 'emuInclusionRule' => 'partial', 'debit' => 0.03],
-			['esaClassifier' => 'S13', 'emuInclusionRule' => 'partial', 'credit' => 0.03],
+			['esaClassifier' => 'S13', 'emuInclusionRule' => 'partial', 'credit' => 0.07],
 			['esaClassifier' => 'S1311', 'emuInclusionRule' => 'other', 'credit' => '2'],
 			['account' => ['esaClassifier' => null], 'esaClassifier' => 'S11', 'debit' => 0.01],
 		];
 		$guard = new EmuCalculator($logger);
-		$saldo = ['S13' => 1001, 'S11' => -249, 'S1311' => -200];
+		$saldo = ['S13' => 999, 'S11' => -249, 'S1311' => -200];
 		self::assertSame(expected: $saldo, actual: $guard->computeQuarterlySaldo(glLines: $gl, params: ['q' => 1]));
 		self::assertSame(expected: $saldo, actual: $guard->computeAnnualSaldo(glLines: $gl, params: []));
 		self::assertSame(expected: [], actual: $guard->computeAnnualSaldo(glLines: [], params: []));
