@@ -118,6 +118,20 @@ class LeaseController extends Controller {
 			return $invalid;
 		}
 
+		return $this->builtSchedule(leaseId: $leaseId, administrationId: $administrationId);
+	}//end schedule()
+
+	/**
+	 * Build the lease's payment schedule; a failure is a logged 500.
+	 *
+	 * @param string $leaseId          The lease contract.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse 200 with the rows and their count.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	private function builtSchedule(string $leaseId, string $administrationId): JSONResponse {
 		try {
 			$rows = $this->scheduleService->buildSchedule(
 				leaseContractId: $leaseId,
@@ -133,7 +147,7 @@ class LeaseController extends Controller {
 		}
 
 		return new JSONResponse(['data' => $rows, 'total' => count($rows)], Http::STATUS_OK);
-	}//end schedule()
+	}//end builtSchedule()
 
 	/**
 	 * Return the IFRS 16 disclosure table for an administration + period (REQ-LD-001),
@@ -177,81 +191,133 @@ class LeaseController extends Controller {
 			return $authError;
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$fiscalPeriod = trim((string)$this->request->getParam('fiscal_period', ''));
-
+		$ask = new DisclosureRequest(request: $this->request);
 		$invalid = $this->validateIdentifiers(
-			identifiers: ['administration_id' => $administrationId, 'fiscal_period' => $fiscalPeriod]
-		);
+			identifiers: ['administration_id' => $ask->administrationId, 'fiscal_period' => $ask->fiscalPeriod]
+		) ?? $this->optionRefusal(ask: $ask);
 		if ($invalid !== null) {
 			return $invalid;
 		}
 
-		// Allowlist, not a pattern: an unknown format must 400 rather than
-		// fall through to the JSON default, so a typo'd `?format=cvs` cannot
-		// silently hand the operator the wrong representation.
-		$format = strtolower(trim((string)$this->request->getParam('format', 'json')));
-		if (in_array($format, self::DISCLOSURE_FORMATS, true) === false) {
+		return $this->disclosed(ask: $ask);
+	}//end disclosure()
+
+	/**
+	 * The 400 for an unknown format, then for an unknown language.
+	 *
+	 * Allowlist, not a pattern: an unknown format must 400 rather than
+	 * fall through to the JSON default, so a typo'd `?format=cvs` cannot
+	 * silently hand the operator the wrong representation.
+	 *
+	 * @param DisclosureRequest $ask The request.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function optionRefusal(DisclosureRequest $ask): ?JSONResponse {
+		if (in_array($ask->format, self::DISCLOSURE_FORMATS, true) === false) {
 			return new JSONResponse(
 				['error' => 'format must be one of: ' . implode(', ', self::DISCLOSURE_FORMATS)],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		$language = strtolower(trim((string)$this->request->getParam('language', 'en')));
-		if (in_array($language, self::DISCLOSURE_LANGUAGES, true) === false) {
+		if (in_array($ask->language, self::DISCLOSURE_LANGUAGES, true) === false) {
 			return new JSONResponse(
 				['error' => 'language must be one of: ' . implode(', ', self::DISCLOSURE_LANGUAGES)],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
+		return null;
+	}//end optionRefusal()
+
+	/**
+	 * Generate the disclosure table and answer it in the asked format; a
+	 * failure is a logged 500.
+	 *
+	 * @param DisclosureRequest $ask The validated request.
+	 *
+	 * @return JSONResponse|DataDownloadResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	private function disclosed(DisclosureRequest $ask): JSONResponse|DataDownloadResponse {
 		try {
 			$table = $this->disclosureService->generateForPeriod(
-				administrationId: $administrationId,
-				fiscalPeriod: $fiscalPeriod
+				administrationId: $ask->administrationId,
+				fiscalPeriod: $ask->fiscalPeriod
 			);
 
-			if ($format === 'csv') {
-				return new DataDownloadResponse(
-					$this->disclosureService->exportToCSV(disclosure: $table),
-					'lease-disclosure-' . $fiscalPeriod . '.csv',
-					'text/csv'
-				);
-			}
-
-			if ($format === 'pdf') {
-				return new JSONResponse(
-					$this->disclosureService->exportDisclosureNoteToPDF(
-						disclosure: $table,
-						language: $language
-					),
-					Http::STATUS_OK
-				);
-			}
-
-			if ($format === 'xbrl') {
-				return new JSONResponse(
-					$this->disclosureService->exportToXBRL(disclosure: $table),
-					Http::STATUS_OK
-				);
-			}
+			return $this->rendered(ask: $ask, table: $table);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'LeaseController: failed to generate disclosure table',
-				[
-					'administrationId' => $administrationId,
-					'fiscalPeriod' => $fiscalPeriod,
-					'format' => $format,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(['error' => 'Failed to generate disclosure table'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->disclosureFailed(ask: $ask, e: $e);
 		}//end try
+	}//end disclosed()
 
-		return new JSONResponse($table, Http::STATUS_OK);
-	}//end disclosure()
+	/**
+	 * The table as a CSV download, or as JSON: the PDF note, the XBRL facts or the table itself.
+	 *
+	 * @param DisclosureRequest    $ask   The request.
+	 * @param array<string, mixed> $table The disclosure table.
+	 *
+	 * @return JSONResponse|DataDownloadResponse
+	 */
+	private function rendered(DisclosureRequest $ask, array $table): JSONResponse|DataDownloadResponse {
+		if ($ask->format === 'csv') {
+			return new DataDownloadResponse(
+				$this->disclosureService->exportToCSV(disclosure: $table),
+				'lease-disclosure-' . $ask->fiscalPeriod . '.csv',
+				'text/csv'
+			);
+		}
+
+		return new JSONResponse($this->jsonBody(ask: $ask, table: $table), Http::STATUS_OK);
+	}//end rendered()
+
+	/**
+	 * The JSON body of a format: the PDF note, the XBRL facts, or the table.
+	 *
+	 * @param DisclosureRequest    $ask   The request.
+	 * @param array<string, mixed> $table The disclosure table.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function jsonBody(DisclosureRequest $ask, array $table): array {
+		if ($ask->format === 'pdf') {
+			return $this->disclosureService->exportDisclosureNoteToPDF(
+				disclosure: $table,
+				language: $ask->language
+			);
+		}
+
+		if ($ask->format === 'xbrl') {
+			return $this->disclosureService->exportToXBRL(disclosure: $table);
+		}
+
+		return $table;
+	}//end jsonBody()
+
+	/**
+	 * Log a failed disclosure and answer 500 without internals.
+	 *
+	 * @param DisclosureRequest $ask The request.
+	 * @param \Throwable        $e   The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function disclosureFailed(DisclosureRequest $ask, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'LeaseController: failed to generate disclosure table',
+			[
+				'administrationId' => $ask->administrationId,
+				'fiscalPeriod' => $ask->fiscalPeriod,
+				'format' => $ask->format,
+				'exception' => $e->getMessage(),
+			]
+		);
+
+		return new JSONResponse(['error' => 'Failed to generate disclosure table'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end disclosureFailed()
 
 	/**
 	 * Authorization body-guard: in-body counterpart to #[NoAdminRequired] so
