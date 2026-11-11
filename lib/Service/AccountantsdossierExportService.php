@@ -245,23 +245,8 @@ class AccountantsdossierExportService {
 			'pdfaConformance' => 'ISO 19005-1:2005',
 			'iso8601Timestamp' => $generatedAt,
 			'attachments' => $this->attachmentInventory(bundle: $bundle),
-			'objectCounts' => [
-				'auditProtocol' => 1,
-				'toleranceMatrix' => count($bundle['toleranceMatrix']),
-				'materialiteit' => count($bundle['materialiteit']),
-				'auditSamples' => count($bundle['auditSamples']),
-				'auditFindings' => count($bundle['auditFindings']),
-				'verklaringDraft' => $this->presenceCount(value: $bundle['verklaringDraft']),
-				'sisaAssurance' => count($bundle['sisaAssurance']),
-			],
-			'signature' => [
-				'algorithm' => 'PKIO-RSA-SHA256',
-				'standard' => 'ETSI EN 319 142-1 PAdES B-LT',
-				'status' => 'pending',
-				'signedAt' => null,
-				'signerUri' => $this->signerUri(),
-				'thumbprint' => null,
-			],
+			'objectCounts' => $this->objectCounts(bundle: $bundle),
+			'signature' => $this->pendingSignature(),
 		];
 
 		$summaryHtml = $this->renderSummaryHtml(manifest: $manifest, bundle: $bundle);
@@ -280,6 +265,42 @@ class AccountantsdossierExportService {
 			'signaturePending' => true,
 		];
 	}//end buildDossier()
+
+	/**
+	 * How many objects of each kind the bundle holds.
+	 *
+	 * @param array<string,mixed> $bundle The collected bundle.
+	 *
+	 * @return array<string,int> Kind => count.
+	 */
+	private function objectCounts(array $bundle): array {
+		return [
+			'auditProtocol' => 1,
+			'toleranceMatrix' => count($bundle['toleranceMatrix']),
+			'materialiteit' => count($bundle['materialiteit']),
+			'auditSamples' => count($bundle['auditSamples']),
+			'auditFindings' => count($bundle['auditFindings']),
+			'verklaringDraft' => $this->presenceCount(value: $bundle['verklaringDraft']),
+			'sisaAssurance' => count($bundle['sisaAssurance']),
+		];
+	}//end objectCounts()
+
+	/**
+	 * The manifest's signature block: PKIO PAdES B-LT, pending, delegated to
+	 * the configured signer.
+	 *
+	 * @return array<string,mixed> The signature block.
+	 */
+	private function pendingSignature(): array {
+		return [
+			'algorithm' => 'PKIO-RSA-SHA256',
+			'standard' => 'ETSI EN 319 142-1 PAdES B-LT',
+			'status' => 'pending',
+			'signedAt' => null,
+			'signerUri' => $this->signerUri(),
+			'thumbprint' => null,
+		];
+	}//end pendingSignature()
 
 	/**
 	 * Build and persist the dossier as a ZIP package + PKIO delegation (REQ-010).
@@ -365,64 +386,78 @@ class AccountantsdossierExportService {
 		$materialiteit = $this->loadAllByProtocol(schema: self::SCHEMA_MATERIALITEIT, protocolId: $protocolId);
 		$auditSamples = $this->loadAllByProtocol(schema: self::SCHEMA_AUDIT_SAMPLE, protocolId: $protocolId);
 
+		$auditFindings = $this->loadFindings(sampleIds: $this->sampleIds(samples: $auditSamples));
+		$declarationDraft = $this->loadDeclarationForProtocol(protocolId: $protocolId);
+		$sisaAssurance = $this->loadAllByProtocol(schema: self::SCHEMA_SISA_ASSURANCE, protocolId: $protocolId);
+
+		return [
+			'auditProtocol' => $auditProtocol,
+			'toleranceMatrix' => $this->sortedBy(rows: $toleranceMatrix, field: 'topic'),
+			'materialiteit' => $this->sortedBy(rows: $materialiteit, field: 'scope'),
+			'auditSamples' => $this->sortedBy(rows: $auditSamples, field: 'extractedAt'),
+			'auditFindings' => $this->sortedById(rows: $auditFindings),
+			'verklaringDraft' => $declarationDraft,
+			'sisaAssurance' => $this->sortedBy(rows: $sisaAssurance, field: 'schemeCode'),
+		];
+	}//end collectBundle()
+
+	/**
+	 * The ids of the samples, as a lookup set.
+	 *
+	 * @param array<int,array<string,mixed>> $samples The AuditSample rows.
+	 *
+	 * @return array<string,bool> Sample id => true.
+	 */
+	private function sampleIds(array $samples): array {
 		$sampleIds = [];
-		foreach ($auditSamples as $sample) {
+		foreach ($samples as $sample) {
 			$sampleId = (string)($sample['id'] ?? ($sample['@self']['id'] ?? ''));
 			if ($sampleId !== '') {
 				$sampleIds[$sampleId] = true;
 			}
 		}
 
-		$auditFindings = $this->loadFindings(sampleIds: $sampleIds);
-		$declarationDraft = $this->loadDeclarationForProtocol(protocolId: $protocolId);
-		$sisaAssurance = $this->loadAllByProtocol(schema: self::SCHEMA_SISA_ASSURANCE, protocolId: $protocolId);
+		return $sampleIds;
+	}//end sampleIds()
 
+	/**
+	 * The rows sorted on one string field (missing sorts as '').
+	 *
+	 * @param array<int,array<string,mixed>> $rows  The rows.
+	 * @param string                         $field The sort field.
+	 *
+	 * @return array<int,array<string,mixed>> The sorted rows.
+	 */
+	private function sortedBy(array $rows, string $field): array {
 		usort(
-			$toleranceMatrix,
+			$rows,
 			static fn (array $left, array $right): int => strcmp(
-				(string)($left['topic'] ?? ''),
-				(string)($right['topic'] ?? '')
+				(string)($left[$field] ?? ''),
+				(string)($right[$field] ?? '')
 			)
 		);
+
+		return $rows;
+	}//end sortedBy()
+
+	/**
+	 * The rows sorted on their object id (`id`, else `@self.id`).
+	 *
+	 * @param array<int,array<string,mixed>> $rows The rows.
+	 *
+	 * @return array<int,array<string,mixed>> The sorted rows.
+	 */
+	private function sortedById(array $rows): array {
 		usort(
-			$materialiteit,
-			static fn (array $left, array $right): int => strcmp(
-				(string)($left['scope'] ?? ''),
-				(string)($right['scope'] ?? '')
-			)
-		);
-		usort(
-			$auditSamples,
-			static fn (array $left, array $right): int => strcmp(
-				(string)($left['extractedAt'] ?? ''),
-				(string)($right['extractedAt'] ?? '')
-			)
-		);
-		usort(
-			$auditFindings,
+			$rows,
 			static fn (array $left, array $right): int => strcmp(
 				(string)($left['id'] ?? ($left['@self']['id'] ?? '')),
 				(string)($right['id'] ?? ($right['@self']['id'] ?? ''))
 			)
 		);
-		usort(
-			$sisaAssurance,
-			static fn (array $left, array $right): int => strcmp(
-				(string)($left['schemeCode'] ?? ''),
-				(string)($right['schemeCode'] ?? '')
-			)
-		);
 
-		return [
-			'auditProtocol' => $auditProtocol,
-			'toleranceMatrix' => $toleranceMatrix,
-			'materialiteit' => $materialiteit,
-			'auditSamples' => $auditSamples,
-			'auditFindings' => $auditFindings,
-			'verklaringDraft' => $declarationDraft,
-			'sisaAssurance' => $sisaAssurance,
-		];
-	}//end collectBundle()
+		return $rows;
+	}//end sortedById()
 
 	/**
 	 * Build the ledger payload (every record keyed by schema).
@@ -495,238 +530,8 @@ class AccountantsdossierExportService {
 	 * @return string
 	 */
 	private function renderSummaryHtml(array $manifest, array $bundle): string {
-		$protocol = $bundle['auditProtocol'] ?? [];
-		$declaration = $bundle['verklaringDraft'];
-		$findingRows = $this->renderFindingRows(findings: $bundle['auditFindings']);
-		$toleranceRows = $this->renderToleranceRows(rows: $bundle['toleranceMatrix']);
-		$sisaRows = $this->renderSisaRows(rows: $bundle['sisaAssurance']);
-		$sampleRows = $this->renderSampleRows(samples: $bundle['auditSamples']);
-		$materialityRows = $this->renderMaterialityRows(rows: $bundle['materialiteit']);
-
-		$opinion = '—';
-		$opinionRationale = '';
-		$signOff = [];
-		if ($declaration !== null) {
-			$opinion = (string)($declaration['proposedOpinion'] ?? '—');
-			$opinionRationale = (string)($declaration['opinionRationale'] ?? '');
-			$signOff = (array)($declaration['signOff'] ?? []);
-		}
-
-		$auditYearLabel = (int)($protocol['auditYear'] ?? 0);
-		$organisationId = (string)($protocol['organisationId'] ?? '');
-		$organisationLabel = (string)($protocol['organisationType'] ?? '') . ' ' . $organisationId;
-		$effectiveFrom = (string)($protocol['effectiveFrom'] ?? '');
-		$effectiveTo = (string)($protocol['effectiveTo'] ?? '');
-		$protocolVersion = (string)($protocol['version'] ?? '');
-		$adoptionDecision = (array)($protocol['adoptionDecision'] ?? []);
-
-		$generatedAt = (string)$manifest['generatedAt'];
-		$sha256 = (string)$manifest['sha256'];
-		$packageId = (string)$manifest['packageId'];
-
-		return sprintf(
-			'<!doctype html><html lang="nl"><head><meta charset="utf-8">'
-			. '<title>Accountantsdossier %s</title>'
-			. '<meta name="pdfaid:part" content="%s">'
-			. '<meta name="pdfaid:conformance" content="B">'
-			. '<meta name="xmp:CreatorTool" content="Shillinq BADO Dossier Exporter">'
-			. '<meta name="xmpMM:DocumentID" content="urn:uuid:%s">'
-			. '<meta name="dc:title" content="Accountantsdossier %s">'
-			. '<meta name="generated-at" content="%s">'
-			. '<meta name="sha256-anchor" content="%s">'
-			. '<style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}'
-			. 'h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:24px 0 8px;}'
-			. 'table{border-collapse:collapse;width:100%%;margin:8px 0;font-size:10pt;}'
-			. 'th,td{padding:6px 8px;border:1px solid #ccc;text-align:left;vertical-align:top;}'
-			. 'th{background:#eee;}.num{text-align:right;}.muted{color:#666;font-size:9pt;}'
-			. '.opinion{padding:8px;border:2px solid #333;background:#f8f8f8;font-size:13pt;font-weight:bold;}'
-			. '</style></head><body>'
-			. '<h1>Accountantsdossier BADO — %s</h1>'
-			. '<p class="muted">Bundle: %s &middot; Gegenereerd: %s (ISO 8601 UTC) &middot; '
-			. 'SHA-256: <code>%s</code> &middot; PDF/A-%sB / ISO 19005-1:2005</p>'
-			. '<h2>1. Controleprotocol</h2>'
-			. '<table><tr><th>Versie</th><td>%s</td><th>Auditjaar</th><td>%d</td></tr>'
-			. '<tr><th>Organisatie</th><td>%s</td><th>Effectief</th><td>%s &mdash; %s</td></tr>'
-			. '<tr><th>Adoptiebesluit</th><td colspan="3">%s (%s) op %s</td></tr></table>'
-			. '<h2>2. ToleranceMatrix</h2><table><thead><tr><th>Topic</th>'
-			. '<th class="num">Goedkeurend %% (rechtm.)</th><th class="num">Beperking %% (rechtm.)</th>'
-			. '<th class="num">Goedkeurend %% (getr.)</th><th class="num">Beperking %% (getr.)</th>'
-			. '<th class="num">Onzekerheid %%</th></tr></thead><tbody>%s</tbody></table>'
-			. '<h2>3. Materialiteit</h2><table><thead><tr><th>Scope</th><th>Basis</th>'
-			. '<th class="num">Basisbedrag (€)</th><th class="num">Percentage %%</th>'
-			. '<th class="num">Materialiteit (€)</th><th>Status</th></tr></thead><tbody>%s</tbody></table>'
-			. '<h2>4. AuditSamples</h2><table><thead><tr><th>Populatie</th><th>Methode</th>'
-			. '<th class="num">Steekproefgrootte</th><th>Seed</th><th>Geëxtraheerd op</th></tr></thead>'
-			. '<tbody>%s</tbody></table>'
-			. '<h2>5. AuditFindings</h2><table><thead><tr><th>Transactie</th><th>Type</th>'
-			. '<th>Topic</th><th class="num">Bedrag (€)</th><th>Severity</th><th>Status</th>'
-			. '<th>Controller</th><th>Auditor</th></tr></thead><tbody>%s</tbody></table>'
-			. '<h2>6. VerklaringDraft</h2><div class="opinion">Oordeel: %s</div>'
-			. '<p>%s</p>'
-			. '<p class="muted">Sign-off: %s &middot; AFM-vergunning %s &middot; %s te %s</p>'
-			. '<h2>7. SiSaAssurance</h2><table><thead><tr><th>Regeling</th>'
-			. '<th>Verantwoordingsplichtige</th><th>Specifieke uitkering</th>'
-			. '<th>Niveau</th><th class="num">Findings</th></tr></thead><tbody>%s</tbody></table>'
-			. '<p class="muted">Retentie: %d jaar (Archiefwet / Selectielijst Gemeenten 2020 21.1). '
-			. 'Handtekening: PKIO RSA-SHA256 / PAdES B-LT (gedelegeerd aan externe signer).</p>'
-			. '</body></html>',
-			htmlspecialchars($packageId, ENT_QUOTES),
-			self::PDFA_PART,
-			$this->packageUuid(packageId: $packageId),
-			htmlspecialchars($packageId, ENT_QUOTES),
-			htmlspecialchars($generatedAt, ENT_QUOTES),
-			htmlspecialchars($sha256, ENT_QUOTES),
-			htmlspecialchars($organisationLabel, ENT_QUOTES),
-			htmlspecialchars($packageId, ENT_QUOTES),
-			htmlspecialchars($generatedAt, ENT_QUOTES),
-			htmlspecialchars($sha256, ENT_QUOTES),
-			self::PDFA_PART,
-			htmlspecialchars($protocolVersion, ENT_QUOTES),
-			$auditYearLabel,
-			htmlspecialchars($organisationLabel, ENT_QUOTES),
-			htmlspecialchars($effectiveFrom, ENT_QUOTES),
-			htmlspecialchars($effectiveTo, ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['decisionType'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['decisionNumber'] ?? '—'), ENT_QUOTES),
-			htmlspecialchars((string)($adoptionDecision['date'] ?? '—'), ENT_QUOTES),
-			$toleranceRows,
-			$materialityRows,
-			$sampleRows,
-			$findingRows,
-			htmlspecialchars($opinion, ENT_QUOTES),
-			htmlspecialchars($opinionRationale, ENT_QUOTES),
-			htmlspecialchars((string)($signOff['auditor'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['afmPermitNumber'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['date'] ?? ''), ENT_QUOTES),
-			htmlspecialchars((string)($signOff['place'] ?? ''), ENT_QUOTES),
-			$sisaRows,
-			self::RETENTION_YEARS
-		);
+		return (new DossierSummaryRenderer())->render(manifest: $manifest, bundle: $bundle);
 	}//end renderSummaryHtml()
-
-	/**
-	 * Render the ToleranceMatrix rows as `<tr>` HTML.
-	 *
-	 * @param array<int,array<string,mixed>> $rows ToleranceMatrix rows.
-	 *
-	 * @return string
-	 */
-	private function renderToleranceRows(array $rows): string {
-		$html = '';
-		foreach ($rows as $row) {
-			$html .= sprintf(
-				'<tr><td>%s</td><td class="num">%s</td><td class="num">%s</td>'
-				. '<td class="num">%s</td><td class="num">%s</td><td class="num">%s</td></tr>',
-				htmlspecialchars((string)($row['topic'] ?? ''), ENT_QUOTES),
-				$this->fmtNumber(value: $row['lawfulnessApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['lawfulnessQualificationCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['faithfulnessApprovalCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['faithfulnessQualificationCeiling'] ?? 0),
-				$this->fmtNumber(value: $row['uncertaintyCeiling'] ?? 0)
-			);
-		}
-
-		return $html;
-	}//end renderToleranceRows()
-
-	/**
-	 * Render the Materialiteit rows as `<tr>` HTML.
-	 *
-	 * @param array<int,array<string,mixed>> $rows Materialiteit rows.
-	 *
-	 * @return string
-	 */
-	private function renderMaterialityRows(array $rows): string {
-		$html = '';
-		foreach ($rows as $row) {
-			$html .= sprintf(
-				'<tr><td>%s</td><td>%s</td><td class="num">%s</td>'
-				. '<td class="num">%s</td><td class="num">%s</td><td>%s</td></tr>',
-				htmlspecialchars((string)($row['scope'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['baseLabel'] ?? ($row['base'] ?? '')), ENT_QUOTES),
-				$this->fmtMoney(value: (float)($row['base'] ?? 0)),
-				$this->fmtNumber(value: $row['percentage'] ?? 0),
-				$this->fmtMoney(value: (float)($row['calculatedAmount'] ?? 0)),
-				htmlspecialchars((string)($row['status'] ?? ''), ENT_QUOTES)
-			);
-		}
-
-		return $html;
-	}//end renderMaterialityRows()
-
-	/**
-	 * Render the AuditSample rows as `<tr>` HTML.
-	 *
-	 * @param array<int,array<string,mixed>> $samples AuditSample records.
-	 *
-	 * @return string
-	 */
-	private function renderSampleRows(array $samples): string {
-		$html = '';
-		foreach ($samples as $sample) {
-			$html .= sprintf(
-				'<tr><td>%s</td><td>%s</td><td class="num">%d</td><td><code>%s</code></td><td>%s</td></tr>',
-				htmlspecialchars((string)($sample['population'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($sample['selectionMethod'] ?? ''), ENT_QUOTES),
-				(int)($sample['sampleSize'] ?? 0),
-				htmlspecialchars((string)($sample['reproducibleSeed'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($sample['extractedAt'] ?? ''), ENT_QUOTES)
-			);
-		}
-
-		return $html;
-	}//end renderSampleRows()
-
-	/**
-	 * Render the AuditFinding rows as `<tr>` HTML.
-	 *
-	 * @param array<int,array<string,mixed>> $findings AuditFinding records.
-	 *
-	 * @return string
-	 */
-	private function renderFindingRows(array $findings): string {
-		$html = '';
-		foreach ($findings as $finding) {
-			$html .= sprintf(
-				'<tr><td>%s</td><td>%s</td><td>%s</td><td class="num">%s</td>'
-				. '<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
-				htmlspecialchars((string)($finding['transaction'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($finding['findingType'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($finding['topic'] ?? ''), ENT_QUOTES),
-				$this->fmtMoney(value: (float)($finding['amount'] ?? 0)),
-				htmlspecialchars((string)($finding['severity'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($finding['status'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($finding['controllerResponse'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($finding['auditorConclusion'] ?? ''), ENT_QUOTES)
-			);
-		}
-
-		return $html;
-	}//end renderFindingRows()
-
-	/**
-	 * Render the SiSaAssurance rows as `<tr>` HTML.
-	 *
-	 * @param array<int,array<string,mixed>> $rows SiSaAssurance rows.
-	 *
-	 * @return string
-	 */
-	private function renderSisaRows(array $rows): string {
-		$html = '';
-		foreach ($rows as $row) {
-			$count = count((array)($row['findings'] ?? []));
-			$html .= sprintf(
-				'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td class="num">%d</td></tr>',
-				htmlspecialchars((string)($row['schemeCode'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['accountableParty'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['specificBenefit'] ?? ''), ENT_QUOTES),
-				htmlspecialchars((string)($row['assuranceLevel'] ?? ''), ENT_QUOTES),
-				$count
-			);
-		}
-
-		return $html;
-	}//end renderSisaRows()
 
 	/**
 	 * Write the bundle as a ZIP archive and return the absolute path.
@@ -973,28 +778,6 @@ class AccountantsdossierExportService {
 	}//end canonicalJson()
 
 	/**
-	 * Format an EUR amount with Dutch locale.
-	 *
-	 * @param float $value The amount.
-	 *
-	 * @return string
-	 */
-	private function fmtMoney(float $value): string {
-		return number_format($value, 2, ',', '.');
-	}//end fmtMoney()
-
-	/**
-	 * Format a generic number (up to 2 decimals) with Dutch locale.
-	 *
-	 * @param mixed $value The number.
-	 *
-	 * @return string
-	 */
-	private function fmtNumber(mixed $value): string {
-		return number_format((float)$value, 2, ',', '.');
-	}//end fmtNumber()
-
-	/**
 	 * Build the package id from protocol id + timestamp.
 	 *
 	 * @param string $protocolId The Controleprotocol.id.
@@ -1006,25 +789,6 @@ class AccountantsdossierExportService {
 		$safe = preg_replace('/[^A-Za-z0-9_-]/', '_', $protocolId);
 		return 'accountantsdossier-' . $safe . '-' . substr(md5($generatedAt . $protocolId), 0, 12);
 	}//end packageId()
-
-	/**
-	 * Stable UUID-ish identifier for the XMP DocumentID block.
-	 *
-	 * @param string $packageId The package id.
-	 *
-	 * @return string
-	 */
-	private function packageUuid(string $packageId): string {
-		$hash = md5($packageId);
-		return sprintf(
-			'%s-%s-%s-%s-%s',
-			substr($hash, 0, 8),
-			substr($hash, 8, 4),
-			substr($hash, 12, 4),
-			substr($hash, 16, 4),
-			substr($hash, 20, 12)
-		);
-	}//end packageUuid()
 
 	/**
 	 * Count a nullable record as 1 (present) or 0 (absent).
