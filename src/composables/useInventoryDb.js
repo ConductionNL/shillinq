@@ -39,6 +39,43 @@ const STORE_PENDING = 'pendingOps'
 const NEGATIVE_QUANTITY = 'Quantity must be non-negative'
 
 /**
+ * The object stores of the offline database, in creation order, with their
+ * key path and their [index, unique] pairs (each index is keyed on its name).
+ */
+const DB_STORES = [
+	{ name: STORE_STOCK, keyPath: 'skuLocation', indexes: [['sku', false], ['location', false], ['lastModified', false]] },
+	{ name: STORE_ITEM, keyPath: 'sku', indexes: [['name', false]] },
+	{ name: STORE_LOCATION, keyPath: 'code', indexes: [] },
+	{ name: STORE_PENDING, keyPath: 'id', indexes: [['synced', false], ['transactionId', true]] },
+]
+
+/**
+ * Create every store the database does not have yet.
+ *
+ * @param {IDBDatabase} db The database being upgraded.
+ */
+function upgradeStores(db) {
+	for (const spec of DB_STORES) {
+		if (!db.objectStoreNames.contains(spec.name)) {
+			createStore(db, spec)
+		}
+	}
+}
+
+/**
+ * Create one store with its indexes.
+ *
+ * @param {IDBDatabase} db The database being upgraded.
+ * @param {{name: string, keyPath: string, indexes: Array<[string, boolean]>}} spec The store.
+ */
+function createStore(db, spec) {
+	const store = db.createObjectStore(spec.name, { keyPath: spec.keyPath })
+	for (const [index, unique] of spec.indexes) {
+		store.createIndex(index, index, { unique })
+	}
+}
+
+/**
  * Compose the (sku, location) composite key used by the inventoryStock store.
  *
  * @param {string} sku The SKU value.
@@ -66,33 +103,7 @@ export function initDB() {
 
 		const req = indexedDB.open(DB_NAME, DB_VERSION)
 
-		req.onupgradeneeded = (event) => {
-			const db = event.target.result
-			if (!db.objectStoreNames.contains(STORE_STOCK)) {
-				const stock = db.createObjectStore(STORE_STOCK, {
-					keyPath: 'skuLocation',
-				})
-				stock.createIndex('sku', 'sku', { unique: false })
-				stock.createIndex('location', 'location', { unique: false })
-				stock.createIndex('lastModified', 'lastModified', { unique: false })
-			}
-			if (!db.objectStoreNames.contains(STORE_ITEM)) {
-				const item = db.createObjectStore(STORE_ITEM, { keyPath: 'sku' })
-				item.createIndex('name', 'name', { unique: false })
-			}
-			if (!db.objectStoreNames.contains(STORE_LOCATION)) {
-				db.createObjectStore(STORE_LOCATION, { keyPath: 'code' })
-			}
-			if (!db.objectStoreNames.contains(STORE_PENDING)) {
-				const pending = db.createObjectStore(STORE_PENDING, {
-					keyPath: 'id',
-				})
-				pending.createIndex('synced', 'synced', { unique: false })
-				pending.createIndex('transactionId', 'transactionId', {
-					unique: true,
-				})
-			}
-		}
+		req.onupgradeneeded = (event) => upgradeStores(event.target.result)
 
 		req.onsuccess = () => resolve(req.result)
 		req.onerror = () =>
