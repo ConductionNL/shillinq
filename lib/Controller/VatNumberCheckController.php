@@ -100,21 +100,31 @@ class VatNumberCheckController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		if (isset(VatNumberCheck::RECORDS[$type]) === false) {
-			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		try {
-			$record = $this->records->find(schema: VatNumberCheck::RECORDS[$type]['schema'], id: $id);
-		} catch (Throwable $e) {
-			$record = null;
-		}
-
+		$record = $this->recordOrNull(type: $type, id: $id);
 		if ($record === null || $this->context->canAccess(administrationId: (string)($record['administrationId'] ?? '')) === false) {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}
 
 		return $record;
-
 	}//end authorizeRecord()
+
+	/**
+	 * The record of a known type, or null when the type is unknown or the record cannot be read.
+	 *
+	 * @param string $type The record type: customer or supplier.
+	 * @param string $id   The record id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function recordOrNull(string $type, string $id): array|null {
+		if (isset(VatNumberCheck::RECORDS[$type]) === false) {
+			return null;
+		}
+
+		try {
+			return $this->records->find(schema: VatNumberCheck::RECORDS[$type]['schema'], id: $id);
+		} catch (Throwable $e) {
+			return null;
+		}
+	}//end recordOrNull()
 }//end class
