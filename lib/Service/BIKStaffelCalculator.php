@@ -180,43 +180,16 @@ class BIKStaffelCalculator {
 		bool $vatOffsettable = true,
 		float $vatPercentage = self::DEFAULT_BTW_PERCENTAGE,
 	): array {
-		if ($principal < 0) {
-			throw new InvalidArgumentException('BIK staffel principal must be non-negative.');
-		}
-
-		if ($vatPercentage < 0) {
-			throw new InvalidArgumentException('BTW percentage must be non-negative.');
-		}
+		self::assertStaffelInputs(principal: $principal, vatPercentage: $vatPercentage);
 
 		$hoofdsomCents = $this->toCents(amount: $principal);
-
-		$slabAmountsCents = [0, 0, 0, 0, 0];
-		$previousBound = 0;
-
-		foreach (self::SLAB_BOUNDS_CENTS as $i => $upperBound) {
-			$sliceTop = min($hoofdsomCents, $upperBound);
-			$slice = max($sliceTop - $previousBound, 0);
-			$slabAmountsCents[$i] = (int)round($slice * self::SLAB_RATES[$i]);
-			$previousBound = $upperBound;
-		}
-
-		// Open-ended top slab (>€200.000).
-		$topSlice = max($hoofdsomCents - 20000000, 0);
-		$slabAmountsCents[4] = (int)round($topSlice * self::SLAB_RATES[4]);
-
+		$slabAmountsCents = self::slabAmountsCents(hoofdsomCents: $hoofdsomCents);
 		$totaalCents = array_sum($slabAmountsCents);
 
 		// Statutory floor (€40) then statutory ceiling (€6.775).
-		$toegepastCents = max($totaalCents, self::MINIMUM_CENTS);
-		$toegepastCents = min($toegepastCents, self::MAXIMUM_CENTS);
+		$toegepastCents = min(max($totaalCents, self::MINIMUM_CENTS), self::MAXIMUM_CENTS);
 
-		// BTW-over-incassokosten (art. 2 lid 2 Besluit BIK) on the normed fee.
-		$btwCents = 0;
-		$appliedBtwPercentage = 0.0;
-		if ($vatOffsettable === false) {
-			$btwCents = (int)round($toegepastCents * $vatPercentage);
-			$appliedBtwPercentage = $vatPercentage;
-		}
+		$btw = self::feeVat(feeCents: $toegepastCents, vat: ['offsettable' => $vatOffsettable, 'percentage' => $vatPercentage]);
 
 		return [
 			'scale1_0_2500' => $this->fromCents(cents: $slabAmountsCents[0]),
@@ -229,12 +202,77 @@ class BIKStaffelCalculator {
 			'maximum' => $this->fromCents(cents: self::MAXIMUM_CENTS),
 			'applied' => $this->fromCents(cents: $toegepastCents),
 			'vatOffsettable' => $vatOffsettable,
-			'vatPercentage' => $appliedBtwPercentage,
-			'vatAmount' => $this->fromCents(cents: $btwCents),
-			'appliedInclVat' => $this->fromCents(cents: ($toegepastCents + $btwCents)),
+			'vatPercentage' => $btw['percentage'],
+			'vatAmount' => $this->fromCents(cents: $btw['cents']),
+			'appliedInclVat' => $this->fromCents(cents: ($toegepastCents + $btw['cents'])),
 		];
 
 	}//end staffel()
+
+	/**
+	 * Refuse a negative principal or BTW percentage.
+	 *
+	 * @param float $principal     The hoofdsom.
+	 * @param float $vatPercentage The BTW percentage.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When either is negative.
+	 */
+	private static function assertStaffelInputs(float $principal, float $vatPercentage): void {
+		if ($principal < 0) {
+			throw new InvalidArgumentException('BIK staffel principal must be non-negative.');
+		}
+
+		if ($vatPercentage < 0) {
+			throw new InvalidArgumentException('BTW percentage must be non-negative.');
+		}
+
+	}//end assertStaffelInputs()
+
+	/**
+	 * The fee per slab, in cents: the four bounded slabs, then the
+	 * open-ended top slab (>€200.000).
+	 *
+	 * @param int $hoofdsomCents The hoofdsom, in cents.
+	 *
+	 * @return array{0: int, 1: int, 2: int, 3: int, 4: int}
+	 */
+	private static function slabAmountsCents(int $hoofdsomCents): array {
+		$slabAmountsCents = [0, 0, 0, 0, 0];
+		$previousBound = 0;
+
+		foreach (self::SLAB_BOUNDS_CENTS as $i => $upperBound) {
+			$sliceTop = min($hoofdsomCents, $upperBound);
+			$slice = max($sliceTop - $previousBound, 0);
+			$slabAmountsCents[$i] = (int)round($slice * self::SLAB_RATES[$i]);
+			$previousBound = $upperBound;
+		}
+
+		$topSlice = max($hoofdsomCents - 20000000, 0);
+		$slabAmountsCents[4] = (int)round($topSlice * self::SLAB_RATES[4]);
+
+		return $slabAmountsCents;
+
+	}//end slabAmountsCents()
+
+	/**
+	 * BTW-over-incassokosten (art. 2 lid 2 Besluit BIK) on the normed fee:
+	 * none when the creditor can offset the BTW.
+	 *
+	 * @param int                                     $feeCents The applied fee, in cents.
+	 * @param array{offsettable: bool, percentage: float} $vat      Whether BTW is offsettable, and its percentage.
+	 *
+	 * @return array{cents: int, percentage: float}
+	 */
+	private static function feeVat(int $feeCents, array $vat): array {
+		if ($vat['offsettable'] === true) {
+			return ['cents' => 0, 'percentage' => 0.0];
+		}
+
+		return ['cents' => (int)round($feeCents * $vat['percentage']), 'percentage' => $vat['percentage']];
+
+	}//end feeVat()
 
 	/**
 	 * Compute wettelijke rente accrual per REQ-CCD-003.
