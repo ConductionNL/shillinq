@@ -95,59 +95,27 @@ class BudgetGridCalculator {
 		array $budgetLinesByFiscalYear,
 		array $accountTypeByNumber
 	): array {
-		$budgetTotal = 0;
-		$hasAnyBudgetMonth = false;
-		foreach ($column['monthKeys'] as $monthKey) {
-			[$year, $monthNumber] = $this->splitMonthKey(monthKey: $monthKey);
-			$lines = ($budgetLinesByFiscalYear[$year] ?? null);
-			if ($lines === null) {
-				// No default AnnualBudget exists for this fiscal year — this
-				// month contributes nothing, and (§2b) the column must render
-				// an explicit empty state when NO month in it has a budget.
-				continue;
-			}
-
-			$hasAnyBudgetMonth = true;
-			$budgetTotal += $this->budgetedAmountForYear(
-				ledgerGroupKey: $ledgerGroupKey,
-				monthNumber: $monthNumber,
-				budgetLines: $lines,
-				bvaContext: $bvaContext
-			);
-		}
+		$run = new BudgetGridCellRun(
+			ledgerGroupKey: $ledgerGroupKey,
+			bvaContext: $bvaContext,
+			budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
+			accountTypeByNumber: $accountTypeByNumber
+		);
+		$budget = $this->budgetTotal(monthKeys: $column['monthKeys'], run: $run);
 
 		$actualTotal = null;
+		$sign = ['deviation' => null, 'favorable' => null];
 		if ($isPast === true) {
-			$actualTotal = 0;
-			foreach ($column['monthKeys'] as $monthKey) {
-				$actualTotal += $this->inner->actualAmount(ledgerGroupKey: $ledgerGroupKey, monthKey: $monthKey, context: $bvaContext);
-			}
-		}
-
-		$budget = null;
-		if ($hasAnyBudgetMonth === true) {
-			$budget = $budgetTotal;
-		}
-		$deviation = null;
-		$favorable = null;
-		if ($isPast === true && $budget !== null) {
-			$sign = $this->deviationFor(
-				ledgerGroupKey: $ledgerGroupKey,
-				bvaContext: $bvaContext,
-				accountTypeByNumber: $accountTypeByNumber,
-				budget: $budget,
-				actual: (int)$actualTotal
-			);
-			$deviation = $sign['deviation'];
-			$favorable = $sign['favorable'];
+			$actualTotal = $this->actualTotal(monthKeys: $column['monthKeys'], run: $run);
+			$sign = $this->signFor(totals: ['budget' => $budget, 'actual' => $actualTotal], run: $run);
 		}
 
 		return [
 			'budget' => $budget,
 			'actual' => $actualTotal,
-			'deviation' => $deviation,
-			'favorable' => $favorable,
-			'hasBudget' => $hasAnyBudgetMonth,
+			'deviation' => $sign['deviation'],
+			'favorable' => $sign['favorable'],
+			'hasBudget' => ($budget !== null),
 		];
 
 	}//end evaluateColumn()
@@ -175,51 +143,112 @@ class BudgetGridCalculator {
 		array $budgetLinesByFiscalYear,
 		array $accountTypeByNumber
 	): array {
-		$budgetTotal = 0;
-		$hasAnyBudgetMonth = false;
-		$actualTotal = 0;
+		$run = new BudgetGridCellRun(
+			ledgerGroupKey: $ledgerGroupKey,
+			bvaContext: $bvaContext,
+			budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
+			accountTypeByNumber: $accountTypeByNumber
+		);
+		$monthKeys = self::columnMonthKeys(columns: $columns);
+		$budget = $this->budgetTotal(monthKeys: $monthKeys['all'], run: $run);
+		$actualTotal = $this->actualTotal(monthKeys: $monthKeys['past'], run: $run);
+		$sign = $this->signFor(totals: ['budget' => $budget, 'actual' => $actualTotal], run: $run);
 
+		return ['budget' => $budget, 'actual' => $actualTotal, 'deviation' => $sign['deviation'], 'favorable' => $sign['favorable']];
+
+	}//end cumulative()
+
+	/**
+	 * Every month key of the columns, and those of the past columns, in order.
+	 *
+	 * @param array<int,array<string,mixed>> $columns The columns.
+	 *
+	 * @return array{all: list<string>, past: list<string>}
+	 */
+	private static function columnMonthKeys(array $columns): array {
+		$keys = ['all' => [], 'past' => []];
 		foreach ($columns as $column) {
 			foreach ($column['monthKeys'] as $monthKey) {
-				[$year, $monthNumber] = $this->splitMonthKey(monthKey: $monthKey);
-				$lines = ($budgetLinesByFiscalYear[$year] ?? null);
-				if ($lines !== null) {
-					$hasAnyBudgetMonth = true;
-					$budgetTotal += $this->budgetedAmountForYear(
-						ledgerGroupKey: $ledgerGroupKey,
-						monthNumber: $monthNumber,
-						budgetLines: $lines,
-						bvaContext: $bvaContext
-					);
-				}
-
+				$keys['all'][] = $monthKey;
 				if ($column['isPast'] === true) {
-					$actualTotal += $this->inner->actualAmount(ledgerGroupKey: $ledgerGroupKey, monthKey: $monthKey, context: $bvaContext);
+					$keys['past'][] = $monthKey;
 				}
 			}
 		}
 
-		$budget = null;
-		if ($hasAnyBudgetMonth === true) {
-			$budget = $budgetTotal;
-		}
-		$deviation = null;
-		$favorable = null;
-		if ($budget !== null) {
-			$sign = $this->deviationFor(
-				ledgerGroupKey: $ledgerGroupKey,
-				bvaContext: $bvaContext,
-				accountTypeByNumber: $accountTypeByNumber,
-				budget: $budget,
-				actual: $actualTotal
-			);
-			$deviation = $sign['deviation'];
-			$favorable = $sign['favorable'];
+		return $keys;
+
+	}//end columnMonthKeys()
+
+	/**
+	 * The budgeted total over the months, or null when no month's fiscal year
+	 * has a default AnnualBudget (§2b: an explicit empty state, not zero).
+	 *
+	 * @param list<string>      $monthKeys The months (`yyyy-mm`).
+	 * @param BudgetGridCellRun $run       The row's inputs.
+	 *
+	 * @return int|null
+	 */
+	private function budgetTotal(array $monthKeys, BudgetGridCellRun $run): ?int {
+		$total = null;
+		foreach ($monthKeys as $monthKey) {
+			[$year, $monthNumber] = $this->splitMonthKey(monthKey: $monthKey);
+			$lines = ($run->budgetLinesByFiscalYear[$year] ?? null);
+			if ($lines !== null) {
+				$total = (($total ?? 0) + $this->budgetedAmountForYear(
+					ledgerGroupKey: $run->ledgerGroupKey,
+					monthNumber: $monthNumber,
+					budgetLines: $lines,
+					bvaContext: $run->bvaContext
+				));
+			}
 		}
 
-		return ['budget' => $budget, 'actual' => $actualTotal, 'deviation' => $deviation, 'favorable' => $favorable];
+		return $total;
 
-	}//end cumulative()
+	}//end budgetTotal()
+
+	/**
+	 * The actual total over the months.
+	 *
+	 * @param list<string>      $monthKeys The months (`yyyy-mm`).
+	 * @param BudgetGridCellRun $run       The row's inputs.
+	 *
+	 * @return int
+	 */
+	private function actualTotal(array $monthKeys, BudgetGridCellRun $run): int {
+		$total = 0;
+		foreach ($monthKeys as $monthKey) {
+			$total += $this->inner->actualAmount(ledgerGroupKey: $run->ledgerGroupKey, monthKey: $monthKey, context: $run->bvaContext);
+		}
+
+		return $total;
+
+	}//end actualTotal()
+
+	/**
+	 * The deviation and its favourability, or both null without a budget.
+	 *
+	 * @param array{budget: int|null, actual: int} $totals The budget and actual totals.
+	 * @param BudgetGridCellRun                    $run    The row's inputs.
+	 *
+	 * @return array{deviation: mixed, favorable: mixed}
+	 */
+	private function signFor(array $totals, BudgetGridCellRun $run): array {
+		if ($totals['budget'] === null) {
+			return ['deviation' => null, 'favorable' => null];
+		}
+
+		$sign = $this->deviationFor(
+			ledgerGroupKey: $run->ledgerGroupKey,
+			bvaContext: $run->bvaContext,
+			accountTypeByNumber: $run->accountTypeByNumber,
+			budget: $totals['budget'],
+			actual: $totals['actual']
+		);
+		return ['deviation' => $sign['deviation'], 'favorable' => $sign['favorable']];
+
+	}//end signFor()
 
 	/**
 	 * Evaluate a page-config `computedRows` waterfall (design.md §4 /
