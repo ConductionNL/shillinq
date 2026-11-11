@@ -816,12 +816,13 @@ class GRIRClearingService {
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
 	public function postGRIRForGoodsReceiptAccept(string $administrationId, array $grn): array {
-		return $this->postGRIRForReceiptLines(
+		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
 			receipt: $grn,
 			lineSchema: self::SCHEMA_GRN_LINE,
 			parentField: 'grnId'
 		);
+		return $this->postGRIRForReceiptLines(fanOut: $fanOut);
 
 	}//end postGRIRForGoodsReceiptAccept()
 
@@ -843,6 +844,26 @@ class GRIRClearingService {
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
 	public function postGRIRForServiceReceiptAccept(string $administrationId, array $receipt): array {
+		$fanOut = new GRIRReceiptFanOut(
+			administrationId: $administrationId,
+			receipt: $this->normaliseServiceReceipt(receipt: $receipt),
+			lineSchema: self::SCHEMA_SVC_RECEIPT_LINE,
+			parentField: 'serviceReceiptId'
+		);
+		return $this->postGRIRForReceiptLines(fanOut: $fanOut);
+
+	}//end postGRIRForServiceReceiptAccept()
+
+	/**
+	 * Give a SvcReceipt the GRN fields createGRIRPosting() reads: its receipt
+	 * number as grnNumber and its period end (else confirmation time) as
+	 * receivedAt, where those are blank.
+	 *
+	 * @param array<string,mixed> $receipt The accepted SvcReceipt.
+	 *
+	 * @return array<string,mixed> The receipt in GRN shape.
+	 */
+	private function normaliseServiceReceipt(array $receipt): array {
 		$normalised = $receipt;
 		if (trim((string)($normalised['grnNumber'] ?? '')) === '') {
 			$normalised['grnNumber'] = (string)($receipt['receiptNumber'] ?? '');
@@ -852,14 +873,8 @@ class GRIRClearingService {
 			$normalised['receivedAt'] = (string)($receipt['periodEnd'] ?? ($receipt['confirmedAt'] ?? ''));
 		}
 
-		return $this->postGRIRForReceiptLines(
-			administrationId: $administrationId,
-			receipt: $normalised,
-			lineSchema: self::SCHEMA_SVC_RECEIPT_LINE,
-			parentField: 'serviceReceiptId'
-		);
-
-	}//end postGRIRForServiceReceiptAccept()
+		return $normalised;
+	}//end normaliseServiceReceipt()
 
 	/**
 	 * Resolve the driving `auto_approved`/`within_tolerance` `ThreeWayMatch`
@@ -931,66 +946,62 @@ class GRIRClearingService {
 	 * row for the given receipt (by parent-FK field) and posts
 	 * {@see createGRIRPosting()} for every line with `quantityAccepted > 0`.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param array<string,mixed> $receipt The accepted receipt (GRN or SvcReceipt).
-	 * @param string $lineSchema Child line schema slug.
-	 * @param string $parentField FK field on the line row that references the receipt id.
+	 * @param GRIRReceiptFanOut $fanOut The receipt, its line schema and parent field, in its administration.
 	 *
 	 * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
 	 */
-	private function postGRIRForReceiptLines(
-		string $administrationId,
-		array $receipt,
-		string $lineSchema,
-		string $parentField,
-	): array {
-		$receiptId = (string)($receipt['id'] ?? ($receipt['@self']['id'] ?? ''));
+	private function postGRIRForReceiptLines(GRIRReceiptFanOut $fanOut): array {
+		$tally = new GRIRFanOutTally();
+		$receiptId = $fanOut->receiptId();
 		if ($receiptId === '') {
-			return [
-				'posted' => 0,
-				'skipped' => 0,
-				'results' => [],
-			];
+			return $tally->envelope();
 		}
 
-		$lines = $this->records()->findAll(
-			schema: $lineSchema,
-			filters: [
-				$parentField => $receiptId,
-				'administrationId' => $administrationId,
-			]
-		);
+		foreach ($this->receiptLines(fanOut: $fanOut, receiptId: $receiptId) as $line) {
+			$tally->count(result: $this->postAcceptedReceiptLine(fanOut: $fanOut, line: $line));
+		}
 
-		$posted = 0;
-		$skipped = 0;
-		$results = [];
-		foreach ($lines as $line) {
-			$accepted = (float)($line['quantityAccepted'] ?? 0);
-			if ($accepted <= 0.0) {
-				$skipped++;
-				continue;
-			}
-
-			$result = $this->createGRIRPosting(
-				administrationId: $administrationId,
-				grn: $receipt,
-				grnLine: $line
-			);
-			$results[] = $result;
-			if (($result['posted'] ?? false) === true) {
-				$posted++;
-			} else {
-				$skipped++;
-			}
-		}//end foreach
-
-		return [
-			'posted' => $posted,
-			'skipped' => $skipped,
-			'results' => $results,
-		];
+		return $tally->envelope();
 
 	}//end postGRIRForReceiptLines()
+
+	/**
+	 * Load the receipt's line rows in its administration.
+	 *
+	 * @param GRIRReceiptFanOut $fanOut The fan-out.
+	 * @param string $receiptId The receipt's record id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function receiptLines(GRIRReceiptFanOut $fanOut, string $receiptId): array {
+		return $this->records()->findAll(
+			schema: $fanOut->lineSchema,
+			filters: [
+				$fanOut->parentField => $receiptId,
+				'administrationId' => $fanOut->administrationId,
+			]
+		);
+	}//end receiptLines()
+
+	/**
+	 * Post one receipt line to GR/IR; null when nothing on it was accepted.
+	 *
+	 * @param GRIRReceiptFanOut $fanOut The fan-out.
+	 * @param array<string,mixed> $line The receipt line row.
+	 *
+	 * @return array<string,mixed>|null The createGRIRPosting() result, or null.
+	 */
+	private function postAcceptedReceiptLine(GRIRReceiptFanOut $fanOut, array $line): ?array {
+		if ((float)($line['quantityAccepted'] ?? 0) <= 0.0) {
+			return null;
+		}
+
+		return $this->createGRIRPosting(
+			administrationId: $fanOut->administrationId,
+			grn: $fanOut->receipt,
+			grnLine: $line
+		);
+	}//end postAcceptedReceiptLine()
 
 	/**
 	 * Compute the clearing line amount in integer cents.
