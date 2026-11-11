@@ -78,6 +78,13 @@ class InvoiceSettlementService {
 	];
 
 	/**
+	 * Invoice ids whose settlement transition is running in this request.
+	 *
+	 * @var array<string,int>
+	 */
+	private static array $settling = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
@@ -184,9 +191,23 @@ class InvoiceSettlementService {
 			return ['outcome' => self::SKIPPED, 'transition' => null, 'reason' => $reason];
 		}
 
-		return $this->runSettlement(invoiceId: $invoiceId, transition: $transition);
+		return $this->runSettlement(invoiceId: $invoiceId, transition: $transition, storedId: (string)($invoice['id'] ?? ''));
 
 	}//end settleOne()
+
+	/**
+	 * Whether a settlement transition for this invoice id is running now.
+	 *
+	 * @param string $invoiceId The invoice uuid.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	public static function isSettling(string $invoiceId): bool {
+		return $invoiceId !== '' && (self::$settling[$invoiceId] ?? 0) > 0;
+
+	}//end isSettling()
 
 	/**
 	 * The invoice by id, or null when it is missing or the lookup fails.
@@ -213,10 +234,16 @@ class InvoiceSettlementService {
 	 *
 	 * @param string $invoiceId The invoice id.
 	 * @param string $transition The lifecycle action.
+	 * @param string $storedId The id the stored invoice carries.
 	 *
 	 * @return array{outcome: string, transition: string, reason: string} The outcome.
 	 */
-	private function runSettlement(string $invoiceId, string $transition): array {
+	private function runSettlement(string $invoiceId, string $transition, string $storedId): array {
+		$ids = array_values(array_unique(array_filter([$invoiceId, $storedId], static fn (string $id): bool => $id !== '')));
+		foreach ($ids as $id) {
+			self::$settling[$id] = ((self::$settling[$id] ?? 0) + 1);
+		}
+
 		try {
 			$this->transitions->run(objectId: $invoiceId, action: $transition);
 		} catch (Throwable $e) {
@@ -225,6 +252,13 @@ class InvoiceSettlementService {
 				['invoiceId' => $invoiceId, 'transition' => $transition, 'exception' => $e->getMessage()]
 			);
 			return ['outcome' => self::FAILED, 'transition' => $transition, 'reason' => 'transition refused'];
+		} finally {
+			foreach ($ids as $id) {
+				self::$settling[$id]--;
+				if (self::$settling[$id] <= 0) {
+					unset(self::$settling[$id]);
+				}
+			}
 		}
 
 		return ['outcome' => self::SETTLED, 'transition' => $transition, 'reason' => ''];

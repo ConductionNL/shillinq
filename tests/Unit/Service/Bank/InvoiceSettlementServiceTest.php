@@ -165,6 +165,36 @@ final class InvoiceSettlementServiceTest extends TestCase {
 	}//end testApTransactionFullAndPartial()
 
 	/**
+	 * The settlement guard sees the transaction as settling only during its own transition.
+	 *
+	 * @return void
+	 */
+	public function testTheTransactionIsSettlingOnlyDuringItsTransition(): void {
+		$seen = [];
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use (&$seen): void {
+				$seen[] = InvoiceSettlementService::isSettling(invoiceId: $objectId);
+			}
+		);
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+		$service = new InvoiceSettlementService(
+			objectService: $this->store,
+			transitions: $runner,
+			settings: $settings,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+
+		self::assertFalse(InvoiceSettlementService::isSettling(invoiceId: 'ap-issued'));
+		$service->settle(['targetType' => 'ap-invoice', 'targetRefs' => ['ap-issued'], 'isPartial' => false]);
+
+		self::assertSame([true], $seen);
+		self::assertFalse(InvoiceSettlementService::isSettling(invoiceId: 'ap-issued'));
+
+	}//end testTheTransactionIsSettlingOnlyDuringItsTransition()
+
+	/**
 	 * A partial match leaves a sales invoice issued: ARInvoice has no partially paid state.
 	 *
 	 * @return void
