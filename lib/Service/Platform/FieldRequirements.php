@@ -151,37 +151,65 @@ class FieldRequirements {
 			'field'
 		);
 
+		$marks = $this->requiredMarks(definition: $definition, own: $own);
+		return $this->formRows(definition: $definition, marks: $marks);
+
+	}//end formFields()
+
+	/**
+	 * The form rows of a schema's writable fields.
+	 *
+	 * @param array{slug: string, title: string, properties: array<string, mixed>, required: list<string>} $definition The schema.
+	 * @param array<string, string>                                                                         $marks      The field marks.
+	 *
+	 * @return list<array{field: string, title: string, required: string, requiredLabel: string}> The rows.
+	 */
+	private function formRows(array $definition, array $marks): array {
 		$labels = [
 			'always'         => $this->l10n->t('Always'),
 			'administration' => $this->l10n->t('In this administration'),
 			'no'             => $this->l10n->t('No'),
 		];
-		$rows = [];
+		$rows   = [];
 		foreach ($definition['properties'] as $field => $property) {
 			if (is_array($property) === true && ($property['readOnly'] ?? false) === true) {
 				continue;
 			}
 
-			$required = 'no';
-			if (in_array((string)$field, $own, true) === true) {
-				$required = 'administration';
-			}
-
-			if (in_array((string)$field, $definition['required'], true) === true) {
-				$required = 'always';
-			}
-
-			$rows[] = [
+			$required = ($marks[(string)$field] ?? 'no');
+			$rows[]   = [
 				'field'         => (string)$field,
 				'title'         => $this->title(definition: $definition, field: (string)$field),
 				'required'      => $required,
 				'requiredLabel' => $labels[$required],
 			];
-		}//end foreach
+		}
 
 		return $rows;
 
-	}//end formFields()
+	}//end formRows()
+
+	/**
+	 * Each marked field: administration for its own requirements, always for the schema's.
+	 *
+	 * @param array{slug: string, title: string, properties: array<string, mixed>, required: list<string>} $definition The schema.
+	 * @param list<mixed>                                                                                   $own        Its own fields.
+	 *
+	 * @return array<string, string> Field => always or administration.
+	 */
+	private function requiredMarks(array $definition, array $own): array {
+		$marks = [];
+		foreach (array_filter($own, 'is_string') as $field) {
+			$marks[$field] = 'administration';
+		}
+
+		foreach (array_filter($definition['required'], 'is_string') as $field) {
+			$marks[$field] = 'always';
+		}
+
+		return $marks;
+
+	}//end requiredMarks()
 
 	/**
 	 * One requirement by id, null when absent.
