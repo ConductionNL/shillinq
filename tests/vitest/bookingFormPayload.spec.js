@@ -35,6 +35,8 @@ function makeForm(status) {
 		$emit: vi.fn(),
 		reset: vi.fn(),
 		toUtcIso: BookingForm.methods.toUtcIso,
+		bookingPayload: BookingForm.methods.bookingPayload,
+		takeBookingResponse: BookingForm.methods.takeBookingResponse,
 	}
 }
 
