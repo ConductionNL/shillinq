@@ -25,7 +25,7 @@
  * within tolerance) and trigger an immediate SupplierInvoice transition
  * out of `received` → `matching` → `matched` so member 09's GR/IR
  * clearing posting fires declaratively. Out-of-tolerance matches set an
- * exception_* status (exception_price / exception_quantity /
+ * exception_* status (exception_price / exception_quantity / exception_date /
  * exception_missing_grn / exception_missing_po) and transition the
  * invoice to `exception`; the exception resolution UI lives in slice 08.
  *
@@ -136,6 +136,13 @@ class ThreeWayMatchingEngine {
 	public const STATUS_EXCEPTION_QUANTITY = 'exception_quantity';
 
 	/**
+	 * Match outcome — delivery date outside the date tolerance, early or late.
+	 *
+	 * @var string
+	 */
+	public const STATUS_EXCEPTION_DATE = 'exception_date';
+
+	/**
 	 * Match outcome — invoice has no matching GRN (services or pre-receipt).
 	 *
 	 * @var string
@@ -243,6 +250,7 @@ class ThreeWayMatchingEngine {
 		'lineTotal' => 'price',
 		'vat' => 'price',
 		'quantity' => 'quantity',
+		'deliveryDate' => 'date',
 	];
 
 	/**
@@ -255,6 +263,7 @@ class ThreeWayMatchingEngine {
 		'missing_grn' => self::STATUS_EXCEPTION_MISSING_GRN,
 		'price' => self::STATUS_EXCEPTION_PRICE,
 		'quantity' => self::STATUS_EXCEPTION_QUANTITY,
+		'date' => self::STATUS_EXCEPTION_DATE,
 		'delta' => self::STATUS_WITHIN_TOLERANCE,
 	];
 
@@ -675,7 +684,8 @@ class ThreeWayMatchingEngine {
 	/**
 	 * The match status of the strongest outcome: a line without a PO line,
 	 * then a line without a receipt line, then a price failure, then a
-	 * quantity failure, then a delta within tolerance.
+	 * quantity failure, then a delivery date failure, then a delta within
+	 * tolerance.
 	 *
 	 * @param array<string,bool> $outcomes The outcomes seen.
 	 *

@@ -1443,7 +1443,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_date",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -1611,7 +1611,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_date",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -1664,7 +1664,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
@@ -1679,7 +1679,7 @@
             "matchedGrnIds": [
                 "grn-1"
             ],
-            "matchStatus": "auto_approved",
+            "matchStatus": "exception_date",
             "divergenceDetails": [
                 {
                     "field": "unitPrice",
@@ -1847,7 +1847,7 @@
                     "matchedGrnIds": [
                         "grn-1"
                     ],
-                    "matchStatus": "auto_approved",
+                    "matchStatus": "exception_date",
                     "divergenceDetails": [
                         {
                             "field": "unitPrice",
@@ -1900,7 +1900,7 @@
             [
                 "adm-1",
                 "inv-1",
-                "matched"
+                "exception"
             ]
         ],
         "alerts": [],
