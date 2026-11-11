@@ -3,6 +3,9 @@
 /**
  * CBS Export Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3+ extended capability — aggregates Chart-of-Accounts + General-Ledger
  * data into a CBS (Centraal Bureau voor de Statistiek) IV3-extended submission
  * package per REQ-CBS-004. The service is the imperative engine-side fallback
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

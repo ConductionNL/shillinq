@@ -3,6 +3,9 @@
 /**
  * Commitment Materialisation Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-VPL-010 (Tasks 1+2) — thin event-glue that reacts to a PurchaseOrder
  * reaching `approved` or a Contract reaching `active`, and forwards to
  * {@see CommitmentMaterialisationService} to auto-materialise the matching
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * DBA Compliance Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path guard for the DBA compliance marker registers
  * (dba-compliance-marker, T2). The bulk of the DBA surface is declarative
  * (six schemas + x-openregister-lifecycle + x-openregister-calculations +
@@ -52,9 +55,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

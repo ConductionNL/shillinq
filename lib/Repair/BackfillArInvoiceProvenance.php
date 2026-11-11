@@ -3,6 +3,9 @@
 /**
  * Backfill AR Invoice Provenance
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ARInvoice 0.16.0 declares `recurringProfileId`, `billingPeriod`,
  * `customerReference` and `invoiceLines[].glAccount`. Before it OpenRegister
  * dropped all four, so invoices saved earlier lack them: the recurring
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/recurring-invoicing/spec.md (REQ-RIN-011)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

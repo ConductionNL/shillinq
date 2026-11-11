@@ -3,6 +3,9 @@
 /**
  * Innovatiebox Audit Trail Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Listens to OpenRegister `ObjectCreatedEvent` + `ObjectUpdatedEvent` on the
  * three immutable / sensitive innovatiebox schemas — `NexusCalculation`,
  * `IBProfitAttribution`, and `CarryForwardLoss` — and records one row per
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Unit tests for ServiceReceiptService.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers member 12 of bookkeeping-purchase-order-3way (REQ-PO3W-011) at the
  * line-confirmation level:
  *  - createServiceReceipt materialises a per-administration receiptNumber
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

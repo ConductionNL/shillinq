@@ -3,6 +3,9 @@
 /**
  * Nexus Calculation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper for the OECD BEPS Action 5 modified-nexus approach
  * (REQ-IBA-002, Wet Vpb art. 12bc). Computes the nexusbreuk per qualifying
  * asset per fiscal year:
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

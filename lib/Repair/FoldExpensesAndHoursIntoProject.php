@@ -3,6 +3,9 @@
 /**
  * Shillinq FoldExpensesAndHoursIntoProject Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent repair step that folds the previously-separate expense and
  * time-registration objects into the owning `Project` record, matching
  * the Order-family abstraction merge (`abstract-project-cost-lines`
@@ -32,9 +35,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

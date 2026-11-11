@@ -3,6 +3,9 @@
 /**
  * XAF 3.2 Auditfile Financieel generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders the Dutch **Auditfile Financieel (XAF 3.2)** — the national hand-over
  * format between a bookkeeping package and an accountant or the Belastingdienst,
  * maintained by XBRL Nederland / the Belastingdienst under the namespace
@@ -41,9 +44,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */

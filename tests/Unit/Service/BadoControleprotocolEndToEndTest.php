@@ -4,6 +4,9 @@
  * Hermetic end-to-end integration test for the BADO controleprotocol workflow
  * (Task 20 of bookkeeping-bado-controleprotocol).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Exercises every lifecycle stage with an in-memory ObjectService stub so the
  * suite stays hermetic — no Nextcloud bootstrap, no OR runtime, no
  * OpenConnector, no PKI. The decision logic is wired through the real
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-20
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

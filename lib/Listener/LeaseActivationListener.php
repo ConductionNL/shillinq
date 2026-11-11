@@ -3,6 +3,9 @@
 /**
  * Lease Activation Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-lease-capabilities (shillinq#446): the missing IFRS-16 lease
  * schedule trigger. {@see \OCA\Shillinq\Service\LeasePaymentScheduleService::generateSchedule()}
  * fully materialises the per-period amortization schedule (interest /
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

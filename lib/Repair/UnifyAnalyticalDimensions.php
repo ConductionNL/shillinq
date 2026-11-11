@@ -3,6 +3,9 @@
 /**
  * Shillinq UnifyAnalyticalDimensions Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent migration that folds every existing `CostCenter` and
  * `KostenDrager` object into the unified `AnalyticalDimension` register
  * (per REQ-ADIM-006 / REQ-ADIM-007 from change
@@ -58,9 +61,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

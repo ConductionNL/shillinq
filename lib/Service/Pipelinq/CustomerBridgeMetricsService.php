@@ -3,6 +3,9 @@
 /**
  * Pipelinq customer-bridge metrics service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * The chain emits structured logs at every interesting transition
  * (success/cache hit at DEBUG, transient failure + circuit-breaker
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

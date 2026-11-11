@@ -3,6 +3,9 @@
 /**
  * Revenue Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 read-only IFRS 15 revenue cut-off API (REQ-IFRS15-007, REQ-IFRS15-008).
  * Exposes a single GET endpoint that returns the per-contract revenue cut-off for
  * one administration + period end: cumulative recognised, contract asset /
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

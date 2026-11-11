@@ -3,6 +3,9 @@
 /**
  * Import Pipeline Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The staged migration pipeline for administration-import-migration
  * (REQ-AIM-005 .. REQ-AIM-009). It contains ZERO bookkeeping rules: posting
  * composes the existing journal-entry, AR/AP, and NC-contacts surfaces
@@ -34,9 +37,6 @@
  * @spec openspec/changes/administration-import-migration/tasks.md#task-12
  * @spec openspec/changes/administration-import-migration/tasks.md#task-13
  * @spec openspec/changes/administration-import-migration/tasks.md#task-14
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

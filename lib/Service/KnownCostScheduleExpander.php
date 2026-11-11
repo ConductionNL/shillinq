@@ -3,6 +3,9 @@
 /**
  * Known Cost Schedule Expander
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The pure arithmetic half of `budget-known-costs` (REQ-BKC-003, REQ-BKC-006,
  * REQ-BKC-010): expands one `CashflowRecurring`-shaped row into its 12
  * monthly cent contributions for a requested fiscal year. Mirrors
@@ -78,9 +81,6 @@
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

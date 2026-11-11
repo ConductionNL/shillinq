@@ -3,6 +3,9 @@
 /**
  * Requisition Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative create / submit / approve / reject for the purchase
  * requisition (aanvraag) sub-ledger (REQ-REQ-001..004). A Requisition is the
  * internal pre-PO document: an employee raises it, it is submitted for
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/purchase-requisition/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

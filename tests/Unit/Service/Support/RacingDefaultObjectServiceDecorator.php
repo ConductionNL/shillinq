@@ -3,6 +3,9 @@
 /**
  * Racing-default decorator over InMemoryObjectServiceStub.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Simulates a concurrent `BudgetScenarioDefaultPromoter::promote()` call
  * (e.g. a second browser tab) interleaving its own write BETWEEN this call's
  * demotion/promotion writes and its own post-promotion verification re-read
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

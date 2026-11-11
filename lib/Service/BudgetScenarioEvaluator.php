@@ -3,6 +3,9 @@
 /**
  * Budget Scenario Evaluator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure, non-destructive (REQ-BSC-005): computes a side-by-side
  * `(ledgerGroupId, month) => {base, scenario, delta}` comparison for one
  * `BudgetScenario`, never writing to any `BudgetLine` or `CashflowRecurring`
@@ -61,9 +64,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

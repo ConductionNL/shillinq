@@ -3,6 +3,9 @@
 /**
  * Budget-scenarios (REQ-BSC-004, REQ-BSC-006) DI registrations
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires both container bindings the budget-scenarios change needs:
  *
  *   1. The `BudgetScenarioModifier` schema's
@@ -37,9 +40,6 @@
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

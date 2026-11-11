@@ -3,6 +3,9 @@
 /**
  * Leges Intake Step Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The `payment` step of a portaliq intake journey (ADR-085), on shillinq's
  * side. After the journey writes the object, this decides three things: is
  * there a fee for this type on this day, does a request already stand on the
@@ -48,9 +51,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-007)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

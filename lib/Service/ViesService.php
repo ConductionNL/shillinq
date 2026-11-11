@@ -3,6 +3,9 @@
 /**
  * VIES Validation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 intra-community supplies (ICP) VAT-ID verification (REQ-ICP-001,
  * REQ-ICP-009). Validates a counterparty VAT-ID against the EU VIES service and
  * persists an immutable `ViesValidation` record carrying the VIES `requestId` as
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Statement Verify Guard — bookkeeping-reconciliation-reports (T4).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Lifecycle preconditions for the `BankReconciliation` register declared in
  * lib/Settings/register.d/bookkeeping-reconciliation-reports.json. Two thin
  * PHP seams referenced by name from the schema's x-openregister-lifecycle
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Rule Engine
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Evaluates a bookkeeping object against the machine-checkable rules that apply
  * to it, returning structured Violations. This is the executable layer over the
  * static RuleCatalogue: each registered check is a pure predicate over an object

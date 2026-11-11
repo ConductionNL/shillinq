@@ -3,6 +3,9 @@
 /**
  * Stock Reservation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service implementing the optimistic-lock
  * compare-and-swap (CAS) reservation workflow declared in
  * REQ-SM-004 + REQ-SM-005. Three operations:
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

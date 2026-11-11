@@ -3,6 +3,9 @@
 /**
  * Product Catalog Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The read side of shillinq's inventory product catalog (#860), and the first
  * implementation of the `pipelinq-product-master` integration contract declared
  * in `lib/Settings/register.d/shillinq-pipelinq-product-vendor-integration.json`.
@@ -63,9 +66,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

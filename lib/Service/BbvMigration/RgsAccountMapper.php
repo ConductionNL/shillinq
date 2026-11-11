@@ -3,6 +3,9 @@
 /**
  * RGS-decentraal Account Mapping Backfill Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Backfills pre-existing `Account` records of a BBV-tenant with RGS-decentraal
  * codes by scoring candidate matches and surfacing them for operator approval
  * (Task 3.9, REQ-BBV-001/002/006). The service is read-only with respect to
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

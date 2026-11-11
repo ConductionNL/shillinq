@@ -4,6 +4,9 @@
  * FeeScheduleValidationListener — enforce the fee-schedule rules on the write
  * path, where fee schedules are actually written.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * FeeScheduleService::assertNoOverlap() has existed, with tests, since the
  * leges work landed, and nothing ever called it. Gate 6 (orphan-auth) named
  * it: a validator with a full test suite and no call site reports exactly the
@@ -28,9 +31,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

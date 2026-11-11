@@ -3,6 +3,9 @@
 /**
  * Mollie Payments adapter port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Mollie is a Dutch PSP widely used by the MKB to collect
  * one-off + recurring iDEAL / SEPA / card / Bancontact payments.
  * Shillinq materialises payment intents through Mollie on two
@@ -44,9 +47,6 @@
  *
  * @spec openspec/specs/bookings-deposits/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

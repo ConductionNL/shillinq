@@ -3,6 +3,9 @@
 /**
  * Stock Move Transitioned Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reacts to OpenRegister's ObjectTransitionedEvent on the `StockMove`
  * schema. When a draft StockMove transitions to `posted`, dispatches
  * the move into the valuation engine:
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

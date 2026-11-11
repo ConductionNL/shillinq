@@ -3,6 +3,9 @@
 /**
  * BZK SiSa (Single Information Single Audit) upload port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Dutch municipalities + co-financed grant recipients file an annual
  * SiSa report to the Ministry of BZK (Binnenlandse Zaken en
  * Koninkrijksrelaties) via the BZK SiSa upload portal. Shillinq
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

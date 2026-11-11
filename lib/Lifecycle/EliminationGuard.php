@@ -3,6 +3,9 @@
 /**
  * Elimination Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the IntercompanyTransaction
  * register (bookkeeping-intercompany-posting, T5 GR consolidation). The
  * IntercompanyTransaction schema's x-openregister-lifecycle transitions

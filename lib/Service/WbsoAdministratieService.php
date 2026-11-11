@@ -3,6 +3,9 @@
 /**
  * WBSO Administratie Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-1 read-only realisatie computation for the WBSO S&O-administratie
  * (bookkeeping-wbso-sno-administratie). For one administration it aggregates the
  * realised speur- en ontwikkelingswerk hours per WbsoBeschikking from the
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

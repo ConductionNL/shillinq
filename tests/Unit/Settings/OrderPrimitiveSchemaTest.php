@@ -3,6 +3,9 @@
 /**
  * Register schema tests for abstract-order-primitive.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Asserts the shipped `OrderPrimitive` schema against the register JSON:
  *  - exactly ONE `OrderPrimitive` schema definition exists (no slug collision);
  *  - the bare `Order` slug is NEVER used (issue #503 regression guard — a
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

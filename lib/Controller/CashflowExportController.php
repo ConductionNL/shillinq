@@ -3,6 +3,9 @@
 /**
  * Cashflow Export Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The route half of REQ-CF-016 (#865): downloads the 13-week cashflow forecast
  * as a PDF for a bank or accountant meeting. Before this existed,
  * `CashflowPdfRenderer` had zero callers and `appinfo/routes.php` registered no
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

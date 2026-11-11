@@ -3,6 +3,9 @@
 /**
  * Stock Move Offset Creator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service that materialises a balanced
  * offsetting StockMove when a posted move is cancelled per REQ-SM-003.
  * The original posted row is NOT patched; immutability is preserved.
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-10
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

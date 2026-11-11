@@ -3,6 +3,9 @@
 /**
  * Aansluiting Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The Aansluiting (tie-out) framework's orchestrator (REQ-AANS-002,
  * REQ-AANS-004, REQ-AANS-006). Resolves an Aansluiting definition's source A
  * / source B totals by dispatching on `aansluitingType` to one of two
@@ -49,9 +52,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Innovatiebox Audit Event Logger
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Append-only writer of `InnovatieboxAuditEvent` records (REQ-IBA-008 +
  * REQ-IBA-009). Every nexus calculation, profit-attribution write, year-end
  * finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check, and
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

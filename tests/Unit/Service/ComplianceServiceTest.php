@@ -4,6 +4,9 @@
  * Unit tests for ComplianceService (slice 08 of the
  * bookkeeping-waterschappen-bbv-variant chain).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 (testing) of the chain. Asserts the imperative orchestration
  * + caching surface around the declarative aggregation defined on the
  * BBVProgramme schema by slice 02. Covers spend levels (on-track,
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-11-testing/tasks.md#unit-tests
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

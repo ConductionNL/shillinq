@@ -3,6 +3,9 @@
 /**
  * Shillinq StampJournalTypeOnGlTransactions Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent repair step that stamps the new `journalType` discriminator
  * (and the folded closing/intercompany field groups) onto existing
  * `GLTransaction` records, completing the GLTransaction-family
@@ -42,9 +45,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

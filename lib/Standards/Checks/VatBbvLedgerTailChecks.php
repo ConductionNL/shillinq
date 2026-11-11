@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * VAT-tail / NL-BBV / ledger-integrity-tail check provider
  *
  * Contributes the remaining machine-checkable rules of three corpora that the

@@ -3,6 +3,9 @@
 /**
  * Goods Receipt Note Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative API for the 3-way-match GRN sub-ledger (member 04 of
  * the bookkeeping-purchase-order-3way chain). Exposes the
  * GoodsReceiptNoteService's five surfaces — create / add line /
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Multi-PO Consolidation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 07 of the bookkeeping-purchase-order-3way chain — extends the
  * matching engine (slice 06) to handle one supplier invoice whose lines
  * consolidate items from multiple POs / GRNs (REQ-PO3W-007). The service:
@@ -49,9 +52,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Financial Dashboard Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Read-only API for the Wave-4 endpoint-bound financial dashboard widgets:
  * GET /api/dashboard/financial-series returns the monthly turnover / costs /
  * margin / billable-hours / cashflow series and GET
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

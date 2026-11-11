@@ -3,6 +3,9 @@
 /**
  * Service Receipt Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative API for the 3-way-match service-receipt
  * (prestatieverklaring) sub-ledger (member 12 of the
  * bookkeeping-purchase-order-3way chain, REQ-PO3W-011). Exposes
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

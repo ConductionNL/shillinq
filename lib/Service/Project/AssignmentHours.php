@@ -3,6 +3,9 @@
 /**
  * Assignment Hours
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Keeps the hours budget of a project assignment current (people-hours-budget
  * REQ-PHB-001, REQ-PHB-002): the logged hours are the sum of the time
  * registrations booked on the assignment, the remaining hours follow from the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

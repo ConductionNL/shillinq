@@ -3,6 +3,9 @@
 /**
  * Expense Reimbursement Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for ExpenseClaimEntry dual-mode
  * settlement transitions: settlement-mode consistency on submit,
  * markup-approval gating on approve, pass-through path on markInvoiced,

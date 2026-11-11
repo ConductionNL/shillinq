@@ -3,6 +3,9 @@
 /**
  * Budget Projection Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The arithmetic half of the `budget-projection-engine` change: the exact
  * growth-rate arithmetic, its degenerate-case rules, the account-level vs.
  * group-level decision, the actual/projected seam, and both trend and
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/budget-projection-engine/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

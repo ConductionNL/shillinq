@@ -3,6 +3,9 @@
 /**
  * Budget Grid Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The arithmetic half of the begroting grid (`budget-grid-view`,
  * REQ-BGV-003/004/005/008). No OpenRegister calls — every input is a
  * {@see BudgetGridReader::loadGrid()} bundle plus
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * VAT Return Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BTW-aangifte HTTP API for the bookkeeping-vat-btw-filing
  * change (issue #127). Exposes the seven endpoints declared in
  * tasks.md:
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

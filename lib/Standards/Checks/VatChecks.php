@@ -3,6 +3,9 @@
 /**
  * VAT Directive Check Provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Contributes executable checks for the `vat` rule domain (EU VAT Directive
  * 2006/112/EC) to the RuleEngine. The predicates map the directive's invoice-content
  * obligations onto the structured ARInvoice / APTransaction fields shillinq already

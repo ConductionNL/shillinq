@@ -3,6 +3,9 @@
 /**
  * Shillinq Administration Backup Scheduler
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Per-administratie incremental backup scheduler (REQ-MA-007 / Task 15).
  * Iterates every Administration record, evaluates its `backupSchedule`
  * (dagelijks / wekelijks / aanvragen) against the last-completed-backup
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Lease Reassessment Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Captures every IFRS 16 modification and remeasurement event on a lease — CPI /
  * fixed-percent indexation, extension- and termination-option reassessment, scope
  * / term / payment modifications, IBR reset, impairment, abandonment, partial and
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

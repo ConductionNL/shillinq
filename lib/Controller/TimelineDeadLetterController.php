@@ -3,6 +3,9 @@
 /**
  * Timeline Dead-Letter Controller.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Admin-only REST endpoints over the {@see TimelineDeadLetter} register
  * populated by {@see PipelinqTimelineRetryJob} once a queued event
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

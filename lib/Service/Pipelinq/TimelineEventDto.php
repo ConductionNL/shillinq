@@ -3,6 +3,9 @@
 /**
  * Timeline event DTO for the pipelinq publish path.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 07 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Immutable value object representing a single timeline entry to publish
  * to pipelinq's klantbeeld-360 endpoint (POST `/api/v1/timeline`). The
@@ -33,9 +36,6 @@
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

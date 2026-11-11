@@ -3,6 +3,9 @@
 /**
  * Shillinq Portal Payment Initiation Controller (portal-payment-initiation, A6 receiver).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The receiving end of portaliq's server-to-server `pay` action forward
  * (ADR-046 contract v2, A6 — see `PortalContributionProvider`'s `customer`
  * manifest). The route is `#[PublicPage]` + `#[NoCSRFRequired]` because the
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

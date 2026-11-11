@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Compliance rule-audit data-report generator
  *
  * Renders the compliance auditor's result natively as CSV. It resolves the existing

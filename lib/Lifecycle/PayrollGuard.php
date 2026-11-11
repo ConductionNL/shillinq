@@ -3,6 +3,9 @@
 /**
  * Payroll Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Payroll register
  * (bookkeeping-detachering-payroll-administratie, T2). Two preconditions are
  * referenced from the Payroll schema's x-openregister-lifecycle transitions
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

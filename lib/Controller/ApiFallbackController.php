@@ -3,6 +3,9 @@
 /**
  * Shillinq API fallback controller.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Answers any `GET /apps/shillinq/api/...` that matched no declared API route
  * with a real 404, instead of letting it fall through to the SPA catch-all.
  *
@@ -46,9 +49,6 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Suspense / Unmatched-Worklist Ageing Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Ages the bank-reconciliation suspense worklist (payment-control-guards,
  * REQ-PCG-002). A `BankStatementLine` in state `unmatched` or `routed-to-suspense`
  * is an open suspense item — money the bank moved that the ledger has not yet
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/payment-control-guards/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

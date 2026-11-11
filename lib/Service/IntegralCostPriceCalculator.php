@@ -3,6 +3,9 @@
 /**
  * Integral Cost Price Calculator (WMO IKP — Wet Markt en Overheid)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic calculator for the integrale-kostprijs (IKP) per commercial
  * activity per period (REQ-WMO-002). The calculator sums the 6 component
  * groups — directPayrollCost, directeMaterialen, directDepreciations,
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

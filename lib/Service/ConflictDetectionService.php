@@ -3,6 +3,9 @@
 /**
  * Conflict Detection Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Per-resource booking-overlap detection for the bookings-resource-calendar
  * change (REQ-004). Reads existing non-cancelled Booking records for a
  * resource and returns the subset whose time window overlaps a proposed
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-4
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

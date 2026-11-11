@@ -3,6 +3,9 @@
 /**
  * Period Status Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the continuous-close feature.
  * Referenced from the bookkeeping-soft-close-flux register fragment
  * GLTransaction.post.preconditions: rejects a posting whose periodId resolves
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-19
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

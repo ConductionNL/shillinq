@@ -3,6 +3,9 @@
 /**
  * Pairs an unmatched bank line with invoices, or books it to a ledger account, by hand.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Invoices: a credit line (money in) pays open sales invoices, a debit line
  * (money out) pays open AP transactions. Several invoices must add up to the
  * line exactly; one invoice larger than the line is a part payment recorded
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

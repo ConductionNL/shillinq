@@ -3,6 +3,9 @@
 /**
  * VAT Suppletie Detection Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Detection + compilation engine behind REQ-VBTW-009 (issue: `VatCorrection`
  * register + REQ-VBTW-009 landed, but no code ever created one —
  * `grep -ril VatCorrection lib/` returned only register JSON).
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Lease Audit Pack Generator (skeleton)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * One-click audit-pack export skeleton for an IFRS 16 lease — packages the
  * lease-contract, full LeasePaymentSchedule, IBR derivation evidence, and every
  * LeaseReassessmentEvent (with before/after snapshots) into a single ZIP for
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

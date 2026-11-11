@@ -3,6 +3,9 @@
 /**
  * Scheduled Report Runner
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Produces every due report schedule (reporting-data-delivery REQ-RDD-002).
  * A schedule is due when it is active and its next run has passed. A run
  * produces the report through ReportGenerationService as the schedule's
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

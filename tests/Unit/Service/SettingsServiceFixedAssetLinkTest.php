@@ -3,6 +3,9 @@
 /**
  * Unit tests for the asset -> schedule link in SettingsService::seedFixedAssetsDemo().
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The shipped code resolved the saved FixedAsset's identifier with
  * `method_exists($saved, 'getId')`. OpenRegister's `ObjectEntity` reaches every
  * `get*` accessor through `OCP\AppFramework\Db\Entity::__call()`, so that probe
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

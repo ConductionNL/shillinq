@@ -3,6 +3,9 @@
 /**
  * Booking Depth Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reachable operator surface for the two bookings-depth capabilities:
  *
  *  1. POST /api/v1/appointments/{appointmentId}/no-show — records a no-show and
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-recurring-series/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

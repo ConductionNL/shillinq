@@ -3,6 +3,9 @@
 /**
  * Bunq Bank Connector adapter port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bunq is a Dutch challenger bank with a first-class public API
  * (sandbox + production). Within shillinq it is one of the
  * PSD2-aggregator-bypass options the
@@ -44,9 +47,6 @@
  * @link https://doc.bunq.com/
  *
  * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

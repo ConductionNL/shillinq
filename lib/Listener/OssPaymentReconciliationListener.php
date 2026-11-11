@@ -3,6 +3,9 @@
 /**
  * OSS Payment Reconciliation Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#446): the missing trigger for
  * {@see \OCA\Shillinq\Service\OssPaymentReconciliation::reconcileDistribution()}
  * (REQ-OSS-008). The method compares the per-country distribution the
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

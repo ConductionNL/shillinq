@@ -3,6 +3,9 @@
 /**
  * Subsidie Repayment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Lifecycle precondition for the Subsidie schema's
  * `afhandelenVanuitTeruggevorderd` transition (teruggevorderd -> afgehandeld,
  * lib/Settings/shillinq_register.json, REQ-SUB-004).
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

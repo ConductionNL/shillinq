@@ -3,6 +3,9 @@
 /**
  * Landed Cost Allocation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Capitalises a receipt's landed costs (freight + import duties + insurance)
  * into the unit cost of the goods received, so both COGS and the
  * balance-sheet inventory value reflect the true acquisition cost per
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

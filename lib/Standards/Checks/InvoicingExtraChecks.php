@@ -3,6 +3,9 @@
 /**
  * Invoicing Extra check provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Contributes the remaining machine-checkable EN 16931 / VAT-Directive invoicing
  * rules that the RuleEngine built-in registry does not yet enforce, mapped onto
  * the existing ARInvoice header/line/breakdown fields. This covers payment means

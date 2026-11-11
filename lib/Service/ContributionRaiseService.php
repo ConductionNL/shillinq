@@ -3,6 +3,9 @@
 /**
  * Contribution Raise Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bills a set of guardians for one school contribution: the ouderbijdrage, the
  * overblijfbijdrage, a schoolreisje, a club. Each guardian becomes one issued
  * ARInvoice with no order behind it and one PaymentRequest that stands on the
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

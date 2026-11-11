@@ -3,6 +3,9 @@
 /**
  * Invoice-from-Booking Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Order `complete` transition
  * (confirmed -> completed). Before a booking order is marked completed and a
  * final Invoice is materialised in Shillinq, it validates:
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-6
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

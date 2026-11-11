@@ -3,6 +3,9 @@
 /**
  * OrderFulfilment bewijsstuk-gate registrations (REQ-004)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires both halves of the bewijsstuk-required completion gate into the
  * Nextcloud DI/event container:
  *
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

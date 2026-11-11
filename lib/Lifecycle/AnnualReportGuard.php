@@ -3,6 +3,9 @@
 /**
  * Annual Report Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the AnnualReport register
  * (bookkeeping-titel-9-jaarrekening, T3). Two preconditions are referenced
  * from the AnnualReport schema's x-openregister-lifecycle transitions because
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

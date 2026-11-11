@@ -3,6 +3,9 @@
 /**
  * Vpb-aangifte Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Vpb (vennootschapsbelasting)
  * registers of the bookkeeping-vpb-mkb change (T3). The declarative
  * x-openregister-lifecycle metadata on the VpbAangifte, DefinitieveAanslag and
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

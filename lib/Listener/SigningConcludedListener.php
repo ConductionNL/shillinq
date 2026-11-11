@@ -3,6 +3,9 @@
 /**
  * Document SigningConcludedEvent Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change shillinq-signing-via-events (REQ-SIGN-001/006) — consumes the terminal
  * document-signing outcome filinq publishes via its SigningConcludedEvent,
  * matched under every namespace filinq has shipped it under. Filters to
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

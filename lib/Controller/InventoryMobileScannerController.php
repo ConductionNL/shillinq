@@ -3,6 +3,9 @@
 /**
  * Inventory Mobile Scanner Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * HTTP endpoints that back the offline-first warehouse PWA:
  *
  *   GET  /api/v1/inventory/sync — return InventoryStock deltas since the
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-mobile-scanner/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

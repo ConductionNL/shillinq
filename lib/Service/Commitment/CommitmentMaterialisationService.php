@@ -3,6 +3,9 @@
 /**
  * Commitment Materialisation Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-VPL-010/011/012 — thin glue that closes the loop between the PO/
  * contract approval surfaces and the existing verplichtingenadministratie
  * (REQ-VPL-001..009, already shipped). When a PurchaseOrder reaches
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

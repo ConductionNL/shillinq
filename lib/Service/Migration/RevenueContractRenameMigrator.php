@@ -3,6 +3,9 @@
 /**
  * RevenueContract rename migrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The unit-tested migration core for contracts-single-home. The schema-level
  * rename (IFRS-15's `Contract` → `RevenueContract`; CLM's `Contract` stays
  * canonical and unambiguous) is done non-destructively in the register JSON
@@ -52,9 +55,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

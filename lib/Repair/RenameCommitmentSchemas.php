@@ -3,6 +3,9 @@
 /**
  * Shillinq RenameCommitmentSchemas Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renames the seven Dutch commitment-cluster schema slugs to their English
  * names IN PLACE, before the register import runs.
  *
@@ -47,9 +50,6 @@
  *
  * Upgrade-only by placement: Nextcloud runs post-migration steps only when
  * `$previousVersion !== ''`, and a fresh install has no legacy slugs to move.
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
  *
  * @category Repair
  * @package  OCA\Shillinq\Repair

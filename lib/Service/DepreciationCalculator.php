@@ -3,6 +3,9 @@
 /**
  * Depreciation Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper that materialises the values declared as
  * `x-openregister-calculations` on the `FixedAsset` schema (REQ-FA-003,
  * REQ-FA-004). The calculator holds the side-effect-free arithmetic the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

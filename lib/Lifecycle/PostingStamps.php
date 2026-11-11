@@ -3,6 +3,9 @@
 /**
  * Shillinq PostingStamps
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The fields a post gives a ledger transaction. The mandatory NL and EU
  * ledger rules of LedgerIntegrityChecks ask a POSTED entry to be locked
  * against edits (`postingLocked`), kept long enough (`retentionUntil`, at
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-general-ledger/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

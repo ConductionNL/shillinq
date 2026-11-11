@@ -3,6 +3,9 @@
 /**
  * TenderNed Award Promotion Job.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Runs the award -> Commitment promotion that
  * `TenderNedAwardDetectedListener` used to do synchronously, inside the
  * OpenRegister write that raised the event.
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

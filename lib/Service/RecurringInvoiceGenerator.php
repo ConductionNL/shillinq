@@ -3,6 +3,9 @@
 /**
  * Recurring Invoice Generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The thin ADR-031 exception-path executor behind the recurring-invoicing
  * change. Generation is declared on the RecurringInvoiceProfile schema
  * (lib/Settings/register.d/recurring-invoicing.json) — schedule, lifecycle,
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/recurring-invoicing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

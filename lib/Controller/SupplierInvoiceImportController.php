@@ -3,6 +3,9 @@
 /**
  * Supplier Invoice Import Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Dashboard-launched supplier-invoice import endpoint for the
  * shillinq-bill-import-modal change. Backs the BillImportModal's Upload
  * step (REQ-BIM-001) by accepting a UBL/e-invoice XML or CSV file (or a
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/shillinq-bill-import-modal/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

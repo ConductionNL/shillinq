@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Credit-Control / Dunning Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the credit-control & dunning

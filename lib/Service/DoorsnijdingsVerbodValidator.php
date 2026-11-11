@@ -3,6 +3,9 @@
 /**
  * Doorsnijdingsverbod Validator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Enforces the doorsnijdingsverbod (non-duplication rule, Wet Vpb art. 12bd
  * lid 2, REQ-IBA-004): costs allocated to an innovatiebox asset
  * (IBExpenseAllocation with exclusief_in_winstbepaling=true) MUST NOT be
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

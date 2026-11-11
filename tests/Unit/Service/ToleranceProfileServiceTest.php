@@ -4,6 +4,9 @@
  * Unit tests for ToleranceProfileService (slice 06 of
  * bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-006 (configurable tolerance profiles) + REQ-PO3W-004
  * (the "more permissive" rule):
  *  - getApplicableProfile() resolves the most-specific scope
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

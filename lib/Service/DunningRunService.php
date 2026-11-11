@@ -3,6 +3,9 @@
 /**
  * Dunning Run Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path PHP orchestrator for the credit-control & dunning
  * ladder capability. Per ADR-022 the underlying ladder lifecycle is owned by
  * OpenRegister's scheduled-workflow primitive; per ADR-024 the ladder, run,
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Uren Prognose Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Rolling-12-weeks + seasonality prognose service per REQ-URC-002. Computes the
  * forecast year-end total from a 12-week running average over the YTD
  * UrenDagregistratie feed, with month-specific seasonal corrections (e.g. -25%
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

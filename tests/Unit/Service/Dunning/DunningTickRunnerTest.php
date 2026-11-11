@@ -3,6 +3,9 @@
 /**
  * DunningTickRunnerTest
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Task 3.1 of receivables-automatic-dunning: the daily job marks issued
  * invoices past their due date overdue and sends every overdue invoice the
  * stage that is due, for each administration with automatic reminders on, in
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

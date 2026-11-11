@@ -3,6 +3,9 @@
 /**
  * Lease decidesk webhook delivery (Task 8.2).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * When LeaseReassessmentService persists a reassessment-event with
  * `status = pending-approval` (i.e. the RoU adjustment exceeds the
  * EUR 100,000 materiality threshold per REQ-LR-007) this service
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

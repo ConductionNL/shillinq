@@ -3,6 +3,9 @@
 /**
  * Ledger Integrity & Retention check provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Contributes executable checks for the GoBD / audit-trail / retention / SAF-T
  * integrity corpus (lib/Standards/rules/integrity-retention.json) to the
  * RuleEngine. Each predicate is a real, deterministic test over the structured

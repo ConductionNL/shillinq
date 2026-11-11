@@ -3,6 +3,9 @@
 /**
  * End-to-end workflow scenarios for verplichtingenadministratie.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Composes the three Commitment lifecycle guards (BudgetBlocker +
  * MandateEnforcer + CommitmentGuard) and walks through the REQ-VPL-001 ..
  * REQ-VPL-010 GIVEN/WHEN/THEN scenarios at the unit level. The lifecycle
@@ -27,9 +30,6 @@
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.3
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.4
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

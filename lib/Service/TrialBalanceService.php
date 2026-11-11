@@ -3,6 +3,9 @@
 /**
  * Trial Balance Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 read-only trial-balance computation (REQ-TB-008, REQ-TB-018). Computes
  * the per-account opening / movement / closing breakdown for a fiscal period from
  * existing GLTransaction + GLLine + Account data using the real OpenRegister
@@ -35,9 +38,6 @@
  * prohibition predates this file by nine days. A tag that resolves to a
  * requirement the code violates reports conformance; a dangling one reports
  * work to do.
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

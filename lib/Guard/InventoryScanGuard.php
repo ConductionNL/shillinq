@@ -3,6 +3,9 @@
 /**
  * Inventory Scan Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the MobileScanOperation save
  * precondition. Validates, before any mobile-scanner operation record is
  * persisted, that it is internally well-formed and safe to apply to the
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

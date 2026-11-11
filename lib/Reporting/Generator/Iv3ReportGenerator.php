@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * IV3 (Informatie voor derden) data-report generator
  *
  * Renders the CBS IV3 report natively, in XML or CSV, aggregating the general-ledger

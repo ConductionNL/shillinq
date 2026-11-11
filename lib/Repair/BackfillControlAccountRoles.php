@@ -3,6 +3,9 @@
 /**
  * Backfill Control Account Roles
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `Account.controlAccountFor` names the ledger that owns a control account,
  * and a journal entry by hand on such an account is refused
  * (ledger-booking-rules REQ-LBR-001, REQ-LBR-002). New administrations get
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

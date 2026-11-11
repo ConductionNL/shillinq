@@ -3,6 +3,9 @@
 /**
  * Reconciliation Resolution Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * T4 bookkeeping-reconciliation-reports — REQ-REC-004 unmatched-item
  * resolution endpoint. Accepts a classification (matched / timing / pending
  * / adjustment) plus operator-supplied reason text and writes both onto
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

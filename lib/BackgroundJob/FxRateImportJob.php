@@ -3,6 +3,9 @@
 /**
  * Shillinq Daily FX Rate Import Background Job
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Daily background job that fetches the previous business day's ECB
  * FX rates for every currency pair the administration cares about
  * and upserts them into the FxRate register (add-shillinq-multi-currency
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

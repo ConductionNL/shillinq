@@ -3,6 +3,9 @@
 /**
  * Budget Grid Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REST surface for the begroting grid (`budget-grid-view`, REQ-BGV-001..009):
  * `GET /api/budget-grid` returns the fully pre-computed row tree + column
  * set + computed-row waterfall for one render, in ONE request — the grid's
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

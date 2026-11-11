@@ -3,6 +3,9 @@
 /**
  * Contract Cost Rollup Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A contract with an expiry nobody watches is the most common avoidable
  * overspend in a gemeente, and a contract whose cost nobody adds up is the
  * second. `compliance-deadline-calendar` already watches the expiry. This adds
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

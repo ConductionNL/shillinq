@@ -3,6 +3,9 @@
 /**
  * Revenue Cutoff Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 nightly IFRS 15 revenue cut-off (REQ-IFRS15-007, REQ-IFRS15-008). For each
  * contract in an administration it sums cumulative recognised revenue (from
  * RevenueRecognitionEvent) and cumulative billed amount, derives the contract
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

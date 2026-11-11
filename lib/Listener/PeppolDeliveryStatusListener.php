@@ -3,6 +3,9 @@
 /**
  * Peppol Delivery Status Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Consumes the cross-app `nl.conduction.peppol.delivery.status` cloud event
  * (REQ-EINV-005) emitted by integriq's Peppol access point and advances
  * the `ARInvoice.deliveryStatus` sub-lifecycle declared in
@@ -39,9 +42,6 @@
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

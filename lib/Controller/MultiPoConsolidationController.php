@@ -3,6 +3,9 @@
 /**
  * Multi-PO Consolidation Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 07 of the bookkeeping-purchase-order-3way chain — exposes the
  * consolidation surface of {@see MultiPoConsolidationService} so the
  * crediteuren-administrateur UI can:
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

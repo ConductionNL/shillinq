@@ -3,6 +3,9 @@
 /**
  * Default PipelinqAdminNotifier binding — logs the alert at ERROR.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * The giant's auth-error decision requires an admin alert when the
  * pipelinq token is rejected (HTTP 401) — but the canonical NC
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

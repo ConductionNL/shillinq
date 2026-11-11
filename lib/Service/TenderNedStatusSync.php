@@ -3,6 +3,9 @@
 /**
  * TenderNed Status Sync Integration.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-006 — when an aanbestedende dienst approves the eindoplevering of a
  * `bron: tenderned` obligation, send a status update to TenderNed via
  * openconnector so the public dossier reflects completion
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Shillinq AppendReopenHistoryAction
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Handler for the `append-reopen-history` lifecycle action declared on the
  * FiscalPeriod `reopen` transition (`closed` → `open`) in
  * `lib/Settings/register.d/bookkeeping-period-close.json`, per REQ-PC-006.
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-period-close/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

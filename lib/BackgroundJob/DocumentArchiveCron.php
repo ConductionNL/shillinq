@@ -3,6 +3,9 @@
 /**
  * WBSO Document Archive Cron.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Nightly background job that scans `Document` records in `filed` whose
  * `documentDate` (or `filedAt`, whichever is later) has crossed the seven-
  * year Archiefwet 1995 retention boundary, and routes each match through
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

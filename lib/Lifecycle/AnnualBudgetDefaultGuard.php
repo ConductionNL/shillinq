@@ -3,6 +3,9 @@
 /**
  * Annual Budget Default Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the `AnnualBudget` schema's
  * `activate` transition (`draft` -> `active`,
  * `lib/Settings/register.d/budget-core-schema.json`, REQ-BCS-006). Enforces
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+
 """Programmatic eval grader for the report-out skill.
 
 Reads SKILL.md and supporting files, runs each eval's assertions as text/regex

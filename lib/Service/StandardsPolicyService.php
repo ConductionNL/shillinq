@@ -3,6 +3,9 @@
 /**
  * Standards Policy Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Resolves which accounting/reporting framework wins when an administration is
  * subject to several at once (REQ-ASP-003). An administrator declares the
  * applicable frameworks and their order of precedence via the

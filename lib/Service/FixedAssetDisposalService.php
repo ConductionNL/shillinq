@@ -3,6 +3,9 @@
 /**
  * Fixed-Asset Disposal Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities: the missing disposal-posting trigger.
  * {@see \OCA\Shillinq\Service\DisposalJournalEmitter} shapes a balanced
  * closing `GLTransaction` for a retired `FixedAsset` (REQ-FA-006 /
@@ -46,9 +49,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

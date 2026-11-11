@@ -3,6 +3,9 @@
 /**
  * BCF Claim Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the BcfClaim register
  * (bookkeeping-bcf-vat-compensation, T3). One precondition is referenced from
  * the BcfClaim schema's x-openregister-lifecycle transition because it requires
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

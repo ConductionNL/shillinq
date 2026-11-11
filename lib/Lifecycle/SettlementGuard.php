@@ -3,6 +3,9 @@
 /**
  * Settlement Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for dual-mode expense settlement
  * (expense-reimbursement-or-passthrough). Implements the cross-schema and
  * submission-time-immutability rules that the declarative OpenRegister DSL

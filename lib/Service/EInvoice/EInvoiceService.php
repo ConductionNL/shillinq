@@ -3,6 +3,9 @@
 /**
  * E-Invoice Orchestrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Drives the "Send e-invoice" flow (REQ-EINV-005) for an issued `ARInvoice`:
  * pre-send validation (KvK/BTW/Peppol participant, REQ-EINV-003) -> NLCIUS UBL
  * 2.1 rendering (REQ-EINV-001) -> hybrid PDF embed (REQ-EINV-002; NL/Peppol
@@ -28,9 +31,6 @@
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Shillinq route table.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * AppHost adoption (adopt-apphost): the canonical fleet-skeleton routes
  * (`dashboard#page`, `dashboard#catchAll`, `settings#index|create|load`,
  * `preferences#getPreference|setPreference`, `metrics#index`, `health#index`)
@@ -29,9 +32,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

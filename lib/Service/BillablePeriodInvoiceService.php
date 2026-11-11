@@ -3,6 +3,9 @@
 /**
  * Invoice Ingest Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Answers BillablePeriodClosedEvent: another app's customer month becomes a
  * draft BillableInvoice for the one CustomerMaster that carries that app's
  * reference (decision 174: a dossiq tenant bills under the customer whose
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

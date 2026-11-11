@@ -3,6 +3,9 @@
 /**
  * Quote -> Order -> Invoice Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Sales Funnel (Q2C) registers
  * (bookkeeping-quote-order-invoice, T3). The bulk of the quote-to-cash model is
  * declarative (schema metadata + x-openregister-lifecycle +
@@ -57,9 +60,6 @@
  *
  * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

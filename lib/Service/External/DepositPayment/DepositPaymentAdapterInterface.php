@@ -3,6 +3,9 @@
 /**
  * DepositPayment lifecycle adapter port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The `bookings-deposits` lifecycle (REQ-DP-001 / 003 / 005 / 007 / 008)
  * needs three high-level operations the surrounding orchestrators
  * (DepositReconciliationService, DepositWebhookController,
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-deposits/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

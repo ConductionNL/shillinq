@@ -3,6 +3,9 @@
 /**
  * VAT line backfill
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Stamps the VAT tariff, return box and amount kind on ledger lines that were
  * posted before the posting mapper stamped them, or while the VatTariff
  * records were not there yet (REQ-VBTW-004, design D1 "A backfill does the
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

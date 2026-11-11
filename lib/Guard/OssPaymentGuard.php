@@ -3,6 +3,9 @@
 /**
  * OSS Payment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities, design D2. The `OssReturn.pay` and
  * `OssPayment.reconcile` transitions both declare
  * `"requires": "OCA\\Shillinq\\Service\\OssPaymentReconciliation::canMarkPaid"`
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

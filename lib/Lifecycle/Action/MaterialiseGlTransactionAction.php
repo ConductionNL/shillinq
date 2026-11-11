@@ -3,6 +3,9 @@
 /**
  * Shillinq MaterialiseGlTransactionAction
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Handler for the posting action declared on the transitions that book a
  * source document into the general ledger: JournalEntry `post` and
  * `postDirect`, APInvoice `post` and ARInvoice `issue` (ledger-posting-path
@@ -60,9 +63,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

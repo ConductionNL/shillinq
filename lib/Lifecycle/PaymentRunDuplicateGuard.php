@@ -3,6 +3,9 @@
 /**
  * Payment-Run Duplicate-Payment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side duplicate-payment control on the `PaymentRun.export` lifecycle
  * transition (approved -> exported). Export is the transition that generates the
  * SEPA pain.001 / CSV bank file and disburses money; it is the last declarative
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/payment-control-guards/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

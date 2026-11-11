@@ -3,6 +3,9 @@
 /**
  * Tax Report Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 read-only Vpb quarterly/annual tax-statement API (REQ-VPB-003,
  * REQ-VPB-009, REQ-VPB-010, REQ-VPB-012). Exposes two GET endpoints returning
  * the aggregated income statement for one administration + fiscal period. The
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-36
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

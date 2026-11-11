@@ -3,6 +3,9 @@
 /**
  * Extraction Completed Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-001) — consumes docudesk's
  * cross-app {@see \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent}
  * (canonical wire contract `nl.conduction.docudesk.extraction.completed`,
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

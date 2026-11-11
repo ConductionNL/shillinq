@@ -3,6 +3,9 @@
 /**
  * Journal Entry Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the JournalEntry register
  * (bookkeeping-journal-entries, T1 foundation). Two preconditions are
  * referenced from the JournalEntry schema's x-openregister-lifecycle

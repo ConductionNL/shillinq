@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+
 """Sync skill-creator from upstream anthropics/skills via 3-way merge.
 
 Replaces the older rsync + local-mods.patch approach. Treats the three trees:

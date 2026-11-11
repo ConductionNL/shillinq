@@ -4,6 +4,9 @@
  * Belastingdienst IB47 (opgaaf van uitbetaalde bedragen aan
  * derden) submission port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * IB47 is the Belastingdienst's annual reporting obligation for
  * payments made to non-employed third parties (freelance
  * speakers, jury members, volunteers' onkostenvergoeding above
@@ -42,9 +45,6 @@
  *
  * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

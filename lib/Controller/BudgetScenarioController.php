@@ -3,6 +3,9 @@
 /**
  * Budget Scenario Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Two endpoints:
  *   - `promote` (REQ-BSC-002): the REST surface `BudgetScenarioDefaultPromoter`
  *     needs — `isDefault` is set exclusively via this endpoint (a service
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

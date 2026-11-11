@@ -3,6 +3,9 @@
 /**
  * Persistent TimelineRetryQueue binding (slice 09).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Replaces the slice-07 {@see LoggingTimelineRetryQueue} stub with a real
  * persistent queue: on every {@see self::enqueue()} call we
  *
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

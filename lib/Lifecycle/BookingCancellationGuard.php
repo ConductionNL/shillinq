@@ -3,6 +3,9 @@
 /**
  * Booking Cancellation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Order `cancelAfterInvoice`
  * transition (completed -> cancelled). Before a booking that already has an
  * issued final Invoice is cancelled and a reversing CreditNote is materialised
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-16
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Financial Series Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side port of the Financial overview dashboard's pure computation
  * layer (src/components/dashboard/financial/financialSeries.js). Every method
  * mirrors its JS counterpart exactly — month bucketing, chart-of-accounts
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Spend Analytics Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Read-only API for single-dimension spend analysis over the Accounts-Payable
  * sub-ledger. `GET /api/analytics/spend?administration_id=<id>&dimension=
  * <supplier|category|costCentre|period>` returns `{ dimension, label,
@@ -66,9 +69,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/spend-analytics/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

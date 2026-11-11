@@ -3,6 +3,9 @@
 /**
  * Contract Obligation Task Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Supplies the missing trigger for {@see \OCA\Shillinq\Service\ObligationTaskBridge::createTaskForObligation()}.
  *
  * REQ-CDC-005 ({@see openspec/specs/compliance-deadline-calendar/spec.md})
@@ -46,9 +49,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

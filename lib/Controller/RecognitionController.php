@@ -3,6 +3,9 @@
 /**
  * Recognition Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Thin read-only endpoint for the order-revenue-recognition chain. Exposes
  * GET /api/recognition/recurring-revenue which returns recognized RECURRING
  * revenue for one administration over a runtime period [from, to], the annualized
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/order-revenue-recognition-engine/tasks.md#task-2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

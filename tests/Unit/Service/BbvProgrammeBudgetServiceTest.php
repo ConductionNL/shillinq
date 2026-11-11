@@ -4,6 +4,9 @@
  * Unit tests for BbvProgrammeBudgetService + BbvProgrammeBudgetReader — the
  * OpenRegister half of the provincies-BBV Compliance Dashboard (#866/#862).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## What these tests are pointed at
  *
  * Not "does the arithmetic add up" — {@see BbvProgrammeBudgetCalculatorTest}
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

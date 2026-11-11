@@ -3,6 +3,9 @@
 /**
  * Admin-notifier port for the pipelinq customer bridge.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * On a 401 from pipelinq the giant's auth-error decision requires us to
  * alert an administrator: the token is permanently invalid and a human
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

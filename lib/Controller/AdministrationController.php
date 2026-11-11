@@ -3,6 +3,9 @@
 /**
  * Administration Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Administratie-aware RBAC + multi-tenant context API (REQ-MA-001, REQ-MA-003,
  * REQ-MA-007). Exposes:
  *  - GET  /api/administrations/context   the authenticated user's accessible
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

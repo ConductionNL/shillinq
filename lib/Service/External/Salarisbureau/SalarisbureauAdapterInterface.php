@@ -3,6 +3,9 @@
 /**
  * Salarisbureau (payroll bureau) integration port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Dutch detachering organisations (and most MKB employers) outsource
  * payroll runs to a salarisbureau — ADP, Loket.nl, Visma, Nmbrs,
  * Exact Loon, etc. The bureau owns the loonaangifte (wage-tax filing
@@ -37,9 +40,6 @@
  *
  * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

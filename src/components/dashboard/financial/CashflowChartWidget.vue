@@ -1,3 +1,5 @@
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!--
   CashflowChartWidget — realized monthly in/out columns + net line
   from posted GL lines on liquid-asset accounts, with the 13-week

@@ -3,6 +3,9 @@
 /**
  * CBS Submissions Seed Repair Step.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Declarative repair step that idempotently seeds the CBSSubmission and
  * CBSLine example records shipped with the bookkeeping-cbs-bestanden-extended
  * change. Per ADR-037 the canonical seeds live in
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

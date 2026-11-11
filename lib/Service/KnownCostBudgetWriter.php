@@ -3,6 +3,9 @@
 /**
  * Known Cost Budget Writer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The orchestrator half of `budget-known-costs` (REQ-BKC-004, REQ-BKC-005,
  * REQ-BKC-007): turns every in-scope `CashflowRecurring` row into
  * `BudgetLine(source: "contract"|"recurring")` rows, idempotently, via the
@@ -72,9 +75,6 @@
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-005
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-007
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

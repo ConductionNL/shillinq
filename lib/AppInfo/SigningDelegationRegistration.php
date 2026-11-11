@@ -3,6 +3,9 @@
 /**
  * Shillinq SigningDelegationRegistration
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Registers the four cross-app signing / governance-delegation listeners
  * (REQ-SIGN-001, REQ-SIGN-005, REQ-SIGN-006) that wire shillinq's finance
  * objects onto decidesk's DECISION path and docudesk's DOCUMENT e-signature
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

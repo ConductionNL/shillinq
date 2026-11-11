@@ -3,6 +3,9 @@
 /**
  * CBS Submission Controller.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * RESTful CBS submission API per REQ-CBS-009 / ADR-002 / ADR-003. The
  * controller is intentionally thin (≤10 lines of logic per method per
  * ADR-003): delegates CRUD to OpenRegister's ObjectService and the
@@ -31,9 +34,6 @@
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
  * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

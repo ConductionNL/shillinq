@@ -3,6 +3,9 @@
 /**
  * Inventory Posting Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception path lifecycle guard for the perpetual inventory
  * GL-posting envelope (inventory-cogs-posting REQ-CG-002 / REQ-CG-003 /
  * REQ-CG-004). Four predicates:
@@ -49,9 +52,6 @@
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-8
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

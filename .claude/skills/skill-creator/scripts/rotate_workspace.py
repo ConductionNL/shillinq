@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+
 """Rotate eval workspace: keep N live iterations, archive the rest.
 
 Run at the end of every eval cycle. Enforces the invariant that no more than

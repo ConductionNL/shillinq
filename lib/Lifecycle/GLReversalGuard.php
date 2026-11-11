@@ -3,6 +3,9 @@
 /**
  * GL Reversal Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Lifecycle precondition shared by the `void` transitions of
  * ExpenseClaimEntry, APInvoice, and ARInvoice (T1 REQ-GL-004:
  * "the materialised GLTransaction MUST already be reversed"). ADR-031
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

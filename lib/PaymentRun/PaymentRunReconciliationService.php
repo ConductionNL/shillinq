@@ -3,6 +3,9 @@
 /**
  * Payment-run reconciliation service (CAMT.053 match)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reconciles a PaymentRun in lifecycle state `exported` against an imported
  * CAMT.053 bank statement. It parses the statement's booked outgoing entries
  * (Camt053StatementParser) and matches each back to the run's paymentLines[]:
@@ -31,9 +34,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */

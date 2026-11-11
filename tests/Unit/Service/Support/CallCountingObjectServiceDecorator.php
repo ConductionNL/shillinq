@@ -3,6 +3,9 @@
 /**
  * Call-counting decorator over InMemoryObjectServiceStub.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wraps any {@see ObjectServiceInterface} implementation (e.g.
  * `InMemoryObjectServiceStub`, or a bespoke fixture store — `final` classes
  * like `InMemoryObjectServiceStub` cannot be extended, so this decorates by
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

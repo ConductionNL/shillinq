@@ -3,6 +3,9 @@
 /**
  * Shillinq Payment Request Webhook Controller (shared deposits + invoice links)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Receives async payment-confirmation webhooks from Mollie and Stripe (routed by
  * OpenConnector) and idempotently reconciles the matching payment record. This is
  * the GENERALIZED, shared webhook surface (REQ-APL-004 "ONE shared surface —

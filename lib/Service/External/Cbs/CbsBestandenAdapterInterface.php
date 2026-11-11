@@ -3,6 +3,9 @@
 /**
  * CBS Bestanden submission port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * CBS (Centraal Bureau voor de Statistiek) ingests aggregated business
  * statistics ("CBS Bestanden") under the Verordening Statistieken
  * Bedrijven mandate. Shillinq materialises the submission payload from
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -4,6 +4,9 @@
  * Hermetic integration test for the BADO finding escalation workflow (Task 22
  * of bookkeeping-bado-controleprotocol).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Exercises the open → disputed → resolved lifecycle with controller dispute,
  * auditor escalation, external audit-manager resolution and post-resolution
  * aggregation (REQ-006, Task 18) using the production
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-22
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * BBV Provincie Programme Budget Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The `programmeBudgetVsActuals` aggregation the provincies-BBV Compliance
  * Dashboard was written against and which no code ever computed (#866/#862).
  *
@@ -65,9 +68,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

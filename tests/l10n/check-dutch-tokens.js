@@ -2,6 +2,9 @@
 /**
  * ADR-057 D3 gate — Dutch-as-source-string hard fail.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * English is the source language (ADR-007); a Dutch word used as a
  * `t()`/`n()` literal argument, or as a manifest `title`/`body`/`label`
  * value, is source text in the wrong language, not a translation. This
@@ -42,9 +45,6 @@
  * Exit codes:
  *   0  no Dutch-token match found
  *   1  one or more Dutch-token matches found (hard failure)
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  */
 
 'use strict'

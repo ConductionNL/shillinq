@@ -3,6 +3,9 @@
 /**
  * Object Identifier
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Resolves the OpenRegister identifier from whatever `ObjectService::saveObject()`
  * or `findAll()` handed back, in the ONE identifier space the rest of this app
  * joins on: the UUID.
@@ -66,9 +69,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-cycle-count/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

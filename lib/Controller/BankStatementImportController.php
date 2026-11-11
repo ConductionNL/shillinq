@@ -3,6 +3,9 @@
 /**
  * Bank Statement Import Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The real import endpoint behind the BankStatementWizard
  * (shillinq-bank-statement-wizard, REQ-BSW-004). It accepts a CAMT.053 /
  * MT940 / CSV bank-statement file (multipart upload OR a JSON body carrying
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

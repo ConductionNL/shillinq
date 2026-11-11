@@ -3,6 +3,9 @@
 /**
  * Dormant default Digipoort/SBR adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Records the would-be submission to the structured logger and returns
  * a synthetic DEFERRED result so the surrounding lifecycle stays
  * observable until an openconnector-backed binding to Digipoort is
@@ -28,9 +31,6 @@
  * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  * @spec openspec/changes/bookkeeping-csrd-esrs/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+
 # /tmp/resolve_threads.py — populate thread_ids from {THREAD_NODE_MAP}
 import subprocess, json
 

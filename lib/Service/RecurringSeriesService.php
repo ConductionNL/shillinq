@@ -3,6 +3,9 @@
 /**
  * Recurring Appointment Series Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Closes the bookings-depth "recurring-appointment-series" gap: bookings/spec.md
  * self-declared recurring bookings DEFERRED to Tier-2. This service realises them.
  * It expands an RRULE-style recurrence string (RFC 5545 subset) into individual
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-recurring-series/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
