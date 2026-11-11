@@ -51,14 +51,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  */
 class CreditLimitGuard {
 	/**
-	 * Statuses that count toward a customer's outstanding receivable.
-	 *
-	 * Paid and written-off invoices are excluded — they no longer consume
-	 * credit. Mirrors the ARInvoice outstandingByCustomer aggregation filter.
-	 */
-	private const OUTSTANDING_STATUSES = ['draft', 'issued', 'overdue', 'disputed'];
-
-	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
@@ -111,68 +103,12 @@ class CreditLimitGuard {
 	 * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-007-002)
 	 */
 	public function requireWithinCreditLimit(array $invoice): bool {
-		$customerNumber = (string)($invoice['customerNumber'] ?? '');
-		$administrationId = (string)($invoice['administrationId'] ?? '');
-
-		if ($customerNumber === '' || $administrationId === '') {
-			$this->logger->error(
-				'CreditLimitGuard: invoice missing customerNumber or administrationId — denying issue (fail-closed)',
-				['invoiceNumber' => ($invoice['invoiceNumber'] ?? 'unknown')]
-			);
+		if ($this->hasCustomerScope(invoice: $invoice) === false) {
 			return false;
 		}
 
 		try {
-			$registerSlug = $this->getRegisterSlug();
-
-			// Resolve the customer to read their credit limit.
-			$customers = $this->objectService
-				->setRegister($registerSlug)
-				->setSchema('CustomerMaster')
-				->findAll(
-					[
-						'filters' => [
-							'customerNumber' => $customerNumber,
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($customers) === true) {
-				$this->logger->error(
-					'CreditLimitGuard: customer not found — denying issue (fail-closed)',
-					[
-						'customerNumber' => $customerNumber,
-						'administrationId' => $administrationId,
-					]
-				);
-				return false;
-			}
-
-			$customer = $customers[0];
-			$creditLimitCents = $customer['creditLimitCents'] ?? null;
-
-			// No credit limit configured → unlimited credit by policy.
-			if ($creditLimitCents === null) {
-				return true;
-			}
-
-			$creditLimitCents = (int)$creditLimitCents;
-
-			// Sum the customer's outstanding receivable, excluding this invoice
-			// (so a re-issue or idempotent retry doesn't double-count itself).
-			$outstandingCents = $this->sumOutstandingCents(
-				objectService: $this->objectService,
-				registerSlug: $registerSlug,
-				customerNumber: $customerNumber,
-				administrationId: $administrationId,
-				excludeInvoiceNumber: (string)($invoice['invoiceNumber'] ?? '')
-			);
-			$thisInvoiceCents = (int)($invoice['totalCents'] ?? 0);
-			$projectedCents = ($outstandingCents + $thisInvoiceCents);
-
-			return $projectedCents <= $creditLimitCents;
+			return $this->withinLimit(run: new CreditLimitRun(invoice: $invoice, registerSlug: $this->getRegisterSlug()));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CreditLimitGuard: credit-limit computation failed — denying issue (fail-closed)',
@@ -184,64 +120,143 @@ class CreditLimitGuard {
 	}//end requireWithinCreditLimit()
 
 	/**
+	 * Whether the invoice names its customer and administration; fail-closed
+	 * and logged when it does not.
+	 *
+	 * @param array<string, mixed> $invoice ARInvoice object array.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-007-002)
+	 */
+	private function hasCustomerScope(array $invoice): bool {
+		$customerNumber = (string)($invoice['customerNumber'] ?? '');
+		$administrationId = (string)($invoice['administrationId'] ?? '');
+
+		if ($customerNumber === '' || $administrationId === '') {
+			$this->logger->error(
+				'CreditLimitGuard: invoice missing customerNumber or administrationId — denying issue (fail-closed)',
+				['invoiceNumber' => ($invoice['invoiceNumber'] ?? 'unknown')]
+			);
+			return false;
+		}
+
+		return true;
+	}//end hasCustomerScope()
+
+	/**
+	 * Resolve the customer to read their credit limit; a customer that cannot
+	 * be found denies the issue (logged).
+	 *
+	 * @param CreditLimitRun $run The check.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-007-002)
+	 */
+	private function withinLimit(CreditLimitRun $run): bool {
+		$customer = $this->findCustomer(run: $run);
+		if ($customer === null) {
+			$this->logger->error(
+				'CreditLimitGuard: customer not found — denying issue (fail-closed)',
+				[
+					'customerNumber' => $run->customerNumber,
+					'administrationId' => $run->administrationId,
+				]
+			);
+			return false;
+		}
+
+		return $this->limitHolds(run: $run, customer: $customer);
+	}//end withinLimit()
+
+	/**
+	 * The customer of the check, or null when there is none.
+	 *
+	 * @param CreditLimitRun $run The check.
+	 *
+	 * @return mixed The first customer record, or null.
+	 */
+	private function findCustomer(CreditLimitRun $run): mixed {
+		$customers = $this->objectService
+			->setRegister($run->registerSlug)
+			->setSchema('CustomerMaster')
+			->findAll($run->customerQuery());
+
+		if (empty($customers) === true) {
+			return null;
+		}
+
+		return $customers[0];
+	}//end findCustomer()
+
+	/**
+	 * Whether the outstanding receivable plus this invoice stays within the
+	 * customer's credit limit. No credit limit configured → unlimited credit by policy.
+	 *
+	 * @param CreditLimitRun $run      The check.
+	 * @param mixed          $customer The customer record.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-007-002)
+	 */
+	private function limitHolds(CreditLimitRun $run, mixed $customer): bool {
+		$creditLimitCents = $customer['creditLimitCents'] ?? null;
+		if ($creditLimitCents === null) {
+			return true;
+		}
+
+		$projectedCents = ($this->sumOutstandingCents(run: $run) + $run->totalCents);
+
+		return $projectedCents <= (int)$creditLimitCents;
+	}//end limitHolds()
+
+	/**
 	 * Sum the outstanding receivable for a customer in integer cents.
 	 *
-	 * Pages through all outstanding ARInvoice records (status in
-	 * OUTSTANDING_STATUSES) for the customer in the administration, excluding
-	 * the invoice currently being issued. Uses integer cents throughout.
+	 * Pages through all ARInvoice records for the customer in the
+	 * administration, counting the outstanding ones except the invoice
+	 * currently being issued. Uses integer cents throughout.
 	 *
-	 * @param object $objectService OR ObjectService (already DI-resolved).
-	 * @param string $registerSlug Configured register slug.
-	 * @param string $customerNumber Customer FK.
-	 * @param string $administrationId Administration scope (multi-tenant).
-	 * @param string $excludeInvoiceNumber Invoice to exclude from the sum.
+	 * @param CreditLimitRun $run The check.
 	 *
 	 * @return int Outstanding receivable in integer cents.
 	 */
-	private function sumOutstandingCents(
-		object $objectService,
-		string $registerSlug,
-		string $customerNumber,
-		string $administrationId,
-		string $excludeInvoiceNumber,
-	): int {
-		$pageSize = 500;
+	private function sumOutstandingCents(CreditLimitRun $run): int {
 		$page = 1;
 		$total = 0;
-		$batchSize = 0;
 
 		do {
-			$batch = $objectService
-				->setRegister($registerSlug)
+			$batch = $this->objectService
+				->setRegister($run->registerSlug)
 				->setSchema('ARInvoice')
-				->findAll(
-					[
-						'filters' => [
-							'customerNumber' => $customerNumber,
-							'administrationId' => $administrationId,
-						],
-						'limit' => $pageSize,
-						'offset' => (($page - 1) * $pageSize),
-					]
-				);
+				->findAll($run->invoicePageQuery(page: $page));
 
-			foreach ($batch as $line) {
-				$status = (string)($line['status'] ?? '');
-				if (in_array($status, self::OUTSTANDING_STATUSES, true) === false) {
-					continue;
-				}
-
-				if ((string)($line['invoiceNumber'] ?? '') === $excludeInvoiceNumber && $excludeInvoiceNumber !== '') {
-					continue;
-				}
-
-				$total += (int)($line['totalCents'] ?? 0);
-			}
-
+			$total += $this->outstandingIn(run: $run, batch: $batch);
 			$batchSize = count($batch);
 			$page++;
-		} while ($batchSize === $pageSize);
+		} while ($batchSize === CreditLimitRun::PAGE_SIZE);
 
 		return $total;
 	}//end sumOutstandingCents()
+
+	/**
+	 * The cents of the invoices in a page that count toward the outstanding receivable.
+	 *
+	 * @param CreditLimitRun    $run   The check.
+	 * @param array<int, mixed> $batch One page of ARInvoice records.
+	 *
+	 * @return int
+	 */
+	private function outstandingIn(CreditLimitRun $run, array $batch): int {
+		$total = 0;
+		foreach ($batch as $line) {
+			if ($run->countsTowardOutstanding(line: $line) === true) {
+				$total += (int)($line['totalCents'] ?? 0);
+			}
+		}
+
+		return $total;
+	}//end outstandingIn()
 }//end class
