@@ -136,52 +136,70 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 			$balance = [];
 		}
 
-		$fixedAssets = $this->num($balance, 'fixedAssets');
-		$currentAssets = $this->num($balance, 'currentAssets');
-		$equity = $this->num($balance, 'equity');
-		$provisions = $this->num($balance, 'provisions');
-		$liabilities = $this->num($balance, 'liabilities');
+		$debit = [
+			['label' => 'Vaste activa', 'amount' => $this->num($balance, 'fixedAssets')],
+			['label' => 'Vlottende activa', 'amount' => $this->num($balance, 'currentAssets')],
+		];
+		$credit = [
+			['label' => 'Eigen vermogen', 'amount' => $this->num($balance, 'equity')],
+			['label' => 'Voorzieningen', 'amount' => $this->num($balance, 'provisions')],
+			['label' => 'Schulden', 'amount' => $this->num($balance, 'liabilities')],
+		];
+		$totals = ['assets' => self::sideTotal(rows: $debit), 'credit' => self::sideTotal(rows: $credit), 'currency' => $currency];
 
-		$totalAssets = ($fixedAssets + $currentAssets);
-		$totalCredit = ($equity + $provisions + $liabilities);
-
-		$this->addAmountTable(
-			$section,
-			'Activa',
-			'Bedrag',
-			[
-				['label' => 'Vaste activa', 'amount' => $fixedAssets],
-				['label' => 'Vlottende activa', 'amount' => $currentAssets],
-			],
-			['label' => 'Totaal activa', 'amount' => $totalAssets],
-			$currency
-		);
-
+		$this->addAmountTable($section, 'Activa', 'Bedrag', $debit, ['label' => 'Totaal activa', 'amount' => $totals['assets']], $currency);
 		$section->addTextBreak(1);
+		$this->addAmountTable($section, 'Passiva', 'Bedrag', $credit, ['label' => 'Totaal passiva', 'amount' => $totals['credit']], $currency);
 
-		$this->addAmountTable(
-			$section,
-			'Passiva',
-			'Bedrag',
-			[
-				['label' => 'Eigen vermogen', 'amount' => $equity],
-				['label' => 'Voorzieningen', 'amount' => $provisions],
-				['label' => 'Schulden', 'amount' => $liabilities],
-			],
-			['label' => 'Totaal passiva', 'amount' => $totalCredit],
-			$currency
-		);
-
-		if (abs($totalAssets - $totalCredit) > 0.005) {
-			$section->addTextBreak(1);
-			$this->addNote(
-				$section,
-				'Let op: activa (' . $this->money($totalAssets, $currency) . ') en passiva ('
-				. $this->money($totalCredit, $currency) . ') sluiten niet op elkaar aan.'
-			);
-		}
+		$this->addMismatchNote(section: $section, totals: $totals);
 
 	}//end buildBalanceSheet()
+
+	/**
+	 * The total of one side of the balance sheet, summed in row order. The
+	 * first row starts the sum (not 0.0), so the total is exactly
+	 * `first + second (+ third)` as written out before.
+	 *
+	 * @param list<array{label: string, amount: float}> $rows The side's rows.
+	 *
+	 * @return float
+	 */
+	private static function sideTotal(array $rows): float {
+		$total = 0.0;
+		foreach ($rows as $index => $row) {
+			if ($index === 0) {
+				$total = $row['amount'];
+				continue;
+			}
+
+			$total = ($total + $row['amount']);
+		}
+
+		return $total;
+
+	}//end sideTotal()
+
+	/**
+	 * Note that assets and liabilities do not tie out (beyond half a cent).
+	 *
+	 * @param ReportSection        $section The block accumulator.
+	 * @param array<string, mixed> $totals  assets, credit and currency.
+	 *
+	 * @return void
+	 */
+	private function addMismatchNote(ReportSection $section, array $totals): void {
+		if (abs($totals['assets'] - $totals['credit']) <= 0.005) {
+			return;
+		}
+
+		$section->addTextBreak(1);
+		$this->addNote(
+			$section,
+			'Let op: activa (' . $this->money($totals['assets'], $totals['currency']) . ') en passiva ('
+			. $this->money($totals['credit'], $totals['currency']) . ') sluiten niet op elkaar aan.'
+		);
+
+	}//end addMismatchNote()
 
 	/**
 	 * Lay out the profit-and-loss account from FinancialStatement.profitAndLoss.
