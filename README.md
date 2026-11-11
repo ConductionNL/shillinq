@@ -16,6 +16,11 @@
 
 ---
 
+## Test coverage
+
+<!-- coverage:start -->
+<!-- coverage:end -->
+
 ## Overview
 
 Shillinq is a comprehensive business administration platform designed for organizations of all sizes who need integrated financial, procurement, and contract management. Built as a Nextcloud app, it brings enterprise-grade accounting capabilities to self-hosted environments while maintaining simplicity and accessibility. From small freelancers managing invoices to enterprises handling complex procurement workflows, Shillinq streamlines business operations.

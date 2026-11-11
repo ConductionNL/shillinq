@@ -137,6 +137,7 @@ final class InMemoryAggregationRunner {
 
 /**
  * @covers \OCA\Shillinq\Service\SpendAnalyticsService
+ * @uses   \OCA\Shillinq\Service\SpendAggregation
  */
 final class SpendAnalyticsServiceTest extends TestCase {
 	/**

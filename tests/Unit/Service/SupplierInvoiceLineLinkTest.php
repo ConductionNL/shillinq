@@ -29,6 +29,8 @@ use RuntimeException;
  * Pins linkInvoiceLineToPo() before it is split into named steps.
  *
  * @covers \OCA\Shillinq\Service\SupplierInvoiceService
+ * @uses   \OCA\Shillinq\Service\InvoiceLineLink
+ * @uses   \OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

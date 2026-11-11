@@ -28,6 +28,9 @@ use Psr\Log\AbstractLogger;
  * Pins the deferred-tax period-end run before its methods are split.
  *
  * @covers \OCA\Shillinq\Service\TaxCalculationService
+ * @uses   \OCA\Shillinq\Service\CategoryAmount
+ * @uses   \OCA\Shillinq\Service\DeferredTaxRun
+ * @uses   \OCA\Shillinq\Service\TaxCalculationHelper
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

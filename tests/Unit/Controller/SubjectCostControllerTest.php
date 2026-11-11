@@ -41,6 +41,7 @@ use RuntimeException;
  * below is a branch that had no caller at all before this controller.
  *
  * @covers \OCA\Shillinq\Controller\SubjectCostController
+ * @uses   \OCA\Shillinq\Controller\SubjectCostQuery
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
