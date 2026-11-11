@@ -147,20 +147,7 @@ class ENSIAValidationGuard {
 		}
 
 		try {
-			$unresolved = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('Evaluatievraag')
-				->findAll(
-					[
-						'filters' => [
-							'cyclusId' => $cyclusId,
-							'peerReviewStatus' => 'wijziging-gevraagd',
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($unresolved) === false) {
+			if ($this->hasUnresolvedWijziging(objectService: $objectService, cyclusId: $cyclusId) === true) {
 				$this->logger->info(
 					'ENSIAValidationGuard: blocking college-akkoord — unresolved peer-review wijzigingen',
 					['cyclusId' => $cyclusId]
@@ -181,6 +168,32 @@ class ENSIAValidationGuard {
 		}//end try
 
 	}//end collegeAkkoordAllowed()
+
+	/**
+	 * Whether any of the cycle's questions still awaits a requested wijziging.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $cyclusId The ENSIAJaarcyclus id.
+	 *
+	 * @return bool True when at least one question is `wijziging-gevraagd`.
+	 */
+	private function hasUnresolvedWijziging(object $objectService, string $cyclusId): bool {
+		$unresolved = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('Evaluatievraag')
+			->findAll(
+				[
+					'filters' => [
+						'cyclusId' => $cyclusId,
+						'peerReviewStatus' => 'wijziging-gevraagd',
+					],
+					'limit' => 1,
+				]
+			);
+
+		return empty($unresolved) === false;
+
+	}//end hasUnresolvedWijziging()
 
 	/**
 	 * Precondition enforcing REQ-ENSIA-003 maturity-evidence rule on an

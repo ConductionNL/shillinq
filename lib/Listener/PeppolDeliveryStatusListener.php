@@ -206,52 +206,81 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @return void
 	 */
 	private function apply(array $payload): void {
-		$objectUri = trim((string)($payload['objectUri'] ?? ''));
-		$status = trim((string)($payload['status'] ?? ''));
-		$detail = (string)($payload['detail'] ?? '');
-
-		if ($objectUri === '' || $status === '') {
+		$update = new DeliveryStatusUpdate(
+			objectUri: trim((string)($payload['objectUri'] ?? '')),
+			status: trim((string)($payload['status'] ?? '')),
+			detail: (string)($payload['detail'] ?? ''),
+			transmissionId: trim((string)($payload['transmissionId'] ?? ''))
+		);
+		if ($update->objectUri === '' || $update->status === '') {
 			return;
 		}
 
-		$id = $this->extractId(objectUri: $objectUri);
-		if ($id === '') {
+		$invoice = $this->matchingInvoice(update: $update);
+		if ($invoice === null || $this->transitionAllowed(invoice: $invoice, update: $update) === false) {
 			return;
+		}
+
+		$invoice['deliveryStatus'] = $update->status;
+		$invoice['deliveryDetail'] = $update->detail;
+		if ($update->transmissionId !== '') {
+			$invoice['transmissionId'] = $update->transmissionId;
+		}
+
+		$this->saveObject(schema: 'ARInvoice', object: $invoice);
+
+		if ($update->status === 'rejected') {
+			$this->notifyFinanceOperators(invoice: $invoice, detail: $update->detail);
+		}
+
+	}//end apply()
+
+	/**
+	 * The ARInvoice the update's objectUri points at; a miss is logged.
+	 *
+	 * @param DeliveryStatusUpdate $update The delivery-status update.
+	 *
+	 * @return array<string,mixed>|null The invoice, or null when there is none.
+	 */
+	private function matchingInvoice(DeliveryStatusUpdate $update): array|null {
+		$id = $this->extractId(objectUri: $update->objectUri);
+		if ($id === '') {
+			return null;
 		}
 
 		$invoice = $this->findByIdOrInvoiceNumber(id: $id);
 		if ($invoice === null) {
 			$this->logger->info(
 				'PeppolDeliveryStatusListener: no matching ARInvoice for objectUri — skipping',
-				['objectUri' => $objectUri]
+				['objectUri' => $update->objectUri]
 			);
-			return;
 		}
 
+		return $invoice;
+
+	}//end matchingInvoice()
+
+	/**
+	 * Whether the invoice may move to the update's status; an illegal pair is logged.
+	 *
+	 * @param array<string,mixed> $invoice The ARInvoice.
+	 * @param DeliveryStatusUpdate $update The delivery-status update.
+	 *
+	 * @return bool True for a declared (or idempotent) transition.
+	 */
+	private function transitionAllowed(array $invoice, DeliveryStatusUpdate $update): bool {
 		$currentStatus = (string)($invoice['deliveryStatus'] ?? 'not-sent');
-		$transitionKey = $currentStatus . '|' . $status;
-		if (isset(self::ALLOWED_TRANSITIONS[$transitionKey]) === false) {
-			$this->logger->info(
-				'PeppolDeliveryStatusListener: illegal delivery-status transition — skipping',
-				['from' => $currentStatus, 'to' => $status, 'objectUri' => $objectUri]
-			);
-			return;
+		if (isset(self::ALLOWED_TRANSITIONS[$currentStatus . '|' . $update->status]) === true) {
+			return true;
 		}
 
-		$invoice['deliveryStatus'] = $status;
-		$invoice['deliveryDetail'] = $detail;
-		$transmissionId = trim((string)($payload['transmissionId'] ?? ''));
-		if ($transmissionId !== '') {
-			$invoice['transmissionId'] = $transmissionId;
-		}
+		$this->logger->info(
+			'PeppolDeliveryStatusListener: illegal delivery-status transition — skipping',
+			['from' => $currentStatus, 'to' => $update->status, 'objectUri' => $update->objectUri]
+		);
+		return false;
 
-		$this->saveObject(schema: 'ARInvoice', object: $invoice);
-
-		if ($status === 'rejected') {
-			$this->notifyFinanceOperators(invoice: $invoice, detail: $detail);
-		}
-
-	}//end apply()
+	}//end transitionAllowed()
 
 	/**
 	 * Extract the trailing id segment from an `openregister://{register}/ARInvoice/{id}` URI.
@@ -321,7 +350,11 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 */
 	private function notifyFinanceOperators(array $invoice, string $detail): void {
 		$administrationId = (string)($invoice['administrationId'] ?? '');
-		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? '');
+		$rejection = [
+			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
+			'detail' => $detail,
+			'invoiceId' => (string)($invoice['id'] ?? ''),
+		];
 		if ($administrationId === '') {
 			return;
 		}
@@ -331,43 +364,59 @@ class PeppolDeliveryStatusListener implements IEventListener {
 			filters: ['administrationId' => $administrationId]
 		);
 
+		foreach ($this->receivablesRecipients(memberships: $memberships) as $userId) {
+			$this->notifyRejected(rejection: $rejection, userId: $userId);
+		}
+
+	}//end notifyFinanceOperators()
+
+	/**
+	 * The distinct users holding a receivables role, in membership order.
+	 *
+	 * @param array<int,array<string,mixed>> $memberships The administration's memberships.
+	 *
+	 * @return array<int,string> The user ids to notify.
+	 */
+	private function receivablesRecipients(array $memberships): array {
 		$notified = [];
 		foreach ($memberships as $membership) {
 			$userId = trim((string)($membership['userId'] ?? ''));
-			if ($userId === ''
-				|| isset($notified[$userId]) === true
-				|| in_array((string)($membership['role'] ?? ''), self::RECEIVABLES_ROLES, true) === false
-			) {
-				continue;
+			if ($userId !== '' && in_array((string)($membership['role'] ?? ''), self::RECEIVABLES_ROLES, true) === true) {
+				// Keyed by user, so a user holding several roles is told once.
+				$notified[$userId] = true;
 			}
+		}
 
-			$notified[$userId] = true;
+		return array_map('strval', array_keys($notified));
 
-			try {
-				$notification = $this->notificationManager->createNotification();
-				$notification
-					->setApp(AppIdentity::APP_ID)
-					->setUser($userId)
-					->setDateTime(new DateTime())
-					->setObject(self::NOTIFICATION_OBJECT_TYPE, $invoiceNumber)
-					->setSubject(
-						self::NOTIFICATION_SUBJECT_REJECTED,
-						[
-							'invoiceNumber' => $invoiceNumber,
-							'detail' => $detail,
-							'invoiceId' => (string)($invoice['id'] ?? ''),
-						]
-					);
-				$this->notificationManager->notify($notification);
-			} catch (Throwable $e) {
-				$this->logger->warning(
-					'PeppolDeliveryStatusListener: failed to dispatch rejected-e-invoice notification',
-					['invoiceNumber' => $invoiceNumber, 'userId' => $userId, 'exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
+	}//end receivablesRecipients()
 
-	}//end notifyFinanceOperators()
+	/**
+	 * Send one user the rejected-e-invoice notification; a failure is logged.
+	 *
+	 * @param array{invoiceNumber:string,detail:string,invoiceId:string} $rejection The notification parameters.
+	 * @param string $userId The user to notify.
+	 *
+	 * @return void
+	 */
+	private function notifyRejected(array $rejection, string $userId): void {
+		try {
+			$notification = $this->notificationManager->createNotification();
+			$notification
+				->setApp(AppIdentity::APP_ID)
+				->setUser($userId)
+				->setDateTime(new DateTime())
+				->setObject(self::NOTIFICATION_OBJECT_TYPE, $rejection['invoiceNumber'])
+				->setSubject(self::NOTIFICATION_SUBJECT_REJECTED, $rejection);
+			$this->notificationManager->notify($notification);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'PeppolDeliveryStatusListener: failed to dispatch rejected-e-invoice notification',
+				['invoiceNumber' => $rejection['invoiceNumber'], 'userId' => $userId, 'exception' => $e->getMessage()]
+			);
+		}//end try
+
+	}//end notifyRejected()
 
 	/**
 	 * Persist an object via the real ObjectService API.

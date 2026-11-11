@@ -358,66 +358,9 @@ export default {
 		},
 
 		lineGroups() {
-			const noCosts = t(
-				'shillinq',
-				'No costs passed on to this customer in this period.',
-			)
-			const noReadings = t(
-				'shillinq',
-				'This customer has no rated readings in this period that are not on an invoice yet.',
-			)
-			const groups = [
-				{
-					key: 'timeEntryIds',
-					title: t('shillinq', 'Hours'),
-					label: t('shillinq', 'Description'),
-					quantityLabel: t('shillinq', 'Hours'),
-					empty: t('shillinq', 'No hours in this period.'),
-					rows: this.candidates.timeEntries.map((e) => ({
-						id: idOf(e),
-						title: String(e.description || e.personId || ''),
-						meta: [e.personId, e.date].filter(Boolean).join(' · '),
-						quantity: Number(e.hours || 0).toLocaleString(undefined, {
-							minimumFractionDigits: 1,
-						}),
-					})),
-				},
-				{
-					key: 'expenseIds',
-					title: t('shillinq', 'Costs passed on'),
-					label: t('shillinq', 'Costs'),
-					quantityLabel: t('shillinq', 'Amount'),
-					empty: noCosts,
-					rows: this.candidates.expenses.map((c) => ({
-						id: idOf(c),
-						title: String(c.description || c.claimNumber || ''),
-						meta: [c.claimNumber, c.submittedDate]
-							.filter(Boolean)
-							.join(' · '),
-						quantity: this.money(
-							c.totalPassThroughAmount ?? c.totalAmount,
-						),
-					})),
-				},
-			]
+			const groups = [this.hoursGroup(), this.costsGroup()]
 			if (this.source.billingModel === 'usage') {
-				groups.push({
-					key: 'meterReadingIds',
-					title: t('shillinq', 'Meter readings'),
-					label: t('shillinq', 'Meter'),
-					quantityLabel: t('shillinq', 'Usage'),
-					empty: noReadings,
-					rows: this.candidates.readings.map((r) => ({
-						id: idOf(r),
-						title: String(r.description || r.meterId || ''),
-						meta: [r.periodStart, r.periodEnd]
-							.filter(Boolean)
-							.join(' to '),
-						quantity: [r.quantity, r.unit]
-							.filter((v) => v !== undefined && v !== '')
-							.join(' '),
-					})),
-				})
+				groups.push(this.readingsGroup())
 			}
 			return groups
 		},
@@ -512,45 +455,136 @@ export default {
 		async validate(stepId) {
 			this.error = ''
 			if (stepId === 'source') {
-				if (
-					!this.source.customerId
-					|| !this.source.fromDate
-					|| !this.source.toDate
-				) {
-					return t('shillinq', 'Choose a customer and a period first.')
-				}
-				if (this.source.fromDate > this.source.toDate) {
-					return t('shillinq', 'The period ends before it starts.')
-				}
-				this.linesLoading = true
-				try {
-					this.candidates = await loadCandidates(this.source)
-					this.chosen = {
-						timeEntryIds: this.candidates.timeEntries.map(idOf),
-						expenseIds: this.candidates.expenses.map(idOf),
-						meterReadingIds: this.candidates.readings.map(idOf),
-					}
-				} catch (error) {
-					return errorText(
-						error,
-						t('shillinq', 'The lines could not be loaded.'),
-					)
-				} finally {
-					this.linesLoading = false
-				}
-				return true
+				return this.validateSource()
 			}
 			if (stepId === 'lines') {
-				try {
-					this.draft = await draftInvoice(
-						buildGenerateRequest(this.source, this.chosen),
-					)
-				} catch (error) {
-					return errorText(error, t('shillinq', 'Failed to draft invoice'))
-				}
-				return true
+				return this.draftChosenLines()
 			}
 			return true
+		},
+
+		/**
+		 * Check the customer and period, then load the candidate lines with
+		 * every line chosen.
+		 *
+		 * @return {Promise<true|string>} True, or the refusal.
+		 */
+		async validateSource() {
+			if (
+				!this.source.customerId
+				|| !this.source.fromDate
+				|| !this.source.toDate
+			) {
+				return t('shillinq', 'Choose a customer and a period first.')
+			}
+			if (this.source.fromDate > this.source.toDate) {
+				return t('shillinq', 'The period ends before it starts.')
+			}
+			this.linesLoading = true
+			try {
+				this.candidates = await loadCandidates(this.source)
+				this.chosen = {
+					timeEntryIds: this.candidates.timeEntries.map(idOf),
+					expenseIds: this.candidates.expenses.map(idOf),
+					meterReadingIds: this.candidates.readings.map(idOf),
+				}
+			} catch (error) {
+				return errorText(error, t('shillinq', 'The lines could not be loaded.'))
+			} finally {
+				this.linesLoading = false
+			}
+			return true
+		},
+
+		/**
+		 * Draft the invoice from the chosen lines.
+		 *
+		 * @return {Promise<true|string>} True, or the refusal.
+		 */
+		async draftChosenLines() {
+			try {
+				this.draft = await draftInvoice(
+					buildGenerateRequest(this.source, this.chosen),
+				)
+			} catch (error) {
+				return errorText(error, t('shillinq', 'Failed to draft invoice'))
+			}
+			return true
+		},
+
+		/**
+		 * The hours group of the lines step.
+		 *
+		 * @return {object}
+		 */
+		hoursGroup() {
+			return {
+				key: 'timeEntryIds',
+				title: t('shillinq', 'Hours'),
+				label: t('shillinq', 'Description'),
+				quantityLabel: t('shillinq', 'Hours'),
+				empty: t('shillinq', 'No hours in this period.'),
+				rows: this.candidates.timeEntries.map((e) => ({
+					id: idOf(e),
+					title: String(e.description || e.personId || ''),
+					meta: [e.personId, e.date].filter(Boolean).join(' · '),
+					quantity: Number(e.hours || 0).toLocaleString(undefined, {
+						minimumFractionDigits: 1,
+					}),
+				})),
+			}
+		},
+
+		/**
+		 * The costs-passed-on group of the lines step.
+		 *
+		 * @return {object}
+		 */
+		costsGroup() {
+			return {
+				key: 'expenseIds',
+				title: t('shillinq', 'Costs passed on'),
+				label: t('shillinq', 'Costs'),
+				quantityLabel: t('shillinq', 'Amount'),
+				empty: t(
+					'shillinq',
+					'No costs passed on to this customer in this period.',
+				),
+
+				rows: this.candidates.expenses.map((c) => ({
+					id: idOf(c),
+					title: String(c.description || c.claimNumber || ''),
+					meta: [c.claimNumber, c.submittedDate].filter(Boolean).join(' · '),
+					quantity: this.money(c.totalPassThroughAmount ?? c.totalAmount),
+				})),
+			}
+		},
+
+		/**
+		 * The meter-readings group of the lines step, for a usage customer.
+		 *
+		 * @return {object}
+		 */
+		readingsGroup() {
+			return {
+				key: 'meterReadingIds',
+				title: t('shillinq', 'Meter readings'),
+				label: t('shillinq', 'Meter'),
+				quantityLabel: t('shillinq', 'Usage'),
+				empty: t(
+					'shillinq',
+					'This customer has no rated readings in this period that are not on an invoice yet.',
+				),
+
+				rows: this.candidates.readings.map((r) => ({
+					id: idOf(r),
+					title: String(r.description || r.meterId || ''),
+					meta: [r.periodStart, r.periodEnd].filter(Boolean).join(' to '),
+					quantity: [r.quantity, r.unit]
+						.filter((v) => v !== undefined && v !== '')
+						.join(' '),
+				})),
+			}
 		},
 
 		/**

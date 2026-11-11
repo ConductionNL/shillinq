@@ -104,37 +104,20 @@ class EliminationGuard {
 	 */
 	public function canChangeEliminationStatus(string $transactionId, ?array $object = null): bool {
 		try {
-			$reportId = '';
-			if ($object !== null && isset($object['consolidatedReportId']) === true) {
-				$reportId = (string)$object['consolidatedReportId'];
-			}
+			$reportId = $this->consolidatedReportId(object: $object);
 
 			// Not yet consolidated into any report — always editable (REQ-ICP-006).
 			if ($reportId === '') {
 				return true;
 			}
 
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->resolveRegister();
-
-			$reports = $objectService
-				->setRegister($register)
-				->setSchema('ConsolidatedReport')
-				->findAll(['filters' => ['id' => $reportId]]);
-
-			foreach ($reports as $report) {
-				if (is_array($report) === false) {
-					continue;
-				}
-
-				$status = (string)($report['status'] ?? '');
-				if (in_array($status, self::FROZEN_REPORT_STATES, true) === true) {
-					$this->logger->info(
-						'EliminationGuard: elimination status frozen — owning ConsolidatedReport is ' . $status,
-						['intercompanyTransactionId' => $transactionId, 'consolidatedReportId' => $reportId]
-					);
-					return false;
-				}
+			$status = $this->frozenReportStatus(reportId: $reportId);
+			if ($status !== null) {
+				$this->logger->info(
+					'EliminationGuard: elimination status frozen — owning ConsolidatedReport is ' . $status,
+					['intercompanyTransactionId' => $transactionId, 'consolidatedReportId' => $reportId]
+				);
+				return false;
 			}
 
 			// No frozen report found for the referenced id — permit the change.
@@ -147,6 +130,53 @@ class EliminationGuard {
 			return false;
 		}//end try
 	}//end canChangeEliminationStatus()
+
+	/**
+	 * The transaction's consolidatedReportId, or '' when it has none.
+	 *
+	 * @param array<string,mixed>|null $object The IntercompanyTransaction.
+	 *
+	 * @return string The report id.
+	 */
+	private function consolidatedReportId(array|null $object): string {
+		if ($object !== null && isset($object['consolidatedReportId']) === true) {
+			return (string)$object['consolidatedReportId'];
+		}
+
+		return '';
+
+	}//end consolidatedReportId()
+
+	/**
+	 * The status of the first matching ConsolidatedReport that freezes its eliminations.
+	 *
+	 * @param string $reportId The ConsolidatedReport id.
+	 *
+	 * @return string|null The frozen status, or null when no frozen report matches.
+	 */
+	private function frozenReportStatus(string $reportId): string|null {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$register = $this->resolveRegister();
+
+		$reports = $objectService
+			->setRegister($register)
+			->setSchema('ConsolidatedReport')
+			->findAll(['filters' => ['id' => $reportId]]);
+
+		foreach ($reports as $report) {
+			$status = '';
+			if (is_array($report) === true) {
+				$status = (string)($report['status'] ?? '');
+			}
+
+			if (in_array($status, self::FROZEN_REPORT_STATES, true) === true) {
+				return $status;
+			}
+		}
+
+		return null;
+
+	}//end frozenReportStatus()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.

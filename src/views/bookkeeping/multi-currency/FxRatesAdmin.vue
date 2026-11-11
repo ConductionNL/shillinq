@@ -166,30 +166,46 @@ export default {
 					'/apps/shillinq/api/admin/fx-rate-import-status',
 				)
 				const { data } = await axios.get(url)
-				this.status = {
-					jobClass: data?.jobClass ?? this.status.jobClass,
-					lastRunAt: data?.lastRunAt ?? null,
-					lastRunEpoch: data?.lastRunEpoch ?? null,
-					adapterDormant: Boolean(data?.adapterDormant),
-					interval: Number(data?.interval ?? 86400),
-					status: data?.status ?? 'never-ran',
-				}
+				this.status = this.importStatus(data)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 401 || status === 403) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Admin permission required to read FX import status.',
-					)
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load FX import status.',
-					)
-				}
+				this.errorMessage = this.statusLoadError(error)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The import status shown, with defaults for what the answer leaves out.
+		 *
+		 * @param {object|null} data The status response body.
+		 * @return {object}
+		 */
+		importStatus(data) {
+			return {
+				jobClass: data?.jobClass ?? this.status.jobClass,
+				lastRunAt: data?.lastRunAt ?? null,
+				lastRunEpoch: data?.lastRunEpoch ?? null,
+				adapterDormant: Boolean(data?.adapterDormant),
+				interval: Number(data?.interval ?? 86400),
+				status: data?.status ?? 'never-ran',
+			}
+		},
+
+		/**
+		 * The message of a failed status read, by HTTP status.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		statusLoadError(error) {
+			const status = error?.response?.status
+			if (status === 401 || status === 403) {
+				return this.t(
+					'shillinq',
+					'Admin permission required to read FX import status.',
+				)
+			}
+			return this.t('shillinq', 'Failed to load FX import status.')
 		},
 
 		formatTimestamp(iso) {
