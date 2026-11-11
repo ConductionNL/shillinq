@@ -1,0 +1,44 @@
+{
+    "allResolve": {
+        "generators": {
+            "csv": "OCA\\Shillinq\\PaymentRun\\Generator\\PaymentRunCsvGenerator",
+            "sepa-pain001": "OCA\\Shillinq\\PaymentRun\\Generator\\SepaPain001Generator"
+        },
+        "memoised": true,
+        "calls": [
+            [
+                "get",
+                "\\OCA\\Shillinq\\PaymentRun\\Generator\\PaymentRunCsvGenerator"
+            ],
+            [
+                "get",
+                "\\OCA\\Shillinq\\PaymentRun\\Generator\\SepaPain001Generator"
+            ]
+        ]
+    },
+    "sepaFails": {
+        "generators": {
+            "csv": "OCA\\Shillinq\\PaymentRun\\Generator\\PaymentRunCsvGenerator"
+        },
+        "memoised": true,
+        "calls": [
+            [
+                "get",
+                "\\OCA\\Shillinq\\PaymentRun\\Generator\\PaymentRunCsvGenerator"
+            ],
+            [
+                "get",
+                "\\OCA\\Shillinq\\PaymentRun\\Generator\\SepaPain001Generator"
+            ],
+            [
+                "log",
+                "warning",
+                "PaymentRunExportService: failed to instantiate generator",
+                {
+                    "class": "\\OCA\\Shillinq\\PaymentRun\\Generator\\SepaPain001Generator",
+                    "exception": "cannot build SepaPain001Generator"
+                }
+            ]
+        ]
+    }
+}
