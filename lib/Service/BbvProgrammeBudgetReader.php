@@ -343,7 +343,7 @@ class BbvProgrammeBudgetReader {
 				}
 
 				$month = substr($postingDate, 0, 7);
-				foreach ($this->transactionRefs(transaction: $transaction) as $ref) {
+				foreach ((new LedgerActuals())->transactionRefs(transaction: $transaction) as $ref) {
 					$months[$ref] = $month;
 				}
 			}
@@ -369,29 +369,6 @@ class BbvProgrammeBudgetReader {
 		return ($postingDate >= $window['startDate'] && $postingDate <= $window['endDate']);
 
 	}//end inWindow()
-
-	/**
-	 * Every reference a GL line may use to name this transaction.
-	 *
-	 * @param array<string,mixed> $transaction The GL transaction.
-	 *
-	 * @return list<string> The non-empty references.
-	 */
-	private function transactionRefs(array $transaction): array {
-		$refs = [];
-		$objectId = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
-		if ($objectId !== '') {
-			$refs[] = $objectId;
-		}
-
-		$number = (string)($transaction['transactionNumber'] ?? '');
-		if ($number !== '') {
-			$refs[] = $number;
-		}
-
-		return $refs;
-
-	}//end transactionRefs()
 
 	/**
 	 * Resolve a GL line's contribution to programme spend.
