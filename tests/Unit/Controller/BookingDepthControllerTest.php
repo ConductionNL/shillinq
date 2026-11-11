@@ -34,7 +34,6 @@ use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -113,7 +112,7 @@ final class BookingDepthControllerTest extends TestCase {
 
 		$slotService = new SlotService(
 			container: $this->createMock(ContainerInterface::class),
-			settings: $this->createMock(SettingsService::class),
+			registerLocation: $this->createMock(RegisterLocation::class),
 			cacheFactory: $cacheFactory,
 			time: $time,
 			logger: $logger,

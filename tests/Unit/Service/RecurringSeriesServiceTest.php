@@ -32,7 +32,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICacheFactory;
@@ -64,7 +64,7 @@ final class RecurringSeriesServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$container = $this->createMock(ContainerInterface::class);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$cacheFactory = $this->createMock(ICacheFactory::class);
 		$time = $this->createMock(ITimeFactory::class);
 		$logger = $this->createMock(LoggerInterface::class);
@@ -74,7 +74,7 @@ final class RecurringSeriesServiceTest extends TestCase {
 
 		$slotService = new SlotService(
 			container: $container,
-			settings: $settings,
+			registerLocation: $settings,
 			cacheFactory: $cacheFactory,
 			time: $time,
 			logger: $logger,

@@ -36,7 +36,7 @@ use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -120,11 +120,11 @@ final class CommitmentYearEndTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);
 		$container->method('get')->willReturn($mapper);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$contract = $this->createMock(ListenerSlugContract::class);
 		$contract->method('isEnabled')->willReturn(true);
-		$resolver = new ListenerSchemaResolver(container: $container, settingsService: $settings, contract: $contract, logger: $this->createMock(LoggerInterface::class));
+		$resolver = new ListenerSchemaResolver(container: $container, registerLocation: $settings, contract: $contract, logger: $this->createMock(LoggerInterface::class));
 
 		return new InvoiceCommitmentListener($this->invoicing(), $resolver, $this->createMock(LoggerInterface::class));
 	}//end listener()

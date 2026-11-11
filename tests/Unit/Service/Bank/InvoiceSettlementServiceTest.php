@@ -358,7 +358,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 
 		return new ListenerSchemaResolver(
 			container: $container,
-			settingsService: $settings,
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			contract: $contract,
 			logger: $this->createMock(LoggerInterface::class),
 		);

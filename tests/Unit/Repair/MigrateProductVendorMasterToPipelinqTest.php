@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
@@ -67,11 +67,11 @@ final class MigrateProductVendorMasterToPipelinqTest extends TestCase {
 	/**
 	 * Build the step around an empty recording store.
 	 *
-	 * @param SettingsService $settings The settings double handing out the register slug.
+	 * @param RegisterLocation $settings The register-location double handing out the slug.
 	 *
 	 * @return MigrateProductVendorMasterToPipelinq The step under test.
 	 */
-	private function makeStep(SettingsService $settings): MigrateProductVendorMasterToPipelinq {
+	private function makeStep(RegisterLocation $settings): MigrateProductVendorMasterToPipelinq {
 		$this->store = new class() {
 
 			/**
@@ -134,7 +134,7 @@ final class MigrateProductVendorMasterToPipelinqTest extends TestCase {
 		return new MigrateProductVendorMasterToPipelinq(
 			config: $config,
 			logger: $this->createMock(LoggerInterface::class),
-			settingsService: $settings,
+			registerLocation: $settings,
 			container: $container,
 			contactsManager: $this->createMock(IContactsManager::class),
 		);
@@ -169,7 +169,7 @@ final class MigrateProductVendorMasterToPipelinqTest extends TestCase {
 	 * @return void
 	 */
 	public function testReadsTheConfiguredRegisterAndCompletes(): void {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->expects($this->once())->method('getRegisterSlug')->willReturn('finance');
 
 		$this->makeStep($settings)->run($this->recordingOutput());
@@ -186,7 +186,7 @@ final class MigrateProductVendorMasterToPipelinqTest extends TestCase {
 	 * @return void
 	 */
 	public function testSlugLookupFailureDefersTheMigration(): void {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willThrowException(new RuntimeException('config down'));
 
 		$this->makeStep($settings)->run($this->recordingOutput());
