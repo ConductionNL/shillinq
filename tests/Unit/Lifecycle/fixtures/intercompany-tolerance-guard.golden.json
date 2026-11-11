@@ -119,6 +119,31 @@
             }
         ]
     },
+    "typedRuleAbsoluteOnlyFails": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
     "allTypesMinOf": {
         "result": false,
         "logs": [],

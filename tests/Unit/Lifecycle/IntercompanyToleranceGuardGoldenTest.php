@@ -67,6 +67,14 @@ final class IntercompanyToleranceGuardGoldenTest extends TestCase {
 					],
 				],
 			],
+			'typedRuleAbsoluteOnlyFails' => [
+				['mismatchAmount' => 6.0, 'mismatchPercentage' => 0.01] + $match,
+				$relation + [
+					'ToleranceRule' => [
+						['relationTypeFilter' => 'loan', 'toleranceAbsolute' => 5, 'toleranceMethod' => 'absolute-only'],
+					],
+				],
+			],
 			'allTypesMinOf' => [
 				['mismatchAmount' => 3.0] + $match,
 				$relation + [
