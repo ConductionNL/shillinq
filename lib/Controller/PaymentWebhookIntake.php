@@ -52,6 +52,12 @@ final class PaymentWebhookIntake {
 	public const MALFORMED_PAYLOAD = 'malformed-payload';
 
 	/**
+	 * How far, in seconds, a Stripe signature timestamp may lie from now
+	 * (Stripe's documented default tolerance).
+	 */
+	public const STRIPE_TOLERANCE_SECONDS = 300;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request The webhook request (for the signature header).
@@ -115,7 +121,7 @@ final class PaymentWebhookIntake {
 		}
 
 		if ($gateway === 'stripe') {
-			$provided = self::stripeV1Signature(provided: $provided);
+			return $this->verifyStripeSignature(provided: $provided, rawBody: $rawBody, secret: $secret);
 		}
 
 		$expected = hash_hmac('sha256', $rawBody, $secret);
@@ -123,6 +129,48 @@ final class PaymentWebhookIntake {
 		return hash_equals($expected, strtolower(trim($provided)));
 
 	}//end verifySignature()
+
+	/**
+	 * Verify a Stripe "t=<unix>,v1=<hex>[,v1=<hex>]" header the way Stripe
+	 * signs it: HMAC-SHA256 over "<t>.<raw body>", accepted when any v1 value
+	 * matches and t lies within the tolerance of now.
+	 *
+	 * @param string $provided The Stripe-Signature header.
+	 * @param string $rawBody The raw request body.
+	 * @param string $secret The endpoint secret.
+	 *
+	 * @return bool
+	 */
+	private function verifyStripeSignature(string $provided, string $rawBody, string $secret): bool {
+		$timestamp = null;
+		$signatures = [];
+		foreach (explode(',', $provided) as $part) {
+			[$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
+			if ($key === 't' && ctype_digit($value) === true) {
+				$timestamp = $value;
+			} else if ($key === 'v1' && $value !== '') {
+				$signatures[] = strtolower($value);
+			}
+		}
+
+		if ($timestamp === null || $signatures === []) {
+			return false;
+		}
+
+		if (abs(time() - (int)$timestamp) > self::STRIPE_TOLERANCE_SECONDS) {
+			return false;
+		}
+
+		$expected = hash_hmac('sha256', $timestamp . '.' . $rawBody, $secret);
+		foreach ($signatures as $signature) {
+			if (hash_equals($expected, $signature) === true) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end verifyStripeSignature()
 
 	/**
 	 * The configured shared secret of a gateway, '' when not provisioned.
@@ -157,29 +205,5 @@ final class PaymentWebhookIntake {
 		return 'X-Mollie-Signature';
 
 	}//end signatureHeader()
-
-	/**
-	 * Take the v1 segment of a Stripe "t=...,v1=<hex>" header; any other
-	 * header value is returned as sent.
-	 *
-	 * @param string $provided The Stripe-Signature header.
-	 *
-	 * @return string
-	 */
-	private static function stripeV1Signature(string $provided): string {
-		if (str_contains($provided, 'v1=') === false) {
-			return $provided;
-		}
-
-		foreach (explode(',', $provided) as $part) {
-			$part = trim($part);
-			if (str_starts_with($part, 'v1=') === true) {
-				return substr($part, 3);
-			}
-		}
-
-		return $provided;
-
-	}//end stripeV1Signature()
 
 }//end class

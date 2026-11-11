@@ -177,7 +177,8 @@ final class DepositWebhookControllerTest extends TestCase {
 	}//end testMissingSecretFailsClosed()
 
 	/**
-	 * A Stripe payment_intent.succeeded with a "t=..,v1=<sig>" header is accepted
+	 * A Stripe payment_intent.succeeded with a current "t=..,v1=<sig>" header,
+	 * signed over "<t>.<body>", is accepted
 	 * and mapped to the authorized outcome.
 	 *
 	 * @return void
@@ -199,7 +200,8 @@ final class DepositWebhookControllerTest extends TestCase {
 			)
 			->willReturn(DepositReconciliationService::RESULT_APPLIED);
 
-		$header = 't=1700000000,v1=' . $this->sign($body);
+		$timestamp = (string)time();
+		$header = 't=' . $timestamp . ',v1=' . $this->sign($timestamp . '.' . $body);
 		$controller = $this->makeController($body, $header, $recon);
 		$response = $controller->handle('stripe');
 
