@@ -134,6 +134,17 @@ class SupplierInvoiceService {
 	];
 
 	/**
+	 * The UBL namespaces XPath lookups use, by prefix.
+	 *
+	 * @var array<string,string>
+	 */
+	private const UBL_NAMESPACES = [
+		'inv' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+		'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+		'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig App config for the OR register slug.
@@ -654,40 +665,98 @@ class SupplierInvoiceService {
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
 	public function parseUblInvoice(string $ublXml): array {
+		$xml = $this->loadUblXml(ublXml: $ublXml);
+		$invoiceNumber = $this->requireUblInvoiceNumber(xml: $xml);
+
+		return [
+			'invoiceNumber' => $invoiceNumber,
+			'supplierId' => $this->ublSupplierId(xml: $xml),
+			'invoiceDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:IssueDate'])),
+			'dueDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:DueDate'])),
+			'currency' => $this->ublCurrency(xml: $xml),
+		] + $this->ublTotals(xml: $xml)
+			+ $this->ublPayment(xml: $xml)
+			+ $this->ublSupplierRegistration(xml: $xml)
+			+ ['lines' => $this->ublLines(xml: $xml)];
+
+	}//end parseUblInvoice()
+
+	/**
+	 * Parse a UBL document and register the UBL Invoice, CBC and CAC namespaces.
+	 *
+	 * Libxml ≥ 2.9 disables external-entity loading by default (PHP 8);
+	 * simplexml_load_string is XXE-safe in our supported runtime
+	 * ([[nc-security-defaults]]).
+	 *
+	 * @param string $ublXml UBL Invoice XML document.
+	 *
+	 * @return SimpleXMLElement
+	 *
+	 * @throws \RuntimeException When the document is empty or not valid XML.
+	 */
+	private function loadUblXml(string $ublXml): SimpleXMLElement {
 		if (trim($ublXml) === '') {
 			throw new RuntimeException('UBL Invoice XML is empty');
 		}
 
-		// Libxml ≥ 2.9 disables external-entity loading by default (PHP 8);
-		// simplexml_load_string is XXE-safe in our supported runtime
-		// ([[nc-security-defaults]]).
 		$xml = simplexml_load_string($ublXml);
 		if ($xml === false) {
 			throw new RuntimeException('UBL Invoice XML is malformed');
 		}
 
-		// Register the canonical UBL Invoice + CBC + CAC namespaces so
-		// XPath lookups work regardless of the source document's prefix
-		// conventions.
-		$namespaces = $xml->getNamespaces(true);
-		foreach ([
-			'inv' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
-			'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-			'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-		] as $prefix => $uri
-		) {
+		$this->registerUblNamespaces(element: $xml, prefixes: ['inv', 'cbc', 'cac']);
+		return $xml;
+
+	}//end loadUblXml()
+
+	/**
+	 * Register the canonical UBL namespaces the element's document declares, so
+	 * XPath lookups work regardless of the source document's prefix conventions.
+	 *
+	 * @param SimpleXMLElement  $element  The element to search from.
+	 * @param array<int,string> $prefixes The prefixes to register, from UBL_NAMESPACES.
+	 *
+	 * @return void
+	 */
+	private function registerUblNamespaces(SimpleXMLElement $element, array $prefixes): void {
+		$namespaces = $element->getNamespaces(true);
+		foreach ($prefixes as $prefix) {
+			$uri = self::UBL_NAMESPACES[$prefix];
 			if (in_array($uri, $namespaces, true) === true) {
-				$xml->registerXPathNamespace($prefix, $uri);
+				$element->registerXPathNamespace($prefix, $uri);
 			}
 		}
 
-		$invoiceNumber = $this->xpathFirst(xml: $xml, paths: ['//cbc:ID', '/inv:Invoice/cbc:ID']);
-		$invoiceNumber = trim($invoiceNumber);
+	}//end registerUblNamespaces()
+
+	/**
+	 * The invoice number (cbc:ID), which a UBL bill must carry.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the invoice number is absent.
+	 */
+	private function requireUblInvoiceNumber(SimpleXMLElement $xml): string {
+		$invoiceNumber = trim($this->xpathFirst(xml: $xml, paths: ['//cbc:ID', '/inv:Invoice/cbc:ID']));
 		if ($invoiceNumber === '') {
 			throw new RuntimeException('UBL Invoice is missing InvoiceNumber (cbc:ID)');
 		}
 
-		$supplierId = trim(
+		return $invoiceNumber;
+
+	}//end requireUblInvoiceNumber()
+
+	/**
+	 * The supplier's party identification, else its endpoint id.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return string
+	 */
+	private function ublSupplierId(SimpleXMLElement $xml): string {
+		return trim(
 			$this->xpathFirst(
 				xml: $xml,
 				paths: [
@@ -697,20 +766,93 @@ class SupplierInvoiceService {
 			)
 		);
 
-		$currency = trim(
-			$this->xpathFirst(
-				xml: $xml,
-				paths: ['//cbc:DocumentCurrencyCode']
-			)
-		);
+	}//end ublSupplierId()
+
+	/**
+	 * The document currency, EUR when absent.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return string
+	 */
+	private function ublCurrency(SimpleXMLElement $xml): string {
+		$currency = trim($this->xpathFirst(xml: $xml, paths: ['//cbc:DocumentCurrencyCode']));
 		if ($currency === '') {
-			$currency = 'EUR';
+			return 'EUR';
 		}
 
+		return $currency;
+
+	}//end ublCurrency()
+
+	/**
+	 * The document totals in cents: excluding VAT, VAT, and payable.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array{totalExclVat:int,totalVat:int,totalInclVat:int}
+	 */
+	private function ublTotals(SimpleXMLElement $xml): array {
 		$totalExclVat = $this->xpathFirstFloat(xml: $xml, paths: ['//cac:LegalMonetaryTotal/cbc:LineExtensionAmount']);
 		$totalInclVat = $this->xpathFirstFloat(xml: $xml, paths: ['//cac:LegalMonetaryTotal/cbc:PayableAmount']);
 		$totalVat = $this->xpathFirstFloat(xml: $xml, paths: ['//cac:TaxTotal/cbc:TaxAmount']);
 
+		return [
+			'totalExclVat' => $this->toCents(amount: $totalExclVat),
+			'totalVat' => $this->toCents(amount: $totalVat),
+			'totalInclVat' => $this->toCents(amount: $totalInclVat),
+		];
+
+	}//end ublTotals()
+
+	/**
+	 * The payment reference and the payee IBAN (spaces removed, upper-cased).
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array{paymentReference:string,payeeIban:string}
+	 */
+	private function ublPayment(SimpleXMLElement $xml): array {
+		$iban = $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID']);
+
+		return [
+			'paymentReference' => trim($this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cbc:PaymentID'])),
+			'payeeIban' => strtoupper((string)preg_replace('/\s+/', '', $iban)),
+		];
+
+	}//end ublPayment()
+
+	/**
+	 * The supplier's KvK number and VAT number.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array{supplierKvk:string,supplierVatNumber:string}
+	 */
+	private function ublSupplierRegistration(SimpleXMLElement $xml): array {
+		$kvkPaths = [
+			'//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID',
+			'//cac:AccountingSupplierParty/cac:Party/cbc:EndpointID[@schemeID="0106"]',
+			'//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID="0106"]',
+		];
+
+		return [
+			'supplierKvk' => trim($this->xpathFirst(xml: $xml, paths: $kvkPaths)),
+			'supplierVatNumber' => trim(
+				$this->xpathFirst(xml: $xml, paths: ['//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID'])
+			),
+		];
+
+	}//end ublSupplierRegistration()
+
+	/**
+	 * The parsed cac:InvoiceLine elements, numbered from 1.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function ublLines(SimpleXMLElement $xml): array {
 		$lines = [];
 		$nodes = $xml->xpath('//cac:InvoiceLine');
 		if (is_array($nodes) === true) {
@@ -721,36 +863,9 @@ class SupplierInvoiceService {
 			}
 		}
 
-		return [
-			'invoiceNumber' => $invoiceNumber,
-			'supplierId' => $supplierId,
-			'invoiceDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:IssueDate'])),
-			'dueDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:DueDate'])),
-			'currency' => $currency,
-			'totalExclVat' => $this->toCents(amount: $totalExclVat),
-			'totalVat' => $this->toCents(amount: $totalVat),
-			'totalInclVat' => $this->toCents(amount: $totalInclVat),
-			'paymentReference' => trim($this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cbc:PaymentID'])),
-			'payeeIban' => strtoupper(
-				(string)preg_replace('/\s+/', '', $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID']))
-			),
-			'supplierKvk' => trim(
-				$this->xpathFirst(
-					xml: $xml,
-					paths: [
-						'//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID',
-						'//cac:AccountingSupplierParty/cac:Party/cbc:EndpointID[@schemeID="0106"]',
-						'//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID="0106"]',
-					]
-				)
-			),
-			'supplierVatNumber' => trim(
-				$this->xpathFirst(xml: $xml, paths: ['//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID'])
-			),
-			'lines' => $lines,
-		];
+		return $lines;
 
-	}//end parseUblInvoice()
+	}//end ublLines()
 
 	/**
 	 * Parse a single cac:InvoiceLine element into the embedded line shape.
@@ -763,55 +878,68 @@ class SupplierInvoiceService {
 	private function parseUblInvoiceLine(SimpleXMLElement $node, int $lineNumber): array {
 		// Re-register namespaces on the line node so XPath works against the
 		// element scope (some SimpleXML implementations require this).
-		$namespaces = $node->getNamespaces(true);
-		foreach ([
-			'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-			'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-		] as $prefix => $uri
-		) {
-			if (in_array($uri, $namespaces, true) === true) {
-				$node->registerXPathNamespace($prefix, $uri);
-			}
-		}
+		$this->registerUblNamespaces(element: $node, prefixes: ['cbc', 'cac']);
 
+		$description = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
+		$productCode = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
+		$unitPrice = $this->xpathFirstFloat(xml: $node, paths: ['cac:Price/cbc:PriceAmount']);
+		$lineExtension = $this->xpathFirstFloat(xml: $node, paths: ['cbc:LineExtensionAmount']);
+
+		return [
+			'lineNumber' => $this->ublLineNumber(node: $node, position: $lineNumber),
+			'productCode' => trim($productCode),
+			'description' => trim($description),
+			'quantity' => $this->xpathFirstFloat(xml: $node, paths: ['cbc:InvoicedQuantity']),
+			'unitPrice' => $this->toCents(amount: $unitPrice),
+			'lineExtension' => $this->toCents(amount: $lineExtension),
+			'vatRate' => $this->ublLineVatRate(node: $node),
+		];
+
+	}//end parseUblInvoiceLine()
+
+	/**
+	 * The line's own numeric cbc:ID, else its position in the document.
+	 *
+	 * @param SimpleXMLElement $node     The InvoiceLine node.
+	 * @param int              $position Position in the document (1-based).
+	 *
+	 * @return int
+	 */
+	private function ublLineNumber(SimpleXMLElement $node, int $position): int {
 		$idNode = $node->xpath('cbc:ID');
 		$rawLineId = '';
 		if (is_array($idNode) === true && isset($idNode[0]) === true) {
 			$rawLineId = trim((string)$idNode[0]);
 		}
 
-		$description = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
-		$productCode = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
-		$quantity = $this->xpathFirstFloat(xml: $node, paths: ['cbc:InvoicedQuantity']);
-		$unitPrice = $this->xpathFirstFloat(xml: $node, paths: ['cac:Price/cbc:PriceAmount']);
-		$lineExtension = $this->xpathFirstFloat(xml: $node, paths: ['cbc:LineExtensionAmount']);
+		if ($rawLineId !== '' && ctype_digit($rawLineId) === true) {
+			return (int)$rawLineId;
+		}
+
+		return $position;
+
+	}//end ublLineNumber()
+
+	/**
+	 * The line's VAT rate as a fraction (0.21): UBL Percent is expressed in
+	 * whole percent (21.0), the rest of the app uses the fraction.
+	 *
+	 * @param SimpleXMLElement $node The InvoiceLine node.
+	 *
+	 * @return float
+	 */
+	private function ublLineVatRate(SimpleXMLElement $node): float {
 		$vatRate = $this->xpathFirstFloat(
 			xml: $node,
 			paths: ['cac:Item/cac:ClassifiedTaxCategory/cbc:Percent', 'cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent']
 		);
-		// UBL Percent is expressed in whole-percent (21.0); store as the
-		// fraction the rest of the app already uses (0.21).
-		$vatRateFraction = 0.0;
 		if ($vatRate > 0.0) {
-			$vatRateFraction = ($vatRate / 100.0);
+			return ($vatRate / 100.0);
 		}
 
-		$resolvedLineNumber = $lineNumber;
-		if ($rawLineId !== '' && ctype_digit($rawLineId) === true) {
-			$resolvedLineNumber = (int)$rawLineId;
-		}
+		return 0.0;
 
-		return [
-			'lineNumber' => $resolvedLineNumber,
-			'productCode' => trim($productCode),
-			'description' => trim($description),
-			'quantity' => $quantity,
-			'unitPrice' => $this->toCents(amount: $unitPrice),
-			'lineExtension' => $this->toCents(amount: $lineExtension),
-			'vatRate' => $vatRateFraction,
-		];
-
-	}//end parseUblInvoiceLine()
+	}//end ublLineVatRate()
 
 	/**
 	 * Run a sequence of xpath candidates and return the first non-empty
@@ -870,61 +998,106 @@ class SupplierInvoiceService {
 	 * @throws \RuntimeException When mandatory identifiers are missing.
 	 */
 	private function normaliseOcrPayload(array $ocrPayload): array {
-		$invoiceNumber = trim((string)($ocrPayload['invoiceNumber'] ?? ''));
-		$supplierId = trim((string)($ocrPayload['supplierId'] ?? ''));
-
-		if ($invoiceNumber === '') {
-			throw new RuntimeException('OCR payload is missing invoiceNumber');
-		}
-
-		if ($supplierId === '') {
-			throw new RuntimeException('OCR payload is missing supplierId');
-		}
-
-		$currency = trim((string)($ocrPayload['currency'] ?? 'EUR'));
-		if ($currency === '') {
-			$currency = 'EUR';
-		}
-
-		$totalExclVat = $this->toCentsLoose(value: ($ocrPayload['totalExclVat'] ?? null));
-		$totalVat = $this->toCentsLoose(value: ($ocrPayload['totalVat'] ?? null));
-		$totalInclVat = $this->toCentsLoose(value: ($ocrPayload['totalInclVat'] ?? null));
-
-		$lines = [];
-		if (isset($ocrPayload['lines']) === true && is_array($ocrPayload['lines']) === true) {
-			$lineNumber = 0;
-			foreach ($ocrPayload['lines'] as $rawLine) {
-				if (is_array($rawLine) === false) {
-					continue;
-				}
-
-				$lineNumber++;
-				$lines[] = [
-					'lineNumber' => ((int)($rawLine['lineNumber'] ?? $lineNumber)),
-					'productCode' => trim((string)($rawLine['productCode'] ?? '')),
-					'description' => trim((string)($rawLine['description'] ?? '')),
-					'quantity' => (float)($rawLine['quantity'] ?? 0),
-					'unitPrice' => $this->toCentsLoose(value: ($rawLine['unitPrice'] ?? null)),
-					'lineExtension' => $this->toCentsLoose(value: ($rawLine['lineExtension'] ?? null)),
-					'vatRate' => (float)($rawLine['vatRate'] ?? 0),
-				];
-			}
-		}
+		$invoiceNumber = $this->requiredOcrField(ocrPayload: $ocrPayload, field: 'invoiceNumber');
+		$supplierId = $this->requiredOcrField(ocrPayload: $ocrPayload, field: 'supplierId');
 
 		return [
 			'invoiceNumber' => $invoiceNumber,
 			'supplierId' => $supplierId,
 			'invoiceDate' => trim((string)($ocrPayload['invoiceDate'] ?? '')),
 			'dueDate' => trim((string)($ocrPayload['dueDate'] ?? '')),
-			'currency' => $currency,
-			'totalExclVat' => $totalExclVat,
-			'totalVat' => $totalVat,
-			'totalInclVat' => $totalInclVat,
+			'currency' => $this->ocrCurrency(ocrPayload: $ocrPayload),
+			'totalExclVat' => $this->toCentsLoose(value: ($ocrPayload['totalExclVat'] ?? null)),
+			'totalVat' => $this->toCentsLoose(value: ($ocrPayload['totalVat'] ?? null)),
+			'totalInclVat' => $this->toCentsLoose(value: ($ocrPayload['totalInclVat'] ?? null)),
 			'paymentReference' => trim((string)($ocrPayload['paymentReference'] ?? '')),
-			'lines' => $lines,
+			'lines' => $this->ocrLines(ocrPayload: $ocrPayload),
 		];
 
 	}//end normaliseOcrPayload()
+
+	/**
+	 * A mandatory OCR identifier, trimmed.
+	 *
+	 * @param array<string,mixed> $ocrPayload OCR payload.
+	 * @param string              $field      The identifier's field name.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the identifier is missing or blank.
+	 */
+	private function requiredOcrField(array $ocrPayload, string $field): string {
+		$value = trim((string)($ocrPayload[$field] ?? ''));
+		if ($value === '') {
+			throw new RuntimeException('OCR payload is missing ' . $field);
+		}
+
+		return $value;
+
+	}//end requiredOcrField()
+
+	/**
+	 * The OCR currency, EUR when absent or blank.
+	 *
+	 * @param array<string,mixed> $ocrPayload OCR payload.
+	 *
+	 * @return string
+	 */
+	private function ocrCurrency(array $ocrPayload): string {
+		$currency = trim((string)($ocrPayload['currency'] ?? 'EUR'));
+		if ($currency === '') {
+			return 'EUR';
+		}
+
+		return $currency;
+
+	}//end ocrCurrency()
+
+	/**
+	 * The OCR line items in the embedded line shape; non-array lines are skipped.
+	 *
+	 * @param array<string,mixed> $ocrPayload OCR payload.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function ocrLines(array $ocrPayload): array {
+		$lines = [];
+		if (isset($ocrPayload['lines']) === false || is_array($ocrPayload['lines']) === false) {
+			return $lines;
+		}
+
+		$lineNumber = 0;
+		foreach ($ocrPayload['lines'] as $rawLine) {
+			if (is_array($rawLine) === true) {
+				$lineNumber++;
+				$lines[] = $this->ocrLine(rawLine: $rawLine, lineNumber: $lineNumber);
+			}
+		}
+
+		return $lines;
+
+	}//end ocrLines()
+
+	/**
+	 * One OCR line item in the embedded line shape.
+	 *
+	 * @param array<string,mixed> $rawLine    The OCR line.
+	 * @param int                 $lineNumber Its position among the array lines (1-based).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function ocrLine(array $rawLine, int $lineNumber): array {
+		return [
+			'lineNumber' => ((int)($rawLine['lineNumber'] ?? $lineNumber)),
+			'productCode' => trim((string)($rawLine['productCode'] ?? '')),
+			'description' => trim((string)($rawLine['description'] ?? '')),
+			'quantity' => (float)($rawLine['quantity'] ?? 0),
+			'unitPrice' => $this->toCentsLoose(value: ($rawLine['unitPrice'] ?? null)),
+			'lineExtension' => $this->toCentsLoose(value: ($rawLine['lineExtension'] ?? null)),
+			'vatRate' => (float)($rawLine['vatRate'] ?? 0),
+		];
+
+	}//end ocrLine()
 
 	/**
 	 * Loose float-or-null to integer cents.
