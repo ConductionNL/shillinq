@@ -245,72 +245,161 @@ class BIKStaffelCalculator {
 	 * override rate (e.g. a contractually agreed B2B rate per art. 6:119a
 	 * lid 3 BW); an override forces a single flat period.
 	 *
-	 * @param string $partyType 'B2B' or 'B2C' (anything else treated as B2B for safety).
-	 * @param float $principal Outstanding principal in EUR.
-	 * @param DateTimeImmutable $effectiveDate First day the rente accrues.
-	 * @param DateTimeImmutable $calculatedOn Calculation date.
-	 * @param float|null $rateB2B Override the B2B handelsrente (flat, skips the table).
-	 * @param float|null $rateB2C Override the B2C wettelijke rente (flat, skips the table).
+	 * @param InterestAccrualRequest $request The party, principal, window and overrides.
 	 *
 	 * @return array{rate:float,type:string,ingangsdatum:string,calculatedOn:string,days:int,amount:float,periods:array<int,array{van:string,tot:string,days:int,rate:float,amount:float}>}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
-	public function rente(
-		string $partyType,
-		float $principal,
-		DateTimeImmutable $effectiveDate,
-		DateTimeImmutable $calculatedOn,
-		?float $rateB2B = null,
-		?float $rateB2C = null,
-	): array {
-		if ($principal < 0) {
+	public function rente(InterestAccrualRequest $request): array {
+		$this->assertAccrualWindow(request: $request);
+
+		$segments = $this->accrualSegments(request: $request);
+		$accrual = $this->accrue(principalCents: $this->toCents(amount: $request->principal), segments: $segments);
+
+		// Headline rate = the rate in force on calculatedOn (the current rate).
+		$lastSegment = end($segments);
+
+		return [
+			'rate' => (float)$lastSegment['rate'],
+			'type' => $this->interestType(request: $request),
+			'ingangsdatum' => $request->effectiveDate->format('Y-m-d'),
+			'calculatedOn' => $request->calculatedOn->format('Y-m-d'),
+			'days' => $accrual['days'],
+			'amount' => $this->fromCents(cents: $accrual['cents']),
+			'periods' => $accrual['periods'],
+		];
+
+	}//end rente()
+
+	/**
+	 * Refuse a negative principal or a calculation date before the start.
+	 *
+	 * @param InterestAccrualRequest $request The accrual request.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On an invalid principal or window.
+	 */
+	private function assertAccrualWindow(InterestAccrualRequest $request): void {
+		if ($request->principal < 0) {
 			throw new InvalidArgumentException('Rente principal must be non-negative.');
 		}
 
-		if ($calculatedOn < $effectiveDate) {
+		if ($request->calculatedOn < $request->effectiveDate) {
 			throw new InvalidArgumentException('calculatedOn must not be before ingangsdatum.');
 		}
 
-		$isB2C = ($partyType === 'B2C');
-		if ($isB2C === true) {
-			$type = 'STATUTORY_INTEREST_B2_C_6_119_BW';
-			$table = self::WETTELIJKE_RENTE_B2C_TABLE;
-			$override = $rateB2C;
-		} else {
-			$type = 'COMMERCIAL_INTEREST_B2_B_6_119_A_BW';
-			$table = self::HANDELSRENTE_B2B_TABLE;
-			$override = $rateB2B;
+	}//end assertAccrualWindow()
+
+	/**
+	 * The interest type of the party (B2C wettelijke rente, else B2B handelsrente).
+	 *
+	 * @param InterestAccrualRequest $request The accrual request.
+	 *
+	 * @return string
+	 */
+	private function interestType(InterestAccrualRequest $request): string {
+		if ($request->isConsumer() === true) {
+			return 'STATUTORY_INTEREST_B2_C_6_119_BW';
 		}
 
-		$hoofdsomCents = $this->toCents(amount: $principal);
+		return 'COMMERCIAL_INTEREST_B2_B_6_119_A_BW';
 
+	}//end interestType()
+
+	/**
+	 * The accrual window's rate periods: one flat period at the party's
+	 * explicit override, else split at every statutory rate boundary of the
+	 * party's table.
+	 *
+	 * @param InterestAccrualRequest $request The accrual request.
+	 *
+	 * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,rate:float}>
+	 */
+	private function accrualSegments(InterestAccrualRequest $request): array {
+		$override = $this->overrideRate(request: $request);
 		if ($override !== null) {
 			// Explicit override — single flat period, table bypassed.
-			$segments = [
-				[
-					'van' => $effectiveDate,
-					'tot' => $calculatedOn,
-					'rate' => $override,
-				],
-			];
-		} else {
-			$segments = $this->splitByRateBoundaries(
-				table: $table,
-				from: $effectiveDate,
-				to: $calculatedOn
-			);
+			return $this->flatSegment(request: $request, rate: $override);
 		}
 
-		$periods = [];
-		$totaalCents = 0;
-		$totaalDagen = 0;
+		return $this->splitByRateBoundaries(
+			table: $this->rateTable(request: $request),
+			from: $request->effectiveDate,
+			to: $request->calculatedOn
+		);
+
+	}//end accrualSegments()
+
+	/**
+	 * The party's explicit flat rate override, if any.
+	 *
+	 * @param InterestAccrualRequest $request The accrual request.
+	 *
+	 * @return float|null
+	 */
+	private function overrideRate(InterestAccrualRequest $request): float|null {
+		if ($request->isConsumer() === true) {
+			return $request->rateB2C;
+		}
+
+		return $request->rateB2B;
+
+	}//end overrideRate()
+
+	/**
+	 * The party's date-keyed statutory rate table.
+	 *
+	 * @param InterestAccrualRequest $request The accrual request.
+	 *
+	 * @return array<string,float>
+	 */
+	private function rateTable(InterestAccrualRequest $request): array {
+		if ($request->isConsumer() === true) {
+			return self::WETTELIJKE_RENTE_B2C_TABLE;
+		}
+
+		return self::HANDELSRENTE_B2B_TABLE;
+
+	}//end rateTable()
+
+	/**
+	 * The whole accrual window as one period at a flat rate.
+	 *
+	 * @param InterestAccrualRequest $request The accrual request.
+	 * @param float                  $rate    The flat rate.
+	 *
+	 * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,rate:float}>
+	 */
+	private function flatSegment(InterestAccrualRequest $request, float $rate): array {
+		return [
+			[
+				'van' => $request->effectiveDate,
+				'tot' => $request->calculatedOn,
+				'rate' => $rate,
+			],
+		];
+
+	}//end flatSegment()
+
+	/**
+	 * Accrue each period on the principal (days / 365, rounded per period to
+	 * whole cents) and total the days and cents.
+	 *
+	 * @param int                                                                        $principalCents The principal in cents.
+	 * @param array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,rate:float}> $segments       The rate periods.
+	 *
+	 * @return array{cents:int,days:int,periods:list<array{van:string,tot:string,days:int,rate:float,amount:float}>}
+	 */
+	private function accrue(int $principalCents, array $segments): array {
+		$accrual = ['cents' => 0, 'days' => 0, 'periods' => []];
 		foreach ($segments as $segment) {
 			$days = (int)$segment['van']->diff($segment['tot'])->days;
-			$segmentCents = (int)round((($hoofdsomCents * $segment['rate'] * $days) / 365.0));
-			$totaalCents += $segmentCents;
-			$totaalDagen += $days;
-			$periods[] = [
+			$segmentCents = (int)round((($principalCents * $segment['rate'] * $days) / 365.0));
+			$accrual['cents'] += $segmentCents;
+			$accrual['days'] += $days;
+			$accrual['periods'][] = [
 				'van' => $segment['van']->format('Y-m-d'),
 				'tot' => $segment['tot']->format('Y-m-d'),
 				'days' => $days,
@@ -319,21 +408,9 @@ class BIKStaffelCalculator {
 			];
 		}
 
-		// Headline rate = the rate in force on calculatedOn (the current rate).
-		$lastSegment = end($segments);
-		$headlineTarief = (float)$lastSegment['rate'];
+		return $accrual;
 
-		return [
-			'rate' => $headlineTarief,
-			'type' => $type,
-			'ingangsdatum' => $effectiveDate->format('Y-m-d'),
-			'calculatedOn' => $calculatedOn->format('Y-m-d'),
-			'days' => $totaalDagen,
-			'amount' => $this->fromCents(cents: $totaalCents),
-			'periods' => $periods,
-		];
-
-	}//end rente()
+	}//end accrue()
 
 	/**
 	 * Resolve the statutory rate in force on a given date from a rate table.
@@ -471,14 +548,16 @@ class BIKStaffelCalculator {
 
 		// Named-argument LABELS carry no `$`, so a variable rename does not touch
 		// them — and a named argument needs the parameter to exist by that exact
-		// name. rente() already declares effectiveDate/rateB2B/rateB2C.
+		// name. InterestAccrualRequest declares effectiveDate/rateB2B/rateB2C.
 		$rente = $this->rente(
-			partyType: $effectiveParty,
-			principal: $principal,
-			effectiveDate: $effectiveDate,
-			calculatedOn: $calculatedOn,
-			rateB2B: $rateB2B,
-			rateB2C: $rateB2C
+			request: new InterestAccrualRequest(
+				partyType: $effectiveParty,
+				principal: $principal,
+				effectiveDate: $effectiveDate,
+				calculatedOn: $calculatedOn,
+				rateB2B: $rateB2B,
+				rateB2C: $rateB2C
+			)
 		);
 
 		$hoofdsomCents = $this->toCents(amount: $principal);
