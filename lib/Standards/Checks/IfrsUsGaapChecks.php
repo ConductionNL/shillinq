@@ -401,7 +401,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias132NoOffsetting(array $o): bool {
-		return self::isFalse($o, 'itemsNetted');
+		return CheckFields::isFalse($o, 'itemsNetted');
 
 	}//end ias132NoOffsetting()
 
@@ -416,7 +416,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 */
 	private static function ias136AnnualFrequency(array $o): bool {
 		return self::periodSpansAnnual($o)
-			&& self::isTrue($o, 'priorYearComparatives');
+			&& CheckFields::isTrue($o, 'priorYearComparatives');
 
 	}//end ias136AnnualFrequency()
 
@@ -428,7 +428,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias138ComparativeInformation(array $o): bool {
-		return self::isTrue($o, 'priorYearComparatives');
+		return CheckFields::isTrue($o, 'priorYearComparatives');
 
 	}//end ias138ComparativeInformation()
 
@@ -503,7 +503,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias225LifoProhibited(array $o): bool {
-		return self::present($o, 'inventoryCostFormula')
+		return CheckFields::present($o, 'inventoryCostFormula')
 			&& strcasecmp(trim((string)$o['inventoryCostFormula']), 'lifo') !== 0;
 
 	}//end ias225LifoProhibited()
@@ -516,7 +516,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias3848NoInternalGoodwill(array $o): bool {
-		return self::isFalse($o, 'internalGoodwillRecognised');
+		return CheckFields::isFalse($o, 'internalGoodwillRecognised');
 
 	}//end ias3848NoInternalGoodwill()
 
@@ -529,7 +529,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias3863NoInternalBrands(array $o): bool {
-		return self::isFalse($o, 'internalBrandsRecognised');
+		return CheckFields::isFalse($o, 'internalBrandsRecognised');
 
 	}//end ias3863NoInternalBrands()
 
@@ -541,7 +541,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias36124GoodwillReversalProhibited(array $o): bool {
-		return self::isFalse($o, 'goodwillImpairmentReversed');
+		return CheckFields::isFalse($o, 'goodwillImpairmentReversed');
 
 	}//end ias36124GoodwillReversalProhibited()
 
@@ -553,7 +553,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias3727ContingentLiabilityNotRecognised(array $o): bool {
-		return self::isFalse($o, 'contingentLiabilityRecognised');
+		return CheckFields::isFalse($o, 'contingentLiabilityRecognised');
 
 	}//end ias3727ContingentLiabilityNotRecognised()
 
@@ -618,7 +618,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias1253NoDiscounting(array $o): bool {
-		return self::isFalse($o, 'deferredTaxDiscounted');
+		return CheckFields::isFalse($o, 'deferredTaxDiscounted');
 
 	}//end ias1253NoDiscounting()
 
@@ -643,7 +643,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ias1911ShortTermBenefitsUndiscounted(array $o): bool {
-		return self::isFalse($o, 'shortTermBenefitsDiscounted');
+		return CheckFields::isFalse($o, 'shortTermBenefitsDiscounted');
 
 	}//end ias1911ShortTermBenefitsUndiscounted()
 
@@ -857,18 +857,6 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	// ===================== private helpers =====================
 
 	/**
-	 * A non-empty scalar value is present under $key.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function present(array $o, string $key): bool {
-		return array_key_exists($key, $o) === true && trim((string)$o[$key]) !== '';
-	}//end present()
-
-	/**
 	 * The string value under $key equals $value (case-insensitive, trimmed).
 	 *
 	 * @param array<string, mixed> $o The object.
@@ -878,7 +866,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function equalsField(array $o, string $key, string $value): bool {
-		return self::present($o, $key) === true
+		return CheckFields::present($o, $key) === true
 			&& strcasecmp(trim((string)$o[$key]), $value) === 0;
 
 	}//end equalsField()
@@ -893,7 +881,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function inEnum(array $o, string $key, array $allowed): bool {
-		if (self::present($o, $key) === false) {
+		if (CheckFields::present($o, $key) === false) {
 			return false;
 		}
 
@@ -908,48 +896,6 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	}//end inEnum()
 
 	/**
-	 * The field under $key is a boolean (or boolean-like) value at all.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function isBool(array $o, string $key): bool {
-		return array_key_exists($key, $o) === true
-			&& (is_bool($o[$key]) === true || in_array($o[$key], [0, 1, '0', '1', 'true', 'false'], true) === true);
-
-	}//end isBool()
-
-	/**
-	 * The boolean field under $key is explicitly true.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function isTrue(array $o, string $key): bool {
-		return self::isBool($o, $key) === true
-			&& in_array($o[$key], [true, 1, '1', 'true'], true) === true;
-
-	}//end isTrue()
-
-	/**
-	 * The boolean field under $key is explicitly false.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function isFalse(array $o, string $key): bool {
-		return self::isBool($o, $key) === true
-			&& in_array($o[$key], [false, 0, '0', 'false'], true) === true;
-
-	}//end isFalse()
-
-	/**
 	 * A present, numeric value lives under $key.
 	 *
 	 * @param array<string, mixed> $o The object.
@@ -960,18 +906,6 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	private static function numericPresent(array $o, string $key): bool {
 		return array_key_exists($key, $o) === true && is_numeric($o[$key]) === true;
 	}//end numericPresent()
-
-	/**
-	 * The numeric value under $key (0.0 when absent / non-numeric).
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return float
-	 */
-	private static function numericVal(array $o, string $key): float {
-		return is_numeric($o[$key] ?? null) === true ? (float)$o[$key] : 0.0;
-	}//end numericVal()
 
 	/**
 	 * The list under $key contains every required code (case-insensitive).
@@ -1011,8 +945,8 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function periodSpansAnnual(array $o): bool {
-		$start = self::date($o, 'reportingPeriodStart');
-		$end = self::date($o, 'reportingPeriodEnd');
+		$start = CheckFields::date($o, 'reportingPeriodStart');
+		$end = CheckFields::date($o, 'reportingPeriodEnd');
 		if ($start === null || $end === null || $end <= $start) {
 			return false;
 		}
@@ -1177,8 +1111,8 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function measurementPeriodWithinYear(array $o): bool {
-		$acq = self::date($o, 'acquisitionDate');
-		$end = self::date($o, 'measurementPeriodEnd');
+		$acq = CheckFields::date($o, 'acquisitionDate');
+		$end = CheckFields::date($o, 'measurementPeriodEnd');
 		if ($acq === null || $end === null) {
 			return false;
 		}
@@ -1198,13 +1132,13 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 */
 	private static function significantInfluenceConsistent(array $o): bool {
 		if (self::numericPresent($o, 'investeeVotingPowerPct') === false
-			|| self::isBool($o, 'equityMethodApplied') === false
+			|| CheckFields::isBool($o, 'equityMethodApplied') === false
 		) {
 			return false;
 		}
 
-		$pct = self::numericVal($o, 'investeeVotingPowerPct');
-		$applied = self::isTrue($o, 'equityMethodApplied');
+		$pct = CheckFields::numericVal($o, 'investeeVotingPowerPct');
+		$applied = CheckFields::isTrue($o, 'equityMethodApplied');
 		if ($pct >= 20.0) {
 			return $applied === true;
 		}
@@ -1224,11 +1158,11 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function expedientWithinDays(array $o, string $appliedKey, string $daysKey, int $maxDays): bool {
-		if (self::isTrue($o, $appliedKey) === false) {
-			return self::isBool($o, $appliedKey);
+		if (CheckFields::isTrue($o, $appliedKey) === false) {
+			return CheckFields::isBool($o, $appliedKey);
 		}
 
-		return self::numericPresent($o, $daysKey) && self::numericVal($o, $daysKey) <= (float)$maxDays;
+		return self::numericPresent($o, $daysKey) && CheckFields::numericVal($o, $daysKey) <= (float)$maxDays;
 	}//end expedientWithinDays()
 
 	/**
@@ -1243,11 +1177,11 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function expedientWithinMonths(array $o, string $appliedKey, string $monthsKey, int $maxMonths): bool {
-		if (self::isTrue($o, $appliedKey) === false) {
-			return self::isBool($o, $appliedKey);
+		if (CheckFields::isTrue($o, $appliedKey) === false) {
+			return CheckFields::isBool($o, $appliedKey);
 		}
 
-		return self::numericPresent($o, $monthsKey) && self::numericVal($o, $monthsKey) <= (float)$maxMonths;
+		return self::numericPresent($o, $monthsKey) && CheckFields::numericVal($o, $monthsKey) <= (float)$maxMonths;
 	}//end expedientWithinMonths()
 
 	/**
@@ -1387,11 +1321,11 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function asc848BeforeSunset(array $o): bool {
-		if (self::present($o, 'asc848ModificationDate') === false) {
+		if (CheckFields::present($o, 'asc848ModificationDate') === false) {
 			return true;
 		}
 
-		$date = self::date($o, 'asc848ModificationDate');
+		$date = CheckFields::date($o, 'asc848ModificationDate');
 		if ($date === null) {
 			return false;
 		}
@@ -1413,26 +1347,4 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 			&& (is_bool($map[$key]) === true || in_array($map[$key], [0, 1, '0', '1', 'true', 'false'], true) === true);
 
 	}//end isBoolValue()
-
-	/**
-	 * Parse the date field under $key into a DateTimeImmutable, or null when absent /
-	 * unparseable.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return DateTimeImmutable|null
-	 */
-	private static function date(array $o, string $key): ?DateTimeImmutable {
-		if (self::present($o, $key) === false) {
-			return null;
-		}
-
-		try {
-			return new DateTimeImmutable(substr(trim((string)$o[$key]), 0, 10));
-		} catch (\Exception $e) {
-			return null;
-		}
-
-	}//end date()
 }//end class

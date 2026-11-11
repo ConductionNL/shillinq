@@ -43,8 +43,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
-use DateTimeImmutable;
-
 /**
  * Executable national financial-statement reporting checks against FinancialStatement.
  *
@@ -253,8 +251,8 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function bwArt363Aggregation(array $o): bool {
-		return self::isFalse($o, 'itemsNetted')
-			&& self::isTrue($o, 'priorYearComparatives');
+		return CheckFields::isFalse($o, 'itemsNetted')
+			&& CheckFields::isTrue($o, 'priorYearComparatives');
 
 	}//end bwArt363Aggregation()
 
@@ -417,7 +415,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function hgb246CompletenessGross(array $o): bool {
-		return self::isFalse($o, 'itemsNetted');
+		return CheckFields::isFalse($o, 'itemsNetted');
 
 	}//end hgb246CompletenessGross()
 
@@ -577,7 +575,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function esefScopeListedOnly(array $o): bool {
-		return self::isBool($o, 'listedOnRegulatedMarket');
+		return CheckFields::isBool($o, 'listedOnRegulatedMarket');
 
 	}//end esefScopeListedOnly()
 
@@ -589,7 +587,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function esefXhtmlFormat(array $o): bool {
-		return self::notListedOr($o, static fn (array $x): bool => self::isTrue($x, 'xhtmlFormat'));
+		return self::notListedOr($o, static fn (array $x): bool => CheckFields::isTrue($x, 'xhtmlFormat'));
 
 	}//end esefXhtmlFormat()
 
@@ -602,7 +600,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function esefIxbrlConsolidated(array $o): bool {
-		return self::notListedOr($o, static fn (array $x): bool => self::isTrue($x, 'iXbrlTagged'));
+		return self::notListedOr($o, static fn (array $x): bool => CheckFields::isTrue($x, 'iXbrlTagged'));
 
 	}//end esefIxbrlConsolidated()
 
@@ -615,7 +613,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function esefDetailedPrimary(array $o): bool {
-		return self::notListedOr($o, static fn (array $x): bool => self::isTrue($x, 'detailTaggedPrimary'));
+		return self::notListedOr($o, static fn (array $x): bool => CheckFields::isTrue($x, 'detailTaggedPrimary'));
 
 	}//end esefDetailedPrimary()
 
@@ -652,18 +650,6 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	// ===================== private helpers =====================
 
 	/**
-	 * A non-empty scalar value is present under $key.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function present(array $o, string $key): bool {
-		return array_key_exists($key, $o) === true && trim((string)$o[$key]) !== '';
-	}//end present()
-
-	/**
 	 * The string value under $key equals $value (case-insensitive, trimmed).
 	 *
 	 * @param array<string, mixed> $o The object.
@@ -673,7 +659,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function equalsField(array $o, string $key, string $value): bool {
-		return self::present($o, $key) === true
+		return CheckFields::present($o, $key) === true
 			&& strcasecmp(trim((string)$o[$key]), $value) === 0;
 
 	}//end equalsField()
@@ -688,7 +674,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function jurisdictionNot(array $o, string $code): bool {
-		return self::present($o, 'jurisdiction') === true
+		return CheckFields::present($o, 'jurisdiction') === true
 			&& strcasecmp(trim((string)$o['jurisdiction']), $code) !== 0;
 
 	}//end jurisdictionNot()
@@ -702,7 +688,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function langIs(array $o, string $lang): bool {
-		return self::present($o, 'language') === true
+		return CheckFields::present($o, 'language') === true
 			&& strcasecmp(substr(trim((string)$o['language']), 0, 2), $lang) === 0;
 
 	}//end langIs()
@@ -717,7 +703,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function inEnum(array $o, string $key, array $allowed): bool {
-		if (self::present($o, $key) === false) {
+		if (CheckFields::present($o, $key) === false) {
 			return false;
 		}
 
@@ -730,48 +716,6 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 
 		return false;
 	}//end inEnum()
-
-	/**
-	 * The field under $key is a boolean (or boolean-like) value at all.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function isBool(array $o, string $key): bool {
-		return array_key_exists($key, $o) === true
-			&& (is_bool($o[$key]) === true || in_array($o[$key], [0, 1, '0', '1', 'true', 'false'], true) === true);
-
-	}//end isBool()
-
-	/**
-	 * The boolean field under $key is explicitly true.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function isTrue(array $o, string $key): bool {
-		return self::isBool($o, $key) === true
-			&& in_array($o[$key], [true, 1, '1', 'true'], true) === true;
-
-	}//end isTrue()
-
-	/**
-	 * The boolean field under $key is explicitly false.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return bool
-	 */
-	private static function isFalse(array $o, string $key): bool {
-		return self::isBool($o, $key) === true
-			&& in_array($o[$key], [false, 0, '0', 'false'], true) === true;
-
-	}//end isFalse()
 
 	/**
 	 * The nested balanceSheet carries all five statutory components as numbers
@@ -878,15 +822,15 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 		[$balCap, $turnCap, $empCap] = $table[$class];
 
 		$exceeded = 0;
-		if (self::numericVal($o, 'balanceTotal') > $balCap) {
+		if (CheckFields::numericVal($o, 'balanceTotal') > $balCap) {
 			$exceeded++;
 		}
 
-		if (self::numericVal($o, 'turnover') > $turnCap) {
+		if (CheckFields::numericVal($o, 'turnover') > $turnCap) {
 			$exceeded++;
 		}
 
-		if (self::numericVal($o, 'employees') > $empCap) {
+		if (CheckFields::numericVal($o, 'employees') > $empCap) {
 			$exceeded++;
 		}
 
@@ -903,11 +847,11 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function regimeStable(array $o): bool {
-		if (self::present($o, 'sizeClassPriorYear') === false) {
+		if (CheckFields::present($o, 'sizeClassPriorYear') === false) {
 			return true;
 		}
 
-		return self::present($o, 'sizeClass') === true
+		return CheckFields::present($o, 'sizeClass') === true
 			&& strcasecmp(trim((string)$o['sizeClass']), trim((string)$o['sizeClassPriorYear'])) === 0;
 
 	}//end regimeStable()
@@ -927,7 +871,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 
 		$class = strtolower(trim((string)$o['sizeClass']));
 		if ($class === 'medium' || $class === 'large') {
-			return self::isTrue($o, 'audited');
+			return CheckFields::isTrue($o, 'audited');
 		}
 
 		return true;
@@ -943,27 +887,27 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function frAuditConsistent(array $o): bool {
-		if (self::present($o, 'balanceTotal') === false || self::present($o, 'turnover') === false
-			|| self::present($o, 'employees') === false
+		if (CheckFields::present($o, 'balanceTotal') === false || CheckFields::present($o, 'turnover') === false
+			|| CheckFields::present($o, 'employees') === false
 		) {
 			return false;
 		}
 
 		$exceeded = 0;
-		if (self::numericVal($o, 'balanceTotal') > 5000000.0) {
+		if (CheckFields::numericVal($o, 'balanceTotal') > 5000000.0) {
 			$exceeded++;
 		}
 
-		if (self::numericVal($o, 'turnover') > 10000000.0) {
+		if (CheckFields::numericVal($o, 'turnover') > 10000000.0) {
 			$exceeded++;
 		}
 
-		if (self::numericVal($o, 'employees') > 50.0) {
+		if (CheckFields::numericVal($o, 'employees') > 50.0) {
 			$exceeded++;
 		}
 
 		if ($exceeded >= 2) {
-			return self::isTrue($o, 'audited');
+			return CheckFields::isTrue($o, 'audited');
 		}
 
 		return true;
@@ -979,8 +923,8 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function filedWithin(array $o, int $months): bool {
-		$end = self::date($o, 'reportingPeriodEnd');
-		$filed = self::date($o, 'filedDate');
+		$end = CheckFields::date($o, 'reportingPeriodEnd');
+		$filed = CheckFields::date($o, 'filedDate');
 		if ($end === null || $filed === null) {
 			return false;
 		}
@@ -998,8 +942,8 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function filedAfterAdoptionWithin(array $o, int $months): bool {
-		$adopted = self::date($o, 'adoptionDate');
-		$filed = self::date($o, 'filedDate');
+		$adopted = CheckFields::date($o, 'adoptionDate');
+		$filed = CheckFields::date($o, 'filedDate');
 		if ($adopted === null || $filed === null) {
 			return false;
 		}
@@ -1018,8 +962,8 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function preparedWithin(array $o, int $months): bool {
-		$end = self::date($o, 'reportingPeriodEnd');
-		$prepared = self::date($o, 'preparedDate');
+		$end = CheckFields::date($o, 'reportingPeriodEnd');
+		$prepared = CheckFields::date($o, 'preparedDate');
 		if ($end === null || $prepared === null) {
 			return false;
 		}
@@ -1067,48 +1011,14 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function notListedOr(array $o, callable $tagged): bool {
-		if (self::isBool($o, 'listedOnRegulatedMarket') === false) {
+		if (CheckFields::isBool($o, 'listedOnRegulatedMarket') === false) {
 			return false;
 		}
 
-		if (self::isTrue($o, 'listedOnRegulatedMarket') === false) {
+		if (CheckFields::isTrue($o, 'listedOnRegulatedMarket') === false) {
 			return true;
 		}
 
 		return (bool)$tagged($o);
 	}//end notListedOr()
-
-	/**
-	 * The numeric value under $key (0.0 when absent / non-numeric).
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return float
-	 */
-	private static function numericVal(array $o, string $key): float {
-		return is_numeric($o[$key] ?? null) === true ? (float)$o[$key] : 0.0;
-	}//end numericVal()
-
-	/**
-	 * Parse the date field under $key into a DateTimeImmutable, or null when absent /
-	 * unparseable.
-	 *
-	 * @param array<string, mixed> $o The object.
-	 * @param string $key The field name.
-	 *
-	 * @return DateTimeImmutable|null
-	 */
-	private static function date(array $o, string $key): ?DateTimeImmutable {
-		if (self::present($o, $key) === false) {
-			return null;
-		}
-
-		try {
-			return new DateTimeImmutable(substr(trim((string)$o[$key]), 0, 10));
-		} catch (\Exception $e) {
-			return null;
-		}
-
-	}//end date()
 }//end class
