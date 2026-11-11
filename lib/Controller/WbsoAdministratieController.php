@@ -92,57 +92,67 @@ class WbsoAdministratieController extends Controller {
 	public function realisatie(): JSONResponse {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 
+		$refusal = $this->administrationRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->realisatieSummary(administrationId: $administrationId);
+	}//end realisatie()
+
+	/**
+	 * The 400 for a missing or malformed identifier, the masked 404 for a non-member, or null.
+	 *
+	 * Malformed identifiers are rejected before touching the data layer
+	 * (REQ-WBSO-004): administration identifiers are short slugs.
+	 *
+	 * ADR-005 Rule 3 / REQ-001 (security-endpoint-guards): OpenRegister does not
+	 * scope these reads by membership (no schema of this app declares an
+	 * `authorization` block), so without the membership check any authenticated
+	 * caller could read another organization's statutory WBSO S&O realisatie by
+	 * quoting its administration_id. Masked as 404 (not 403) per
+	 * AdministrationContextService::canAccess()'s own contract: a non-member must
+	 * not be able to distinguish "wrong administration" from "does not exist".
+	 *
+	 * @param string $administrationId The trimmed administration_id parameter.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function administrationRefusal(string $administrationId): JSONResponse|null {
 		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administration_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		// Reject obviously malformed identifiers before touching the data layer
-		// (REQ-WBSO-004) — administration identifiers are short slugs.
 		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administration_id must be a valid administration identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return new JSONResponse(['error' => 'administration_id must be a valid administration identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
-		// ADR-005 Rule 3 / REQ-001 (security-endpoint-guards). The docblock above
-		// USED to claim "administration scope is validated against the caller's
-		// membership by OpenRegister's ObjectService RBAC layer" — false, per the
-		// same fleet-wide finding documented on VATReturnController/VATLineController:
-		// none of this app's ~871 schemas declares an `authorization` block, so
-		// OpenRegister grants every read to every authenticated user. Without this
-		// check, any authenticated caller could read another organization's
-		// statutory WBSO S&O realisatie by quoting its administration_id. Masked
-		// as 404 (not 403) per AdministrationContextService::canAccess()'s own
-		// contract — a non-member must not be able to distinguish "wrong
-		// administration" from "administration does not exist".
 		if ($this->administrationContext->canAccess($administrationId) === false) {
-			return new JSONResponse(
-				['error' => 'Administration not found'],
-				Http::STATUS_NOT_FOUND
-			);
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The service's summary as is, or the logged 500 without a stack trace.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse
+	 */
+	private function realisatieSummary(string $administrationId): JSONResponse {
 		try {
 			$result = $this->service->realisatieSummary(administrationId: $administrationId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'WbsoAdministratieController: failed to compute realisatie summary',
-				[
-					'administrationId' => $administrationId,
-					'exception' => $e->getMessage(),
-				]
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
 
-			return new JSONResponse(
-				['error' => 'Failed to compute WBSO realisatie summary'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return new JSONResponse(['error' => 'Failed to compute WBSO realisatie summary'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end realisatie()
+	}//end realisatieSummary()
 }//end class
