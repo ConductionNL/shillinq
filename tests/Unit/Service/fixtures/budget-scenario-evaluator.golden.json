@@ -1,0 +1,649 @@
+{
+    "none": {
+        "cells": {
+            "lg-host:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-host",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-host:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-host",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-parent:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-parent",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-parent:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-parent",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            }
+        },
+        "count": 48,
+        "expander": [],
+        "logs": []
+    },
+    "recurringEnd": {
+        "cells": {
+            "lg-host:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-host",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-host:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-host",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-host:2027-05": {
+                "month": "2027-05",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-06": {
+                "month": "2027-06",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-07": {
+                "month": "2027-07",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-08": {
+                "month": "2027-08",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-09": {
+                "month": "2027-09",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-12": {
+                "month": "2027-12",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-parent",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-parent:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-parent",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-parent:2027-05": {
+                "month": "2027-05",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-06": {
+                "month": "2027-06",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-07": {
+                "month": "2027-07",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-08": {
+                "month": "2027-08",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-09": {
+                "month": "2027-09",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-12": {
+                "month": "2027-12",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            }
+        },
+        "count": 48,
+        "expander": [
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": null,
+                "standardAmount": 250.0
+            },
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-04-30",
+                "standardAmount": 250.0
+            }
+        ],
+        "logs": []
+    },
+    "amountChange": {
+        "cells": {
+            "lg-host:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-host",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-host:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-host",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-host:2027-07": {
+                "month": "2027-07",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-host:2027-08": {
+                "month": "2027-08",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-host:2027-09": {
+                "month": "2027-09",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-host:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-host:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-host:2027-12": {
+                "month": "2027-12",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-parent:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-parent",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-parent:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-parent",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-parent:2027-07": {
+                "month": "2027-07",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-parent:2027-08": {
+                "month": "2027-08",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-parent:2027-09": {
+                "month": "2027-09",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-parent:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-parent:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            },
+            "lg-parent:2027-12": {
+                "month": "2027-12",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 5050,
+                "delta": 5050
+            }
+        },
+        "count": 48,
+        "expander": [
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": null,
+                "standardAmount": 250.0
+            },
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-06-30",
+                "standardAmount": 250.0
+            },
+            {
+                "recurId": "rec-host",
+                "validFrom": "2027-07-01",
+                "validTo": null,
+                "standardAmount": 300.5
+            }
+        ],
+        "logs": []
+    },
+    "ledgerDeltas": {
+        "cells": {
+            "lg-host:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-host",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-host:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-host",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-parent:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-parent",
+                "base": 30005,
+                "scenario": 0,
+                "delta": -30005
+            },
+            "lg-parent:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-parent",
+                "base": 30000,
+                "scenario": 0,
+                "delta": -30000
+            },
+            "lg-parent:2027-03": {
+                "month": "2027-03",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": 1000,
+                "delta": 1000
+            },
+            "empty-child:2027-03": {
+                "month": "2027-03",
+                "ledgerGroupId": "empty-child",
+                "base": 0,
+                "scenario": -250,
+                "delta": -250
+            }
+        },
+        "count": 48,
+        "expander": [],
+        "logs": [
+            [
+                "info",
+                "BudgetScenarioEvaluator: LEDGER_AMOUNT_DELTA targets an unknown LedgerGroup \u2014 skipping",
+                {
+                    "targetLedgerGroupId": "nope"
+                }
+            ]
+        ]
+    },
+    "skips": {
+        "cells": {
+            "lg-host:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-host",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-host:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-host",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-parent:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-parent",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-parent:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-parent",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            }
+        },
+        "count": 48,
+        "expander": [
+            {
+                "recurId": "rec-cpi",
+                "validFrom": "2026-01-01",
+                "validTo": null,
+                "standardAmount": 10.0
+            },
+            {
+                "recurId": "rec-cpi",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-01-31",
+                "standardAmount": 10.0
+            },
+            {
+                "recurId": "rec-cpi",
+                "validFrom": "2027-02-01",
+                "validTo": null,
+                "standardAmount": 1
+            }
+        ],
+        "logs": [
+            [
+                "info",
+                "BudgetScenarioEvaluator: modifier targets an unknown CashflowRecurring recurId \u2014 skipping",
+                {
+                    "targetRecurId": "rec-missing",
+                    "modifierType": "RECURRING_END"
+                }
+            ],
+            [
+                "info",
+                "BudgetScenarioEvaluator: modifier targets a CashflowRecurring row whose accountNumberExpense resolves to no LedgerGroup \u2014 skipping",
+                {
+                    "targetRecurId": "rec-unmapped",
+                    "accountNumberExpense": "9999"
+                }
+            ],
+            [
+                "info",
+                "BudgetScenarioEvaluator: the expander needs operator input (missing CPI rate) for this CashflowRecurring row \u2014 skipping this modifier",
+                {
+                    "targetRecurId": "rec-cpi",
+                    "modifierType": "RECURRING_AMOUNT_CHANGE"
+                }
+            ],
+            [
+                "error",
+                "BudgetScenarioEvaluator: KnownCostScheduleExpander::expand() failed \u2014 skipping this modifier",
+                {
+                    "targetRecurId": "rec-throws",
+                    "exception": "expander down"
+                }
+            ]
+        ]
+    },
+    "stacked": {
+        "cells": {
+            "lg-host:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-host",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-host:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-host",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-host:2027-07": {
+                "month": "2027-07",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-08": {
+                "month": "2027-08",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -24223,
+                "delta": -24223
+            },
+            "lg-host:2027-09": {
+                "month": "2027-09",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-host:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -50000,
+                "delta": -50000
+            },
+            "lg-host:2027-12": {
+                "month": "2027-12",
+                "ledgerGroupId": "lg-host",
+                "base": 0,
+                "scenario": -50000,
+                "delta": -50000
+            },
+            "lg-parent:2027-01": {
+                "month": "2027-01",
+                "ledgerGroupId": "lg-parent",
+                "base": 30005,
+                "scenario": 30005,
+                "delta": 0
+            },
+            "lg-parent:2027-02": {
+                "month": "2027-02",
+                "ledgerGroupId": "lg-parent",
+                "base": 30000,
+                "scenario": 30000,
+                "delta": 0
+            },
+            "lg-parent:2027-07": {
+                "month": "2027-07",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-08": {
+                "month": "2027-08",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -24223,
+                "delta": -24223
+            },
+            "lg-parent:2027-09": {
+                "month": "2027-09",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -25000,
+                "delta": -25000
+            },
+            "lg-parent:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -50000,
+                "delta": -50000
+            },
+            "lg-parent:2027-12": {
+                "month": "2027-12",
+                "ledgerGroupId": "lg-parent",
+                "base": 0,
+                "scenario": -50000,
+                "delta": -50000
+            },
+            "lg-lic:2027-10": {
+                "month": "2027-10",
+                "ledgerGroupId": "lg-lic",
+                "base": 0,
+                "scenario": -9999,
+                "delta": -9999
+            },
+            "lg-lic:2027-11": {
+                "month": "2027-11",
+                "ledgerGroupId": "lg-lic",
+                "base": 0,
+                "scenario": -9999,
+                "delta": -9999
+            }
+        },
+        "count": 48,
+        "expander": [
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": null,
+                "standardAmount": 250.0
+            },
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-06-30",
+                "standardAmount": 250.0
+            },
+            {
+                "recurId": "rec-lic",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-11-30",
+                "standardAmount": 99.99
+            },
+            {
+                "recurId": "rec-lic",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-09-30",
+                "standardAmount": 99.99
+            },
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": null,
+                "standardAmount": 250.0
+            },
+            {
+                "recurId": "rec-host",
+                "validFrom": "2026-01-01",
+                "validTo": "2027-10-31",
+                "standardAmount": 250.0
+            }
+        ],
+        "logs": []
+    }
+}
