@@ -93,8 +93,7 @@ class TaxCalculationService {
 
 		// Build movement rolls and provisions for each jurisdiction observed.
 		$jurisdictions = $this->observedJurisdictions(
-			periodId: $periodId,
-			administrationId: $administrationId
+			run: new DeferredTaxRun(periodId: $periodId, administrationId: $administrationId)
 		);
 		foreach ($jurisdictions as $jurisdiction) {
 			$this->calculateMovements(
@@ -129,86 +128,21 @@ class TaxCalculationService {
 	 * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
 	 */
 	public function detectTemporaryDifferences(string $periodId, string $administrationId): void {
-		$objectService = $this->objectService();
-		$register = $this->register();
+		$run = new DeferredTaxRun(periodId: $periodId, administrationId: $administrationId);
 
 		// Fetch all tagged accounts for this administration (REQ-DT-001 / REQ-DT-002).
-		$accounts = $objectService
-			->setRegister($register)
-			->setSchema('Account')
+		$accounts = $this->store(schema: 'Account')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 		foreach ($accounts as $account) {
-			$category = ($account['taxBasisDifferenceCategory'] ?? null);
-			if ($category === null) {
-				// No hint — skip automatic detection (operator enters differences manually).
-				continue;
+			$difference = $this->accountDifference(account: $account);
+			if ($difference !== null) {
+				$this->upsertRecord(
+					schema: 'TemporaryDifference',
+					row: $this->temporaryDifferenceRow(run: $run, difference: $difference)
+				);
 			}
-
-			$accountNumber = (string)($account['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			// Resolve jurisdiction from account or default to NL.
-			$jurisdiction = (string)($account['jurisdiction'] ?? 'NL');
-			if ($jurisdiction === '') {
-				$jurisdiction = 'NL';
-			}
-
-			// Fetch tax basis if stored on the account; otherwise use 0 (operator must patch).
-			$commercialCents = $this->helper->toCents(($account['commercialCarryingAmount'] ?? 0));
-			$taxCents = $this->helper->toCents(($account['taxCarryingAmount'] ?? 0));
-			$diffCents = ($commercialCents - $taxCents);
-
-			if ($diffCents === 0) {
-				continue;
-			}
-
-			$type = 'deductible';
-			if ($diffCents > 0) {
-				$type = 'taxable';
-			}
-
-			// Resolve tax rate for this jurisdiction and period.
-			$taxRateBps = $this->resolveCurrentTaxRateBps(
-				jurisdiction: $jurisdiction,
-				periodId: $periodId,
-				administrationId: $administrationId
-			);
-
-			$dtaCents = $this->helper->computeDeferredTaxCents(
-				differenceInCents: $diffCents,
-				taxRateBps: $taxRateBps
-			);
-
-			$slug = 'td-' . $periodId . '-' . $accountNumber . '-' . $jurisdiction;
-
-			$record = [
-				'periodId' => $periodId,
-				'jurisdiction' => $jurisdiction,
-				'accountNumber' => $accountNumber,
-				'category' => $category,
-				'commercialCarryingAmount' => $commercialCents,
-				'taxCarryingAmount' => $taxCents,
-				'temporaryDifference' => $diffCents,
-				'type' => $type,
-				'reversalPattern' => 'long-term',
-				'expectedReversalYear' => null,
-				'taxRate' => $taxRateBps,
-				'deferredTaxBalance' => $dtaCents,
-				'notes' => null,
-				'administrationId' => $administrationId,
-			];
-
-			$this->upsertRecord(
-				objectService: $objectService,
-				register: $register,
-				schema: 'TemporaryDifference',
-				slug: $slug,
-				data: $record
-			);
-		}//end foreach
+		}
 
 	}//end detectTemporaryDifferences()
 
@@ -230,88 +164,16 @@ class TaxCalculationService {
 	 * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
 	 */
 	public function compensateLosses(string $periodId, string $administrationId): void {
-		$objectService = $this->objectService();
-		$register = $this->register();
+		$run = new DeferredTaxRun(periodId: $periodId, administrationId: $administrationId);
 
 		// Fetch all open carry-forwards for this administration.
-		$losses = $objectService
-			->setRegister($register)
-			->setSchema('TaxLossCarryForward')
+		$losses = $this->store(schema: 'TaxLossCarryForward')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-		// Group by jurisdiction so we can apply per-jurisdiction profit offsets.
-		$byJurisdiction = [];
-		foreach ($losses as $loss) {
-			$remaining = (int)($loss['remainingAmount'] ?? 0);
-			if ($remaining <= 0) {
-				continue;
-			}
-
-			$jurisdiction = (string)($loss['jurisdiction'] ?? 'NL');
-			$byJurisdiction[$jurisdiction][] = $loss;
-		}//end foreach
-
-		foreach ($byJurisdiction as $jurisdiction => $jurisdictionLosses) {
-			// Resolve available taxable profit for this jurisdiction from FiscalPeriod.
-			$availableProfitCents = $this->resolveTaxableProfit(
-				periodId: $periodId,
-				jurisdiction: $jurisdiction,
-				administrationId: $administrationId
-			);
-
-			if ($availableProfitCents <= 0) {
-				continue;
-			}
-
-			$remainingProfit = $availableProfitCents;
-
-			// Apply losses oldest-first (min originatingYear first).
-			usort(
-				$jurisdictionLosses,
-				static function (array $a, array $b): int {
-					return ((int)($a['originatingYear'] ?? 0)) <=> ((int)($b['originatingYear'] ?? 0));
-				}
-			);
-
-			foreach ($jurisdictionLosses as $loss) {
-				if ($remainingProfit <= 0) {
-					break;
-				}
-
-				$regime = (string)($loss['applicableRegime'] ?? '2022-onwards');
-				$remaining = (int)($loss['remainingAmount'] ?? 0);
-
-				$utilisable = $this->helper->computeUtilisableLoss(
-					remainingLossCents: $remaining,
-					availableProfitCents: $remainingProfit,
-					regime: $regime
-				);
-
-				if ($utilisable <= 0) {
-					continue;
-				}
-
-				$newUtilised = ((int)($loss['utilisedAmount'] ?? 0)) + $utilisable;
-				$newRemaining = $remaining - $utilisable;
-				$remainingProfit -= $utilisable;
-
-				$id = ($loss['id'] ?? ($loss['@self']['id'] ?? null));
-				if ($id === null) {
-					continue;
-				}
-
-				$objectService
-					->setRegister($register)
-					->setSchema('TaxLossCarryForward')
-					->updateObject(
-						(string)$id,
-						[
-							'utilisedAmount' => $newUtilised,
-							'remainingAmount' => $newRemaining,
-						]
-					);
-			}//end foreach
-		}//end foreach
+		foreach (self::openLossesByJurisdiction(losses: $losses) as $jurisdiction => $jurisdictionLosses) {
+			$run->jurisdiction = $jurisdiction;
+			$this->offsetLossesAgainstProfit(run: $run, losses: $jurisdictionLosses);
+		}
 
 	}//end compensateLosses()
 
@@ -334,36 +196,13 @@ class TaxCalculationService {
 	 */
 	public function assessRecoverability(string $periodId, string $administrationId): void {
 		unset($periodId);
-		$objectService = $this->objectService();
-		$register = $this->register();
 
-		$losses = $objectService
-			->setRegister($register)
-			->setSchema('TaxLossCarryForward')
+		$losses = $this->store(schema: 'TaxLossCarryForward')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 		foreach ($losses as $loss) {
-			$dtaRecognised = (int)($loss['dtaRecognised'] ?? 0);
-			if ($dtaRecognised <= 0) {
-				continue;
-			}
-
-			$rationale = ($loss['dtaRecoverabilityRationale'] ?? null);
-			if ($rationale === null || trim((string)$rationale) === '') {
-				$jurisdiction = (string)($loss['jurisdiction'] ?? 'NL');
-				$originatingYear = (int)($loss['originatingYear'] ?? 0);
-				$this->logger->warning(
-					'Deferred-tax DTA recognised without recoverability rationale (REQ-DT-004)',
-					[
-						'app' => AppIdentity::APP_ID,
-						'administrationId' => $administrationId,
-						'jurisdiction' => $jurisdiction,
-						'originatingYear' => $originatingYear,
-						'dtaRecognised' => $dtaRecognised,
-					]
-				);
-			}//end if
-		}//end foreach
+			$this->warnWhenDtaUnjustified(loss: $loss, administrationId: $administrationId);
+		}
 
 	}//end assessRecoverability()
 
@@ -383,91 +222,19 @@ class TaxCalculationService {
 	 * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
 	 */
 	public function applyRateChanges(string $periodId, string $administrationId): void {
-		$objectService = $this->objectService();
-		$register = $this->register();
+		$run = new DeferredTaxRun(periodId: $periodId, administrationId: $administrationId);
 
-		$enactedRates = $this->fetchEnactedRates(
-			periodId: $periodId,
-			administrationId: $administrationId
-		);
-
+		$enactedRates = $this->fetchEnactedRates(run: $run);
 		if (empty($enactedRates) === true) {
 			return;
 		}
 
 		foreach ($enactedRates as $jurisdiction => $rateInfo) {
-			$newRateBps = (int)$rateInfo['rate'];
-			$effectiveDate = (string)$rateInfo['effectiveDate'];
-			if ($newRateBps === 0 || $effectiveDate === '') {
-				continue;
-			}
-
-			$effectiveYear = (int)substr($effectiveDate, 0, 4);
-
-			// Fetch all TemporaryDifference records for this jurisdiction.
-			$diffs = $objectService
-				->setRegister($register)
-				->setSchema('TemporaryDifference')
-				->findAll(
-					[
-						'filters' => [
-							'periodId' => $periodId,
-							'jurisdiction' => $jurisdiction,
-							'administrationId' => $administrationId,
-						],
-					]
-				);
-
-			foreach ($diffs as $diff) {
-				$reversalYear = ((int)($diff['expectedReversalYear'] ?? 0));
-				if ($reversalYear < $effectiveYear) {
-					continue;
-				}
-
-				$diffCents = (int)($diff['temporaryDifference'] ?? 0);
-				$oldRateBps = (int)($diff['taxRate'] ?? 0);
-				$adjustment = $this->helper->computeRateChangeAdjustmentCents(
-					differenceInCents: $diffCents,
-					oldRateBps: $oldRateBps,
-					newRateBps: $newRateBps
-				);
-
-				if ($adjustment === 0) {
-					continue;
-				}
-
-				$id = ($diff['id'] ?? ($diff['@self']['id'] ?? null));
-				if ($id === null) {
-					continue;
-				}
-
-				$newDtaCents = $this->helper->computeDeferredTaxCents(
-					differenceInCents: $diffCents,
-					taxRateBps: $newRateBps
-				);
-
-				$objectService
-					->setRegister($register)
-					->setSchema('TemporaryDifference')
-					->updateObject(
-						(string)$id,
-						[
-							'taxRate' => $newRateBps,
-							'deferredTaxBalance' => $newDtaCents,
-						]
-					);
-
-				// Record rate-change movement per REQ-DT-009.
-				$category = (string)($diff['category'] ?? 'other');
-				$this->recordRateChangeMovement(
-					periodId: $periodId,
-					jurisdiction: $jurisdiction,
-					category: $category,
-					adjustmentCents: $adjustment,
-					administrationId: $administrationId
-				);
-			}//end foreach
-		}//end foreach
+			$run->jurisdiction = $jurisdiction;
+			$run->newRateBps = (int)$rateInfo['rate'];
+			$run->effectiveDate = (string)$rateInfo['effectiveDate'];
+			$this->applyJurisdictionRateChange(run: $run);
+		}
 
 	}//end applyRateChanges()
 
@@ -483,92 +250,19 @@ class TaxCalculationService {
 	 * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
 	 */
 	public function calculateMovements(string $periodId, string $administrationId, string $jurisdiction): void {
-		$objectService = $this->objectService();
-		$register = $this->register();
+		$run = new DeferredTaxRun(periodId: $periodId, administrationId: $administrationId);
+		$run->jurisdiction = $jurisdiction;
 
-		$diffs = $objectService
-			->setRegister($register)
-			->setSchema('TemporaryDifference')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'jurisdiction' => $jurisdiction,
-						'administrationId' => $administrationId,
-					],
-				]
-			);
+		$diffs = $this->store(schema: 'TemporaryDifference')
+			->findAll(['filters' => $run->jurisdictionFilters()]);
 
 		// Group deferred balances by category.
-		$byCategory = [];
-		foreach ($diffs as $diff) {
-			$category = (string)($diff['category'] ?? 'other');
-			if (isset($byCategory[$category]) === false) {
-				$byCategory[$category] = 0;
-			}
-
-			$byCategory[$category] += (int)($diff['deferredTaxBalance'] ?? 0);
-		}//end foreach
-
-		foreach ($byCategory as $category => $totalCents) {
-			$slug = 'dtm-' . $periodId . '-' . $jurisdiction . '-' . $category;
-
-			// Fetch existing movement (from prior periods) to determine opening balance.
-			$existing = $this->findMovementRecord(
-				objectService: $objectService,
-				register: $register,
-				periodId: $periodId,
-				jurisdiction: $jurisdiction,
-				category: $category,
-				administrationId: $administrationId
-			);
-
-			$openingBalance = (int)($existing['openingBalance'] ?? 0);
-			$origination = $totalCents - $openingBalance;
-			$reversedInPeriod = (int)($existing['reversedInPeriod'] ?? 0);
-			$rateAdj = (int)($existing['rateChangeAdjustment'] ?? 0);
-			$businessCombo = (int)($existing['acquiredViaBusinessCombination'] ?? 0);
-			$recognisedInPL = $this->helper->computeMovementRecognisedInPL(
-				originatedInPeriod: $origination,
-				reversedInPeriod: $reversedInPeriod,
-				rateChangeAdjustment: $rateAdj,
-				acquiredViaBusinessCombination: $businessCombo
-			);
-			$closingBalance = $this->helper->computeMovementClosingBalance(
-				openingBalance: $openingBalance,
-				originatedInPeriod: $origination,
-				reversedInPeriod: $reversedInPeriod,
-				rateChangeAdjustment: $rateAdj,
-				acquiredViaBusinessCombination: $businessCombo,
-				translationAdjustment: (int)($existing['translationAdjustment'] ?? 0),
-				recognisedInOCI: (int)($existing['recognisedInOCI'] ?? 0)
-			);
-
-			$record = [
-				'periodId' => $periodId,
-				'jurisdiction' => $jurisdiction,
-				'category' => $category,
-				'openingBalance' => $openingBalance,
-				'originatedInPeriod' => $origination,
-				'reversedInPeriod' => $reversedInPeriod,
-				'rateChangeAdjustment' => $rateAdj,
-				'acquiredViaBusinessCombination' => $businessCombo,
-				'translationAdjustment' => (int)($existing['translationAdjustment'] ?? 0),
-				'recognisedInPL' => $recognisedInPL,
-				'recognisedInOCI' => (int)($existing['recognisedInOCI'] ?? 0),
-				'closingBalance' => $closingBalance,
-				'linkedJournalEntries' => ($existing['linkedJournalEntries'] ?? []),
-				'administrationId' => $administrationId,
-			];
-
+		foreach (self::deferredBalanceByCategory(diffs: $diffs) as $category => $totalCents) {
 			$this->upsertRecord(
-				objectService: $objectService,
-				register: $register,
 				schema: 'DeferredTaxMovement',
-				slug: $slug,
-				data: $record
+				row: $this->movementRow(run: $run, balance: new CategoryAmount(category: $category, cents: $totalCents))
 			);
-		}//end foreach
+		}
 
 	}//end calculateMovements()
 
@@ -584,57 +278,16 @@ class TaxCalculationService {
 	 * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
 	 */
 	public function calculateTaxProvision(string $periodId, string $administrationId, string $jurisdiction): void {
-		$objectService = $this->objectService();
-		$register = $this->register();
+		$run = new DeferredTaxRun(periodId: $periodId, administrationId: $administrationId);
+		$run->jurisdiction = $jurisdiction;
 
 		// Read all DeferredTaxMovement closingBalances for this period/jurisdiction.
-		$movements = $objectService
-			->setRegister($register)
-			->setSchema('DeferredTaxMovement')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'jurisdiction' => $jurisdiction,
-						'administrationId' => $administrationId,
-					],
-				]
-			);
-
-		$dtaTotal = 0;
-		$dtlTotal = 0;
-		foreach ($movements as $movement) {
-			$closing = (int)($movement['closingBalance'] ?? 0);
-			if ($closing < 0) {
-				$dtaTotal += abs($closing);
-				continue;
-			}
-
-			$dtlTotal += $closing;
-		}//end foreach
-
-		$netPosition = ($dtlTotal - $dtaTotal);
-		$slug = 'tp-' . $periodId . '-' . $jurisdiction;
-
-		$record = [
-			'periodId' => $periodId,
-			'jurisdiction' => $jurisdiction,
-			'currentTaxPayable' => 0,
-			'currentTaxPrepaid' => 0,
-			'dtaTotal' => $dtaTotal,
-			'dtlTotal' => $dtlTotal,
-			'netDtaDtlPosition' => $netPosition,
-			'presentationOnBalanceSheet' => 'gross',
-			'linkedVpbReturn' => null,
-			'administrationId' => $administrationId,
-		];
+		$movements = $this->store(schema: 'DeferredTaxMovement')
+			->findAll(['filters' => $run->jurisdictionFilters()]);
 
 		$this->upsertRecord(
-			objectService: $objectService,
-			register: $register,
 			schema: 'TaxProvision',
-			slug: $slug,
-			data: $record
+			row: self::taxProvisionRow(run: $run, totals: self::dtaDtlTotals(movements: $movements))
 		);
 
 	}//end calculateTaxProvision()
@@ -646,26 +299,13 @@ class TaxCalculationService {
 	/**
 	 * Collect unique jurisdictions observed in TemporaryDifference for a period.
 	 *
-	 * @param string $periodId Fiscal period identifier.
-	 * @param string $administrationId Administration scope.
+	 * @param DeferredTaxRun $run The period and administration.
 	 *
 	 * @return array<int,string> Unique jurisdiction codes.
 	 */
-	private function observedJurisdictions(string $periodId, string $administrationId): array {
-		$objectService = $this->objectService();
-		$register = $this->register();
-
-		$diffs = $objectService
-			->setRegister($register)
-			->setSchema('TemporaryDifference')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'administrationId' => $administrationId,
-					],
-				]
-			);
+	private function observedJurisdictions(DeferredTaxRun $run): array {
+		$diffs = $this->store(schema: 'TemporaryDifference')
+			->findAll(['filters' => $run->periodFilters()]);
 
 		$jurisdictions = [];
 		foreach ($diffs as $diff) {
@@ -673,25 +313,454 @@ class TaxCalculationService {
 			if (in_array($jur, $jurisdictions, true) === false) {
 				$jurisdictions[] = $jur;
 			}
-		}//end foreach
+		}
 
 		return $jurisdictions;
 	}//end observedJurisdictions()
 
 	/**
-	 * Resolve the current enacted tax rate for a jurisdiction in basis points.
+	 * The temporary difference of one account, or null when the account has no
+	 * category hint (the operator enters those manually, REQ-DT-002), no account
+	 * number, or no difference between its carrying amounts.
 	 *
-	 * Reads FiscalPeriod.enactedTaxRates; falls back to the NL 2026 blended rate
-	 * (25.80% = 2580 bps) when no enacted rate is found.
+	 * @param array<string,mixed> $account The Account record.
 	 *
-	 * @param string $jurisdiction ISO 3166-1 alpha-2 country code.
-	 * @param string $periodId Fiscal period identifier.
-	 * @param string $administrationId Administration scope.
-	 *
-	 * @return int Tax rate in basis points.
+	 * @return array{category:mixed,accountNumber:string,jurisdiction:string,commercialCents:int,taxCents:int}|null
 	 */
-	private function resolveCurrentTaxRateBps(string $jurisdiction, string $periodId, string $administrationId): int {
-		$enacted = $this->fetchEnactedRates(periodId: $periodId, administrationId: $administrationId);
+	private function accountDifference(array $account): ?array {
+		$category = ($account['taxBasisDifferenceCategory'] ?? null);
+		$accountNumber = (string)($account['accountNumber'] ?? '');
+		if ($category === null || $accountNumber === '') {
+			return null;
+		}
+
+		// Tax basis if stored on the account; otherwise 0 (operator must patch).
+		$commercialCents = $this->helper->toCents(($account['commercialCarryingAmount'] ?? 0));
+		$taxCents = $this->helper->toCents(($account['taxCarryingAmount'] ?? 0));
+		if (($commercialCents - $taxCents) === 0) {
+			return null;
+		}
+
+		return [
+			'category' => $category,
+			'accountNumber' => $accountNumber,
+			'jurisdiction' => self::accountJurisdiction(account: $account),
+			'commercialCents' => $commercialCents,
+			'taxCents' => $taxCents,
+		];
+	}//end accountDifference()
+
+	/**
+	 * The account's jurisdiction, NL when it states none.
+	 *
+	 * @param array<string,mixed> $account The Account record.
+	 *
+	 * @return string
+	 */
+	private static function accountJurisdiction(array $account): string {
+		$jurisdiction = (string)($account['jurisdiction'] ?? 'NL');
+		if ($jurisdiction === '') {
+			return 'NL';
+		}
+
+		return $jurisdiction;
+	}//end accountJurisdiction()
+
+	/**
+	 * The TemporaryDifference record (with its slug) of one account's
+	 * difference, valued at the jurisdiction's current tax rate.
+	 *
+	 * @param DeferredTaxRun                    $run        The period and administration.
+	 * @param array<string,mixed>               $difference The account's difference.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function temporaryDifferenceRow(DeferredTaxRun $run, array $difference): array {
+		$diffCents = ($difference['commercialCents'] - $difference['taxCents']);
+		$type = 'deductible';
+		if ($diffCents > 0) {
+			$type = 'taxable';
+		}
+
+		$taxRateBps = $this->resolveCurrentTaxRateBps(run: $run, jurisdiction: $difference['jurisdiction']);
+
+		return [
+			'slug' => 'td-' . $run->periodId . '-' . $difference['accountNumber'] . '-' . $difference['jurisdiction'],
+			'periodId' => $run->periodId,
+			'jurisdiction' => $difference['jurisdiction'],
+			'accountNumber' => $difference['accountNumber'],
+			'category' => $difference['category'],
+			'commercialCarryingAmount' => $difference['commercialCents'],
+			'taxCarryingAmount' => $difference['taxCents'],
+			'temporaryDifference' => $diffCents,
+			'type' => $type,
+			'reversalPattern' => 'long-term',
+			'expectedReversalYear' => null,
+			'taxRate' => $taxRateBps,
+			'deferredTaxBalance' => $this->helper->computeDeferredTaxCents(differenceInCents: $diffCents, taxRateBps: $taxRateBps),
+			'notes' => null,
+			'administrationId' => $run->administrationId,
+		];
+	}//end temporaryDifferenceRow()
+
+	/**
+	 * The carry-forwards with a remaining amount, grouped by jurisdiction (NL
+	 * when none is stated) in the order they were read.
+	 *
+	 * @param array<int,array<string,mixed>> $losses TaxLossCarryForward records.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private static function openLossesByJurisdiction(array $losses): array {
+		$byJurisdiction = [];
+		foreach ($losses as $loss) {
+			$remaining = (int)($loss['remainingAmount'] ?? 0);
+			if ($remaining <= 0) {
+				continue;
+			}
+
+			$jurisdiction = (string)($loss['jurisdiction'] ?? 'NL');
+			$byJurisdiction[$jurisdiction][] = $loss;
+		}
+
+		return $byJurisdiction;
+	}//end openLossesByJurisdiction()
+
+	/**
+	 * Offset one jurisdiction's open losses, oldest first, against the period's
+	 * taxable profit there until the profit is used up.
+	 *
+	 * @param DeferredTaxRun                 $run    The period, administration and jurisdiction.
+	 * @param array<int,array<string,mixed>> $losses The jurisdiction's open losses.
+	 *
+	 * @return void
+	 */
+	private function offsetLossesAgainstProfit(DeferredTaxRun $run, array $losses): void {
+		// Resolve available taxable profit for this jurisdiction from FiscalPeriod.
+		$remainingProfit = $this->resolveTaxableProfit(run: $run, jurisdiction: (string)$run->jurisdiction);
+		if ($remainingProfit <= 0) {
+			return;
+		}
+
+		foreach (self::oldestFirst(losses: $losses) as $loss) {
+			if ($remainingProfit <= 0) {
+				break;
+			}
+
+			$remainingProfit -= $this->utiliseLoss(loss: $loss, availableProfitCents: $remainingProfit);
+		}
+	}//end offsetLossesAgainstProfit()
+
+	/**
+	 * The losses ordered by originating year, oldest first.
+	 *
+	 * @param array<int,array<string,mixed>> $losses The losses.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function oldestFirst(array $losses): array {
+		usort(
+			$losses,
+			static function (array $a, array $b): int {
+				return ((int)($a['originatingYear'] ?? 0)) <=> ((int)($b['originatingYear'] ?? 0));
+			}
+		);
+
+		return $losses;
+	}//end oldestFirst()
+
+	/**
+	 * Utilise as much of one loss as its regime allows against the available
+	 * profit and store the new utilised / remaining amounts.
+	 *
+	 * @param array<string,mixed> $loss                 The TaxLossCarryForward record.
+	 * @param int                 $availableProfitCents Profit still available.
+	 *
+	 * @return int The cents utilised (0 when none).
+	 */
+	private function utiliseLoss(array $loss, int $availableProfitCents): int {
+		$remaining = (int)($loss['remainingAmount'] ?? 0);
+		$utilisable = $this->helper->computeUtilisableLoss(
+			remainingLossCents: $remaining,
+			availableProfitCents: $availableProfitCents,
+			regime: (string)($loss['applicableRegime'] ?? '2022-onwards')
+		);
+		if ($utilisable <= 0) {
+			return 0;
+		}
+
+		$id = ($loss['id'] ?? ($loss['@self']['id'] ?? null));
+		if ($id !== null) {
+			$this->store(schema: 'TaxLossCarryForward')->updateObject(
+				(string)$id,
+				[
+					'utilisedAmount' => ((int)($loss['utilisedAmount'] ?? 0)) + $utilisable,
+					'remainingAmount' => $remaining - $utilisable,
+				]
+			);
+		}
+
+		return $utilisable;
+	}//end utiliseLoss()
+
+	/**
+	 * Warn when a loss carries a recognised DTA without a recoverability
+	 * rationale (REQ-DT-004).
+	 *
+	 * @param array<string,mixed> $loss             The TaxLossCarryForward record.
+	 * @param string              $administrationId Administration scope.
+	 *
+	 * @return void
+	 */
+	private function warnWhenDtaUnjustified(array $loss, string $administrationId): void {
+		$dtaRecognised = (int)($loss['dtaRecognised'] ?? 0);
+		$rationale = ($loss['dtaRecoverabilityRationale'] ?? null);
+		if ($dtaRecognised <= 0 || ($rationale !== null && trim((string)$rationale) !== '')) {
+			return;
+		}
+
+		$this->logger->warning(
+			'Deferred-tax DTA recognised without recoverability rationale (REQ-DT-004)',
+			[
+				'app' => AppIdentity::APP_ID,
+				'administrationId' => $administrationId,
+				'jurisdiction' => (string)($loss['jurisdiction'] ?? 'NL'),
+				'originatingYear' => (int)($loss['originatingYear'] ?? 0),
+				'dtaRecognised' => $dtaRecognised,
+			]
+		);
+	}//end warnWhenDtaUnjustified()
+
+	/**
+	 * Revalue the jurisdiction's temporary differences that reverse in or
+	 * after the year the run's enacted rate takes effect.
+	 *
+	 * @param DeferredTaxRun $run The period, administration, jurisdiction and enacted rate.
+	 *
+	 * @return void
+	 */
+	private function applyJurisdictionRateChange(DeferredTaxRun $run): void {
+		if ($run->newRateBps === 0 || $run->effectiveDate === '') {
+			return;
+		}
+
+		$effectiveYear = (int)substr($run->effectiveDate, 0, 4);
+
+		// Fetch all TemporaryDifference records for this jurisdiction.
+		$diffs = $this->store(schema: 'TemporaryDifference')
+			->findAll(['filters' => $run->jurisdictionFilters()]);
+
+		foreach ($diffs as $diff) {
+			if (((int)($diff['expectedReversalYear'] ?? 0)) >= $effectiveYear) {
+				$this->revalueDifference(run: $run, diff: $diff);
+			}
+		}
+	}//end applyJurisdictionRateChange()
+
+	/**
+	 * Revalue one temporary difference at the enacted rate and record the
+	 * rate-change movement (REQ-DT-009); nothing happens when the adjustment
+	 * is zero or the record has no id.
+	 *
+	 * @param DeferredTaxRun      $run  The period, administration, jurisdiction and enacted rate.
+	 * @param array<string,mixed> $diff The TemporaryDifference record.
+	 *
+	 * @return void
+	 */
+	private function revalueDifference(DeferredTaxRun $run, array $diff): void {
+		$diffCents = (int)($diff['temporaryDifference'] ?? 0);
+		$adjustment = $this->helper->computeRateChangeAdjustmentCents(
+			differenceInCents: $diffCents,
+			oldRateBps: (int)($diff['taxRate'] ?? 0),
+			newRateBps: $run->newRateBps
+		);
+		$id = ($diff['id'] ?? ($diff['@self']['id'] ?? null));
+		if ($adjustment === 0 || $id === null) {
+			return;
+		}
+
+		$this->store(schema: 'TemporaryDifference')->updateObject(
+			(string)$id,
+			[
+				'taxRate' => $run->newRateBps,
+				'deferredTaxBalance' => $this->helper->computeDeferredTaxCents(differenceInCents: $diffCents, taxRateBps: $run->newRateBps),
+			]
+		);
+
+		$this->recordRateChangeMovement(
+			run: $run,
+			adjustment: new CategoryAmount(category: (string)($diff['category'] ?? 'other'), cents: $adjustment)
+		);
+	}//end revalueDifference()
+
+	/**
+	 * Sum the deferred balances of the differences per category.
+	 *
+	 * @param array<int,array<string,mixed>> $diffs TemporaryDifference records.
+	 *
+	 * @return array<string|int,int>
+	 */
+	private static function deferredBalanceByCategory(array $diffs): array {
+		$byCategory = [];
+		foreach ($diffs as $diff) {
+			$category = (string)($diff['category'] ?? 'other');
+			if (isset($byCategory[$category]) === false) {
+				$byCategory[$category] = 0;
+			}
+
+			$byCategory[$category] += (int)($diff['deferredTaxBalance'] ?? 0);
+		}
+
+		return $byCategory;
+	}//end deferredBalanceByCategory()
+
+	/**
+	 * The DeferredTaxMovement record (with its slug) of one category's
+	 * balance, rolled forward from the existing movement.
+	 *
+	 * @param DeferredTaxRun $run     The period, administration and jurisdiction.
+	 * @param CategoryAmount $balance The category's summed deferred balance.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function movementRow(DeferredTaxRun $run, CategoryAmount $balance): array {
+		// Fetch existing movement (from prior periods) to determine opening balance.
+		$existing = $this->findMovementRecord(run: $run, category: $balance->category);
+
+		return [
+			'slug' => 'dtm-' . $run->periodId . '-' . $run->jurisdiction . '-' . $balance->category,
+			'periodId' => $run->periodId,
+			'jurisdiction' => $run->jurisdiction,
+			'category' => $balance->category,
+			...$this->movementFigures(existing: $existing, totalCents: $balance->cents),
+			'linkedJournalEntries' => ($existing['linkedJournalEntries'] ?? []),
+			'administrationId' => $run->administrationId,
+		];
+	}//end movementRow()
+
+	/**
+	 * The roll-forward figures of a movement whose closing deferred balance is
+	 * $totalCents, carried from the existing movement.
+	 *
+	 * @param array<string,mixed> $existing   The existing movement ([] when none).
+	 * @param int                 $totalCents The category's summed deferred balance.
+	 *
+	 * @return array<string,int>
+	 */
+	private function movementFigures(array $existing, int $totalCents): array {
+		$openingBalance = (int)($existing['openingBalance'] ?? 0);
+		$figures = [
+			'openingBalance' => $openingBalance,
+			'originatedInPeriod' => $totalCents - $openingBalance,
+			'reversedInPeriod' => (int)($existing['reversedInPeriod'] ?? 0),
+			'rateChangeAdjustment' => (int)($existing['rateChangeAdjustment'] ?? 0),
+			'acquiredViaBusinessCombination' => (int)($existing['acquiredViaBusinessCombination'] ?? 0),
+			'translationAdjustment' => (int)($existing['translationAdjustment'] ?? 0),
+			'recognisedInPL' => 0,
+			'recognisedInOCI' => (int)($existing['recognisedInOCI'] ?? 0),
+			'closingBalance' => 0,
+		];
+		$figures['recognisedInPL'] = $this->movementRecognisedInPl(figures: $figures);
+		$figures['closingBalance'] = $this->movementClosingBalance(figures: $figures);
+
+		return $figures;
+	}//end movementFigures()
+
+	/**
+	 * The movement recognised in P&L.
+	 *
+	 * @param array<string,int> $figures The movement's roll-forward figures.
+	 *
+	 * @return int
+	 */
+	private function movementRecognisedInPl(array $figures): int {
+		return $this->helper->computeMovementRecognisedInPL(
+			originatedInPeriod: $figures['originatedInPeriod'],
+			reversedInPeriod: $figures['reversedInPeriod'],
+			rateChangeAdjustment: $figures['rateChangeAdjustment'],
+			acquiredViaBusinessCombination: $figures['acquiredViaBusinessCombination']
+		);
+	}//end movementRecognisedInPl()
+
+	/**
+	 * The movement's closing balance.
+	 *
+	 * @param array<string,int> $figures The movement's roll-forward figures.
+	 *
+	 * @return int
+	 */
+	private function movementClosingBalance(array $figures): int {
+		return $this->helper->computeMovementClosingBalance(
+			openingBalance: $figures['openingBalance'],
+			originatedInPeriod: $figures['originatedInPeriod'],
+			reversedInPeriod: $figures['reversedInPeriod'],
+			rateChangeAdjustment: $figures['rateChangeAdjustment'],
+			acquiredViaBusinessCombination: $figures['acquiredViaBusinessCombination'],
+			translationAdjustment: $figures['translationAdjustment'],
+			recognisedInOCI: $figures['recognisedInOCI']
+		);
+	}//end movementClosingBalance()
+
+	/**
+	 * The DTA total (negative closing balances, as a positive amount) and the
+	 * DTL total (the other closing balances) of the movements.
+	 *
+	 * @param array<int,array<string,mixed>> $movements DeferredTaxMovement records.
+	 *
+	 * @return array{0:int,1:int} [dtaTotal, dtlTotal]
+	 */
+	private static function dtaDtlTotals(array $movements): array {
+		$dtaTotal = 0;
+		$dtlTotal = 0;
+		foreach ($movements as $movement) {
+			$closing = (int)($movement['closingBalance'] ?? 0);
+			if ($closing < 0) {
+				$dtaTotal += abs($closing);
+				continue;
+			}
+
+			$dtlTotal += $closing;
+		}
+
+		return [$dtaTotal, $dtlTotal];
+	}//end dtaDtlTotals()
+
+	/**
+	 * The TaxProvision record (with its slug) of the jurisdiction's totals.
+	 *
+	 * @param DeferredTaxRun     $run    The period, administration and jurisdiction.
+	 * @param array{0:int,1:int} $totals [dtaTotal, dtlTotal].
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function taxProvisionRow(DeferredTaxRun $run, array $totals): array {
+		[$dtaTotal, $dtlTotal] = $totals;
+
+		return [
+			'slug' => 'tp-' . $run->periodId . '-' . $run->jurisdiction,
+			'periodId' => $run->periodId,
+			'jurisdiction' => $run->jurisdiction,
+			'currentTaxPayable' => 0,
+			'currentTaxPrepaid' => 0,
+			'dtaTotal' => $dtaTotal,
+			'dtlTotal' => $dtlTotal,
+			'netDtaDtlPosition' => ($dtlTotal - $dtaTotal),
+			'presentationOnBalanceSheet' => 'gross',
+			'linkedVpbReturn' => null,
+			'administrationId' => $run->administrationId,
+		];
+	}//end taxProvisionRow()
+
+	/**
+	 * Resolve the current tax rate in basis points for a jurisdiction.
+	 *
+	 * @param DeferredTaxRun $run          The period and administration.
+	 * @param string         $jurisdiction ISO 3166-1 alpha-2 code.
+	 *
+	 * @return int Rate in basis points (e.g. 2580 = 25.80%).
+	 */
+	private function resolveCurrentTaxRateBps(DeferredTaxRun $run, string $jurisdiction): int {
+		$enacted = $this->fetchEnactedRates(run: $run);
 		if (isset($enacted[$jurisdiction]['rate']) === true) {
 			return (int)$enacted[$jurisdiction]['rate'];
 		}
@@ -701,35 +770,20 @@ class TaxCalculationService {
 	}//end resolveCurrentTaxRateBps()
 
 	/**
-	 * Resolve the available taxable profit for a jurisdiction from the FiscalPeriod.
+	 * Resolve taxable profit in cents for a jurisdiction from the FiscalPeriod
+	 * record, falling back to profitBeforeTax.
 	 *
-	 * @param string $periodId Fiscal period identifier.
-	 * @param string $jurisdiction ISO 3166-1 alpha-2 country code.
-	 * @param string $administrationId Administration scope.
+	 * @param DeferredTaxRun $run          The period and administration.
+	 * @param string         $jurisdiction ISO 3166-1 alpha-2 code.
 	 *
-	 * @return int Taxable profit in euro cents (0 when not available).
+	 * @return int Taxable profit in cents (0 if not found).
 	 */
-	private function resolveTaxableProfit(string $periodId, string $jurisdiction, string $administrationId): int {
-		$objectService = $this->objectService();
-		$register = $this->register();
-
-		$periods = $objectService
-			->setRegister($register)
-			->setSchema('FiscalPeriod')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'administrationId' => $administrationId,
-					],
-				]
-			);
-
-		if (empty($periods) === true) {
+	private function resolveTaxableProfit(DeferredTaxRun $run, string $jurisdiction): int {
+		$period = $this->fiscalPeriod(run: $run);
+		if ($period === null) {
 			return 0;
 		}
 
-		$period = $periods[0];
 		$profitData = ($period['taxableProfitByJurisdiction'] ?? []);
 		if (is_array($profitData) === true && isset($profitData[$jurisdiction]) === true) {
 			return $this->helper->toCents($profitData[$jurisdiction]);
@@ -740,34 +794,19 @@ class TaxCalculationService {
 	}//end resolveTaxableProfit()
 
 	/**
-	 * Fetch enacted tax rates from the FiscalPeriod record.
+	 * Fetch the enacted tax rates per jurisdiction from the FiscalPeriod record.
 	 *
-	 * @param string $periodId Fiscal period identifier.
-	 * @param string $administrationId Administration scope.
+	 * @param DeferredTaxRun $run The period and administration.
 	 *
-	 * @return array<string,array{rate:int,effectiveDate:string}> Rates keyed by jurisdiction.
+	 * @return array<string,array{rate:int,effectiveDate:string}> Keyed by jurisdiction.
 	 */
-	private function fetchEnactedRates(string $periodId, string $administrationId): array {
-		$objectService = $this->objectService();
-		$register = $this->register();
-
-		$periods = $objectService
-			->setRegister($register)
-			->setSchema('FiscalPeriod')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'administrationId' => $administrationId,
-					],
-				]
-			);
-
-		if (empty($periods) === true) {
+	private function fetchEnactedRates(DeferredTaxRun $run): array {
+		$period = $this->fiscalPeriod(run: $run);
+		if ($period === null) {
 			return [];
 		}
 
-		$rates = ($periods[0]['enactedTaxRates'] ?? []);
+		$rates = ($period['enactedTaxRates'] ?? []);
 		if (is_array($rates) === false) {
 			return [];
 		}
@@ -776,111 +815,106 @@ class TaxCalculationService {
 	}//end fetchEnactedRates()
 
 	/**
-	 * Record a rate-change adjustment on the DeferredTaxMovement for a category.
+	 * The period's FiscalPeriod record, or null when there is none.
 	 *
-	 * @param string $periodId Fiscal period identifier.
-	 * @param string $jurisdiction ISO 3166-1 alpha-2 country code.
-	 * @param string $category Deferred-tax category.
-	 * @param int $adjustmentCents Adjustment in euro cents.
-	 * @param string $administrationId Administration scope.
+	 * @param DeferredTaxRun $run The period and administration.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function fiscalPeriod(DeferredTaxRun $run): ?array {
+		$periods = $this->store(schema: 'FiscalPeriod')
+			->findAll(['filters' => $run->periodFilters()]);
+		if (empty($periods) === true) {
+			return null;
+		}
+
+		return $periods[0];
+	}//end fiscalPeriod()
+
+	/**
+	 * Add a rate-change adjustment to the category's DeferredTaxMovement: on
+	 * the existing movement when it has an id, else on a new movement whose
+	 * P&L and closing balance are the adjustment (REQ-DT-009).
+	 *
+	 * @param DeferredTaxRun $run        The period, administration and jurisdiction.
+	 * @param CategoryAmount $adjustment The category and its adjustment in cents.
 	 *
 	 * @return void
 	 */
-	private function recordRateChangeMovement(
-		string $periodId,
-		string $jurisdiction,
-		string $category,
-		int $adjustmentCents,
-		string $administrationId,
-	): void {
-		$objectService = $this->objectService();
-		$register = $this->register();
-
-		$existing = $this->findMovementRecord(
-			objectService: $objectService,
-			register: $register,
-			periodId: $periodId,
-			jurisdiction: $jurisdiction,
-			category: $category,
-			administrationId: $administrationId
-		);
-
-		$currentAdj = (int)($existing['rateChangeAdjustment'] ?? 0);
-		$slug = 'dtm-' . $periodId . '-' . $jurisdiction . '-' . $category;
-
+	private function recordRateChangeMovement(DeferredTaxRun $run, CategoryAmount $adjustment): void {
+		$existing = $this->findMovementRecord(run: $run, category: $adjustment->category);
 		$data = [
-			'periodId' => $periodId,
-			'jurisdiction' => $jurisdiction,
-			'category' => $category,
-			'rateChangeAdjustment' => ($currentAdj + $adjustmentCents),
-			'administrationId' => $administrationId,
+			'periodId' => $run->periodId,
+			'jurisdiction' => $run->jurisdiction,
+			'category' => $adjustment->category,
+			'rateChangeAdjustment' => ((int)($existing['rateChangeAdjustment'] ?? 0) + $adjustment->cents),
+			'administrationId' => $run->administrationId,
 		];
 
-		if (isset($existing['id']) === true || isset($existing['@self']['id']) === true) {
-			$id = ($existing['id'] ?? $existing['@self']['id']);
-			$objectService
-				->setRegister($register)
-				->setSchema('DeferredTaxMovement')
-				->updateObject((string)$id, $data);
+		$id = ($existing['id'] ?? ($existing['@self']['id'] ?? null));
+		if ($id !== null) {
+			$this->store(schema: 'DeferredTaxMovement')->updateObject((string)$id, $data);
 			return;
 		}
 
 		$this->upsertRecord(
-			objectService: $objectService,
-			register: $register,
 			schema: 'DeferredTaxMovement',
-			slug: $slug,
-			data: array_merge(
-				[
-					'openingBalance' => 0,
-					'originatedInPeriod' => 0,
-					'reversedInPeriod' => 0,
-					'acquiredViaBusinessCombination' => 0,
-					'translationAdjustment' => 0,
-					'recognisedInPL' => $adjustmentCents,
-					'recognisedInOCI' => 0,
-					'closingBalance' => $adjustmentCents,
-					'linkedJournalEntries' => [],
-				],
-				$data
+			row: self::newRateChangeMovementRow(
+				slug: 'dtm-' . $run->periodId . '-' . $run->jurisdiction . '-' . $adjustment->category,
+				data: $data,
+				cents: $adjustment->cents
 			)
 		);
-
 	}//end recordRateChangeMovement()
 
 	/**
-	 * Find an existing DeferredTaxMovement record for a period/jurisdiction/category.
+	 * A new DeferredTaxMovement (with its slug) holding only a rate-change
+	 * adjustment: its P&L and closing balance are this run's adjustment.
 	 *
-	 * @param mixed $objectService OR ObjectService instance.
-	 * @param string $register Register slug.
-	 * @param string $periodId Fiscal period identifier.
-	 * @param string $jurisdiction ISO 3166-1 alpha-2 country code.
-	 * @param string $category Deferred-tax category.
-	 * @param string $administrationId Administration scope.
+	 * @param string              $slug  The movement slug.
+	 * @param array<string,mixed> $data  The movement key and its rateChangeAdjustment.
+	 * @param int                 $cents This run's adjustment in cents.
 	 *
-	 * @return array<string,mixed> Existing record or empty array.
+	 * @return array<string,mixed>
 	 */
-	private function findMovementRecord(
-		mixed $objectService,
-		string $register,
-		string $periodId,
-		string $jurisdiction,
-		string $category,
-		string $administrationId,
-	): array {
-		$results = $objectService
-			->setRegister($register)
-			->setSchema('DeferredTaxMovement')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'jurisdiction' => $jurisdiction,
-						'category' => $category,
-						'administrationId' => $administrationId,
-					],
-				]
-			);
+	private static function newRateChangeMovementRow(string $slug, array $data, int $cents): array {
+		return array_merge(
+			['slug' => $slug],
+			[
+				'openingBalance' => 0,
+				'originatedInPeriod' => 0,
+				'reversedInPeriod' => 0,
+				'acquiredViaBusinessCombination' => 0,
+				'translationAdjustment' => 0,
+				'recognisedInPL' => $cents,
+				'recognisedInOCI' => 0,
+				'closingBalance' => $cents,
+				'linkedJournalEntries' => [],
+			],
+			$data
+		);
+	}//end newRateChangeMovementRow()
+
+	/**
+	 * The category's existing DeferredTaxMovement in the run's jurisdiction,
+	 * [] when there is none.
+	 *
+	 * @param DeferredTaxRun $run      The period, administration and jurisdiction.
+	 * @param string|int     $category The movement category.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function findMovementRecord(DeferredTaxRun $run, string|int $category): array {
+		$results = $this->store(schema: 'DeferredTaxMovement')->findAll(
+			[
+				'filters' => [
+					'periodId' => $run->periodId,
+					'jurisdiction' => $run->jurisdiction,
+					'category' => $category,
+					'administrationId' => $run->administrationId,
+				],
+			]
+		);
 
 		if (empty($results) === false) {
 			return $results[0];
@@ -890,44 +924,30 @@ class TaxCalculationService {
 	}//end findMovementRecord()
 
 	/**
-	 * Upsert a record by slug: create if absent, update if found.
+	 * Update the record with the row's slug when one exists (with an id),
+	 * else create it with the slug.
 	 *
-	 * @param mixed $objectService OR ObjectService instance.
-	 * @param string $register Register slug.
-	 * @param string $schema Schema slug.
-	 * @param string $slug Object slug.
-	 * @param array<string,mixed> $data Data to write.
+	 * @param string              $schema OR schema slug.
+	 * @param array<string,mixed> $row    The record, its 'slug' first.
 	 *
 	 * @return void
 	 */
-	private function upsertRecord(
-		mixed $objectService,
-		string $register,
-		string $schema,
-		string $slug,
-		array $data,
-	): void {
-		$existing = $objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['slug' => $slug]]);
+	private function upsertRecord(string $schema, array $row): void {
+		$data = $row;
+		unset($data['slug']);
 
+		$existing = $this->store(schema: $schema)->findAll(['filters' => ['slug' => $row['slug']]]);
+		$id = null;
 		if (empty($existing) === false) {
 			$id = ($existing[0]['id'] ?? ($existing[0]['@self']['id'] ?? null));
-			if ($id !== null) {
-				$objectService
-					->setRegister($register)
-					->setSchema($schema)
-					->updateObject((string)$id, $data);
-				return;
-			}
-		}//end if
+		}
 
-		$objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->saveObject(array_merge(['slug' => $slug], $data));
+		if ($id !== null) {
+			$this->store(schema: $schema)->updateObject((string)$id, $data);
+			return;
+		}
 
+		$this->store(schema: $schema)->saveObject($row);
 	}//end upsertRecord()
 
 	/**
@@ -945,11 +965,15 @@ class TaxCalculationService {
 	}//end register()
 
 	/**
-	 * Lazy-fetch the OpenRegister ObjectService from the DI container.
+	 * The OpenRegister ObjectService set to the configured register and $schema.
+	 *
+	 * @param string $schema OR schema slug.
 	 *
 	 * @return mixed OR ObjectService instance.
 	 */
-	private function objectService(): mixed {
-		return $this->objectService;
-	}//end objectService()
+	private function store(string $schema): mixed {
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema($schema);
+	}//end store()
 }//end class
