@@ -262,46 +262,61 @@ class VarianceGate {
 		?float $qtyThresholdPct = null,
 		?float $valueThresholdAbs = null,
 	): array {
-		$qtyThresholdPct = ($qtyThresholdPct ?? self::DEFAULT_QTY_THRESHOLD_PCT);
-		$valueThresholdAbs = ($valueThresholdAbs ?? self::DEFAULT_VALUE_THRESHOLD_ABS);
-
 		$expectedQty = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
 		$countedQty = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
 		$unitCost = $this->numericOrNull(value: $line['unitCost'] ?? null);
 
 		if ($expectedQty !== null && $unitCost !== null) {
-			$expCents = (int)round(($this->cents(value: $expectedQty) * $this->cents(value: $unitCost)) / 100);
-			$line['expectedValue'] = $this->fromCents(cents: $expCents);
+			$line['expectedValue'] = $this->fromCents(cents: $this->valueCents(quantity: $expectedQty, unitCost: $unitCost));
 		}
 
 		if ($countedQty === null || $unitCost === null || $expectedQty === null) {
-			$line['countedValue'] = null;
-			$line['quantityVariance'] = null;
-			$line['valueVariance'] = null;
-			$line['requiresReason'] = false;
-			return $line;
+			return self::withoutVariance(line: $line);
 		}
 
-		$countedCents = $this->cents(value: $countedQty);
-		$expectedCents = $this->cents(value: $expectedQty);
-		$unitCostCents = $this->cents(value: $unitCost);
-
-		$countedValueCents = (int)round(($countedCents * $unitCostCents) / 100);
-		$expectedValueCents = (int)round(($expectedCents * $unitCostCents) / 100);
-		$qtyVarianceCents = ($countedCents - $expectedCents);
-		$valVarianceCents = ($countedValueCents - $expectedValueCents);
-
-		$line['countedValue'] = $this->fromCents(cents: $countedValueCents);
-		$line['quantityVariance'] = $this->fromCents(cents: $qtyVarianceCents);
-		$line['valueVariance'] = $this->fromCents(cents: $valVarianceCents);
+		$line['countedValue'] = $this->fromCents(cents: $this->valueCents(quantity: $countedQty, unitCost: $unitCost));
+		$line['quantityVariance'] = $this->fromCents(cents: ($this->cents(value: $countedQty) - $this->cents(value: $expectedQty)));
+		$line['valueVariance'] = $this->fromCents(
+			cents: ($this->valueCents(quantity: $countedQty, unitCost: $unitCost) - $this->valueCents(quantity: $expectedQty, unitCost: $unitCost))
+		);
 		$line['requiresReason'] = $this->isFlagged(
 			line: $line,
-			qtyThresholdPct: $qtyThresholdPct,
-			valueThresholdAbs: $valueThresholdAbs
+			qtyThresholdPct: ($qtyThresholdPct ?? self::DEFAULT_QTY_THRESHOLD_PCT),
+			valueThresholdAbs: ($valueThresholdAbs ?? self::DEFAULT_VALUE_THRESHOLD_ABS)
 		);
 
 		return $line;
 	}//end recalculateLine()
+
+	/**
+	 * A line that is not fully entered: no counted value or variances, and
+	 * never flagged.
+	 *
+	 * @param array<string,mixed> $line The line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function withoutVariance(array $line): array {
+		$line['countedValue'] = null;
+		$line['quantityVariance'] = null;
+		$line['valueVariance'] = null;
+		$line['requiresReason'] = false;
+		return $line;
+
+	}//end withoutVariance()
+
+	/**
+	 * Quantity times unit cost, in whole cents (rounded half away from zero).
+	 *
+	 * @param float $quantity The quantity.
+	 * @param float $unitCost The unit cost.
+	 *
+	 * @return int
+	 */
+	private function valueCents(float $quantity, float $unitCost): int {
+		return (int)round(($this->cents(value: $quantity) * $this->cents(value: $unitCost)) / 100);
+
+	}//end valueCents()
 
 	/**
 	 * Apply the REQ-ICC-004 threshold rule against a single line. Both
