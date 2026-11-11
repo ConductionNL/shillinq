@@ -35,6 +35,9 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SettingsService;
@@ -159,13 +162,10 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 			->setObject($payload);
 
 		return new ObjectTransitionedEvent(
-			$entity,
-			$action,
-			'draft',
-			'ready-for-submission',
-			'concerncontroller1',
-			'shillinq',
-			$schemaSlug,
+			object: $entity,
+			move: new TransitionMove(action: $action, from: 'draft', to: 'ready-for-submission'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: $schemaSlug),
+			actor: new TransitionActor(userId: 'concerncontroller1'),
 		);
 
 	}//end makeEvent()

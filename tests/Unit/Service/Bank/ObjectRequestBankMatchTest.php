@@ -28,6 +28,9 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
@@ -124,7 +127,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 				$entity->setObject(array_merge($object, ['id' => $record['objectId']]));
 				$entity->setSchema('ReconciliationMatch');
 				$entity->setRegister('shillinq');
-				$this->listener->handle(new ObjectTransitionedEvent($entity, $record['action'], $record['from'], $record['to'], 'bookkeeper', 'shillinq', 'ReconciliationMatch'));
+				$this->listener->handle(new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: $record['action'], from: $record['from'], to: $record['to']), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ReconciliationMatch'), actor: new TransitionActor(userId: 'bookkeeper')));
 			}
 		);
 
