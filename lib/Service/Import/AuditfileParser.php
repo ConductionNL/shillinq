@@ -273,7 +273,10 @@ class AuditfileParser {
 
 		$read = ['opened' => true, 'fragments' => [], 'findings' => []];
 		try {
-			$read['fragments'] = $this->companyFragments(reader: $reader);
+			// Collected one by one, so the fragments read before a stream error are kept.
+			foreach ($this->companyFragments(reader: $reader) as $fragment) {
+				$read['fragments'][] = $fragment;
+			}
 		} catch (\Throwable $e) {
 			$read['findings'][] = $this->error(code: 'stream-error', context: ['detail' => $e->getMessage()]);
 		} finally {
@@ -291,10 +294,9 @@ class AuditfileParser {
 	 *
 	 * @param XMLReader $reader The opened reader.
 	 *
-	 * @return list<string>
+	 * @return \Generator<int, string>
 	 */
-	private function companyFragments(XMLReader $reader): array {
-		$fragments = [];
+	private function companyFragments(XMLReader $reader): \Generator {
 		while ($reader->read() === true) {
 			if ($reader->nodeType !== XMLReader::ELEMENT || $reader->localName !== 'company') {
 				continue;
@@ -302,13 +304,11 @@ class AuditfileParser {
 
 			$fragment = $reader->readOuterXml();
 			if ($fragment !== '') {
-				$fragments[] = $fragment;
+				yield $fragment;
 			}
 
 			$reader->next();
 		}
-
-		return $fragments;
 	}//end companyFragments()
 
 	/**
