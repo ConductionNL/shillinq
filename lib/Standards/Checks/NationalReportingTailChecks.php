@@ -61,6 +61,127 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 class NationalReportingTailChecks implements CheckProvider {
 	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'FinancialStatement' => [
+			// NL BW composition — class breakdowns summing to the seeded totals.
+			'fixedAssetClasses' => [
+				'intangible' => 20000.0,
+				'tangible' => 80000.0,
+				'financial' => 20000.0,
+			],
+			'intangibleAssetClasses' => [
+				'development' => 8000.0,
+				'concessions' => 6000.0,
+				'goodwill' => 4000.0,
+				'prepayments' => 2000.0,
+			],
+			'tangibleAssetClasses' => [
+				'landAndBuildings' => 50000.0,
+				'plantAndMachinery' => 20000.0,
+				'otherOperating' => 7000.0,
+				'underConstruction' => 3000.0,
+			],
+			'financialFixedAssetClasses' => [
+				'participations' => 9000.0,
+				'groupReceivables' => 6000.0,
+				'otherSecurities' => 3000.0,
+				'otherReceivables' => 2000.0,
+			],
+			'currentAssetClasses' => [
+				'inventories' => 25000.0,
+				'receivables' => 35000.0,
+				'securities' => 5000.0,
+				'cash' => 15000.0,
+			],
+			'equityComponents' => [
+				'issuedCapital' => 20000.0,
+				'sharePremium' => 15000.0,
+				'revaluationReserve' => 5000.0,
+				'statutoryReserves' => 10000.0,
+				'retainedResult' => 40000.0,
+			],
+			'liabilitiesMaturity' => [
+				'shortTerm' => 60000.0,
+				'longTerm' => 40000.0,
+				'overFiveYears' => 15000.0,
+			],
+			// RJ 210 — a legal reserve equal to the unamortised development cost.
+			'capitalisedDevelopmentCosts' => 8000.0,
+			'developmentLegalReserve' => 8000.0,
+			'intangibleAmortisationYears' => 10.0,
+			// RGS/SBR — a small entity deposits via SBR/XBRL.
+			'sbrFiled' => true,
+			// DE HGB — abridged balance is permissible for the small entity, plus
+			// the equity detail and (categorical) nature breakdown.
+			'balanceDetailLevel' => 'abridged',
+			'equityComponentsHgb' => [
+				'subscribedCapital' => 20000.0,
+				'capitalReserve' => 15000.0,
+				'revenueReserves' => 15000.0,
+				'retainedEarnings' => 10000.0,
+				'netIncomeForYear' => 30000.0,
+			],
+			'pnlNatureBreakdown' => [
+				'materialExpense' => 200000.0,
+				'personnelExpense' => 180000.0,
+				'depreciation' => 50000.0,
+				'inventoryChange' => -2000.0,
+				'ownWorkCapitalised' => 3000.0,
+			],
+			'pnlFunctionBreakdown' => [
+				'costOfGoodsSold' => 300000.0,
+				'distributionCosts' => 80000.0,
+				'administrativeExpenses' => 50000.0,
+			],
+			'retentionYearsAccounts' => 10.0,
+			'retentionYearsCorrespondence' => 6.0,
+			// FR PCG — table-form balance, list-form income statement, abridged
+			// system permissible for the small entity.
+			'balancePresentation' => 'table',
+			'pnlResultBreakdown' => [
+				'operatingResult' => 70000.0,
+				'financialResult' => -5000.0,
+				'exceptionalResult' => 0.0,
+			],
+			'pnlPresentation' => 'list',
+			'accountingSystem' => 'abrege',
+			'confidentialFiling' => false,
+			// FR FEC — export available, plus a field-complete FEC view (kept in a
+			// distinct field so the seeder backfills it on the existing rows whose
+			// balance-only fecEntries lack the structural fields).
+			'fecExportAvailable' => true,
+			'fecStructuredEntries' => [
+				[
+					'entryNum' => '1',
+					'debit' => 1000.0,
+					'credit' => 1000.0,
+					'journalCode' => 'VE',
+					'ecritureDate' => '2025-01-31',
+					'compteNum' => '411000',
+					'pieceRef' => 'FA-2025-001',
+				],
+				[
+					'entryNum' => '2',
+					'debit' => 250.5,
+					'credit' => 250.5,
+					'journalCode' => 'AC',
+					'ecritureDate' => '2025-02-15',
+					'compteNum' => '607000',
+					'pieceRef' => 'FF-2025-014',
+				],
+			],
+			// EU ESEF — for the seeded listed issuer; harmless on non-listed rows.
+			'notesBlockTagged' => true,
+			'taxonomyExtensionsUsed' => false,
+			'extensionsAnchored' => true,
+		],
+	];
+
+	/**
 	 * Per-object-type, per-rule predicates for the remaining `national-reporting`
 	 * domain rules.
 	 *
@@ -69,138 +190,426 @@ class NationalReportingTailChecks implements CheckProvider {
 	public static function checks(): array {
 		return [
 			'FinancialStatement' => [
-				// ===== NL — Burgerlijk Wetboek Boek 2, Titel 9 (composition). =====
-				// art. 365: vaste activa are subdivided into intangible, tangible and
-				// financial fixed assets, and their sum reconciles to the balance-sheet
-				// fixedAssets total.
-				'bw-art365-fixed-assets-classes' => static fn (array $o): bool => self::numericKeys($o, 'fixedAssetClasses', ['intangible', 'tangible', 'financial'])
-					&& self::sumReconciles($o, 'fixedAssetClasses', ['intangible', 'tangible', 'financial'], 'balanceSheet', 'fixedAssets'),
-
-				// art. 365 lid 1: immateriële vaste activa separately disclose
-				// development costs, concessions/licences/IP, goodwill paid and
-				// prepayments on intangibles.
-				'bw-art365-1-intangibles' => static fn (array $o): bool => self::numericKeys($o, 'intangibleAssetClasses', ['development', 'concessions', 'goodwill', 'prepayments']),
-
-				// art. 366: materiële vaste activa are subdivided into land and
-				// buildings, plant and machinery, other operating assets and assets
-				// under construction / prepayments.
-				'bw-art366-tangible-assets' => static fn (array $o): bool => self::numericKeys($o, 'tangibleAssetClasses', ['landAndBuildings', 'plantAndMachinery', 'otherOperating', 'underConstruction']),
-
-				// art. 367: financiële vaste activa separately disclose participating
-				// interests, group/participation receivables, other securities and
-				// other receivables.
-				'bw-art367-financial-fixed-assets' => static fn (array $o): bool => self::numericKeys($o, 'financialFixedAssetClasses', ['participations', 'groupReceivables', 'otherSecurities', 'otherReceivables']),
-
-				// art. 369: vlottende activa are subdivided into inventories,
-				// receivables, securities and cash, and their sum reconciles to the
-				// balance-sheet currentAssets total.
-				'bw-art369-current-assets' => static fn (array $o): bool => self::numericKeys($o, 'currentAssetClasses', ['inventories', 'receivables', 'securities', 'cash'])
-					&& self::sumReconciles($o, 'currentAssetClasses', ['inventories', 'receivables', 'securities', 'cash'], 'balanceSheet', 'currentAssets'),
-
-				// art. 373: eigen vermogen is split into issued capital, share premium,
-				// revaluation reserve, other statutory/articles reserves and
-				// retained/undistributed result, reconciling to the equity total.
-				'bw-art373-equity-components' => static fn (array $o): bool => self::numericKeys($o, 'equityComponents', ['issuedCapital', 'sharePremium', 'revaluationReserve', 'statutoryReserves', 'retainedResult'])
-					&& self::sumReconciles($o, 'equityComponents', ['issuedCapital', 'sharePremium', 'revaluationReserve', 'statutoryReserves', 'retainedResult'], 'balanceSheet', 'equity'),
-
-				// art. 375: schulden disclose separately the portion with a remaining
-				// term over one year and that over five years; the short + long-term
-				// split reconciles to the liabilities total and the >5yr portion is a
-				// subset of the >1yr portion.
-				'bw-art375-debts-maturity' => static fn (array $o): bool => self::debtsMaturityValid($o),
-
-				// RJ 210: when development costs are capitalised a legal reserve equal
-				// to the unamortised carrying amount is maintained within equity.
-				'rj-210-development-legal-reserve' => static fn (array $o): bool => self::developmentLegalReserveValid($o),
-
-				// RJ 210: an intangible fixed asset's amortisation life does not exceed
-				// twenty years.
-				'rj-210-intangible-max-life' => static fn (array $o): bool => self::intangibleLifeWithin($o, 20),
-
-				// RGS/SBR: a micro or small entity's statutory KvK deposit is performed
-				// via an SBR (XBRL) instance; larger entities are out of scope.
-				'rgs-sbr-filing' => static fn (array $o): bool => self::sbrFilingValid($o),
-
-				// ===== DE — Handelsgesetzbuch (composition / retention). =====
-				// §266: only a small (or micro) corporation may present the abridged
-				// balance sheet limited to lettered/Roman-numeral items.
-				'hgb-266-small-abridged-balance' => static fn (array $o): bool => self::abridgedBalanceAllowed($o),
-
-				// §268: Eigenkapital is broken down into subscribed capital, capital
-				// reserve, revenue reserves, retained earnings carried forward and net
-				// income/loss for the year.
-				'hgb-268-equity-detail' => static fn (array $o): bool => self::numericKeys($o, 'equityComponentsHgb', ['subscribedCapital', 'capitalReserve', 'revenueReserves', 'retainedEarnings', 'netIncomeForYear']),
-
-				// §275: under the total-cost method (Gesamtkostenverfahren) expenses are
-				// classified by nature and the change in inventory and own work
-				// capitalised are shown separately — required when the categorical model
-				// is applied.
-				'hgb-275-gesamtkostenverfahren' => static fn (array $o): bool => self::pnlMethodBreakdownValid($o, 'categorical', 'pnlNatureBreakdown', ['materialExpense', 'personnelExpense', 'depreciation', 'inventoryChange', 'ownWorkCapitalised']),
-
-				// §275: under the cost-of-sales method (Umsatzkostenverfahren) expenses
-				// are classified by function — required when the functional model is
-				// applied.
-				'hgb-275-umsatzkostenverfahren' => static fn (array $o): bool => self::pnlMethodBreakdownValid($o, 'functional', 'pnlFunctionBreakdown', ['costOfGoodsSold', 'distributionCosts', 'administrativeExpenses']),
-
-				// §257: books, inventories, opening balance sheets and annual accounts
-				// are retained for at least 10 years and commercial correspondence for
-				// at least 6 years.
-				'hgb-257-retention' => static fn (array $o): bool => self::numericAtLeast($o, 'retentionYearsAccounts', 10.0)
-					&& self::numericAtLeast($o, 'retentionYearsCorrespondence', 6.0),
-
-				// ===== FR — PCG / greffe / FEC (composition / retention). =====
-				// PCG base system: the bilan presents fixed + current assets on the
-				// asset side and equity, provisions and liabilities on the credit side,
-				// in table form.
-				'pcg-balance-table-form' => static fn (array $o): bool => self::balanceLayoutComplete($o)
-					&& self::equalsField($o, 'balancePresentation', 'table'),
-
-				// PCG: the compte de résultat distinguishes operating, financial and
-				// exceptional result, presented in list form.
-				'pcg-income-statement-list' => static fn (array $o): bool => self::numericKeys($o, 'pnlResultBreakdown', ['operatingResult', 'financialResult', 'exceptionalResult'])
-					&& self::equalsField($o, 'pnlPresentation', 'list'),
-
-				// PCG: the abridged system (système abrégé) may only be used by an
-				// entity within the small/micro size limits.
-				'pcg-systeme-abrege' => static fn (array $o): bool => self::abridgedSystemAllowed($o),
-
-				// PCG: an entity above the abridged thresholds (medium/large) uses the
-				// base system (système de base).
-				'pcg-systeme-base' => static fn (array $o): bool => self::baseSystemForLarge($o),
-
-				// FR confidentiality option: only a small/micro company may request that
-				// its filed accounts remain confidential.
-				'fr-confidentiality-option' => static fn (array $o): bool => self::confidentialityAllowed($o),
-
-				// FR retention: accounting documents and supporting vouchers are
-				// retained for at least 10 years.
-				'fr-retention-period' => static fn (array $o): bool => self::numericAtLeast($o, 'retentionYearsAccounts', 10.0),
-
-				// FEC: a computerised-accounts entity can produce the Fichier des
-				// Écritures Comptables on a tax audit — modelled as the export being
-				// available with at least one entry.
-				'fec-mandatory-export' => static fn (array $o): bool => self::isTrue($o, 'fecExportAvailable')
-					&& self::hasEntries($o, 'fecEntries'),
-
-				// FEC: every exported entry carries the prescribed structural fields
-				// (JournalCode, EcritureNum, EcritureDate, CompteNum, PieceRef, Debit,
-				// Credit). Read from fecStructuredEntries — the field-complete FEC view
-				// distinct from the balance-only fecEntries.
-				'fec-field-structure' => static fn (array $o): bool => self::fecFieldStructureValid($o),
-
-				// ===== EU — ESEF (consolidated-IFRS tagging detail). =====
-				// ESEF: a listed issuer's IFRS notes are block-tagged at section level;
-				// a non-listed statement is vacuously in scope-compliant.
-				'esef-block-tagging-notes' => static fn (array $o): bool => self::notListedOr($o, static fn (array $x): bool => self::isTrue($x, 'notesBlockTagged')),
-
-				// ESEF: where an extension element is used it is anchored to the closest
-				// standard taxonomy element(s); when no extension is used the rule is
-				// vacuously satisfied. Only relevant for listed issuers.
-				'esef-taxonomy-extension' => static fn (array $o): bool => self::notListedOr($o, static fn (array $x): bool => self::taxonomyExtensionValid($x)),
+				...self::dutchReportingChecks(),
+				...self::germanReportingChecks(),
+				...self::frenchAndEsefReportingChecks(),
 			],
 		];
 
 	}//end checks()
+
+	/**
+	 * The Dutch reporting and filing predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function dutchReportingChecks(): array {
+		return [
+			// ===== NL — Burgerlijk Wetboek Boek 2, Titel 9 (composition). =====
+			'bw-art365-fixed-assets-classes' => self::bwArt365FixedAssetsClasses(...),
+			'bw-art365-1-intangibles' => self::bwArt3651Intangibles(...),
+			'bw-art366-tangible-assets' => self::bwArt366TangibleAssets(...),
+			'bw-art367-financial-fixed-assets' => self::bwArt367FinancialFixedAssets(...),
+			'bw-art369-current-assets' => self::bwArt369CurrentAssets(...),
+			'bw-art373-equity-components' => self::bwArt373EquityComponents(...),
+			'bw-art375-debts-maturity' => self::bwArt375DebtsMaturity(...),
+			'rj-210-development-legal-reserve' => self::rj210DevelopmentLegalReserve(...),
+			'rj-210-intangible-max-life' => self::rj210IntangibleMaxLife(...),
+			'rgs-sbr-filing' => self::rgsSbrFiling(...),
+		];
+
+	}//end dutchReportingChecks()
+
+	/**
+	 * The German abridged-statement and retention predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function germanReportingChecks(): array {
+		return [
+			// ===== DE — Handelsgesetzbuch (composition / retention). =====
+			'hgb-266-small-abridged-balance' => self::hgb266SmallAbridgedBalance(...),
+			'hgb-268-equity-detail' => self::hgb268EquityDetail(...),
+			'hgb-275-gesamtkostenverfahren' => self::hgb275Gesamtkostenverfahren(...),
+			'hgb-275-umsatzkostenverfahren' => self::hgb275Umsatzkostenverfahren(...),
+			'hgb-257-retention' => self::hgb257Retention(...),
+		];
+
+	}//end germanReportingChecks()
+
+	/**
+	 * The French PCG and ESEF reporting predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function frenchAndEsefReportingChecks(): array {
+		return [
+			// ===== FR — PCG / greffe / FEC (composition / retention). =====
+			'pcg-balance-table-form' => self::pcgBalanceTableForm(...),
+			'pcg-income-statement-list' => self::pcgIncomeStatementList(...),
+			'pcg-systeme-abrege' => self::pcgSystemeAbrege(...),
+			'pcg-systeme-base' => self::pcgSystemeBase(...),
+			'fr-confidentiality-option' => self::frConfidentialityOption(...),
+			'fr-retention-period' => self::frRetentionPeriod(...),
+			'fec-mandatory-export' => self::fecMandatoryExport(...),
+			'fec-field-structure' => self::fecFieldStructure(...),
+
+			// ===== EU — ESEF (consolidated-IFRS tagging detail). =====
+			'esef-block-tagging-notes' => self::esefBlockTaggingNotes(...),
+			'esef-taxonomy-extension' => self::esefTaxonomyExtension(...),
+		];
+
+	}//end frenchAndEsefReportingChecks()
+
+	/**
+	 * art. 365: vaste activa are subdivided into intangible, tangible and
+	 * financial fixed assets, and their sum reconciles to the balance-sheet
+	 * fixedAssets total.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt365FixedAssetsClasses(array $o): bool {
+		return self::numericKeys($o, 'fixedAssetClasses', ['intangible', 'tangible', 'financial'])
+			&& self::sumReconciles($o, 'fixedAssetClasses', ['intangible', 'tangible', 'financial'], 'balanceSheet', 'fixedAssets');
+
+	}//end bwArt365FixedAssetsClasses()
+
+	/**
+	 * art. 365 lid 1: immateriële vaste activa separately disclose
+	 * development costs, concessions/licences/IP, goodwill paid and
+	 * prepayments on intangibles.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt3651Intangibles(array $o): bool {
+		return self::numericKeys($o, 'intangibleAssetClasses', ['development', 'concessions', 'goodwill', 'prepayments']);
+
+	}//end bwArt3651Intangibles()
+
+	/**
+	 * art. 366: materiële vaste activa are subdivided into land and
+	 * buildings, plant and machinery, other operating assets and assets
+	 * under construction / prepayments.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt366TangibleAssets(array $o): bool {
+		return self::numericKeys($o, 'tangibleAssetClasses', ['landAndBuildings', 'plantAndMachinery', 'otherOperating', 'underConstruction']);
+
+	}//end bwArt366TangibleAssets()
+
+	/**
+	 * art. 367: financiële vaste activa separately disclose participating
+	 * interests, group/participation receivables, other securities and
+	 * other receivables.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt367FinancialFixedAssets(array $o): bool {
+		return self::numericKeys($o, 'financialFixedAssetClasses', ['participations', 'groupReceivables', 'otherSecurities', 'otherReceivables']);
+
+	}//end bwArt367FinancialFixedAssets()
+
+	/**
+	 * art. 369: vlottende activa are subdivided into inventories,
+	 * receivables, securities and cash, and their sum reconciles to the
+	 * balance-sheet currentAssets total.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt369CurrentAssets(array $o): bool {
+		return self::numericKeys($o, 'currentAssetClasses', ['inventories', 'receivables', 'securities', 'cash'])
+			&& self::sumReconciles($o, 'currentAssetClasses', ['inventories', 'receivables', 'securities', 'cash'], 'balanceSheet', 'currentAssets');
+
+	}//end bwArt369CurrentAssets()
+
+	/**
+	 * art. 373: eigen vermogen is split into issued capital, share premium,
+	 * revaluation reserve, other statutory/articles reserves and
+	 * retained/undistributed result, reconciling to the equity total.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt373EquityComponents(array $o): bool {
+		return self::numericKeys($o, 'equityComponents', ['issuedCapital', 'sharePremium', 'revaluationReserve', 'statutoryReserves', 'retainedResult'])
+			&& self::sumReconciles($o, 'equityComponents', ['issuedCapital', 'sharePremium', 'revaluationReserve', 'statutoryReserves', 'retainedResult'], 'balanceSheet', 'equity');
+
+	}//end bwArt373EquityComponents()
+
+	/**
+	 * art. 375: schulden disclose separately the portion with a remaining
+	 * term over one year and that over five years; the short + long-term
+	 * split reconciles to the liabilities total and the >5yr portion is a
+	 * subset of the >1yr portion.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bwArt375DebtsMaturity(array $o): bool {
+		return self::debtsMaturityValid($o);
+
+	}//end bwArt375DebtsMaturity()
+
+	/**
+	 * RJ 210: when development costs are capitalised a legal reserve equal
+	 * to the unamortised carrying amount is maintained within equity.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function rj210DevelopmentLegalReserve(array $o): bool {
+		return self::developmentLegalReserveValid($o);
+
+	}//end rj210DevelopmentLegalReserve()
+
+	/**
+	 * RJ 210: an intangible fixed asset's amortisation life does not exceed
+	 * twenty years.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function rj210IntangibleMaxLife(array $o): bool {
+		return self::intangibleLifeWithin($o, 20);
+
+	}//end rj210IntangibleMaxLife()
+
+	/**
+	 * RGS/SBR: a micro or small entity's statutory KvK deposit is performed
+	 * via an SBR (XBRL) instance; larger entities are out of scope.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function rgsSbrFiling(array $o): bool {
+		return self::sbrFilingValid($o);
+
+	}//end rgsSbrFiling()
+
+	/**
+	 * §266: only a small (or micro) corporation may present the abridged
+	 * balance sheet limited to lettered/Roman-numeral items.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function hgb266SmallAbridgedBalance(array $o): bool {
+		return self::abridgedBalanceAllowed($o);
+
+	}//end hgb266SmallAbridgedBalance()
+
+	/**
+	 * §268: Eigenkapital is broken down into subscribed capital, capital
+	 * reserve, revenue reserves, retained earnings carried forward and net
+	 * income/loss for the year.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function hgb268EquityDetail(array $o): bool {
+		return self::numericKeys($o, 'equityComponentsHgb', ['subscribedCapital', 'capitalReserve', 'revenueReserves', 'retainedEarnings', 'netIncomeForYear']);
+
+	}//end hgb268EquityDetail()
+
+	/**
+	 * §275: under the total-cost method (Gesamtkostenverfahren) expenses are
+	 * classified by nature and the change in inventory and own work
+	 * capitalised are shown separately — required when the categorical model
+	 * is applied.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function hgb275Gesamtkostenverfahren(array $o): bool {
+		return self::pnlMethodBreakdownValid($o, 'categorical', 'pnlNatureBreakdown', ['materialExpense', 'personnelExpense', 'depreciation', 'inventoryChange', 'ownWorkCapitalised']);
+
+	}//end hgb275Gesamtkostenverfahren()
+
+	/**
+	 * §275: under the cost-of-sales method (Umsatzkostenverfahren) expenses
+	 * are classified by function — required when the functional model is
+	 * applied.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function hgb275Umsatzkostenverfahren(array $o): bool {
+		return self::pnlMethodBreakdownValid($o, 'functional', 'pnlFunctionBreakdown', ['costOfGoodsSold', 'distributionCosts', 'administrativeExpenses']);
+
+	}//end hgb275Umsatzkostenverfahren()
+
+	/**
+	 * §257: books, inventories, opening balance sheets and annual accounts
+	 * are retained for at least 10 years and commercial correspondence for
+	 * at least 6 years.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function hgb257Retention(array $o): bool {
+		return self::numericAtLeast($o, 'retentionYearsAccounts', 10.0)
+			&& self::numericAtLeast($o, 'retentionYearsCorrespondence', 6.0);
+
+	}//end hgb257Retention()
+
+	/**
+	 * PCG base system: the bilan presents fixed + current assets on the
+	 * asset side and equity, provisions and liabilities on the credit side,
+	 * in table form.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgBalanceTableForm(array $o): bool {
+		return self::balanceLayoutComplete($o)
+			&& self::equalsField($o, 'balancePresentation', 'table');
+
+	}//end pcgBalanceTableForm()
+
+	/**
+	 * PCG: the compte de résultat distinguishes operating, financial and
+	 * exceptional result, presented in list form.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgIncomeStatementList(array $o): bool {
+		return self::numericKeys($o, 'pnlResultBreakdown', ['operatingResult', 'financialResult', 'exceptionalResult'])
+			&& self::equalsField($o, 'pnlPresentation', 'list');
+
+	}//end pcgIncomeStatementList()
+
+	/**
+	 * PCG: the abridged system (système abrégé) may only be used by an
+	 * entity within the small/micro size limits.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgSystemeAbrege(array $o): bool {
+		return self::abridgedSystemAllowed($o);
+
+	}//end pcgSystemeAbrege()
+
+	/**
+	 * PCG: an entity above the abridged thresholds (medium/large) uses the
+	 * base system (système de base).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgSystemeBase(array $o): bool {
+		return self::baseSystemForLarge($o);
+
+	}//end pcgSystemeBase()
+
+	/**
+	 * FR confidentiality option: only a small/micro company may request that
+	 * its filed accounts remain confidential.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frConfidentialityOption(array $o): bool {
+		return self::confidentialityAllowed($o);
+
+	}//end frConfidentialityOption()
+
+	/**
+	 * FR retention: accounting documents and supporting vouchers are
+	 * retained for at least 10 years.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frRetentionPeriod(array $o): bool {
+		return self::numericAtLeast($o, 'retentionYearsAccounts', 10.0);
+
+	}//end frRetentionPeriod()
+
+	/**
+	 * FEC: a computerised-accounts entity can produce the Fichier des
+	 * Écritures Comptables on a tax audit — modelled as the export being
+	 * available with at least one entry.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function fecMandatoryExport(array $o): bool {
+		return self::isTrue($o, 'fecExportAvailable')
+			&& self::hasEntries($o, 'fecEntries');
+
+	}//end fecMandatoryExport()
+
+	/**
+	 * FEC: every exported entry carries the prescribed structural fields
+	 * (JournalCode, EcritureNum, EcritureDate, CompteNum, PieceRef, Debit,
+	 * Credit). Read from fecStructuredEntries — the field-complete FEC view
+	 * distinct from the balance-only fecEntries.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function fecFieldStructure(array $o): bool {
+		return self::fecFieldStructureValid($o);
+
+	}//end fecFieldStructure()
+
+	/**
+	 * ESEF: a listed issuer's IFRS notes are block-tagged at section level;
+	 * a non-listed statement is vacuously in scope-compliant.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esefBlockTaggingNotes(array $o): bool {
+		return self::notListedOr($o, static fn (array $x): bool => self::isTrue($x, 'notesBlockTagged'));
+
+	}//end esefBlockTaggingNotes()
+
+	/**
+	 * ESEF: where an extension element is used it is anchored to the closest
+	 * standard taxonomy element(s); when no extension is used the rule is
+	 * vacuously satisfied. Only relevant for listed issuers.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esefTaxonomyExtension(array $o): bool {
+		return self::notListedOr($o, static fn (array $x): bool => self::taxonomyExtensionValid($x));
+
+	}//end esefTaxonomyExtension()
 
 	/**
 	 * Backfill the fields these tail predicates read onto the EXISTING
@@ -212,121 +621,7 @@ class NationalReportingTailChecks implements CheckProvider {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'FinancialStatement' => [
-				// NL BW composition — class breakdowns summing to the seeded totals.
-				'fixedAssetClasses' => [
-					'intangible' => 20000.0,
-					'tangible' => 80000.0,
-					'financial' => 20000.0,
-				],
-				'intangibleAssetClasses' => [
-					'development' => 8000.0,
-					'concessions' => 6000.0,
-					'goodwill' => 4000.0,
-					'prepayments' => 2000.0,
-				],
-				'tangibleAssetClasses' => [
-					'landAndBuildings' => 50000.0,
-					'plantAndMachinery' => 20000.0,
-					'otherOperating' => 7000.0,
-					'underConstruction' => 3000.0,
-				],
-				'financialFixedAssetClasses' => [
-					'participations' => 9000.0,
-					'groupReceivables' => 6000.0,
-					'otherSecurities' => 3000.0,
-					'otherReceivables' => 2000.0,
-				],
-				'currentAssetClasses' => [
-					'inventories' => 25000.0,
-					'receivables' => 35000.0,
-					'securities' => 5000.0,
-					'cash' => 15000.0,
-				],
-				'equityComponents' => [
-					'issuedCapital' => 20000.0,
-					'sharePremium' => 15000.0,
-					'revaluationReserve' => 5000.0,
-					'statutoryReserves' => 10000.0,
-					'retainedResult' => 40000.0,
-				],
-				'liabilitiesMaturity' => [
-					'shortTerm' => 60000.0,
-					'longTerm' => 40000.0,
-					'overFiveYears' => 15000.0,
-				],
-				// RJ 210 — a legal reserve equal to the unamortised development cost.
-				'capitalisedDevelopmentCosts' => 8000.0,
-				'developmentLegalReserve' => 8000.0,
-				'intangibleAmortisationYears' => 10.0,
-				// RGS/SBR — a small entity deposits via SBR/XBRL.
-				'sbrFiled' => true,
-				// DE HGB — abridged balance is permissible for the small entity, plus
-				// the equity detail and (categorical) nature breakdown.
-				'balanceDetailLevel' => 'abridged',
-				'equityComponentsHgb' => [
-					'subscribedCapital' => 20000.0,
-					'capitalReserve' => 15000.0,
-					'revenueReserves' => 15000.0,
-					'retainedEarnings' => 10000.0,
-					'netIncomeForYear' => 30000.0,
-				],
-				'pnlNatureBreakdown' => [
-					'materialExpense' => 200000.0,
-					'personnelExpense' => 180000.0,
-					'depreciation' => 50000.0,
-					'inventoryChange' => -2000.0,
-					'ownWorkCapitalised' => 3000.0,
-				],
-				'pnlFunctionBreakdown' => [
-					'costOfGoodsSold' => 300000.0,
-					'distributionCosts' => 80000.0,
-					'administrativeExpenses' => 50000.0,
-				],
-				'retentionYearsAccounts' => 10.0,
-				'retentionYearsCorrespondence' => 6.0,
-				// FR PCG — table-form balance, list-form income statement, abridged
-				// system permissible for the small entity.
-				'balancePresentation' => 'table',
-				'pnlResultBreakdown' => [
-					'operatingResult' => 70000.0,
-					'financialResult' => -5000.0,
-					'exceptionalResult' => 0.0,
-				],
-				'pnlPresentation' => 'list',
-				'accountingSystem' => 'abrege',
-				'confidentialFiling' => false,
-				// FR FEC — export available, plus a field-complete FEC view (kept in a
-				// distinct field so the seeder backfills it on the existing rows whose
-				// balance-only fecEntries lack the structural fields).
-				'fecExportAvailable' => true,
-				'fecStructuredEntries' => [
-					[
-						'entryNum' => '1',
-						'debit' => 1000.0,
-						'credit' => 1000.0,
-						'journalCode' => 'VE',
-						'ecritureDate' => '2025-01-31',
-						'compteNum' => '411000',
-						'pieceRef' => 'FA-2025-001',
-					],
-					[
-						'entryNum' => '2',
-						'debit' => 250.5,
-						'credit' => 250.5,
-						'journalCode' => 'AC',
-						'ecritureDate' => '2025-02-15',
-						'compteNum' => '607000',
-						'pieceRef' => 'FF-2025-014',
-					],
-				],
-				// EU ESEF — for the seeded listed issuer; harmless on non-listed rows.
-				'notesBlockTagged' => true,
-				'taxonomyExtensionsUsed' => false,
-				'extensionsAnchored' => true,
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 

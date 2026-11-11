@@ -252,31 +252,12 @@ class BudgetProjectionReader {
 	 * @return array<string,string> Transaction reference => `YYYY-MM` posting month.
 	 */
 	private function postedTransactionMonths(string $administrationId): array {
-		$months = [];
 		$transactions = $this->query(
 			schema: self::SCHEMA_GL_TRANSACTION,
 			filters: ['administrationId' => $administrationId, 'state' => 'posted']
 		);
 
-		foreach ($transactions as $transaction) {
-			$postingDate = (string)($transaction['postingDate'] ?? '');
-			if ($postingDate === '') {
-				continue;
-			}
-
-			$month = substr($postingDate, 0, 7);
-			$objectId = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
-			if ($objectId !== '') {
-				$months[$objectId] = $month;
-			}
-
-			$number = (string)($transaction['transactionNumber'] ?? '');
-			if ($number !== '') {
-				$months[$number] = $month;
-			}
-		}
-
-		return $months;
+		return (new LedgerActuals())->postingMonths(transactions: $transactions);
 
 	}//end postedTransactionMonths()
 
@@ -290,33 +271,14 @@ class BudgetProjectionReader {
 	 * @return array<string,array<string,int>> accountNumber => monthKey => signed net-movement cents.
 	 */
 	private function bucketByAccountMonth(array $monthByRef): array {
-		$buckets = [];
 		if ($monthByRef === []) {
-			return $buckets;
+			return [];
 		}
 
-		$lines = $this->query(schema: self::SCHEMA_GL_LINE, filters: []);
-		foreach ($lines as $line) {
-			$ref = (string)($line['transactionId'] ?? '');
-			if ($ref === '' || isset($monthByRef[$ref]) === false) {
-				continue;
-			}
-
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$month = $monthByRef[$ref];
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			if ((string)($line['side'] ?? 'debit') === 'credit') {
-				$cents = -$cents;
-			}
-
-			$buckets[$accountNumber][$month] = (($buckets[$accountNumber][$month] ?? 0) + $cents);
-		}
-
-		return $buckets;
+		return (new LedgerActuals())->centsByAccountMonth(
+			lines: $this->query(schema: self::SCHEMA_GL_LINE, filters: []),
+			monthByRef: $monthByRef
+		);
 
 	}//end bucketByAccountMonth()
 
@@ -421,82 +383,9 @@ class BudgetProjectionReader {
 	 * @return list<string> The resolved, deduplicated member account numbers.
 	 */
 	private function resolveMembers(array $ledgerGroup, array $accountNumbers): array {
-		$ranges = [];
-		if (is_array($ledgerGroup['accountRanges'] ?? null) === true) {
-			$ranges = $ledgerGroup['accountRanges'];
-		}
-
-		$included = [];
-		if (is_array($ledgerGroup['includedAccountNumbers'] ?? null) === true) {
-			$included = $ledgerGroup['includedAccountNumbers'];
-		}
-
-		$excludedList = [];
-		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
-			$excludedList = $ledgerGroup['excludedAccountNumbers'];
-		}
-
-		$excluded = array_flip(array_map('strval', $excludedList));
-
-		$members = [];
-		foreach ($accountNumbers as $number) {
-			if (isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			if ($this->inAnyRange(accountNumber: $number, ranges: $ranges) === true) {
-				$members[$number] = true;
-			}
-		}
-
-		foreach ($included as $number) {
-			$number = (string)$number;
-			if ($number === '' || isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			$members[$number] = true;
-		}
-
-		// PHP casts a purely-numeric string array key to an int key, so
-		// array_keys() would silently hand back integers here — cast back
-		// to string explicitly, since every caller compares account
-		// numbers as strings.
-		return array_values(array_map('strval', array_keys($members)));
+		return (new LedgerGroupMembers(ledgerGroup: $ledgerGroup))->resolve(accountNumbers: $accountNumbers);
 
 	}//end resolveMembers()
-
-	/**
-	 * Whether an account number falls inside any of the given range pairs,
-	 * compared numerically (not lexicographically) so a 5-digit account
-	 * number cannot fall inside a 4-digit range by string-sort accident.
-	 *
-	 * @param string $accountNumber The account number to test.
-	 * @param list<array{from?:string,to?:string}> $ranges The range pairs.
-	 *
-	 * @return boolean True when the account number is inside at least one range.
-	 */
-	private function inAnyRange(string $accountNumber, array $ranges): bool {
-		if (is_numeric($accountNumber) === false) {
-			return false;
-		}
-
-		$value = (int)$accountNumber;
-		foreach ($ranges as $range) {
-			$from = (string)($range['from'] ?? '');
-			$to = (string)($range['to'] ?? '');
-			if ($from === '' || $to === '' || is_numeric($from) === false || is_numeric($to) === false) {
-				continue;
-			}
-
-			if ($value >= (int)$from && $value <= (int)$to) {
-				return true;
-			}
-		}
-
-		return false;
-
-	}//end inAnyRange()
 
 	/**
 	 * Advance a `YYYY-MM` bucket by one calendar month.

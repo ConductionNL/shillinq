@@ -49,21 +49,12 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
  *
- * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.ShortVariable)
  * @SuppressWarnings(PHPMD.ErrorControlOperator)
- * Pre-existing debt (issue #506): inherent branch complexity; the `@`
- * suppresses a PHP warning on an externally-supplied, possibly-malformed
+ * Pre-existing debt (issue #506): the `@` suppresses a PHP warning on an externally-supplied, possibly-malformed
  * regex pattern, and the return value is explicitly checked (fail-closed).
  */
 class BankRulePreviewService {
-	/**
-	 * Number of matched sample lines returned in a preview response.
-	 *
-	 * @var int
-	 */
-	private const SAMPLE_LIMIT = 20;
-
 	/**
 	 * Dry-run a draft rule against a window of candidate bank lines.
 	 *
@@ -87,49 +78,19 @@ class BankRulePreviewService {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
 	 */
 	public function previewRule(array $rule, array $candidateLines, ?string $anchorDate = null): array {
-		$predicates = [];
-		if (isset($rule['predicates']) === true && is_array($rule['predicates']) === true) {
-			$predicates = $rule['predicates'];
-		}
-
-		$matchedIds = [];
-		$sample = [];
-		$breakdown = [];
+		$predicates = $this->rulePredicates(rule: $rule);
+		$tally = new RulePreviewTally();
 
 		foreach ($candidateLines as $line) {
 			if (is_array($line) === false) {
 				continue;
 			}
 
-			$result = $this->evaluatePredicates(predicates: $predicates, line: $line, anchorDate: $anchorDate);
+			$facts = new BankLineFacts(line: $line, anchorDate: $anchorDate);
+			$tally->record(line: $line, result: $this->evaluatePredicates(predicates: $predicates, facts: $facts));
+		}
 
-			// Tally per-op pass counts so the operator sees which predicate narrows the window.
-			foreach ($result['breakdown'] as $op => $passed) {
-				if (isset($breakdown[$op]) === false) {
-					$breakdown[$op] = 0;
-				}
-
-				if ($passed === true) {
-					$breakdown[$op]++;
-				}
-			}
-
-			if ($result['matches'] === true) {
-				$lineId = (string)($line['id'] ?? $line['uuid'] ?? '');
-				$matchedIds[] = $lineId;
-				if (count($sample) < self::SAMPLE_LIMIT) {
-					$sample[] = $line;
-				}
-			}
-		}//end foreach
-
-		return [
-			'matchedLineIds' => $matchedIds,
-			'matchedCount' => count($matchedIds),
-			'totalEvaluated' => count($candidateLines),
-			'sample' => $sample,
-			'predicateBreakdown' => $breakdown,
-		];
+		return $tally->result(totalEvaluated: count($candidateLines));
 
 	}//end previewRule()
 
@@ -148,26 +109,33 @@ class BankRulePreviewService {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
 	 */
 	public function suggestForLine(array $line, array $activeRules): ?array {
+		$best = $this->highestPriorityMatch(
+			rules: $activeRules,
+			facts: new BankLineFacts(line: $line, anchorDate: null)
+		);
+		if ($best === null) {
+			return null;
+		}
+
+		return $this->projectSuggestion(rule: $best);
+
+	}//end suggestForLine()
+
+	/**
+	 * Pick the matching rule with the lowest `priority` value (default 100);
+	 * on a tie the earlier rule stays.
+	 *
+	 * @param list<mixed>   $rules The active MatchingRule rows.
+	 * @param BankLineFacts $facts The bank line.
+	 *
+	 * @return array<string,mixed>|null The best matching rule, or null.
+	 */
+	private function highestPriorityMatch(array $rules, BankLineFacts $facts): array|null {
 		$best = null;
 		$bestPriority = null;
 
-		foreach ($activeRules as $rule) {
-			if (is_array($rule) === false) {
-				continue;
-			}
-
-			$predicates = [];
-			if (isset($rule['predicates']) === true && is_array($rule['predicates']) === true) {
-				$predicates = $rule['predicates'];
-			}
-
-			// An empty rule matches nothing — never suggest on a rule with no predicates.
-			if ($predicates === []) {
-				continue;
-			}
-
-			$result = $this->evaluatePredicates(predicates: $predicates, line: $line, anchorDate: null);
-			if ($result['matches'] === false) {
+		foreach ($rules as $rule) {
+			if ($this->ruleMatches(rule: $rule, facts: $facts) === false) {
 				continue;
 			}
 
@@ -176,170 +144,256 @@ class BankRulePreviewService {
 				$bestPriority = $priority;
 				$best = $rule;
 			}
-		}//end foreach
-
-		if ($best === null) {
-			return null;
 		}
 
-		$glAccount = null;
-		if (isset($best['targetGlAccount']) === true && (string)$best['targetGlAccount'] !== '') {
-			$glAccount = (string)$best['targetGlAccount'];
+		return $best;
+
+	}//end highestPriorityMatch()
+
+	/**
+	 * True when the rule is a row with at least one predicate and all its
+	 * determinable predicates pass. An empty rule matches nothing.
+	 *
+	 * @param mixed         $rule  One MatchingRule row.
+	 * @param BankLineFacts $facts The bank line.
+	 *
+	 * @return bool True when the rule matches the line.
+	 */
+	private function ruleMatches(mixed $rule, BankLineFacts $facts): bool {
+		if (is_array($rule) === false) {
+			return false;
 		}
 
+		$predicates = $this->rulePredicates(rule: $rule);
+
+		return $predicates !== []
+			&& $this->evaluatePredicates(predicates: $predicates, facts: $facts)['matches'] === true;
+
+	}//end ruleMatches()
+
+	/**
+	 * The rule's predicate list, or an empty list when it carries none.
+	 *
+	 * @param array<string,mixed> $rule One MatchingRule row.
+	 *
+	 * @return array<int|string,mixed> The predicates.
+	 */
+	private function rulePredicates(array $rule): array {
+		if (isset($rule['predicates']) === true && is_array($rule['predicates']) === true) {
+			return $rule['predicates'];
+		}
+
+		return [];
+
+	}//end rulePredicates()
+
+	/**
+	 * Project the picked rule to a suggestion.
+	 *
+	 * @param array<string,mixed> $rule The picked MatchingRule row.
+	 *
+	 * @return array{matchingRuleId:?string,ruleName:string,targetType:string,targetGlAccount:?string,confidence:float}
+	 */
+	private function projectSuggestion(array $rule): array {
 		$matchingRuleId = null;
-		if (isset($best['id']) === true) {
-			$matchingRuleId = (string)$best['id'];
+		if (isset($rule['id']) === true) {
+			$matchingRuleId = (string)$rule['id'];
 		}
 
 		return [
 			'matchingRuleId' => $matchingRuleId,
-			'ruleName' => (string)($best['ruleName'] ?? ''),
-			'targetType' => (string)($best['targetType'] ?? 'gl-transaction'),
-			'targetGlAccount' => $glAccount,
-			'confidence' => (float)($best['confidenceScore'] ?? 1.0),
+			'ruleName' => (string)($rule['ruleName'] ?? ''),
+			'targetType' => (string)($rule['targetType'] ?? 'gl-transaction'),
+			'targetGlAccount' => $this->targetGlAccount(rule: $rule),
+			'confidence' => (float)($rule['confidenceScore'] ?? 1.0),
 		];
 
-	}//end suggestForLine()
+	}//end projectSuggestion()
+
+	/**
+	 * The rule's target GL account, or null when it names none.
+	 *
+	 * @param array<string,mixed> $rule The picked MatchingRule row.
+	 *
+	 * @return string|null The GL account.
+	 */
+	private function targetGlAccount(array $rule): string|null {
+		if (isset($rule['targetGlAccount']) === true && (string)$rule['targetGlAccount'] !== '') {
+			return (string)$rule['targetGlAccount'];
+		}
+
+		return null;
+
+	}//end targetGlAccount()
 
 	/**
 	 * Evaluate a predicate list against one bank line (AND semantics).
 	 *
-	 * @param list<array<string,mixed>> $predicates The rule predicates.
-	 * @param array<string,mixed> $line The bank line.
-	 * @param string|null $anchorDate Optional Y-m-d anchor for date-window.
+	 * A rule with no predicates, or whose predicates are all indeterminate
+	 * (e.g. a lone anchorless date-window), matches nothing — never a false
+	 * positive.
+	 *
+	 * @param array<int|string,mixed> $predicates The rule predicates.
+	 * @param BankLineFacts           $facts      The bank line.
 	 *
 	 * @return array{matches:bool,breakdown:array<int,bool>}
 	 */
-	private function evaluatePredicates(array $predicates, array $line, ?string $anchorDate): array {
-		// A rule with no predicates matches nothing (never everything).
-		if ($predicates === []) {
-			return [
-				'matches' => false,
-				'breakdown' => [],
-			];
-		}
-
-		$amount = (float)($line['amount'] ?? 0.0);
-		$absAmount = abs($amount);
-		$reference = (string)($line['reference'] ?? '');
-		$narrative = (string)($line['narrative'] ?? '');
-		$counterpartyName = (string)($line['counterpartyName'] ?? '');
-		$counterpartyIban = (string)($line['counterpartyIban'] ?? '');
-		$valueDate = (string)($line['valueDate'] ?? '');
-
+	private function evaluatePredicates(array $predicates, BankLineFacts $facts): array {
 		$breakdown = [];
-		$allPass = true;
-		$determinateCount = 0;
+		$determinate = [];
 
 		foreach ($predicates as $index => $predicate) {
-			if (is_array($predicate) === false) {
-				$breakdown[$index] = false;
-				$allPass = false;
-				$determinateCount++;
-				continue;
+			$outcome = $this->predicateOutcome(predicate: $predicate, facts: $facts);
+			$breakdown[$index] = ($outcome === true);
+			if ($outcome !== null) {
+				$determinate[] = $outcome;
 			}
+		}
 
-			$op = (string)($predicate['op'] ?? '');
-			$pass = false;
-
-			switch ($op) {
-				case 'exact-amount':
-					$target = (float)($predicate['amount'] ?? 0.0);
-					$pass = (abs($absAmount - abs($target)) < 0.005);
-					break;
-
-				case 'amount-range':
-					$min = (float)($predicate['min'] ?? 0.0);
-					$max = (float)($predicate['max'] ?? 0.0);
-					$pass = ($absAmount >= $min && $absAmount <= $max);
-					break;
-
-				case 'reference-match':
-					$pass = $this->referenceMatches(
-						pattern: (string)($predicate['pattern'] ?? ''),
-						reference: $reference,
-						narrative: $narrative,
-					);
-					break;
-
-				case 'counterparty-fuzzy':
-					$threshold = (float)($predicate['threshold'] ?? 0.85);
-					$name = (string)($predicate['name'] ?? '');
-					$pass = ($counterpartyName !== '' && $name !== ''
-						&& $this->similarity(a: $counterpartyName, b: $name) >= $threshold);
-					break;
-
-				case 'counterparty-iban':
-					$iban = (string)($predicate['iban'] ?? '');
-					$pass = ($iban !== '' && $counterpartyIban !== ''
-						&& $this->normaliseIban(iban: $counterpartyIban) === $this->normaliseIban(iban: $iban));
-					break;
-
-				case 'date-window':
-					// Indeterminate without an anchor date — excluded from the AND
-					// (not counted determinate); MUST NOT by itself cause a match.
-					if ($anchorDate === null || $anchorDate === '' || $valueDate === '') {
-						$breakdown[$index] = false;
-						continue 2;
-					}
-
-					$days = (int)($predicate['days'] ?? 0);
-					$lineTs = strtotime($valueDate);
-					$anchorTs = strtotime($anchorDate);
-					if ($lineTs === false || $anchorTs === false) {
-						$breakdown[$index] = false;
-						$allPass = false;
-						$determinateCount++;
-						continue 2;
-					}
-
-					$deltaDays = (int)(abs($lineTs - $anchorTs) / 86400);
-					$pass = ($deltaDays <= $days);
-					break;
-
-				default:
-					// Unknown op — fail closed.
-					$pass = false;
-					break;
-			}//end switch
-
-			$breakdown[$index] = $pass;
-			$determinateCount++;
-			if ($pass === false) {
-				$allPass = false;
-			}
-		}//end foreach
-
-		// A rule that is entirely indeterminate (e.g. a lone anchorless
-		// date-window) matches nothing — never a false positive.
 		return [
-			'matches' => ($allPass === true && $determinateCount > 0),
+			'matches' => ($determinate !== [] && in_array(false, $determinate, true) === false),
 			'breakdown' => $breakdown,
 		];
 
 	}//end evaluatePredicates()
 
 	/**
+	 * Evaluate one predicate: true or false, or null when it is indeterminate
+	 * and so excluded from the AND. A malformed predicate or an unknown op
+	 * fails closed.
+	 *
+	 * @param mixed         $predicate One predicate map.
+	 * @param BankLineFacts $facts     The bank line.
+	 *
+	 * @return bool|null The outcome, or null when indeterminate.
+	 */
+	private function predicateOutcome(mixed $predicate, BankLineFacts $facts): bool|null {
+		if (is_array($predicate) === false) {
+			return false;
+		}
+
+		return match ((string)($predicate['op'] ?? '')) {
+			'exact-amount' => $this->exactAmountPasses(predicate: $predicate, facts: $facts),
+			'amount-range' => $this->amountRangePasses(predicate: $predicate, facts: $facts),
+			'reference-match' => $this->referenceMatches(pattern: (string)($predicate['pattern'] ?? ''), facts: $facts),
+			'counterparty-fuzzy' => $this->counterpartyNamePasses(predicate: $predicate, facts: $facts),
+			'counterparty-iban' => $this->counterpartyIbanPasses(predicate: $predicate, facts: $facts),
+			'date-window' => $this->dateWindowOutcome(predicate: $predicate, facts: $facts),
+			default => false,
+		};
+
+	}//end predicateOutcome()
+
+	/**
+	 * `exact-amount`: the absolute amounts agree to within half a cent.
+	 *
+	 * @param array<string,mixed> $predicate The predicate map.
+	 * @param BankLineFacts       $facts     The bank line.
+	 *
+	 * @return bool True when the amounts agree.
+	 */
+	private function exactAmountPasses(array $predicate, BankLineFacts $facts): bool {
+		$target = (float)($predicate['amount'] ?? 0.0);
+
+		return (abs($facts->absAmount - abs($target)) < 0.005);
+
+	}//end exactAmountPasses()
+
+	/**
+	 * `amount-range`: the absolute amount lies within [min, max].
+	 *
+	 * @param array<string,mixed> $predicate The predicate map.
+	 * @param BankLineFacts       $facts     The bank line.
+	 *
+	 * @return bool True when the amount is in range.
+	 */
+	private function amountRangePasses(array $predicate, BankLineFacts $facts): bool {
+		$min = (float)($predicate['min'] ?? 0.0);
+		$max = (float)($predicate['max'] ?? 0.0);
+
+		return ($facts->absAmount >= $min && $facts->absAmount <= $max);
+
+	}//end amountRangePasses()
+
+	/**
+	 * `counterparty-fuzzy`: both names are present and similar enough
+	 * (default threshold 0.85).
+	 *
+	 * @param array<string,mixed> $predicate The predicate map.
+	 * @param BankLineFacts       $facts     The bank line.
+	 *
+	 * @return bool True when the names are similar enough.
+	 */
+	private function counterpartyNamePasses(array $predicate, BankLineFacts $facts): bool {
+		$threshold = (float)($predicate['threshold'] ?? 0.85);
+		$name = (string)($predicate['name'] ?? '');
+
+		return ($facts->counterpartyName !== '' && $name !== ''
+			&& $this->similarity(a: $facts->counterpartyName, b: $name) >= $threshold);
+
+	}//end counterpartyNamePasses()
+
+	/**
+	 * `counterparty-iban`: both IBANs are present and equal once normalised.
+	 *
+	 * @param array<string,mixed> $predicate The predicate map.
+	 * @param BankLineFacts       $facts     The bank line.
+	 *
+	 * @return bool True when the IBANs are equal.
+	 */
+	private function counterpartyIbanPasses(array $predicate, BankLineFacts $facts): bool {
+		$iban = (string)($predicate['iban'] ?? '');
+
+		return ($iban !== '' && $facts->counterpartyIban !== ''
+			&& $this->normaliseIban(iban: $facts->counterpartyIban) === $this->normaliseIban(iban: $iban));
+
+	}//end counterpartyIbanPasses()
+
+	/**
+	 * `date-window`: the value date lies within N days of the anchor.
+	 *
+	 * Indeterminate (null) without an anchor date or a value date — excluded
+	 * from the AND, so it MUST NOT by itself cause a match. An unparsable date
+	 * is a determinate failure.
+	 *
+	 * @param array<string,mixed> $predicate The predicate map.
+	 * @param BankLineFacts       $facts     The bank line.
+	 *
+	 * @return bool|null The outcome, or null when indeterminate.
+	 */
+	private function dateWindowOutcome(array $predicate, BankLineFacts $facts): bool|null {
+		if ($facts->hasDateWindowDates() === false) {
+			return null;
+		}
+
+		$days = (int)($predicate['days'] ?? 0);
+		$lineTs = strtotime($facts->valueDate);
+		$anchorTs = strtotime((string)$facts->anchorDate);
+		if ($lineTs === false || $anchorTs === false) {
+			return false;
+		}
+
+		$deltaDays = (int)(abs($lineTs - $anchorTs) / 86400);
+
+		return ($deltaDays <= $days);
+
+	}//end dateWindowOutcome()
+
+	/**
 	 * Match a reference/narrative against a regex pattern, failing closed on
 	 * an invalid pattern (no PHP warning, no false match).
 	 *
-	 * @param string $pattern The regex body (without delimiters).
-	 * @param string $reference The line reference.
-	 * @param string $narrative The line narrative (fallback).
+	 * @param string        $pattern The regex body (without delimiters).
+	 * @param BankLineFacts $facts   The bank line (reference, narrative fallback).
 	 *
 	 * @return bool
 	 */
-	private function referenceMatches(string $pattern, string $reference, string $narrative): bool {
+	private function referenceMatches(string $pattern, BankLineFacts $facts): bool {
 		if ($pattern === '') {
 			return false;
 		}
 
-		$haystack = $reference;
-		if ($haystack === '') {
-			$haystack = $narrative;
-		}
-
+		$haystack = $facts->referenceOrNarrative();
 		if ($haystack === '') {
 			return false;
 		}
@@ -374,16 +428,8 @@ class BankRulePreviewService {
 	 * @return float
 	 */
 	private function similarity(string $a, string $b): float {
-		if ($a === '' || $b === '') {
-			return 0.0;
-		}
-
-		// Normalise away case + punctuation/whitespace so "Acme B.V." and
-		// "Acme BV" compare as equal (bank names carry inconsistent punctuation).
-		$al = preg_replace('/[^a-z0-9]/', '', strtolower($a));
-		$bl = preg_replace('/[^a-z0-9]/', '', strtolower($b));
-		$al = ($al ?? '');
-		$bl = ($bl ?? '');
+		$al = $this->comparableName(name: $a);
+		$bl = $this->comparableName(name: $b);
 
 		if ($al === '' || $bl === '') {
 			return 0.0;
@@ -393,13 +439,19 @@ class BankRulePreviewService {
 			return 1.0;
 		}
 
-		$maxLen = max(strlen($al), strlen($bl));
-		if ($maxLen === 0) {
-			return 0.0;
-		}
-
-		$distance = levenshtein($al, $bl);
-
-		return max(0.0, (1.0 - ($distance / $maxLen)));
+		return max(0.0, (1.0 - (levenshtein($al, $bl) / max(strlen($al), strlen($bl)))));
 	}//end similarity()
+
+	/**
+	 * Normalise a name for comparison: lower-case, only letters and digits, so
+	 * "Acme B.V." and "Acme BV" compare as equal (bank names carry
+	 * inconsistent punctuation).
+	 *
+	 * @param string $name The raw name.
+	 *
+	 * @return string The comparable form ('' when nothing remains).
+	 */
+	private function comparableName(string $name): string {
+		return (preg_replace('/[^a-z0-9]/', '', strtolower($name)) ?? '');
+	}//end comparableName()
 }//end class

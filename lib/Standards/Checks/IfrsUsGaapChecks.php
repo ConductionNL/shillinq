@@ -69,6 +69,164 @@ use DateTimeImmutable;
  */
 final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The data seedObjects() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_OBJECTS = [
+		'FinancialStatement' => [
+			[
+				'statementType' => 'consolidated',
+				'jurisdiction' => 'US',
+				'framework' => 'usgaap',
+				'reportingPeriodStart' => '2025-01-01',
+				'reportingPeriodEnd' => '2025-12-31',
+				'language' => 'en',
+				'currency' => 'USD',
+				'balanceTotal' => 200000.0,
+				'turnover' => 500000.0,
+				'employees' => 12.0,
+				'sizeClass' => 'large',
+				'sizeClassPriorYear' => 'large',
+				'balanceSheet' => [
+					'fixedAssets' => 120000.0,
+					'currentAssets' => 80000.0,
+					'equity' => 90000.0,
+					'provisions' => 10000.0,
+					'liabilities' => 100000.0,
+				],
+				'profitAndLoss' => [
+					'netTurnover' => 500000.0,
+					'operatingExpenses' => 430000.0,
+					'financialResult' => -5000.0,
+					'result' => 65000.0,
+				],
+				'priorYearComparatives' => true,
+				'itemsNetted' => false,
+				'components' => ['balance', 'pnl', 'notes'],
+				'audited' => true,
+				'listedOnRegulatedMarket' => false,
+			],
+		],
+	];
+
+	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'FinancialStatement' => [
+			// IAS 1 — complete set + comparatives. itemsNetted already false on the
+			// existing rows; reasserted here for the US sample.
+			'ifrsComponents' => self::IFRS_COMPLETE_SET,
+			'itemsNetted' => false,
+			'priorYearComparatives' => true,
+
+			// IAS 7 / ASC 230 — the three cash-flow categories (reconciling to a
+			// net change for the period).
+			'cashFlowStatement' => [
+				'operating' => 70000.0,
+				'investing' => -20000.0,
+				'financing' => -15000.0,
+				'netChange' => 35000.0,
+			],
+
+			// IFRS 18 — categories + operating subtotal.
+			'pnlCategories' => self::IFRS18_CATEGORIES,
+			'operatingProfitSubtotal' => 70000.0,
+
+			// IAS 2 — inventory cost formula.
+			'inventoryCostFormula' => 'fifo',
+
+			// IAS 38 / 36 / 37 — prohibited recognitions are all false.
+			'internalGoodwillRecognised' => false,
+			'internalBrandsRecognised' => false,
+			'goodwillImpairmentReversed' => false,
+			'contingentLiabilityRecognised' => false,
+
+			// IAS 21 — foreign-currency translation: initial spot, monetary closing,
+			// non-monetary historical.
+			'fxInitialMeasurement' => [
+				'foreignAmount' => 10000.0,
+				'spotRate' => 1.10,
+				'recordedAmount' => 11000.0,
+			],
+			'monetaryItemRateType' => 'closing',
+			'nonMonetaryHistoricalRateType' => 'historical',
+
+			// IAS 12 / ASC 740 — current tax position + no discounting + non-current
+			// deferred tax. unpaidCurrentTax > 0 -> classified as a liability.
+			'currentTaxPosition' => [
+				'unpaidCurrentTax' => 12000.0,
+				'classification' => 'liability',
+			],
+			'deferredTaxDiscounted' => false,
+			'deferredTaxClassification' => 'noncurrent',
+
+			// IAS 19 — short-term benefits undiscounted.
+			'shortTermBenefitsDiscounted' => false,
+
+			// IFRS 9 — credit-risk staging consistent with 30/90 DPD presumptions.
+			'creditRiskExposure' => [
+				'daysPastDue' => 0,
+				'sicrRebutted' => false,
+				'sicrStage' => 1,
+				'defaultRebutted' => false,
+				'inDefault' => false,
+			],
+
+			// IFRS 3 / ASC 805 — measurement period within one year.
+			'acquisitionDate' => '2025-03-01',
+			'measurementPeriodEnd' => '2025-09-30',
+
+			// IAS 28 / ASC 323 — 20 % significant influence -> equity method.
+			'investeeVotingPowerPct' => 25.0,
+			'equityMethodApplied' => true,
+
+			// IFRS 15 — one-year practical expedients.
+			'financingExpedientApplied' => true,
+			'transferToPaymentDays' => 30,
+			'costObtainingExpedientApplied' => true,
+			'costAmortisationMonths' => 8,
+
+			// IFRS 16 / ASC 842 — right-of-use + liability, constant-rate interest,
+			// short-term exemption.
+			'leaseRecognition' => [
+				'rouAsset' => 50000.0,
+				'leaseLiability' => 50000.0,
+				'openingLiability' => 50000.0,
+				'discountRate' => 0.05,
+				'firstPeriodInterest' => 2500.0,
+			],
+			'shortTermLease' => [
+				'termMonths' => 9,
+				'purchaseOptionLikely' => false,
+				'exemptionElected' => true,
+			],
+
+			// ASC 210 — classified balance sheet.
+			'classifiedBalanceSheet' => [
+				'currentAssets' => 80000.0,
+				'noncurrentAssets' => 120000.0,
+				'currentLiabilities' => 60000.0,
+				'noncurrentLiabilities' => 40000.0,
+			],
+
+			// ASC 220 — comprehensive income.
+			'comprehensiveIncome' => [
+				'netIncome' => 65000.0,
+				'otherComprehensiveIncome' => 5000.0,
+				'totalComprehensiveIncome' => 70000.0,
+				'presentationFormat' => 'single',
+			],
+
+			// ASC 848 — modification on/before the 2024 sunset.
+			'asc848ModificationDate' => '2024-06-30',
+		],
+	];
+
+	/**
 	 * The five IFRS primary statements that make up a complete set (IAS 1.10).
 	 *
 	 * @var array<int, string>
@@ -102,153 +260,572 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	public static function checks(): array {
 		return [
 			'FinancialStatement' => [
-				// ===== IAS 1 — Presentation of Financial Statements. =====
-				// 1.10: a complete set comprises the statement of financial position,
-				// P&L and OCI, changes in equity, cash flows and notes.
-				'ias1-10-complete-set' => static fn (array $o): bool => self::componentsContainAll($o, 'ifrsComponents', self::IFRS_COMPLETE_SET),
-
-				// 1.32: assets and liabilities (and income and expenses) are not offset.
-				'ias1-32-no-offsetting' => static fn (array $o): bool => self::isFalse($o, 'itemsNetted'),
-
-				// 1.36: a complete set (with comparatives) is presented at least
-				// annually — the reporting period spans about a year and comparatives
-				// are present.
-				'ias1-36-annual-frequency' => static fn (array $o): bool => self::periodSpansAnnual($o)
-					&& self::isTrue($o, 'priorYearComparatives'),
-
-				// 1.38: comparative information for the preceding period is presented.
-				'ias1-38-comparative-information' => static fn (array $o): bool => self::isTrue($o, 'priorYearComparatives'),
-
-				// ===== IAS 7 / ASC 230 — Statement of Cash Flows. =====
-				// 7.10 / ASC 230: cash flows are classified into operating, investing and
-				// financing activities.
-				'ias7-10-classify-three-activities' => static fn (array $o): bool => self::cashFlowThreeCategories($o),
-				'asc230-three-categories' => static fn (array $o): bool => self::cashFlowThreeCategories($o),
-
-				// ===== IFRS 18 — Presentation and Disclosure. =====
-				// 18.47: income and expenses are classified into the operating,
-				// investing, financing, income-taxes and discontinued-operations
-				// categories.
-				'ifrs18-47-classify-into-categories' => static fn (array $o): bool => self::componentsContainAll($o, 'pnlCategories', self::IFRS18_CATEGORIES),
-
-				// 18.69: an operating profit-or-loss subtotal is presented.
-				'ifrs18-69-operating-profit-subtotal' => static fn (array $o): bool => self::numericPresent($o, 'operatingProfitSubtotal'),
-
-				// ===== IAS 2 — Inventories. =====
-				// 2.25: interchangeable inventories use FIFO or weighted-average cost.
-				'ias2-25-fifo-or-weighted-average' => static fn (array $o): bool => self::inEnum($o, 'inventoryCostFormula', ['fifo', 'weightedaverage', 'weighted-average', 'weighted_average']),
-
-				// 2.25: LIFO is prohibited.
-				'ias2-25-lifo-prohibited' => static fn (array $o): bool => self::present($o, 'inventoryCostFormula')
-					&& strcasecmp(trim((string)$o['inventoryCostFormula']), 'lifo') !== 0,
-
-				// ===== IAS 38 — Intangible Assets. =====
-				// 38.48: internally generated goodwill is not recognised as an asset.
-				'ias38-48-no-internal-goodwill' => static fn (array $o): bool => self::isFalse($o, 'internalGoodwillRecognised'),
-
-				// 38.63: internally generated brands, mastheads, customer lists, etc.,
-				// are not recognised as intangible assets.
-				'ias38-63-no-internal-brands' => static fn (array $o): bool => self::isFalse($o, 'internalBrandsRecognised'),
-
-				// ===== IAS 36 — Impairment of Assets. =====
-				// 36.124: an impairment loss recognised for goodwill is not reversed.
-				'ias36-124-goodwill-reversal-prohibited' => static fn (array $o): bool => self::isFalse($o, 'goodwillImpairmentReversed'),
-
-				// ===== IAS 37 — Provisions, Contingent Liabilities and Assets. =====
-				// 37.27: a contingent liability is not recognised (disclosed only).
-				'ias37-27-contingent-liability-not-recognised' => static fn (array $o): bool => self::isFalse($o, 'contingentLiabilityRecognised'),
-
-				// ===== IAS 21 — The Effects of Changes in Foreign Exchange Rates. =====
-				// 21.21: a foreign-currency transaction is initially recorded at the spot
-				// rate at the transaction date applied to the foreign amount
-				// (recordedAmount = foreignAmount x spotRate).
-				'ias21-21-initial-spot-rate' => static fn (array $o): bool => self::fxInitialSpotConsistent($o),
-
-				// 21.23(a): monetary items are translated at the closing rate at each
-				// reporting date.
-				'ias21-23a-monetary-closing-rate' => static fn (array $o): bool => self::fxItemRate($o, 'monetary', 'closing'),
-
-				// 21.23(b): non-monetary items at historical cost use the rate at the
-				// transaction date.
-				'ias21-23b-nonmonetary-historical-rate' => static fn (array $o): bool => self::fxItemRate($o, 'nonMonetaryHistorical', 'historical'),
-
-				// ===== IAS 12 / ASC 740 — Income Taxes. =====
-				// 12.12: unpaid current tax for current and prior periods is a liability;
-				// any excess paid is an asset — classification matches the sign.
-				'ias12-12-current-tax-liability' => static fn (array $o): bool => self::currentTaxClassified($o),
-
-				// 12.53: deferred tax assets and liabilities are not discounted.
-				'ias12-53-no-discounting' => static fn (array $o): bool => self::isFalse($o, 'deferredTaxDiscounted'),
-
-				// ASC 740: deferred tax is classified non-current on a classified balance
-				// sheet, netted per tax-paying jurisdiction.
-				'asc740-dta-dtl-noncurrent' => static fn (array $o): bool => self::equalsField($o, 'deferredTaxClassification', 'noncurrent'),
-
-				// ===== IAS 19 — Employee Benefits. =====
-				// 19.11: short-term employee benefits are recognised undiscounted.
-				'ias19-11-short-term-benefits-undiscounted' => static fn (array $o): bool => self::isFalse($o, 'shortTermBenefitsDiscounted'),
-
-				// ===== IFRS 9 — Financial Instruments. =====
-				// 9.5.5.11: rebuttable presumption of significant increase in credit risk
-				// at 30 days past due — unless rebutted, the asset is in stage >= 2.
-				'ifrs9-5511-sicr-30dpd-rebuttable' => static fn (array $o): bool => self::sicrStaging($o),
-
-				// 9 (B5.5.37): rebuttable presumption of default no later than 90 days
-				// past due — unless rebutted, a 90+ DPD asset is flagged default.
-				'ifrs9-default-90dpd-rebuttable' => static fn (array $o): bool => self::defaultStaging($o),
-
-				// ===== IFRS 3 / ASC 805 — Business Combinations. =====
-				// 3.45 / ASC 805: the measurement period ends within one year of the
-				// acquisition date.
-				'ifrs3-45-measurement-period-one-year' => static fn (array $o): bool => self::measurementPeriodWithinYear($o),
-				'asc805-measurement-period-one-year' => static fn (array $o): bool => self::measurementPeriodWithinYear($o),
-
-				// ===== IAS 28 / ASC 323 — Associates / Equity Method. =====
-				// 28 / ASC 323: significant influence is presumed at >= 20 % voting power,
-				// which requires the equity method — internally consistent flag.
-				'ias28-significant-influence-20pct' => static fn (array $o): bool => self::significantInfluenceConsistent($o),
-				'asc323-equity-method-significant-influence' => static fn (array $o): bool => self::significantInfluenceConsistent($o),
-
-				// ===== IFRS 15 — Revenue from Contracts with Customers. =====
-				// 15.63: the no-financing-component practical expedient may be used when
-				// the period between transfer and payment is one year or less.
-				'ifrs15-63-financing-practical-expedient' => static fn (array $o): bool => self::expedientWithinDays($o, 'financingExpedientApplied', 'transferToPaymentDays', 366),
-
-				// 15.94: incremental costs of obtaining a contract may be expensed when
-				// the amortisation period would be one year or less.
-				'ifrs15-94-cost-obtaining-practical-expedient' => static fn (array $o): bool => self::expedientWithinMonths($o, 'costObtainingExpedientApplied', 'costAmortisationMonths', 12),
-
-				// ===== IFRS 16 / ASC 842 — Leases. =====
-				// 16.22: at commencement a lessee recognises a right-of-use asset and a
-				// lease liability (both present and equal at commencement).
-				'ifrs16-22-recognise-rou-and-liability' => static fn (array $o): bool => self::rouAndLiabilityRecognised($o),
-
-				// 16.37: interest on the lease liability produces a constant periodic rate
-				// (period interest = opening liability x rate).
-				'ifrs16-37-liability-constant-rate-interest' => static fn (array $o): bool => self::leaseInterestConstantRate($o),
-
-				// ASC 842: short-term-lease exemption (term <= 12 months, no reasonably
-				// certain purchase option) — internally consistent election.
-				'asc842-short-term-exemption' => static fn (array $o): bool => self::shortTermLeaseConsistent($o),
-
-				// ===== ASC 210 — Balance Sheet. =====
-				// ASC 210: a classified balance sheet separates current from non-current
-				// assets and liabilities.
-				'asc210-classified-balance-sheet' => static fn (array $o): bool => self::classifiedBalanceSheet($o),
-
-				// ===== ASC 220 — Comprehensive Income. =====
-				// ASC 220: comprehensive income = net income + OCI, presented in a single
-				// or two-statement format.
-				'asc220-comprehensive-income' => static fn (array $o): bool => self::comprehensiveIncomeConsistent($o),
-
-				// ===== ASC 848 — Reference Rate Reform. =====
-				// ASC 848: relief applies only to contracts modified on or before the
-				// 31 December 2024 sunset date.
-				'asc848-sunset-date-2024' => static fn (array $o): bool => self::asc848BeforeSunset($o),
+				...self::iasPresentationAndInventoryChecks(),
+				...self::iasAssetAndEmployeeChecks(),
+				...self::ifrsInstrumentAndUsGaapLeaseChecks(),
+				...self::usGaapPresentationChecks(),
 			],
 		];
 
 	}//end checks()
+
+	/**
+	 * The IAS presentation, revenue and inventory predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function iasPresentationAndInventoryChecks(): array {
+		return [
+			// ===== IAS 1 — Presentation of Financial Statements. =====
+			'ias1-10-complete-set' => self::ias110CompleteSet(...),
+			'ias1-32-no-offsetting' => self::ias132NoOffsetting(...),
+			'ias1-36-annual-frequency' => self::ias136AnnualFrequency(...),
+			'ias1-38-comparative-information' => self::ias138ComparativeInformation(...),
+
+			// ===== IAS 7 / ASC 230 — Statement of Cash Flows. =====
+			'ias7-10-classify-three-activities' => self::ias710ClassifyThreeActivities(...),
+			'asc230-three-categories' => self::asc230ThreeCategories(...),
+
+			// ===== IFRS 18 — Presentation and Disclosure. =====
+			'ifrs18-47-classify-into-categories' => self::ifrs1847ClassifyIntoCategories(...),
+			'ifrs18-69-operating-profit-subtotal' => self::ifrs1869OperatingProfitSubtotal(...),
+
+			// ===== IAS 2 — Inventories. =====
+			'ias2-25-fifo-or-weighted-average' => self::ias225FifoOrWeightedAverage(...),
+			'ias2-25-lifo-prohibited' => self::ias225LifoProhibited(...),
+		];
+
+	}//end iasPresentationAndInventoryChecks()
+
+	/**
+	 * The IAS intangible-asset, provision, impairment and employee-benefit predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function iasAssetAndEmployeeChecks(): array {
+		return [
+			// ===== IAS 38 — Intangible Assets. =====
+			'ias38-48-no-internal-goodwill' => self::ias3848NoInternalGoodwill(...),
+			'ias38-63-no-internal-brands' => self::ias3863NoInternalBrands(...),
+
+			// ===== IAS 36 — Impairment of Assets. =====
+			'ias36-124-goodwill-reversal-prohibited' => self::ias36124GoodwillReversalProhibited(...),
+
+			// ===== IAS 37 — Provisions, Contingent Liabilities and Assets. =====
+			'ias37-27-contingent-liability-not-recognised' => self::ias3727ContingentLiabilityNotRecognised(...),
+
+			// ===== IAS 21 — The Effects of Changes in Foreign Exchange Rates. =====
+			'ias21-21-initial-spot-rate' => self::ias2121InitialSpotRate(...),
+			'ias21-23a-monetary-closing-rate' => self::ias2123aMonetaryClosingRate(...),
+			'ias21-23b-nonmonetary-historical-rate' => self::ias2123bNonmonetaryHistoricalRate(...),
+
+			// ===== IAS 12 / ASC 740 — Income Taxes. =====
+			'ias12-12-current-tax-liability' => self::ias1212CurrentTaxLiability(...),
+			'ias12-53-no-discounting' => self::ias1253NoDiscounting(...),
+			'asc740-dta-dtl-noncurrent' => self::asc740DtaDtlNoncurrent(...),
+
+			// ===== IAS 19 — Employee Benefits. =====
+			'ias19-11-short-term-benefits-undiscounted' => self::ias1911ShortTermBenefitsUndiscounted(...),
+		];
+
+	}//end iasAssetAndEmployeeChecks()
+
+	/**
+	 * The IFRS 9 / IFRS 16 and US GAAP revenue and lease predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function ifrsInstrumentAndUsGaapLeaseChecks(): array {
+		return [
+			// ===== IFRS 9 — Financial Instruments. =====
+			'ifrs9-5511-sicr-30dpd-rebuttable' => self::ifrs95511Sicr30dpdRebuttable(...),
+			'ifrs9-default-90dpd-rebuttable' => self::ifrs9Default90dpdRebuttable(...),
+
+			// ===== IFRS 3 / ASC 805 — Business Combinations. =====
+			'ifrs3-45-measurement-period-one-year' => self::ifrs345MeasurementPeriodOneYear(...),
+			'asc805-measurement-period-one-year' => self::asc805MeasurementPeriodOneYear(...),
+
+			// ===== IAS 28 / ASC 323 — Associates / Equity Method. =====
+			'ias28-significant-influence-20pct' => self::ias28SignificantInfluence20pct(...),
+			'asc323-equity-method-significant-influence' => self::asc323EquityMethodSignificantInfluence(...),
+
+			// ===== IFRS 15 — Revenue from Contracts with Customers. =====
+			'ifrs15-63-financing-practical-expedient' => self::ifrs1563FinancingPracticalExpedient(...),
+			'ifrs15-94-cost-obtaining-practical-expedient' => self::ifrs1594CostObtainingPracticalExpedient(...),
+
+			// ===== IFRS 16 / ASC 842 — Leases. =====
+			'ifrs16-22-recognise-rou-and-liability' => self::ifrs1622RecogniseRouAndLiability(...),
+			'ifrs16-37-liability-constant-rate-interest' => self::ifrs1637LiabilityConstantRateInterest(...),
+			'asc842-short-term-exemption' => self::asc842ShortTermExemption(...),
+		];
+
+	}//end ifrsInstrumentAndUsGaapLeaseChecks()
+
+	/**
+	 * The US GAAP balance-sheet and reference-rate predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function usGaapPresentationChecks(): array {
+		return [
+			// ===== ASC 210 — Balance Sheet. =====
+			'asc210-classified-balance-sheet' => self::asc210ClassifiedBalanceSheet(...),
+
+			// ===== ASC 220 — Comprehensive Income. =====
+			'asc220-comprehensive-income' => self::asc220ComprehensiveIncome(...),
+
+			// ===== ASC 848 — Reference Rate Reform. =====
+			'asc848-sunset-date-2024' => self::asc848SunsetDate2024(...),
+		];
+
+	}//end usGaapPresentationChecks()
+
+	/**
+	 * 1.10: a complete set comprises the statement of financial position,
+	 * P&L and OCI, changes in equity, cash flows and notes.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias110CompleteSet(array $o): bool {
+		return self::componentsContainAll($o, 'ifrsComponents', self::IFRS_COMPLETE_SET);
+
+	}//end ias110CompleteSet()
+
+	/**
+	 * 1.32: assets and liabilities (and income and expenses) are not offset.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias132NoOffsetting(array $o): bool {
+		return self::isFalse($o, 'itemsNetted');
+
+	}//end ias132NoOffsetting()
+
+	/**
+	 * 1.36: a complete set (with comparatives) is presented at least
+	 * annually — the reporting period spans about a year and comparatives
+	 * are present.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias136AnnualFrequency(array $o): bool {
+		return self::periodSpansAnnual($o)
+			&& self::isTrue($o, 'priorYearComparatives');
+
+	}//end ias136AnnualFrequency()
+
+	/**
+	 * 1.38: comparative information for the preceding period is presented.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias138ComparativeInformation(array $o): bool {
+		return self::isTrue($o, 'priorYearComparatives');
+
+	}//end ias138ComparativeInformation()
+
+	/**
+	 * 7.10 / ASC 230: cash flows are classified into operating, investing and
+	 * financing activities.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias710ClassifyThreeActivities(array $o): bool {
+		return self::cashFlowThreeCategories($o);
+
+	}//end ias710ClassifyThreeActivities()
+
+	/**
+	 * Rule asc230-three-categories holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc230ThreeCategories(array $o): bool {
+		return self::cashFlowThreeCategories($o);
+
+	}//end asc230ThreeCategories()
+
+	/**
+	 * 18.47: income and expenses are classified into the operating,
+	 * investing, financing, income-taxes and discontinued-operations
+	 * categories.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs1847ClassifyIntoCategories(array $o): bool {
+		return self::componentsContainAll($o, 'pnlCategories', self::IFRS18_CATEGORIES);
+
+	}//end ifrs1847ClassifyIntoCategories()
+
+	/**
+	 * 18.69: an operating profit-or-loss subtotal is presented.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs1869OperatingProfitSubtotal(array $o): bool {
+		return self::numericPresent($o, 'operatingProfitSubtotal');
+
+	}//end ifrs1869OperatingProfitSubtotal()
+
+	/**
+	 * 2.25: interchangeable inventories use FIFO or weighted-average cost.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias225FifoOrWeightedAverage(array $o): bool {
+		return self::inEnum($o, 'inventoryCostFormula', ['fifo', 'weightedaverage', 'weighted-average', 'weighted_average']);
+
+	}//end ias225FifoOrWeightedAverage()
+
+	/**
+	 * 2.25: LIFO is prohibited.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias225LifoProhibited(array $o): bool {
+		return self::present($o, 'inventoryCostFormula')
+			&& strcasecmp(trim((string)$o['inventoryCostFormula']), 'lifo') !== 0;
+
+	}//end ias225LifoProhibited()
+
+	/**
+	 * 38.48: internally generated goodwill is not recognised as an asset.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias3848NoInternalGoodwill(array $o): bool {
+		return self::isFalse($o, 'internalGoodwillRecognised');
+
+	}//end ias3848NoInternalGoodwill()
+
+	/**
+	 * 38.63: internally generated brands, mastheads, customer lists, etc.,
+	 * are not recognised as intangible assets.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias3863NoInternalBrands(array $o): bool {
+		return self::isFalse($o, 'internalBrandsRecognised');
+
+	}//end ias3863NoInternalBrands()
+
+	/**
+	 * 36.124: an impairment loss recognised for goodwill is not reversed.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias36124GoodwillReversalProhibited(array $o): bool {
+		return self::isFalse($o, 'goodwillImpairmentReversed');
+
+	}//end ias36124GoodwillReversalProhibited()
+
+	/**
+	 * 37.27: a contingent liability is not recognised (disclosed only).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias3727ContingentLiabilityNotRecognised(array $o): bool {
+		return self::isFalse($o, 'contingentLiabilityRecognised');
+
+	}//end ias3727ContingentLiabilityNotRecognised()
+
+	/**
+	 * 21.21: a foreign-currency transaction is initially recorded at the spot
+	 * rate at the transaction date applied to the foreign amount
+	 * (recordedAmount = foreignAmount x spotRate).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias2121InitialSpotRate(array $o): bool {
+		return self::fxInitialSpotConsistent($o);
+
+	}//end ias2121InitialSpotRate()
+
+	/**
+	 * 21.23(a): monetary items are translated at the closing rate at each
+	 * reporting date.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias2123aMonetaryClosingRate(array $o): bool {
+		return self::fxItemRate($o, 'monetary', 'closing');
+
+	}//end ias2123aMonetaryClosingRate()
+
+	/**
+	 * 21.23(b): non-monetary items at historical cost use the rate at the
+	 * transaction date.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias2123bNonmonetaryHistoricalRate(array $o): bool {
+		return self::fxItemRate($o, 'nonMonetaryHistorical', 'historical');
+
+	}//end ias2123bNonmonetaryHistoricalRate()
+
+	/**
+	 * 12.12: unpaid current tax for current and prior periods is a liability;
+	 * any excess paid is an asset — classification matches the sign.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias1212CurrentTaxLiability(array $o): bool {
+		return self::currentTaxClassified($o);
+
+	}//end ias1212CurrentTaxLiability()
+
+	/**
+	 * 12.53: deferred tax assets and liabilities are not discounted.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias1253NoDiscounting(array $o): bool {
+		return self::isFalse($o, 'deferredTaxDiscounted');
+
+	}//end ias1253NoDiscounting()
+
+	/**
+	 * ASC 740: deferred tax is classified non-current on a classified balance
+	 * sheet, netted per tax-paying jurisdiction.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc740DtaDtlNoncurrent(array $o): bool {
+		return self::equalsField($o, 'deferredTaxClassification', 'noncurrent');
+
+	}//end asc740DtaDtlNoncurrent()
+
+	/**
+	 * 19.11: short-term employee benefits are recognised undiscounted.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias1911ShortTermBenefitsUndiscounted(array $o): bool {
+		return self::isFalse($o, 'shortTermBenefitsDiscounted');
+
+	}//end ias1911ShortTermBenefitsUndiscounted()
+
+	/**
+	 * 9.5.5.11: rebuttable presumption of significant increase in credit risk
+	 * at 30 days past due — unless rebutted, the asset is in stage >= 2.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs95511Sicr30dpdRebuttable(array $o): bool {
+		return self::sicrStaging($o);
+
+	}//end ifrs95511Sicr30dpdRebuttable()
+
+	/**
+	 * 9 (B5.5.37): rebuttable presumption of default no later than 90 days
+	 * past due — unless rebutted, a 90+ DPD asset is flagged default.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs9Default90dpdRebuttable(array $o): bool {
+		return self::defaultStaging($o);
+
+	}//end ifrs9Default90dpdRebuttable()
+
+	/**
+	 * 3.45 / ASC 805: the measurement period ends within one year of the
+	 * acquisition date.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs345MeasurementPeriodOneYear(array $o): bool {
+		return self::measurementPeriodWithinYear($o);
+
+	}//end ifrs345MeasurementPeriodOneYear()
+
+	/**
+	 * Rule asc805-measurement-period-one-year holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc805MeasurementPeriodOneYear(array $o): bool {
+		return self::measurementPeriodWithinYear($o);
+
+	}//end asc805MeasurementPeriodOneYear()
+
+	/**
+	 * 28 / ASC 323: significant influence is presumed at >= 20 % voting power,
+	 * which requires the equity method — internally consistent flag.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ias28SignificantInfluence20pct(array $o): bool {
+		return self::significantInfluenceConsistent($o);
+
+	}//end ias28SignificantInfluence20pct()
+
+	/**
+	 * Rule asc323-equity-method-significant-influence holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc323EquityMethodSignificantInfluence(array $o): bool {
+		return self::significantInfluenceConsistent($o);
+
+	}//end asc323EquityMethodSignificantInfluence()
+
+	/**
+	 * 15.63: the no-financing-component practical expedient may be used when
+	 * the period between transfer and payment is one year or less.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs1563FinancingPracticalExpedient(array $o): bool {
+		return self::expedientWithinDays($o, 'financingExpedientApplied', 'transferToPaymentDays', 366);
+
+	}//end ifrs1563FinancingPracticalExpedient()
+
+	/**
+	 * 15.94: incremental costs of obtaining a contract may be expensed when
+	 * the amortisation period would be one year or less.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs1594CostObtainingPracticalExpedient(array $o): bool {
+		return self::expedientWithinMonths($o, 'costObtainingExpedientApplied', 'costAmortisationMonths', 12);
+
+	}//end ifrs1594CostObtainingPracticalExpedient()
+
+	/**
+	 * 16.22: at commencement a lessee recognises a right-of-use asset and a
+	 * lease liability (both present and equal at commencement).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs1622RecogniseRouAndLiability(array $o): bool {
+		return self::rouAndLiabilityRecognised($o);
+
+	}//end ifrs1622RecogniseRouAndLiability()
+
+	/**
+	 * 16.37: interest on the lease liability produces a constant periodic rate
+	 * (period interest = opening liability x rate).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ifrs1637LiabilityConstantRateInterest(array $o): bool {
+		return self::leaseInterestConstantRate($o);
+
+	}//end ifrs1637LiabilityConstantRateInterest()
+
+	/**
+	 * ASC 842: short-term-lease exemption (term <= 12 months, no reasonably
+	 * certain purchase option) — internally consistent election.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc842ShortTermExemption(array $o): bool {
+		return self::shortTermLeaseConsistent($o);
+
+	}//end asc842ShortTermExemption()
+
+	/**
+	 * ASC 210: a classified balance sheet separates current from non-current
+	 * assets and liabilities.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc210ClassifiedBalanceSheet(array $o): bool {
+		return self::classifiedBalanceSheet($o);
+
+	}//end asc210ClassifiedBalanceSheet()
+
+	/**
+	 * ASC 220: comprehensive income = net income + OCI, presented in a single
+	 * or two-statement format.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc220ComprehensiveIncome(array $o): bool {
+		return self::comprehensiveIncomeConsistent($o);
+
+	}//end asc220ComprehensiveIncome()
+
+	/**
+	 * ASC 848: relief applies only to contracts modified on or before the
+	 * 31 December 2024 sunset date.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function asc848SunsetDate2024(array $o): bool {
+		return self::asc848BeforeSunset($o);
+
+	}//end asc848SunsetDate2024()
 
 	/**
 	 * Backfill the IFRS/US-GAAP structural fields onto the EXISTING FinancialStatement
@@ -259,116 +836,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'FinancialStatement' => [
-				// IAS 1 — complete set + comparatives. itemsNetted already false on the
-				// existing rows; reasserted here for the US sample.
-				'ifrsComponents' => self::IFRS_COMPLETE_SET,
-				'itemsNetted' => false,
-				'priorYearComparatives' => true,
-
-				// IAS 7 / ASC 230 — the three cash-flow categories (reconciling to a
-				// net change for the period).
-				'cashFlowStatement' => [
-					'operating' => 70000.0,
-					'investing' => -20000.0,
-					'financing' => -15000.0,
-					'netChange' => 35000.0,
-				],
-
-				// IFRS 18 — categories + operating subtotal.
-				'pnlCategories' => self::IFRS18_CATEGORIES,
-				'operatingProfitSubtotal' => 70000.0,
-
-				// IAS 2 — inventory cost formula.
-				'inventoryCostFormula' => 'fifo',
-
-				// IAS 38 / 36 / 37 — prohibited recognitions are all false.
-				'internalGoodwillRecognised' => false,
-				'internalBrandsRecognised' => false,
-				'goodwillImpairmentReversed' => false,
-				'contingentLiabilityRecognised' => false,
-
-				// IAS 21 — foreign-currency translation: initial spot, monetary closing,
-				// non-monetary historical.
-				'fxInitialMeasurement' => [
-					'foreignAmount' => 10000.0,
-					'spotRate' => 1.10,
-					'recordedAmount' => 11000.0,
-				],
-				'monetaryItemRateType' => 'closing',
-				'nonMonetaryHistoricalRateType' => 'historical',
-
-				// IAS 12 / ASC 740 — current tax position + no discounting + non-current
-				// deferred tax. unpaidCurrentTax > 0 -> classified as a liability.
-				'currentTaxPosition' => [
-					'unpaidCurrentTax' => 12000.0,
-					'classification' => 'liability',
-				],
-				'deferredTaxDiscounted' => false,
-				'deferredTaxClassification' => 'noncurrent',
-
-				// IAS 19 — short-term benefits undiscounted.
-				'shortTermBenefitsDiscounted' => false,
-
-				// IFRS 9 — credit-risk staging consistent with 30/90 DPD presumptions.
-				'creditRiskExposure' => [
-					'daysPastDue' => 0,
-					'sicrRebutted' => false,
-					'sicrStage' => 1,
-					'defaultRebutted' => false,
-					'inDefault' => false,
-				],
-
-				// IFRS 3 / ASC 805 — measurement period within one year.
-				'acquisitionDate' => '2025-03-01',
-				'measurementPeriodEnd' => '2025-09-30',
-
-				// IAS 28 / ASC 323 — 20 % significant influence -> equity method.
-				'investeeVotingPowerPct' => 25.0,
-				'equityMethodApplied' => true,
-
-				// IFRS 15 — one-year practical expedients.
-				'financingExpedientApplied' => true,
-				'transferToPaymentDays' => 30,
-				'costObtainingExpedientApplied' => true,
-				'costAmortisationMonths' => 8,
-
-				// IFRS 16 / ASC 842 — right-of-use + liability, constant-rate interest,
-				// short-term exemption.
-				'leaseRecognition' => [
-					'rouAsset' => 50000.0,
-					'leaseLiability' => 50000.0,
-					'openingLiability' => 50000.0,
-					'discountRate' => 0.05,
-					'firstPeriodInterest' => 2500.0,
-				],
-				'shortTermLease' => [
-					'termMonths' => 9,
-					'purchaseOptionLikely' => false,
-					'exemptionElected' => true,
-				],
-
-				// ASC 210 — classified balance sheet.
-				'classifiedBalanceSheet' => [
-					'currentAssets' => 80000.0,
-					'noncurrentAssets' => 120000.0,
-					'currentLiabilities' => 60000.0,
-					'noncurrentLiabilities' => 40000.0,
-				],
-
-				// ASC 220 — comprehensive income.
-				'comprehensiveIncome' => [
-					'netIncome' => 65000.0,
-					'otherComprehensiveIncome' => 5000.0,
-					'totalComprehensiveIncome' => 70000.0,
-					'presentationFormat' => 'single',
-				],
-
-				// ASC 848 — modification on/before the 2024 sunset.
-				'asc848ModificationDate' => '2024-06-30',
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
@@ -382,42 +850,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'FinancialStatement' => [
-				[
-					'statementType' => 'consolidated',
-					'jurisdiction' => 'US',
-					'framework' => 'usgaap',
-					'reportingPeriodStart' => '2025-01-01',
-					'reportingPeriodEnd' => '2025-12-31',
-					'language' => 'en',
-					'currency' => 'USD',
-					'balanceTotal' => 200000.0,
-					'turnover' => 500000.0,
-					'employees' => 12.0,
-					'sizeClass' => 'large',
-					'sizeClassPriorYear' => 'large',
-					'balanceSheet' => [
-						'fixedAssets' => 120000.0,
-						'currentAssets' => 80000.0,
-						'equity' => 90000.0,
-						'provisions' => 10000.0,
-						'liabilities' => 100000.0,
-					],
-					'profitAndLoss' => [
-						'netTurnover' => 500000.0,
-						'operatingExpenses' => 430000.0,
-						'financialResult' => -5000.0,
-						'result' => 65000.0,
-					],
-					'priorYearComparatives' => true,
-					'itemsNetted' => false,
-					'components' => ['balance', 'pnl', 'notes'],
-					'audited' => true,
-					'listedOnRegulatedMarket' => false,
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 

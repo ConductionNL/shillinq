@@ -26,33 +26,38 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
 /**
- * Administration scope for the WBSO v1 controllers.
- *
- * Requires the using class to hold `$request` and `$administrationContext`.
- *
- * @property IRequest $request
- * @property AdministrationContextService $administrationContext
+ * The administration a WBSO API request works in.
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
  */
-trait WbsoAdministrationScopeTrait {
+final class WbsoAdministrationScope {
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The request naming the administration.
+	 * @param AdministrationContextService $administrationContext The caller's memberships.
+	 */
+	public function __construct(
+		private readonly IRequest $request,
+		private readonly AdministrationContextService $administrationContext,
+	) {
+	}//end __construct()
 
 	/**
-	 * The administration of this request, only when the caller is a member of it.
+	 * The administration the request works in.
 	 *
-	 * An omitted `administration_id` means the caller's first valid membership.
-	 * A malformed id, or one the caller holds no valid membership for, gives null.
+	 * The request's `administration_id`, when the caller holds a membership for
+	 * it; without one, the caller's first administration. Null when it is
+	 * malformed, foreign, or the caller has none.
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
-	private function resolveAdministration(): ?string {
+	public function resolve(): ?string {
 		$value = trim((string)$this->request->getParam('administration_id', ''));
 		if ($value === '') {
 			return ($this->administrationContext->accessibleAdministrationIds()[0] ?? null);
@@ -67,18 +72,20 @@ trait WbsoAdministrationScopeTrait {
 		}
 
 		return $value;
-	}//end resolveAdministration()
+
+	}//end resolve()
 
 	/**
-	 * The answer for an administration the caller may not use.
+	 * Whether the caller may book journal entries in the administration.
 	 *
-	 * A 404, so the response does not confirm that the administration exists.
+	 * @param string $administrationId The resolved administration.
 	 *
-	 * @return JSONResponse
+	 * @return bool
 	 *
-	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
-	private function administrationNotFound(): JSONResponse {
-		return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-	}//end administrationNotFound()
-}//end trait
+	public function canPost(string $administrationId): bool {
+		return $this->administrationContext->canPostJournalEntry(administrationId: $administrationId);
+
+	}//end canPost()
+}//end class

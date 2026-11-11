@@ -1,0 +1,841 @@
+{
+    "{\"audience\":\"customer\"}": {
+        "label": "Bestellingen en facturen",
+        "collections": [
+            {
+                "id": "invoices",
+                "register": "shillinq",
+                "schema": "Invoice",
+                "scopeField": "customerReference",
+                "scopeClaim": "customerId",
+                "label": "Mijn facturen",
+                "listable": true
+            },
+            {
+                "id": "projectInvoices",
+                "register": "shillinq",
+                "schema": "BillableInvoice",
+                "scopeField": "customerId",
+                "scopeClaim": "customerId",
+                "label": "Mijn projectfacturen",
+                "listable": true
+            },
+            {
+                "id": "quotes",
+                "register": "shillinq",
+                "schema": "Quote",
+                "scopeField": "customerReference",
+                "scopeClaim": "customerId",
+                "label": "Mijn offertes",
+                "listable": true
+            },
+            {
+                "id": "salesOrders",
+                "register": "shillinq",
+                "schema": "SalesOrder",
+                "scopeField": "customerReference",
+                "scopeClaim": "customerId",
+                "label": "Mijn bestellingen",
+                "listable": true
+            },
+            {
+                "id": "contracts",
+                "register": "shillinq",
+                "schema": "RevenueContract",
+                "scopeField": "customerId",
+                "scopeClaim": "customerId",
+                "label": "Mijn contracten",
+                "listable": true
+            },
+            {
+                "id": "salesInvoices",
+                "register": "shillinq",
+                "schema": "ARInvoice",
+                "scopeField": "customerId",
+                "scopeClaim": "customerMasterId",
+                "label": "Mijn rekeningen",
+                "listable": true,
+                "rowAction": "pay",
+                "fields": [
+                    "invoiceNumber",
+                    "invoiceType",
+                    "invoiceDate",
+                    "dueDate",
+                    "currency",
+                    "grossAmount",
+                    "vatAmount",
+                    "invoiceLines",
+                    "lifecycleState",
+                    "sourceDocumentUri",
+                    "ublRef",
+                    "dunning"
+                ],
+                "columns": [
+                    {
+                        "field": "invoiceNumber",
+                        "label": "Factuur",
+                        "render": "text"
+                    },
+                    {
+                        "field": "invoiceDate",
+                        "label": "Datum",
+                        "render": "date"
+                    },
+                    {
+                        "field": "dueDate",
+                        "label": "Vervaldatum",
+                        "render": "date"
+                    },
+                    {
+                        "field": "grossAmount",
+                        "label": "Bedrag",
+                        "render": "currency"
+                    },
+                    {
+                        "field": "lifecycleState",
+                        "label": "Status",
+                        "render": "badge"
+                    }
+                ],
+                "detail": {
+                    "layout": "card",
+                    "fields": [
+                        "invoiceNumber",
+                        "invoiceType",
+                        "invoiceDate",
+                        "dueDate",
+                        "currency",
+                        "grossAmount",
+                        "vatAmount",
+                        "invoiceLines",
+                        "lifecycleState",
+                        "sourceDocumentUri",
+                        "ublRef",
+                        "dunning"
+                    ]
+                },
+                "defaultSort": {
+                    "field": "invoiceDate",
+                    "direction": "desc"
+                }
+            },
+            {
+                "id": "paymentRequests",
+                "register": "shillinq",
+                "schema": "PaymentRequest",
+                "scopeField": "invoiceReference",
+                "scopeClaim": "customerMasterId",
+                "via": {
+                    "register": "shillinq",
+                    "schema": "ARInvoice",
+                    "scopeField": "customerId",
+                    "targetField": "id",
+                    "match": "scopeField"
+                },
+                "label": "Mijn facturen betalen",
+                "listable": true,
+                "fields": [
+                    "invoiceReference",
+                    "amount",
+                    "currency",
+                    "paymentGateway",
+                    "state",
+                    "paymentLink",
+                    "expiresAt",
+                    "capturedAt",
+                    "failureReason",
+                    "confirmationSummary"
+                ],
+                "columns": [
+                    {
+                        "field": "invoiceReference",
+                        "label": "Factuur",
+                        "render": "text"
+                    },
+                    {
+                        "field": "amount",
+                        "label": "Bedrag",
+                        "render": "currency"
+                    },
+                    {
+                        "field": "state",
+                        "label": "Status",
+                        "render": "badge"
+                    },
+                    {
+                        "field": "paymentLink",
+                        "label": "Nu betalen",
+                        "render": "link"
+                    }
+                ],
+                "detail": {
+                    "layout": "card",
+                    "fields": [
+                        "invoiceReference",
+                        "amount",
+                        "currency",
+                        "paymentGateway",
+                        "state",
+                        "paymentLink",
+                        "expiresAt",
+                        "capturedAt",
+                        "failureReason",
+                        "confirmationSummary"
+                    ]
+                },
+                "defaultSort": {
+                    "field": "expiresAt",
+                    "direction": "desc"
+                }
+            },
+            {
+                "id": "requestPayments",
+                "register": "shillinq",
+                "schema": "PaymentRequest",
+                "scopeField": "customerId",
+                "scopeClaim": "customerMasterId",
+                "label": "Mijn betaalverzoeken",
+                "listable": true,
+                "rowAction": "pay-request",
+                "fields": [
+                    "description",
+                    "requestType",
+                    "amount",
+                    "currency",
+                    "state",
+                    "dueAt",
+                    "legalBasis",
+                    "paymentLink",
+                    "capturedAt",
+                    "failureReason",
+                    "confirmationSummary"
+                ],
+                "columns": [
+                    {
+                        "field": "description",
+                        "label": "Waarvoor",
+                        "render": "text"
+                    },
+                    {
+                        "field": "amount",
+                        "label": "Bedrag",
+                        "render": "currency"
+                    },
+                    {
+                        "field": "dueAt",
+                        "label": "Vervaldatum",
+                        "render": "date"
+                    },
+                    {
+                        "field": "state",
+                        "label": "Status",
+                        "render": "badge"
+                    }
+                ],
+                "detail": {
+                    "layout": "card",
+                    "fields": [
+                        "description",
+                        "requestType",
+                        "amount",
+                        "currency",
+                        "state",
+                        "dueAt",
+                        "legalBasis",
+                        "paymentLink",
+                        "capturedAt",
+                        "failureReason",
+                        "confirmationSummary"
+                    ]
+                },
+                "defaultSort": {
+                    "field": "dueAt",
+                    "direction": "desc"
+                }
+            }
+        ],
+        "actions": [
+            {
+                "id": "pay",
+                "label": "Nu betalen",
+                "type": "endpoint-forward",
+                "endpoint": "/apps/shillinq/api/portal/payments/initiate",
+                "method": "POST",
+                "minTrust": "low",
+                "rowField": "invoiceId",
+                "rowWhen": {
+                    "field": "lifecycleState",
+                    "in": [
+                        "issued",
+                        "partially-paid",
+                        "overdue"
+                    ]
+                }
+            },
+            {
+                "id": "pay-request",
+                "label": "Nu betalen",
+                "type": "endpoint-forward",
+                "endpoint": "/apps/shillinq/api/portal/payments/initiate",
+                "method": "POST",
+                "minTrust": "low",
+                "rowField": "paymentRequestId",
+                "rowWhen": {
+                    "field": "state",
+                    "in": [
+                        "pending"
+                    ]
+                }
+            }
+        ],
+        "notifications": [],
+        "pages": [
+            {
+                "id": "invoices",
+                "label": "Mijn facturen",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "invoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "invoices"
+                    }
+                ]
+            },
+            {
+                "id": "projectInvoices",
+                "label": "Mijn projectfacturen",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "projectInvoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "projectInvoices"
+                    }
+                ]
+            },
+            {
+                "id": "quotes",
+                "label": "Mijn offertes",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "quotes"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "quotes"
+                    }
+                ]
+            },
+            {
+                "id": "salesOrders",
+                "label": "Mijn bestellingen",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "salesOrders"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "salesOrders"
+                    }
+                ]
+            },
+            {
+                "id": "contracts",
+                "label": "Mijn contracten",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "contracts"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "contracts"
+                    }
+                ]
+            },
+            {
+                "id": "salesInvoices",
+                "label": "Mijn rekeningen",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "salesInvoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "salesInvoices"
+                    }
+                ]
+            },
+            {
+                "id": "paymentRequests",
+                "label": "Mijn facturen betalen",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "paymentRequests"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "paymentRequests"
+                    }
+                ]
+            },
+            {
+                "id": "requestPayments",
+                "label": "Mijn betaalverzoeken",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "requestPayments"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "requestPayments"
+                    }
+                ]
+            }
+        ]
+    },
+    "{\"audience\":\"supplier\"}": {
+        "label": "Opdrachten en facturen",
+        "collections": [
+            {
+                "id": "purchaseOrders",
+                "register": "shillinq",
+                "schema": "PurchaseOrder",
+                "scopeField": "supplierId",
+                "scopeClaim": "supplierId",
+                "label": "Inkooporders",
+                "listable": true
+            },
+            {
+                "id": "supplierInvoices",
+                "register": "shillinq",
+                "schema": "SupplierInvoice",
+                "scopeField": "supplierId",
+                "scopeClaim": "supplierId",
+                "label": "Mijn facturen",
+                "listable": true
+            }
+        ],
+        "actions": [],
+        "notifications": [],
+        "pages": [
+            {
+                "id": "purchaseOrders",
+                "label": "Inkooporders",
+                "group": "Opdrachten en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "purchaseOrders"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "purchaseOrders"
+                    }
+                ]
+            },
+            {
+                "id": "supplierInvoices",
+                "label": "Mijn facturen",
+                "group": "Opdrachten en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "supplierInvoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "supplierInvoices"
+                    }
+                ]
+            }
+        ]
+    },
+    "{\"audience\":\"accountant\"}": {
+        "label": "Administratie",
+        "collections": [
+            {
+                "id": "salesInvoices",
+                "register": "shillinq",
+                "schema": "ARInvoice",
+                "scopeField": "administrationId",
+                "scopeClaim": "accountantAdministrationId",
+                "label": "Verkoopfacturen",
+                "listable": true
+            },
+            {
+                "id": "purchaseInvoices",
+                "register": "shillinq",
+                "schema": "SupplierInvoice",
+                "scopeField": "administrationId",
+                "scopeClaim": "accountantAdministrationId",
+                "label": "Inkoopfacturen",
+                "listable": true
+            },
+            {
+                "id": "journalEntries",
+                "register": "shillinq",
+                "schema": "JournalEntry",
+                "scopeField": "administrationId",
+                "scopeClaim": "accountantAdministrationId",
+                "label": "Journaalposten",
+                "listable": true
+            },
+            {
+                "id": "generalLedger",
+                "register": "shillinq",
+                "schema": "GLTransaction",
+                "scopeField": "administrationId",
+                "scopeClaim": "accountantAdministrationId",
+                "label": "Grootboek",
+                "listable": true
+            },
+            {
+                "id": "trialBalance",
+                "register": "shillinq",
+                "schema": "TrialBalance",
+                "scopeField": "administrationId",
+                "scopeClaim": "accountantAdministrationId",
+                "label": "Proefbalans",
+                "listable": true
+            },
+            {
+                "id": "vatReturns",
+                "register": "shillinq",
+                "schema": "VatReturn",
+                "scopeField": "administrationId",
+                "scopeClaim": "accountantAdministrationId",
+                "label": "Btw-aangiften",
+                "listable": true
+            }
+        ],
+        "actions": [],
+        "notifications": [],
+        "pages": [
+            {
+                "id": "salesInvoices",
+                "label": "Verkoopfacturen",
+                "group": "Administratie",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "salesInvoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "salesInvoices"
+                    }
+                ]
+            },
+            {
+                "id": "purchaseInvoices",
+                "label": "Inkoopfacturen",
+                "group": "Administratie",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "purchaseInvoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "purchaseInvoices"
+                    }
+                ]
+            },
+            {
+                "id": "journalEntries",
+                "label": "Journaalposten",
+                "group": "Administratie",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "journalEntries"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "journalEntries"
+                    }
+                ]
+            },
+            {
+                "id": "generalLedger",
+                "label": "Grootboek",
+                "group": "Administratie",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "generalLedger"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "generalLedger"
+                    }
+                ]
+            },
+            {
+                "id": "trialBalance",
+                "label": "Proefbalans",
+                "group": "Administratie",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "trialBalance"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "trialBalance"
+                    }
+                ]
+            },
+            {
+                "id": "vatReturns",
+                "label": "Btw-aangiften",
+                "group": "Administratie",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "vatReturns"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "vatReturns"
+                    }
+                ]
+            }
+        ]
+    },
+    "{\"audience\":\"parent\"}": {
+        "label": "Schoolbijdragen",
+        "collections": [
+            {
+                "id": "salesInvoices",
+                "register": "shillinq",
+                "schema": "ARInvoice",
+                "scopeField": "customerId",
+                "scopeClaim": "customerMasterId",
+                "label": "Mijn bijdragen",
+                "listable": true,
+                "rowAction": "pay",
+                "fields": [
+                    "invoiceNumber",
+                    "invoiceType",
+                    "invoiceDate",
+                    "dueDate",
+                    "currency",
+                    "grossAmount",
+                    "vatAmount",
+                    "invoiceLines",
+                    "lifecycleState",
+                    "sourceDocumentUri",
+                    "ublRef",
+                    "dunning",
+                    "invoiceNote"
+                ],
+                "columns": [
+                    {
+                        "field": "invoiceNumber",
+                        "label": "Factuur",
+                        "render": "text"
+                    },
+                    {
+                        "field": "invoiceDate",
+                        "label": "Datum",
+                        "render": "date"
+                    },
+                    {
+                        "field": "dueDate",
+                        "label": "Vervaldatum",
+                        "render": "date"
+                    },
+                    {
+                        "field": "grossAmount",
+                        "label": "Bedrag",
+                        "render": "currency"
+                    },
+                    {
+                        "field": "lifecycleState",
+                        "label": "Status",
+                        "render": "badge"
+                    }
+                ],
+                "detail": {
+                    "layout": "card",
+                    "fields": [
+                        "invoiceNumber",
+                        "invoiceType",
+                        "invoiceDate",
+                        "dueDate",
+                        "currency",
+                        "grossAmount",
+                        "vatAmount",
+                        "invoiceLines",
+                        "lifecycleState",
+                        "sourceDocumentUri",
+                        "ublRef",
+                        "dunning",
+                        "invoiceNote"
+                    ]
+                },
+                "defaultSort": {
+                    "field": "invoiceDate",
+                    "direction": "desc"
+                },
+                "noticeField": "invoiceNote"
+            },
+            {
+                "id": "paymentRequests",
+                "register": "shillinq",
+                "schema": "PaymentRequest",
+                "scopeField": "invoiceReference",
+                "scopeClaim": "customerMasterId",
+                "via": {
+                    "register": "shillinq",
+                    "schema": "ARInvoice",
+                    "scopeField": "customerId",
+                    "targetField": "id",
+                    "match": "scopeField"
+                },
+                "label": "Mijn bijdragen betalen",
+                "listable": true,
+                "fields": [
+                    "invoiceReference",
+                    "amount",
+                    "currency",
+                    "paymentGateway",
+                    "state",
+                    "paymentLink",
+                    "expiresAt",
+                    "capturedAt",
+                    "failureReason",
+                    "confirmationSummary",
+                    "description"
+                ],
+                "columns": [
+                    {
+                        "field": "invoiceReference",
+                        "label": "Factuur",
+                        "render": "text"
+                    },
+                    {
+                        "field": "amount",
+                        "label": "Bedrag",
+                        "render": "currency"
+                    },
+                    {
+                        "field": "state",
+                        "label": "Status",
+                        "render": "badge"
+                    },
+                    {
+                        "field": "paymentLink",
+                        "label": "Nu betalen",
+                        "render": "link"
+                    }
+                ],
+                "detail": {
+                    "layout": "card",
+                    "fields": [
+                        "invoiceReference",
+                        "amount",
+                        "currency",
+                        "paymentGateway",
+                        "state",
+                        "paymentLink",
+                        "expiresAt",
+                        "capturedAt",
+                        "failureReason",
+                        "confirmationSummary",
+                        "description"
+                    ]
+                },
+                "defaultSort": {
+                    "field": "expiresAt",
+                    "direction": "desc"
+                }
+            }
+        ],
+        "actions": [
+            {
+                "id": "pay",
+                "label": "Nu betalen",
+                "type": "endpoint-forward",
+                "endpoint": "/apps/shillinq/api/portal/payments/initiate",
+                "method": "POST",
+                "minTrust": "low",
+                "rowField": "invoiceId",
+                "rowWhen": {
+                    "field": "lifecycleState",
+                    "in": [
+                        "issued",
+                        "partially-paid",
+                        "overdue"
+                    ]
+                }
+            },
+            {
+                "id": "decline",
+                "label": "Ik betaal niet",
+                "type": "endpoint-forward",
+                "endpoint": "/apps/shillinq/api/portal/contributions/decline",
+                "method": "POST",
+                "fields": [
+                    "invoiceId"
+                ],
+                "minTrust": "low"
+            }
+        ],
+        "notifications": [],
+        "pages": [
+            {
+                "id": "salesInvoices",
+                "label": "Mijn bijdragen",
+                "group": "Schoolbijdragen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "salesInvoices"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "salesInvoices"
+                    }
+                ]
+            },
+            {
+                "id": "paymentRequests",
+                "label": "Mijn bijdragen betalen",
+                "group": "Schoolbijdragen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "paymentRequests"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "paymentRequests"
+                    }
+                ]
+            }
+        ]
+    },
+    "{\"audience\":\"employee\"}": null,
+    "[]": null
+}
