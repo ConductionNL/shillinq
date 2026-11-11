@@ -68,6 +68,18 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  */
 class ExpenseReimbursementGuard {
 	/**
+	 * The claim's line-item kinds, in the order they are read: the claim
+	 * field listing their ids and the item field holding their cost.
+	 *
+	 * @var array<string, array{ids:string, amount:string}>
+	 */
+	private const ITEM_SOURCES = [
+		'Receipt' => ['ids' => 'receiptIds', 'amount' => 'amountInBaseCurrency'],
+		'MileageEntry' => ['ids' => 'mileageIds', 'amount' => 'totalAmount'],
+		'PerDiem' => ['ids' => 'perDiemIds', 'amount' => 'allowanceAmount'],
+	];
+
+	/**
 	 * Construct the guard with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for register slug.
@@ -115,33 +127,11 @@ class ExpenseReimbursementGuard {
 	 */
 	public function requireSettlementModeConsistency(array $claim): bool {
 		try {
-			$claimMode = ($claim['settlementMode'] ?? null);
-			if ($claimMode === null || $claimMode === '') {
-				$this->logger->info(
-					'ExpenseReimbursementGuard: claim has no settlementMode — denying submit (REQ-ERP-003)',
-					['claimId' => ($claim['id'] ?? 'unknown')]
-				);
+			if ($this->claimModeIsValid(claim: $claim) === false) {
 				return false;
 			}
 
-			if (in_array($claimMode, ['reimbursable', 'pass-through'], true) === false) {
-				$this->logger->info(
-					'ExpenseReimbursementGuard: claim has invalid settlementMode — denying submit',
-					[
-						'claimId' => ($claim['id'] ?? 'unknown'),
-						'settlementMode' => $claimMode,
-					]
-				);
-				return false;
-			}
-
-			return $this->allItemsMatchSettlementMode(
-				claimId: (string)($claim['id'] ?? ''),
-				claimMode: $claimMode,
-				receiptIds: (array)($claim['receiptIds'] ?? []),
-				mileageIds: (array)($claim['mileageIds'] ?? []),
-				perDiemIds: (array)($claim['perDiemIds'] ?? []),
-			);
+			return $this->allItemsMatchSettlementMode(claim: $claim, claimMode: (string)$claim['settlementMode']);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ExpenseReimbursementGuard: requireSettlementModeConsistency failed — denying submit (fail-closed)',
@@ -151,6 +141,51 @@ class ExpenseReimbursementGuard {
 		}//end try
 
 	}//end requireSettlementModeConsistency()
+
+	/**
+	 * Whether the claim carries a settlementMode, and a known one
+	 * (reimbursable | pass-through); a refusal is logged (REQ-ERP-003).
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array.
+	 *
+	 * @return bool
+	 */
+	private function claimModeIsValid(array $claim): bool {
+		$claimMode = ($claim['settlementMode'] ?? null);
+		if ($claimMode === null || $claimMode === '') {
+			return $this->refuse(
+				message: 'ExpenseReimbursementGuard: claim has no settlementMode — denying submit (REQ-ERP-003)',
+				context: ['claimId' => ($claim['id'] ?? 'unknown')]
+			);
+		}
+
+		if (in_array($claimMode, ['reimbursable', 'pass-through'], true) === false) {
+			return $this->refuse(
+				message: 'ExpenseReimbursementGuard: claim has invalid settlementMode — denying submit',
+				context: [
+					'claimId' => ($claim['id'] ?? 'unknown'),
+					'settlementMode' => $claimMode,
+				]
+			);
+		}
+
+		return true;
+
+	}//end claimModeIsValid()
+
+	/**
+	 * Log a refused transition and refuse it.
+	 *
+	 * @param string               $message The refusal log line.
+	 * @param array<string, mixed> $context The log context.
+	 *
+	 * @return bool Always false.
+	 */
+	private function refuse(string $message, array $context): bool {
+		$this->logger->info($message, $context);
+		return false;
+
+	}//end refuse()
 
 	/**
 	 * Precondition for the approve transition (REQ-ERP-006).
@@ -175,41 +210,12 @@ class ExpenseReimbursementGuard {
 	 */
 	public function requireMarkupApprovalIfThreshold(array $claim): bool {
 		try {
-			// No pass-through markup ⇒ no extra gate needed.
-			$settlementMode = ($claim['settlementMode'] ?? null);
-			if ($settlementMode !== 'pass-through') {
-				return true;
-			}
-
-			$policyId = ($claim['reimbursementPolicyId'] ?? null);
-			if ($policyId === null || $policyId === '') {
-				// No explicit policy ⇒ admin defaults apply, no extra gate.
-				return true;
-			}
-
-			$threshold = $this->getMarkupApprovalThresholdForPolicy(policyId: (string)$policyId);
+			$threshold = $this->markupThreshold(claim: $claim);
 			if ($threshold === null) {
 				return true;
 			}
 
-			$totalPassThroughAmount = (float)($claim['totalPassThroughAmount'] ?? 0.0);
-			$markupAmount = $this->computePassThroughMarkupAmount(claim: $claim, totalPassThrough: $totalPassThroughAmount);
-
-			if ($markupAmount >= $threshold) {
-				$this->logger->info(
-					'ExpenseReimbursementGuard: pass-through markup meets/exceeds policy threshold — '
-					. 'denying standard approve, deferring to OR approval-workflow extra-approver gate (REQ-ERP-006)',
-					[
-						'claimId' => ($claim['id'] ?? 'unknown'),
-						'policyId' => $policyId,
-						'markupAmount' => $markupAmount,
-						'threshold' => $threshold,
-					]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->markupBelowThreshold(claim: $claim, threshold: $threshold);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ExpenseReimbursementGuard: requireMarkupApprovalIfThreshold failed — denying approve (fail-closed)',
@@ -219,6 +225,55 @@ class ExpenseReimbursementGuard {
 		}//end try
 
 	}//end requireMarkupApprovalIfThreshold()
+
+	/**
+	 * The markup-approval threshold that applies to the claim, or null: only
+	 * a pass-through claim with an explicit policy declaring one is gated
+	 * (no pass-through markup, or admin defaults, need no extra gate).
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array.
+	 *
+	 * @return float|null
+	 */
+	private function markupThreshold(array $claim): float|null {
+		$policyId = ($claim['reimbursementPolicyId'] ?? null);
+		if (($claim['settlementMode'] ?? null) !== 'pass-through' || $policyId === null || $policyId === '') {
+			return null;
+		}
+
+		return $this->getMarkupApprovalThresholdForPolicy(policyId: (string)$policyId);
+
+	}//end markupThreshold()
+
+	/**
+	 * Whether the claim's pass-through markup stays below the threshold; at
+	 * or above it the standard approve is denied, deferring to OR's
+	 * approval-workflow extra-approver gate (REQ-ERP-006).
+	 *
+	 * @param array<string, mixed> $claim     ExpenseClaimEntry object array.
+	 * @param float                $threshold The policy threshold.
+	 *
+	 * @return bool
+	 */
+	private function markupBelowThreshold(array $claim, float $threshold): bool {
+		$totalPassThroughAmount = (float)($claim['totalPassThroughAmount'] ?? 0.0);
+		$markupAmount = $this->computePassThroughMarkupAmount(claim: $claim, totalPassThrough: $totalPassThroughAmount);
+		if ($markupAmount < $threshold) {
+			return true;
+		}
+
+		return $this->refuse(
+			message: 'ExpenseReimbursementGuard: pass-through markup meets/exceeds policy threshold — '
+			. 'denying standard approve, deferring to OR approval-workflow extra-approver gate (REQ-ERP-006)',
+			context: [
+				'claimId' => ($claim['id'] ?? 'unknown'),
+				'policyId' => ($claim['reimbursementPolicyId'] ?? null),
+				'markupAmount' => $markupAmount,
+				'threshold' => $threshold,
+			]
+		);
+
+	}//end markupBelowThreshold()
 
 	/**
 	 * Precondition for the markInvoiced transition (REQ-ERP-007 pass-through closure).
@@ -316,92 +371,121 @@ class ExpenseReimbursementGuard {
 	 * (or null — items inherit the claim mode by default per REQ-ERP-003).
 	 *
 	 * Items with a non-null settlementMode that diverges from the claim
-	 * settlementMode are rejected (mixed-mode claim).
+	 * settlementMode are rejected (mixed-mode claim); pass-through items need
+	 * a linkedCustomerId (REQ-ERP-002). The first refusal stops the lookups.
 	 *
-	 * @param string $claimId Claim ID for log context.
-	 * @param string $claimMode The claim-level settlementMode.
-	 * @param array<string> $receiptIds Receipt record IDs.
-	 * @param array<string> $mileageIds MileageEntry record IDs.
-	 * @param array<string> $perDiemIds PerDiem record IDs.
+	 * @param array<string, mixed> $claim     ExpenseClaimEntry object array.
+	 * @param string               $claimMode The claim-level settlementMode.
 	 *
 	 * @return bool True when all items match (or inherit) the claim mode.
 	 */
-	private function allItemsMatchSettlementMode(
-		string $claimId,
-		string $claimMode,
-		array $receiptIds,
-		array $mileageIds,
-		array $perDiemIds,
-	): bool {
-		$register = $this->getRegisterSlug();
-
-		$checks = [
-			['schema' => 'Receipt', 'ids' => $receiptIds],
-			['schema' => 'MileageEntry', 'ids' => $mileageIds],
-			['schema' => 'PerDiem', 'ids' => $perDiemIds],
-		];
-
-		foreach ($checks as $check) {
-			foreach ($check['ids'] as $itemId) {
-				$stringId = (string)$itemId;
-				if ($stringId === '') {
-					continue;
-				}
-
-				$item = ObjectIdentifier::findScoped(
-					scoped: $this->objectService
-						->setRegister($register)
-						->setSchema($check['schema']),
-					id: $stringId
-				);
-
-				if ($item === null) {
-					continue;
-				}
-
-				// ADR-084: find() returns an ObjectEntityInterface, so the is_array()
-				// arm was unreachable and `(array)$item` cast the ENTITY — yielding
-				// its (mangled, private) property names rather than the stored
-				// payload, so `settlementMode` was never present and the mixed-mode
-				// rejection below could not fire.
-				$itemArray = (array)$item->jsonSerialize();
-
-				$itemMode = ($itemArray['settlementMode'] ?? null);
-
-				if ($itemMode !== null && $itemMode !== '' && $itemMode !== $claimMode) {
-					$this->logger->info(
-						'ExpenseReimbursementGuard: mixed-mode claim rejected (REQ-ERP-003)',
-						[
-							'claimId' => $claimId,
-							'itemId' => $stringId,
-							'schema' => $check['schema'],
-							'claimMode' => $claimMode,
-							'itemMode' => $itemMode,
-						]
-					);
-					return false;
-				}
-
-				// Pass-through items require linkedCustomerId (REQ-ERP-002 validation).
-				if ($claimMode === 'pass-through') {
-					$linkedCustomerId = ($itemArray['linkedCustomerId'] ?? null);
-					if ($linkedCustomerId === null || $linkedCustomerId === '') {
-						$this->logger->info(
-							'ExpenseReimbursementGuard: pass-through item missing linkedCustomerId (REQ-ERP-002)',
-							[
-								'claimId' => $claimId,
-								'itemId' => $stringId,
-								'schema' => $check['schema'],
-							]
-						);
-						return false;
-					}
-				}
-			}//end foreach
-		}//end foreach
+	private function allItemsMatchSettlementMode(array $claim, string $claimMode): bool {
+		$claimId = (string)($claim['id'] ?? '');
+		foreach ($this->claimItems(claim: $claim) as $entry) {
+			$refusal = ($this->modeRefusal(entry: $entry, claimMode: $claimMode) ?? $this->customerRefusal(entry: $entry, claimMode: $claimMode));
+			if ($refusal !== null) {
+				return $this->refuse(message: $refusal['message'], context: ['claimId' => $claimId] + $refusal['context']);
+			}
+		}
 
 		return true;
 	}//end allItemsMatchSettlementMode()
+
+	/**
+	 * The refusal for an item whose own settlementMode diverges from the
+	 * claim's, or null.
+	 *
+	 * @param array{schema:string,id:string,item:array<string,mixed>,amountField:string} $entry     A claim item.
+	 * @param string                                                                     $claimMode The claim-level settlementMode.
+	 *
+	 * @return array{message:string,context:array<string,mixed>}|null
+	 */
+	private function modeRefusal(array $entry, string $claimMode): array|null {
+		$itemMode = ($entry['item']['settlementMode'] ?? null);
+		if ($itemMode === null || $itemMode === '' || $itemMode === $claimMode) {
+			return null;
+		}
+
+		return [
+			'message' => 'ExpenseReimbursementGuard: mixed-mode claim rejected (REQ-ERP-003)',
+			'context' => [
+				'itemId' => $entry['id'],
+				'schema' => $entry['schema'],
+				'claimMode' => $claimMode,
+				'itemMode' => $itemMode,
+			],
+		];
+	}//end modeRefusal()
+
+	/**
+	 * The refusal for a pass-through claim's item without a linkedCustomerId
+	 * (REQ-ERP-002 validation), or null.
+	 *
+	 * @param array{schema:string,id:string,item:array<string,mixed>,amountField:string} $entry     A claim item.
+	 * @param string                                                                     $claimMode The claim-level settlementMode.
+	 *
+	 * @return array{message:string,context:array<string,mixed>}|null
+	 */
+	private function customerRefusal(array $entry, string $claimMode): array|null {
+		$linkedCustomerId = ($entry['item']['linkedCustomerId'] ?? null);
+		if ($claimMode !== 'pass-through' || ($linkedCustomerId !== null && $linkedCustomerId !== '')) {
+			return null;
+		}
+
+		return [
+			'message' => 'ExpenseReimbursementGuard: pass-through item missing linkedCustomerId (REQ-ERP-002)',
+			'context' => [
+				'itemId' => $entry['id'],
+				'schema' => $entry['schema'],
+			],
+		];
+	}//end customerRefusal()
+
+	/**
+	 * The claim's resolvable line items — receipts, then mileage entries,
+	 * then per-diems, each in id order — read lazily, so a caller that stops
+	 * early stops the lookups. Empty and unknown ids are skipped.
+	 *
+	 * @param array<string, mixed> $claim ExpenseClaimEntry object array.
+	 *
+	 * @return \Generator<int, array{schema:string,id:string,item:array<string,mixed>,amountField:string}>
+	 */
+	private function claimItems(array $claim): \Generator {
+		$register = $this->getRegisterSlug();
+		foreach (self::ITEM_SOURCES as $schema => $source) {
+			foreach ((array)($claim[$source['ids']] ?? []) as $itemId) {
+				if ((string)$itemId === '') {
+					continue;
+				}
+
+				$item = $this->claimItem(scoped: $this->objectService->setRegister($register)->setSchema($schema), id: (string)$itemId);
+				if ($item !== null) {
+					yield ['schema' => $schema, 'id' => (string)$itemId, 'item' => $item, 'amountField' => $source['amount']];
+				}
+			}
+		}
+	}//end claimItems()
+
+	/**
+	 * One line item's stored payload, or null for an unknown id.
+	 *
+	 * ADR-084: find() returns an ObjectEntityInterface, so the payload is read
+	 * through jsonSerialize(); `(array)$item` would cast the ENTITY — yielding
+	 * its (mangled, private) property names rather than the stored payload.
+	 *
+	 * @param object $scoped The object service scoped to the item's schema.
+	 * @param string $id     The item id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function claimItem(object $scoped, string $id): array|null {
+		$item = ObjectIdentifier::findScoped(scoped: $scoped, id: $id);
+		if ($item === null) {
+			return null;
+		}
+
+		return (array)$item->jsonSerialize();
+	}//end claimItem()
 
 	/**
 	 * Look up the requiresMarkupApprovalThreshold field on the named
@@ -486,55 +570,16 @@ class ExpenseReimbursementGuard {
 	 *
 	 * @return float|null The weighted average, or null when no rates can be resolved.
 	 */
-	private function weightedAverageMarkupRate(array $claim): ?float {
-		$register = $this->getRegisterSlug();
-
+	private function weightedAverageMarkupRate(array $claim): float|null {
 		$totalCost = 0.0;
 		$totalWeighted = 0.0;
-
-		$sources = [
-			['schema' => 'Receipt', 'ids' => (array)($claim['receiptIds'] ?? []), 'amountField' => 'amountInBaseCurrency'],
-			['schema' => 'MileageEntry', 'ids' => (array)($claim['mileageIds'] ?? []), 'amountField' => 'totalAmount'],
-			['schema' => 'PerDiem', 'ids' => (array)($claim['perDiemIds'] ?? []), 'amountField' => 'allowanceAmount'],
-		];
-
-		foreach ($sources as $source) {
-			foreach ($source['ids'] as $itemId) {
-				$stringId = (string)$itemId;
-				if ($stringId === '') {
-					continue;
-				}
-
-				$item = ObjectIdentifier::findScoped(
-					scoped: $this->objectService
-						->setRegister($register)
-						->setSchema($source['schema']),
-					id: $stringId
-				);
-
-				if ($item === null) {
-					continue;
-				}
-
-				// ADR-084: see the note in the mixed-mode check above — `(array)$item`
-				// cast the ENTITY, not its payload, so no pass-through item was ever
-				// recognised and the cost total below always came out zero.
-				$itemArray = (array)$item->jsonSerialize();
-
-				if (($itemArray['settlementMode'] ?? null) !== 'pass-through') {
-					continue;
-				}
-
-				$cost = (float)($itemArray[$source['amountField']] ?? 0.0);
-				$rate = (float)($itemArray['markupRateApplied'] ?? 0.0);
-				if ($cost <= 0.0) {
-					continue;
-				}
-
+		foreach ($this->claimItems(claim: $claim) as $entry) {
+			$cost = $this->passThroughCost(entry: $entry);
+			if ($cost > 0.0) {
 				$totalCost += $cost;
-				$totalWeighted += ($cost * $rate);
-			}//end foreach
-		}//end foreach
+				$totalWeighted += ($cost * (float)($entry['item']['markupRateApplied'] ?? 0.0));
+			}
+		}
 
 		if ($totalCost <= 0.0) {
 			return null;
@@ -542,6 +587,21 @@ class ExpenseReimbursementGuard {
 
 		return ($totalWeighted / $totalCost);
 	}//end weightedAverageMarkupRate()
+
+	/**
+	 * A pass-through item's cost in base currency, or 0.0 for any other item.
+	 *
+	 * @param array{schema:string,id:string,item:array<string,mixed>,amountField:string} $entry A claim item.
+	 *
+	 * @return float
+	 */
+	private function passThroughCost(array $entry): float {
+		if (($entry['item']['settlementMode'] ?? null) !== 'pass-through') {
+			return 0.0;
+		}
+
+		return (float)($entry['item'][$entry['amountField']] ?? 0.0);
+	}//end passThroughCost()
 
 	/**
 	 * Check whether the named GLTransaction has been marked reversed per

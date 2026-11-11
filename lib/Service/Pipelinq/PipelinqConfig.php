@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClientService;
+use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\Security\ICredentialsManager;
 use Psr\Log\LoggerInterface;
@@ -240,56 +241,93 @@ class PipelinqConfig {
 	public function testConnection(): array {
 		$endpoint = $this->getPipelinqEndpoint();
 		if ($endpoint === '') {
-			return [
-				'success' => false,
-				'status' => 0,
-				'message' => 'No pipelinq endpoint configured.',
-			];
+			return $this->connectionFailure(message: 'No pipelinq endpoint configured.');
 		}
 
 		$token = $this->getPipelinqToken();
 		if ($token === '') {
-			return [
-				'success' => false,
-				'status' => 0,
-				'message' => 'No pipelinq API token configured.',
-			];
+			return $this->connectionFailure(message: 'No pipelinq API token configured.');
 		}
 
+		return $this->probeHealth(endpoint: $endpoint, token: $token);
+
+	}//end testConnection()
+
+	/**
+	 * GET the health path and turn the response or the failure into an outcome.
+	 *
+	 * @param string $endpoint The configured pipelinq base URL.
+	 * @param string $token    The decrypted bearer token.
+	 *
+	 * @return array<string,mixed> The outcome (success, status, message).
+	 */
+	private function probeHealth(string $endpoint, string $token): array {
+		try {
+			$response = $this->requestHealth(endpoint: $endpoint, token: $token);
+		} catch (Throwable $e) {
+			return $this->healthCheckFailed(error: $e);
+		}
+
+		return $this->healthOutcome(status: $response->getStatusCode());
+
+	}//end probeHealth()
+
+	/**
+	 * Issue the authenticated health-check GET.
+	 *
+	 * @param string $endpoint The configured pipelinq base URL.
+	 * @param string $token    The decrypted bearer token.
+	 *
+	 * @return IResponse
+	 */
+	private function requestHealth(string $endpoint, string $token): IResponse {
 		$healthUrl = rtrim($endpoint, '/') . self::HEALTH_PATH;
 
-		try {
-			$client = $this->clientService->newClient();
-			$response = $client->get(
-				$healthUrl,
-				[
-					'headers' => [
-						'Authorization' => 'Bearer ' . $token,
-						'Accept' => 'application/json',
-					],
-					'timeout' => self::HEALTH_TIMEOUT_SECONDS,
-					'connect_timeout' => self::HEALTH_TIMEOUT_SECONDS,
-				]
-			);
-		} catch (Throwable $e) {
-			// Sanitise: log only the exception class + message — never
-			// the URL with embedded token or the request headers.
-			$this->logger->warning(
-				'Shillinq: pipelinq health-check failed',
-				[
-					'exception' => get_class($e),
-					'message' => $e->getMessage(),
-				]
-			);
+		$client = $this->clientService->newClient();
+		return $client->get(
+			$healthUrl,
+			[
+				'headers' => [
+					'Authorization' => 'Bearer ' . $token,
+					'Accept' => 'application/json',
+				],
+				'timeout' => self::HEALTH_TIMEOUT_SECONDS,
+				'connect_timeout' => self::HEALTH_TIMEOUT_SECONDS,
+			]
+		);
 
-			return [
-				'success' => false,
-				'status' => 0,
-				'message' => 'Pipelinq health-check failed: ' . $e->getMessage(),
-			];
-		}//end try
+	}//end requestHealth()
 
-		$status = $response->getStatusCode();
+	/**
+	 * Log a failed health check (class and message only) and report it.
+	 *
+	 * @param Throwable $error The client error or timeout.
+	 *
+	 * @return array<string,mixed> The outcome (success, status, message).
+	 */
+	private function healthCheckFailed(Throwable $error): array {
+		// Sanitise: log only the exception class + message — never
+		// the URL with embedded token or the request headers.
+		$this->logger->warning(
+			'Shillinq: pipelinq health-check failed',
+			[
+				'exception' => get_class($error),
+				'message' => $error->getMessage(),
+			]
+		);
+
+		return $this->connectionFailure(message: 'Pipelinq health-check failed: ' . $error->getMessage());
+
+	}//end healthCheckFailed()
+
+	/**
+	 * The outcome for a health-check response status.
+	 *
+	 * @param int $status HTTP status of the health-check response.
+	 *
+	 * @return array<string,mixed> The outcome (success, status, message).
+	 */
+	private function healthOutcome(int $status): array {
 		if ($status >= 200 && $status < 300) {
 			return [
 				'success' => true,
@@ -298,11 +336,24 @@ class PipelinqConfig {
 			];
 		}
 
+		return $this->connectionFailure(message: 'Pipelinq returned HTTP ' . $status . '.', status: $status);
+
+	}//end healthOutcome()
+
+	/**
+	 * A failed outcome with the given message and status.
+	 *
+	 * @param string $message Sanitised failure message.
+	 * @param int    $status  HTTP status, or 0 when no response was received.
+	 *
+	 * @return array<string,mixed> The outcome (success, status, message).
+	 */
+	private function connectionFailure(string $message, int $status = 0): array {
 		return [
 			'success' => false,
 			'status' => $status,
-			'message' => 'Pipelinq returned HTTP ' . $status . '.',
+			'message' => $message,
 		];
 
-	}//end testConnection()
+	}//end connectionFailure()
 }//end class

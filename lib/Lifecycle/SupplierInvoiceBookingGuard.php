@@ -86,8 +86,53 @@ class SupplierInvoiceBookingGuard implements LifecycleGuardInterface {
 	 *
 	 * @return string|null
 	 */
-	private function refusal(array $invoice): ?string {
+	private function refusal(array $invoice): string|null {
 		$lines = (array)($invoice['lines'] ?? []);
+		$orderRefusal = $this->orderLinkRefusal(lines: $lines);
+		if ($orderRefusal !== null) {
+			return $orderRefusal;
+		}
+
+		$supplierRefusal = $this->supplierRefusal(invoice: $invoice, lines: $lines);
+		if ($supplierRefusal !== null) {
+			return $supplierRefusal;
+		}
+
+		return $this->unacknowledgedWarning(invoice: $invoice);
+
+	}//end refusal()
+
+	/**
+	 * The refusal for an unknown supplier or, when the supplier has no default
+	 * expense account, for the first line without one; or null.
+	 *
+	 * @param array<string, mixed> $invoice The SupplierInvoice.
+	 * @param array<mixed>         $lines   The invoice lines.
+	 *
+	 * @return string|null
+	 */
+	private function supplierRefusal(array $invoice, array $lines): string|null {
+		$payee = $this->checks->payee(supplierId: (string)($invoice['supplierId'] ?? ''));
+		if ($payee === null) {
+			return 'The invoice cannot be booked: its supplier is not recognised. Choose the supplier first.';
+		}
+
+		if (trim((string)($payee['defaultExpenseAccountNumber'] ?? '')) !== '') {
+			return null;
+		}
+
+		return $this->missingAccountRefusal(lines: $lines);
+
+	}//end supplierRefusal()
+
+	/**
+	 * The refusal for the first line linked to a purchase order, or null.
+	 *
+	 * @param array<mixed> $lines The invoice lines.
+	 *
+	 * @return string|null
+	 */
+	private function orderLinkRefusal(array $lines): string|null {
 		foreach ($lines as $line) {
 			$order = trim((string)($line['linkedPoId'] ?? ($line['linkedPoLineId'] ?? '')));
 			if ($order !== '') {
@@ -95,29 +140,60 @@ class SupplierInvoiceBookingGuard implements LifecycleGuardInterface {
 			}
 		}
 
-		$supplierId = (string)($invoice['supplierId'] ?? '');
-		$payee = $this->checks->payee(supplierId: $supplierId);
-		if ($payee === null) {
-			return 'The invoice cannot be booked: its supplier is not recognised. Choose the supplier first.';
-		}
+		return null;
 
-		$default = trim((string)($payee['defaultExpenseAccountNumber'] ?? ''));
+	}//end orderLinkRefusal()
+
+	/**
+	 * The refusal for the first line without an expense account, or null.
+	 *
+	 * @param array<mixed> $lines The invoice lines.
+	 *
+	 * @return string|null
+	 */
+	private function missingAccountRefusal(array $lines): string|null {
 		foreach ($lines as $index => $line) {
-			if (trim((string)($line['accountNumber'] ?? '')) === '' && $default === '') {
+			if (trim((string)($line['accountNumber'] ?? '')) === '') {
 				return sprintf('The invoice cannot be booked: line %d has no expense account.', ((int)($line['lineNumber'] ?? ($index + 1))));
 			}
 		}
 
+		return null;
+
+	}//end missingAccountRefusal()
+
+	/**
+	 * The refusal for a duplicate number or a differing IBAN that carries no
+	 * acknowledgement reason, in that order, or null.
+	 *
+	 * @param array<string, mixed> $invoice The SupplierInvoice.
+	 *
+	 * @return string|null
+	 */
+	private function unacknowledgedWarning(array $invoice): string|null {
 		$warnings = $this->checks->warnings(invoice: $invoice);
-		if ($warnings['duplicateOfId'] !== '' && trim((string)($invoice['duplicateAcknowledgedReason'] ?? '')) === '') {
+		if ($warnings['duplicateOfId'] !== '' && $this->hasReason(invoice: $invoice, field: 'duplicateAcknowledgedReason') === false) {
 			return 'The invoice cannot be booked: its number was already used for this supplier. Give a reason to book it anyway.';
 		}
 
-		if ($warnings['ibanMismatch'] !== '' && trim((string)($invoice['ibanAcknowledgedReason'] ?? '')) === '') {
+		if ($warnings['ibanMismatch'] !== '' && $this->hasReason(invoice: $invoice, field: 'ibanAcknowledgedReason') === false) {
 			return 'The invoice cannot be booked: its IBAN differs from the supplier record. Give a reason to book it anyway.';
 		}
 
 		return null;
 
-	}//end refusal()
+	}//end unacknowledgedWarning()
+
+	/**
+	 * Whether the invoice carries a non-blank reason in the given field.
+	 *
+	 * @param array<string, mixed> $invoice The SupplierInvoice.
+	 * @param string               $field   The reason field.
+	 *
+	 * @return bool
+	 */
+	private function hasReason(array $invoice, string $field): bool {
+		return trim((string)($invoice[$field] ?? '')) !== '';
+
+	}//end hasReason()
 }//end class

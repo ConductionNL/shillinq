@@ -93,33 +93,12 @@ class FiscalYearGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$filters = ['fiscalYear' => $yearNumber];
-			if ($administrationId !== '') {
-				$filters['administrationId'] = $administrationId;
-			}
-
-			$periods = $objectService
-				->setRegister($this->register())
-				->setSchema('FiscalPeriod')
-				->findAll(['filters' => $filters]);
-
+			$periods = $this->yearPeriods(yearNumber: $yearNumber, administrationId: $administrationId);
 			if (is_array($periods) === false || $periods === []) {
 				return true;
 			}
 
-			foreach ($periods as $period) {
-				$state = (string)($period['state'] ?? '');
-				if (in_array($state, self::SATISFYING_STATES, true) === false) {
-					$this->logger->info(
-						'FiscalYearGuard: beginClose rejected — an open FiscalPeriod remains',
-						['yearNumber' => $yearNumber, 'periodId' => ($period['periodId'] ?? null), 'state' => $state]
-					);
-					return false;
-				}
-			}
-
-			return true;
+			return $this->allPeriodsClosed(yearNumber: $yearNumber, periods: $periods);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'FiscalYearGuard: requireAllPeriodsClosedForYear check failed — denying (fail-closed)',
@@ -129,6 +108,52 @@ class FiscalYearGuard {
 		}//end try
 
 	}//end requireAllPeriodsClosedForYear()
+
+	/**
+	 * The FiscalPeriods of the year, scoped to the administration when known.
+	 *
+	 * @param mixed $yearNumber The FiscalYear's yearNumber.
+	 * @param string $administrationId The administration, or ''.
+	 *
+	 * @return mixed The store's answer.
+	 */
+	private function yearPeriods(mixed $yearNumber, string $administrationId): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$filters = ['fiscalYear' => $yearNumber];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		return $objectService
+			->setRegister($this->register())
+			->setSchema('FiscalPeriod')
+			->findAll(['filters' => $filters]);
+
+	}//end yearPeriods()
+
+	/**
+	 * Whether every period is closed or audit-locked; the first open one is logged.
+	 *
+	 * @param mixed $yearNumber The FiscalYear's yearNumber.
+	 * @param array<int|string,mixed> $periods The year's FiscalPeriods.
+	 *
+	 * @return bool False at the first period in another state.
+	 */
+	private function allPeriodsClosed(mixed $yearNumber, array $periods): bool {
+		foreach ($periods as $period) {
+			$state = (string)($period['state'] ?? '');
+			if (in_array($state, self::SATISFYING_STATES, true) === false) {
+				$this->logger->info(
+					'FiscalYearGuard: beginClose rejected — an open FiscalPeriod remains',
+					['yearNumber' => $yearNumber, 'periodId' => ($period['periodId'] ?? null), 'state' => $state]
+				);
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end allPeriodsClosed()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

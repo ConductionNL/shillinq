@@ -125,19 +125,46 @@ class PortalPaymentInitiationController extends Controller {
 			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->sessionAnswer(claims: $claims, target: $this->target());
+	}//end initiate()
+
+	/**
+	 * The target the body names, read before the session starts: the invoice
+	 * id when one is sent (a non-string counts as absent), else a payment
+	 * request that stands without an invoice (REQ-SPPI-008).
+	 *
+	 * @return array{0:string,1:string} 'invoice' or 'request', and the id ('' when neither is sent).
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	private function target(): array {
 		$invoiceId = $this->request->getParam('invoiceId');
 		if (is_string($invoiceId) === false) {
 			$invoiceId = '';
 		}
 
-		// A `requestPayments` row carries a payment request without an invoice
-		// (REQ-SPPI-008); an invoice id wins when both are sent.
 		$paymentRequestId = $this->request->getParam('paymentRequestId');
+		if ($invoiceId === '' && is_string($paymentRequestId) === true && $paymentRequestId !== '') {
+			return ['request', $paymentRequestId];
+		}
 
+		return ['invoice', $invoiceId];
+	}//end target()
+
+	/**
+	 * Start the session and answer its outcome, or the logged 502.
+	 *
+	 * Never leaks internals from a #[PublicPage] endpoint (ADR-005).
+	 *
+	 * @param array<string, mixed>     $claims The verified assertion claims.
+	 * @param array{0:string,1:string} $target The target from target().
+	 *
+	 * @return JSONResponse
+	 */
+	private function sessionAnswer(array $claims, array $target): JSONResponse {
 		try {
-			$result = $this->startSession(claims: $claims, invoiceId: $invoiceId, paymentRequestId: $paymentRequestId);
+			$result = $this->startSession(claims: $claims, target: $target);
 		} catch (Throwable $e) {
-			// Never leak internals from a #[PublicPage] endpoint (ADR-005).
 			$this->logger->error(
 				'Shillinq: portal payment initiation controller caught an unexpected failure',
 				['exception' => $e->getMessage()]
@@ -145,31 +172,40 @@ class PortalPaymentInitiationController extends Controller {
 			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
 		}
 
+		return self::outcomeResponse(result: $result);
+	}//end sessionAnswer()
+
+	/**
+	 * The answer for a session outcome; anything unknown is the uniform 403.
+	 *
+	 * @param PortalPaymentSessionResult $result The outcome.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function outcomeResponse(PortalPaymentSessionResult $result): JSONResponse {
 		return match ($result->status) {
 			'ok' => new JSONResponse(['checkoutUrl' => $result->checkoutUrl]),
 			'deferred' => new JSONResponse(['status' => 'deferred'], Http::STATUS_SERVICE_UNAVAILABLE),
 			'downstream_error' => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
 		};
-	}//end initiate()
+	}//end outcomeResponse()
 
 	/**
-	 * Start the session for the target the body names: an invoice, or a
-	 * payment request without an invoice when no invoice id is sent.
+	 * Start the session for the target: an invoice, or a payment request without an invoice.
 	 *
-	 * @param array<string, mixed> $claims The verified assertion claims.
-	 * @param string $invoiceId The body's invoiceId, '' when absent.
-	 * @param mixed $paymentRequestId The body's paymentRequestId.
+	 * @param array<string, mixed>     $claims The verified assertion claims.
+	 * @param array{0:string,1:string} $target The target from target().
 	 *
 	 * @return PortalPaymentSessionResult
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	private function startSession(array $claims, string $invoiceId, mixed $paymentRequestId): PortalPaymentSessionResult {
-		if ($invoiceId === '' && is_string($paymentRequestId) === true && $paymentRequestId !== '') {
-			return $this->sessionService->initiateForRequest(claims: $claims, target: $paymentRequestId);
+	private function startSession(array $claims, array $target): PortalPaymentSessionResult {
+		if ($target[0] === 'request') {
+			return $this->sessionService->initiateForRequest(claims: $claims, target: $target[1]);
 		}
 
-		return $this->sessionService->initiate(claims: $claims, target: $invoiceId);
+		return $this->sessionService->initiate(claims: $claims, target: $target[1]);
 	}//end startSession()
 }//end class

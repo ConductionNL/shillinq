@@ -131,35 +131,72 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface {
 			return GuardResult::deny(self::MESSAGE_NO_OBJECT);
 		}
 
+		return $this->preparerDecision(
+			run: new FourEyesApprovalRun(paymentRunId: $objectId, approverId: $approverId, action: $action)
+		);
+	}//end check()
+
+	/**
+	 * Read the preparers from the audit trail; a failing read denies
+	 * (fail-closed).
+	 *
+	 * @param FourEyesApprovalRun $run The approval under check.
+	 *
+	 * @return GuardResult
+	 */
+	private function preparerDecision(FourEyesApprovalRun $run): GuardResult {
 		try {
-			$preparers = $this->resolvePreparers(objectId: $objectId);
+			$preparers = $this->resolvePreparers(objectId: $run->paymentRunId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'FourEyesPaymentRunGuard: audit-trail read threw — denying (fail-closed).',
-				['paymentRun' => $objectId, 'action' => $action, 'error' => $e->getMessage()]
+				['paymentRun' => $run->paymentRunId, 'action' => $run->action, 'error' => $e->getMessage()]
 			);
 			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
 		}
 
+		return $this->approverDecision(run: $run, preparers: $preparers);
+	}//end preparerDecision()
+
+	/**
+	 * Deny when the preparer is indeterminate or the approver is one of the
+	 * preparers; allow otherwise.
+	 *
+	 * @param FourEyesApprovalRun       $run       The approval under check.
+	 * @param array<string, true>|null $preparers The preparer set, or null when indeterminate.
+	 *
+	 * @return GuardResult
+	 */
+	private function approverDecision(FourEyesApprovalRun $run, array|null $preparers): GuardResult {
 		if ($preparers === null) {
-			// No determinable `create` actor in the immutable audit trail.
-			$this->logger->error(
-				'FourEyesPaymentRunGuard: preparer indeterminate from audit trail — denying (fail-closed).',
-				['paymentRun' => $objectId, 'action' => $action]
-			);
-			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
+			return $this->indeterminatePreparer(run: $run);
 		}
 
-		if (isset($preparers[$approverId]) === true) {
+		if (isset($preparers[$run->approverId]) === true) {
 			$this->logger->warning(
 				'FourEyesPaymentRunGuard: approver is also the preparer — denying self-approval.',
-				['paymentRun' => $objectId, 'action' => $action, 'user' => $approverId]
+				['paymentRun' => $run->paymentRunId, 'action' => $run->action, 'user' => $run->approverId]
 			);
 			return GuardResult::deny(self::MESSAGE_SELF_APPROVAL);
 		}
 
 		return GuardResult::allow();
-	}//end check()
+	}//end approverDecision()
+
+	/**
+	 * Deny an approval whose audit trail has no determinable `create` actor.
+	 *
+	 * @param FourEyesApprovalRun $run The approval under check.
+	 *
+	 * @return GuardResult
+	 */
+	private function indeterminatePreparer(FourEyesApprovalRun $run): GuardResult {
+		$this->logger->error(
+			'FourEyesPaymentRunGuard: preparer indeterminate from audit trail — denying (fail-closed).',
+			['paymentRun' => $run->paymentRunId, 'action' => $run->action]
+		);
+		return GuardResult::deny(self::MESSAGE_INDETERMINATE);
+	}//end indeterminatePreparer()
 
 	/**
 	 * Extract the object uuid from the transition payload.
@@ -192,7 +229,7 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface {
 	 *
 	 * @return array<string, true>|null Preparer uids as a set, or null when indeterminate.
 	 */
-	private function resolvePreparers(string $objectId): ?array {
+	private function resolvePreparers(string $objectId): array|null {
 		$objectService = $this->container->get(self::OBJECT_SERVICE);
 		// `getLogs()` returns the object's OpenRegister audit-trail rows
 		// (ADR-022). RBAC/multitenancy flags are ignored by getLogs itself;
@@ -203,31 +240,70 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface {
 			return null;
 		}
 
-		$preparers = [];
-		$createActor = false;
-		foreach ($logs as $log) {
-			$logAction = $this->logField(log: $log, key: 'action', getter: 'getAction');
-			$logUser = $this->logField(log: $log, key: 'user', getter: 'getUser');
-
-			if ($logAction !== 'create' && $logAction !== 'update') {
-				continue;
-			}
-
-			if ($logAction === 'create' && $logUser !== '') {
-				$createActor = true;
-			}
-
-			if ($logUser !== '') {
-				$preparers[$logUser] = true;
-			}
-		}//end foreach
-
-		if ($createActor === false) {
+		$entries = $this->preparingEntries(logs: $logs);
+		if ($this->hasCreateActor(entries: $entries) === false) {
 			return null;
 		}
 
-		return $preparers;
+		return $this->preparerSet(entries: $entries);
 	}//end resolvePreparers()
+
+	/**
+	 * The action and actor of every `create` or `update` audit-trail row, in
+	 * trail order.
+	 *
+	 * @param array<mixed> $logs The audit-trail rows.
+	 *
+	 * @return list<array{action:string,user:string}>
+	 */
+	private function preparingEntries(array $logs): array {
+		$entries = [];
+		foreach ($logs as $log) {
+			$logAction = $this->logField(log: $log, key: 'action', getter: 'getAction');
+			$logUser = $this->logField(log: $log, key: 'user', getter: 'getUser');
+			if ($logAction === 'create' || $logAction === 'update') {
+				$entries[] = ['action' => $logAction, 'user' => $logUser];
+			}
+		}
+
+		return $entries;
+	}//end preparingEntries()
+
+	/**
+	 * Whether a `create` row names its actor — without one the preparer is
+	 * indeterminate.
+	 *
+	 * @param list<array{action:string,user:string}> $entries The preparing rows.
+	 *
+	 * @return bool
+	 */
+	private function hasCreateActor(array $entries): bool {
+		foreach ($entries as $entry) {
+			if ($entry['action'] === 'create' && $entry['user'] !== '') {
+				return true;
+			}
+		}
+
+		return false;
+	}//end hasCreateActor()
+
+	/**
+	 * The distinct, non-empty actors of the preparing rows, as a set.
+	 *
+	 * @param list<array{action:string,user:string}> $entries The preparing rows.
+	 *
+	 * @return array<string, true>
+	 */
+	private function preparerSet(array $entries): array {
+		$preparers = [];
+		foreach ($entries as $entry) {
+			if ($entry['user'] !== '') {
+				$preparers[$entry['user']] = true;
+			}
+		}
+
+		return $preparers;
+	}//end preparerSet()
 
 	/**
 	 * Read a field from an audit-trail row that may be an entity or an array.

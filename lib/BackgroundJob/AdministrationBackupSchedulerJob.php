@@ -131,23 +131,52 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 			return false;
 		}
 
-		$interval = self::SCHEDULE_INTERVALS[$schedule];
-
 		if ($schedule === 'aanvragen') {
-			$nextBackupAt = (string)($administration['nextBackupAt'] ?? '');
-			if ($nextBackupAt === '') {
-				return false;
-			}
-
-			try {
-				$next = new DateTimeImmutable($nextBackupAt);
-			} catch (Throwable) {
-				return false;
-			}
-
-			return $next <= $now;
+			return $this->isRequestedBackupDue(administration: $administration, now: $now);
 		}
 
+		return $this->isIntervalBackupDue(administration: $administration, now: $now);
+	}//end isDue()
+
+	/**
+	 * An on-request backup is due once its nextBackupAt has passed; never
+	 * when it has none or it cannot be parsed.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 * @param DateTimeImmutable   $now            Evaluation instant.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+	 */
+	private function isRequestedBackupDue(array $administration, DateTimeImmutable $now): bool {
+		$nextBackupAt = (string)($administration['nextBackupAt'] ?? '');
+		if ($nextBackupAt === '') {
+			return false;
+		}
+
+		try {
+			$next = new DateTimeImmutable($nextBackupAt);
+		} catch (Throwable) {
+			return false;
+		}
+
+		return $next <= $now;
+	}//end isRequestedBackupDue()
+
+	/**
+	 * A scheduled backup is due once its interval has elapsed since the last
+	 * completed one, and immediately when there is none.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 * @param DateTimeImmutable   $now            Evaluation instant.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+	 */
+	private function isIntervalBackupDue(array $administration, DateTimeImmutable $now): bool {
+		$interval = self::SCHEDULE_INTERVALS[(string)($administration['backupSchedule'] ?? '')];
 		$lastCompleted = (string)($administration['lastBackupCompletedAt'] ?? '');
 		if ($lastCompleted === '') {
 			// Never backed up before — due immediately.
@@ -164,7 +193,7 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 
 		$elapsed = ($now->getTimestamp() - $previous->getTimestamp());
 		return $elapsed >= (int)$interval;
-	}//end isDue()
+	}//end isIntervalBackupDue()
 
 	/**
 	 * Filter a list of administrations to those due for backup at $now (REQ-MA-007).
@@ -243,38 +272,41 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 	 * carries exactly one administrationId; backups are per-administration.
 	 *
 	 * @param array<string,mixed> $administration The Administration record.
-	 * @param DateTimeImmutable $startedAt Backup start instant.
-	 * @param DateTimeImmutable $completedAt Backup completion instant.
-	 * @param string $status Final backup status (success / failed / snapshot-only).
-	 * @param int|null $sizeBytes Size of the backup payload, when known.
+	 * @param BackupRunOutcome    $outcome        When the backup started and completed, its status and size.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
 	 */
-	public function buildBackupRunRecord(
-		array $administration,
-		DateTimeImmutable $startedAt,
-		DateTimeImmutable $completedAt,
-		string $status,
-		?int $sizeBytes = null,
-	): array {
-		return [
-			'administrationId' => (string)($administration['id'] ?? ''),
-			'administrationCode' => (string)($administration['administrationCode'] ?? ''),
-			'schedule' => (string)($administration['backupSchedule'] ?? ''),
-			'startedAt' => $startedAt->format(DATE_ATOM),
-			'completedAt' => $completedAt->format(DATE_ATOM),
-			'status' => $status,
+	public function buildBackupRunRecord(array $administration, BackupRunOutcome $outcome): array {
+		return $this->administrationFields(administration: $administration) + [
+			'startedAt' => $outcome->startedAt->format(DATE_ATOM),
+			'completedAt' => $outcome->completedAt->format(DATE_ATOM),
+			'status' => $outcome->status,
 			'snapshotOnly' => $this->isReadOnlyAdministration(administration: $administration),
-			'sizeBytes' => $sizeBytes,
+			'sizeBytes' => $outcome->sizeBytes,
 			'nextBackupAt' => $this->nextBackupTimestamp(
 				administration: $administration,
-				completedAt: $completedAt
+				completedAt: $outcome->completedAt
 			),
 		];
 
 	}//end buildBackupRunRecord()
+
+	/**
+	 * The record's administration fields: the one administrationId, its code and schedule.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 *
+	 * @return array<string,string>
+	 */
+	private function administrationFields(array $administration): array {
+		return [
+			'administrationId' => (string)($administration['id'] ?? ''),
+			'administrationCode' => (string)($administration['administrationCode'] ?? ''),
+			'schedule' => (string)($administration['backupSchedule'] ?? ''),
+		];
+	}//end administrationFields()
 
 	/**
 	 * Execute the per-administration scheduler tick.
@@ -290,6 +322,21 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 	protected function run(mixed $argument): void {
 		$this->logger->info('Shillinq: AdministrationBackupSchedulerJob started');
 
+		$store = $this->openStore();
+		if ($store === null) {
+			return;
+		}
+
+		$this->backUpDue(run: new BackupSchedulerRun(store: $store, now: new DateTimeImmutable()));
+
+	}//end run()
+
+	/**
+	 * The OpenRegister store of this tick, or null (logged) when OpenRegister is not available.
+	 *
+	 * @return AdministrationBackupStore|null
+	 */
+	private function openStore(): AdministrationBackupStore|null {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (Throwable $e) {
@@ -297,45 +344,25 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 				'Shillinq AdministrationBackupSchedulerJob: OpenRegister not available, skipping.',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
 
-		$register = $this->resolveRegister();
-		$now = new DateTimeImmutable();
-		$administrations = $this->fetchAdministrations(objectService: $objectService, register: $register);
-		$due = $this->evaluateDueAdministrations(administrations: $administrations, now: $now);
-		$persisted = 0;
+		return new AdministrationBackupStore(objectService: $objectService, register: $this->resolveRegister(), logger: $this->logger);
+	}//end openStore()
 
-		foreach ($due as $administration) {
-			if ($this->isReadOnlyAdministration(administration: $administration) === true) {
-				$status = 'snapshot-only';
-			} else {
-				$status = 'success';
-			}
-
-			$record = $this->buildBackupRunRecord(
-				administration: $administration,
-				startedAt: $now,
-				completedAt: $now,
-				status: $status
-			);
-
-			try {
-				$objectService
-					->setRegister($register)
-					->setSchema('AdministrationBackupRun')
-					->saveObject($record);
-				$persisted++;
-			} catch (Throwable $e) {
-				$this->logger->error(
-					'Shillinq AdministrationBackupSchedulerJob: failed to persist backup run',
-					[
-						'administrationId' => $record['administrationId'],
-						'exception' => $e->getMessage(),
-					]
-				);
-			}
-		}//end foreach
+	/**
+	 * Record a backup run for every due administration and log the tally.
+	 *
+	 * @param BackupSchedulerRun $run The tick.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+	 */
+	private function backUpDue(BackupSchedulerRun $run): void {
+		$administrations = $run->store->fetchAdministrations();
+		$due = $this->evaluateDueAdministrations(administrations: $administrations, now: $run->now);
+		$persisted = $this->recordBackups(run: $run, due: $due);
 
 		$this->logger->info(
 			sprintf(
@@ -345,63 +372,46 @@ class AdministrationBackupSchedulerJob extends TimedJob {
 				$persisted
 			)
 		);
-
-	}//end run()
+	}//end backUpDue()
 
 	/**
-	 * Fetch all Administration records, paginated.
+	 * Persist one backup run per due administration, in order.
 	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $register The register slug.
+	 * @param BackupSchedulerRun               $run The tick.
+	 * @param array<int, array<string, mixed>> $due The due administrations.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return int How many were persisted.
 	 */
-	private function fetchAdministrations(object $objectService, string $register): array {
-		$pageSize = 100;
-		$offset = 0;
-		$result = [];
-
-		while (true) {
-			try {
-				$entities = $objectService
-					->setRegister($register)
-					->setSchema('Administration')
-					->findAll(
-						[
-							'limit' => $pageSize,
-							'offset' => $offset,
-						]
-					);
-			} catch (Throwable $e) {
-				$this->logger->error(
-					'Shillinq AdministrationBackupSchedulerJob: failed to fetch administrations',
-					['offset' => $offset, 'exception' => $e->getMessage()]
-				);
-				break;
+	private function recordBackups(BackupSchedulerRun $run, array $due): int {
+		$persisted = 0;
+		foreach ($due as $administration) {
+			$outcome = new BackupRunOutcome(
+				startedAt: $run->now,
+				completedAt: $run->now,
+				status: $this->scheduledStatus(administration: $administration)
+			);
+			if ($run->store->saveRun(record: $this->buildBackupRunRecord(administration: $administration, outcome: $outcome)) === true) {
+				$persisted++;
 			}
+		}
 
-			$batch = [];
-			foreach ($entities as $entity) {
-				if (is_array($entity) === true) {
-					$batch[] = $entity;
-				} elseif (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
-					$data = $entity->getObject();
-					if (is_array($data) === true) {
-						$batch[] = $data;
-					}
-				}
-			}
+		return $persisted;
+	}//end recordBackups()
 
-			$result = array_merge($result, $batch);
-			$offset += count($batch);
+	/**
+	 * A read-only administration gets a snapshot; any other a full backup.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 *
+	 * @return string snapshot-only or success.
+	 */
+	private function scheduledStatus(array $administration): string {
+		if ($this->isReadOnlyAdministration(administration: $administration) === true) {
+			return 'snapshot-only';
+		}
 
-			if (count($batch) < $pageSize) {
-				break;
-			}
-		}//end while
-
-		return $result;
-	}//end fetchAdministrations()
+		return 'success';
+	}//end scheduledStatus()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.

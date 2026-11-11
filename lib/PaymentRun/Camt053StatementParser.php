@@ -53,6 +53,25 @@ class Camt053StatementParser {
 	 * @return array<int, array{endToEndId: string, amount: float, creditorIban: string, currency: string}>
 	 */
 	public function parse(string $contents): array {
+		$entries = [];
+		foreach ($this->entryNodes(contents: $contents) as $ntry) {
+			// Only booked outgoing transfers (money leaving the debtor account).
+			if ($this->isBookedOutgoing(ntry: $ntry) === true) {
+				array_push($entries, ...$this->entriesOf(ntry: $ntry));
+			}
+		}
+
+		return $entries;
+	}//end parse()
+
+	/**
+	 * Every Ntry of the statement, or none for empty or unparseable input.
+	 *
+	 * @param string $contents The raw CAMT.053 XML.
+	 *
+	 * @return array<int, SimpleXMLElement>
+	 */
+	private function entryNodes(string $contents): array {
 		$contents = trim(string: $contents);
 		if ($contents === '') {
 			return [];
@@ -65,42 +84,51 @@ class Camt053StatementParser {
 			return [];
 		}
 
-		$entries = [];
 		$entryNodes = $clean->xpath(expression: '//Ntry');
 		if (is_array(value: $entryNodes) === false) {
 			return [];
 		}
 
-		foreach ($entryNodes as $ntry) {
-			$status = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './Sts')));
-			$cdtDbt = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './CdtDbtInd')));
+		return $entryNodes;
+	}//end entryNodes()
 
-			// Only booked outgoing transfers (money leaving the debtor account).
-			if ($status !== 'BOOK' || $cdtDbt !== 'DBIT') {
-				continue;
-			}
+	/**
+	 * Whether an entry is booked (BOOK) and outgoing (DBIT).
+	 *
+	 * @param SimpleXMLElement $ntry The Ntry element.
+	 *
+	 * @return bool
+	 */
+	private function isBookedOutgoing(SimpleXMLElement $ntry): bool {
+		$status = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './Sts')));
+		$cdtDbt = strtoupper(string: trim(string: $this->firstString(node: $ntry, expression: './CdtDbtInd')));
 
-			// A single Ntry may carry multiple TxDtls; emit one entry each.
-			$txDetails = $ntry->xpath(expression: './/TxDtls');
-			if (is_array(value: $txDetails) === true && $txDetails !== []) {
-				foreach ($txDetails as $tx) {
-					$entries[] = $this->mapTransaction(tx: $tx, ntry: $ntry);
-				}
+		return $status === 'BOOK' && $cdtDbt === 'DBIT';
+	}//end isBookedOutgoing()
 
-				continue;
-			}
+	/**
+	 * One entry per TxDtls of the Ntry, or — without TxDtls — one entry
+	 * carrying only the Ntry-level amount.
+	 *
+	 * @param SimpleXMLElement $ntry The Ntry element.
+	 *
+	 * @return list<array{endToEndId: string, amount: float, creditorIban: string, currency: string}>
+	 */
+	private function entriesOf(SimpleXMLElement $ntry): array {
+		$txDetails = $ntry->xpath(expression: './/TxDtls');
+		if (is_array(value: $txDetails) === true && $txDetails !== []) {
+			return array_map(fn (SimpleXMLElement $tx): array => $this->mapTransaction(tx: $tx, ntry: $ntry), $txDetails);
+		}
 
-			// No TxDtls — fall back to the Ntry-level amount only.
-			$entries[] = [
+		return [
+			[
 				'endToEndId' => '',
 				'amount' => $this->amount(node: $ntry),
 				'creditorIban' => '',
 				'currency' => $this->currency(node: $ntry),
-			];
-		}//end foreach
-
-		return $entries;
-	}//end parse()
+			],
+		];
+	}//end entriesOf()
 
 	/**
 	 * Map one TxDtls (with its parent Ntry for amount fallback) to an entry.

@@ -123,24 +123,48 @@ class FixedAssetDepreciationController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		try {
-			$asset = $this->records->find(schema: DepreciationScheduleService::ASSET, id: $id);
-		} catch (Throwable $e) {
-			$asset = null;
-		}
-
+		$asset            = $this->assetOrNull(id: $id);
 		$administrationId = (string)($asset['administrationId'] ?? '');
 		if ($asset === null || $this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		if ($post === true && $this->context->canPostJournalEntry(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'You may not post journal entries in this administration.'], Http::STATUS_FORBIDDEN);
+		if ($post === true) {
+			return $this->postRefusal(administrationId: $administrationId) ?? $asset;
 		}
 
 		return $asset;
-
 	}//end authorizeAsset()
+
+	/**
+	 * The asset, or null when it is unknown or cannot be read.
+	 *
+	 * @param string $id The asset id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function assetOrNull(string $id): array|null {
+		try {
+			return $this->records->find(schema: DepreciationScheduleService::ASSET, id: $id);
+		} catch (Throwable $e) {
+			return null;
+		}
+	}//end assetOrNull()
+
+	/**
+	 * The 403 when the caller may not post journal entries in the administration, or null.
+	 *
+	 * @param string $administrationId The asset's administration.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function postRefusal(string $administrationId): JSONResponse|null {
+		if ($this->context->canPostJournalEntry(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'You may not post journal entries in this administration.'], Http::STATUS_FORBIDDEN);
+		}
+
+		return null;
+	}//end postRefusal()
 
 	/**
 	 * Rows and their total.

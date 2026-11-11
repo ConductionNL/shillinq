@@ -228,4 +228,50 @@ final class ChartOfAccountsCandidateServiceTest extends TestCase {
 		self::assertSame([], $service->activeCandidates(administrationId: 'adm-1'));
 
 	}//end testDegradesGracefullyWhenOrUnavailable()
+
+	/**
+	 * Pin the scoped query and the candidates over every row shape; and that
+	 * an empty administration reads nothing.
+	 *
+	 * @return void
+	 */
+	public function testScopedQueryAndCandidatesAreExact(): void {
+		$queries = [];
+		$store = new class($queries) {
+			public function __construct(private array &$queries) {
+			}
+
+			public function setRegister(string $register): self {
+				$this->queries[] = ['register', $register];
+				return $this;
+			}
+
+			public function setSchema(string $schema): self {
+				$this->queries[] = ['schema', $schema];
+				return $this;
+			}
+
+			public function findAll(array $config): array {
+				$this->queries[] = ['find', $config];
+				return [['accountNumber' => ' 4000 ', 'name' => 'Kosten'], ['accountNumber' => '8000'], ['accountNumber' => ' '], 'scalar', ['name' => 'no code'], ['accountNumber' => 1300, 'name' => null]];
+			}
+		};
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturn($store);
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturn('');
+		$service = new ChartOfAccountsCandidateService($container, $config, $this->createMock(\Psr\Log\LoggerInterface::class));
+
+		self::assertSame([], $service->activeCandidates(''));
+		self::assertSame([], $queries);
+		self::assertSame(
+			[['code' => '4000', 'label' => 'Kosten'], ['code' => '8000', 'label' => null], ['code' => '1300', 'label' => null]],
+			$service->activeCandidates('adm-1')
+		);
+		self::assertSame(
+			[['register', 'shillinq'], ['schema', 'Account'], ['find', ['filters' => ['administrationId' => 'adm-1', 'lifecycleState' => 'active'], 'limit' => 200]]],
+			$queries
+		);
+
+	}//end testScopedQueryAndCandidatesAreExact()
 }//end class

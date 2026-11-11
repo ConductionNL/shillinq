@@ -254,6 +254,12 @@ class RuleEngineTest extends TestCase {
 		$this->assertNotContains('en16931-br-cl-03', $goodIds);
 		$this->assertNotContains('en16931-br-dec-14', $goodIds);
 
+		// The code list is upper case: a lower-case or padded code is not on it.
+		foreach (['eur', ' EUR', 'Eur'] as $currency) {
+			$ids = array_map(static fn (Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', array_merge($base, ['currency' => $currency])));
+			$this->assertContains(needle: 'en16931-br-cl-03', haystack: $ids, message: 'currency "' . $currency . '" flagged');
+		}
+
 	}//end testCurrencyAndDecimalChecks()
 
 	/**

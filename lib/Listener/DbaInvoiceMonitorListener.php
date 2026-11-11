@@ -83,37 +83,52 @@ class DbaInvoiceMonitorListener implements IEventListener {
 			return;
 		}
 
-		$administrationId = (string)($payload['administrationId'] ?? '');
-		$invoiceId = (string)($payload['@self']['id'] ?? ($payload['id'] ?? ''));
-		$amountCents = (int)($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
-		$hours = (float)($payload['hours'] ?? ($payload['hoursBilled'] ?? 0.0));
+		$facts = new DbaInvoiceFacts(
+			assignmentId: $assignmentId,
+			administrationId: (string)($payload['administrationId'] ?? ''),
+			invoiceId: (string)($payload['@self']['id'] ?? ($payload['id'] ?? '')),
+			amountCents: (int)($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0)),
+			hours: (float)($payload['hours'] ?? ($payload['hoursBilled'] ?? 0.0))
+		);
 
 		try {
-			$result = $this->vbarMonitor->assess(
-				amountCents: $amountCents,
-				hours: $hours,
-				administrationId: $administrationId,
-			);
-			if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
-				&& $invoiceId !== ''
-			) {
-				$this->vbarMonitor->emitFlag(
-					assignmentId: $assignmentId,
-					administrationId: $administrationId,
-					invoiceId: $invoiceId,
-					hourlyRateCents: (int)($result['uurtariefCents'] ?? 0),
-					vbarGrensCents: (int)($result['vbarGrensCents'] ?? 0),
-				);
-			}
+			$this->assessAndFlag(facts: $facts);
 		} catch (Throwable $e) {
 			// Non-blocking: log and continue. The AP/AR factuur commit MUST NOT
 			// be undone by a DBA monitoring hiccup.
 			$this->logger->warning(
 				'DbaInvoiceMonitorListener: VBAR assess/emit failed (non-blocking).',
-				['assignmentId' => $assignmentId, 'invoiceId' => $invoiceId, 'exception' => $e->getMessage()]
+				['assignmentId' => $facts->assignmentId, 'invoiceId' => $facts->invoiceId, 'exception' => $e->getMessage()]
 			);
 		}//end try
 	}//end handle()
+
+	/**
+	 * Assess the invoice against the VBAR limit and flag a known invoice over it.
+	 *
+	 * @param DbaInvoiceFacts $facts The invoice facts.
+	 *
+	 * @return void
+	 */
+	private function assessAndFlag(DbaInvoiceFacts $facts): void {
+		$result = $this->vbarMonitor->assess(
+			amountCents: $facts->amountCents,
+			hours: $facts->hours,
+			administrationId: $facts->administrationId,
+		);
+		if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
+			&& $facts->invoiceId !== ''
+		) {
+			$this->vbarMonitor->emitFlag(
+				assignmentId: $facts->assignmentId,
+				administrationId: $facts->administrationId,
+				invoiceId: $facts->invoiceId,
+				hourlyRateCents: (int)($result['uurtariefCents'] ?? 0),
+				vbarGrensCents: (int)($result['vbarGrensCents'] ?? 0),
+			);
+		}
+
+	}//end assessAndFlag()
 
 	/**
 	 * Extract an invoice payload from a heterogeneous OR event.
@@ -127,42 +142,58 @@ class DbaInvoiceMonitorListener implements IEventListener {
 	 */
 	private function extractInvoice(Event $event): ?array {
 		try {
-			if (method_exists($event, 'getObject') === true) {
-				$obj = $event->getObject();
-				if (is_array($obj) === true) {
-					/*
-					 * @var array<string,mixed> $obj
-					 */
-
-					return $obj;
-				}
-
-				if (is_object($obj) === true && method_exists($obj, 'getObject') === true) {
-					$data = $obj->getObject();
-					if (is_array($data) === true) {
-						/*
-						 * @var array<string,mixed> $data
-						 */
-
-						return $data;
-					}
-				}
-			}//end if
-
-			if (method_exists($event, 'getData') === true) {
-				$data = $event->getData();
-				if (is_array($data) === true) {
-					/*
-					 * @var array<string,mixed> $data
-					 */
-
-					return $data;
-				}
-			}
+			return ($this->objectPayload(event: $event) ?? $this->dataPayload(event: $event));
 		} catch (Throwable $e) {
 			$this->logger->debug('DbaInvoiceMonitorListener: extract failed', ['exception' => $e->getMessage()]);
-		}//end try
+		}
 
 		return null;
 	}//end extractInvoice()
+
+	/**
+	 * The payload from `getObject()`, either an array or an entity's object.
+	 *
+	 * @param Event $event Any OR event.
+	 *
+	 * @return array<string,mixed>|null The payload, or null when not extractable this way.
+	 */
+	private function objectPayload(Event $event): array|null {
+		if (method_exists($event, 'getObject') === false) {
+			return null;
+		}
+
+		$obj = $event->getObject();
+		if (is_array($obj) === true) {
+			return $obj;
+		}
+
+		if (is_object($obj) === true && method_exists($obj, 'getObject') === true) {
+			$data = $obj->getObject();
+			if (is_array($data) === true) {
+				return $data;
+			}
+		}
+
+		return null;
+
+	}//end objectPayload()
+
+	/**
+	 * The payload from `getData()`.
+	 *
+	 * @param Event $event Any OR event.
+	 *
+	 * @return array<string,mixed>|null The payload, or null when not extractable this way.
+	 */
+	private function dataPayload(Event $event): array|null {
+		if (method_exists($event, 'getData') === true) {
+			$data = $event->getData();
+			if (is_array($data) === true) {
+				return $data;
+			}
+		}
+
+		return null;
+
+	}//end dataPayload()
 }//end class

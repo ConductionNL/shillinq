@@ -122,6 +122,41 @@ class PaymentRunExportService {
 	 * @spec openspec/specs/payment-run-sepa-export/spec.md#requirement-req-sepa-005-export-shall-write-back-the-file-reference-and-drive-the-lifecycle
 	 */
 	public function export(array $paymentRun): array {
+		$refusal = $this->refusal(paymentRun: $paymentRun);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$rendered = $this->renderArtefacts(paymentRun: $paymentRun);
+		if ($rendered === []) {
+			return ['error' => 'no-generator'];
+		}
+
+		$run = new PaymentRunExportRun(paymentRun: $paymentRun, userId: ($this->userSession->getUser()?->getUID() ?? ''));
+		foreach ($rendered as $file) {
+			$this->storeOne(run: $run, file: $file);
+		}
+
+		// Storage failed entirely — leave the run approved for an idempotent retry.
+		if ($run->xmlFileRef === null) {
+			$this->logger->warning('PaymentRunExportService: XML file storage failed; run stays approved');
+			return ['error' => 'storage-failed', 'files' => $run->files];
+		}
+
+		return $this->writeBack(paymentRun: $paymentRun, run: $run);
+
+	}//end export()
+
+	/**
+	 * Why the run may not be exported, or null when it may: it must be
+	 * approved, every line needs a creditor IBAN, and (REQ-BPR-005) a block
+	 * set after approval stops the file before it is written.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 *
+	 * @return array<string, mixed>|null The refusal envelope, or null.
+	 */
+	private function refusal(array $paymentRun): array|null {
 		$state = (string)($paymentRun['lifecycleState'] ?? $paymentRun['status'] ?? '');
 		if ($state !== 'approved') {
 			$this->logger->warning('PaymentRunExportService: run not approved', ['state' => $state]);
@@ -134,94 +169,106 @@ class PaymentRunExportService {
 			return ['error' => 'missing-creditor-iban', 'lines' => $missing];
 		}
 
-		// REQ-BPR-005: a block set after approval stops the file before it is written.
 		$blocked = $this->blockChecker->blockedLines(paymentRun: $paymentRun);
 		if ($blocked !== []) {
 			$this->logger->warning('PaymentRunExportService: run pays a blocked invoice', ['invoices' => array_column($blocked, 'invoiceNumber')]);
 			return ['error' => 'payment-blocked', 'blocked' => $blocked];
 		}
 
-		$rendered = $this->renderArtefacts(paymentRun: $paymentRun);
-		if ($rendered === []) {
-			return ['error' => 'no-generator'];
+		return null;
+	}//end refusal()
+
+	/**
+	 * Store one rendered file, tag it with the run, administration and file
+	 * type, and record it on the run (the pain.001 path as the file reference).
+	 *
+	 * @param PaymentRunExportRun $run  The export in progress.
+	 * @param RenderedFile        $file The rendered artefact.
+	 *
+	 * @return void
+	 */
+	private function storeOne(PaymentRunExportRun $run, RenderedFile $file): void {
+		$stored = $this->storeFile(administrationId: $run->administrationId, rendered: $file, userId: $run->userId);
+
+		if ($stored['fileId'] !== null) {
+			$this->applyTags(
+				fileId: $stored['fileId'],
+				tags: [
+					'shillinq-payment-run:' . $run->runNumber,
+					'shillinq-administration:' . $run->administrationId,
+					'shillinq-file-type:' . $file->format,
+				]
+			);
 		}
 
-		$administrationId = (string)($paymentRun['administrationId'] ?? '');
-		$runNumber = (string)($paymentRun['runNumber'] ?? '');
-		$userId = ($this->userSession->getUser()?->getUID() ?? '');
-
-		$storedFiles = [];
-		$storedNodes = [];
-		$xmlFileRef = null;
-		foreach ($rendered as $file) {
-			$stored = $this->storeFile(administrationId: $administrationId, rendered: $file, userId: $userId);
-
-			if ($stored['fileId'] !== null) {
-				$this->applyTags(
-					fileId: $stored['fileId'],
-					tags: [
-						'shillinq-payment-run:' . $runNumber,
-						'shillinq-administration:' . $administrationId,
-						'shillinq-file-type:' . $file->format,
-					]
-				);
-			}
-
-			if ($stored['node'] !== null) {
-				$storedNodes[] = $stored['node'];
-			}
-
-			$storedFiles[] = [
-				'format' => $file->format,
-				'fileName' => $file->fileName,
-				'filePath' => $stored['filePath'],
-				'fileId' => $stored['fileId'],
-			];
-
-			if ($file->format === 'sepa-pain001' && $stored['filePath'] !== null) {
-				$xmlFileRef = $stored['filePath'];
-			}
-		}//end foreach
-
-		// Storage failed entirely — leave the run approved for an idempotent retry.
-		if ($xmlFileRef === null) {
-			$this->logger->warning('PaymentRunExportService: XML file storage failed; run stays approved');
-			return ['error' => 'storage-failed', 'files' => $storedFiles];
+		if ($stored['node'] !== null) {
+			$run->nodes[] = $stored['node'];
 		}
 
-		$exportedAt = gmdate('Y-m-d\TH:i:s\Z');
+		$run->files[] = [
+			'format' => $file->format,
+			'fileName' => $file->fileName,
+			'filePath' => $stored['filePath'],
+			'fileId' => $stored['fileId'],
+		];
 
-		$update = array_merge(
-			$paymentRun,
-			[
-				'exportedFileRef' => $xmlFileRef,
-				'exportedAt' => $exportedAt,
-				// Request the declarative approved → exported transition via the
-				// OR lifecycle engine (it validates the transition on save).
-				'lifecycleState' => 'exported',
-				'status' => 'exported',
-			]
-		);
+		if ($file->format === 'sepa-pain001' && $stored['filePath'] !== null) {
+			$run->xmlFileRef = $stored['filePath'];
+		}
+	}//end storeOne()
 
-		$outcome = $this->saveRun(run: $update);
+	/**
+	 * Write the file reference and export time back and request the
+	 * declarative approved → exported transition. When the run does not move
+	 * to exported (a guard refused it, or it could not be saved), its bank
+	 * file must not stay where someone uploads it.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 * @param PaymentRunExportRun  $run        The export with its stored files.
+	 *
+	 * @return array<string, mixed> The success envelope, or the save outcome's error.
+	 */
+	private function writeBack(array $paymentRun, PaymentRunExportRun $run): array {
+		$run->exportedAt = gmdate('Y-m-d\TH:i:s\Z');
+
+		$outcome = $this->saveRun(run: $this->exportedUpdate(paymentRun: $paymentRun, run: $run));
 		if (isset($outcome['error']) === true) {
-			// The run did not move to exported (a guard refused it, or it could
-			// not be saved): its bank file must not stay where someone uploads it.
-			$this->removeFiles(nodes: $storedNodes);
+			$this->removeFiles(nodes: $run->nodes);
 			return $outcome;
 		}
 
 		$saved = $outcome['run'];
 
 		return [
-			'exportedFileRef' => $xmlFileRef,
-			'exportedAt' => $exportedAt,
+			'exportedFileRef' => $run->xmlFileRef,
+			'exportedAt' => $run->exportedAt,
 			'lifecycleState' => (string)($saved['lifecycleState'] ?? 'exported'),
-			'files' => $storedFiles,
+			'files' => $run->files,
 			'paymentRun' => $saved,
 		];
+	}//end writeBack()
 
-	}//end export()
+	/**
+	 * The run with its export written back.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 * @param PaymentRunExportRun  $run        The export with its file reference and time.
+	 *
+	 * @return array<string, mixed> The updated run.
+	 */
+	private function exportedUpdate(array $paymentRun, PaymentRunExportRun $run): array {
+		return array_merge(
+			$paymentRun,
+			[
+				'exportedFileRef' => $run->xmlFileRef,
+				'exportedAt' => $run->exportedAt,
+				// Request the declarative approved → exported transition via the
+				// OR lifecycle engine (it validates the transition on save).
+				'lifecycleState' => 'exported',
+				'status' => 'exported',
+			]
+		);
+	}//end exportedUpdate()
 
 	/**
 	 * Render every discovered generator's artefact for the run (no storage).
@@ -301,34 +348,67 @@ class PaymentRunExportService {
 		}
 
 		foreach ($files as $file) {
-			$class = '\\OCA\\Shillinq\\PaymentRun\\Generator\\' . basename($file, '.php');
-			if (class_exists($class) === false) {
-				continue;
+			$class = self::generatorClass(file: $file);
+			$instance = null;
+			if ($class !== null) {
+				$instance = $this->instantiateGenerator(class: $class);
 			}
 
-			if (in_array(PaymentRunGeneratorInterface::class, class_implements($class), true) === false) {
-				continue;
-			}
-
-			if ((new ReflectionClass($class))->isInstantiable() === false) {
-				continue;
-			}
-
-			try {
-				// Resolve via the container so generators with constructor DI are autowired.
-				$instance = $this->container->get($class);
+			if ($instance !== null) {
 				$found[$instance::format()] = $instance;
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'PaymentRunExportService: failed to instantiate generator',
-					['class' => $class, 'exception' => $e->getMessage()]
-				);
 			}
-		}//end foreach
+		}
 
 		$this->generators = $found;
 		return $found;
 	}//end generators()
+
+	/**
+	 * The generator class a file in Generator/ declares, or null when it is not
+	 * an existing, instantiable PaymentRunGeneratorInterface implementation.
+	 *
+	 * @param string $file The PHP file.
+	 *
+	 * @return string|null
+	 */
+	private static function generatorClass(string $file): ?string {
+		$class = '\\OCA\\Shillinq\\PaymentRun\\Generator\\' . basename($file, '.php');
+		if (class_exists($class) === false) {
+			return null;
+		}
+
+		if (in_array(PaymentRunGeneratorInterface::class, class_implements($class), true) === false) {
+			return null;
+		}
+
+		if ((new ReflectionClass($class))->isInstantiable() === false) {
+			return null;
+		}
+
+		return $class;
+
+	}//end generatorClass()
+
+	/**
+	 * Resolve a generator via the container, so generators with constructor
+	 * DI are autowired; null (logged) when that fails.
+	 *
+	 * @param string $class The generator class.
+	 *
+	 * @return object|null The generator (container-resolved), or null.
+	 */
+	private function instantiateGenerator(string $class): ?object {
+		try {
+			return $this->container->get($class);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'PaymentRunExportService: failed to instantiate generator',
+				['class' => $class, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end instantiateGenerator()
 
 	/**
 	 * Write the rendered bytes to /Shillinq/PaymentRuns/<administrationId>/.

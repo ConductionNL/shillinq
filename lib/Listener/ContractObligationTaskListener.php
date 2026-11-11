@@ -129,45 +129,10 @@ class ContractObligationTaskListener implements IEventListener {
 		}
 
 		try {
-			$entity = $this->resolveEntity(event: $event);
-			if ($entity === null) {
-				return;
+			$obligation = $this->unlinkedObligation(event: $event);
+			if ($obligation !== null) {
+				$this->linkTask(obligation: $obligation);
 			}
-
-			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isObligationSchema(schema: $schema) === false) {
-				return;
-			}
-
-			$obligation = $entity->getObject();
-			if (is_array($obligation) === false) {
-				return;
-			}
-
-			// Re-entry guard — see the class docblock. This is what stops the
-			// write-back below from re-triggering this listener forever.
-			if ((string)($obligation['taskLinkStatus'] ?? '') === self::STATUS_LINKED) {
-				return;
-			}
-
-			$objectId = (string)($obligation['id'] ?? ($entity->getId() ?? ''));
-			if ($objectId === '') {
-				return;
-			}
-
-			$obligation['id'] = $objectId;
-
-			$result = $this->bridge->createTaskForObligation(obligation: $obligation);
-
-			$this->persist(id: $objectId, result: $result);
-
-			$this->logger->info(
-				'ContractObligationTaskListener: obligation task link attempted',
-				[
-					'obligationId' => $objectId,
-					'taskLinkStatus' => ($result['taskLinkStatus'] ?? 'unknown'),
-				]
-			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'ContractObligationTaskListener: task creation failed (fail-soft)',
@@ -176,6 +141,58 @@ class ContractObligationTaskListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The event's ContractObligation, id-stamped, when it has no linked task yet.
+	 *
+	 * @param Event $event OR object lifecycle event.
+	 *
+	 * @return array<string,mixed>|null The obligation, or null when it needs no task.
+	 */
+	private function unlinkedObligation(Event $event): array|null {
+		$entity = $this->resolveEntity(event: $event);
+		if ($entity === null || $this->isObligationSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+			return null;
+		}
+
+		$obligation = $entity->getObject();
+		// Re-entry guard — see the class docblock. This is what stops the
+		// write-back below from re-triggering this listener forever.
+		if (is_array($obligation) === false || (string)($obligation['taskLinkStatus'] ?? '') === self::STATUS_LINKED) {
+			return null;
+		}
+
+		$objectId = (string)($obligation['id'] ?? ($entity->getId() ?? ''));
+		if ($objectId === '') {
+			return null;
+		}
+
+		$obligation['id'] = $objectId;
+		return $obligation;
+
+	}//end unlinkedObligation()
+
+	/**
+	 * Create the obligation's task, write the link back and log the attempt.
+	 *
+	 * @param array<string,mixed> $obligation The id-stamped obligation.
+	 *
+	 * @return void
+	 */
+	private function linkTask(array $obligation): void {
+		$result = $this->bridge->createTaskForObligation(obligation: $obligation);
+
+		$this->persist(id: $obligation['id'], result: $result);
+
+		$this->logger->info(
+			'ContractObligationTaskListener: obligation task link attempted',
+			[
+				'obligationId' => $obligation['id'],
+				'taskLinkStatus' => ($result['taskLinkStatus'] ?? 'unknown'),
+			]
+		);
+
+	}//end linkTask()
 
 	/**
 	 * Pull the object entity off either supported event shape.

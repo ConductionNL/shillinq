@@ -290,4 +290,48 @@ final class KorControllerTest extends TestCase {
 	}//end testMonitorServiceFailureReturns500WithoutStackTrace()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * Every body in check order, the default year, the trimmed scope and the
+	 * failure log context.
+	 *
+	 * @return void
+	 */
+	public function testBodiesDefaultYearAndFailureLog(): void {
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$params = ['year' => 'x'];
+		self::assertSame(['error' => 'administration_id is required'], $this->controller->monitor()->getData());
+		$params = ['administration_id' => 'a/b', 'year' => 'x'];
+		self::assertSame(['error' => 'administration_id must be a valid administration identifier'], $this->controller->monitor()->getData());
+		$this->canAccess = false;
+		$params = ['administration_id' => 'adm-1', 'year' => 'x'];
+		self::assertSame(['error' => 'Administration not found'], $this->controller->monitor()->getData());
+		$this->canAccess = true;
+		self::assertSame(['error' => 'year must be a four-digit calendar year'], $this->controller->monitor()->getData());
+
+		$params = ['administration_id' => ' adm-1 ', 'year' => ' '];
+		$this->monitorService->expects($this->exactly(2))->method('status')
+			->willReturnCallback(
+				static function (string $administrationId, int $year): array {
+					if ($year === 2024) {
+						throw new \RuntimeException('boom');
+					}
+
+					return ['administrationId' => $administrationId, 'year' => $year];
+				}
+			);
+		self::assertSame(['administrationId' => 'adm-1', 'year' => (int)date('Y')], $this->controller->monitor()->getData());
+
+		$params = ['administration_id' => 'adm-1', 'year' => '2024'];
+		$this->logger->expects($this->once())->method('error')->with(
+			'KorController: failed to compute KOR drempel-status',
+			['administrationId' => 'adm-1', 'year' => 2024, 'exception' => 'boom']
+		);
+		self::assertSame(['error' => 'Failed to compute KOR threshold status'], $this->controller->monitor()->getData());
+
+	}//end testBodiesDefaultYearAndFailureLog()
 }//end class

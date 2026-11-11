@@ -50,7 +50,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -191,7 +190,7 @@ class ServiceReceiptService {
 			'administrationId' => $administrationId,
 		];
 
-		return $this->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
+		return $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
 	}//end createServiceReceipt()
 
 	/**
@@ -221,7 +220,7 @@ class ServiceReceiptService {
 		$this->assertAccess(administrationId: $administrationId);
 		$approver = $this->requireSessionUser();
 
-		$receipt = $this->findOne(
+		$receipt = $this->records()->findOne(
 			schema: self::SCHEMA_SVC_RECEIPT,
 			filters: [
 				'id' => $receiptId,
@@ -237,7 +236,7 @@ class ServiceReceiptService {
 			throw new RuntimeException('poLineId is required');
 		}
 
-		$poLine = $this->findOne(
+		$poLine = $this->records()->findOne(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'id' => $poLineId,
@@ -275,7 +274,7 @@ class ServiceReceiptService {
 			'administrationId' => $administrationId,
 		];
 
-		return $this->saveObject(schema: self::SCHEMA_SVC_RECEIPT_LINE, object: $line);
+		return $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT_LINE, object: $line);
 	}//end addServiceReceiptLine()
 
 	/**
@@ -298,7 +297,7 @@ class ServiceReceiptService {
 	public function confirmServiceReceipt(string $administrationId, string $receiptId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$receipt = $this->findOne(
+		$receipt = $this->records()->findOne(
 			schema: self::SCHEMA_SVC_RECEIPT,
 			filters: [
 				'id' => $receiptId,
@@ -317,7 +316,7 @@ class ServiceReceiptService {
 		$receipt['statusCode'] = 'confirmed';
 		$receipt['confirmedAt'] = $this->nowIso();
 
-		return $this->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
+		return $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
 	}//end confirmServiceReceipt()
 
 	/**
@@ -350,7 +349,7 @@ class ServiceReceiptService {
 	public function acceptServiceReceipt(string $administrationId, string $receiptId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$receipt = $this->findOne(
+		$receipt = $this->records()->findOne(
 			schema: self::SCHEMA_SVC_RECEIPT,
 			filters: [
 				'id' => $receiptId,
@@ -367,7 +366,7 @@ class ServiceReceiptService {
 		}
 
 		$receipt['statusCode'] = 'accepted';
-		$persisted = $this->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
+		$persisted = $this->records()->saveObject(schema: self::SCHEMA_SVC_RECEIPT, object: $receipt);
 
 		$poIds = $this->stringArray(input: ($persisted['poIds'] ?? $receipt['poIds'] ?? []));
 		foreach ($poIds as $poId) {
@@ -437,7 +436,7 @@ class ServiceReceiptService {
 	 * @return void
 	 */
 	private function updatePurchaseOrderReceiptLifecycle(string $administrationId, string $poId): void {
-		$po = $this->findOne(
+		$po = $this->records()->findOne(
 			schema: self::SCHEMA_PO,
 			filters: [
 				'id' => $poId,
@@ -448,93 +447,88 @@ class ServiceReceiptService {
 			return;
 		}
 
-		$poLines = $this->findAll(
+		$poLines = $this->records()->findAll(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'poId' => $poId,
 				'administrationId' => $administrationId,
 			]
 		);
+		$received = $this->receivedQuantities(
+			administrationId: $administrationId,
+			acceptedReceiptIds: $this->acceptedReceiptIds(administrationId: $administrationId)
+		);
+		$lifecycle = $received->lifecycleFor(po: $po, poLines: $poLines);
+		if ($lifecycle !== null) {
+			$po['statusCode'] = $lifecycle;
+			$this->records()->saveObject(schema: self::SCHEMA_PO, object: $po);
+		}
 
-		// Only accepted receipts contribute — a confirmed-but-not-yet-accepted
-		// line has not settled anything yet.
+	}//end updatePurchaseOrderReceiptLifecycle()
+
+	/**
+	 * The ids of the administration's accepted receipts. Only accepted
+	 * receipts contribute — a confirmed-but-not-yet-accepted line has not
+	 * settled anything yet.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,true> Accepted receipt ids as keys.
+	 */
+	private function acceptedReceiptIds(string $administrationId): array {
 		$acceptedReceiptIds = [];
-		$receipts = $this->findAll(
+		$receipts = $this->records()->findAll(
 			schema: self::SCHEMA_SVC_RECEIPT,
 			filters: [
 				'administrationId' => $administrationId,
 			]
 		);
 		foreach ($receipts as $receiptRow) {
-			$status = (string)($receiptRow['statusCode'] ?? '');
-			if ($status !== 'accepted') {
-				continue;
-			}
-
 			$id = (string)($receiptRow['id'] ?? ($receiptRow['@self']['id'] ?? ''));
-			if ($id !== '') {
+			if ((string)($receiptRow['statusCode'] ?? '') === 'accepted' && $id !== '') {
 				$acceptedReceiptIds[$id] = true;
 			}
 		}
 
-		// Total accepted per PO-line across every accepted receipt's lines.
-		$acceptedByPoLine = [];
-		$allReceiptLines = $this->findAll(
+		return $acceptedReceiptIds;
+	}//end acceptedReceiptIds()
+
+	/**
+	 * Total accepted per PO-line across every accepted receipt's lines.
+	 *
+	 * @param string             $administrationId   Administration scope.
+	 * @param array<string,true> $acceptedReceiptIds Accepted receipt ids as keys.
+	 *
+	 * @return ReceivedQuantities The accepted quantities.
+	 */
+	private function receivedQuantities(string $administrationId, array $acceptedReceiptIds): ReceivedQuantities {
+		$received = new ReceivedQuantities();
+		$allReceiptLines = $this->records()->findAll(
 			schema: self::SCHEMA_SVC_RECEIPT_LINE,
 			filters: [
 				'administrationId' => $administrationId,
 			]
 		);
 		foreach ($allReceiptLines as $receiptLine) {
-			$parentReceiptId = (string)($receiptLine['serviceReceiptId'] ?? '');
-			if (isset($acceptedReceiptIds[$parentReceiptId]) === false) {
-				continue;
-			}
-
-			$linePoLineId = (string)($receiptLine['poLineId'] ?? '');
-			if ($linePoLineId === '') {
-				continue;
-			}
-
-			$thousandths = $this->thousandths(value: (float)($receiptLine['quantityAccepted'] ?? 0));
-			$acceptedByPoLine[$linePoLineId] = (($acceptedByPoLine[$linePoLineId] ?? 0) + $thousandths);
-		}
-
-		$allFullyReceived = true;
-		$anyReceived = false;
-		foreach ($poLines as $line) {
-			$lineId = (string)($line['id'] ?? ($line['@self']['id'] ?? ''));
-			$orderedAmount = $this->thousandths(value: (float)($line['quantityOrdered'] ?? 0));
-			$acceptedAmount = (int)($acceptedByPoLine[$lineId] ?? 0);
-
-			if ($acceptedAmount > 0) {
-				$anyReceived = true;
-			}
-
-			if ($acceptedAmount < $orderedAmount) {
-				$allFullyReceived = false;
+			if (isset($acceptedReceiptIds[(string)($receiptLine['serviceReceiptId'] ?? '')]) === true) {
+				$received->add(poLineId: (string)($receiptLine['poLineId'] ?? ''), quantityAccepted: ($receiptLine['quantityAccepted'] ?? 0));
 			}
 		}
 
-		if ($poLines === []) {
-			return;
-		}
+		return $received;
+	}//end receivedQuantities()
 
-		$newLifecycle = $po['statusCode'] ?? '';
-		if ($allFullyReceived === true) {
-			$newLifecycle = 'fully_received';
-		} elseif ($anyReceived === true) {
-			$newLifecycle = 'partial_received';
-		}
-
-		if ($newLifecycle === ($po['statusCode'] ?? '')) {
-			return;
-		}
-
-		$po['statusCode'] = $newLifecycle;
-		$this->saveObject(schema: self::SCHEMA_PO, object: $po);
-
-	}//end updatePurchaseOrderReceiptLifecycle()
+	/**
+	 * The record store on the app's register, logging as this service.
+	 *
+	 * @return SchemaRecordStore The record store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'ServiceReceiptService')
+		);
+	}//end records()
 
 	/**
 	 * Generate a per-administration service-receipt number for the current
@@ -548,7 +542,7 @@ class ServiceReceiptService {
 	 */
 	private function generateReceiptNumber(string $administrationId): string {
 		$year = (int)date('Y');
-		$existing = $this->findAll(
+		$existing = $this->records()->findAll(
 			schema: self::SCHEMA_SVC_RECEIPT,
 			filters: ['administrationId' => $administrationId]
 		);
@@ -602,7 +596,7 @@ class ServiceReceiptService {
 	 */
 	private function assertPurchaseOrdersAccessible(string $administrationId, array $poIds): void {
 		foreach ($poIds as $poId) {
-			$po = $this->findOne(
+			$po = $this->records()->findOne(
 				schema: self::SCHEMA_PO,
 				filters: [
 					'id' => $poId,
@@ -705,117 +699,6 @@ class ServiceReceiptService {
 		// Round to thousandths so multipleOf 0.001 enforcement is exact.
 		return (((float)round($float * 1000.0)) / 1000.0);
 	}//end normaliseQuantity()
-
-	/**
-	 * Convert a quantity float to integer thousandths (multipleOf 0.001) so
-	 * the partial-confirmation allocator stays bit-exact.
-	 *
-	 * @param float $value Quantity value.
-	 *
-	 * @return int Thousandths.
-	 */
-	private function thousandths(float $value): int {
-		return (int)round(($value * 1000.0), 0, PHP_ROUND_HALF_UP);
-	}//end thousandths()
-
-	/**
-	 * Persist an object via OpenRegister's real ObjectService API
-	 * (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object The object to persist.
-	 *
-	 * @return array<string,mixed> The persisted record (id stamped by OR).
-	 *
-	 * @throws \RuntimeException When the persistence call fails.
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ServiceReceiptService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ServiceReceiptService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config (defaults to
-	 * "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 
 	/**
 	 * Assert the caller can access the requested administration; mask as

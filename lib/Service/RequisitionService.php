@@ -53,6 +53,17 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/specs/purchase-requisition/spec.md
  */
 class RequisitionService {
+
+	/**
+	 * How a creation refusal names a required field that is not called by
+	 * its own name.
+	 *
+	 * @var array<string,string>
+	 */
+	private const REQUIRED_LABELS = [
+		'programme' => 'programma',
+		'kind' => 'soort',
+	];
 	/**
 	 * Constructor.
 	 *
@@ -93,6 +104,41 @@ class RequisitionService {
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
 	public function createRequisition(string $administrationId, array $payload): array {
+		$requester = $this->authorisedRequester(administrationId: $administrationId);
+		$fields    = $this->requisitionFields(payload: $payload);
+
+		$lines     = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []));
+		$totalCent = $this->totalCents(lines: $lines);
+		if ($totalCent <= 0) {
+			throw new RuntimeException('Requisition total must be positive');
+		}
+
+		$requisitionNumber = $this->generateRequisitionNumber(administrationId: $administrationId);
+
+		$requisition = ['requisitionNumber' => $requisitionNumber, 'administrationId' => $administrationId, 'requester' => $requester] + $fields + [
+			'preferredSupplierId' => trim((string)($payload['preferredSupplierId'] ?? '')),
+			'total_amount_excl_vat' => $totalCent,
+			'statusCode' => 'draft',
+		];
+
+		$persisted     = $this->saveObject(schema: 'Requisition', object: $requisition);
+		$requisitionId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $requisitionNumber));
+		$this->saveLines(lines: $lines, requisition: ['requisitionId' => $requisitionId, 'administrationId' => $administrationId]);
+
+		return $persisted;
+	}//end createRequisition()
+
+	/**
+	 * The authenticated requester in an accessible administration; the
+	 * requester is never trusted from the request body (ADR-005).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the administration is missing or inaccessible, or nobody is signed in.
+	 */
+	private function authorisedRequester(string $administrationId): string {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -107,64 +153,66 @@ class RequisitionService {
 			throw new RuntimeException('Authenticated requester is required');
 		}
 
-		$programma = trim((string)($payload['programme'] ?? ''));
-		if ($programma === '') {
-			throw new RuntimeException('programma is required');
-		}
+		return $requester;
+	}//end authorisedRequester()
 
-		$financialYear = (int)($payload['financialYear'] ?? 0);
-		if ($financialYear <= 0) {
+	/**
+	 * The programme, financial year, needed-by date, justification and kind
+	 * of a new requisition, refused in that order when one is missing.
+	 *
+	 * @param array<string,mixed> $payload Caller payload.
+	 *
+	 * @return array{programme:string,financialYear:int,neededByDate:string,justification:string,kind:string}
+	 *
+	 * @throws \RuntimeException When a field is missing.
+	 */
+	private function requisitionFields(array $payload): array {
+		$fields = ['programme' => $this->requiredText(payload: $payload, field: 'programme')];
+
+		$fields['financialYear'] = (int)($payload['financialYear'] ?? 0);
+		if ($fields['financialYear'] <= 0) {
 			throw new RuntimeException('boekjaar is required');
 		}
 
-		$neededByDate = trim((string)($payload['neededByDate'] ?? ''));
-		if ($neededByDate === '') {
-			throw new RuntimeException('neededByDate is required');
+		foreach (['neededByDate', 'justification', 'kind'] as $field) {
+			$fields[$field] = $this->requiredText(payload: $payload, field: $field);
 		}
 
-		$justification = trim((string)($payload['justification'] ?? ''));
-		if ($justification === '') {
-			throw new RuntimeException('justification is required');
+		return $fields;
+	}//end requisitionFields()
+
+	/**
+	 * A trimmed required payload field.
+	 *
+	 * @param array<string,mixed> $payload Caller payload.
+	 * @param string              $field   The field.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the field is empty; the refusal names it as {@see REQUIRED_LABELS} does.
+	 */
+	private function requiredText(array $payload, string $field): string {
+		$value = trim((string)($payload[$field] ?? ''));
+		if ($value === '') {
+			throw new RuntimeException((self::REQUIRED_LABELS[$field] ?? $field) . ' is required');
 		}
 
-		$kind = trim((string)($payload['kind'] ?? ''));
-		if ($kind === '') {
-			throw new RuntimeException('soort is required');
-		}
+		return $value;
+	}//end requiredText()
 
-		$lines = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []));
-		$totalCent = $this->totalCents(lines: $lines);
-		if ($totalCent <= 0) {
-			throw new RuntimeException('Requisition total must be positive');
-		}
-
-		$requisitionNumber = $this->generateRequisitionNumber(administrationId: $administrationId);
-
-		$requisition = [
-			'requisitionNumber' => $requisitionNumber,
-			'administrationId' => $administrationId,
-			'requester' => $requester,
-			'programme' => $programma,
-			'financialYear' => $financialYear,
-			'neededByDate' => $neededByDate,
-			'justification' => $justification,
-			'kind' => $kind,
-			'preferredSupplierId' => trim((string)($payload['preferredSupplierId'] ?? '')),
-			'total_amount_excl_vat' => $totalCent,
-			'statusCode' => 'draft',
-		];
-
-		$persisted = $this->saveObject(schema: 'Requisition', object: $requisition);
-		$requisitionId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $requisitionNumber));
-
+	/**
+	 * Save each line under its requisition.
+	 *
+	 * @param array<int,array<string,mixed>> $lines       The normalised lines.
+	 * @param array{requisitionId:string,administrationId:string} $requisition The requisition id and administration.
+	 *
+	 * @return void
+	 */
+	private function saveLines(array $lines, array $requisition): void {
 		foreach ($lines as $line) {
-			$line['requisitionId'] = $requisitionId;
-			$line['administrationId'] = $administrationId;
-			$this->saveObject(schema: 'RequisitionLine', object: $line);
+			$this->saveObject(schema: 'RequisitionLine', object: $line + $requisition);
 		}
-
-		return $persisted;
-	}//end createRequisition()
+	}//end saveLines()
 
 	/**
 	 * Submit a draft requisition for approval (REQ-REQ-002).
@@ -351,49 +399,71 @@ class RequisitionService {
 		}
 
 		$lines = [];
-		$lineNumber = 0;
-		foreach ($rawLines as $raw) {
+		foreach (array_values($rawLines) as $index => $raw) {
 			if (is_array($raw) === false) {
 				throw new RuntimeException('Line item must be an object');
 			}
 
-			$lineNumber++;
-			$description = trim((string)($raw['description'] ?? ''));
-			$glAccount = trim((string)($raw['glAccountSuggestion'] ?? ''));
-			$quantity = (float)($raw['quantity'] ?? 0);
-			$unitPrice = (float)($raw['unitPrice'] ?? 0);
-
-			if ($description === '') {
-				throw new RuntimeException('Line ' . $lineNumber . ' is missing description');
-			}
-
-			if ($glAccount === '') {
-				throw new RuntimeException('Line ' . $lineNumber . ' is missing glAccountSuggestion');
-			}
-
-			if ($quantity <= 0.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' must have positive quantity');
-			}
-
-			if ($unitPrice < 0.0) {
-				throw new RuntimeException('Line ' . $lineNumber . ' must have non-negative unitPrice');
-			}
-
-			$unitCents = $this->toCents(amount: $unitPrice);
-			$lineCents = (int)round(($unitCents * $quantity), 0, PHP_ROUND_HALF_UP);
-
-			$lines[] = [
-				'lineNumber' => ((int)($raw['lineNumber'] ?? $lineNumber)),
-				'description' => $description,
-				'quantity' => $quantity,
-				'unitPrice' => $unitCents,
-				'lineTotal' => $lineCents,
-				'glAccountSuggestion' => $glAccount,
-			];
-		}//end foreach
+			$lines[] = $this->pricedLine(line: $this->checkedLine(raw: $raw, lineNumber: ($index + 1)));
+		}
 
 		return $lines;
 	}//end normaliseLines()
+
+	/**
+	 * One raw line's fields, refused when the description or GL account
+	 * suggestion is missing, the quantity is not positive or the price is
+	 * negative.
+	 *
+	 * @param array<string,mixed> $raw        The raw line.
+	 * @param int                 $lineNumber The line's position.
+	 *
+	 * @return array{lineNumber:int,description:string,glAccountSuggestion:string,quantity:float,unitPrice:float}
+	 *
+	 * @throws \RuntimeException When the line is malformed.
+	 */
+	private function checkedLine(array $raw, int $lineNumber): array {
+		$line = [
+			'lineNumber' => ((int)($raw['lineNumber'] ?? $lineNumber)),
+			'description' => trim((string)($raw['description'] ?? '')),
+			'glAccountSuggestion' => trim((string)($raw['glAccountSuggestion'] ?? '')),
+			'quantity' => (float)($raw['quantity'] ?? 0),
+			'unitPrice' => (float)($raw['unitPrice'] ?? 0),
+		];
+
+		$refusal = match (true) {
+			$line['description'] === '' => 'is missing description',
+			$line['glAccountSuggestion'] === '' => 'is missing glAccountSuggestion',
+			$line['quantity'] <= 0.0 => 'must have positive quantity',
+			$line['unitPrice'] < 0.0 => 'must have non-negative unitPrice',
+			default => '',
+		};
+		if ($refusal !== '') {
+			throw new RuntimeException('Line ' . $lineNumber . ' ' . $refusal);
+		}
+
+		return $line;
+	}//end checkedLine()
+
+	/**
+	 * A checked line with its unit price and total in cents.
+	 *
+	 * @param array{lineNumber:int,description:string,glAccountSuggestion:string,quantity:float,unitPrice:float} $line The checked line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function pricedLine(array $line): array {
+		$unitCents = $this->toCents(amount: $line['unitPrice']);
+
+		return [
+			'lineNumber' => $line['lineNumber'],
+			'description' => $line['description'],
+			'quantity' => $line['quantity'],
+			'unitPrice' => $unitCents,
+			'lineTotal' => (int)round(($unitCents * $line['quantity']), 0, PHP_ROUND_HALF_UP),
+			'glAccountSuggestion' => $line['glAccountSuggestion'],
+		];
+	}//end pricedLine()
 
 	/**
 	 * Sum the lineTotal of every line as integer cents.

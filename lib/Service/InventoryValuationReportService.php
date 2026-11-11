@@ -100,47 +100,14 @@ class InventoryValuationReportService {
 		?string $sku = null,
 		?string $warehouse = null,
 	): array {
+		$filter = new StockLocation();
+		$filter->administrationId = $administrationId;
+		$filter->sku       = (string)$sku;
+		$filter->warehouse = (string)$warehouse;
+
 		$cutoff = $this->normaliseCutoff(asOfDate: $asOfDate);
-		$groups = $this->groupedMoves(administrationId: $administrationId, cutoff: $cutoff, sku: $sku, warehouse: $warehouse);
-
-		$lines = [];
-		$totalCents = 0;
-		$totalQuantity = 0.0;
-		foreach ($groups as $key => $moves) {
-			[$groupSku, $groupWarehouse] = $this->splitKey(key: $key);
-			$method = $this->methodFor(
-				administrationId: $administrationId,
-				sku: $groupSku,
-				warehouse: $groupWarehouse
-			);
-			$snapshot = $this->replay(moves: $moves, method: $method);
-			if ($snapshot['quantity'] <= 0.0 && $snapshot['totalValueCents'] === 0) {
-				continue;
-			}
-
-			$unitCost = 0.0;
-			if ($snapshot['quantity'] > 0) {
-				$unitCost = round(($snapshot['totalValueCents'] / 100) / $snapshot['quantity'], 4);
-			}
-
-			$lines[] = [
-				'sku' => $groupSku,
-				'warehouse' => $groupWarehouse,
-				'method' => $method,
-				'quantity' => round($snapshot['quantity'], 2),
-				'unitCost' => $unitCost,
-				'totalValue' => round(($snapshot['totalValueCents'] / 100), 2),
-			];
-			$totalCents += $snapshot['totalValueCents'];
-			$totalQuantity += $snapshot['quantity'];
-		}//end foreach
-
-		return [
-			'asOfDate' => $cutoff,
-			'totalValue' => round(($totalCents / 100), 2),
-			'totalQuantity' => round($totalQuantity, 2),
-			'lines' => $lines,
-		];
+		$groups = $this->groupedMoves(filter: $filter, cutoff: $cutoff);
+		return ['asOfDate' => $cutoff] + $this->valuationOf(groups: $groups, administrationId: $administrationId);
 
 	}//end valuationAsOf()
 
@@ -157,56 +124,21 @@ class InventoryValuationReportService {
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
 	public function ageing(string $administrationId, string $asOfDate, string $sku, string $warehouse): array {
+		$location = new StockLocation();
+		$location->administrationId = $administrationId;
+		$location->sku       = $sku;
+		$location->warehouse = $warehouse;
+
 		$cutoff = $this->normaliseCutoff(asOfDate: $asOfDate);
-		$moves = $this->movesFor(
-			administrationId: $administrationId,
-			sku: $sku,
-			warehouse: $warehouse,
-			cutoff: $cutoff
-		);
+		$replay = $this->moveReplay()->replay(moves: $this->movesFor(location: $location, cutoff: $cutoff), method: 'FIFO');
 
-		$replay = $this->replay(moves: $moves, method: 'FIFO');
-		$residualLots = $replay['lots'];
-		$cutoffTs = strtotime($cutoff);
-		$buckets = [
-			'0-30' => 0,
-			'31-60' => 0,
-			'61-90' => 0,
-			'90+' => 0,
-		];
-
-		foreach ($residualLots as $lot) {
-			$lotCents = (int)round(((float)$lot['quantity']) * ((float)$lot['unitCost']) * 100);
-			$lotTs = strtotime((string)($lot['postedAt'] ?? ''));
-			$ageDays = 0;
-			if ($cutoffTs !== false && $lotTs !== false) {
-				$ageDays = (int)floor((($cutoffTs - $lotTs) / 86400));
-			}
-
-			$bucket = '90+';
-			if ($ageDays <= 30) {
-				$bucket = '0-30';
-			} elseif ($ageDays <= 60) {
-				$bucket = '31-60';
-			} elseif ($ageDays <= 90) {
-				$bucket = '61-90';
-			}
-
-			$buckets[$bucket] += $lotCents;
-		}//end foreach
-
-		$out = [
+		return [
 			'asOfDate' => $cutoff,
 			'sku' => $sku,
 			'warehouse' => $warehouse,
 			'totalValue' => round(($replay['totalValueCents'] / 100), 2),
-			'buckets' => [],
+			'buckets' => $this->moveReplay()->ageBuckets(lots: $replay['lots'], cutoff: $cutoff),
 		];
-		foreach ($buckets as $label => $cents) {
-			$out['buckets'][$label] = round(($cents / 100), 2);
-		}
-
-		return $out;
 	}//end ageing()
 
 	/**
@@ -223,350 +155,308 @@ class InventoryValuationReportService {
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
 	 */
 	public function turnover(string $administrationId, string $from, string $to, string $sku, string $warehouse): array {
-		$fromCut = $this->normaliseCutoff(asOfDate: $from);
-		$toCut = $this->normaliseCutoff(asOfDate: $to);
-		$method = $this->methodFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse);
+		$window = new StockWindow();
+		$window->location = new StockLocation();
+		$window->location->administrationId = $administrationId;
+		$window->location->sku       = $sku;
+		$window->location->warehouse = $warehouse;
+		$window->fromCut = $this->normaliseCutoff(asOfDate: $from);
+		$window->toCut   = $this->normaliseCutoff(asOfDate: $to);
+		$window->method  = $this->methodFor(location: $window->location);
 
-		$startMoves = $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $fromCut);
-		$endMoves = $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $toCut);
+		return $this->turnoverOf(window: $window);
 
-		$startCents = $this->replay(moves: $startMoves, method: $method)['totalValueCents'];
-		$endCents = $this->replay(moves: $endMoves, method: $method)['totalValueCents'];
-		$avgCents = (int)round((($startCents + $endCents) / 2));
+	}//end turnover()
 
-		// COGS in window = value consumed by issues whose postedAt in (from, to].
-		$cogsCents = $this->cogsInWindow(
-			administrationId: $administrationId,
-			sku: $sku,
-			warehouse: $warehouse,
-			method: $method,
-			fromCut: $fromCut,
-			toCut: $toCut
-		);
-
-		$turnoverRatio = 0.0;
-		$daysOnHand = 0.0;
-		if ($avgCents > 0) {
-			$turnoverRatio = round(($cogsCents / $avgCents), 4);
-			$windowDays = $this->windowDays(fromCut: $fromCut, toCut: $toCut);
-			if ($cogsCents > 0) {
-				$daysOnHand = round(($avgCents / $cogsCents) * $windowDays, 2);
+	/**
+	 * The valued lines and totals of grouped moves; a group with nothing
+	 * left is skipped.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $groups           Moves keyed by "sku\x00warehouse".
+	 * @param string                                       $administrationId Tenant scope.
+	 *
+	 * @return array{totalValue: float, totalQuantity: float, lines: array<int,array<string,mixed>>}
+	 */
+	private function valuationOf(array $groups, string $administrationId): array {
+		$lines         = [];
+		$totalCents    = 0;
+		$totalQuantity = 0.0;
+		foreach ($groups as $key => $moves) {
+			$line = $this->valuationLine(location: $this->locationOf(administrationId: $administrationId, key: $key), moves: $moves);
+			if ($line !== null) {
+				$totalCents    += $line['totalValueCents'];
+				$totalQuantity += $line['rawQuantity'];
+				unset($line['totalValueCents'], $line['rawQuantity']);
+				$lines[] = $line;
 			}
 		}
 
+		return ['totalValue' => round(($totalCents / 100), 2), 'totalQuantity' => round($totalQuantity, 2), 'lines' => $lines];
+	}//end valuationOf()
+
+	/**
+	 * The valued line of one stock position under its method, with its raw
+	 * cents and quantity for the totals; null when nothing is left.
+	 *
+	 * @param StockLocation                  $location The stock position.
+	 * @param array<int,array<string,mixed>> $moves    Its moves up to the cut-off.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function valuationLine(StockLocation $location, array $moves): ?array {
+		$method   = $this->methodFor(location: $location);
+		$snapshot = $this->moveReplay()->replay(moves: $moves, method: $method);
+		if ($snapshot['quantity'] <= 0.0 && $snapshot['totalValueCents'] === 0) {
+			return null;
+		}
+
+		$unitCost = 0.0;
+		if ($snapshot['quantity'] > 0) {
+			$unitCost = round(($snapshot['totalValueCents'] / 100) / $snapshot['quantity'], 4);
+		}
+
 		return [
-			'from' => $fromCut,
-			'to' => $toCut,
+			'sku' => $location->sku,
+			'warehouse' => $location->warehouse,
 			'method' => $method,
+			'quantity' => round($snapshot['quantity'], 2),
+			'unitCost' => $unitCost,
+			'totalValue' => round(($snapshot['totalValueCents'] / 100), 2),
+			'totalValueCents' => $snapshot['totalValueCents'],
+			'rawQuantity' => $snapshot['quantity'],
+		];
+	}//end valuationLine()
+
+	/**
+	 * The stock position a group key names.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $key              The "sku\x00warehouse" key.
+	 *
+	 * @return StockLocation
+	 */
+	private function locationOf(string $administrationId, string $key): StockLocation {
+		[$sku, $warehouse] = $this->splitKey(key: $key);
+
+		$location = new StockLocation();
+		$location->administrationId = $administrationId;
+		$location->sku       = $sku;
+		$location->warehouse = $warehouse;
+		return $location;
+	}//end locationOf()
+
+	/**
+	 * Turnover ratio and days on hand of a window: COGS over the average of
+	 * the opening and closing inventory value.
+	 *
+	 * @param StockWindow $window The position, window and method.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function turnoverOf(StockWindow $window): array {
+		$startCents = $this->valueAt(window: $window, cutoff: $window->fromCut);
+		$endCents   = $this->valueAt(window: $window, cutoff: $window->toCut);
+		$avgCents   = (int)round((($startCents + $endCents) / 2));
+		$cogsCents  = $this->cogsInWindow(window: $window);
+
+		$turnoverRatio = 0.0;
+		$daysOnHand    = 0.0;
+		if ($avgCents > 0) {
+			$turnoverRatio = round(($cogsCents / $avgCents), 4);
+			$daysOnHand    = $this->daysOnHand(window: $window, cents: ['average' => $avgCents, 'cogs' => $cogsCents]);
+		}
+
+		return [
+			'from' => $window->fromCut,
+			'to' => $window->toCut,
+			'method' => $window->method,
 			'cogs' => round(($cogsCents / 100), 2),
 			'averageInventoryValue' => round(($avgCents / 100), 2),
 			'turnoverRatio' => $turnoverRatio,
 			'daysOnHand' => $daysOnHand,
 		];
-
-	}//end turnover()
+	}//end turnoverOf()
 
 	/**
-	 * Replay a chronological move list into a valuation snapshot.
+	 * Days on hand: average inventory over COGS times the window's days; 0
+	 * without COGS.
 	 *
-	 * @param array<int,array<string,mixed>> $moves Posted moves, will be sorted by postedAt.
-	 * @param string $method 'FIFO' or 'average'.
+	 * @param StockWindow                       $window The window.
+	 * @param array{average: int, cogs: int}    $cents  Average inventory and COGS in cents.
 	 *
-	 * @return array{quantity: float, totalValueCents: int, lots: array<int,array<string,mixed>>}
+	 * @return float
 	 */
-	private function replay(array $moves, string $method): array {
-		usort(
-			$moves,
-			static fn (array $a, array $b): int => strcmp(
-				(string)($a['postedAt'] ?? ($a['draftedAt'] ?? '')),
-				(string)($b['postedAt'] ?? ($b['draftedAt'] ?? ''))
-			)
-		);
-
-		if ($method === 'average') {
-			return $this->replayAverage(moves: $moves);
+	private function daysOnHand(StockWindow $window, array $cents): float {
+		$windowDays = $this->windowDays(fromCut: $window->fromCut, toCut: $window->toCut);
+		if ($cents['cogs'] <= 0) {
+			return 0.0;
 		}
 
-		return $this->replayFifo(moves: $moves);
-	}//end replay()
+		return round(($cents['average'] / $cents['cogs']) * $windowDays, 2);
+	}//end daysOnHand()
 
 	/**
-	 * FIFO replay: build open lots, consume oldest-first on issues.
+	 * The inventory value of the window's position at a cut-off, in cents.
 	 *
-	 * @param array<int,array<string,mixed>> $moves Chronologically sorted moves.
+	 * @param StockWindow $window The position and method.
+	 * @param string      $cutoff Inclusive cut-off.
 	 *
-	 * @return array{quantity: float, totalValueCents: int, lots: array<int,array<string,mixed>>}
+	 * @return int
 	 */
-	private function replayFifo(array $moves): array {
-		$lots = [];
-		foreach ($moves as $move) {
-			$type = (string)($move['movementType'] ?? '');
-			$qty = (float)($move['quantity'] ?? 0);
-			if ($qty <= 0) {
-				continue;
-			}
-
-			if ($type === 'receipt') {
-				$lots[] = [
-					'quantity' => $qty,
-					'unitCost' => (float)($move['unitCost'] ?? 0),
-					'postedAt' => (string)($move['postedAt'] ?? ($move['draftedAt'] ?? '')),
-				];
-				continue;
-			}
-
-			if ($type !== 'issue') {
-				continue;
-			}
-
-			$remaining = $qty;
-			foreach ($lots as $i => $lot) {
-				if ($remaining <= 0) {
-					break;
-				}
-
-				$take = min((float)$lot['quantity'], $remaining);
-				$lots[$i]['quantity'] = ((float)$lot['quantity'] - $take);
-				$remaining -= $take;
-			}
-
-			$lots = array_values(
-				array_filter($lots, static fn (array $lot): bool => ((float)$lot['quantity']) > 1e-9)
-			);
-		}//end foreach
-
-		$qtyTotal = 0.0;
-		$valueCents = 0;
-		foreach ($lots as $lot) {
-			$qtyTotal += (float)$lot['quantity'];
-			$valueCents += (int)round(((float)$lot['quantity']) * ((float)$lot['unitCost']) * 100);
-		}
-
-		return [
-			'quantity' => $qtyTotal,
-			'totalValueCents' => $valueCents,
-			'lots' => $lots,
-		];
-
-	}//end replayFifo()
-
-	/**
-	 * Moving-average replay: running weighted average.
-	 *
-	 * @param array<int,array<string,mixed>> $moves Chronologically sorted moves.
-	 *
-	 * @return array{quantity: float, totalValueCents: int, lots: array<int,array<string,mixed>>}
-	 */
-	private function replayAverage(array $moves): array {
-		$qty = 0.0;
-		$avgCost = 0.0;
-		foreach ($moves as $move) {
-			$type = (string)($move['movementType'] ?? '');
-			$moveQty = (float)($move['quantity'] ?? 0);
-			if ($moveQty <= 0) {
-				continue;
-			}
-
-			if ($type === 'receipt') {
-				$rcvCost = (float)($move['unitCost'] ?? 0);
-				$newQty = ($qty + $moveQty);
-				if ($newQty > 0) {
-					$avgCost = round(((($qty * $avgCost) + ($moveQty * $rcvCost)) / $newQty), 4);
-				}
-
-				$qty = $newQty;
-				continue;
-			}
-
-			if ($type === 'issue') {
-				$qty = max(0.0, ($qty - $moveQty));
-			}
-		}//end foreach
-
-		$valueCents = (int)round(($qty * $avgCost) * 100);
-		return [
-			'quantity' => $qty,
-			'totalValueCents' => $valueCents,
-			'lots' => [],
-		];
-
-	}//end replayAverage()
+	private function valueAt(StockWindow $window, string $cutoff): int {
+		return $this->moveReplay()->replay(
+			moves: $this->movesFor(location: $window->location, cutoff: $cutoff),
+			method: $window->method
+		)['totalValueCents'];
+	}//end valueAt()
 
 	/**
 	 * COGS consumed by issues whose postedAt falls within (fromCut, toCut],
-	 * valued under the active method by replaying up to each issue.
+	 * valued under the active method: receipts landed in the window add value;
+	 * the residual delta that is NOT explained by receipts is the value
+	 * consumed by issues.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $sku Product SKU.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $method 'FIFO' or 'average'.
-	 * @param string $fromCut Window start (exclusive).
-	 * @param string $toCut Window end (inclusive).
+	 * @param StockWindow $window The position, window and method.
 	 *
 	 * @return int COGS in integer cents.
 	 */
-	private function cogsInWindow(
-		string $administrationId,
-		string $sku,
-		string $warehouse,
-		string $method,
-		string $fromCut,
-		string $toCut,
-	): int {
-		$startCents = $this->replay(
-			moves: $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $fromCut),
-			method: $method
-		)['totalValueCents'];
-		$endCents = $this->replay(
-			moves: $this->movesFor(administrationId: $administrationId, sku: $sku, warehouse: $warehouse, cutoff: $toCut),
-			method: $method
-		)['totalValueCents'];
+	private function cogsInWindow(StockWindow $window): int {
+		$startCents    = $this->valueAt(window: $window, cutoff: $window->fromCut);
+		$endCents      = $this->valueAt(window: $window, cutoff: $window->toCut);
+		$receiptsCents = $this->receiptsValueInWindow(window: $window);
 
-		// Receipts landed in the window add value; the residual delta that is
-		// NOT explained by receipts is the value consumed by issues (COGS).
-		$receiptsCents = $this->receiptsValueInWindow(
-			administrationId: $administrationId,
-			sku: $sku,
-			warehouse: $warehouse,
-			fromCut: $fromCut,
-			toCut: $toCut
-		);
-
-		$cogsCents = (($startCents + $receiptsCents) - $endCents);
-		if ($cogsCents < 0) {
-			return 0;
-		}
-
-		return $cogsCents;
+		return max(0, (($startCents + $receiptsCents) - $endCents));
 	}//end cogsInWindow()
 
 	/**
 	 * Sum receipt value (qty × unitCost) landed within (fromCut, toCut].
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $sku Product SKU.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $fromCut Window start (exclusive).
-	 * @param string $toCut Window end (inclusive).
+	 * @param StockWindow $window The position and window.
 	 *
 	 * @return int
 	 */
-	private function receiptsValueInWindow(
-		string $administrationId,
-		string $sku,
-		string $warehouse,
-		string $fromCut,
-		string $toCut,
-	): int {
+	private function receiptsValueInWindow(StockWindow $window): int {
 		$cents = 0;
-		foreach ($this->rawReceipts(administrationId: $administrationId, sku: $sku, warehouse: $warehouse) as $move) {
-			$postedAt = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-			if ($postedAt === '' || strcmp($postedAt, $fromCut) <= 0 || strcmp($postedAt, $toCut) > 0) {
-				continue;
+		foreach ($this->rawReceipts(location: $window->location) as $move) {
+			$postedAt = $this->moveReplay()->postedAtOf(move: $move);
+			if ($postedAt !== '' && strcmp($postedAt, $window->fromCut) > 0 && strcmp($postedAt, $window->toCut) <= 0) {
+				$cents += (int)round(((float)($move['quantity'] ?? 0)) * ((float)($move['unitCost'] ?? 0)) * 100);
 			}
-
-			$cents += (int)round(((float)($move['quantity'] ?? 0)) * ((float)($move['unitCost'] ?? 0)) * 100);
 		}
 
 		return $cents;
 	}//end receiptsValueInWindow()
 
 	/**
-	 * All posted, non-cancelled receipt + issue moves for a (sku, warehouse)
-	 * with postedAt <= cutoff, normalised.
+	 * All posted receipt + issue moves of a position with postedAt <= cutoff
+	 * (or no postedAt).
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $sku Product SKU.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $cutoff Inclusive cut-off timestamp.
+	 * @param StockLocation $location The stock position.
+	 * @param string        $cutoff   Inclusive cut-off timestamp.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function movesFor(string $administrationId, string $sku, string $warehouse, string $cutoff): array {
-		$receipts = $this->rawReceipts(administrationId: $administrationId, sku: $sku, warehouse: $warehouse);
-		$issues = $this->rawIssues(administrationId: $administrationId, sku: $sku, warehouse: $warehouse);
+	private function movesFor(StockLocation $location, string $cutoff): array {
+		$moves = array_merge($this->rawReceipts(location: $location), $this->rawIssues(location: $location));
 
-		$out = [];
-		foreach (array_merge($receipts, $issues) as $move) {
-			$postedAt = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-			if ($postedAt !== '' && strcmp($postedAt, $cutoff) > 0) {
-				continue;
-			}
-
-			$out[] = $move;
-		}
-
-		return $out;
+		return array_values(array_filter($moves, fn (array $move): bool => $this->isUpTo(move: $move, cutoff: $cutoff)));
 	}//end movesFor()
 
 	/**
 	 * Grouped posted moves keyed by "sku\x00warehouse" for the whole
-	 * administration up to a cut-off, honouring optional filters.
+	 * administration up to a cut-off, honouring the filter's SKU and
+	 * warehouse when they are set.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $cutoff Inclusive cut-off.
-	 * @param string|null $sku Optional SKU filter.
-	 * @param string|null $warehouse Optional warehouse filter.
+	 * @param StockLocation $filter The administration and optional SKU / warehouse.
+	 * @param string        $cutoff Inclusive cut-off.
 	 *
 	 * @return array<string,array<int,array<string,mixed>>>
 	 */
-	private function groupedMoves(string $administrationId, string $cutoff, ?string $sku, ?string $warehouse): array {
-		$filters = [
-			'administrationId' => $administrationId,
-			'lifecycleState' => 'posted',
-		];
-		if ($sku !== null && $sku !== '') {
-			$filters['itemId'] = $sku;
-		}
-
-		$rows = $this->objectService
-			->setRegister($this->register())
-			->setSchema('StockMove')
-			->findAll(['filters' => $filters]);
-
+	private function groupedMoves(StockLocation $filter, string $cutoff): array {
 		$groups = [];
-		foreach ($rows as $row) {
-			$move = $this->asArray(row: $row);
-			$type = (string)($move['movementType'] ?? '');
-			if (in_array($type, ['receipt', 'issue'], true) === false) {
-				continue;
+		foreach ($this->rawMoves(filters: $this->groupFilters(filter: $filter)) as $move) {
+			$warehouse = $this->groupWarehouse(move: $move, filter: $filter);
+			if ($warehouse !== null && $this->isUpTo(move: $move, cutoff: $cutoff) === true) {
+				$groups[$this->makeKey(sku: (string)($move['itemId'] ?? ''), warehouse: $warehouse)][] = $move;
 			}
-
-			$wh = (string)($move['sourceLocationId'] ?? '');
-			if ($type === 'receipt') {
-				$wh = (string)($move['destinationLocationId'] ?? '');
-			}
-
-			if ($warehouse !== null && $warehouse !== '' && $wh !== $warehouse) {
-				continue;
-			}
-
-			$postedAt = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-			if ($postedAt !== '' && strcmp($postedAt, $cutoff) > 0) {
-				continue;
-			}
-
-			$groups[$this->makeKey(sku: (string)($move['itemId'] ?? ''), warehouse: $wh)][] = $move;
-		}//end foreach
+		}
 
 		return $groups;
 	}//end groupedMoves()
 
 	/**
+	 * The StockMove filters of a grouped read: the administration's posted
+	 * moves, of one SKU when the filter names one.
+	 *
+	 * @param StockLocation $filter The administration and optional SKU.
+	 *
+	 * @return array<string,string>
+	 */
+	private function groupFilters(StockLocation $filter): array {
+		$filters = [
+			'administrationId' => $filter->administrationId,
+			'lifecycleState' => 'posted',
+		];
+		if ($filter->sku !== '') {
+			$filters['itemId'] = $filter->sku;
+		}
+
+		return $filters;
+	}//end groupFilters()
+
+	/**
+	 * The warehouse a receipt or issue belongs to, or null when the move is
+	 * neither or lies outside the filter's warehouse.
+	 *
+	 * @param array<string,mixed> $move   One stock move.
+	 * @param StockLocation       $filter The optional warehouse filter.
+	 *
+	 * @return string|null
+	 */
+	private function groupWarehouse(array $move, StockLocation $filter): ?string {
+		$type = (string)($move['movementType'] ?? '');
+		if (in_array($type, ['receipt', 'issue'], true) === false) {
+			return null;
+		}
+
+		$warehouse = (string)($move['sourceLocationId'] ?? '');
+		if ($type === 'receipt') {
+			$warehouse = (string)($move['destinationLocationId'] ?? '');
+		}
+
+		if ($filter->warehouse !== '' && $warehouse !== $filter->warehouse) {
+			return null;
+		}
+
+		return $warehouse;
+	}//end groupWarehouse()
+
+	/**
+	 * Whether a move has no postedAt or one on or before the cut-off.
+	 *
+	 * @param array<string,mixed> $move   One stock move.
+	 * @param string              $cutoff Inclusive cut-off.
+	 *
+	 * @return bool
+	 */
+	private function isUpTo(array $move, string $cutoff): bool {
+		$postedAt = $this->moveReplay()->postedAtOf(move: $move);
+		return $postedAt === '' || strcmp($postedAt, $cutoff) <= 0;
+	}//end isUpTo()
+
+	/**
 	 * Raw receipt moves for a (sku, warehouse).
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $sku Product SKU.
-	 * @param string $warehouse Warehouse location id.
+	 * @param StockLocation $location The stock position.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function rawReceipts(string $administrationId, string $sku, string $warehouse): array {
+	private function rawReceipts(StockLocation $location): array {
 		return $this->rawMoves(
 			filters: [
-				'administrationId' => $administrationId,
-				'itemId' => $sku,
-				'destinationLocationId' => $warehouse,
+				'administrationId' => $location->administrationId,
+				'itemId' => $location->sku,
+				'destinationLocationId' => $location->warehouse,
 				'movementType' => 'receipt',
 				'lifecycleState' => 'posted',
 			]
@@ -577,18 +467,16 @@ class InventoryValuationReportService {
 	/**
 	 * Raw issue moves for a (sku, warehouse).
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $sku Product SKU.
-	 * @param string $warehouse Warehouse location id.
+	 * @param StockLocation $location The stock position.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function rawIssues(string $administrationId, string $sku, string $warehouse): array {
+	private function rawIssues(StockLocation $location): array {
 		return $this->rawMoves(
 			filters: [
-				'administrationId' => $administrationId,
-				'itemId' => $sku,
-				'sourceLocationId' => $warehouse,
+				'administrationId' => $location->administrationId,
+				'itemId' => $location->sku,
+				'sourceLocationId' => $location->warehouse,
 				'movementType' => 'issue',
 				'lifecycleState' => 'posted',
 			]
@@ -618,45 +506,55 @@ class InventoryValuationReportService {
 	}//end rawMoves()
 
 	/**
-	 * Resolve the valuation method for a (sku, warehouse), default FIFO.
+	 * Resolve the valuation method for a stock position, default FIFO; a
+	 * failed lookup is logged and answers FIFO.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $sku Product SKU.
-	 * @param string $warehouse Warehouse location id.
+	 * @param StockLocation $location The stock position.
 	 *
 	 * @return string 'FIFO' or 'average'.
 	 */
-	private function methodFor(string $administrationId, string $sku, string $warehouse): string {
+	private function methodFor(StockLocation $location): string {
 		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryValuation')
-				->findAll(
-					[
-						'filters' => [
-							'productId' => $sku,
-							'warehouse' => $warehouse,
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if ($rows !== []) {
-				$method = (string)($this->asArray(row: $rows[0])['valuationMethod'] ?? 'FIFO');
-				if ($method === 'average') {
-					return 'average';
-				}
-			}
+			return $this->storedMethod(location: $location);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'InventoryValuationReportService: methodFor lookup failed — defaulting to FIFO',
-				['sku' => $sku, 'exception' => $e->getMessage()]
+				['sku' => $location->sku, 'exception' => $e->getMessage()]
 			);
-		}//end try
+		}
 
 		return 'FIFO';
 	}//end methodFor()
+
+	/**
+	 * The valuation method stored on the position's InventoryValuation: 'average'
+	 * when it says so, else FIFO.
+	 *
+	 * @param StockLocation $location The stock position.
+	 *
+	 * @return string 'FIFO' or 'average'.
+	 */
+	private function storedMethod(StockLocation $location): string {
+		$rows = $this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryValuation')
+			->findAll(
+				[
+					'filters' => [
+						'productId' => $location->sku,
+						'warehouse' => $location->warehouse,
+						'administrationId' => $location->administrationId,
+					],
+					'limit' => 1,
+				]
+			);
+
+		if ($rows !== [] && (string)($this->asArray(row: $rows[0])['valuationMethod'] ?? 'FIFO') === 'average') {
+			return 'average';
+		}
+
+		return 'FIFO';
+	}//end storedMethod()
 
 	/**
 	 * Normalise a cut-off to an end-of-day inclusive timestamp when a bare
@@ -733,26 +631,44 @@ class InventoryValuationReportService {
 			return $row;
 		}
 
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$out = $row->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
+		if (is_object($row) === false) {
 			return [];
 		}
 
-		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-			$out = $row->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
+		if (method_exists($row, 'jsonSerialize') === true) {
+			return $this->arrayOrEmpty(value: $row->jsonSerialize());
+		}
 
-			return [];
+		if (method_exists($row, 'getObject') === true) {
+			return $this->arrayOrEmpty(value: $row->getObject());
 		}
 
 		return [];
 	}//end asArray()
+
+	/**
+	 * The valuation arithmetic.
+	 *
+	 * @return StockMoveReplay
+	 */
+	private function moveReplay(): StockMoveReplay {
+		return new StockMoveReplay();
+	}//end moveReplay()
+
+	/**
+	 * A value when it is an array, else [].
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function arrayOrEmpty(mixed $value): array {
+		if (is_array($value) === true) {
+			return $value;
+		}
+
+		return [];
+	}//end arrayOrEmpty()
 
 	/**
 	 * Resolve the OR register slug, defaulting to 'shillinq'.

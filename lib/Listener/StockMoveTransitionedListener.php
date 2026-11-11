@@ -105,59 +105,10 @@ class StockMoveTransitionedListener implements IEventListener {
 		}
 
 		try {
-			if ($this->isStockMoveSchema(schema: (string)$event->getSchema()) === false) {
-				return;
+			$move = $this->postedStockMove(event: $event);
+			if ($move !== null) {
+				$this->valuate(move: $move);
 			}
-
-			if ($event->getTo() !== 'posted') {
-				return;
-			}
-
-			$entity = $event->getObject();
-			$move = $entity->getObject();
-			if (is_array($move) === false) {
-				return;
-			}
-
-			$movementType = (string)($move['movementType'] ?? '');
-			if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-				// Transfer, manufacture, repack — out of scope here.
-				return;
-			}
-
-			$valuation = $this->lookupValuation(move: $move);
-			if ($valuation === null) {
-				// No driving valuation yet — only fire if the operator already
-				// has a snapshot. On a true first receipt the snapshot will be
-				// created by the engine on next dispatch via findOrCreateValuation().
-				$valuation = ['valuationMethod' => 'FIFO'];
-			}
-
-			$method = (string)($valuation['valuationMethod'] ?? 'FIFO');
-			$result = match ($method) {
-				'average' => $this->average->processStockMove(move: $move),
-				default => $this->fifo->processStockMove(move: $move),
-			};
-
-			if (((bool)($result['processed'] ?? false)) !== true) {
-				return;
-			}
-
-			// Only outbound moves drive COGS posting per REQ-INV-007.
-			if ($movementType !== 'issue') {
-				return;
-			}
-
-			$cogsCents = (int)($result['cogsCents'] ?? 0);
-			if ($cogsCents <= 0) {
-				return;
-			}
-
-			$this->cogs->postCogs(
-				move: $move,
-				valuation: $result['valuation'],
-				cogsCents: $cogsCents
-			);
 		} catch (Throwable $e) {
 			// Fail-soft: valuation is a derived view. Never bubble up
 			// and block the StockMove transition itself.
@@ -165,9 +116,83 @@ class StockMoveTransitionedListener implements IEventListener {
 				'StockMoveTransitionedListener: valuation dispatch failed (fail-soft)',
 				['exception' => $e->getMessage()]
 			);
-		}//end try
+		}
 
 	}//end handle()
+
+	/**
+	 * The StockMove payload when the event posts a receipt or an issue,
+	 * else null.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return array<string,mixed>|null The StockMove, or null.
+	 */
+	private function postedStockMove(ObjectTransitionedEvent $event): array|null {
+		if ($this->isStockMoveSchema(schema: (string)$event->getSchema()) === false || $event->getTo() !== 'posted') {
+			return null;
+		}
+
+		$move = $event->getObject()->getObject();
+		if (is_array($move) === false) {
+			return null;
+		}
+
+		// Transfer, manufacture, repack — out of scope here.
+		if (in_array((string)($move['movementType'] ?? ''), ['receipt', 'issue'], true) === false) {
+			return null;
+		}
+
+		return $move;
+	}//end postedStockMove()
+
+	/**
+	 * Run the valuation engine for the move and, for a processed issue with
+	 * a positive cost, post the COGS.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return void
+	 */
+	private function valuate(array $move): void {
+		$result = $this->processWithMethod(move: $move);
+		if (((bool)($result['processed'] ?? false)) !== true) {
+			return;
+		}
+
+		// Only outbound moves drive COGS posting per REQ-INV-007.
+		$cogsCents = (int)($result['cogsCents'] ?? 0);
+		if ((string)($move['movementType'] ?? '') !== 'issue' || $cogsCents <= 0) {
+			return;
+		}
+
+		$this->cogs->postCogs(
+			move: $move,
+			valuation: $result['valuation'],
+			cogsCents: $cogsCents
+		);
+	}//end valuate()
+
+	/**
+	 * Process the move with the engine of its active valuation method.
+	 *
+	 * No driving valuation yet means FIFO: on a true first receipt the
+	 * snapshot is created by the engine on next dispatch via
+	 * findOrCreateValuation().
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return array<string,mixed> The engine result.
+	 */
+	private function processWithMethod(array $move): array {
+		$valuation = $this->lookupValuation(move: $move);
+		$method = (string)($valuation['valuationMethod'] ?? 'FIFO');
+
+		return match ($method) {
+			'average' => $this->average->processStockMove(move: $move),
+			default => $this->fifo->processStockMove(move: $move),
+		};
+	}//end processWithMethod()
 
 	/**
 	 * Look up the active InventoryValuation snapshot for the move.
@@ -176,18 +201,9 @@ class StockMoveTransitionedListener implements IEventListener {
 	 *
 	 * @return array<string,mixed>|null Snapshot or null.
 	 */
-	private function lookupValuation(array $move): ?array {
-		$movementType = (string)($move['movementType'] ?? '');
-		if ($movementType === 'receipt') {
-			$warehouse = (string)($move['destinationLocationId'] ?? '');
-		} else {
-			$warehouse = (string)($move['sourceLocationId'] ?? '');
-		}
-
-		$productId = (string)($move['itemId'] ?? '');
-		$administrationId = (string)($move['administrationId'] ?? '');
-
-		if ($productId === '' || $warehouse === '' || $administrationId === '') {
+	private function lookupValuation(array $move): array|null {
+		$filters = $this->valuationFilters(move: $move);
+		if ($filters === null) {
 			return null;
 		}
 
@@ -195,55 +211,113 @@ class StockMoveTransitionedListener implements IEventListener {
 			$rows = $this->objectService
 				->setRegister($this->register())
 				->setSchema('InventoryValuation')
-				->findAll(
-					[
-						'filters' => [
-							'productId' => $productId,
-							'warehouse' => $warehouse,
-							'status' => 'active',
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
+				->findAll(['filters' => $filters, 'limit' => 1]);
 
-			if (count($rows) === 0) {
-				return null;
-			}
-
-			$row = $rows[0];
-			if (is_array($row) === true) {
-				return $row;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-				$out = $row->jsonSerialize();
-				if (is_array($out) === true) {
-					return $out;
-				}
-
-				return null;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$out = $row->getObject();
-				if (is_array($out) === true) {
-					return $out;
-				}
-
-				return null;
-			}
-
-			return null;
+			return $this->firstRow(rows: $rows);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'StockMoveTransitionedListener: lookupValuation failed',
 				['exception' => $e->getMessage()]
 			);
 			return null;
-		}//end try
+		}
 
 	}//end lookupValuation()
+
+	/**
+	 * The snapshot filters for the move: product, the warehouse the move
+	 * books on (destination for a receipt, source otherwise), active status
+	 * and administration — or null when any key is missing.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return array<string,string>|null The filters, or null.
+	 */
+	private function valuationFilters(array $move): array|null {
+		$productId = (string)($move['itemId'] ?? '');
+		$warehouse = $this->warehouse(move: $move);
+		$administrationId = (string)($move['administrationId'] ?? '');
+		if ($productId === '' || $warehouse === '' || $administrationId === '') {
+			return null;
+		}
+
+		return [
+			'productId' => $productId,
+			'warehouse' => $warehouse,
+			'status' => 'active',
+			'administrationId' => $administrationId,
+		];
+	}//end valuationFilters()
+
+	/**
+	 * The warehouse a move books on: its destination for a receipt, its
+	 * source otherwise.
+	 *
+	 * @param array<string,mixed> $move The StockMove.
+	 *
+	 * @return string The location id, or ''.
+	 */
+	private function warehouse(array $move): string {
+		if ((string)($move['movementType'] ?? '') === 'receipt') {
+			return (string)($move['destinationLocationId'] ?? '');
+		}
+
+		return (string)($move['sourceLocationId'] ?? '');
+	}//end warehouse()
+
+	/**
+	 * The first lookup row as a plain array, or null.
+	 *
+	 * @param array<int,mixed> $rows The findAll() rows.
+	 *
+	 * @return array<string,mixed>|null The snapshot, or null.
+	 */
+	private function firstRow(array $rows): array|null {
+		if (count($rows) === 0) {
+			return null;
+		}
+
+		return $this->rowArray(row: $rows[0]);
+	}//end firstRow()
+
+	/**
+	 * One lookup row as a plain array: an array as is, an entity's serialised
+	 * or object payload when that is an array, else null.
+	 *
+	 * @param mixed $row One findAll() row.
+	 *
+	 * @return array<string,mixed>|null The snapshot, or null.
+	 */
+	private function rowArray(mixed $row): array|null {
+		if (is_object($row) === false) {
+			return self::arrayOrNull(value: $row);
+		}
+
+		if (method_exists($row, 'jsonSerialize') === true) {
+			return self::arrayOrNull(value: $row->jsonSerialize());
+		}
+
+		if (method_exists($row, 'getObject') === true) {
+			return self::arrayOrNull(value: $row->getObject());
+		}
+
+		return null;
+	}//end rowArray()
+
+	/**
+	 * The value when it is an array, else null.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return array<string,mixed>|null The array, or null.
+	 */
+	private static function arrayOrNull(mixed $value): array|null {
+		if (is_array($value) === true) {
+			return $value;
+		}
+
+		return null;
+	}//end arrayOrNull()
 
 	/**
 	 * Schema-name match for StockMove (plain slug or namespaced).

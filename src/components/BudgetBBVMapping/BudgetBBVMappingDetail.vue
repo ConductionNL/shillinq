@@ -220,6 +220,7 @@ import { generateUrl } from '@nextcloud/router'
 import DeleteBudgetMappingDialog from '../../modals/DeleteBudgetMappingDialog.vue'
 import BBVProgrammePicker from './BBVProgrammePicker.vue'
 import GlAccountPicker from './GlAccountPicker.vue'
+import { allocationValue, firstPresent, isSavableMapping, mappingRecordBody } from './budgetMappingDetail.js'
 
 const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'BudgetBBVMapping'
@@ -322,34 +323,7 @@ export default {
 		},
 
 		canSave() {
-			if (this.saving) {
-				return false
-			}
-			if (!this.form.glAccountNumber || !this.form.programmeCode) {
-				return false
-			}
-			if (
-				this.form.allocationPercentage === null
-				|| this.form.allocationPercentage === undefined
-				|| this.form.allocationPercentage === ''
-				|| Number(this.form.allocationPercentage) < 0
-				|| Number(this.form.allocationPercentage) > 100
-			) {
-				return false
-			}
-			if (!this.form.effectiveFrom) {
-				return false
-			}
-			if (
-				this.form.effectiveTo
-				&& this.form.effectiveTo < this.form.effectiveFrom
-			) {
-				return false
-			}
-			if (this.allocationFeedback.severity === 'error') {
-				return false
-			}
-			return true
+			return isSavableMapping(this)
 		},
 
 		fiscalYearOfMapping() {
@@ -413,44 +387,61 @@ export default {
 
 		async loadRecord() {
 			if (this.isCreate) {
-				this.record = null
-				this.loadError = ''
+				this.clearRecord()
 				return
 			}
 			this.loading = true
 			this.loadError = ''
 			try {
-				const response = await axios.get(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
-					),
-				)
-				const body =
-					response.data?.object
-					?? response.data?.result
-					?? response.data
-					?? null
-				if (!body || typeof body !== 'object') {
-					throw new Error('Empty response')
-				}
-				this.record = body
-				this.form.glAccountNumber = body.glAccountNumber ?? ''
-				this.form.programmeCode = body.programmeCode ?? ''
-				this.form.allocationPercentage = body.allocationPercentage ?? 0
-				this.form.effectiveFrom =
-					body.effectiveFrom ?? this.defaultEffectiveFrom()
-				this.form.effectiveTo = body.effectiveTo ?? ''
-				this.form.status = body.status ?? 'active'
-				this.form.administrationId =
-					body.administrationId ?? this.administrationId ?? ''
-				await this.refreshAllocationProjection()
+				await this.fetchRecord()
 			} catch (e) {
-				this.loadError =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'Failed to load mapping.')
+				this.loadError = this.loadFailureText(e)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		clearRecord() {
+			this.record = null
+			this.loadError = ''
+		},
+
+		async fetchRecord() {
+			const response = await axios.get(
+				generateUrl(
+					`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
+				),
+			)
+			const body = mappingRecordBody(response)
+			this.record = body
+			this.fillFormFromRecord(body)
+			await this.refreshAllocationProjection()
+		},
+
+		/**
+		 * Copy the record's fields onto the form, each falling back to its
+		 * default when the record does not carry it.
+		 *
+		 * @param {object} body The mapping record.
+		 */
+		fillFormFromRecord(body) {
+			const fallbacks = {
+				glAccountNumber: '',
+				programmeCode: '',
+				allocationPercentage: 0,
+				effectiveFrom: this.defaultEffectiveFrom(),
+				effectiveTo: '',
+				status: 'active',
+				administrationId: this.administrationId ?? '',
+			}
+			for (const [field, fallback] of Object.entries(fallbacks)) {
+				this.form[field] = body[field] ?? fallback
+			}
+		},
+
+		loadFailureText(e) {
+			return e?.response?.data?.error
+				|| this.t('shillinq', 'Failed to load mapping.')
 		},
 
 		onGlAccountSelected(account) {
@@ -521,7 +512,6 @@ export default {
 		async refreshAllocationProjection() {
 			const gl = this.form.glAccountNumber
 			const fiscalYear = this.fiscalYearOfMapping
-			const adminId = this.form.administrationId
 
 			// The 0..100 bound is enforced synchronously by
 			// checkAllocationRange() before this debounced projection is ever
@@ -537,78 +527,96 @@ export default {
 				return
 			}
 			try {
-				const params = {
-					glAccountNumber: gl,
-					status: 'active',
-				}
-				if (adminId) {
-					params.administrationId = adminId
-				}
-				const response = await axios.get(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
-					),
-					{ params },
-				)
-				const rows =
-					response.data?.results
-					?? response.data?.objects
-					?? response.data
-					?? []
-				const others = Array.isArray(rows) ? rows : []
-				const sumOthers = others.reduce((acc, row) => {
-					if (!row || typeof row !== 'object') {
-						return acc
-					}
-					if (
-						!this.isCreate
-						&& this.recordId
-						&& String(row.id) === this.recordId
-					) {
-						return acc
-					}
-					if (!this.overlapsFiscalYear(row, fiscalYear)) {
-						return acc
-					}
-					const v = Number(row.allocationPercentage ?? 0)
-					return acc + (Number.isFinite(v) ? v : 0)
-				}, 0)
-				this.existingAllocationTotal = sumOthers
-				const current = Number(this.form.allocationPercentage ?? 0)
-				const projected =
-					sumOthers + (Number.isFinite(current) ? current : 0)
-				if (projected > ALLOCATION_OVER_THRESHOLD) {
-					const over = (projected - 100).toFixed(2)
-					this.allocationFeedback = {
-						severity: 'error',
-						message: this.t(
-							'shillinq',
-							'GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.',
-							{
-								gl,
-								pct: projected.toFixed(2),
-								over,
-							},
-						),
-					}
-				} else {
-					const remaining = Math.max(0, 100 - sumOthers)
-					this.allocationFeedback = {
-						severity: 'info',
-						message: this.t(
-							'shillinq',
-							'GL {gl} total: {sum} % — you can add up to {remaining} %.',
-							{
-								gl,
-								sum: sumOthers.toFixed(2),
-								remaining: remaining.toFixed(2),
-							},
-						),
-					}
-				}
+				await this.projectAllocation(gl, fiscalYear)
 			} catch (e) {
 				// Non-blocking — server-side schema still enforces (ADR-022).
 				this.allocationFeedback = { message: '', severity: 'info' }
+			}
+		},
+
+		async projectAllocation(gl, fiscalYear) {
+			const others = await this.fetchActiveMappings(gl)
+			const sumOthers = this.otherAllocationsTotal(others, fiscalYear)
+			this.existingAllocationTotal = sumOthers
+			this.allocationFeedback = this.allocationFeedbackFor(gl, sumOthers)
+		},
+
+		async fetchActiveMappings(gl) {
+			const params = {
+				glAccountNumber: gl,
+				status: 'active',
+			}
+			if (this.form.administrationId) {
+				params.administrationId = this.form.administrationId
+			}
+			const response = await axios.get(
+				generateUrl(
+					`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
+				),
+				{ params },
+			)
+			const rows = firstPresent([response.data?.results, response.data?.objects, response.data]) ?? []
+			return Array.isArray(rows) ? rows : []
+		},
+
+		otherAllocationsTotal(rows, fiscalYear) {
+			return rows.reduce((acc, row) => {
+				return this.countsTowardsTotal(row, fiscalYear) ? acc + allocationValue(row) : acc
+			}, 0)
+		},
+
+		countsTowardsTotal(row, fiscalYear) {
+			if (!row || typeof row !== 'object') {
+				return false
+			}
+			if (this.isThisRecord(row)) {
+				return false
+			}
+			return this.overlapsFiscalYear(row, fiscalYear)
+		},
+
+		isThisRecord(row) {
+			return Boolean(!this.isCreate && this.recordId && String(row.id) === this.recordId)
+		},
+
+		allocationFeedbackFor(gl, sumOthers) {
+			const current = Number(this.form.allocationPercentage ?? 0)
+			const projected = sumOthers + (Number.isFinite(current) ? current : 0)
+			if (projected > ALLOCATION_OVER_THRESHOLD) {
+				return this.overAllocationFeedback(gl, projected)
+			}
+			return this.remainingAllocationFeedback(gl, sumOthers)
+		},
+
+		overAllocationFeedback(gl, projected) {
+			const over = (projected - 100).toFixed(2)
+			return {
+				severity: 'error',
+				message: this.t(
+					'shillinq',
+					'GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.',
+					{
+						gl,
+						pct: projected.toFixed(2),
+						over,
+					},
+				),
+			}
+		},
+
+		remainingAllocationFeedback(gl, sumOthers) {
+			const remaining = Math.max(0, 100 - sumOthers)
+			return {
+				severity: 'info',
+				message: this.t(
+					'shillinq',
+					'GL {gl} total: {sum} % — you can add up to {remaining} %.',
+					{
+						gl,
+						sum: sumOthers.toFixed(2),
+						remaining: remaining.toFixed(2),
+					},
+				),
 			}
 		},
 

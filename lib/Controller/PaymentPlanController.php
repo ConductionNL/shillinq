@@ -203,21 +203,31 @@ class PaymentPlanController extends Controller {
 		}
 
 		$candidates = array_map(
-			static fn (array $candidate): array => [
-				'planId' => (string)$candidate['plan']['id'],
-				'planNumber' => (string)($candidate['plan']['planNumber'] ?? ''),
-				'customerName' => (string)($candidate['plan']['customerName'] ?? ''),
-				'nextDueDate' => $candidate['plan']['nextDueDate'] ?? null,
-				'nextDueAmount' => $candidate['plan']['nextDueAmount'] ?? null,
-				'confidence' => $candidate['confidence'],
-				'reason' => $candidate['reason'],
-			],
+			static fn (array $candidate): array => self::candidateRow(candidate: $candidate),
 			$this->matcher->candidates(line: $line)
 		);
 
 		return new JSONResponse(data: ['candidates' => $candidates]);
-
 	}//end lineCandidates()
+
+	/**
+	 * One candidate as the bank-line screen shows it.
+	 *
+	 * @param array<string,mixed> $candidate The matcher's candidate: plan, confidence, reason.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function candidateRow(array $candidate): array {
+		return [
+			'planId' => (string)$candidate['plan']['id'],
+			'planNumber' => (string)($candidate['plan']['planNumber'] ?? ''),
+			'customerName' => (string)($candidate['plan']['customerName'] ?? ''),
+			'nextDueDate' => $candidate['plan']['nextDueDate'] ?? null,
+			'nextDueAmount' => $candidate['plan']['nextDueAmount'] ?? null,
+			'confidence' => $candidate['confidence'],
+			'reason' => $candidate['reason'],
+		];
+	}//end candidateRow()
 
 	/**
 	 * Pay a plan from a bank line the bookkeeper confirmed: lineId.

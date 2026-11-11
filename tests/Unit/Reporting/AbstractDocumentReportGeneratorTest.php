@@ -448,4 +448,77 @@ final class AbstractDocumentReportGeneratorTest extends TestCase {
 
 		$generator->generate([], 'pdf');
 	}//end testAContainerWithoutTheDocumentAppThrowsDocudeskUnavailable()
+
+	/**
+	 * Golden: the docudesk call and the outcome for a spread of contexts,
+	 * formats and template sets. Regenerate with ADRG_GOLDEN_WRITE=1.
+	 *
+	 * @return void
+	 */
+	public function testGenerationOutcomesMatchGolden(): void {
+		$golden = __DIR__.'/fixtures/abstract-document-report.golden.json';
+		$context = ['period' => '2026-Q1', 'administrationId' => 'adm-1'];
+		$cases = [
+			'pdfSystemUser' => [$context, 'pdf', [], ['content' => 'BYTES']],
+			'odtNamedUser' => [$context + ['userId' => 'alice'], 'odt', [], ['content' => 'ODT']],
+			'unknownFormat' => [[], 'xyz', [], ['content' => 'X']],
+			'noTemplates' => [$context, 'pdf', [['id' => 'tpl-9', 'category' => 'other']], ['content' => 'X']],
+			'twoTemplates' => [
+				$context,
+				'pdf',
+				[
+					['id' => 'tpl-1', 'category' => 'shillinq-balans'],
+					['@self' => ['id' => 'tpl-2'], 'category' => 'shillinq-balans'],
+					['category' => 'shillinq-balans'],
+				],
+				['content' => 'X'],
+			],
+			'selfIdTemplate' => [$context, 'pdf', [['@self' => ['id' => 'tpl-s'], 'category' => 'shillinq-balans']], ['content' => 'X']],
+			'idlessTemplate' => [$context, 'pdf', [['category' => 'shillinq-balans']], ['content' => 'X']],
+			'emptyContent' => [$context, 'pdf', [], ['content' => '']],
+		];
+
+		$actual = [];
+		foreach ($cases as $name => [$ctx, $format, $templates, $response]) {
+			$documents = new FakeAdrgDocumentService($response);
+			$templateService = null;
+			if ($templates !== []) {
+				$templateService = new FakeAdrgTemplateService($templates);
+			}
+
+			$generator = new FixtureDocumentReportGenerator(true, $documents, $templateService);
+			try {
+				$file = $generator->generate($ctx, $format);
+				$outcome = [
+					'fileName' => $file->fileName,
+					'mimeType' => $file->mimeType,
+					'format' => $file->format,
+					'content' => $file->content,
+				];
+			} catch (\Throwable $e) {
+				$outcome = ['exception' => get_class($e), 'message' => $e->getMessage()];
+			}
+
+			$call = $documents->lastCall;
+			if ($call !== null) {
+				$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $call['options']['adHocData']['meta']['generatedAt']);
+				$call['options']['adHocData']['meta']['generatedAt'] = '<masked>';
+				$call['options']['adHocData']['report']['blocks'][0]['meta'] = preg_replace(
+					'/^Gegenereerd: .*$/',
+					'Gegenereerd: <masked>',
+					$call['options']['adHocData']['report']['blocks'][0]['meta']
+				);
+			}
+
+			$actual[$name] = ['outcome' => $outcome, 'call' => $call, 'loads' => $generator->loadObjectsCalls];
+		}//end foreach
+
+		if (getenv('ADRG_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, json_encode($actual, (JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION))."\n");
+		}
+
+		$expected = json_decode((string) file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR);
+		$this->assertSame(json_encode($expected, JSON_PRESERVE_ZERO_FRACTION), json_encode($actual, JSON_PRESERVE_ZERO_FRACTION));
+
+	}//end testGenerationOutcomesMatchGolden()
 }//end class

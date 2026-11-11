@@ -345,4 +345,68 @@ final class KnownCostBudgetWriterTest extends TestCase {
 
 	}//end testFiscalYearWithNoDefaultBudgetIsSkipped()
 
+	/**
+	 * The run summaries through create, update, override, skip and reset, and
+	 * the exact BudgetLine and derivation records written.
+	 *
+	 * @return void
+	 */
+	public function testSummariesAndRecordsThroughEveryPath(): void {
+		$data = $this->fixture();
+		$data['CashflowRecurring'][] = ['recurId' => 'rec-2', 'administrationId' => 'adm-1', 'accountNumberExpense' => '4300', 'frequency' => 'MONTHLY', 'standardAmount' => 10.0, 'indexationRule' => 'FIXED', 'validFrom' => '2027-01-01', 'validTo' => '2027-12-31', 'dagFromMonth' => 1, 'contractReference' => 'K-1'];
+		$data['CashflowRecurring'][] = ['recurId' => 'rec-x', 'administrationId' => 'adm-1', 'accountNumberExpense' => '9999', 'validFrom' => '2027-01-01'];
+		[$writer, $store] = $this->buildWriter($data);
+
+		$summaries   = [];
+		$summaries[] = $writer->run('adm-1');
+		$summaries[] = $writer->run('adm-1');
+
+		$lines = $store->dump('BudgetLine');
+		$lines[0]['month03Amount'] = 1;
+		$store->replace('BudgetLine', $lines);
+		$summaries[] = $writer->run('adm-1');
+		$summaries[] = $writer->run('adm-1');
+
+		$store->replace('BudgetLine', [$lines[1]]);
+		$summaries[] = $writer->run('adm-1');
+
+		$counts = array_map(static fn (array $summary): array => [$summary['created'], $summary['updated'], $summary['overridden']], $summaries);
+		self::assertSame([[2, 0, 0], [0, 2, 0], [0, 1, 1], [0, 1, 0], [1, 1, 0]], $counts);
+		self::assertSame([], array_diff(array_column($summaries, 'skippedFiscalYears')[0], range(2028, 2100)));
+
+		$derivations = array_map(
+			static function (array $derivation): array {
+				unset($derivation['lastGeneratedAt'], $derivation['id'], $derivation['@self'], $derivation['budgetLineId']);
+				return $derivation;
+			},
+			$store->dump('BudgetLineDerivation')
+		);
+		self::assertSame(
+			[
+				[
+					'administrationId' => 'adm-1',
+					'annualBudgetId' => 'ab-2027',
+					'ledgerGroupId' => 'lg-1',
+					'sourceType' => 'recurring',
+					'contributingRecurIds' => ['rec-1'],
+					'lastGeneratedMonthlyAmounts' => array_fill(0, 12, 85000),
+					'overridden' => false,
+				],
+				[
+					'administrationId' => 'adm-1',
+					'annualBudgetId' => 'ab-2027',
+					'ledgerGroupId' => 'lg-1',
+					'sourceType' => 'contract',
+					'contributingRecurIds' => ['rec-2'],
+					'lastGeneratedMonthlyAmounts' => array_fill(0, 12, 1000),
+					'overridden' => false,
+				],
+			],
+			$derivations
+		);
+
+		$fresh = array_values(array_filter($store->dump('BudgetLine'), static fn (array $line): bool => $line['source'] === 'recurring'))[0];
+		self::assertSame(['administrationId' => 'adm-1', 'annualBudgetId' => 'ab-2027', 'ledgerGroupId' => 'lg-1', 'source' => 'recurring', 'month01Amount' => 85000], array_slice($fresh, 0, 5));
+
+	}//end testSummariesAndRecordsThroughEveryPath()
 }//end class

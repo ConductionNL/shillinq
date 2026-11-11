@@ -419,4 +419,107 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 
 		self::assertSame([], RegisterSchema::errors('PaymentRequest', $request));
 	}//end testARequestWithAReferenceFitsTheSchema()
+
+	/**
+	 * Pin the outcome (refusal message or `ok`) of every guard, and which
+	 * guard wins, over a table of requests, existing requests and reference
+	 * holders.
+	 *
+	 * @return void
+	 */
+	public function testEveryGuardOutcomeIsPinned(): void {
+		$pending = static fn (array $extra = []): array => array_merge(
+			['state' => 'pending', 'requestType' => 'dwangsom', 'subject' => ['type' => 'other', 'register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-1']],
+			$extra
+		);
+		$cases = [
+			'unknownKind' => [['subjectKind' => 'case'], [], []],
+			'invoiceNoRef' => [['subjectKind' => 'invoice'], [], []],
+			'invoiceOk' => [['subjectKind' => 'invoice', 'invoiceReference' => 'INV-1', 'subject' => null], [], []],
+			'subjectScalar' => [['subject' => 'zaak'], [], []],
+			'subjectEmpty' => [['subject' => []], [], []],
+			'subjectParts' => [['subject' => ['type' => 'case', 'id' => 'z']], [], []],
+			'beneficiaryScalar' => [['beneficiary' => 'kid'], [], []],
+			'beneficiaryNoId' => [['beneficiary' => ['type' => 'child']], [], []],
+			'beneficiaryEmpty' => [['beneficiary' => []], [], []],
+			'badType' => [['requestType' => 'fine'], [], []],
+			'zeroAmount' => [['amount' => 0], [], []],
+			'textAmount' => [['amount' => 'abc'], [], []],
+			'stringAmount' => [['amount' => '12.5'], [], []],
+			'dupNamed' => [[], [$pending(['id' => 'r-9'])], []],
+			'dupUnnamed' => [[], [$pending()], []],
+			'dupStateMissing' => [[], [array_diff_key($pending(['id' => 'r-8']), ['state' => 1])], []],
+			'captured' => [[], [$pending(['state' => 'captured'])], []],
+			'otherType' => [[], [$pending(['requestType' => 'leges'])], []],
+			'scalarSubject' => [[], [$pending(['subject' => 'zaak-1'])], []],
+			'otherObject' => [[], [$pending(['subject' => ['register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-2']])], []],
+			'otherBeneficiary' => [['beneficiary' => ['type' => 'child', 'id' => 'k1']], [$pending(['beneficiary' => ['type' => 'child', 'id' => 'k2']])], []],
+			'sameBeneficiary' => [['beneficiary' => ['type' => 'child', 'id' => 'k1']], [$pending(['beneficiary' => ['type' => 'child', 'id' => 'k1', 'register' => '']])], []],
+			'self' => [['id' => 'r-1'], [$pending(['id' => 'r-1'])], []],
+			'selfOther' => [['id' => 'r-1'], [$pending(['id' => 'r-2'])], []],
+			'selfEmptyCandidate' => [['id' => 'r-1'], [$pending()], []],
+			'refBlank' => [['paymentReference' => '   '], [], [['state' => 'pending', 'paymentReference' => '   ']]],
+			'refShort' => [['paymentReference' => ' ABCDE '], [], []],
+			'refMultibyte' => [['paymentReference' => 'ÉÉÉÉÉÉ'], [], []],
+			'refDup' => [['paymentReference' => 'Ref-123'], [], [['state' => 'authorized', 'paymentReference' => ' ref-123 ', 'id' => 'h']]],
+			'refDupCaptured' => [['paymentReference' => 'Ref-123'], [], [['state' => 'captured', 'paymentReference' => 'REF-123']]],
+			'refDupSelf' => [['paymentReference' => 'Ref-123', 'id' => 'h'], [], [['state' => 'pending', 'paymentReference' => 'REF-123', 'id' => 'h']]],
+			'refDupNoIds' => [['paymentReference' => 'Ref-123'], [], [['state' => 'pending', 'paymentReference' => 'REF-123']]],
+			'dupBeforeRef' => [['paymentReference' => 'AB'], [$pending()], []],
+		];
+		$actual = [];
+		foreach ($cases as $label => [$overrides, $existing, $holders]) {
+			try {
+				$this->validator->validate($this->objectRequest($overrides), $existing, $holders);
+				$actual[$label] = 'ok';
+			} catch (\InvalidArgumentException $exception) {
+				$actual[$label] = $exception->getMessage();
+			}
+		}
+
+		$dup = 'A pending dwangsom request already stands on this object%s; settle or void it before raising another.';
+		$parts = 'The subject is missing %s; a semantic reference names type, register, schema and id.';
+		$amount = 'A payment request on an object needs its own amount above zero.';
+		$beneficiary = 'A beneficiary names at least a type and an id.';
+		$refDup = 'The payment reference Ref-123 is already on an open request; a reference names one request.';
+		self::assertSame(
+			[
+				'unknownKind' => 'Unknown subjectKind "case"; expected one of invoice, object.',
+				'invoiceNoRef' => 'A payment request on an invoice needs an invoiceReference.',
+				'invoiceOk' => 'ok',
+				'subjectScalar' => 'A payment request on an object needs a subject.',
+				'subjectEmpty' => 'A payment request on an object needs a subject.',
+				'subjectParts' => sprintf($parts, 'register, schema'),
+				'beneficiaryScalar' => $beneficiary,
+				'beneficiaryNoId' => $beneficiary,
+				'beneficiaryEmpty' => 'ok',
+				'badType' => 'A payment request on an object needs a requestType; expected one of leges, dwangsom, deposit, other, contribution, event-fee, got "fine".',
+				'zeroAmount' => $amount,
+				'textAmount' => $amount,
+				'stringAmount' => 'ok',
+				'dupNamed' => sprintf($dup, ' (r-9)'),
+				'dupUnnamed' => sprintf($dup, ''),
+				'dupStateMissing' => sprintf($dup, ' (r-8)'),
+				'captured' => 'ok',
+				'otherType' => 'ok',
+				'scalarSubject' => 'ok',
+				'otherObject' => 'ok',
+				'otherBeneficiary' => 'ok',
+				'sameBeneficiary' => sprintf($dup, ''),
+				'self' => 'ok',
+				'selfOther' => sprintf($dup, ' (r-2)'),
+				'selfEmptyCandidate' => sprintf($dup, ''),
+				'refBlank' => 'ok',
+				'refShort' => 'A payment reference needs at least 6 characters, got "ABCDE".',
+				'refMultibyte' => 'ok',
+				'refDup' => $refDup,
+				'refDupCaptured' => 'ok',
+				'refDupSelf' => 'ok',
+				'refDupNoIds' => $refDup,
+				'dupBeforeRef' => sprintf($dup, ''),
+			],
+			$actual
+		);
+
+	}//end testEveryGuardOutcomeIsPinned()
 }//end class

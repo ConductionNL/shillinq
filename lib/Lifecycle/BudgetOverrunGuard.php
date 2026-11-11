@@ -109,35 +109,15 @@ class BudgetOverrunGuard {
 				return false;
 			}
 
-			$register = $this->resolveRegister();
-
-			$basis = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('Taakveld')
-					->findAll(['filters' => ['budgetId' => $budgetId]])
+			$check = new BudgetPostCheck(
+				register: $this->resolveRegister(),
+				budgetId: $budgetId,
+				taskFieldCode: $taskFieldCode
 			);
-			$wijzigingen = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('Begrotingswijziging')
-					->findAll(['filters' => ['budgetId' => $budgetId]])
-			);
-
-			$authorized = $this->stacker->authorizedLasten(
-				taskFieldCode: $taskFieldCode,
-				basisTaskFields: $basis,
-				wijzigingen: $wijzigingen
-			);
-
-			$glLines = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('GLLine')
-					->findAll(['filters' => ['taskFieldCode' => $taskFieldCode, 'side' => 'debit']])
-			);
-			$alreadyPostedCents = 0;
-			foreach ($glLines as $line) {
-				$alreadyPostedCents += (int)round(((float)($line['amount'] ?? 0)) * 100);
-			}
 
 			return $this->isWithinBudget(
-				authorizedExpenses: $authorized,
-				alreadyPosted: ($alreadyPostedCents / 100),
+				authorizedExpenses: $this->authorizedExpenses(check: $check),
+				alreadyPosted: $this->postedDebits(check: $check),
 				attempted: $attempted
 			);
 		} catch (\Throwable $e) {
@@ -148,6 +128,52 @@ class BudgetOverrunGuard {
 			return false;
 		}//end try
 	}//end canPost()
+
+	/**
+	 * The taakveld's authorized lasten: the basis budget stacked with its wijzigingen.
+	 *
+	 * @param BudgetPostCheck $check The budget and taakveld.
+	 *
+	 * @return float The authorized expenses.
+	 */
+	private function authorizedExpenses(BudgetPostCheck $check): float {
+		$basis = $this->toRows(
+			rows: $this->objectService->setRegister($check->register)->setSchema('Taakveld')
+				->findAll(['filters' => ['budgetId' => $check->budgetId]])
+		);
+		$wijzigingen = $this->toRows(
+			rows: $this->objectService->setRegister($check->register)->setSchema('Begrotingswijziging')
+				->findAll(['filters' => ['budgetId' => $check->budgetId]])
+		);
+
+		return $this->stacker->authorizedLasten(
+			taskFieldCode: $check->taskFieldCode,
+			basisTaskFields: $basis,
+			wijzigingen: $wijzigingen
+		);
+
+	}//end authorizedExpenses()
+
+	/**
+	 * The debit GL lines already posted to the taakveld, summed in cents.
+	 *
+	 * @param BudgetPostCheck $check The budget and taakveld.
+	 *
+	 * @return float The amount already posted.
+	 */
+	private function postedDebits(BudgetPostCheck $check): float {
+		$glLines = $this->toRows(
+			rows: $this->objectService->setRegister($check->register)->setSchema('GLLine')
+				->findAll(['filters' => ['taskFieldCode' => $check->taskFieldCode, 'side' => 'debit']])
+		);
+		$alreadyPostedCents = 0;
+		foreach ($glLines as $line) {
+			$alreadyPostedCents += (int)round(((float)($line['amount'] ?? 0)) * 100);
+		}
+
+		return ($alreadyPostedCents / 100);
+
+	}//end postedDebits()
 
 	/**
 	 * Normalise an ObjectService result into an array of array rows.

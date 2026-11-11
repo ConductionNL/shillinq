@@ -118,109 +118,94 @@ class DisposalJournalEmitter {
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
 	public function emit(array $asset, array $disposal, array $accounts = [], ?float $bookValue = null): array {
-		$accounts = array_merge(self::DEFAULT_ACCOUNTS, $accounts);
-
-		$assetNumber = (string)($asset['assetNumber'] ?? '');
-		$cost = (float)($asset['acquisitionCost'] ?? 0);
-		$costCents = $this->calculator->toCents(amount: $cost);
-
-		$disposalDate = (string)($disposal['disposalDate'] ?? date('Y-m-d'));
-		$treatment = (string)($disposal['disposalAccountingTreatment'] ?? 'sale');
-		$proceeds = (float)($disposal['disposalProceeds'] ?? 0);
-		$proceedsCents = $this->calculator->toCents(amount: $proceeds);
-
-		if ($bookValue === null) {
-			$bookValue = $this->calculator->currentBookValue(asset: $asset, referenceDate: $disposalDate);
-		}
-
-		$bookValueCents = $this->calculator->toCents(amount: $bookValue);
-		$accumDepCents = max(0, ($costCents - $bookValueCents));
-		$gainOrLossCents = ($proceedsCents - $bookValueCents);
-		$gainCents = max(0, $gainOrLossCents);
-		$lossCents = max(0, (-1 * $gainOrLossCents));
-
-		$assetAccount = (string)($asset['assetAccountNumber'] ?? '');
-		$accumDepAccount = (string)($asset['accumulatedDepAccountNumber'] ?? '');
-		$gainAccount = (string)$accounts['gainAccountNumber'];
-		$lossAccount = (string)$accounts['lossAccountNumber'];
-		$clearingAccount = (string)$accounts['clearingAccountNumber'];
-
-		$lines = [];
-
-		// Credit the asset account for its gross value.
-		if ($costCents > 0) {
-			$lines[] = $this->line(
-				accountNumber: $assetAccount,
-				side: 'credit',
-				amountCents: $costCents,
-				assetNumber: $assetNumber,
-				description: 'Disposal: reverse gross asset value'
-			);
-		}
-
-		// Debit accumulated depreciation for the accumulated dep balance.
-		if ($accumDepCents > 0) {
-			$lines[] = $this->line(
-				accountNumber: $accumDepAccount,
-				side: 'debit',
-				amountCents: $accumDepCents,
-				assetNumber: $assetNumber,
-				description: 'Disposal: reverse accumulated depreciation'
-			);
-		}
-
-		// Debit cash/clearing for the disposal proceeds.
-		if ($proceedsCents > 0) {
-			$lines[] = $this->line(
-				accountNumber: $clearingAccount,
-				side: 'debit',
-				amountCents: $proceedsCents,
-				assetNumber: $assetNumber,
-				description: 'Disposal: receive proceeds (' . $treatment . ')'
-			);
-		}
-
-		// Post gain (credit P&L) or loss (debit P&L).
-		if ($gainCents > 0) {
-			$lines[] = $this->line(
-				accountNumber: $gainAccount,
-				side: 'credit',
-				amountCents: $gainCents,
-				assetNumber: $assetNumber,
-				description: 'Disposal: boekwinst vaste activa'
-			);
-		}
-
-		if ($lossCents > 0) {
-			$lines[] = $this->line(
-				accountNumber: $lossAccount,
-				side: 'debit',
-				amountCents: $lossCents,
-				assetNumber: $assetNumber,
-				description: 'Disposal: boekverlies vaste activa'
-			);
-		}
-
-		$header = [
-			'transactionType' => 'disposal',
-			'postingDate' => $disposalDate,
-			'description' => 'Fixed asset disposal ' . $assetNumber . ' (' . $treatment . ')',
-			'sourceReference' => 'fixed-asset:' . $assetNumber,
-			'subLedgerType' => 'fixed-asset',
-			'subLedgerRef' => $assetNumber,
-			'currency' => (string)($asset['currency'] ?? 'EUR'),
-			'administrationId' => (string)($asset['administrationId'] ?? ''),
-		];
+		$run = new DisposalJournalRun(asset: $asset, disposal: $disposal);
+		$run->accounts = array_merge(self::DEFAULT_ACCOUNTS, $accounts);
+		$this->measureDisposal(run: $run, bookValue: $bookValue);
 
 		return [
-			'header' => $header,
-			'lines' => $lines,
-			'bookValue' => $bookValue,
-			'gain' => $this->calculator->fromCents(cents: $gainCents),
-			'loss' => $this->calculator->fromCents(cents: $lossCents),
+			'header' => $this->header(run: $run),
+			'lines' => $this->lines(run: $run),
+			'bookValue' => $run->bookValue,
+			'gain' => $this->calculator->fromCents(cents: $run->gainCents),
+			'loss' => $this->calculator->fromCents(cents: $run->lossCents),
 		];
 
 	}//end emit()
+
+	/**
+	 * Measure the disposal in integer cents: gross value, proceeds, book
+	 * value (the authoritative one when given, else recomputed at the
+	 * disposal date), accumulated depreciation and the gain or loss.
+	 *
+	 * @param DisposalJournalRun $run       The disposal journal run.
+	 * @param float|null         $bookValue The authoritative net book value, when known.
+	 *
+	 * @return void
+	 */
+	private function measureDisposal(DisposalJournalRun $run, ?float $bookValue): void {
+		$run->costCents = $this->calculator->toCents(amount: (float)($run->asset['acquisitionCost'] ?? 0));
+		$run->disposalDate = (string)($run->disposal['disposalDate'] ?? date('Y-m-d'));
+		$run->treatment = (string)($run->disposal['disposalAccountingTreatment'] ?? 'sale');
+		$run->proceedsCents = $this->calculator->toCents(amount: (float)($run->disposal['disposalProceeds'] ?? 0));
+		$run->bookValue = ($bookValue ?? $this->calculator->currentBookValue(asset: $run->asset, referenceDate: $run->disposalDate));
+
+		$bookValueCents = $this->calculator->toCents(amount: $run->bookValue);
+		$run->accumDepCents = max(0, ($run->costCents - $bookValueCents));
+		$gainOrLossCents = ($run->proceedsCents - $bookValueCents);
+		$run->gainCents = max(0, $gainOrLossCents);
+		$run->lossCents = max(0, (-1 * $gainOrLossCents));
+	}//end measureDisposal()
+
+	/**
+	 * The disposal lines with an amount, in order: credit the asset account
+	 * for its gross value, debit accumulated depreciation for its balance,
+	 * debit cash/clearing for the proceeds, then post the gain (credit P&L)
+	 * or loss (debit P&L).
+	 *
+	 * @param DisposalJournalRun $run The disposal journal run.
+	 *
+	 * @return array<int,array<string,mixed>> The GL lines.
+	 */
+	private function lines(DisposalJournalRun $run): array {
+		$accounts = $run->accounts;
+		$legs = [
+			[(string)($run->asset['assetAccountNumber'] ?? ''), 'credit', $run->costCents, 'Disposal: reverse gross asset value'],
+			[(string)($run->asset['accumulatedDepAccountNumber'] ?? ''), 'debit', $run->accumDepCents, 'Disposal: reverse accumulated depreciation'],
+			[(string)$accounts['clearingAccountNumber'], 'debit', $run->proceedsCents, 'Disposal: receive proceeds (' . $run->treatment . ')'],
+			[(string)$accounts['gainAccountNumber'], 'credit', $run->gainCents, 'Disposal: boekwinst vaste activa'],
+			[(string)$accounts['lossAccountNumber'], 'debit', $run->lossCents, 'Disposal: boekverlies vaste activa'],
+		];
+
+		$lines = [];
+		foreach ($legs as $leg) {
+			if ($leg[2] > 0) {
+				$lines[] = $this->line(run: $run, leg: $leg);
+			}
+		}
+
+		return $lines;
+	}//end lines()
+
+	/**
+	 * The journal header.
+	 *
+	 * @param DisposalJournalRun $run The disposal journal run.
+	 *
+	 * @return array<string,mixed> The header.
+	 */
+	private function header(DisposalJournalRun $run): array {
+		$assetNumber = (string)($run->asset['assetNumber'] ?? '');
+		return [
+			'transactionType' => 'disposal',
+			'postingDate' => $run->disposalDate,
+			'description' => 'Fixed asset disposal ' . $assetNumber . ' (' . $run->treatment . ')',
+			'sourceReference' => 'fixed-asset:' . $assetNumber,
+			'subLedgerType' => 'fixed-asset',
+			'subLedgerRef' => $assetNumber,
+			'currency' => (string)($run->asset['currency'] ?? 'EUR'),
+			'administrationId' => (string)($run->asset['administrationId'] ?? ''),
+		];
+	}//end header()
 
 	/**
 	 * Returns true iff the disposal lines balance (debits == credits in cents).
@@ -253,30 +238,21 @@ class DisposalJournalEmitter {
 	/**
 	 * Shape a single GL line.
 	 *
-	 * @param string $accountNumber GL account number.
-	 * @param string $side debit|credit.
-	 * @param int $amountCents Non-negative integer cents.
-	 * @param string $assetNumber FixedAsset.assetNumber (subLedgerRef).
-	 * @param string $description Operator-readable line description.
+	 * @param DisposalJournalRun $run The disposal journal run (asset number).
+	 * @param array{0:string,1:string,2:int,3:string} $leg Account number, debit|credit, non-negative integer cents, description.
 	 *
 	 * @return array<string,mixed> GL line.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
-	private function line(
-		string $accountNumber,
-		string $side,
-		int $amountCents,
-		string $assetNumber,
-		string $description,
-	): array {
+	private function line(DisposalJournalRun $run, array $leg): array {
 		return [
-			'accountNumber' => $accountNumber,
-			'side' => $side,
-			'amount' => $this->calculator->fromCents(cents: $amountCents),
+			'accountNumber' => $leg[0],
+			'side' => $leg[1],
+			'amount' => $this->calculator->fromCents(cents: $leg[2]),
 			'subLedgerType' => 'fixed-asset',
-			'subLedgerRef' => $assetNumber,
-			'description' => $description,
+			'subLedgerRef' => (string)($run->asset['assetNumber'] ?? ''),
+			'description' => $leg[3],
 		];
 
 	}//end line()

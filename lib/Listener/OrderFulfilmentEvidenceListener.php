@@ -62,8 +62,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
-use OCA\OpenRegister\Event\ObjectCreatingEvent;
-use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
@@ -136,43 +134,30 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
 	 */
 	public function handle(Event $event): void {
-		$entity = null;
-		if ($event instanceof ObjectCreatingEvent === true) {
-			$entity = $event->getObject();
-		}
-
-		if ($event instanceof ObjectUpdatingEvent === true) {
-			$entity = $event->getNewObject();
-		}
-
-		if ($entity === null) {
+		$write = new PreSaveWrite();
+		$entity = $write->incomingEntity(event: $event);
+		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
 			return;
 		}
 
-		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
+		$data = $write->payload(entity: $entity);
+		if ($this->completionAllowed(data: $data) === true) {
 			return;
 		}
 
-		$data = [];
-		if (method_exists($entity, 'getObject') === true) {
-			$data = ($entity->getObject() ?? []);
-		}
+		$this->refuse(event: $event, data: $data);
 
-		if (is_array($data) === false) {
-			$data = [];
-		}
+		}//end handle()
 
-		// Only the completed state is gated — an in-progress or cancelled
-		// delivery may be written freely, with or without bewijsstukken.
-		$status = strtolower(trim((string)($data[self::STATUS_FIELD] ?? '')));
-		if ($status !== self::COMPLETED_STATE) {
-			return;
-		}
-
-		if ($this->guard->canVoltooien(assignment: $data) === true) {
-			return;
-		}
-
+	/**
+	 * Log the refusal and veto the write into `completed` (REQ-004).
+	 *
+	 * @param Event                $event The OpenRegister pre-save event.
+	 * @param array<string, mixed> $data  The fulfilment being written.
+	 *
+	 * @return void
+	 */
+	private function refuse(Event $event, array $data): void {
 		$this->logger->warning(
 			'Shillinq: refused an OrderFulfilment write into `completed` without a bewijsstuk (REQ-004)',
 			[
@@ -191,5 +176,24 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 		);
 		$event->stopPropagation();
 
-	}//end handle()
+	}//end refuse()
+
+	/**
+	 * Whether the write may proceed: only the completed state is gated — an
+	 * in-progress or cancelled delivery may be written freely, with or
+	 * without bewijsstukken.
+	 *
+	 * @param array<string, mixed> $data The fulfilment being written.
+	 *
+	 * @return bool
+	 */
+	private function completionAllowed(array $data): bool {
+		$status = strtolower(trim((string)($data[self::STATUS_FIELD] ?? '')));
+		if ($status !== self::COMPLETED_STATE) {
+			return true;
+		}
+
+		return $this->guard->canVoltooien(assignment: $data);
+
+	}//end completionAllowed()
 }//end class

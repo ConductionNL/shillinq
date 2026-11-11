@@ -108,6 +108,58 @@ class EmuReportingServiceTest extends TestCase {
 	}//end testClassifyTransactiemomentCorrection()
 
 	/**
+	 * Characterisation: the full adjustment shape and key order, the
+	 * generalLedgerAccount fallback, first-matching rule, and moments that
+	 * share a date (or lack one side) keep the macro-rule type.
+	 *
+	 * @return void
+	 */
+	public function testClassifyAdjustmentShape(): void {
+		$line = [
+			'generalLedgerAccount' => '9391',
+			'amount'               => -12.5,
+			'description'          => 'Boekwinst',
+			'taskField'            => '0.1',
+			'currency'             => 'USD',
+			'invoiceMoment'        => '2026-04-30T08:00:00+02:00',
+			'paymentMoment'        => '2026-04-30T17:00:00+02:00',
+		];
+
+		self::assertSame(
+			expected: [
+				'reportId'         => 'r9',
+				'type'             => 'elimination-book-profit-divestment',
+				'direction'        => 'balance-increasing',
+				'amount'           => 12.5,
+				'source'           => [
+					'generalLedgerAccount' => '9391',
+					'description'          => 'Boekwinst',
+					'taskField'            => '0.1',
+				],
+				'rule'             => 'Wet Hof art. 3: elimination-book-profit-divestment',
+				'overridden'       => false,
+				'consolidationEMU' => 'extern',
+				'currency'         => 'USD',
+			],
+			actual: $this->service->classifyAdjustment(glLine: $line, reportId: 'r9')
+		);
+
+		$onlyInvoice = $this->service->classifyAdjustment(
+			glLine: ['accountNumber' => '2301', 'invoiceMoment' => '2026-01-01', 'generalLedgerAccount' => '48'],
+			reportId: 'r1'
+		);
+		self::assertSame(expected: 'addition-repayment', actual: $onlyInvoice['type']);
+		self::assertSame(expected: 0.0, actual: $onlyInvoice['amount']);
+		self::assertSame(expected: 'EUR', actual: $onlyInvoice['currency']);
+		self::assertSame(expected: '2301', actual: $onlyInvoice['source']['generalLedgerAccount']);
+		self::assertSame(expected: 'Wet Hof art. 3: correction-transaction-moment', actual: $this->service->classifyAdjustment(
+			glLine: ['accountNumber' => '460', 'invoiceMoment' => '2026-01-01', 'paymentMoment' => '2026-01-02'],
+			reportId: 'r1'
+		)['rule']);
+
+	}//end testClassifyAdjustmentShape()
+
+	/**
 	 * A non-macro account returns null (ordinary cash transaction).
 	 *
 	 * @return void
@@ -362,6 +414,41 @@ class EmuReportingServiceTest extends TestCase {
 	public function testMapIv3UnresolvedReturnsNull(): void {
 		self::assertNull($this->service->mapIv3Classification(item: ['accountNumber' => '999']));
 	}//end testMapIv3UnresolvedReturnsNull()
+
+	/**
+	 * Characterisation: an empty explicit iv3 and an unmapped taakveld fall
+	 * through to the account map, where the longest matching prefix wins and
+	 * non-matching prefixes are ignored; an empty account maps to nothing.
+	 *
+	 * @return void
+	 */
+	public function testMapIv3FallsThroughToTheFirstLongestPrefix(): void {
+		$accountMap = [
+			'4'   => ['hoofdstuk' => 'C'],
+			'48'  => ['hoofdstuk' => 'A'],
+			'49'  => ['hoofdstuk' => 'B'],
+			'481' => ['hoofdstuk' => 'F'],
+			'7'   => ['hoofdstuk' => 'D'],
+		];
+		$item       = ['iv3' => [], 'taskField' => '9.9', 'accountNumber' => '4810'];
+		$taskMap    = ['4.2' => ['hoofdstuk' => '4']];
+
+		self::assertSame(
+			expected: ['hoofdstuk' => 'F'],
+			actual: $this->service->mapIv3Classification(item: $item, taskFieldMap: $taskMap, accountMap: $accountMap)
+		);
+		self::assertSame(
+			expected: ['hoofdstuk' => 'C'],
+			actual: $this->service->mapIv3Classification(item: ['accountNumber' => '40'], accountMap: $accountMap)
+		);
+		self::assertNull(
+			actual: $this->service->mapIv3Classification(item: ['taskField' => '4.3', 'accountNumber' => ''], accountMap: $accountMap)
+		);
+		self::assertNull(
+			actual: $this->service->mapIv3Classification(item: ['accountNumber' => '55'], accountMap: $accountMap)
+		);
+
+	}//end testMapIv3FallsThroughToTheFirstLongestPrefix()
 
 	/**
 	 * Task 25 / REQ-EMU-005: S.1313 counterparty resolves to intern-S1313.

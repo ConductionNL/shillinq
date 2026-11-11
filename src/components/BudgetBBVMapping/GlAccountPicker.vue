@@ -37,6 +37,7 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import { NcSelect } from '@nextcloud/vue'
+import { accountLabelParts, isAmount } from './accountLabel.js'
 import { recordPickerMixin } from './recordPickerMixin.js'
 
 export default {
@@ -83,18 +84,13 @@ export default {
 			if (!account) {
 				return ''
 			}
-			const number = account.accountNumber || account.id || ''
-			const name = account.accountName || account.name || account.title || ''
-			const type = account.accountType || account.type || ''
-			const balanceCents = account.balance ?? account.balanceCents
-			const balance =
-				balanceCents !== null
-				&& balanceCents !== undefined
-				&& Number.isFinite(Number(balanceCents))
-					? this.formatEuro(balanceCents)
-					: ''
-			const parts = [number, name, type, balance].filter(Boolean)
+			const parts = [...accountLabelParts(account), this.balanceText(account)].filter(Boolean)
 			return parts.join(' · ')
+		},
+
+		balanceText(account) {
+			const balanceCents = account.balance ?? account.balanceCents
+			return isAmount(balanceCents) ? this.formatEuro(balanceCents) : ''
 		},
 
 		formatEuro(cents) {

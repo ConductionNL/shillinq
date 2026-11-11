@@ -47,7 +47,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -98,28 +97,7 @@ class PensionIas19Guard {
 				return false;
 			}
 
-			$planType = (string)($plan['planType'] ?? '');
-			if (in_array($planType, ['DB', 'DC', 'CDC', 'hybrid'], true) === false) {
-				return false;
-			}
-
-			if ((string)($plan['regulatoryFramework'] ?? '') === '') {
-				return false;
-			}
-
-			if (trim((string)($plan['pensionableSalaryDefinition'] ?? '')) === '') {
-				return false;
-			}
-
-			// Benefit-accruing plans must carry an accrual rate before activation.
-			if (in_array($planType, ['DB', 'CDC', 'hybrid'], true) === true) {
-				$accrualRate = $plan['accrualRate'] ?? null;
-				if (is_numeric($accrualRate) === false || (float)$accrualRate <= 0.0) {
-					return false;
-				}
-			}
-
-			return true;
+			return self::planIsActivatable(plan: $plan);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PensionIas19Guard: plan activation check failed — denying transition (fail-closed)',
@@ -128,6 +106,51 @@ class PensionIas19Guard {
 			return false;
 		}//end try
 	}//end canActivatePlan()
+
+	/**
+	 * Whether a plan carries everything activation needs: a known plan type,
+	 * a regulatory framework, a pensionable-salary definition and, for a
+	 * benefit-accruing plan, a positive accrual rate.
+	 *
+	 * @param array<string,mixed> $plan The PensionPlan.
+	 *
+	 * @return bool
+	 */
+	private static function planIsActivatable(array $plan): bool {
+		$planType = (string)($plan['planType'] ?? '');
+		if (in_array($planType, ['DB', 'DC', 'CDC', 'hybrid'], true) === false) {
+			return false;
+		}
+
+		if ((string)($plan['regulatoryFramework'] ?? '') === '') {
+			return false;
+		}
+
+		if (trim((string)($plan['pensionableSalaryDefinition'] ?? '')) === '') {
+			return false;
+		}
+
+		return self::accrualRateSatisfied(plan: $plan);
+
+	}//end planIsActivatable()
+
+	/**
+	 * Benefit-accruing plans (DB, CDC, hybrid) must carry a positive numeric
+	 * accrual rate before activation; other plans need none.
+	 *
+	 * @param array<string,mixed> $plan The PensionPlan.
+	 *
+	 * @return bool
+	 */
+	private static function accrualRateSatisfied(array $plan): bool {
+		if (in_array((string)($plan['planType'] ?? ''), ['DB', 'CDC', 'hybrid'], true) === false) {
+			return true;
+		}
+
+		$accrualRate = $plan['accrualRate'] ?? null;
+		return is_numeric($accrualRate) === true && (float)$accrualRate > 0.0;
+
+	}//end accrualRateSatisfied()
 
 	/**
 	 * Returns true iff the ActuarialValuation may transition from draft to approved.
@@ -266,41 +289,8 @@ class PensionIas19Guard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
-
-	/**
-	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-	 *
-	 * @return string The register slug.
-	 */
-	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end resolveRegister()
 }//end class

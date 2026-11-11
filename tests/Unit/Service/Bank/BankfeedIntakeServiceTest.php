@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\BankfeedIntakeService;
@@ -140,7 +142,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 				$entity = new ObjectEntity();
 				$entity->setObject($object);
 				$entity->setSchema('ReconciliationMatch');
-				$settlementListener->handle(new ObjectTransitionedEvent($entity, $record['action'], $record['from'], $record['to'], null, 'shillinq', 'ReconciliationMatch'));
+				$settlementListener->handle(new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: $record['action'], from: $record['from'], to: $record['to']), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ReconciliationMatch')));
 			}
 		);
 		$container = $this->createMock(ContainerInterface::class);

@@ -1,0 +1,500 @@
+{
+    "notFound": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ],
+            [
+                "log",
+                "warning",
+                "Shillinq: KlantLadderOverride ov-1 not found; fail-closed.",
+                []
+            ]
+        ]
+    },
+    "emptyRegister": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "customRegister": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "noOverrides": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "stagesNotArray": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "stageWithoutNr": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "stageString": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "elevatedApproved": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "elevatedNoApprover": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "elevatedNoDate": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "elevatedBlankApprover": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "elevatedStringNr": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "elevatedHigh": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "firstRowOnly": {
+        "approved": true,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ]
+        ]
+    },
+    "objectRow": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ],
+            [
+                "log",
+                "warning",
+                "Shillinq: KlantLadderOverrideApprovalGuard failed: Cannot use object of type JsonSerializable@anonymous as array",
+                []
+            ]
+        ]
+    },
+    "storeThrows": {
+        "approved": false,
+        "calls": [
+            [
+                "getValueString",
+                "shillinq",
+                "register",
+                "shillinq",
+                false
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "KlantLadderOverride"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "ov-1"
+                    }
+                },
+                true,
+                true
+            ],
+            [
+                "log",
+                "warning",
+                "Shillinq: KlantLadderOverrideApprovalGuard failed: store down",
+                []
+            ]
+        ]
+    }
+}

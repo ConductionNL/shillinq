@@ -56,6 +56,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\Files\File;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -160,33 +161,68 @@ class AccountantPortalController extends Controller {
 		}
 
 		$administrationId = trim($id);
-		if ($this->isValidIdentifier(identifier: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'AccountantPortalController: failed to check handover-pack access',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Failed to resolve handover pack'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			// Mask non-membership as 404 — never confirm administration existence (REQ-ACP-003).
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$refusal = $this->packRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$period = trim((string)$this->request->getParam('period', (string)gmdate('Y')));
 
+		return $this->packResponse(scope: new HandoverScope(administrationId: $administrationId, period: $period));
+	}//end handoverPack()
+
+	/**
+	 * The 400 for a malformed id, then the membership answer.
+	 *
+	 * @param string $administrationId The trimmed path id.
+	 *
+	 * @return JSONResponse|null The refusal, or null for a member.
+	 */
+	private function packRefusal(string $administrationId): ?JSONResponse {
+		if ($this->isValidIdentifier(identifier: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->membershipRefusal(administrationId: $administrationId);
+	}//end packRefusal()
+
+	/**
+	 * The masked 404 for a non-member — never confirm administration existence
+	 * (REQ-ACP-003) — or a 500 when membership cannot be checked.
+	 *
+	 * @param string $administrationId The well-formed administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null for a member.
+	 */
+	private function membershipRefusal(string $administrationId): ?JSONResponse {
 		try {
-			$zipBytes = $this->buildPack(administrationId: $administrationId, period: $period);
+			$allowed = $this->context->canAccess(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			$this->logger->error('AccountantPortalController: failed to check handover-pack access', ['exception' => $e->getMessage()]);
+			return new JSONResponse(['error' => 'Failed to resolve handover pack'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($allowed === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end membershipRefusal()
+
+	/**
+	 * Build the pack and stream it; a failure, or a pack without any report, is a 500.
+	 *
+	 * @param HandoverScope $scope The authorised administration and period.
+	 *
+	 * @return Response
+	 */
+	private function packResponse(HandoverScope $scope): Response {
+		try {
+			$zipBytes = $this->buildPack(scope: $scope);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AccountantPortalController: handover pack generation failed',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+				['administrationId' => $scope->administrationId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'Handover pack generation failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -195,62 +231,24 @@ class AccountantPortalController extends Controller {
 			return new JSONResponse(['error' => 'No reports could be generated for this administration'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new DataDownloadResponse(
-			$zipBytes,
-			'handover-pack-' . $administrationId . '-' . $period . '.zip',
-			'application/zip',
-		);
-
-	}//end handoverPack()
+		return new DataDownloadResponse($zipBytes, 'handover-pack-' . $scope->administrationId . '-' . $scope->period . '.zip', 'application/zip');
+	}//end packResponse()
 
 	/**
 	 * Render every handover-pack report through the existing generators and zip
 	 * the resulting files. Each report is generated independently and best-effort
 	 * — a single generator failure never blocks the other reports.
 	 *
-	 * @param string $administrationId The administration scope.
-	 * @param string $period The reporting period passed to each generator.
+	 * @param HandoverScope $scope The administration and the period passed to each generator.
 	 *
 	 * @return string|null The ZIP bytes, or null when no report could be rendered.
 	 *
 	 * @throws RuntimeException When the ZIP extension is unavailable.
 	 */
-	private function buildPack(string $administrationId, string $period): ?string {
-		if (class_exists(ZipArchive::class) === false) {
-			throw new RuntimeException('ZIP extension unavailable');
-		}
-
-		$tmp = tempnam(sys_get_temp_dir(), 'shillinq-handover-');
-		if ($tmp === false) {
-			throw new RuntimeException('Could not allocate a temp file for the handover pack');
-		}
-
-		$zip = new ZipArchive();
-		if ($zip->open($tmp, (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
-			if (file_exists($tmp) === true) {
-				unlink($tmp);
-			}
-
-			throw new RuntimeException('Could not open the handover-pack ZIP archive');
-		}
-
-		$added = 0;
-		foreach (self::HANDOVER_REPORTS as $spec) {
-			$entry = $this->renderReportEntry(
-				reportType: $spec['reportType'],
-				format: $spec['format'],
-				period: $period,
-				administrationId: $administrationId
-			);
-
-			if ($entry === null) {
-				continue;
-			}
-
-			$zip->addFromString($entry['fileName'], $entry['content']);
-			$added++;
-		}
-
+	private function buildPack(HandoverScope $scope): ?string {
+		$tmp = self::packFile();
+		$zip = self::openArchive(tmp: $tmp);
+		$added = $this->addReports(zip: $zip, scope: $scope);
 		$zip->close();
 
 		$bytes = (string)file_get_contents($tmp);
@@ -266,45 +264,130 @@ class AccountantPortalController extends Controller {
 	}//end buildPack()
 
 	/**
+	 * A fresh temp file for the archive.
+	 *
+	 * @return string The path.
+	 *
+	 * @throws RuntimeException When the ZIP extension is unavailable or no temp file can be made.
+	 */
+	private static function packFile(): string {
+		if (class_exists(ZipArchive::class) === false) {
+			throw new RuntimeException('ZIP extension unavailable');
+		}
+
+		$tmp = tempnam(sys_get_temp_dir(), 'shillinq-handover-');
+		if ($tmp === false) {
+			throw new RuntimeException('Could not allocate a temp file for the handover pack');
+		}
+
+		return $tmp;
+	}//end packFile()
+
+	/**
+	 * Open the archive over the temp file; on failure the temp file is removed.
+	 *
+	 * @param string $tmp The temp file.
+	 *
+	 * @return ZipArchive
+	 *
+	 * @throws RuntimeException When the archive cannot be opened.
+	 */
+	private static function openArchive(string $tmp): ZipArchive {
+		$zip = new ZipArchive();
+		if ($zip->open($tmp, (ZipArchive::CREATE | ZipArchive::OVERWRITE)) === true) {
+			return $zip;
+		}
+
+		if (file_exists($tmp) === true) {
+			unlink($tmp);
+		}
+
+		throw new RuntimeException('Could not open the handover-pack ZIP archive');
+	}//end openArchive()
+
+	/**
+	 * Add every report that renders; one that does not is skipped.
+	 *
+	 * @param ZipArchive    $zip   The open archive.
+	 * @param HandoverScope $scope The administration and period.
+	 *
+	 * @return int The number of reports added.
+	 */
+	private function addReports(ZipArchive $zip, HandoverScope $scope): int {
+		$added = 0;
+		foreach (self::HANDOVER_REPORTS as $spec) {
+			$entry = $this->renderReportEntry(spec: $spec, scope: $scope);
+			if ($entry !== null) {
+				$zip->addFromString($entry['fileName'], $entry['content']);
+				$added++;
+			}
+		}
+
+		return $added;
+	}//end addReports()
+
+	/**
 	 * Generate one handover-pack report via the existing ReportGenerationService
 	 * and resolve its stored bytes. Returns null (logged) on any failure so one
 	 * bad generator never blocks the rest of the pack.
 	 *
-	 * @param string $reportType ReportCatalogue report-type id.
-	 * @param string $format The requested format.
-	 * @param string $period The reporting period.
-	 * @param string $administrationId The administration scope.
+	 * @param array{reportType:string,format:string} $spec  The ReportCatalogue report-type id and requested format.
+	 * @param HandoverScope                          $scope The administration and period.
 	 *
 	 * @return array{fileName:string,content:string}|null
 	 */
-	private function renderReportEntry(string $reportType, string $format, string $period, string $administrationId): ?array {
-		$record = $this->reports->generate($reportType, $period, $administrationId, $format);
+	private function renderReportEntry(array $spec, HandoverScope $scope): ?array {
+		$reportType = $spec['reportType'];
+		$where = ['reportType' => $reportType, 'administrationId' => $scope->administrationId];
+		$record = $this->reports->generate($reportType, $scope->period, $scope->administrationId, $spec['format']);
 		if (isset($record['error']) === true) {
-			$this->logger->warning(
-				'AccountantPortalController: handover-pack report failed',
-				['reportType' => $reportType, 'administrationId' => $administrationId, 'error' => $record['error']]
-			);
+			$this->logger->warning('AccountantPortalController: handover-pack report failed', $where + ['error' => $record['error']]);
 			return null;
 		}
 
-		$recordId = (string)($record['id'] ?? '');
-		$fileName = (string)($record['fileName'] ?? ($reportType . '.' . $format));
+		$fileName = (string)($record['fileName'] ?? ($reportType . '.' . $spec['format']));
+		$content = $this->storedContent(record: $record, where: $where);
+		if ($content === null) {
+			return null;
+		}
 
+		return ['fileName' => $reportType . '/' . $fileName, 'content' => $content];
+	}//end renderReportEntry()
+
+	/**
+	 * The stored bytes of a generated report; a missing or unreadable file is a warning.
+	 *
+	 * @param array<string,mixed>                              $record The generated report record.
+	 * @param array{reportType:string,administrationId:string} $where  The report type and administration (log context).
+	 *
+	 * @return string|null
+	 */
+	private function storedContent(array $record, array $where): ?string {
+		$recordId = (string)($record['id'] ?? '');
 		$file = null;
 		if ($recordId !== '') {
 			$file = $this->reports->resolveFile($recordId);
 		}
 
 		if ($file === null) {
-			$this->logger->warning(
-				'AccountantPortalController: handover-pack report file not resolvable',
-				['reportType' => $reportType, 'administrationId' => $administrationId]
-			);
+			$this->logger->warning('AccountantPortalController: handover-pack report file not resolvable', $where);
 			return null;
 		}
 
+		return $this->fileContent(file: $file, reportType: $where['reportType']);
+	}//end storedContent()
+
+	/**
+	 * A file's content; an unreadable one is a warning.
+	 *
+	 * @param File   $file       The stored report file.
+	 * @param string $reportType The report type (log context).
+	 *
+	 * @return string|null
+	 */
+	private function fileContent(File $file, string $reportType): ?string {
 		try {
-			$content = $file->getContent();
+			return $file->getContent();
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'AccountantPortalController: handover-pack report content unreadable',
@@ -312,9 +395,7 @@ class AccountantPortalController extends Controller {
 			);
 			return null;
 		}
-
-		return ['fileName' => $reportType . '/' . $fileName, 'content' => $content];
-	}//end renderReportEntry()
+	}//end fileContent()
 
 	/**
 	 * Validate an administration identifier slug before touching the data layer.

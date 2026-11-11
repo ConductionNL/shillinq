@@ -84,10 +84,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Reads every schema the budget-vs-actuals roll-up needs, batched to at most
@@ -224,31 +222,12 @@ class BudgetVsActualsReader {
 	 * @return array<string,string> Transaction reference => `YYYY-MM` posting month.
 	 */
 	private function postedTransactionMonths(string $administrationId): array {
-		$months = [];
 		$transactions = $this->query(
 			schema: self::SCHEMA_GL_TRANSACTION,
 			filters: ['administrationId' => $administrationId, 'state' => 'posted']
 		);
 
-		foreach ($transactions as $transaction) {
-			$postingDate = (string)($transaction['postingDate'] ?? '');
-			if ($postingDate === '') {
-				continue;
-			}
-
-			$month = substr($postingDate, 0, 7);
-			$objectId = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
-			if ($objectId !== '') {
-				$months[$objectId] = $month;
-			}
-
-			$number = (string)($transaction['transactionNumber'] ?? '');
-			if ($number !== '') {
-				$months[$number] = $month;
-			}
-		}
-
-		return $months;
+		return (new LedgerActuals())->postingMonths(transactions: $transactions);
 
 	}//end postedTransactionMonths()
 
@@ -262,33 +241,14 @@ class BudgetVsActualsReader {
 	 * @return array<string,array<string,int>> accountNumber => monthKey => signed cents.
 	 */
 	private function actualsByAccountMonth(array $monthByRef): array {
-		$buckets = [];
 		if ($monthByRef === []) {
-			return $buckets;
+			return [];
 		}
 
-		$lines = $this->query(schema: self::SCHEMA_GL_LINE, filters: []);
-		foreach ($lines as $line) {
-			$ref = (string)($line['transactionId'] ?? '');
-			if ($ref === '' || isset($monthByRef[$ref]) === false) {
-				continue;
-			}
-
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$month = $monthByRef[$ref];
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			if ((string)($line['side'] ?? 'debit') === 'credit') {
-				$cents = -$cents;
-			}
-
-			$buckets[$accountNumber][$month] = (($buckets[$accountNumber][$month] ?? 0) + $cents);
-		}
-
-		return $buckets;
+		return (new LedgerActuals())->centsByAccountMonth(
+			lines: $this->query(schema: self::SCHEMA_GL_LINE, filters: []),
+			monthByRef: $monthByRef
+		);
 
 	}//end actualsByAccountMonth()
 
@@ -306,64 +266,98 @@ class BudgetVsActualsReader {
 	private function buildLedgerGroupIndex(array $rows, array $accounts): array {
 		$entries = [];
 		$keyToIndex = [];
-
 		foreach ($rows as $row) {
-			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
-			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
-			$code = (string)($row['code'] ?? '');
-			$index = count($entries);
-
-			$parentRef = null;
-			if (($row['parentLedgerGroupId'] ?? null) !== null) {
-				$parentRef = (string)$row['parentLedgerGroupId'];
-			}
-
-			$entries[] = [
-				'id' => $id,
-				'slug' => $slug,
-				'parentRef' => $parentRef,
-				'memberAccountNumbers' => $this->resolveMembers(ledgerGroup: $row, accounts: $accounts),
-			];
-
-			if ($id !== '') {
-				$keyToIndex[$id] = $index;
-			}
-
-			if ($slug !== '' && $slug !== $id) {
-				$keyToIndex[$slug] = $index;
-			}
-
-			// `code` is the THIRD accepted parent key, and the one the shipped
-			// seed actually stores (see the register fragment's
-			// parentLedgerGroupId description). `code` is unique within an
-			// administration, which is exactly the scope $rows covers —
-			// LedgerGroup rows are loaded per administrationId. First writer
-			// wins so an id/slug key is never shadowed by a colliding code.
-			if ($code !== '' && isset($keyToIndex[$code]) === false) {
-				$keyToIndex[$code] = $index;
-			}
+			$entry = self::ledgerGroupEntry(row: $row);
+			$entry['memberAccountNumbers'] = $this->resolveMembers(ledgerGroup: $row, accounts: $accounts);
+			$keyToIndex = self::withEntryKeys(
+				keyToIndex: $keyToIndex,
+				keys: ['index' => count($entries), 'id' => $entry['id'], 'slug' => $entry['slug'], 'code' => (string)($row['code'] ?? '')]
+			);
+			$entries[] = $entry;
 		}
 
-		$childrenByIndex = [];
-		foreach ($entries as $index => $entry) {
-			$parentRef = $entry['parentRef'];
-			if ($parentRef === null || $parentRef === '') {
-				continue;
-			}
-
-			$parentIndex = ($keyToIndex[$parentRef] ?? null);
-			if ($parentIndex === null) {
-				// Unresolved parent reference — treated as a root rather than
-				// silently dropped from the tree.
-				continue;
-			}
-
-			$childrenByIndex[$parentIndex][] = $index;
-		}
-
-		return ['entries' => $entries, 'keyToIndex' => $keyToIndex, 'childrenByIndex' => $childrenByIndex];
+		return [
+			'entries' => $entries,
+			'keyToIndex' => $keyToIndex,
+			'childrenByIndex' => self::childrenByIndex(entries: $entries, keyToIndex: $keyToIndex),
+		];
 
 	}//end buildLedgerGroupIndex()
+
+	/**
+	 * The id, slug and parent reference of one LedgerGroup row.
+	 *
+	 * @param array<string,mixed> $row The LedgerGroup row.
+	 *
+	 * @return array{id: string, slug: string, parentRef: ?string}
+	 */
+	private static function ledgerGroupEntry(array $row): array {
+		$parentRef = null;
+		if (($row['parentLedgerGroupId'] ?? null) !== null) {
+			$parentRef = (string)$row['parentLedgerGroupId'];
+		}
+
+		return [
+			'id' => (string)($row['@self']['id'] ?? $row['id'] ?? ''),
+			'slug' => (string)($row['@self']['slug'] ?? $row['slug'] ?? ''),
+			'parentRef' => $parentRef,
+		];
+
+	}//end ledgerGroupEntry()
+
+	/**
+	 * Register an entry under its id, its slug (when distinct) and its code.
+	 *
+	 * `code` is the THIRD accepted parent key, and the one the shipped seed
+	 * actually stores (see the register fragment's parentLedgerGroupId
+	 * description). `code` is unique within an administration, which is
+	 * exactly the scope the rows cover — LedgerGroup rows are loaded per
+	 * administrationId. First writer wins so an id/slug key is never shadowed
+	 * by a colliding code.
+	 *
+	 * @param array<string,int>                                      $keyToIndex The keys so far.
+	 * @param array{index: int, id: string, slug: string, code: string} $keys       The entry's index and keys.
+	 *
+	 * @return array<string,int>
+	 */
+	private static function withEntryKeys(array $keyToIndex, array $keys): array {
+		if ($keys['id'] !== '') {
+			$keyToIndex[$keys['id']] = $keys['index'];
+		}
+
+		if ($keys['slug'] !== '' && $keys['slug'] !== $keys['id']) {
+			$keyToIndex[$keys['slug']] = $keys['index'];
+		}
+
+		if ($keys['code'] !== '' && isset($keyToIndex[$keys['code']]) === false) {
+			$keyToIndex[$keys['code']] = $keys['index'];
+		}
+
+		return $keyToIndex;
+
+	}//end withEntryKeys()
+
+	/**
+	 * Child entry indexes per parent index. An unresolved parent reference
+	 * leaves the entry a root rather than silently dropping it from the tree.
+	 *
+	 * @param list<array<string,mixed>> $entries    The entries.
+	 * @param array<string,int>         $keyToIndex Key => entry index.
+	 *
+	 * @return array<int,list<int>>
+	 */
+	private static function childrenByIndex(array $entries, array $keyToIndex): array {
+		$childrenByIndex = [];
+		foreach ($entries as $index => $entry) {
+			$parentIndex = ($keyToIndex[(string)$entry['parentRef']] ?? null);
+			if ($entry['parentRef'] !== null && $entry['parentRef'] !== '' && $parentIndex !== null) {
+				$childrenByIndex[$parentIndex][] = $index;
+			}
+		}
+
+		return $childrenByIndex;
+
+	}//end childrenByIndex()
 
 	/**
 	 * Resolve one LedgerGroup's member account numbers: every account whose
@@ -377,89 +371,20 @@ class BudgetVsActualsReader {
 	 * @return list<string> The resolved, deduplicated member account numbers.
 	 */
 	private function resolveMembers(array $ledgerGroup, array $accounts): array {
-		$ranges = [];
-		if (is_array($ledgerGroup['accountRanges'] ?? null) === true) {
-			$ranges = $ledgerGroup['accountRanges'];
-		}
+		$accountNumbers = array_map(
+			static fn (array $account): string => (string)($account['accountNumber'] ?? ''),
+			$accounts
+		);
 
-		$included = [];
-		if (is_array($ledgerGroup['includedAccountNumbers'] ?? null) === true) {
-			$included = $ledgerGroup['includedAccountNumbers'];
-		}
-
-		$excludedNumbers = [];
-		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
-			$excludedNumbers = $ledgerGroup['excludedAccountNumbers'];
-		}
-
-		$excluded = array_flip(array_map('strval', $excludedNumbers));
-
-		$members = [];
-		foreach ($accounts as $account) {
-			$number = (string)($account['accountNumber'] ?? '');
-			if ($number === '' || isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			if ($this->inAnyRange(accountNumber: $number, ranges: $ranges) === true) {
-				$members[$number] = true;
-			}
-		}
-
-		foreach ($included as $number) {
-			$number = (string)$number;
-			if ($number === '' || isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			$members[$number] = true;
-		}
-
-		// PHP casts a purely-numeric string array key to an int key, so
-		// array_keys() would silently hand back integers here (e.g. account
-		// "1000" -> key 1000 -> int(1000)) — cast back to string explicitly,
-		// since every caller compares account numbers as strings.
-		return array_values(array_map('strval', array_keys($members)));
+		return (new LedgerGroupMembers(ledgerGroup: $ledgerGroup))->resolve(accountNumbers: $accountNumbers);
 
 	}//end resolveMembers()
-
-	/**
-	 * Whether an account number falls inside any of the given range pairs.
-	 * Compared numerically (not lexicographically) so a 5-digit account
-	 * number cannot fall inside a 4-digit range by string-sort accident.
-	 *
-	 * @param string $accountNumber The account number to test.
-	 * @param list<array{from?:string,to?:string}> $ranges The range pairs.
-	 *
-	 * @return boolean True when the account number is inside at least one range.
-	 */
-	private function inAnyRange(string $accountNumber, array $ranges): bool {
-		if (is_numeric($accountNumber) === false) {
-			return false;
-		}
-
-		$value = (int)$accountNumber;
-		foreach ($ranges as $range) {
-			$from = (string)($range['from'] ?? '');
-			$to = (string)($range['to'] ?? '');
-			if ($from === '' || $to === '' || is_numeric($from) === false || is_numeric($to) === false) {
-				continue;
-			}
-
-			if ($value >= (int)$from && $value <= (int)$to) {
-				return true;
-			}
-		}
-
-		return false;
-
-	}//end inAnyRange()
 
 	/**
 	 * Run one property-filtered query against the shillinq register.
 	 *
 	 * A failure is logged and answered as an empty result set: a missing
-	 * schema must not stop the roll-up from computing whatever it can.
+	 * schema must not stop the reader from computing whatever it can.
 	 *
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters Property filters (never `id`).
@@ -467,50 +392,12 @@ class BudgetVsActualsReader {
 	 * @return list<array<string,mixed>> The matching records as plain arrays.
 	 */
 	private function query(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BudgetVsActualsReader: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$query = new RegisterQuery(
+			register: new ShillinqRegister(appConfig: $this->appConfig, objectService: $this->objectService),
+			failureLog: new QueryFailureLog(logger: $this->logger, component: 'BudgetVsActualsReader'),
+		);
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
-			}
-		}
-
-		return $result;
+		return $query->rows(schema: $schema, filters: $filters);
 
 	}//end query()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config.
-	 *
-	 * @return string The register slug, defaulting to `shillinq`.
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-
-	}//end register()
 }//end class

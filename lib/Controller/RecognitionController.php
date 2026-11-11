@@ -104,78 +104,117 @@ class RecognitionController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		$from = trim((string)$this->request->getParam('from', ''));
-		$to = trim((string)$this->request->getParam('to', ''));
-
-		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administrationId is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+		$window = new RevenueWindow(request: $this->request);
+		$refusal = $this->administrationRefusal(window: $window) ?? $this->periodRefusal(window: $window);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		// Reject obviously malformed identifiers before touching the data layer
-		// (ADR-005 input validation) — administration ids are short slugs.
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administrationId must be a valid administration identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+		return $this->projected(window: $window);
+
+	}//end recurringRevenue()
+
+	/**
+	 * The 400 for a missing or malformed administration, or the masked 404
+	 * when the caller may not access it.
+	 *
+	 * Reject obviously malformed identifiers before touching the data layer
+	 * (ADR-005 input validation) — administration ids are short slugs.
+	 * ⚠️ That check is INPUT VALIDATION, not authorisation — it was the
+	 * only thing standing between any authenticated user and another
+	 * tenant's recurring-revenue book. The membership check is what the
+	 * docblock's "ADR-005 IDOR-safety" always claimed (REQ-MA-001).
+	 *
+	 * @param RevenueWindow $window The request.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/changes/order-revenue-recognition-engine/tasks.md#task-2
+	 */
+	private function administrationRefusal(RevenueWindow $window): ?JSONResponse {
+		if ($window->administrationId === '') {
+			return $this->badRequest(error: 'administrationId is required');
 		}
 
-		// ⚠️ The regex above is INPUT VALIDATION, not authorisation — it was the
-		// only thing standing between any authenticated user and another
-		// tenant's recurring-revenue book. The membership check is what the
-		// docblock's "ADR-005 IDOR-safety" always claimed (REQ-MA-001).
-		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+		if ($window->wellFormedAdministration() === false) {
+			return $this->badRequest(error: 'administrationId must be a valid administration identifier');
+		}
+
+		if ($this->context->canAccess(administrationId: $window->administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		if (preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $from) !== 1) {
-			return new JSONResponse(
-				['error' => 'from must be an ISO date (YYYY-MM-DD)'],
-				Http::STATUS_BAD_REQUEST
-			);
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The 400 unless from and to are ISO dates with from on or before to.
+	 *
+	 * @param RevenueWindow $window The request.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function periodRefusal(RevenueWindow $window): ?JSONResponse {
+		if (RevenueWindow::isIsoDate(date: $window->from) === false) {
+			return $this->badRequest(error: 'from must be an ISO date (YYYY-MM-DD)');
 		}
 
-		if (preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $to) !== 1) {
-			return new JSONResponse(
-				['error' => 'to must be an ISO date (YYYY-MM-DD)'],
-				Http::STATUS_BAD_REQUEST
-			);
+		if (RevenueWindow::isIsoDate(date: $window->to) === false) {
+			return $this->badRequest(error: 'to must be an ISO date (YYYY-MM-DD)');
 		}
 
-		if ($from > $to) {
-			return new JSONResponse(
-				['error' => 'from must be on or before to'],
-				Http::STATUS_BAD_REQUEST
-			);
+		if ($window->from > $window->to) {
+			return $this->badRequest(error: 'from must be on or before to');
 		}
 
+		return null;
+	}//end periodRefusal()
+
+	/**
+	 * A 400 with an error.
+	 *
+	 * @param string $error The error.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $error): JSONResponse {
+		return new JSONResponse(
+			['error' => $error],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end badRequest()
+
+	/**
+	 * Compute the recurring revenue of the window; a failure is a logged 500.
+	 *
+	 * @param RevenueWindow $window The validated request.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/order-revenue-recognition-engine/tasks.md#task-2
+	 */
+	private function projected(RevenueWindow $window): JSONResponse {
 		try {
 			$result = $this->recognitionService->computeRecurring(
-				administrationId: $administrationId,
-				from: $from,
-				to: $to
+				administrationId: $window->administrationId,
+				from: $window->from,
+				to: $window->to
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RecognitionController: failed to compute recurring revenue',
-				[
-					'administrationId' => $administrationId,
-					'from' => $from,
-					'to' => $to,
-					'exception' => $e->getMessage(),
-				]
-			);
+			return $this->projectionFailed(window: $window, e: $e);
+		}
 
-			return new JSONResponse(
-				['error' => 'Failed to compute recurring revenue'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		return $this->projectionResponse(result: $result);
+	}//end projected()
 
+	/**
+	 * The 200 answer with the recognized amount, the ARR, the currency and the line count.
+	 *
+	 * @param array<string, mixed> $result The service result.
+	 *
+	 * @return JSONResponse
+	 */
+	private function projectionResponse(array $result): JSONResponse {
 		return new JSONResponse(
 			[
 				'recognized' => $result['recognized'],
@@ -185,6 +224,30 @@ class RecognitionController extends Controller {
 			],
 			Http::STATUS_OK
 		);
+	}//end projectionResponse()
 
-	}//end recurringRevenue()
+	/**
+	 * Log a failed projection and answer 500 without a stack trace.
+	 *
+	 * @param RevenueWindow $window The request.
+	 * @param \Throwable    $e      The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function projectionFailed(RevenueWindow $window, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'RecognitionController: failed to compute recurring revenue',
+			[
+				'administrationId' => $window->administrationId,
+				'from' => $window->from,
+				'to' => $window->to,
+				'exception' => $e->getMessage(),
+			]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute recurring revenue'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end projectionFailed()
 }//end class

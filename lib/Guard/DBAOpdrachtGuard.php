@@ -35,10 +35,6 @@ use Psr\Log\LoggerInterface;
  * ADR-031 save-time guard for DBAOpdracht state-transitions.
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
 class DBAOpdrachtGuard {
 	/**
@@ -65,55 +61,124 @@ class DBAOpdrachtGuard {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function validateOnSave(array $assignment, array $previous = []): array {
-		$errors = [];
 		$status = (string)($assignment['intakeStatus'] ?? 'DRAFT');
 		$previousStatus = (string)($previous['intakeStatus'] ?? 'DRAFT');
 
-		// REQ-DBA-001 — transition to ACTIEF requires INTAKE_VOLTOOID first.
-		if ($status === 'ACTIEF' && $previousStatus !== 'INTAKE_COMPLETED' && $previousStatus !== 'ACTIEF') {
-			$errors[] = 'REQ-DBA-001: opdracht mag pas ACTIEF worden na voltooide DBA-intake.';
-		}
+		$errors = array_merge(
+			$this->activationErrors(status: $status, previousStatus: $previousStatus),
+			$this->endedErrors(status: $status, assignment: $assignment),
+			$this->riskLevelErrors(assignment: $assignment)
+		);
 
-		// REQ-DBA-018 — BEEINDIGD requires feitelijkeEindDatum + retentieDeadline.
-		if ($status === 'ENDED') {
-			$end = (string)($assignment['actualEndDate'] ?? '');
-			if ($end === '') {
-				$errors[] = 'REQ-DBA-018: BEEINDIGD vereist feitelijkeEindDatum.';
-			} else {
-				$retention = (string)($assignment['retentionDeadline'] ?? '');
-				if ($retention === '') {
-					$errors[] = 'REQ-DBA-018: BEEINDIGD vereist retentieDeadline (7 jaar na einddatum).';
-				} else {
-					$expected = $this->computeRetentieDeadline(feitelijkeEindDatum: $end);
-					if ($expected !== null && $retention !== $expected) {
-						$errors[] = sprintf(
-							'REQ-DBA-018: retentieDeadline %s wijkt af van verwachte %s (einddatum + 7 jaar).',
-							$retention,
-							$expected
-						);
-					}
-				}
-			}
-		}
-
-		// REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
-		$level = (string)($assignment['riskLevel'] ?? 'LOW');
-		$score = $assignment['actueleRisicoscore'] ?? null;
-		if ($level === 'HIGH' && is_int($score) === true) {
-			if ($score < 75) {
-				$errors[] = 'REQ-DBA-000/003: risicoNiveau HOOG vereist actueleRisicoscore >= 75.';
-			}
-		}
-
-		if (count($errors) > 0) {
-			$this->logger->info(
-				'DBAOpdrachtGuard: save blocked',
-				['errors' => $errors, 'status' => $status, 'previousStatus' => $previousStatus]
-			);
-		}
+		$this->logBlockedSave(errors: $errors, statuses: ['status' => $status, 'previousStatus' => $previousStatus]);
 
 		return $errors;
 	}//end validateOnSave()
+
+	/**
+	 * Log a blocked save with its errors and the incoming and previous status.
+	 *
+	 * @param array<int,string>    $errors   The validation errors (nothing is logged when empty).
+	 * @param array<string,string> $statuses The incoming and previous intake status, as log context.
+	 *
+	 * @return void
+	 */
+	private function logBlockedSave(array $errors, array $statuses): void {
+		if (count($errors) > 0) {
+			$this->logger->info('DBAOpdrachtGuard: save blocked', ['errors' => $errors] + $statuses);
+		}
+	}//end logBlockedSave()
+
+	/**
+	 * REQ-DBA-001 — transition to ACTIEF requires INTAKE_VOLTOOID first.
+	 *
+	 * @param string $status         The incoming intake status.
+	 * @param string $previousStatus The persisted intake status.
+	 *
+	 * @return array<int,string> The refusal, or none.
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	private function activationErrors(string $status, string $previousStatus): array {
+		if ($status !== 'ACTIEF' || in_array($previousStatus, ['INTAKE_COMPLETED', 'ACTIEF'], true) === true) {
+			return [];
+		}
+
+		return ['REQ-DBA-001: opdracht mag pas ACTIEF worden na voltooide DBA-intake.'];
+	}//end activationErrors()
+
+	/**
+	 * REQ-DBA-018 — BEEINDIGD requires feitelijkeEindDatum + retentieDeadline.
+	 *
+	 * @param string              $status     The incoming intake status.
+	 * @param array<string,mixed> $assignment The incoming object.
+	 *
+	 * @return array<int,string> The refusal, or none.
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	private function endedErrors(string $status, array $assignment): array {
+		if ($status !== 'ENDED') {
+			return [];
+		}
+
+		$end = (string)($assignment['actualEndDate'] ?? '');
+		if ($end === '') {
+			return ['REQ-DBA-018: BEEINDIGD vereist feitelijkeEindDatum.'];
+		}
+
+		$retention = (string)($assignment['retentionDeadline'] ?? '');
+		if ($retention === '') {
+			return ['REQ-DBA-018: BEEINDIGD vereist retentieDeadline (7 jaar na einddatum).'];
+		}
+
+		return $this->retentionMismatchErrors(end: $end, retention: $retention);
+	}//end endedErrors()
+
+	/**
+	 * REQ-DBA-018 — the retention deadline must be the end date plus seven years
+	 * (not checked when the end date cannot be parsed).
+	 *
+	 * @param string $end       The actual end date.
+	 * @param string $retention The given retention deadline.
+	 *
+	 * @return array<int,string> The refusal, or none.
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	private function retentionMismatchErrors(string $end, string $retention): array {
+		$expected = $this->computeRetentieDeadline(feitelijkeEindDatum: $end);
+		if ($expected === null || $retention === $expected) {
+			return [];
+		}
+
+		return [
+			sprintf(
+				'REQ-DBA-018: retentieDeadline %s wijkt af van verwachte %s (einddatum + 7 jaar).',
+				$retention,
+				$expected
+			),
+		];
+	}//end retentionMismatchErrors()
+
+	/**
+	 * REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
+	 *
+	 * @param array<string,mixed> $assignment The incoming object.
+	 *
+	 * @return array<int,string> The refusal, or none.
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	private function riskLevelErrors(array $assignment): array {
+		$level = (string)($assignment['riskLevel'] ?? 'LOW');
+		$score = $assignment['actueleRisicoscore'] ?? null;
+		if ($level === 'HIGH' && is_int($score) === true && $score < 75) {
+			return ['REQ-DBA-000/003: risicoNiveau HOOG vereist actueleRisicoscore >= 75.'];
+		}
+
+		return [];
+	}//end riskLevelErrors()
 
 	/**
 	 * Compute the retention deadline (einddatum + 7 jaar) per AWR art. 52.

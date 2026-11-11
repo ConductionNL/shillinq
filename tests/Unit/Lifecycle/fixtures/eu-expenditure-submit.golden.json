@@ -1,0 +1,316 @@
+{
+    "notFound": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noCategory": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "byLookup": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:EuExpenditure",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "ex-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "defaultsMet": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "defaultsMissing": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "idFromArgument": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-9"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "ruleOverride": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:EligibilityRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "fonds": "efro",
+                        "state": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "ruleWithoutCategory": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:EligibilityRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "fonds": "efro",
+                        "state": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "indirectNothingNeeded": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "unknownCategory": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "procurementMissing": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "procurementPresent": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:EuProject",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pj-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "EuExpenditureGuard: submit completeness check failed — denying submit transition (fail-closed)",
+                {
+                    "euExpenditureId": "ex-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:SupportingDocument",
+            {
+                "findAll": {
+                    "filters": {
+                        "euExpenditureId": "ex-1"
+                    }
+                }
+            }
+        ]
+    }
+}

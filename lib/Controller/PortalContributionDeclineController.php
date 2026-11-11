@@ -106,15 +106,37 @@ class PortalContributionDeclineController extends Controller {
 			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->declined(claims: $claims, invoiceId: $this->invoiceId());
+	}//end decline()
+
+	/**
+	 * The body's invoice id; a non-string counts as absent ('').
+	 *
+	 * @return string
+	 */
+	private function invoiceId(): string {
 		$invoiceId = $this->request->getParam('invoiceId');
 		if (is_string($invoiceId) === false) {
-			$invoiceId = '';
+			return '';
 		}
 
+		return $invoiceId;
+	}//end invoiceId()
+
+	/**
+	 * Decline the contribution and answer the outcome, or the logged 502.
+	 *
+	 * Never leaks internals from a #[PublicPage] endpoint (ADR-005).
+	 *
+	 * @param array<string, mixed> $claims    The verified assertion claims.
+	 * @param string               $invoiceId The invoice to decline.
+	 *
+	 * @return JSONResponse
+	 */
+	private function declined(array $claims, string $invoiceId): JSONResponse {
 		try {
 			$result = $this->declineService->decline(claims: $claims, target: $invoiceId);
 		} catch (Throwable $e) {
-			// Never leak internals from a #[PublicPage] endpoint (ADR-005).
 			$this->logger->error('Shillinq: portal contribution decline failed unexpectedly', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
 		}
@@ -124,5 +146,5 @@ class PortalContributionDeclineController extends Controller {
 			ContributionDeclineService::DOWNSTREAM_ERROR => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
 		};
-	}//end decline()
+	}//end declined()
 }//end class
