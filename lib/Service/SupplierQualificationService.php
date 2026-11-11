@@ -73,6 +73,28 @@ class SupplierQualificationService {
 	 * @spec openspec/specs/procurement-governance/spec.md
 	 */
 	public function registerSupplier(string $administrationId, array $payload): array {
+		$this->assertAccessible(administrationId: $administrationId);
+		$identity = $this->supplierIdentity(payload: $payload);
+		$this->assertNoDuplicate(administrationId: $administrationId, taxId: $identity['taxId'], iban: $identity['iban']);
+
+		$record = ['administrationId' => $administrationId] + $identity + [
+			'requiredDocuments' => $this->normaliseDocuments(rawDocuments: (array)($payload['requiredDocuments'] ?? [])),
+			'statusCode' => 'draft',
+		];
+
+		return $this->saveObject(schema: 'SupplierQualification', object: $record);
+	}//end registerSupplier()
+
+	/**
+	 * Refuse an empty administration, and mask one the user cannot access as not found (ADR-005).
+	 *
+	 * @param string $administrationId Administration (tenant) scope.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the administration is empty or not accessible.
+	 */
+	private function assertAccessible(string $administrationId): void {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -81,7 +103,18 @@ class SupplierQualificationService {
 			// Mask as not-found per ADR-005 (avoid disclosing other tenants).
 			throw new RuntimeException('Administration not found');
 		}
+	}//end assertAccessible()
 
+	/**
+	 * The trimmed supplier id, name, tax id and IBAN; the id and name are required.
+	 *
+	 * @param array<string,mixed> $payload The registration payload.
+	 *
+	 * @return array{supplierId: string, supplierName: string, taxId: string, iban: string}
+	 *
+	 * @throws RuntimeException When the id or name is missing.
+	 */
+	private function supplierIdentity(array $payload): array {
 		$supplierId = trim((string)($payload['supplierId'] ?? ''));
 		if ($supplierId === '') {
 			throw new RuntimeException('supplierId is required');
@@ -92,23 +125,13 @@ class SupplierQualificationService {
 			throw new RuntimeException('supplierName is required');
 		}
 
-		$taxId = trim((string)($payload['taxId'] ?? ''));
-		$iban = trim((string)($payload['iban'] ?? ''));
-
-		$this->assertNoDuplicate(administrationId: $administrationId, taxId: $taxId, iban: $iban);
-
-		$record = [
-			'administrationId' => $administrationId,
+		return [
 			'supplierId' => $supplierId,
 			'supplierName' => $supplierName,
-			'taxId' => $taxId,
-			'iban' => $iban,
-			'requiredDocuments' => $this->normaliseDocuments(rawDocuments: (array)($payload['requiredDocuments'] ?? [])),
-			'statusCode' => 'draft',
+			'taxId' => trim((string)($payload['taxId'] ?? '')),
+			'iban' => trim((string)($payload['iban'] ?? '')),
 		];
-
-		return $this->saveObject(schema: 'SupplierQualification', object: $record);
-	}//end registerSupplier()
+	}//end supplierIdentity()
 
 	/**
 	 * Qualify a draft supplier once every required document is provided and

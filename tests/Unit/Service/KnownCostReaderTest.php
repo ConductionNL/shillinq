@@ -289,4 +289,56 @@ final class KnownCostReaderTest extends TestCase {
 		self::assertSame(4, $decorator->findAllCalls);
 
 	}//end testNoDefaultAnnualBudgetSkipsBudgetLineQueries()
+	/**
+	 * The full membership and default-budget indexes over edge data: ranges
+	 * compared as numbers, malformed ranges and groups skipped, includes and
+	 * excludes, first group and first default winning, slug fallbacks.
+	 *
+	 * @return void
+	 */
+	public function testIndexesOverEdgeData(): void {
+		$data = $this->fixture();
+		$data['Account'] = [
+			['accountNumber' => '4300', 'administrationId' => 'adm-1'],
+			['accountNumber' => '43000', 'administrationId' => 'adm-1'],
+			['accountNumber' => '4A00', 'administrationId' => 'adm-1'],
+			['accountNumber' => '', 'administrationId' => 'adm-1'],
+			['accountNumber' => '4100', 'administrationId' => 'adm-1'],
+			['accountNumber' => '8000', 'administrationId' => 'adm-1'],
+			['administrationId' => 'adm-1'],
+		];
+		$data['LedgerGroup'] = [
+			['administrationId' => 'adm-1', 'accountRanges' => [['from' => '0', 'to' => '9999']]],
+			[
+				'@self' => ['slug' => 'lg-slug'],
+				'administrationId' => 'adm-1',
+				'accountRanges' => [['from' => '4000', 'to' => '4199'], ['from' => '', 'to' => '9'], ['from' => 'x', 'to' => '9999'], ['to' => '9999']],
+				'includedAccountNumbers' => [9100, '', '4100', '7000'],
+				'excludedAccountNumbers' => [7000],
+			],
+			[
+				'id' => 'lg-2',
+				'administrationId' => 'adm-1',
+				'accountRanges' => [['from' => '4000', 'to' => '4399']],
+				'includedAccountNumbers' => 'not-a-list',
+				'excludedAccountNumbers' => ['4300'],
+			],
+			['id' => 'lg-3', 'administrationId' => 'adm-1', 'accountRanges' => 'none', 'includedAccountNumbers' => ['8000', '4300']],
+		];
+		$data['AnnualBudget'] = [
+			['id' => 'ab-x', 'administrationId' => 'adm-1', 'fiscalYear' => 2026, 'isDefault' => 'true'],
+			['@self' => ['slug' => 'ab-slug'], 'administrationId' => 'adm-1', 'fiscalYear' => '2026', 'isDefault' => true],
+			['id' => 'ab-late', 'administrationId' => 'adm-1', 'fiscalYear' => 2026, 'isDefault' => true],
+			['id' => 'ab-zero', 'administrationId' => 'adm-1', 'fiscalYear' => 0, 'isDefault' => true],
+			['administrationId' => 'adm-1', 'fiscalYear' => 2028, 'isDefault' => true],
+			['id' => 'ab-2029', 'administrationId' => 'adm-1', 'fiscalYear' => 2029, 'isDefault' => true],
+		];
+
+		[$reader] = $this->buildReader($data);
+		$context = $reader->loadContext('adm-1');
+
+		self::assertSame(['4100' => 'lg-slug', '9100' => 'lg-slug', '8000' => 'lg-3', '4300' => 'lg-3'], $context['ledgerGroupIdByAccount']);
+		self::assertSame([2026 => 'ab-slug', 2029 => 'ab-2029'], $context['annualBudgetIdByYear']);
+
+	}//end testIndexesOverEdgeData()
 }//end class

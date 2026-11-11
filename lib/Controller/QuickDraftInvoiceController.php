@@ -94,25 +94,57 @@ class QuickDraftInvoiceController extends Controller {
 			);
 		}
 
-		if ($administrationId === '') {
-			$administrationId = (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
+		$administrationId = $this->draftAdministration(requested: $administrationId);
+		$request = $this->draftRequest();
+
+		return $this->drafted(administrationId: $administrationId, request: $request);
+	}//end create()
+
+	/**
+	 * The asked-for administration, else the caller's active one.
+	 *
+	 * @param string $requested The trimmed administrationId parameter, or ''.
+	 *
+	 * @return string
+	 */
+	private function draftAdministration(string $requested): string {
+		if ($requested === '') {
+			return (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
 		}
 
+		return $requested;
+	}//end draftAdministration()
+
+	/**
+	 * The draft fields from the request, in DRAFT_FIELDS order.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function draftRequest(): array {
 		$request = [];
 		foreach (self::DRAFT_FIELDS as $field) {
 			$request[$field] = $this->request->getParam($field);
 		}
 
+		return $request;
+	}//end draftRequest()
+
+	/**
+	 * Create the draft: 201, a translated 422 when it is refused, or a logged 500.
+	 *
+	 * @param string               $administrationId The administration to invoice in.
+	 * @param array<string, mixed> $request          The draft fields.
+	 *
+	 * @return JSONResponse
+	 */
+	private function drafted(string $administrationId, array $request): JSONResponse {
 		try {
 			return new JSONResponse(
 				data: $this->service->draft(administrationId: $administrationId, request: $request),
 				statusCode: Http::STATUS_CREATED
 			);
 		} catch (QuickDraftRefusedException $e) {
-			return new JSONResponse(
-				data: ['message' => $this->l10n->t($e->getMessage())],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new JSONResponse(data: ['message' => $this->l10n->t($e->getMessage())], statusCode: Http::STATUS_UNPROCESSABLE_ENTITY);
 		} catch (Throwable $e) {
 			$this->logger->error('QuickDraftInvoiceController.create failed: ' . $e->getMessage());
 			return new JSONResponse(
@@ -120,5 +152,5 @@ class QuickDraftInvoiceController extends Controller {
 				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
 			);
 		}
-	}//end create()
+	}//end drafted()
 }//end class

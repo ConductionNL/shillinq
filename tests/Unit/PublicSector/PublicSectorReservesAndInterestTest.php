@@ -228,6 +228,81 @@ class PublicSectorReservesAndInterestTest extends TestCase {
 
 	}//end testARunWithoutARateIsRefused()
 
+	/**
+	 * Golden: the calculated run and its journal, with extra task fields, and each refusal.
+	 */
+	public function testInterestRunAndJournalMatchTheGolden(): void {
+		$this->seed();
+		$this->store->setSchema('Investering')->saveObject(['id' => 'no-field', 'administrationId' => 'adm-gov-1', 'programmeId' => '2', 'description' => 'Fietspad', 'gross' => 900000, 'coverage' => 'lening', 'depreciationTerm' => 30, 'firstDepreciationYear' => 2025, 'capitalChargesSchedule' => []]);
+		$answers = [];
+		$run = $this->interest()->calculate($this->get('InterestAllocationRun', $this->ids['run']));
+		$answers['calculated'] = $run;
+
+		$run['lines'][] = ['investmentId' => 'x', 'taskFieldCode' => '10.1', 'interest' => 1.005];
+		$run['lines'][] = ['investmentId' => 'y', 'taskFieldCode' => '5.2', 'interest' => 10.0];
+		$run['lines'][] = ['investmentId' => 'w', 'taskFieldCode' => '2', 'interest' => 0];
+		$run['lines'][] = ['investmentId' => 'v', 'taskFieldCode' => '2', 'interest' => 3.5];
+		$answers['journal'] = $this->interest()->journalFor($run);
+
+		$refusals = [
+			'no cost account' => array_merge($run, ['interestCostAccountNumber' => ' ']),
+			'no treasury account' => array_merge($run, ['treasuryAccountNumber' => '']),
+			'nothing to post' => array_merge($run, ['lines' => [], 'reserveLines' => []]),
+			'reserve without accounts' => array_merge($run, ['reserveLines' => [['reserveId' => 'missing', 'name' => 'Weg', 'interest' => 1.0]]]),
+		];
+		foreach ($refusals as $name => $refused) {
+			try {
+				$this->interest()->journalFor($refused);
+				$answers['refused ' . $name] = 'accepted';
+			} catch (DomainException $e) {
+				$answers['refused ' . $name] = $e->getMessage();
+			}
+		}
+
+		$golden = __DIR__ . '/fixtures/interest-run.golden.json';
+		$actual = json_decode(json_encode($answers, JSON_PRESERVE_ZERO_FRACTION), true);
+		if (getenv('UPDATE_GOLDEN') === '1') {
+			file_put_contents($golden, json_encode($actual, JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($golden), true), $actual);
+
+	}//end testInterestRunAndJournalMatchTheGolden()
+
+	/**
+	 * Golden: the journal of reserve mutations of both kinds, and each refusal.
+	 */
+	public function testReserveMutationJournalsMatchTheGolden(): void {
+		$this->seed();
+		$reserve = ['name' => 'Reserve wegen', 'balanceAccountNumber' => ' 0520 ', 'resultAccountNumber' => '8990', 'administrationId' => 'adm-r'];
+		$answers = [
+			'addition' => $this->balances()->journalFor(['id' => 'm-1', 'year' => 2025, 'kind' => 'addition', 'amount' => 1000.005, 'councilResolution' => ' 2026-01 ', 'administrationId' => 'adm-m'], $reserve),
+			'withdrawal' => $this->balances()->journalFor(['@self' => ['slug' => 'slug-2'], 'year' => 2024, 'kind' => 'withdrawal', 'amount' => '250'], $reserve),
+			'no key' => $this->balances()->journalFor(['year' => 2023, 'amount' => 1], $reserve),
+		];
+		foreach ([
+			'no reserve account' => [['amount' => 1], array_merge($reserve, ['balanceAccountNumber' => ''])],
+			'no result account' => [['amount' => 1], array_merge($reserve, ['resultAccountNumber' => ' '])],
+			'zero amount' => [['amount' => 0.004], $reserve],
+		] as $name => [$mutation, $refusedReserve]) {
+			try {
+				$this->balances()->journalFor($mutation, $refusedReserve);
+				$answers['refused ' . $name] = 'accepted';
+			} catch (DomainException $e) {
+				$answers['refused ' . $name] = $e->getMessage();
+			}
+		}
+
+		$golden = __DIR__ . '/fixtures/reserve-journal.golden.json';
+		$actual = json_decode(json_encode($answers, JSON_PRESERVE_ZERO_FRACTION), true);
+		if (getenv('UPDATE_GOLDEN') === '1') {
+			file_put_contents($golden, json_encode($actual, JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($golden), true), $actual);
+
+	}//end testReserveMutationJournalsMatchTheGolden()
+
 	private function yearOf(array $rows, string $reserveId, int $year): array {
 		foreach ($rows as $row) {
 			if ($row['reserveId'] === $reserveId && $row['year'] === $year) {

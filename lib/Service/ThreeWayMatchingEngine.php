@@ -25,7 +25,7 @@
  * within tolerance) and trigger an immediate SupplierInvoice transition
  * out of `received` → `matching` → `matched` so member 09's GR/IR
  * clearing posting fires declaratively. Out-of-tolerance matches set an
- * exception_* status (exception_price / exception_quantity /
+ * exception_* status (exception_price / exception_quantity / exception_date /
  * exception_missing_grn / exception_missing_po) and transition the
  * invoice to `exception`; the exception resolution UI lives in slice 08.
  *
@@ -136,6 +136,13 @@ class ThreeWayMatchingEngine {
 	public const STATUS_EXCEPTION_QUANTITY = 'exception_quantity';
 
 	/**
+	 * Match outcome — delivery date outside the date tolerance, early or late.
+	 *
+	 * @var string
+	 */
+	public const STATUS_EXCEPTION_DATE = 'exception_date';
+
+	/**
 	 * Match outcome — invoice has no matching GRN (services or pre-receipt).
 	 *
 	 * @var string
@@ -237,10 +244,13 @@ class ThreeWayMatchingEngine {
 	 * @var array<string,string>
 	 */
 	private const FAILED_AXIS = [
+		'po_line' => 'missing_po',
+		'grn_line' => 'missing_grn',
 		'unitPrice' => 'price',
 		'lineTotal' => 'price',
 		'vat' => 'price',
 		'quantity' => 'quantity',
+		'deliveryDate' => 'date',
 	];
 
 	/**
@@ -249,8 +259,11 @@ class ThreeWayMatchingEngine {
 	 * @var array<string,string>
 	 */
 	private const OUTCOME_STATUS = [
+		'missing_po' => self::STATUS_EXCEPTION_MISSING_PO,
+		'missing_grn' => self::STATUS_EXCEPTION_MISSING_GRN,
 		'price' => self::STATUS_EXCEPTION_PRICE,
 		'quantity' => self::STATUS_EXCEPTION_QUANTITY,
+		'date' => self::STATUS_EXCEPTION_DATE,
 		'delta' => self::STATUS_WITHIN_TOLERANCE,
 	];
 
@@ -395,14 +408,11 @@ class ThreeWayMatchingEngine {
 			$divergences = [['field' => 'multi_po', 'expected' => 1, 'actual' => count($poIds)]];
 		}
 
-		return $this->routeToException(
-			administrationId: $run->administrationId,
-			invoice: $run->invoice,
-			matchStatus: self::STATUS_EXCEPTION_MISSING_PO,
-			divergences: $divergences,
-			matchedPoIds: $poIds,
-			matchedGrnIds: []
-		);
+		$route = new ExceptionRoute(invoice: $run->invoice, matchStatus: self::STATUS_EXCEPTION_MISSING_PO);
+		$route->divergences  = $divergences;
+		$route->matchedPoIds = $poIds;
+
+		return $this->routeToException(administrationId: $run->administrationId, route: $route);
 	}//end routePoException()
 
 	/**
@@ -430,16 +440,14 @@ class ThreeWayMatchingEngine {
 			return $this->recordLineMatch(run: $run);
 		}
 
-		return $this->routeToException(
-			administrationId: $run->administrationId,
-			invoice: $run->invoice,
-			matchStatus: self::STATUS_EXCEPTION_MISSING_GRN,
-			divergences: [
-				['field' => 'grn', 'expected' => 'accepted', 'actual' => 'missing'],
-			],
-			matchedPoIds: [$poId],
-			matchedGrnIds: $this->receiptIds(receipts: $run->receipts)
-		);
+		$route = new ExceptionRoute(invoice: $run->invoice, matchStatus: self::STATUS_EXCEPTION_MISSING_GRN);
+		$route->divergences   = [
+			['field' => 'grn', 'expected' => 'accepted', 'actual' => 'missing'],
+		];
+		$route->matchedPoIds  = [$poId];
+		$route->matchedGrnIds = $this->receiptIds(receipts: $run->receipts);
+
+		return $this->routeToException(administrationId: $run->administrationId, route: $route);
 	}//end matchAgainstPo()
 
 	/**
@@ -555,7 +563,10 @@ class ThreeWayMatchingEngine {
 	}//end hasAcceptedReceipt()
 
 	/**
-	 * Load the lines of every receipt that has an id.
+	 * Load the lines of every accepted receipt.
+	 *
+	 * Draft and rejected receipts do not count as delivered, so their lines
+	 * are left out of the match.
 	 *
 	 * SvcReceiptLine carries the same quantity field names as
 	 * GoodsReceiptLine (see ServiceReceiptService), so the line matcher
@@ -571,7 +582,8 @@ class ThreeWayMatchingEngine {
 			[$lineSchema, $receiptKey] = self::RECEIPT_LINES[$schema];
 			foreach ($rows as $row) {
 				$receiptId = $this->idOf(row: $row);
-				if ($receiptId !== '') {
+				$accepted = in_array((string)($row['statusCode'] ?? ''), self::ACCEPTED_RECEIPT_STATUSES[$schema], true);
+				if ($receiptId !== '' && $accepted === true) {
 					array_push(
 						$lines,
 						...$this->findAll(
@@ -670,8 +682,10 @@ class ThreeWayMatchingEngine {
 	}//end hasDelta()
 
 	/**
-	 * The match status of the strongest outcome: a price failure beats a
-	 * quantity failure, which beats a delta within tolerance.
+	 * The match status of the strongest outcome: a line without a PO line,
+	 * then a line without a receipt line, then a price failure, then a
+	 * quantity failure, then a delivery date failure, then a delta within
+	 * tolerance.
 	 *
 	 * @param array<string,bool> $outcomes The outcomes seen.
 	 *
@@ -778,104 +792,227 @@ class ThreeWayMatchingEngine {
 	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function calculateDivergence(array $invoiceLine, ?array $poLine, ?array $grnLine): array {
-		$deltas = [];
-
 		if ($poLine === null) {
-			$deltas[] = [
-				'field' => 'po_line',
-				'expected' => 'matched',
-				'actual' => 'missing',
-				'deltaCents' => null,
-				'deltaPercentage' => null,
-			];
-			return $deltas;
+			return [$this->missingPoLineDelta()];
 		}
 
-		// Unit-price delta in cents (integer arithmetic).
-		$invoiceUnitPriceCents = (int)($invoiceLine['unitPrice'] ?? 0);
-		$poUnitPriceCents = (int)($poLine['unitPrice'] ?? 0);
-		$unitPriceDelta = $invoiceUnitPriceCents - $poUnitPriceCents;
-		$unitPricePct = 0;
-		if ($poUnitPriceCents !== 0) {
-			$unitPricePct = (int)round((($unitPriceDelta * 10000) / abs($poUnitPriceCents)), 0, PHP_ROUND_HALF_UP);
-		}
-
-		$deltas[] = [
-			'field' => 'unitPrice',
-			'expected' => $poUnitPriceCents,
-			'actual' => $invoiceUnitPriceCents,
-			'deltaCents' => $unitPriceDelta,
-			'deltaPercentage' => $unitPricePct,
+		$deltas = [
+			$this->unitPriceDelta(invoiceLine: $invoiceLine, poLine: $poLine),
+			$this->quantityDelta(invoiceLine: $invoiceLine, expected: $this->expectedQuantity(poLine: $poLine, grnLine: $grnLine)),
+			$this->vatDelta(invoiceLine: $invoiceLine, poLine: $poLine),
 		];
 
-		// Quantity delta in thousandths. Prefer GRN accepted; fall back
-		// to PO ordered when the GRN line is absent (services case).
-		$invoiceQty = $this->thousandths(value: (float)($invoiceLine['quantity'] ?? 0));
-		if ($grnLine !== null) {
-			$expectedQty = $this->thousandths(value: (float)($grnLine['quantityAccepted'] ?? $grnLine['quantityReceived'] ?? 0));
-			$qtySource = 'grn';
-		} else {
-			$expectedQty = $this->thousandths(value: (float)($poLine['quantityOrdered'] ?? 0));
-			$qtySource = 'po';
+		if ($grnLine === null) {
+			$deltas[] = $this->missingGrnLineDelta();
 		}
-
-		$qtyDelta = $invoiceQty - $expectedQty;
-		$qtyPct = 0;
-		if ($expectedQty !== 0) {
-			$qtyPct = (int)round((($qtyDelta * 10000) / abs($expectedQty)), 0, PHP_ROUND_HALF_UP);
-		}
-
-		$deltas[] = [
-			'field' => 'quantity',
-			'expected' => $expectedQty,
-			'actual' => $invoiceQty,
-			'deltaCents' => null,
-			'deltaPercentage' => $qtyPct,
-			'source' => $qtySource,
-		];
-
-		// VAT delta in cents — invoice vatRate × invoice lineExtension vs
-		// PO vatAmount. The invoice schema carries vatRate as a fraction
-		// (0.21); the PO schema carries vatRate as basis points (2100)
-		// and vatAmount in cents. We compute both in cents to compare.
-		$invoiceLineExt = (int)($invoiceLine['lineExtension'] ?? 0);
-		$invoiceVatRate = (float)($invoiceLine['vatRate'] ?? 0);
-		$invoiceVatCents = (int)round(($invoiceLineExt * $invoiceVatRate), 0, PHP_ROUND_HALF_UP);
-
-		$poVatCents = (int)($poLine['vatAmount'] ?? 0);
-		$vatDelta = $invoiceVatCents - $poVatCents;
-		$deltas[] = [
-			'field' => 'vat',
-			'expected' => $poVatCents,
-			'actual' => $invoiceVatCents,
-			'deltaCents' => $vatDelta,
-			'deltaPercentage' => null,
-		];
 
 		// Delivery-date delta in days (only meaningful when a GRN is
 		// present, since the PO's expected date is what the receipt
 		// matched against).
-		if ($grnLine !== null) {
-			// GRN lines don't carry a per-line date; use the parent GRN
-			// receivedAt via the matcher (added as $grnLine['_receivedAt']
-			// when known). When absent, skip the date delta.
-			$expectedDate = trim((string)($poLine['expectedDeliveryDate'] ?? ''));
-			$actualDate = trim((string)($grnLine['_receivedAt'] ?? ''));
-			if ($expectedDate !== '' && $actualDate !== '') {
-				$deltaDays = $this->dateDeltaDays(expected: $expectedDate, actual: $actualDate);
-				$deltas[] = [
-					'field' => 'deliveryDate',
-					'expected' => $expectedDate,
-					'actual' => substr($actualDate, 0, 10),
-					'deltaCents' => null,
-					'deltaPercentage' => null,
-					'deltaDays' => $deltaDays,
-				];
-			}
+		$dateDelta = $this->deliveryDateDelta(poLine: $poLine, grnLine: $grnLine);
+		if ($dateDelta !== null) {
+			$deltas[] = $dateDelta;
 		}
 
 		return $deltas;
 	}//end calculateDivergence()
+
+	/**
+	 * The presence marker of an invoice line without a matching PO line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function missingPoLineDelta(): array {
+		return [
+			'field' => 'po_line',
+			'expected' => 'matched',
+			'actual' => 'missing',
+			'deltaCents' => null,
+			'deltaPercentage' => null,
+		];
+
+	}//end missingPoLineDelta()
+
+	/**
+	 * The presence marker of an invoice line without an accepted receipt line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function missingGrnLineDelta(): array {
+		return [
+			'field' => 'grn_line',
+			'expected' => 'received',
+			'actual' => 'missing',
+			'deltaCents' => null,
+			'deltaPercentage' => null,
+		];
+
+	}//end missingGrnLineDelta()
+
+	/**
+	 * Unit-price delta in cents (integer arithmetic), with its percentage in
+	 * basis points of the PO unit price.
+	 *
+	 * @param array<string,mixed> $invoiceLine Invoice line item.
+	 * @param array<string,mixed> $poLine      Matched PO line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function unitPriceDelta(array $invoiceLine, array $poLine): array {
+		$invoiceUnitPriceCents = (int)($invoiceLine['unitPrice'] ?? 0);
+		$poUnitPriceCents = (int)($poLine['unitPrice'] ?? 0);
+		$unitPriceDelta = $invoiceUnitPriceCents - $poUnitPriceCents;
+
+		return [
+			'field' => 'unitPrice',
+			'expected' => $poUnitPriceCents,
+			'actual' => $invoiceUnitPriceCents,
+			'deltaCents' => $unitPriceDelta,
+			'deltaPercentage' => $this->basisPointsOf(delta: $unitPriceDelta, base: $poUnitPriceCents),
+		];
+
+	}//end unitPriceDelta()
+
+	/**
+	 * A signed delta in basis points of the absolute base; 0 for a zero base.
+	 *
+	 * @param int $delta The signed delta.
+	 * @param int $base  The expected value.
+	 *
+	 * @return int
+	 */
+	private function basisPointsOf(int $delta, int $base): int {
+		if ($base === 0) {
+			return 0;
+		}
+
+		return (int)round((($delta * 10000) / abs($base)), 0, PHP_ROUND_HALF_UP);
+
+	}//end basisPointsOf()
+
+	/**
+	 * The quantity the invoice line is held against, in thousandths: the GRN
+	 * accepted (else received) quantity, falling back to the PO ordered
+	 * quantity when the GRN line is absent. The missing receipt line is
+	 * reported by its own presence marker.
+	 *
+	 * @param array<string,mixed>      $poLine  Matched PO line.
+	 * @param array<string,mixed>|null $grnLine Matched GRN line (or null).
+	 *
+	 * @return array{quantity:int,source:string}
+	 */
+	private function expectedQuantity(array $poLine, ?array $grnLine): array {
+		if ($grnLine !== null) {
+			return [
+				'quantity' => $this->thousandths(value: (float)($grnLine['quantityAccepted'] ?? $grnLine['quantityReceived'] ?? 0)),
+				'source' => 'grn',
+			];
+		}
+
+		return [
+			'quantity' => $this->thousandths(value: (float)($poLine['quantityOrdered'] ?? 0)),
+			'source' => 'po',
+		];
+
+	}//end expectedQuantity()
+
+	/**
+	 * Quantity delta in thousandths against the expected quantity.
+	 *
+	 * @param array<string,mixed>                $invoiceLine Invoice line item.
+	 * @param array{quantity:int,source:string} $expected    From expectedQuantity().
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function quantityDelta(array $invoiceLine, array $expected): array {
+		$invoiceQty = $this->thousandths(value: (float)($invoiceLine['quantity'] ?? 0));
+		$expectedQty = $expected['quantity'];
+
+		return [
+			'field' => 'quantity',
+			'expected' => $expectedQty,
+			'actual' => $invoiceQty,
+			'deltaCents' => null,
+			'deltaPercentage' => $this->basisPointsOf(delta: ($invoiceQty - $expectedQty), base: $expectedQty),
+			'source' => $expected['source'],
+		];
+
+	}//end quantityDelta()
+
+	/**
+	 * VAT delta in cents — invoice vatRate × invoice lineExtension vs PO
+	 * vatAmount. The invoice schema carries vatRate as a fraction (0.21);
+	 * the PO schema carries vatRate as basis points (2100) and vatAmount in
+	 * cents. Both are computed in cents to compare.
+	 *
+	 * @param array<string,mixed> $invoiceLine Invoice line item.
+	 * @param array<string,mixed> $poLine      Matched PO line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function vatDelta(array $invoiceLine, array $poLine): array {
+		$invoiceLineExt = (int)($invoiceLine['lineExtension'] ?? 0);
+		$invoiceVatRate = (float)($invoiceLine['vatRate'] ?? 0);
+		$invoiceVatCents = (int)round(($invoiceLineExt * $invoiceVatRate), 0, PHP_ROUND_HALF_UP);
+		$poVatCents = (int)($poLine['vatAmount'] ?? 0);
+
+		return [
+			'field' => 'vat',
+			'expected' => $poVatCents,
+			'actual' => $invoiceVatCents,
+			'deltaCents' => $invoiceVatCents - $poVatCents,
+			'deltaPercentage' => null,
+		];
+
+	}//end vatDelta()
+
+	/**
+	 * Delivery-date delta in days, or null without a GRN line or a date.
+	 *
+	 * GRN lines don't carry a per-line date; the parent GRN receivedAt is
+	 * added by the matcher as $grnLine['_receivedAt'] when known. When
+	 * absent, the date delta is skipped.
+	 *
+	 * @param array<string,mixed>      $poLine  Matched PO line.
+	 * @param array<string,mixed>|null $grnLine Matched GRN line (or null).
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function deliveryDateDelta(array $poLine, ?array $grnLine): ?array {
+		if ($grnLine === null) {
+			return null;
+		}
+
+		return $this->datedDelta(
+			expectedDate: trim((string)($poLine['expectedDeliveryDate'] ?? '')),
+			actualDate: trim((string)($grnLine['_receivedAt'] ?? ''))
+		);
+
+	}//end deliveryDateDelta()
+
+	/**
+	 * The delivery-date delta entry for two dates, or null when either is empty.
+	 *
+	 * @param string $expectedDate The PO's expected delivery date.
+	 * @param string $actualDate   The GRN's received-at timestamp.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function datedDelta(string $expectedDate, string $actualDate): ?array {
+		if ($expectedDate === '' || $actualDate === '') {
+			return null;
+		}
+
+		return [
+			'field' => 'deliveryDate',
+			'expected' => $expectedDate,
+			'actual' => substr($actualDate, 0, 10),
+			'deltaCents' => null,
+			'deltaPercentage' => null,
+			'deltaDays' => $this->dateDeltaDays(expected: $expectedDate, actual: $actualDate),
+		];
+
+	}//end datedDelta()
 
 	/**
 	 * Decide whether a single divergence entry is within tolerance.
@@ -896,36 +1033,61 @@ class ThreeWayMatchingEngine {
 	 */
 	public function evaluateTolerance(array $divergence, ?array $profile): bool {
 		$field = (string)($divergence['field'] ?? '');
-		switch ($field) {
-			case 'unitPrice':
-			case 'lineTotal':
-			case 'vat':
-				$expected = (int)($divergence['expected'] ?? 0);
-				$actual = (int)($divergence['actual'] ?? 0);
-				return $this->toleranceService->evaluateWithinTolerance(
-					expectedCents: $expected,
-					actualCents:   $actual,
-					profile:       $profile
-				);
+		if (in_array($field, ['unitPrice', 'lineTotal', 'vat'], true) === true) {
+			return $this->priceWithinTolerance(divergence: $divergence, profile: $profile);
+		}
 
-			case 'quantity':
-				$expected = (int)($divergence['expected'] ?? 0);
-				$actual = (int)($divergence['actual'] ?? 0);
-				return $this->toleranceService->evaluateQuantityVariance(
-					expectedThousandths: $expected,
-					actualThousandths:   $actual,
-					profile:             $profile
-				);
+		if ($field === 'quantity') {
+			return $this->quantityWithinTolerance(divergence: $divergence, profile: $profile);
+		}
 
-			case 'deliveryDate':
-				$delta = (int)($divergence['deltaDays'] ?? 0);
-				return $this->toleranceService->evaluateDateVariance(deltaDays: $delta, profile: $profile);
-			default:
-				// Presence markers (po_line missing etc.) are never within tolerance.
-				return false;
-		}//end switch
+		if ($field === 'deliveryDate') {
+			$delta = (int)($divergence['deltaDays'] ?? 0);
+			return $this->toleranceService->evaluateDateVariance(deltaDays: $delta, profile: $profile);
+		}
+
+		// Presence markers (po_line missing etc.) are never within tolerance.
+		return false;
 
 	}//end evaluateTolerance()
+
+	/**
+	 * The "more permissive" price rule for a unitPrice, lineTotal or vat entry.
+	 *
+	 * @param array<string,mixed>      $divergence Divergence entry.
+	 * @param array<string,mixed>|null $profile    Applicable ToleranceProfile (or null).
+	 *
+	 * @return bool
+	 */
+	private function priceWithinTolerance(array $divergence, ?array $profile): bool {
+		$expected = (int)($divergence['expected'] ?? 0);
+		$actual = (int)($divergence['actual'] ?? 0);
+		return $this->toleranceService->evaluateWithinTolerance(
+			expectedCents: $expected,
+			actualCents:   $actual,
+			profile:       $profile
+		);
+
+	}//end priceWithinTolerance()
+
+	/**
+	 * The proportional quantity rule for a quantity entry.
+	 *
+	 * @param array<string,mixed>      $divergence Divergence entry.
+	 * @param array<string,mixed>|null $profile    Applicable ToleranceProfile (or null).
+	 *
+	 * @return bool
+	 */
+	private function quantityWithinTolerance(array $divergence, ?array $profile): bool {
+		$expected = (int)($divergence['expected'] ?? 0);
+		$actual = (int)($divergence['actual'] ?? 0);
+		return $this->toleranceService->evaluateQuantityVariance(
+			expectedThousandths: $expected,
+			actualThousandths:   $actual,
+			profile:             $profile
+		);
+
+	}//end quantityWithinTolerance()
 
 	/**
 	 * Write a ThreeWayMatch with the supplied exception status and
@@ -934,34 +1096,23 @@ class ThreeWayMatchingEngine {
 	 * The resolution UI lives in slice 08; this method only routes the
 	 * record into the exception queue.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param array<string,mixed> $invoice Loaded SupplierInvoice.
-	 * @param string $matchStatus One of the exception_* enum values.
-	 * @param array<int,array<string,mixed>> $divergences Divergence breakdown.
-	 * @param array<int,string> $matchedPoIds Candidate PO ids (may be empty).
-	 * @param array<int,string> $matchedGrnIds Candidate GRN ids (may be empty).
+	 * @param string         $administrationId Administration scope.
+	 * @param ExceptionRoute $route            The invoice, exception status, divergences and candidate ids.
 	 *
 	 * @return array<string,mixed> The persisted ThreeWayMatch record.
 	 *
 	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
-	public function routeToException(
-		string $administrationId,
-		array $invoice,
-		string $matchStatus,
-		array $divergences,
-		array $matchedPoIds,
-		array $matchedGrnIds,
-	): array {
-		$invoiceId = $this->idOf(row: $invoice);
+	public function routeToException(string $administrationId, ExceptionRoute $route): array {
+		$invoiceId = $this->idOf(row: $route->invoice);
 		$match = [
 			'invoiceId' => $invoiceId,
-			'matchedPoIds' => $matchedPoIds,
-			'matchedGrnIds' => $matchedGrnIds,
-			'matchStatus' => $matchStatus,
-			'divergenceDetails' => $divergences,
-			'costCenter' => (string)($invoice['costCenter'] ?? ''),
-			'projectCode' => (string)($invoice['projectCode'] ?? ''),
+			'matchedPoIds' => $route->matchedPoIds,
+			'matchedGrnIds' => $route->matchedGrnIds,
+			'matchStatus' => $route->matchStatus,
+			'divergenceDetails' => $route->divergences,
+			'costCenter' => (string)($route->invoice['costCenter'] ?? ''),
+			'projectCode' => (string)($route->invoice['projectCode'] ?? ''),
 			'createdAt' => $this->nowIso(),
 			'administrationId' => $administrationId,
 		];
@@ -1036,24 +1187,59 @@ class ThreeWayMatchingEngine {
 	 * @return array<string,mixed>|null
 	 */
 	private function findPoLine(array $poLines, string $productCode, int $lineNumber): ?array {
-		if ($productCode !== '') {
-			foreach ($poLines as $poLine) {
-				if ((string)($poLine['productOrServiceCode'] ?? '') === $productCode) {
-					return $poLine;
-				}
-			}
+		$byCode = $this->poLineWithProductCode(poLines: $poLines, productCode: $productCode);
+		if ($byCode !== null) {
+			return $byCode;
 		}
 
-		if ($lineNumber > 0) {
-			foreach ($poLines as $poLine) {
-				if ((int)($poLine['lineNumber'] ?? 0) === $lineNumber) {
-					return $poLine;
-				}
+		return $this->poLineWithNumber(poLines: $poLines, lineNumber: $lineNumber);
+	}//end findPoLine()
+
+	/**
+	 * The first PO line carrying the product code; none for an empty code.
+	 *
+	 * @param array<int,array<string,mixed>> $poLines     PO lines.
+	 * @param string                         $productCode Invoice-side product code.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function poLineWithProductCode(array $poLines, string $productCode): ?array {
+		if ($productCode === '') {
+			return null;
+		}
+
+		foreach ($poLines as $poLine) {
+			if ((string)($poLine['productOrServiceCode'] ?? '') === $productCode) {
+				return $poLine;
 			}
 		}
 
 		return null;
-	}//end findPoLine()
+
+	}//end poLineWithProductCode()
+
+	/**
+	 * The first PO line with the line number; none for a non-positive number.
+	 *
+	 * @param array<int,array<string,mixed>> $poLines    PO lines.
+	 * @param int                            $lineNumber Invoice-side line number.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function poLineWithNumber(array $poLines, int $lineNumber): ?array {
+		if ($lineNumber <= 0) {
+			return null;
+		}
+
+		foreach ($poLines as $poLine) {
+			if ((int)($poLine['lineNumber'] ?? 0) === $lineNumber) {
+				return $poLine;
+			}
+		}
+
+		return null;
+
+	}//end poLineWithNumber()
 
 	/**
 	 * Pick the GRN line whose poLineId matches the given PO line id. When
@@ -1070,13 +1256,7 @@ class ThreeWayMatchingEngine {
 			return null;
 		}
 
-		$candidates = [];
-		foreach ($grnLines as $grnLine) {
-			if ((string)($grnLine['poLineId'] ?? '') === $poLineId) {
-				$candidates[] = $grnLine;
-			}
-		}
-
+		$candidates = $this->grnLinesFor(grnLines: $grnLines, poLineId: $poLineId);
 		if ($candidates === []) {
 			return null;
 		}
@@ -1085,8 +1265,38 @@ class ThreeWayMatchingEngine {
 			return $candidates[0];
 		}
 
-		// Multi-receipt: sum accepted + received across all matching lines
-		// so the engine sees one canonical row.
+		return $this->summedGrnLine(candidates: $candidates);
+	}//end findGrnLine()
+
+	/**
+	 * The GRN lines received against a PO line.
+	 *
+	 * @param array<int,array<string,mixed>> $grnLines GRN lines.
+	 * @param string                         $poLineId PO line id to match.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function grnLinesFor(array $grnLines, string $poLineId): array {
+		$candidates = [];
+		foreach ($grnLines as $grnLine) {
+			if ((string)($grnLine['poLineId'] ?? '') === $poLineId) {
+				$candidates[] = $grnLine;
+			}
+		}
+
+		return $candidates;
+
+	}//end grnLinesFor()
+
+	/**
+	 * Multi-receipt: the first line with accepted + received summed across
+	 * all matching lines, so the engine sees one canonical row.
+	 *
+	 * @param array<int,array<string,mixed>> $candidates GRN lines of one PO line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function summedGrnLine(array $candidates): array {
 		$accepted = 0.0;
 		$received = 0.0;
 		foreach ($candidates as $grnLine) {
@@ -1098,7 +1308,8 @@ class ThreeWayMatchingEngine {
 		$first['quantityAccepted'] = $accepted;
 		$first['quantityReceived'] = $received;
 		return $first;
-	}//end findGrnLine()
+
+	}//end summedGrnLine()
 
 	/**
 	 * Extract the product category to feed the tolerance scope resolver.

@@ -137,143 +137,82 @@ class RgsAccountMapper {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (\Throwable $e) {
-			return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
+			return self::failure(error: $e);
 		}
 
-		$registerSlug = $this->getRegisterSlug();
+		$reads = new RgsRegisterReads(objectService: $objectService, registerSlug: $this->getRegisterSlug());
 		$threshold = $this->getConfidenceThreshold();
 
 		try {
-			$accounts = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Account')
-				->findAll(
-					[
-						'filters' => ['administrationId' => $administrationId],
-						'limit' => 5000,
-					]
-				);
+			$accounts = $reads->accounts(administrationId: $administrationId);
+			$rgsRekeningen = $reads->candidates();
 		} catch (\Throwable $e) {
-			return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
-		}
-
-		try {
-			$rgsRekeningen = $objectService
-				->setRegister($registerSlug)
-				->setSchema('RgsDecentraalRekening')
-				->findAll(['limit' => 5000]);
-		} catch (\Throwable $e) {
-			// Fall back to the BbvAccountMapping register if RgsDecentraalRekening is not yet declared.
-			try {
-				$rgsRekeningen = $objectService
-					->setRegister($registerSlug)
-					->setSchema('BbvAccountMapping')
-					->findAll(['limit' => 5000]);
-			} catch (\Throwable $f) {
-				return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $f->getMessage()];
-			}
+			return self::failure(error: $e);
 		}
 
 		$rgsRows = array_map(fn ($row) => $this->toArray(object: $row), $rgsRekeningen);
 
+		return $this->suggest(accounts: $accounts, matcher: new RgsCandidateMatcher(rgsRows: $rgsRows, threshold: $threshold));
+	}//end suggestMappings()
+
+	/**
+	 * One suggestion per unmapped Account whose best candidate reaches the
+	 * threshold; already-mapped Accounts are counted as skipped.
+	 *
+	 * @param array<int, mixed>   $accounts The Account rows.
+	 * @param RgsCandidateMatcher $matcher  The candidate matcher.
+	 *
+	 * @return array{success: bool, suggestions: array<int, array<string, mixed>>, skipped: int} The result.
+	 */
+	private function suggest(array $accounts, RgsCandidateMatcher $matcher): array {
 		$suggestions = [];
 		$skipped = 0;
 
 		foreach ($accounts as $account) {
 			$accountRow = $this->toArray(object: $account);
-
 			if (empty($accountRow['rgsDecentraalCode']) === false) {
 				$skipped++;
 				continue;
 			}
 
-			$candidate = $this->bestCandidate(accountRow: $accountRow, rgsRows: $rgsRows);
-
-			if ($candidate === null || $candidate['confidence'] < $threshold) {
-				continue;
+			$candidate = $matcher->best(accountRow: $accountRow);
+			if ($candidate !== null) {
+				$suggestions[] = $this->suggestion(accountRow: $accountRow, candidate: $candidate);
 			}
-
-			$suggestions[] = [
-				'accountId' => (string)($accountRow['id'] ?? $accountRow['uuid'] ?? ''),
-				'accountNumber' => (string)($accountRow['code'] ?? $accountRow['accountNumber'] ?? ''),
-				'accountName' => (string)($accountRow['name'] ?? ''),
-				'candidate' => $candidate['row'],
-				'confidence' => $candidate['confidence'],
-				'scoringReason' => $candidate['reason'],
-			];
-		}//end foreach
+		}
 
 		return ['success' => true, 'suggestions' => $suggestions, 'skipped' => $skipped];
-	}//end suggestMappings()
+	}//end suggest()
 
 	/**
-	 * Pick the highest-scoring RGS-decentraal candidate for an Account.
+	 * Project one Account and its candidate to a suggestion row.
 	 *
-	 * @param array<string,mixed> $accountRow Account associative array.
-	 * @param array<int, array<string, mixed>> $rgsRows RGS-decentraal candidates.
+	 * @param array<string, mixed>                                           $accountRow The Account.
+	 * @param array{row: array<string,mixed>, confidence:int, reason:string} $candidate  Its best candidate.
 	 *
-	 * @return array{row: array<string,mixed>, confidence:int, reason:string}|null
+	 * @return array<string, mixed> The suggestion row.
 	 */
-	private function bestCandidate(array $accountRow, array $rgsRows): ?array {
-		$accountReference = (string)($accountRow['referentienummer'] ?? '');
-		$accountCode = (string)($accountRow['code'] ?? $accountRow['accountNumber'] ?? '');
-		$accountName = mb_strtolower((string)($accountRow['name'] ?? ''));
-
-		$best = null;
-
-		foreach ($rgsRows as $rgsRow) {
-			$confidence = 0;
-			$reason = '';
-
-			if ($accountReference !== '' && (string)($rgsRow['referentienummer'] ?? '') === $accountReference) {
-				$confidence = 100;
-				$reason = 'exact-referentienummer';
-			} elseif ($accountCode !== '' && (string)($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
-				$confidence = 95;
-				$reason = 'exact-rgsDecentraalCode';
-			} elseif ($accountCode !== '' && (string)($rgsRow['rgsCode'] ?? '') === $accountCode) {
-				$confidence = 80;
-				$reason = 'exact-rgsCode';
-			} elseif ($accountName !== '') {
-				$candidateName = mb_strtolower((string)($rgsRow['omschrijvingKort'] ?? $rgsRow['name'] ?? ''));
-				if ($candidateName !== '') {
-					$similarity = $this->similarityPercent(left: $accountName, right: $candidateName);
-					if ($similarity >= 50) {
-						$confidence = (int)round($similarity * 0.70);
-						$reason = 'fuzzy-name-match-' . ((int)$similarity) . '%';
-					}
-				}
-			}
-
-			if ($confidence === 0) {
-				continue;
-			}
-
-			if ($best === null || $confidence > $best['confidence']) {
-				$best = ['row' => $rgsRow, 'confidence' => $confidence, 'reason' => $reason];
-				if ($confidence >= 100) {
-					break;
-				}
-			}
-		}//end foreach
-
-		return $best;
-	}//end bestCandidate()
+	private function suggestion(array $accountRow, array $candidate): array {
+		return [
+			'accountId' => (string)($accountRow['id'] ?? $accountRow['uuid'] ?? ''),
+			'accountNumber' => (string)($accountRow['code'] ?? $accountRow['accountNumber'] ?? ''),
+			'accountName' => (string)($accountRow['name'] ?? ''),
+			'candidate' => $candidate['row'],
+			'confidence' => $candidate['confidence'],
+			'scoringReason' => $candidate['reason'],
+		];
+	}//end suggestion()
 
 	/**
-	 * Compute name similarity as a percentage 0-100 using PHP's similar_text.
+	 * The result of a failed read.
 	 *
-	 * @param string $left Left string.
-	 * @param string $right Right string.
+	 * @param \Throwable $error The failure.
 	 *
-	 * @return float Percentage similarity.
+	 * @return array{success: bool, suggestions: array<int, mixed>, skipped: int, message: string} The failure result.
 	 */
-	private function similarityPercent(string $left, string $right): float {
-		$percent = 0.0;
-		similar_text($left, $right, $percent);
-
-		return $percent;
-	}//end similarityPercent()
+	private static function failure(\Throwable $error): array {
+		return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $error->getMessage()];
+	}//end failure()
 
 	/**
 	 * Normalise a heterogeneous OR object into an associative array.

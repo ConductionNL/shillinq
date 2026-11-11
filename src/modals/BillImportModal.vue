@@ -152,17 +152,7 @@
 					v-if="isDraftReview"
 					class="bim__hint"
 					data-testid="bim-review-hint">
-					{{
-						requiresReview
-							? t(
-									'shillinq',
-									'Some fields have low confidence — please review before confirming.',
-								)
-							: t(
-									'shillinq',
-									'Extraction confidence is high. Review and confirm.',
-								)
-					}}
+					{{ reviewHint }}
 				</p>
 
 				<div class="bim__field">
@@ -344,11 +334,15 @@ import { NcButton, NcDialog } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
+	draftReviewHint,
+	requestExtraction,
+	suggestGlAccount,
+} from '../utils/extractionDraftApi.js'
+import {
 	buildImportFormData,
 	canSaveReview,
 	confidenceForField,
 	detectFormat,
-	glAccountSuggestionSummary,
 	hasKnownExtractionId,
 	importErrorMessage,
 	isDeferredPdf,
@@ -402,6 +396,11 @@ export default {
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.importedRecord)
+		},
+
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+		reviewHint() {
+			return draftReviewHint(this.requiresReview)
 		},
 
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
@@ -543,16 +542,10 @@ export default {
 				return
 			}
 
-			try {
-				const response = await axios.post(
-					generateUrl(
-						`/apps/shillinq/api/v1/extraction/drafts/${this.importedRecord.id}/suggest-account?schema=${SUPPLIER_INVOICE_SCHEMA}`,
-					),
-				)
-				this.glSuggestion = glAccountSuggestionSummary(response.data)
-			} catch (e) {
-				this.glSuggestion = null
-			}
+			this.glSuggestion = await suggestGlAccount(
+				this.importedRecord.id,
+				SUPPLIER_INVOICE_SCHEMA,
+			)
 		},
 
 		/**
@@ -577,20 +570,11 @@ export default {
 			this.busy = true
 			this.error = ''
 			try {
-				await axios.post(
-					generateUrl('/apps/shillinq/api/v1/extraction/request'),
-					{
-						documentUri: this.importedRecord.sourceDocumentUri,
-						docType: 'supplier-invoice',
-						id: this.importedRecord.id ?? '',
-					},
-				)
-				showSuccess(
-					t(
-						'shillinq',
-						'Extraction requested. The draft will update once docudesk responds.',
-					),
-				)
+				await requestExtraction({
+					documentUri: this.importedRecord.sourceDocumentUri,
+					docType: 'supplier-invoice',
+					id: this.importedRecord.id ?? '',
+				})
 			} catch (e) {
 				this.error = importErrorMessage(e)
 				showError(this.error)
@@ -686,46 +670,7 @@ export default {
 			this.busy = true
 			this.error = ''
 			try {
-				const record = { ...(this.importedRecord || {}) }
-				record.supplierId = this.form.supplier
-				record.invoiceNumber = this.form.invoiceNumber
-				record.invoiceDate = this.form.invoiceDate
-				record.glAccount = this.form.glAccount
-				record.totalInclVat = Math.round(
-					(Number(this.form.amount) || 0) * 100,
-				)
-				record.totalVat = Math.round(
-					(Number(this.form.vatAmount) || 0) * 100,
-				)
-				record.statusCode = record.statusCode || 'received'
-
-				let created
-				if (this.isDraftReview && record.id) {
-					// REQ-RXC-004: commit the correction on the existing draft —
-					// never fabricates a duplicate SupplierInvoice.
-					const response = await axios.put(
-						generateUrl(
-							`/apps/shillinq/api/v1/extraction/drafts/${record.id}?schema=${SUPPLIER_INVOICE_SCHEMA}`,
-						),
-						{
-							supplierId: record.supplierId,
-							invoiceNumber: record.invoiceNumber,
-							invoiceDate: record.invoiceDate,
-							glAccount: record.glAccount,
-							totalInclVat: record.totalInclVat,
-							totalVat: record.totalVat,
-						},
-					)
-					created = response.data?.record ?? response.data ?? {}
-				} else {
-					const response = await axios.post(
-						generateUrl(
-							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}`,
-						),
-						record,
-					)
-					created = response.data?.object ?? response.data ?? {}
-				}
+				const created = await this.saveBill(this.reviewedRecord())
 
 				showSuccess(t('shillinq', 'Bill imported.'))
 				// REQ-BIM-004: refresh the payables widget without navigation.
@@ -738,6 +683,57 @@ export default {
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * The imported record with the reviewed fields, amounts in cents, and
+		 * `received` as the status when it has none.
+		 *
+		 * @return {object}
+		 */
+		reviewedRecord() {
+			const record = { ...(this.importedRecord || {}) }
+			record.supplierId = this.form.supplier
+			record.invoiceNumber = this.form.invoiceNumber
+			record.invoiceDate = this.form.invoiceDate
+			record.glAccount = this.form.glAccount
+			record.totalInclVat = Math.round((Number(this.form.amount) || 0) * 100)
+			record.totalVat = Math.round((Number(this.form.vatAmount) || 0) * 100)
+			record.statusCode = record.statusCode || 'received'
+			return record
+		},
+
+		/**
+		 * Save the bill: commit the correction on an existing extraction draft
+		 * (REQ-RXC-004, never a duplicate SupplierInvoice), else create one.
+		 *
+		 * @param {object} record The reviewed record.
+		 * @return {Promise<object>} The saved record.
+		 */
+		async saveBill(record) {
+			if (this.isDraftReview && record.id) {
+				const response = await axios.put(
+					generateUrl(
+						`/apps/shillinq/api/v1/extraction/drafts/${record.id}?schema=${SUPPLIER_INVOICE_SCHEMA}`,
+					),
+					{
+						supplierId: record.supplierId,
+						invoiceNumber: record.invoiceNumber,
+						invoiceDate: record.invoiceDate,
+						glAccount: record.glAccount,
+						totalInclVat: record.totalInclVat,
+						totalVat: record.totalVat,
+					},
+				)
+				return response.data?.record ?? response.data ?? {}
+			}
+			const response = await axios.post(
+				generateUrl(
+					`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}`,
+				),
+				record,
+			)
+			return response.data?.object ?? response.data ?? {}
 		},
 
 		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */

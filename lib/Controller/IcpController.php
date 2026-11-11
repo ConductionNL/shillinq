@@ -408,88 +408,12 @@ class IcpController extends Controller {
 		$invoiceId = trim((string)$this->request->getParam('invoice_id', ''));
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 
-		$error = $this->validateId(value: $invoiceId, label: 'invoice_id');
+		$error = $this->validateId(value: $invoiceId, label: 'invoice_id') ?? $this->requireMember(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$error = $this->requireMember(administrationId: $administrationId);
-		if ($error !== null) {
-			return $error;
-		}
-
-		try {
-			$records = $this->loadInvoiceContext(
-				invoiceId: $invoiceId,
-				administrationId: $administrationId
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'IcpController: failed to load ARInvoice + CustomerMaster for ICP PDF',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to load invoice context'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}
-
-		if ($records['invoice'] === null) {
-			return new JSONResponse(['error' => 'Invoice not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		try {
-			$payload = $this->pdfRenderer->render(
-				invoice: $records['invoice'],
-				customer: $records['customer'],
-				seller: $records['seller']
-			);
-		} catch (\InvalidArgumentException $e) {
-			$message = $e->getMessage();
-			$code = ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING;
-			if (str_starts_with($message, $code) === true) {
-				return new JSONResponse(
-					['error' => $code, 'message' => $message],
-					Http::STATUS_UNPROCESSABLE_ENTITY
-				);
-			}
-
-			return new JSONResponse(
-				['error' => 'Render failed', 'message' => $message],
-				Http::STATUS_UNPROCESSABLE_ENTITY
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'IcpController: failed to render ICP PDF',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to render invoice PDF'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
-
-		$response = new DataDisplayResponse(
-			data: $payload['html'],
-			statusCode: Http::STATUS_OK,
-			headers: [
-				'Content-Type' => 'text/html; charset=utf-8',
-				'Content-Disposition' => 'inline; filename="' . $payload['filename'] . '"',
-				'X-Shillinq-Icp' => 'true',
-			]
-		);
-
-		return $response;
+		return $this->renderFor(pdf: new IcpInvoicePdf(invoiceId: $invoiceId, administrationId: $administrationId));
 	}//end renderInvoicePdf()
 
 	/**
@@ -504,65 +428,18 @@ class IcpController extends Controller {
 	 * @return array{invoice:?array<string,mixed>,customer:array<string,mixed>,seller:array<string,mixed>}
 	 */
 	private function loadInvoiceContext(string $invoiceId, string $administrationId): array {
-		$invoices = $this->objectService
-			->setRegister('shillinq')
-			->setSchema('ARInvoice')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-
-		$invoice = null;
-		foreach ($invoices as $candidate) {
-			$candidateId = (string)(
-				$candidate['@self']['slug'] ?? $candidate['@self']['id'] ?? $candidate['id'] ?? ''
-			);
-			if ($candidateId === $invoiceId) {
-				$invoice = $candidate;
-				break;
-			}
-		}
-
+		$invoice = self::firstWithKey(
+			records: $this->records(schema: 'ARInvoice', filters: ['administrationId' => $administrationId]),
+			key: $invoiceId
+		);
 		if ($invoice === null) {
 			return ['invoice' => null, 'customer' => [], 'seller' => []];
 		}
 
-		$customer = [];
-		$customerKey = trim((string)($invoice['customerId'] ?? ''));
-		if ($customerKey !== '') {
-			$candidates = $this->objectService
-				->setRegister('shillinq')
-				->setSchema('CustomerMaster')
-				->findAll(['filters' => ['administrationId' => $administrationId]]);
-			foreach ($candidates as $candidate) {
-				$candidateId = (string)(
-					$candidate['@self']['slug'] ?? $candidate['@self']['id'] ?? $candidate['id'] ?? ''
-				);
-				if ($candidateId === $customerKey
-					|| ((string)($candidate['customerNumber'] ?? '')) === $customerKey
-				) {
-					$customer = $candidate;
-					break;
-				}
-			}
-		}
-
-		$seller = [];
-		$administrations = $this->objectService
-			->setRegister('shillinq')
-			->setSchema('Administration')
-			->findAll(['filters' => []]);
-		foreach ($administrations as $candidate) {
-			$candidateId = (string)(
-				$candidate['@self']['slug'] ?? $candidate['@self']['id'] ?? $candidate['id'] ?? ''
-			);
-			if ($candidateId === $administrationId) {
-				$seller = $candidate;
-				break;
-			}
-		}
-
 		return [
 			'invoice' => $invoice,
-			'customer' => $customer,
-			'seller' => $seller,
+			'customer' => $this->customerOf(invoice: $invoice, administrationId: $administrationId),
+			'seller' => (self::firstWithKey(records: $this->records(schema: 'Administration', filters: []), key: $administrationId) ?? []),
 		];
 
 	}//end loadInvoiceContext()
@@ -638,4 +515,217 @@ class IcpController extends Controller {
 
 		return new JSONResponse($result, Http::STATUS_OK);
 	}//end run()
+
+	/**
+	 * Load the invoice context and render the PDF; a failure to load is a
+	 * logged 500, an unknown invoice a 404.
+	 *
+	 * @param IcpInvoicePdf $pdf The invoice to render.
+	 *
+	 * @return DataDisplayResponse|JSONResponse
+	 */
+	private function renderFor(IcpInvoicePdf $pdf): DataDisplayResponse|JSONResponse {
+		try {
+			$pdf->records = $this->loadInvoiceContext(
+				invoiceId: $pdf->invoiceId,
+				administrationId: $pdf->administrationId
+			);
+		} catch (\Throwable $e) {
+			return $this->contextFailure(pdf: $pdf, failure: $e);
+		}
+
+		if ($pdf->records['invoice'] === null) {
+			return new JSONResponse(['error' => 'Invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->renderRecords(pdf: $pdf);
+
+	}//end renderFor()
+
+	/**
+	 * Render the loaded invoice: a missing buyer VAT-ID or another validation
+	 * failure is a 422, a crash a logged 500.
+	 *
+	 * @param IcpInvoicePdf $pdf The invoice with its records.
+	 *
+	 * @return DataDisplayResponse|JSONResponse
+	 */
+	private function renderRecords(IcpInvoicePdf $pdf): DataDisplayResponse|JSONResponse {
+		try {
+			$payload = $this->pdfRenderer->render(
+				invoice: $pdf->records['invoice'],
+				customer: $pdf->records['customer'],
+				seller: $pdf->records['seller']
+			);
+		} catch (\InvalidArgumentException $e) {
+			return self::renderRefusal(failure: $e);
+		} catch (\Throwable $e) {
+			return $this->renderFailure(pdf: $pdf, failure: $e);
+		}
+
+		return self::pdfResponse(payload: $payload);
+
+	}//end renderRecords()
+
+	/**
+	 * The 422 for invoice data the renderer refused, with its machine-readable
+	 * code for a missing buyer VAT-ID (REQ-ICP-007).
+	 *
+	 * @param \InvalidArgumentException $failure The refusal.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function renderRefusal(\InvalidArgumentException $failure): JSONResponse {
+		$message = $failure->getMessage();
+		$code = ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING;
+		if (str_starts_with($message, $code) === true) {
+			return new JSONResponse(
+				['error' => $code, 'message' => $message],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
+		}
+
+		return new JSONResponse(
+			['error' => 'Render failed', 'message' => $message],
+			Http::STATUS_UNPROCESSABLE_ENTITY
+		);
+
+	}//end renderRefusal()
+
+	/**
+	 * The rendered document, inline.
+	 *
+	 * @param array<string,mixed> $payload The renderer's payload.
+	 *
+	 * @return DataDisplayResponse
+	 */
+	private static function pdfResponse(array $payload): DataDisplayResponse {
+		return new DataDisplayResponse(
+			data: $payload['html'],
+			statusCode: Http::STATUS_OK,
+			headers: [
+				'Content-Type' => 'text/html; charset=utf-8',
+				'Content-Disposition' => 'inline; filename="' . $payload['filename'] . '"',
+				'X-Shillinq-Icp' => 'true',
+			]
+		);
+
+	}//end pdfResponse()
+
+	/**
+	 * Log a context that failed to load and answer a 500.
+	 *
+	 * @param IcpInvoicePdf $pdf The invoice.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function contextFailure(IcpInvoicePdf $pdf, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'IcpController: failed to load ARInvoice + CustomerMaster for ICP PDF',
+			$pdf->logContext(failure: $failure)
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to load invoice context'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end contextFailure()
+
+	/**
+	 * Log a render that crashed and answer a 500.
+	 *
+	 * @param IcpInvoicePdf $pdf The invoice.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function renderFailure(IcpInvoicePdf $pdf, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'IcpController: failed to render ICP PDF',
+			$pdf->logContext(failure: $failure)
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to render invoice PDF'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end renderFailure()
+
+	/**
+	 * The records of a schema of the shillinq register.
+	 *
+	 * @param string $schema The schema.
+	 * @param array<string,mixed> $filters The filters.
+	 *
+	 * @return iterable<mixed>
+	 */
+	private function records(string $schema, array $filters): iterable {
+		return $this->objectService
+			->setRegister('shillinq')
+			->setSchema($schema)
+			->findAll(['filters' => $filters]);
+
+	}//end records()
+
+	/**
+	 * The invoice's customer, by key or customer number; [] without a key or match.
+	 *
+	 * @param array<string,mixed> $invoice The invoice.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function customerOf(array $invoice, string $administrationId): array {
+		$customerKey = trim((string)($invoice['customerId'] ?? ''));
+		if ($customerKey === '') {
+			return [];
+		}
+
+		foreach ($this->records(schema: 'CustomerMaster', filters: ['administrationId' => $administrationId]) as $candidate) {
+			if (self::recordKey(record: $candidate) === $customerKey
+				|| ((string)($candidate['customerNumber'] ?? '')) === $customerKey
+			) {
+				return $candidate;
+			}
+		}
+
+		return [];
+
+	}//end customerOf()
+
+	/**
+	 * The first record whose key is the given one.
+	 *
+	 * @param iterable<mixed> $records The records.
+	 * @param string $key The key.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function firstWithKey(iterable $records, string $key): ?array {
+		foreach ($records as $candidate) {
+			if (self::recordKey(record: $candidate) === $key) {
+				return $candidate;
+			}
+		}
+
+		return null;
+
+	}//end firstWithKey()
+
+	/**
+	 * A record's key: its slug, else its @self id, else its id.
+	 *
+	 * @param mixed $record The record.
+	 *
+	 * @return string
+	 */
+	private static function recordKey(mixed $record): string {
+		return (string)(
+			$record['@self']['slug'] ?? $record['@self']['id'] ?? $record['id'] ?? ''
+		);
+
+	}//end recordKey()
 }//end class

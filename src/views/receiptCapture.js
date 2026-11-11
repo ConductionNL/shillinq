@@ -24,30 +24,57 @@
 export function reviewFormFromReceipt(record) {
 	const r = record || {}
 	return {
-		receiptNumber: String(r.receiptNumber ?? ''),
-		photoUri: String(r.photoUri ?? ''),
-		amount: typeof r.amount === 'number' ? r.amount : Number(r.amount) || 0,
-		currency: String(r.currency ?? 'EUR'),
-		amountInBaseCurrency:
-			typeof r.amountInBaseCurrency === 'number'
-				? r.amountInBaseCurrency
-				: Number(r.amountInBaseCurrency) || 0,
-		exchangeRate:
-			r.exchangeRate === null || r.exchangeRate === undefined
-				? null
-				: Number(r.exchangeRate),
-		receiptDate: String(r.receiptDate ?? ''),
-		category: String(r.category ?? ''),
-		extractedText: String(r.extractedText ?? ''),
-		vendorName: String(r.vendorName ?? ''),
-		description: String(r.description ?? ''),
-		costCentreCode: String(r.costCentreCode ?? ''),
-		claimId: String(r.claimId ?? ''),
+		receiptNumber: textOf(r.receiptNumber),
+		photoUri: textOf(r.photoUri),
+		amount: amountOf(r.amount),
+		currency: textOf(r.currency, 'EUR'),
+		amountInBaseCurrency: amountOf(r.amountInBaseCurrency),
+		exchangeRate: optionalNumber(r.exchangeRate),
+		receiptDate: textOf(r.receiptDate),
+		category: textOf(r.category),
+		extractedText: textOf(r.extractedText),
+		vendorName: textOf(r.vendorName),
+		description: textOf(r.description),
+		costCentreCode: textOf(r.costCentreCode),
+		claimId: textOf(r.claimId),
 		// gl-account-suggestion-consume (REQ-GAC-003) — the booking account,
 		// mirroring SupplierInvoice.glAccount; never auto-filled from a
 		// suggestion without an explicit operator action (REQ-GAC-004).
-		glAccount: String(r.glAccount ?? ''),
+		glAccount: textOf(r.glAccount),
 	}
+}
+
+/**
+ * A record field as text, the fallback when it is null or undefined.
+ *
+ * @param {unknown} value The field.
+ * @param {string} [fallback] The text for a missing field.
+ * @return {string}
+ */
+function textOf(value, fallback = '') {
+	return String(value ?? fallback)
+}
+
+/**
+ * A record amount as a number: a number as is, anything else coerced, 0 when
+ * that is not a number.
+ *
+ * @param {unknown} value The field.
+ * @return {number}
+ */
+function amountOf(value) {
+	return typeof value === 'number' ? value : Number(value) || 0
+}
+
+/**
+ * A record number that may be absent: null when null or undefined, else
+ * coerced.
+ *
+ * @param {unknown} value The field.
+ * @return {number|null}
+ */
+function optionalNumber(value) {
+	return value === null || value === undefined ? null : Number(value)
 }
 
 /**

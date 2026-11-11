@@ -64,6 +64,146 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The compliant IPSAS accrual-entity sample seedObjects() creates.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_IPSAS_ENTITY = [
+		'framework' => 'ipsas',
+		'jurisdiction' => 'global',
+		'reportingEntity' => 'National Public Health Authority',
+		'fiscalYear' => 2025,
+		'currency' => 'EUR',
+		'consolidated' => true,
+		'budgetMadePublic' => true,
+		'components' => [
+			'financialPosition',
+			'financialPerformance',
+			'changesInNetAssets',
+			'cashFlow',
+			'notes',
+			'budgetComparison',
+		],
+		'cashFlowActivities' => ['operating', 'investing', 'financing'],
+		'inventories' => [
+			// Ordinary: lower of cost (100) and NRV (90) => 90.
+			['name' => 'Medical supplies', 'category' => 'ordinary', 'cost' => 100000.0, 'netRealizableValue' => 90000.0, 'carryingAmount' => 90000.0],
+			// Ordinary: cost (50) below NRV (70) => 50.
+			['name' => 'Office stock', 'category' => 'ordinary', 'cost' => 50000.0, 'netRealizableValue' => 70000.0, 'carryingAmount' => 50000.0],
+			// Distribution: lower of cost (40) and replacement cost (35) => 35.
+			['name' => 'Aid parcels', 'category' => 'distribution', 'cost' => 40000.0, 'currentReplacementCost' => 35000.0, 'carryingAmount' => 35000.0],
+		],
+		'contingentLiabilities' => [
+			['description' => 'Pending litigation', 'recognized' => false, 'disclosed' => true],
+			['description' => 'Guarantee call risk', 'recognized' => false, 'disclosed' => true],
+		],
+		'impairments' => [
+			// Carrying reduced to recoverable; loss = old carrying - recoverable.
+			['asset' => 'School building', 'carryingAmountBefore' => 800000.0, 'recoverableServiceAmount' => 650000.0, 'carryingAmount' => 650000.0, 'impairmentLoss' => 150000.0, 'revalued' => false, 'recognizedIn' => 'surplusOrDeficit'],
+			['asset' => 'Bridge (revalued)', 'carryingAmountBefore' => 500000.0, 'recoverableServiceAmount' => 470000.0, 'carryingAmount' => 470000.0, 'impairmentLoss' => 30000.0, 'revalued' => true, 'recognizedIn' => 'revaluationSurplus'],
+		],
+		'nonExchangeRevenues' => [
+			// Conditioned grant: 100 total, 40 condition outstanding => 40 liability, 60 revenue.
+			['source' => 'Capital grant', 'amount' => 100000.0, 'hasCondition' => true, 'liabilityRecognized' => 40000.0, 'revenueRecognized' => 60000.0],
+			// Unconditioned transfer: full revenue, no liability.
+			['source' => 'General transfer', 'amount' => 250000.0, 'hasCondition' => false, 'liabilityRecognized' => 0.0, 'revenueRecognized' => 250000.0],
+		],
+		'taxAssets' => [
+			['taxType' => 'Property tax', 'taxableEventOccurred' => true, 'amount' => 320000.0],
+			['taxType' => 'Income tax', 'taxableEventOccurred' => true, 'amount' => 1200000.0],
+		],
+		'budgetComparison' => [
+			'basis' => 'comparable',
+			'originalBudget' => 5000000.0,
+			'finalBudget' => 5200000.0,
+			'actualAmount' => 5050000.0,
+			'materialDifferenceNote' => 'Final budget increased by supplementary appropriation; actual underspend explained in note 14.',
+		],
+		'intragroupEliminations' => [
+			['type' => 'investment', 'amount' => 750000.0],
+			['type' => 'intragroupBalance', 'amount' => 120000.0],
+			['type' => 'intragroupTransaction', 'amount' => 90000.0],
+		],
+		'shortTermEmployeeBenefits' => [
+			// Undiscounted, recognized as both liability and expense, service rendered.
+			['type' => 'Accrued leave', 'undiscountedAmount' => 85000.0, 'liabilityRecognized' => 85000.0, 'expenseRecognized' => 85000.0, 'serviceRendered' => true, 'discounted' => false],
+		],
+		'financialInstruments' => [
+			['name' => 'Government bond', 'partyToContract' => true, 'recognized' => true],
+			['name' => 'Trade payable', 'partyToContract' => true, 'recognized' => true],
+		],
+		'leases' => [
+			// 12-month-plus lease: ROU asset + liability at PV.
+			// PV of 5 annual payments of 20000 at 5% = 86589.53...
+			['asset' => 'Office space', 'maxTermMonths' => 60, 'rightOfUseAsset' => 86589.53, 'leaseLiability' => 86589.53, 'annualPayment' => 20000.0, 'termYears' => 5, 'discountRate' => 0.05, 'singleModel' => true],
+		],
+	];
+
+	/**
+	 * The compliant US GASB state/local-government sample seedObjects() creates.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_GASB_GOVERNMENT = [
+		'framework' => 'gasb',
+		'jurisdiction' => 'US',
+		'reportingEntity' => 'City of Springfield',
+		'fiscalYear' => 2025,
+		'currency' => 'USD',
+		'governmentWideStatements' => true,
+		'fundStatements' => true,
+		'govWideMeasurementFocus' => 'economicResources',
+		'govWideBasis' => 'accrual',
+		'govWideColumns' => ['governmental', 'businessType'],
+		'mdaPresent' => true,
+		'mdaPlacement' => 'precedes',
+		'govFundsMeasurementFocus' => 'currentFinancialResources',
+		'govFundsBasis' => 'modifiedAccrual',
+		'funds' => [
+			// General fund: always major.
+			['name' => 'General Fund', 'category' => 'governmental', 'isGeneralFund' => true, 'major' => true, 'categoryPercent' => 60.0, 'combinedPercent' => 45.0],
+			// Major: >=10% of category AND >=5% combined.
+			['name' => 'Capital Projects', 'category' => 'governmental', 'isGeneralFund' => false, 'major' => true, 'categoryPercent' => 25.0, 'combinedPercent' => 18.0],
+			// Not major: fails the 10% category test.
+			['name' => 'Special Grants', 'category' => 'governmental', 'isGeneralFund' => false, 'major' => false, 'categoryPercent' => 4.0, 'combinedPercent' => 3.0],
+			// Not major: meets category but fails combined 5% test.
+			['name' => 'Small Enterprise', 'category' => 'enterprise', 'isGeneralFund' => false, 'major' => false, 'categoryPercent' => 12.0, 'combinedPercent' => 3.5],
+		],
+		'fundBalanceClassifications' => [
+			'nonspendable',
+			'restricted',
+			'committed',
+			'assigned',
+			'unassigned',
+		],
+		'fiduciaryFunds' => [
+			['name' => 'Employee Pension Plan', 'fundType' => 'pensionTrust'],
+			['name' => 'External Investment Pool', 'fundType' => 'investmentTrust'],
+			['name' => 'Scholarship Trust', 'fundType' => 'privatePurposeTrust'],
+			['name' => 'Tax Collection Custodial', 'fundType' => 'custodial'],
+		],
+		'leases' => [
+			// Long-term: single-model financing, liability at PV + intangible ROU.
+			// PV of 4 annual payments of 30000 at 4% = 108896.86.
+			['asset' => 'Fleet vehicles', 'maxTermMonths' => 48, 'leaseLiability' => 108896.86, 'rightOfUseAsset' => 108896.86, 'intangibleRouAsset' => true, 'annualPayment' => 30000.0, 'termYears' => 4, 'discountRate' => 0.04, 'singleModel' => true],
+			// Short-term: <=12 months, excluded from recognition, expensed.
+			['asset' => 'Event tent', 'maxTermMonths' => 6, 'leaseLiability' => 0.0, 'rightOfUseAsset' => 0.0, 'intangibleRouAsset' => false, 'shortTerm' => true, 'singleModel' => true],
+		],
+		'sbitas' => [
+			// Long-term SBITA: subscription liability at PV + intangible right-to-use asset.
+			// PV of 3 annual payments of 50000 at 5% = 136162.40.
+			['name' => 'ERP cloud subscription', 'maxTermMonths' => 36, 'subscriptionLiability' => 136162.40, 'rightOfUseAsset' => 136162.40, 'intangibleRouAsset' => true, 'annualPayment' => 50000.0, 'termYears' => 3, 'discountRate' => 0.05],
+			// Short-term SBITA: <=12 months, excluded.
+			['name' => 'Seasonal SaaS tool', 'maxTermMonths' => 9, 'subscriptionLiability' => 0.0, 'rightOfUseAsset' => 0.0, 'intangibleRouAsset' => false, 'shortTerm' => true],
+		],
+		'budgetaryComparison' => [
+			'presentedAsRsi' => true,
+			'varianceColumns' => ['originalToFinal', 'finalToActual'],
+			'significantVarianceNote' => 'Significant variances in public-safety and capital-outlay lines explained in the budgetary-comparison schedule notes.',
+		],
+	];
+
+	/**
 	 * The IPSAS 1.21 complete set of financial statements (component codes).
 	 *
 	 * @var array<int, string>
@@ -116,170 +256,513 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects {
 	public static function checks(): array {
 		return [
 			'PublicSectorStatement' => [
-				// ===== IPSAS — IPSASB accrual framework. =====
-				// IPSAS 1.21: a complete set comprises the statement of financial
-				// position, the statement of financial performance, the statement of
-				// changes in net assets/equity, the cash-flow statement, notes (and a
-				// budget comparison where the entity makes its budget public). Scoped
-				// to IPSAS statements; a GASB statement is vacuously in scope.
-				'ipsas-1-21-complete-set' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| (self::hasAll($o, 'components', self::IPSAS_COMPONENTS)
-					&& (self::isFalse($o, 'budgetMadePublic') || self::contains($o, 'components', 'budgetComparison'))),
-
-				// IPSAS 2.18: the cash-flow statement classifies cash flows by
-				// operating, investing and financing activity.
-				'ipsas-2-18-classify-activities' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::hasAll($o, 'cashFlowActivities', self::CASH_FLOW_ACTIVITIES),
-
-				// IPSAS 12.15: ordinary inventories are measured at the lower of cost and
-				// net realizable value; inventory acquired through a non-exchange
-				// transaction or held for distribution is out of this rule's scope.
-				'ipsas-12-15-lower-cost-nrv' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::inventoriesValuedLowerOf($o, 'netRealizableValue', ['ordinary']),
-
-				// IPSAS 12.17: inventories held for distribution at no/nominal charge are
-				// measured at the lower of cost and current replacement cost.
-				'ipsas-12-17-distribution-replacement-cost' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::inventoriesValuedLowerOf($o, 'currentReplacementCost', ['distribution']),
-
-				// IPSAS 19.35: a contingent liability is not recognized — every modelled
-				// contingent liability is disclosed only, never recognized on the face.
-				'ipsas-19-35-no-contingent-liability' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::noneRecognized($o, 'contingentLiabilities'),
-
-				// IPSAS 21.52: where the recoverable service amount is below the carrying
-				// amount the carrying amount is reduced to it and the difference is the
-				// recognized impairment loss.
-				'ipsas-21-52-recognise-impairment' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::impairmentsMeasured($o),
-
-				// IPSAS 21.54: an impairment loss on a non-cash-generating asset is
-				// recognized immediately in surplus or deficit, unless the asset is
-				// carried at a revalued amount.
-				'ipsas-21-54-loss-in-surplus-deficit' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::impairmentLossDestinationValid($o),
-
-				// IPSAS 23.44: a non-exchange inflow with a present obligation (condition)
-				// recognizes that conditioned portion as a liability; the rest is revenue.
-				'ipsas-23-44-condition-creates-liability' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::nonExchangeConditionsSplit($o),
-
-				// IPSAS 23.59: a tax asset is recognized when the taxable event occurs.
-				'ipsas-23-59-tax-on-taxable-event' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::taxAssetsOnTaxableEvent($o),
-
-				// IPSAS 24.14: a budget comparison presents original and final budget
-				// against actuals on a comparable basis, with a material-difference note.
-				'ipsas-24-14-budget-comparison' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::budgetComparisonComplete($o),
-
-				// IPSAS 35.40: consolidation eliminates the controlling entity's
-				// investment in each controlled entity and all intragroup balances and
-				// transactions — required only of a consolidated statement.
-				'ipsas-35-40-eliminate-intragroup' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::intragroupEliminated($o),
-
-				// IPSAS 39.11: short-term employee benefits are recognized at the
-				// undiscounted amount expected to be paid as a liability and an expense.
-				'ipsas-39-11-short-term-benefits' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::shortTermBenefitsUndiscounted($o),
-
-				// IPSAS 41.10: a financial asset/liability is recognized when, and only
-				// when, the entity becomes party to the contractual provisions.
-				'ipsas-41-10-recognise-on-becoming-party' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::financialInstrumentsRecognizedOnParty($o),
-
-				// IPSAS 43.23: at commencement a lessee recognizes a right-of-use asset
-				// and a lease liability.
-				'ipsas-43-23-right-of-use-model' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::leasesHaveRouAndLiability($o),
-
-				// IPSAS 43.27: the lease liability is the present value of the unpaid
-				// lease payments discounted at the lease/IBR rate.
-				'ipsas-43-27-lease-liability-pv' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::leaseLiabilitiesAtPresentValue($o),
-
-				// IPSAS 47.36: a tax asset is recognized when the taxable event occurs and
-				// the recognition criteria are met.
-				'ipsas-47-36-taxes-on-taxable-event' => static fn (array $o): bool => self::frameworkNot($o, 'ipsas')
-					|| self::taxAssetsOnTaxableEvent($o),
-
-				// ===== GASB — US state and local governments. =====
-				// GASB 34: both government-wide and fund financial statements are
-				// presented. Scoped to GASB statements.
-				'gasb-34-dual-reporting-model' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| (self::isTrue($o, 'governmentWideStatements') && self::isTrue($o, 'fundStatements')),
-
-				// GASB 34: government-wide statements use the economic-resources focus and
-				// the full accrual basis, reporting governmental and business-type
-				// activities in separate columns.
-				'gasb-34-govwide-economic-resources' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| (self::equalsField($o, 'govWideMeasurementFocus', 'economicResources')
-					&& self::equalsField($o, 'govWideBasis', 'accrual')
-					&& self::contains($o, 'govWideColumns', 'governmental')
-					&& self::contains($o, 'govWideColumns', 'businessType')),
-
-				// GASB 34: MD&A is required supplementary information that precedes the
-				// basic financial statements.
-				'gasb-34-mda-required-rsi' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| (self::isTrue($o, 'mdaPresent') && self::equalsField($o, 'mdaPlacement', 'precedes')),
-
-				// GASB 34: governmental funds use the current-financial-resources focus
-				// and the modified-accrual basis.
-				'gasb-34-modified-accrual-govfunds' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| (self::equalsField($o, 'govFundsMeasurementFocus', 'currentFinancialResources')
-					&& self::equalsField($o, 'govFundsBasis', 'modifiedAccrual')),
-
-				// GASB 34: a fund is major when an element is at least 10% of its category
-				// total AND at least 5% of the combined total; the general fund is always
-				// major. The declared major flags are internally consistent with that.
-				'gasb-34-major-fund-criteria' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::majorFundFlagsConsistent($o),
-
-				// GASB 54: governmental fund balance is reported in the five-classification
-				// hierarchy.
-				'gasb-54-five-classifications' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::hasAll($o, 'fundBalanceClassifications', self::GASB54_CLASSIFICATIONS),
-
-				// GASB 84: fiduciary activities are reported in the four fund types.
-				'gasb-84-four-fund-types' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::fiduciaryFundTypesValid($o),
-
-				// GASB 87: a single lease model treats leases as financings, with no
-				// operating-vs-capital distinction.
-				'gasb-87-single-lease-model' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::singleLeaseModel($o),
-
-				// GASB 87: a lessee recognizes a lease liability at present value and an
-				// intangible right-of-use lease asset at commencement (short-term
-				// exception aside).
-				'gasb-87-lessee-recognition' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::gasbLessRecognition($o, 'leases'),
-
-				// GASB 87: leases with a maximum possible term of 12 months or less are
-				// excluded from recognition and treated as outflows/inflows.
-				'gasb-87-short-term-exception' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::shortTermExceptionApplied($o, 'leases'),
-
-				// GASB 96: at commencement of a SBITA a subscription liability is
-				// recognized at present value and a right-to-use subscription asset as an
-				// intangible capital asset.
-				'gasb-96-sbita-recognition' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::gasbLessRecognition($o, 'sbitas'),
-
-				// GASB 96: SBITAs with a maximum possible term of 12 months or less are
-				// excluded from subscription asset/liability recognition.
-				'gasb-96-short-term-exception' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::shortTermExceptionApplied($o, 'sbitas'),
-
-				// GASB 103: budgetary-comparison information is presented as RSI with
-				// separate variance columns and notes explaining significant variances.
-				'gasb-103-budgetary-comparison-rsi' => static fn (array $o): bool => self::frameworkNot($o, 'gasb')
-					|| self::budgetaryComparisonRsi($o),
+				...self::ipsasPresentationAndMeasurementChecks(),
+				...self::ipsasRevenueLeaseAndGroupChecks(),
+				...self::gasbReportingModelChecks(),
+				...self::gasbLeaseAndBudgetChecks(),
 			],
 		];
 
 	}//end checks()
+
+	/**
+	 * The IPSAS presentation, measurement and impairment predicates, keyed by rule id, in registry
+	 * order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function ipsasPresentationAndMeasurementChecks(): array {
+		return [
+			// ===== IPSAS — IPSASB accrual framework. =====
+			'ipsas-1-21-complete-set' => self::ipsas121CompleteSet(...),
+			'ipsas-2-18-classify-activities' => self::ipsas218ClassifyActivities(...),
+			'ipsas-12-15-lower-cost-nrv' => self::ipsas1215LowerCostNrv(...),
+			'ipsas-12-17-distribution-replacement-cost' => self::ipsas1217DistributionReplacementCost(...),
+			'ipsas-19-35-no-contingent-liability' => self::ipsas1935NoContingentLiability(...),
+			'ipsas-21-52-recognise-impairment' => self::ipsas2152RecogniseImpairment(...),
+			'ipsas-21-54-loss-in-surplus-deficit' => self::ipsas2154LossInSurplusDeficit(...),
+			'ipsas-23-44-condition-creates-liability' => self::ipsas2344ConditionCreatesLiability(...),
+		];
+
+	}//end ipsasPresentationAndMeasurementChecks()
+
+	/**
+	 * The IPSAS non-exchange revenue, budget, group, benefit, instrument and lease predicates, keyed by rule id, in registry
+	 * order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function ipsasRevenueLeaseAndGroupChecks(): array {
+		return [
+			'ipsas-23-59-tax-on-taxable-event' => self::ipsas2359TaxOnTaxableEvent(...),
+			'ipsas-24-14-budget-comparison' => self::ipsas2414BudgetComparison(...),
+			'ipsas-35-40-eliminate-intragroup' => self::ipsas3540EliminateIntragroup(...),
+			'ipsas-39-11-short-term-benefits' => self::ipsas3911ShortTermBenefits(...),
+			'ipsas-41-10-recognise-on-becoming-party' => self::ipsas4110RecogniseOnBecomingParty(...),
+			'ipsas-43-23-right-of-use-model' => self::ipsas4323RightOfUseModel(...),
+			'ipsas-43-27-lease-liability-pv' => self::ipsas4327LeaseLiabilityPv(...),
+			'ipsas-47-36-taxes-on-taxable-event' => self::ipsas4736TaxesOnTaxableEvent(...),
+		];
+
+	}//end ipsasRevenueLeaseAndGroupChecks()
+
+	/**
+	 * The GASB reporting-model, fund-balance and fiduciary-fund predicates, keyed by rule id, in registry
+	 * order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function gasbReportingModelChecks(): array {
+		return [
+			// ===== GASB — US state and local governments. =====
+			'gasb-34-dual-reporting-model' => self::gasb34DualReportingModel(...),
+			'gasb-34-govwide-economic-resources' => self::gasb34GovwideEconomicResources(...),
+			'gasb-34-mda-required-rsi' => self::gasb34MdaRequiredRsi(...),
+			'gasb-34-modified-accrual-govfunds' => self::gasb34ModifiedAccrualGovfunds(...),
+			'gasb-34-major-fund-criteria' => self::gasb34MajorFundCriteria(...),
+			'gasb-54-five-classifications' => self::gasb54FiveClassifications(...),
+			'gasb-84-four-fund-types' => self::gasb84FourFundTypes(...),
+		];
+
+	}//end gasbReportingModelChecks()
+
+	/**
+	 * The GASB lease, subscription and budgetary-comparison predicates, keyed by rule id, in registry
+	 * order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function gasbLeaseAndBudgetChecks(): array {
+		return [
+			'gasb-87-single-lease-model' => self::gasb87SingleLeaseModel(...),
+			'gasb-87-lessee-recognition' => self::gasb87LesseeRecognition(...),
+			'gasb-87-short-term-exception' => self::gasb87ShortTermException(...),
+			'gasb-96-sbita-recognition' => self::gasb96SbitaRecognition(...),
+			'gasb-96-short-term-exception' => self::gasb96ShortTermException(...),
+			'gasb-103-budgetary-comparison-rsi' => self::gasb103BudgetaryComparisonRsi(...),
+		];
+
+	}//end gasbLeaseAndBudgetChecks()
+
+	/**
+	 * IPSAS 1.21: a complete set comprises the statement of financial
+	 * position, the statement of financial performance, the statement of
+	 * changes in net assets/equity, the cash-flow statement, notes (and a
+	 * budget comparison where the entity makes its budget public). Scoped
+	 * to IPSAS statements; a GASB statement is vacuously in scope.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas121CompleteSet(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| (self::hasAll($o, 'components', self::IPSAS_COMPONENTS)
+			&& (self::isFalse($o, 'budgetMadePublic') || self::contains($o, 'components', 'budgetComparison')));
+
+	}//end ipsas121CompleteSet()
+
+	/**
+	 * IPSAS 2.18: the cash-flow statement classifies cash flows by
+	 * operating, investing and financing activity.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas218ClassifyActivities(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::hasAll($o, 'cashFlowActivities', self::CASH_FLOW_ACTIVITIES);
+
+	}//end ipsas218ClassifyActivities()
+
+	/**
+	 * IPSAS 12.15: ordinary inventories are measured at the lower of cost and
+	 * net realizable value; inventory acquired through a non-exchange
+	 * transaction or held for distribution is out of this rule's scope.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas1215LowerCostNrv(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::inventoriesValuedLowerOf($o, 'netRealizableValue', ['ordinary']);
+
+	}//end ipsas1215LowerCostNrv()
+
+	/**
+	 * IPSAS 12.17: inventories held for distribution at no/nominal charge are
+	 * measured at the lower of cost and current replacement cost.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas1217DistributionReplacementCost(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::inventoriesValuedLowerOf($o, 'currentReplacementCost', ['distribution']);
+
+	}//end ipsas1217DistributionReplacementCost()
+
+	/**
+	 * IPSAS 19.35: a contingent liability is not recognized — every modelled
+	 * contingent liability is disclosed only, never recognized on the face.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas1935NoContingentLiability(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::noneRecognized($o, 'contingentLiabilities');
+
+	}//end ipsas1935NoContingentLiability()
+
+	/**
+	 * IPSAS 21.52: where the recoverable service amount is below the carrying
+	 * amount the carrying amount is reduced to it and the difference is the
+	 * recognized impairment loss.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas2152RecogniseImpairment(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::impairmentsMeasured($o);
+
+	}//end ipsas2152RecogniseImpairment()
+
+	/**
+	 * IPSAS 21.54: an impairment loss on a non-cash-generating asset is
+	 * recognized immediately in surplus or deficit, unless the asset is
+	 * carried at a revalued amount.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas2154LossInSurplusDeficit(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::impairmentLossDestinationValid($o);
+
+	}//end ipsas2154LossInSurplusDeficit()
+
+	/**
+	 * IPSAS 23.44: a non-exchange inflow with a present obligation (condition)
+	 * recognizes that conditioned portion as a liability; the rest is revenue.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas2344ConditionCreatesLiability(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::nonExchangeConditionsSplit($o);
+
+	}//end ipsas2344ConditionCreatesLiability()
+
+	/**
+	 * IPSAS 23.59: a tax asset is recognized when the taxable event occurs.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas2359TaxOnTaxableEvent(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::taxAssetsOnTaxableEvent($o);
+
+	}//end ipsas2359TaxOnTaxableEvent()
+
+	/**
+	 * IPSAS 24.14: a budget comparison presents original and final budget
+	 * against actuals on a comparable basis, with a material-difference note.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas2414BudgetComparison(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::budgetComparisonComplete($o);
+
+	}//end ipsas2414BudgetComparison()
+
+	/**
+	 * IPSAS 35.40: consolidation eliminates the controlling entity's
+	 * investment in each controlled entity and all intragroup balances and
+	 * transactions — required only of a consolidated statement.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas3540EliminateIntragroup(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::intragroupEliminated($o);
+
+	}//end ipsas3540EliminateIntragroup()
+
+	/**
+	 * IPSAS 39.11: short-term employee benefits are recognized at the
+	 * undiscounted amount expected to be paid as a liability and an expense.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas3911ShortTermBenefits(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::shortTermBenefitsUndiscounted($o);
+
+	}//end ipsas3911ShortTermBenefits()
+
+	/**
+	 * IPSAS 41.10: a financial asset/liability is recognized when, and only
+	 * when, the entity becomes party to the contractual provisions.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas4110RecogniseOnBecomingParty(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::financialInstrumentsRecognizedOnParty($o);
+
+	}//end ipsas4110RecogniseOnBecomingParty()
+
+	/**
+	 * IPSAS 43.23: at commencement a lessee recognizes a right-of-use asset
+	 * and a lease liability.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas4323RightOfUseModel(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::leasesHaveRouAndLiability($o);
+
+	}//end ipsas4323RightOfUseModel()
+
+	/**
+	 * IPSAS 43.27: the lease liability is the present value of the unpaid
+	 * lease payments discounted at the lease/IBR rate.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas4327LeaseLiabilityPv(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::leaseLiabilitiesAtPresentValue($o);
+
+	}//end ipsas4327LeaseLiabilityPv()
+
+	/**
+	 * IPSAS 47.36: a tax asset is recognized when the taxable event occurs and
+	 * the recognition criteria are met.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ipsas4736TaxesOnTaxableEvent(array $o): bool {
+		return self::frameworkNot($o, 'ipsas')
+			|| self::taxAssetsOnTaxableEvent($o);
+
+	}//end ipsas4736TaxesOnTaxableEvent()
+
+	/**
+	 * GASB 34: both government-wide and fund financial statements are
+	 * presented. Scoped to GASB statements.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb34DualReportingModel(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| (self::isTrue($o, 'governmentWideStatements') && self::isTrue($o, 'fundStatements'));
+
+	}//end gasb34DualReportingModel()
+
+	/**
+	 * GASB 34: government-wide statements use the economic-resources focus and
+	 * the full accrual basis, reporting governmental and business-type
+	 * activities in separate columns.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb34GovwideEconomicResources(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| (self::equalsField($o, 'govWideMeasurementFocus', 'economicResources')
+			&& self::equalsField($o, 'govWideBasis', 'accrual')
+			&& self::contains($o, 'govWideColumns', 'governmental')
+			&& self::contains($o, 'govWideColumns', 'businessType'));
+
+	}//end gasb34GovwideEconomicResources()
+
+	/**
+	 * GASB 34: MD&A is required supplementary information that precedes the
+	 * basic financial statements.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb34MdaRequiredRsi(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| (self::isTrue($o, 'mdaPresent') && self::equalsField($o, 'mdaPlacement', 'precedes'));
+
+	}//end gasb34MdaRequiredRsi()
+
+	/**
+	 * GASB 34: governmental funds use the current-financial-resources focus
+	 * and the modified-accrual basis.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb34ModifiedAccrualGovfunds(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| (self::equalsField($o, 'govFundsMeasurementFocus', 'currentFinancialResources')
+			&& self::equalsField($o, 'govFundsBasis', 'modifiedAccrual'));
+
+	}//end gasb34ModifiedAccrualGovfunds()
+
+	/**
+	 * GASB 34: a fund is major when an element is at least 10% of its category
+	 * total AND at least 5% of the combined total; the general fund is always
+	 * major. The declared major flags are internally consistent with that.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb34MajorFundCriteria(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::majorFundFlagsConsistent($o);
+
+	}//end gasb34MajorFundCriteria()
+
+	/**
+	 * GASB 54: governmental fund balance is reported in the five-classification
+	 * hierarchy.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb54FiveClassifications(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::hasAll($o, 'fundBalanceClassifications', self::GASB54_CLASSIFICATIONS);
+
+	}//end gasb54FiveClassifications()
+
+	/**
+	 * GASB 84: fiduciary activities are reported in the four fund types.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb84FourFundTypes(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::fiduciaryFundTypesValid($o);
+
+	}//end gasb84FourFundTypes()
+
+	/**
+	 * GASB 87: a single lease model treats leases as financings, with no
+	 * operating-vs-capital distinction.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb87SingleLeaseModel(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::singleLeaseModel($o);
+
+	}//end gasb87SingleLeaseModel()
+
+	/**
+	 * GASB 87: a lessee recognizes a lease liability at present value and an
+	 * intangible right-of-use lease asset at commencement (short-term
+	 * exception aside).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb87LesseeRecognition(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::gasbLessRecognition($o, 'leases');
+
+	}//end gasb87LesseeRecognition()
+
+	/**
+	 * GASB 87: leases with a maximum possible term of 12 months or less are
+	 * excluded from recognition and treated as outflows/inflows.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb87ShortTermException(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::shortTermExceptionApplied($o, 'leases');
+
+	}//end gasb87ShortTermException()
+
+	/**
+	 * GASB 96: at commencement of a SBITA a subscription liability is
+	 * recognized at present value and a right-to-use subscription asset as an
+	 * intangible capital asset.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb96SbitaRecognition(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::gasbLessRecognition($o, 'sbitas');
+
+	}//end gasb96SbitaRecognition()
+
+	/**
+	 * GASB 96: SBITAs with a maximum possible term of 12 months or less are
+	 * excluded from subscription asset/liability recognition.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb96ShortTermException(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::shortTermExceptionApplied($o, 'sbitas');
+
+	}//end gasb96ShortTermException()
+
+	/**
+	 * GASB 103: budgetary-comparison information is presented as RSI with
+	 * separate variance columns and notes explaining significant variances.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function gasb103BudgetaryComparisonRsi(array $o): bool {
+		return self::frameworkNot($o, 'gasb')
+			|| self::budgetaryComparisonRsi($o);
+
+	}//end gasb103BudgetaryComparisonRsi()
 
 	/**
 	 * No field backfill on existing rows — PublicSectorStatement is a new type seeded
@@ -300,140 +783,8 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		// ----- IPSAS accrual entity. -----
-		$ipsas = [
-			'framework' => 'ipsas',
-			'jurisdiction' => 'global',
-			'reportingEntity' => 'National Public Health Authority',
-			'fiscalYear' => 2025,
-			'currency' => 'EUR',
-			'consolidated' => true,
-			'budgetMadePublic' => true,
-			'components' => [
-				'financialPosition',
-				'financialPerformance',
-				'changesInNetAssets',
-				'cashFlow',
-				'notes',
-				'budgetComparison',
-			],
-			'cashFlowActivities' => ['operating', 'investing', 'financing'],
-			'inventories' => [
-				// Ordinary: lower of cost (100) and NRV (90) => 90.
-				['name' => 'Medical supplies', 'category' => 'ordinary', 'cost' => 100000.0, 'netRealizableValue' => 90000.0, 'carryingAmount' => 90000.0],
-				// Ordinary: cost (50) below NRV (70) => 50.
-				['name' => 'Office stock', 'category' => 'ordinary', 'cost' => 50000.0, 'netRealizableValue' => 70000.0, 'carryingAmount' => 50000.0],
-				// Distribution: lower of cost (40) and replacement cost (35) => 35.
-				['name' => 'Aid parcels', 'category' => 'distribution', 'cost' => 40000.0, 'currentReplacementCost' => 35000.0, 'carryingAmount' => 35000.0],
-			],
-			'contingentLiabilities' => [
-				['description' => 'Pending litigation', 'recognized' => false, 'disclosed' => true],
-				['description' => 'Guarantee call risk', 'recognized' => false, 'disclosed' => true],
-			],
-			'impairments' => [
-				// Carrying reduced to recoverable; loss = old carrying - recoverable.
-				['asset' => 'School building', 'carryingAmountBefore' => 800000.0, 'recoverableServiceAmount' => 650000.0, 'carryingAmount' => 650000.0, 'impairmentLoss' => 150000.0, 'revalued' => false, 'recognizedIn' => 'surplusOrDeficit'],
-				['asset' => 'Bridge (revalued)', 'carryingAmountBefore' => 500000.0, 'recoverableServiceAmount' => 470000.0, 'carryingAmount' => 470000.0, 'impairmentLoss' => 30000.0, 'revalued' => true, 'recognizedIn' => 'revaluationSurplus'],
-			],
-			'nonExchangeRevenues' => [
-				// Conditioned grant: 100 total, 40 condition outstanding => 40 liability, 60 revenue.
-				['source' => 'Capital grant', 'amount' => 100000.0, 'hasCondition' => true, 'liabilityRecognized' => 40000.0, 'revenueRecognized' => 60000.0],
-				// Unconditioned transfer: full revenue, no liability.
-				['source' => 'General transfer', 'amount' => 250000.0, 'hasCondition' => false, 'liabilityRecognized' => 0.0, 'revenueRecognized' => 250000.0],
-			],
-			'taxAssets' => [
-				['taxType' => 'Property tax', 'taxableEventOccurred' => true, 'amount' => 320000.0],
-				['taxType' => 'Income tax', 'taxableEventOccurred' => true, 'amount' => 1200000.0],
-			],
-			'budgetComparison' => [
-				'basis' => 'comparable',
-				'originalBudget' => 5000000.0,
-				'finalBudget' => 5200000.0,
-				'actualAmount' => 5050000.0,
-				'materialDifferenceNote' => 'Final budget increased by supplementary appropriation; actual underspend explained in note 14.',
-			],
-			'intragroupEliminations' => [
-				['type' => 'investment', 'amount' => 750000.0],
-				['type' => 'intragroupBalance', 'amount' => 120000.0],
-				['type' => 'intragroupTransaction', 'amount' => 90000.0],
-			],
-			'shortTermEmployeeBenefits' => [
-				// Undiscounted, recognized as both liability and expense, service rendered.
-				['type' => 'Accrued leave', 'undiscountedAmount' => 85000.0, 'liabilityRecognized' => 85000.0, 'expenseRecognized' => 85000.0, 'serviceRendered' => true, 'discounted' => false],
-			],
-			'financialInstruments' => [
-				['name' => 'Government bond', 'partyToContract' => true, 'recognized' => true],
-				['name' => 'Trade payable', 'partyToContract' => true, 'recognized' => true],
-			],
-			'leases' => [
-				// 12-month-plus lease: ROU asset + liability at PV.
-				// PV of 5 annual payments of 20000 at 5% = 86589.53...
-				['asset' => 'Office space', 'maxTermMonths' => 60, 'rightOfUseAsset' => 86589.53, 'leaseLiability' => 86589.53, 'annualPayment' => 20000.0, 'termYears' => 5, 'discountRate' => 0.05, 'singleModel' => true],
-			],
-		];
-
-		// ----- US GASB state/local government. -----
-		$gasb = [
-			'framework' => 'gasb',
-			'jurisdiction' => 'US',
-			'reportingEntity' => 'City of Springfield',
-			'fiscalYear' => 2025,
-			'currency' => 'USD',
-			'governmentWideStatements' => true,
-			'fundStatements' => true,
-			'govWideMeasurementFocus' => 'economicResources',
-			'govWideBasis' => 'accrual',
-			'govWideColumns' => ['governmental', 'businessType'],
-			'mdaPresent' => true,
-			'mdaPlacement' => 'precedes',
-			'govFundsMeasurementFocus' => 'currentFinancialResources',
-			'govFundsBasis' => 'modifiedAccrual',
-			'funds' => [
-				// General fund: always major.
-				['name' => 'General Fund', 'category' => 'governmental', 'isGeneralFund' => true, 'major' => true, 'categoryPercent' => 60.0, 'combinedPercent' => 45.0],
-				// Major: >=10% of category AND >=5% combined.
-				['name' => 'Capital Projects', 'category' => 'governmental', 'isGeneralFund' => false, 'major' => true, 'categoryPercent' => 25.0, 'combinedPercent' => 18.0],
-				// Not major: fails the 10% category test.
-				['name' => 'Special Grants', 'category' => 'governmental', 'isGeneralFund' => false, 'major' => false, 'categoryPercent' => 4.0, 'combinedPercent' => 3.0],
-				// Not major: meets category but fails combined 5% test.
-				['name' => 'Small Enterprise', 'category' => 'enterprise', 'isGeneralFund' => false, 'major' => false, 'categoryPercent' => 12.0, 'combinedPercent' => 3.5],
-			],
-			'fundBalanceClassifications' => [
-				'nonspendable',
-				'restricted',
-				'committed',
-				'assigned',
-				'unassigned',
-			],
-			'fiduciaryFunds' => [
-				['name' => 'Employee Pension Plan', 'fundType' => 'pensionTrust'],
-				['name' => 'External Investment Pool', 'fundType' => 'investmentTrust'],
-				['name' => 'Scholarship Trust', 'fundType' => 'privatePurposeTrust'],
-				['name' => 'Tax Collection Custodial', 'fundType' => 'custodial'],
-			],
-			'leases' => [
-				// Long-term: single-model financing, liability at PV + intangible ROU.
-				// PV of 4 annual payments of 30000 at 4% = 108896.86.
-				['asset' => 'Fleet vehicles', 'maxTermMonths' => 48, 'leaseLiability' => 108896.86, 'rightOfUseAsset' => 108896.86, 'intangibleRouAsset' => true, 'annualPayment' => 30000.0, 'termYears' => 4, 'discountRate' => 0.04, 'singleModel' => true],
-				// Short-term: <=12 months, excluded from recognition, expensed.
-				['asset' => 'Event tent', 'maxTermMonths' => 6, 'leaseLiability' => 0.0, 'rightOfUseAsset' => 0.0, 'intangibleRouAsset' => false, 'shortTerm' => true, 'singleModel' => true],
-			],
-			'sbitas' => [
-				// Long-term SBITA: subscription liability at PV + intangible right-to-use asset.
-				// PV of 3 annual payments of 50000 at 5% = 136162.40.
-				['name' => 'ERP cloud subscription', 'maxTermMonths' => 36, 'subscriptionLiability' => 136162.40, 'rightOfUseAsset' => 136162.40, 'intangibleRouAsset' => true, 'annualPayment' => 50000.0, 'termYears' => 3, 'discountRate' => 0.05],
-				// Short-term SBITA: <=12 months, excluded.
-				['name' => 'Seasonal SaaS tool', 'maxTermMonths' => 9, 'subscriptionLiability' => 0.0, 'rightOfUseAsset' => 0.0, 'intangibleRouAsset' => false, 'shortTerm' => true],
-			],
-			'budgetaryComparison' => [
-				'presentedAsRsi' => true,
-				'varianceColumns' => ['originalToFinal', 'finalToActual'],
-				'significantVarianceNote' => 'Significant variances in public-safety and capital-outlay lines explained in the budgetary-comparison schedule notes.',
-			],
-		];
-
 		return [
-			'PublicSectorStatement' => [$ipsas, $gasb],
+			'PublicSectorStatement' => [self::SEED_IPSAS_ENTITY, self::SEED_GASB_GOVERNMENT],
 		];
 
 	}//end seedObjects()

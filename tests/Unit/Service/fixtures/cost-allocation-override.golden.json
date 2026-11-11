@@ -1,0 +1,130 @@
+{
+    "valid": {
+        "journalEntryId": "je-1",
+        "commercialActivityId": "ca-1",
+        "glLineId": "gl-1",
+        "originalAmount": 18400.5,
+        "splits": [
+            {
+                "k": "PUBL"
+            }
+        ],
+        "allocationKey": "fte",
+        "automaticApplied": false,
+        "handmatigeOverride": {
+            "approvedBy": [
+                "alice",
+                "bob"
+            ],
+            "reason": "correctie",
+            "timestamp": true,
+            "replacesId": "alloc-1"
+        },
+        "postingDate": "2026-03-31",
+        "materialised": true,
+        "administrationId": "adm-1",
+        "status": "active"
+    },
+    "intApprovers": {
+        "journalEntryId": "",
+        "commercialActivityId": "",
+        "glLineId": null,
+        "originalAmount": 0.0,
+        "splits": [],
+        "allocationKey": "",
+        "automaticApplied": false,
+        "handmatigeOverride": {
+            "approvedBy": [
+                "1",
+                "2"
+            ],
+            "reason": "r",
+            "timestamp": true,
+            "replacesId": "legacy-1"
+        },
+        "postingDate": "",
+        "materialised": false,
+        "administrationId": "",
+        "status": "active"
+    },
+    "duplicateApprover": {
+        "journalEntryId": "",
+        "commercialActivityId": "",
+        "glLineId": null,
+        "originalAmount": 0.0,
+        "splits": [],
+        "allocationKey": "",
+        "automaticApplied": false,
+        "handmatigeOverride": {
+            "approvedBy": [
+                "alice",
+                "bob"
+            ],
+            "reason": "r",
+            "timestamp": true,
+            "replacesId": ""
+        },
+        "postingDate": "",
+        "materialised": false,
+        "administrationId": "",
+        "status": "active"
+    },
+    "sameTwice": {
+        "exception": [
+            "InvalidArgumentException",
+            "Handmatige override requires exactly 2 distinct approver user-ids"
+        ]
+    },
+    "threeApprovers": {
+        "exception": [
+            "InvalidArgumentException",
+            "Handmatige override requires exactly 2 distinct approver user-ids"
+        ]
+    },
+    "oneApprover": {
+        "exception": [
+            "InvalidArgumentException",
+            "Handmatige override requires exactly 2 distinct approver user-ids"
+        ]
+    },
+    "noApprovers": {
+        "exception": [
+            "InvalidArgumentException",
+            "Handmatige override requires exactly 2 distinct approver user-ids"
+        ]
+    },
+    "noReason": {
+        "exception": [
+            "InvalidArgumentException",
+            "Handmatige override requires a non-empty reason"
+        ]
+    },
+    "missingReason": {
+        "exception": [
+            "InvalidArgumentException",
+            "Handmatige override requires a non-empty reason"
+        ]
+    },
+    "scalarOriginal": {
+        "journalEntryId": "",
+        "commercialActivityId": "",
+        "glLineId": null,
+        "originalAmount": 0.0,
+        "splits": [],
+        "allocationKey": "",
+        "automaticApplied": false,
+        "handmatigeOverride": {
+            "approvedBy": [
+                "a",
+                "b"
+            ],
+            "reason": "r",
+            "timestamp": true,
+            "replacesId": ""
+        },
+        "postingDate": "",
+        "materialised": false,
+        "administrationId": "",
+        "status": "active"
+    }
+}

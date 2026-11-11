@@ -150,8 +150,7 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 		// The uuid is what the listener re-resolves the dossier by. Without
 		// it the deferred run has no identity to re-read and could only
 		// promote from the stale snapshot, which the contract forbids.
-		$uuid = (string)($entry['uuid'] ?? '');
-		if ($uuid === '') {
+		if ((string)($entry['uuid'] ?? '') === '') {
 			$this->logger->warning(
 				'TenderNedAwardPromotionJob: buffered entry carries no uuid — skipped',
 				['keys' => array_keys($entry)]
@@ -159,19 +158,31 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 			return;
 		}
 
+		$this->promote(listener: $listener, entry: $entry);
+	}//end runEntry()
+
+	/**
+	 * Promote one entry, fail-soft.
+	 *
+	 * Same blast radius the inline handler had: logged and dropped, never
+	 * rethrown into cron. The next polling tick re-attempts.
+	 *
+	 * @param TenderNedAwardDetectedListener $listener The resolved listener.
+	 * @param array<string, mixed>           $entry    One buffered entry, with a uuid.
+	 *
+	 * @return void
+	 */
+	private function promote(TenderNedAwardDetectedListener $listener, array $entry): void {
 		try {
 			$listener->runDeferredPromotion(entry: $entry);
 		} catch (Throwable $e) {
-			// Same blast radius the inline handler had: logged and dropped,
-			// never rethrown into cron. The next polling tick re-attempts.
 			$this->logger->warning(
 				'TenderNedAwardPromotionJob: promotion failed — fail-soft',
 				[
-					'uuid'      => $uuid,
+					'uuid'      => (string)$entry['uuid'],
 					'exception' => $e->getMessage(),
 				]
 			);
-		}//end try
-
-	}//end runEntry()
+		}
+	}//end promote()
 }//end class

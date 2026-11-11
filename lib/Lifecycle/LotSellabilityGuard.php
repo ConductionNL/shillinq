@@ -78,6 +78,26 @@ class LotSellabilityGuard {
 	private const QUANTITY_EPSILON = 0.00001;
 
 	/**
+	 * The reason, in English and Dutch, for each lotStatus that blocks a sale.
+	 *
+	 * @var array<string,array{0: string, 1: string}>
+	 */
+	private const STATUS_REASONS = [
+		'quarantined' => [
+			'quarantined (held for quality inspection)',
+			'in quarantaine (vastgehouden voor kwaliteitsinspectie)',
+		],
+		'expired' => [
+			'expired (lot marked expired)',
+			'verlopen (lot gemarkeerd als verlopen)',
+		],
+		'exhausted' => [
+			'exhausted (lot depleted)',
+			'uitgeput (lot leeg)',
+		],
+	];
+
+	/**
 	 * Construct the guard.
 	 *
 	 * @param FefoSort $fefoSort FEFO ordering helper — sellable lots are
@@ -115,21 +135,7 @@ class LotSellabilityGuard {
 	 * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
 	 */
 	public function evaluate(array $lots, float $requiredQuantity, string $today): array {
-		$sellableLots = [];
-		$offendingLots = [];
-
-		foreach ($lots as $lot) {
-			if (is_array($lot) === false) {
-				continue;
-			}
-
-			if ($this->isSellable(lot: $lot, today: $today) === true) {
-				$sellableLots[] = $lot;
-				continue;
-			}
-
-			$offendingLots[] = $this->describeUnsellable(lot: $lot, today: $today);
-		}
+		[$sellableLots, $offendingLots] = $this->partitionLots(lots: $lots, today: $today);
 
 		// FEFO order the sellable lots so a downstream lot-stamping consumer
 		// (when StockMove.lotId lands) draws earliest-expiry-first.
@@ -157,6 +163,34 @@ class LotSellabilityGuard {
 		];
 
 	}//end evaluate()
+
+	/**
+	 * Split the array lots into the sellable ones and descriptions of the rest.
+	 *
+	 * @param array<int,mixed> $lots Candidate lots.
+	 * @param string $today Today as `Y-m-d`.
+	 *
+	 * @return array{0: array<int,array<string,mixed>>, 1: array<int,array<string,mixed>>} Sellable lots, offending lot descriptions.
+	 */
+	private function partitionLots(array $lots, string $today): array {
+		$sellableLots = [];
+		$offendingLots = [];
+		foreach ($lots as $lot) {
+			if (is_array($lot) === false) {
+				continue;
+			}
+
+			if ($this->isSellable(lot: $lot, today: $today) === true) {
+				$sellableLots[] = $lot;
+				continue;
+			}
+
+			$offendingLots[] = $this->describeUnsellable(lot: $lot, today: $today);
+		}
+
+		return [$sellableLots, $offendingLots];
+
+	}//end partitionLots()
 
 	/**
 	 * True iff the lot is active and not past its expiry date.
@@ -210,22 +244,7 @@ class LotSellabilityGuard {
 			$expiry = (string)$expiryRaw;
 		}
 
-		if ($status === 'quarantined') {
-			$reason = 'quarantined (held for quality inspection)';
-			$reasonNl = 'in quarantaine (vastgehouden voor kwaliteitsinspectie)';
-		} elseif ($status === 'expired') {
-			$reason = 'expired (lot marked expired)';
-			$reasonNl = 'verlopen (lot gemarkeerd als verlopen)';
-		} elseif ($status === 'exhausted') {
-			$reason = 'exhausted (lot depleted)';
-			$reasonNl = 'uitgeput (lot leeg)';
-		} elseif ($this->isExpired(lot: $lot, today: $today) === true) {
-			$reason = 'expired (past expiry date ' . (string)$expiry . ')';
-			$reasonNl = 'verlopen (vervaldatum ' . (string)$expiry . ' verstreken)';
-		} else {
-			$reason = 'not sellable (lotStatus ' . $status . ')';
-			$reasonNl = 'niet verkoopbaar (lotstatus ' . $status . ')';
-		}//end if
+		[$reason, $reasonNl] = $this->unsellableReason(lot: $lot, today: $today);
 
 		return [
 			'lotId' => (string)($lot['id'] ?? ($lot['@self']['id'] ?? '')),
@@ -237,4 +256,36 @@ class LotSellabilityGuard {
 		];
 
 	}//end describeUnsellable()
+
+	/**
+	 * The English and Dutch reason a lot cannot be sold.
+	 *
+	 * A blocking lotStatus wins; an active lot past its expiry date comes next;
+	 * anything else is reported by its status.
+	 *
+	 * @param array<string,mixed> $lot The unsellable lot.
+	 * @param string $today Today as `Y-m-d`.
+	 *
+	 * @return array{0: string, 1: string} The reason and its Dutch rendering.
+	 */
+	private function unsellableReason(array $lot, string $today): array {
+		$status = (string)($lot['lotStatus'] ?? self::STATUS_ACTIVE);
+		if (isset(self::STATUS_REASONS[$status]) === true) {
+			return self::STATUS_REASONS[$status];
+		}
+
+		if ($this->isExpired(lot: $lot, today: $today) === true) {
+			$expiry = (string)($lot['expiryDate'] ?? '');
+			return [
+				'expired (past expiry date ' . $expiry . ')',
+				'verlopen (vervaldatum ' . $expiry . ' verstreken)',
+			];
+		}
+
+		return [
+			'not sellable (lotStatus ' . $status . ')',
+			'niet verkoopbaar (lotstatus ' . $status . ')',
+		];
+
+	}//end unsellableReason()
 }//end class

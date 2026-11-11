@@ -37,6 +37,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUser;
 use OCP\IUserSession;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
@@ -86,48 +87,94 @@ class ManualMatchController extends Controller {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
+		$line = $this->accessibleLine(lineId: $lineId);
+		if ($line === null) {
+			return $this->notFound();
+		}
+
+		try {
+			return $this->bookedOrMatched(line: $line, user: $user);
+		} catch (ManualMatchRefusedException $e) {
+			return $this->refused(e: $e);
+		} catch (Throwable $e) {
+			return $this->matchFailed(lineId: $lineId, e: $e);
+		}
+	}//end match()
+
+	/**
+	 * The line, when it exists and the caller may access its administration.
+	 * ADR-005: the line's administration decides; a foreign line is masked as absent.
+	 *
+	 * @param string $lineId The line's uuid or `lineId`.
+	 *
+	 * @return array<string,mixed>|null Null for an unknown or foreign line.
+	 */
+	private function accessibleLine(string $lineId): ?array {
 		try {
 			$line = $this->service->findLine(lineId: $lineId);
 		} catch (OutOfBoundsException $e) {
-			return $this->notFound();
+			return null;
 		}
 
-		// ADR-005: the line's administration decides; a foreign line is masked as absent.
 		if ($this->context->canAccess(administrationId: (string)($line['administrationId'] ?? '')) === false) {
-			return $this->notFound();
+			return null;
 		}
 
+		return $line;
+	}//end accessibleLine()
+
+	/**
+	 * Book the line to a ledger account when one is given, else match it to the selected invoices.
+	 *
+	 * @param array<string,mixed> $line The accessible line.
+	 * @param IUser               $user The signed-in user (the actor).
+	 *
+	 * @return JSONResponse
+	 */
+	private function bookedOrMatched(array $line, IUser $user): JSONResponse {
 		$targets = $this->request->getParam('targets');
 		$ledger = $this->request->getParam('ledgerAccount');
-		try {
-			if (is_array($ledger) === true && $ledger !== []) {
-				$match = $this->service->bookToLedger(line: $line, ledger: $ledger, actor: $user->getUID());
-				return new JSONResponse(data: $match);
-			}
+		if (is_array($ledger) === true && $ledger !== []) {
+			return new JSONResponse(data: $this->service->bookToLedger(line: $line, ledger: $ledger, actor: $user->getUID()));
+		}
 
-			if (is_array($targets) === false) {
-				return new JSONResponse(
-					data: ['message' => $this->l10n->t('Select at least one invoice.')],
-					statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-				);
-			}
+		if (is_array($targets) === false) {
+			return new JSONResponse(data: ['message' => $this->l10n->t('Select at least one invoice.')], statusCode: Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
 
-			$match = $this->service->matchInvoices(line: $line, targetIds: $targets, actor: $user->getUID());
-			return new JSONResponse(data: $match);
-		} catch (ManualMatchRefusedException $e) {
-			return new JSONResponse(
-				data: ['message' => $this->l10n->t($e->getTemplate(), $e->getParameters())],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
-		} catch (Throwable $e) {
-			$this->logger->error('ManualMatchController: match failed', ['lineId' => $lineId, 'exception' => $e->getMessage()]);
-			return new JSONResponse(
-				data: ['message' => $this->l10n->t('The bank line could not be matched.')],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		return new JSONResponse(data: $this->service->matchInvoices(line: $line, targetIds: $targets, actor: $user->getUID()));
+	}//end bookedOrMatched()
 
-	}//end match()
+	/**
+	 * The 422 for a match the service refused, in the caller's language.
+	 *
+	 * @param ManualMatchRefusedException $e The refusal.
+	 *
+	 * @return JSONResponse
+	 */
+	private function refused(ManualMatchRefusedException $e): JSONResponse {
+		return new JSONResponse(
+			data: ['message' => $this->l10n->t($e->getTemplate(), $e->getParameters())],
+			statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
+		);
+	}//end refused()
+
+	/**
+	 * Log an unexpected failure and answer 500 without detail.
+	 *
+	 * @param string    $lineId The line's uuid or `lineId`.
+	 * @param Throwable $e      The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function matchFailed(string $lineId, Throwable $e): JSONResponse {
+		$this->logger->error('ManualMatchController: match failed', ['lineId' => $lineId, 'exception' => $e->getMessage()]);
+
+		return new JSONResponse(
+			data: ['message' => $this->l10n->t('The bank line could not be matched.')],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end matchFailed()
 
 	/**
 	 * The masked 404.

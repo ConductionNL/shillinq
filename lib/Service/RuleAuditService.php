@@ -51,6 +51,20 @@ class RuleAuditService {
 	private const LIMIT = 10000;
 
 	/**
+	 * The object counters of an empty report.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const EMPTY_COUNTS = [
+		'types' => [],
+		'objectsChecked' => 0,
+		'objectsCompliant' => 0,
+		'objectsWithViolations' => 0,
+		'violationsBySeverity' => ['mandatory' => 0, 'conditional' => 0, 'recommended' => 0],
+		'topViolatedRules' => [],
+	];
+
+	/**
 	 * Construct the rule audit service.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -74,64 +88,127 @@ class RuleAuditService {
 	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public function audit(array $context = []): array {
-		$corpusTotal = RuleCatalogue::count();
-		$machineCheckable = count(RuleCatalogue::machineCheckable());
-		$enforceable = count(RuleEngine::checkedRuleIds());
-
-		$report = [
-			'catalogueVersion' => RuleCatalogue::version(),
-			'corpusTotal' => $corpusTotal,
-			'machineCheckable' => $machineCheckable,
-			'enforceableRules' => $enforceable,
-			'coveragePct' => $machineCheckable > 0 ? round(($enforceable / $machineCheckable) * 100, 1) : 0.0,
-			'types' => [],
-			'objectsChecked' => 0,
-			'objectsCompliant' => 0,
-			'objectsWithViolations' => 0,
-			'violationsBySeverity' => ['mandatory' => 0, 'conditional' => 0, 'recommended' => 0],
-			'topViolatedRules' => [],
-		];
-
-		$byRule = [];
-
+		$run = new RuleAuditRun();
+		$run->context = $context;
+		$run->report = $this->emptyReport();
 		foreach (RuleEngine::supportedTypes() as $type) {
-			$objects = $this->loadAll($type);
-			$typeStat = ['checked' => 0, 'compliant' => 0, 'withViolations' => 0, 'violations' => 0];
-
-			foreach ($objects as $object) {
-				if ($type === 'GLTransaction') {
-					$object['lines'] = $this->loadLines($object);
-				}
-
-				$violations = RuleEngine::evaluate($type, $object, $context);
-				$typeStat['checked']++;
-				$report['objectsChecked']++;
-
-				if (empty($violations) === true) {
-					$typeStat['compliant']++;
-					$report['objectsCompliant']++;
-					continue;
-				}
-
-				$typeStat['withViolations']++;
-				$report['objectsWithViolations']++;
-				foreach ($violations as $violation) {
-					$typeStat['violations']++;
-					$report['violationsBySeverity'][$violation->severity] = (($report['violationsBySeverity'][$violation->severity] ?? 0) + 1);
-					$byRule[$violation->ruleId] = (($byRule[$violation->ruleId] ?? 0) + 1);
-				}
-			}//end foreach
-
-			$report['types'][$type] = $typeStat;
-		}//end foreach
-
-		arsort($byRule);
-		foreach (array_slice($byRule, 0, 15, true) as $ruleId => $count) {
-			$report['topViolatedRules'][] = ['ruleId' => $ruleId, 'count' => $count];
+			$this->auditType(run: $run, type: $type);
 		}
 
-		return $report;
+		$run->report['topViolatedRules'] = $this->topViolatedRules(byRule: $run->byRule);
+
+		return $run->report;
 	}//end audit()
+
+	/**
+	 * The report before any object is checked: catalogue size and coverage.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function emptyReport(): array {
+		$machineCheckable = count(RuleCatalogue::machineCheckable());
+		$enforceable = count(RuleEngine::checkedRuleIds());
+		$coverage = 0.0;
+		if ($machineCheckable > 0) {
+			$coverage = round(($enforceable / $machineCheckable) * 100, 1);
+		}
+
+		return [
+			'catalogueVersion' => RuleCatalogue::version(),
+			'corpusTotal' => RuleCatalogue::count(),
+			'machineCheckable' => $machineCheckable,
+			'enforceableRules' => $enforceable,
+			'coveragePct' => $coverage,
+		] + self::EMPTY_COUNTS;
+	}//end emptyReport()
+
+	/**
+	 * Audit every object of one type and record the type's statistics.
+	 *
+	 * @param RuleAuditRun $run  The run.
+	 * @param string       $type The object type.
+	 *
+	 * @return void
+	 */
+	private function auditType(RuleAuditRun $run, string $type): void {
+		$run->type = $type;
+		$run->typeStat = ['checked' => 0, 'compliant' => 0, 'withViolations' => 0, 'violations' => 0];
+		foreach ($this->loadAll($type) as $object) {
+			$this->auditObject(run: $run, object: $object);
+		}
+
+		$run->report['types'][$type] = $run->typeStat;
+	}//end auditType()
+
+	/**
+	 * Evaluate one object (a GL transaction with its lines) and count it.
+	 *
+	 * @param RuleAuditRun         $run    The run.
+	 * @param array<string, mixed> $object The object.
+	 *
+	 * @return void
+	 */
+	private function auditObject(RuleAuditRun $run, array $object): void {
+		if ($run->type === 'GLTransaction') {
+			$object['lines'] = $this->loadLines($object);
+		}
+
+		$violations = RuleEngine::evaluate($run->type, $object, $run->context);
+		$run->typeStat['checked']++;
+		$run->report['objectsChecked']++;
+		$outcome = $this->outcomeOf(violations: $violations);
+		$run->typeStat[$outcome[0]]++;
+		$run->report[$outcome[1]]++;
+		$this->countViolations(run: $run, violations: $violations);
+	}//end auditObject()
+
+	/**
+	 * Count each violation for the type, per severity and per rule.
+	 *
+	 * @param RuleAuditRun      $run        The run.
+	 * @param array<int, mixed> $violations The object's violations.
+	 *
+	 * @return void
+	 */
+	private function countViolations(RuleAuditRun $run, array $violations): void {
+		foreach ($violations as $violation) {
+			$run->typeStat['violations']++;
+			$run->report['violationsBySeverity'][$violation->severity] = (($run->report['violationsBySeverity'][$violation->severity] ?? 0) + 1);
+			$run->byRule[$violation->ruleId] = (($run->byRule[$violation->ruleId] ?? 0) + 1);
+		}
+	}//end countViolations()
+
+	/**
+	 * The type-statistic and report counters an object's result goes into.
+	 *
+	 * @param array<int, mixed> $violations The object's violations.
+	 *
+	 * @return array{0: string, 1: string} [type counter, report counter].
+	 */
+	private function outcomeOf(array $violations): array {
+		if (empty($violations) === true) {
+			return ['compliant', 'objectsCompliant'];
+		}
+
+		return ['withViolations', 'objectsWithViolations'];
+	}//end outcomeOf()
+
+	/**
+	 * The 15 most-violated rules, most violated first.
+	 *
+	 * @param array<string, int> $byRule ruleId => violation count.
+	 *
+	 * @return array<int, array{ruleId: string, count: int}>
+	 */
+	private function topViolatedRules(array $byRule): array {
+		arsort($byRule);
+		$top = [];
+		foreach (array_slice($byRule, 0, 15, true) as $ruleId => $count) {
+			$top[] = ['ruleId' => $ruleId, 'count' => $count];
+		}
+
+		return $top;
+	}//end topViolatedRules()
 
 	/**
 	 * Load all objects of a schema (capped), as plain arrays.
@@ -165,36 +242,34 @@ class RuleAuditService {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function loadLines(array $transaction): array {
-		$keys = array_values(
-			array_unique(
-				array_filter(
-					[
-						(string)($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
-						(string)($transaction['transactionNumber'] ?? ''),
-					]
-				)
-			)
-		);
-
 		$lines = [];
-		foreach ($keys as $key) {
+		foreach ($this->lineKeys(transaction: $transaction) as $key) {
 			try {
-				$rows = $this->objectService()
-					->setRegister($this->register())
-					->setSchema('GLLine')
-					->findAll(['filters' => ['transactionId' => $key]]);
+				$rows = $this->objectService()->setRegister($this->register())->setSchema('GLLine')->findAll(['filters' => ['transactionId' => $key]]);
 			} catch (\Throwable $e) {
 				continue;
 			}
 
 			foreach ($this->normaliseRows($rows) as $line) {
-				$lineId = (string)($line['id'] ?? $line['@self']['id'] ?? spl_object_hash((object)$line));
-				$lines[$lineId] = $line;
+				$lines[(string)($line['id'] ?? $line['@self']['id'] ?? spl_object_hash((object)$line))] = $line;
 			}
 		}
 
 		return array_values($lines);
 	}//end loadLines()
+
+	/**
+	 * The keys GLLines may reference a transaction by: its id and its number.
+	 *
+	 * @param array<string, mixed> $transaction The GL transaction.
+	 *
+	 * @return array<int, string> Distinct, non-empty.
+	 */
+	private function lineKeys(array $transaction): array {
+		$keys = [(string)($transaction['id'] ?? $transaction['@self']['id'] ?? ''), (string)($transaction['transactionNumber'] ?? '')];
+
+		return array_values(array_unique(array_filter($keys)));
+	}//end lineKeys()
 
 	/**
 	 * Normalise a list of ObjectService rows (entities or arrays) to arrays.
@@ -206,18 +281,33 @@ class RuleAuditService {
 	private function normaliseRows(mixed $rows): array {
 		$out = [];
 		foreach ((is_array($rows) === true ? $rows : []) as $row) {
-			if (is_array($row) === true) {
-				$out[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-				$out[] = (array)$row->jsonSerialize();
+			$array = $this->rowArray(row: $row);
+			if ($array !== null) {
+				$out[] = $array;
 			}
 		}
 
 		return $out;
 	}//end normaliseRows()
+
+	/**
+	 * A row as an array: arrays as they are, serialisable entities serialised.
+	 *
+	 * @param mixed $row Raw row.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function rowArray(mixed $row): array|null {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			return (array)$row->jsonSerialize();
+		}
+
+		return null;
+	}//end rowArray()
 
 	/**
 	 * Resolve the OpenRegister ObjectService from the DI container.

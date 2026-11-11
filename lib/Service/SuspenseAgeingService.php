@@ -142,41 +142,88 @@ class SuspenseAgeingService {
 		$scopeStatement = $this->statementScope(administrationId: $administrationId);
 
 		$items = [];
-		$oldest = 0;
-		$totalCents = 0;
 		foreach ($this->unresolvedLines() as $line) {
-			if (is_array($line) === false) {
-				continue;
+			if (is_array($line) === true && self::inStatementScope(line: $line, scope: $scopeStatement) === true) {
+				$items[] = $this->worklistItem(line: $line, asOfDate: $asOfDate);
 			}
+		}
 
-			$statementId = trim((string)($line['statementId'] ?? ''));
-			if ($scopeStatement !== null && ($statementId === '' || isset($scopeStatement[$statementId]) === false)) {
-				// Line belongs to another administration's statement.
-				continue;
-			}
+		return self::worklist(items: self::oldestFirst(items: $items));
 
-			$days = $this->daysOutstanding(line: $line, asOfDate: $asOfDate);
-			$amountCents = (int)round(((float)($line['amount'] ?? 0)) * 100);
+	}//end computeWorklist()
 
-			$items[] = [
-				'lineId' => trim((string)($line['lineId'] ?? ($line['id'] ?? ''))),
-				'statementId' => $statementId,
-				'status' => (string)($line['status'] ?? ''),
-				'amount' => (float)($line['amount'] ?? 0),
-				'valueDate' => (string)($line['valueDate'] ?? ($line['transactionDate'] ?? '')),
-				'daysOutstanding' => $days,
-			];
-			$oldest = max($oldest, $days);
-			$totalCents += abs($amountCents);
-		}//end foreach
+	/**
+	 * Whether a line belongs to one of the administration's statements; every
+	 * line does when scoping is disabled.
+	 *
+	 * @param array<string,mixed>    $line  The BankStatementLine record.
+	 * @param array<string,true>|null $scope The administration's statement ids, or null.
+	 *
+	 * @return bool False for a line of another administration's statement.
+	 */
+	private static function inStatementScope(array $line, ?array $scope): bool {
+		if ($scope === null) {
+			return true;
+		}
 
-		// Oldest first — the worklist prioritises the most-aged item.
+		$statementId = trim((string)($line['statementId'] ?? ''));
+		return $statementId !== '' && isset($scope[$statementId]) === true;
+
+	}//end inStatementScope()
+
+	/**
+	 * One worklist item: the line's ids, status, amount, value date and age.
+	 *
+	 * @param array<string,mixed> $line     The BankStatementLine record.
+	 * @param DateTimeImmutable   $asOfDate The as-of reference date.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function worklistItem(array $line, DateTimeImmutable $asOfDate): array {
+		return [
+			'lineId' => trim((string)($line['lineId'] ?? ($line['id'] ?? ''))),
+			'statementId' => trim((string)($line['statementId'] ?? '')),
+			'status' => (string)($line['status'] ?? ''),
+			'amount' => (float)($line['amount'] ?? 0),
+			'valueDate' => (string)($line['valueDate'] ?? ($line['transactionDate'] ?? '')),
+			'daysOutstanding' => $this->daysOutstanding(line: $line, asOfDate: $asOfDate),
+		];
+
+	}//end worklistItem()
+
+	/**
+	 * The items, oldest first — the worklist prioritises the most-aged item.
+	 *
+	 * @param array<int,array<string,mixed>> $items The worklist items.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function oldestFirst(array $items): array {
 		usort(
 			$items,
 			static function (array $a, array $b): int {
 				return ($b['daysOutstanding'] <=> $a['daysOutstanding']);
 			}
 		);
+
+		return $items;
+
+	}//end oldestFirst()
+
+	/**
+	 * The worklist envelope: items, count, oldest age and the absolute total in cents.
+	 *
+	 * @param array<int,array<string,mixed>> $items The ordered worklist items.
+	 *
+	 * @return array{items:array<int,array<string,mixed>>, count:int, oldestDaysOutstanding:int, totalAmountCents:int}
+	 */
+	private static function worklist(array $items): array {
+		$oldest = 0;
+		$totalCents = 0;
+		foreach ($items as $item) {
+			$oldest = max($oldest, $item['daysOutstanding']);
+			$totalCents += abs((int)round($item['amount'] * 100));
+		}
 
 		return [
 			'items' => $items,
@@ -185,7 +232,7 @@ class SuspenseAgeingService {
 			'totalAmountCents' => $totalCents,
 		];
 
-	}//end computeWorklist()
+	}//end worklist()
 
 	/**
 	 * Resolve the as-of date used to age items.
@@ -250,21 +297,34 @@ class SuspenseAgeingService {
 		$scope = [];
 		if (is_array($statements) === true) {
 			foreach ($statements as $statement) {
-				if (is_array($statement) === false) {
-					continue;
-				}
-
-				foreach (['statementId', 'id', 'uuid', 'slug'] as $key) {
-					$value = trim((string)($statement[$key] ?? ''));
-					if ($value !== '') {
-						$scope[$value] = true;
-					}
+				if (is_array($statement) === true) {
+					$scope += self::statementKeys(statement: $statement);
 				}
 			}
 		}
 
 		return $scope;
 	}//end statementScope()
+
+	/**
+	 * Every non-blank id a statement can be referred to by (statementId, id, uuid, slug).
+	 *
+	 * @param array<string,mixed> $statement The BankStatement record.
+	 *
+	 * @return array<string,true>
+	 */
+	private static function statementKeys(array $statement): array {
+		$keys = [];
+		foreach (['statementId', 'id', 'uuid', 'slug'] as $key) {
+			$value = trim((string)($statement[$key] ?? ''));
+			if ($value !== '') {
+				$keys[$value] = true;
+			}
+		}
+
+		return $keys;
+
+	}//end statementKeys()
 
 	/**
 	 * Fetch every unmatched / routed-to-suspense BankStatementLine.

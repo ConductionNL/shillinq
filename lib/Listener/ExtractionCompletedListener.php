@@ -83,6 +83,14 @@ class ExtractionCompletedListener implements IEventListener {
 	private const NOTIFICATION_SUBJECT = 'extraction_draft_created';
 
 	/**
+	 * The supplier-invoice statuses in which a re-extraction may still refresh
+	 * the invoice; later statuses belong to matching and payment.
+	 *
+	 * @var array<int,string>
+	 */
+	private const REFRESHABLE_INVOICE_STATUSES = ['', 'received'];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container DI container — OR ObjectService
@@ -181,46 +189,33 @@ class ExtractionCompletedListener implements IEventListener {
 			return;
 		}
 
-		$schema = $this->prefillService->schemaForDocType(docType: $docType);
+		$schema = $this->knownSchema(docType: $docType);
 		if ($schema === null) {
-			$this->logger->info(
-				'ExtractionCompletedListener: unknown docType — skipping',
-				['docType' => $docType]
-			);
 			return;
 		}
 
 		$existing = $this->findBySourceDocumentUri(schema: $schema, documentUri: $documentUri);
-		$isNew = ($existing === null);
-
-		$administrationId = ($existing['administrationId'] ?? null);
-		if (is_string($administrationId) === false || $administrationId === '') {
-			$administrationId = $this->resolveAdministrationId(userId: $payload['requestedBy']);
+		if ($existing !== null && $this->mayRefresh(schema: $schema, existing: $existing, requestedBy: $payload['requestedBy']) === false) {
+			$this->logger->info(
+				'ExtractionCompletedListener: existing record is not a draft of the requester, not refreshed',
+				['schema' => $schema, 'documentUri' => $documentUri, 'requestedBy' => $payload['requestedBy']]
+			);
+			return;
 		}
 
-		$draft = $this->prefillService->buildDraft(
-			docType: $docType,
-			documentUri: $documentUri,
-			fields: $payload['fields'],
-			fieldConfidence: $payload['fieldConfidence'],
-			overallConfidence: $payload['overallConfidence'],
-			existingDraft: $existing,
-			administrationId: (string)$administrationId
-		);
-
-		$saved = $this->saveObject(schema: $schema, object: $draft);
+		$saved = $this->saveObject(schema: $schema, object: $this->draftFor(payload: $payload, existing: $existing));
 
 		$this->logger->info(
 			'ExtractionCompletedListener: extraction draft persisted',
 			[
 				'schema' => $schema,
 				'documentUri' => $documentUri,
-				'created' => $isNew,
+				'created' => ($existing === null),
 				'requestedBy' => $payload['requestedBy'],
 			]
 		);
 
-		if ($isNew === true) {
+		if ($existing === null) {
 			// REQ-RXC-001 "unmatched documentUri is not dropped" — surface
 			// the new draft to whoever requested the extraction.
 			$this->notifyRequester(
@@ -231,6 +226,76 @@ class ExtractionCompletedListener implements IEventListener {
 		}
 
 	}//end apply()
+
+	/**
+	 * The draft schema for a docType; an unknown docType is logged and skipped.
+	 *
+	 * @param string $docType The trimmed docType.
+	 *
+	 * @return string|null The schema slug, or null when unknown.
+	 */
+	private function knownSchema(string $docType): string|null {
+		$schema = $this->prefillService->schemaForDocType(docType: $docType);
+		if ($schema === null) {
+			$this->logger->info(
+				'ExtractionCompletedListener: unknown docType — skipping',
+				['docType' => $docType]
+			);
+		}
+
+		return $schema;
+
+	}//end knownSchema()
+
+	/**
+	 * Whether a re-extraction may overwrite the existing record: the requester
+	 * belongs to its administration, and a supplier invoice is still received.
+	 *
+	 * @param string               $schema      The draft schema.
+	 * @param array<string, mixed> $existing    The existing record.
+	 * @param string               $requestedBy The requesting NC user id.
+	 *
+	 * @return bool
+	 */
+	private function mayRefresh(string $schema, array $existing, string $requestedBy): bool {
+		$administrationId = (string)($existing['administrationId'] ?? '');
+		if ($this->administrationContext->canUserAccess(userId: $requestedBy, administrationId: $administrationId) === false) {
+			return false;
+		}
+
+		if ($schema !== ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE) {
+			return true;
+		}
+
+		return in_array((string)($existing['statusCode'] ?? ''), self::REFRESHABLE_INVOICE_STATUSES, true);
+
+	}//end mayRefresh()
+
+	/**
+	 * Build the draft, keeping the existing draft's administration when it has one.
+	 *
+	 * @param array<string, mixed> $payload The normalised event payload.
+	 * @param array<string, mixed>|null $existing The existing draft, or null.
+	 *
+	 * @return array<string, mixed> The draft to persist.
+	 */
+	private function draftFor(array $payload, array|null $existing): array {
+		$administrationId = ($existing['administrationId'] ?? null);
+		if (is_string($administrationId) === false || $administrationId === '') {
+			$administrationId = $this->resolveAdministrationId(userId: $payload['requestedBy']);
+		}
+
+		return $this->prefillService->buildDraft(
+			docType: trim($payload['docType']),
+			documentUri: trim($payload['documentUri']),
+			fields: $payload['fields'],
+			fieldConfidence: $payload['fieldConfidence'],
+			overallConfidence: $payload['overallConfidence'],
+			existingDraft: $existing,
+			administrationId: (string)$administrationId
+		);
+
+	}//end draftFor()
 
 	/**
 	 * Find an existing draft carrying the same sourceDocumentUri.

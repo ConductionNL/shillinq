@@ -45,8 +45,6 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\PaymentReconciliationService;
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -60,7 +58,38 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
  */
-class PaymentRequestWebhookController extends Controller {
+class PaymentRequestWebhookController extends PaymentWebhookReceiver {
+	/**
+	 * What this webhook reconciles, as written in its log messages.
+	 */
+	protected const WEBHOOK_KIND = 'payment';
+
+	/**
+	 * Outcome per Stripe event type; other types are not handled.
+	 *
+	 * @var array<string,string>
+	 */
+	protected const STRIPE_OUTCOMES = [
+		'payment_intent.amount_capturable_updated' => PaymentReconciliationService::OUTCOME_AUTHORIZED,
+		'payment_intent.succeeded' => PaymentReconciliationService::OUTCOME_CAPTURED,
+		'charge.captured' => PaymentReconciliationService::OUTCOME_CAPTURED,
+		'payment_intent.payment_failed' => PaymentReconciliationService::OUTCOME_FAILED,
+		'charge.refunded' => PaymentReconciliationService::OUTCOME_VOIDED,
+		'payment_intent.canceled' => PaymentReconciliationService::OUTCOME_VOIDED,
+	];
+
+	/**
+	 * Outcome per Mollie payment status; other statuses are not handled.
+	 *
+	 * @var array<string,string>
+	 */
+	protected const MOLLIE_OUTCOMES = [
+		'paid' => PaymentReconciliationService::OUTCOME_CAPTURED,
+		'failed' => PaymentReconciliationService::OUTCOME_FAILED,
+		'expired' => PaymentReconciliationService::OUTCOME_FAILED,
+		'canceled' => PaymentReconciliationService::OUTCOME_VOIDED,
+	];
+
 	/**
 	 * Constructor for PaymentRequestWebhookController.
 	 *
@@ -83,6 +112,33 @@ class PaymentRequestWebhookController extends Controller {
 	}//end __construct()
 
 	/**
+	 * The logger (never receives raw payment data).
+	 *
+	 * @return LoggerInterface
+	 */
+	protected function webhookLogger(): LoggerInterface {
+		return $this->logger;
+	}//end webhookLogger()
+
+	/**
+	 * Reconcile a normalised event through the shared service, which handles
+	 * both PaymentRequest and DepositPayment (REQ-APL-004).
+	 *
+	 * 200 when applied (or captured_unapplied — the gateway succeeded and the
+	 * exception is recorded), 202 when an idempotent no-op so the gateway stops
+	 * retrying.
+	 *
+	 * @param string $gateway The gateway slug.
+	 * @param array{paymentIntentId: string, outcome: string, errorCode: ?string, errorMessage: ?string} $event The normalised event.
+	 *
+	 * @return string The reconciliation result.
+	 */
+	protected function reconcileEvent(string $gateway, array $event): string {
+		$outcome = $this->reconciliation->reconcile(gateway: $gateway, event: $event);
+		return $outcome['result'];
+	}//end reconcileEvent()
+
+	/**
 	 * Handle a Mollie or Stripe payment webhook for a PaymentRequest or DepositPayment.
 	 *
 	 * The endpoint is public (gateways are unauthenticated callers) but is gated by
@@ -103,248 +159,9 @@ class PaymentRequestWebhookController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 300, period: 60)]
 	public function handle(string $gateway): JSONResponse {
-		$gateway = strtolower($gateway);
-		if (in_array($gateway, ['mollie', 'stripe'], true) === false) {
-			return new JSONResponse(['status' => 'unknown-gateway'], Http::STATUS_NOT_FOUND);
-		}
-
-		$rawBody = $this->getRawBody();
-		if ($rawBody === '') {
-			return new JSONResponse(['status' => 'empty-body'], Http::STATUS_BAD_REQUEST);
-		}
-
-		// ADR-005: verify the provider signature before doing ANY work. The
-		// signature is part of the payload (not user auth), so a mismatch is
-		// surfaced as 400 (malformed/untrusted payload) on this #[PublicPage]
-		// route. Fail-closed when no secret is configured.
-		if ($this->verifySignature(gateway: $gateway, rawBody: $rawBody) === false) {
-			// Do not echo any detail to the caller; log without the body to avoid
-			// persisting payment data (REQ-APL-001).
-			$this->logger->warning(
-				'Shillinq: rejected payment webhook with invalid signature',
-				['gateway' => $gateway]
-			);
-			return new JSONResponse(['status' => 'invalid-signature'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$payload = json_decode($rawBody, true);
-		if (json_last_error() !== JSON_ERROR_NONE || is_array($payload) === false) {
-			return new JSONResponse(['status' => 'malformed-payload'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$event = $this->extractEvent(gateway: $gateway, payload: $payload);
-		if ($event === null || $event['paymentIntentId'] === '') {
-			return new JSONResponse(['status' => 'unparseable-event'], Http::STATUS_BAD_REQUEST);
-		}
-
-		return $this->dispatch(gateway: $gateway, event: $event);
-	}//end handle()
-
-	/**
-	 * Reconcile a normalised event through the shared service and map the result
-	 * to an HTTP response.
-	 *
-	 * @param string $gateway The gateway slug.
-	 * @param array<string, mixed> $event The normalised event.
-	 *
-	 * @return JSONResponse
-	 */
-	private function dispatch(string $gateway, array $event): JSONResponse {
-		try {
-			$outcome = $this->reconciliation->reconcile(gateway: $gateway, event: $event);
-		} catch (\Throwable $e) {
-			// Never leak a stack trace to the gateway (ADR-005).
-			$this->logger->error(
-				'Shillinq: payment webhook reconciliation failed',
-				['gateway' => $gateway, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['status' => 'error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		$result = $outcome['result'];
-
-		if ($result === PaymentReconciliationService::RESULT_NOT_FOUND) {
-			return new JSONResponse(['status' => 'not-found'], Http::STATUS_NOT_FOUND);
-		}
-
-		// 200 when applied (or captured_unapplied — the gateway succeeded and we
-		// recorded the exception), 202 when it was an idempotent no-op so the
-		// gateway stops retrying (REQ-APL-004).
-		$httpStatus = Http::STATUS_OK;
-		if ($result === PaymentReconciliationService::RESULT_NOOP) {
-			$httpStatus = Http::STATUS_ACCEPTED;
-		}
-
-		return new JSONResponse(['status' => $result], $httpStatus);
-	}//end dispatch()
-
-	/**
-	 * Read the raw request body. Extracted to a seam so the signature path can be
-	 * exercised in unit tests without a real php://input stream.
-	 *
-	 * @return string The raw request body, or '' when empty/unreadable.
-	 *
-	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
-	 */
-	protected function getRawBody(): string {
-		$body = file_get_contents('php://input');
-		if ($body === false) {
-			return '';
-		}
-
-		return $body;
-	}//end getRawBody()
-
-	/**
-	 * Verify the gateway signature over the raw request body using the configured
-	 * per-gateway shared secret. Uses a constant-time comparison. Fail-closed when
-	 * no secret is configured (endpoint not provisioned).
-	 *
-	 * @param string $gateway The gateway slug.
-	 * @param string $rawBody The raw request body.
-	 *
-	 * @return bool True when the signature is valid.
-	 */
-	private function verifySignature(string $gateway, string $rawBody): bool {
-		// Shared secret is read from app config exactly as DepositWebhookController
-		// does — the live provider leg is wired through deployment config, never a
-		// hardcoded/always-valid stub. Reuse the same secret keys so deposits and
-		// invoice links share one provisioning surface (REQ-APL-004).
-		$secret = $this->appConfig->getValueString(
-			AppIdentity::APP_ID,
-			'deposit_webhook_secret_' . $gateway,
-			''
+		return $this->receive(
+			intake: new PaymentWebhookIntake(request: $this->request, appConfig: $this->appConfig),
+			gateway: $gateway
 		);
-		if ($secret === '') {
-			// No secret configured means the endpoint is not provisioned; refuse
-			// rather than accepting an unverifiable request (fail-closed).
-			return false;
-		}
-
-		$header = 'X-Mollie-Signature';
-		if ($gateway === 'stripe') {
-			$header = 'Stripe-Signature';
-		}
-
-		$provided = $this->request->getHeader($header);
-		if ($provided === '') {
-			return false;
-		}
-
-		// Stripe prefixes the header with "t=...,v1=<hex>"; extract the v1 segment.
-		if ($gateway === 'stripe' && str_contains($provided, 'v1=') === true) {
-			foreach (explode(',', $provided) as $part) {
-				$part = trim($part);
-				if (str_starts_with($part, 'v1=') === true) {
-					$provided = substr($part, 3);
-					break;
-				}
-			}
-		}
-
-		$expected = hash_hmac('sha256', $rawBody, $secret);
-
-		return hash_equals($expected, strtolower(trim($provided)));
-	}//end verifySignature()
-
-	/**
-	 * Normalise a Mollie/Stripe webhook payload into a gateway-agnostic event.
-	 *
-	 * @param string $gateway The gateway slug.
-	 * @param array<string, mixed> $payload The decoded JSON payload.
-	 *
-	 * @return array{paymentIntentId: string, outcome: string, errorCode: ?string, errorMessage: ?string}|null
-	 */
-	private function extractEvent(string $gateway, array $payload): ?array {
-		if ($gateway === 'stripe') {
-			return $this->extractStripeEvent(payload: $payload);
-		}
-
-		return $this->extractMollieEvent(payload: $payload);
-	}//end extractEvent()
-
-	/**
-	 * Normalise a Stripe webhook payload into a gateway-agnostic event.
-	 *
-	 * @param array<string, mixed> $payload The decoded JSON payload.
-	 *
-	 * @return array{paymentIntentId: string, outcome: string, errorCode: ?string, errorMessage: ?string}|null
-	 */
-	private function extractStripeEvent(array $payload): ?array {
-		$type = (string)($payload['type'] ?? '');
-		$object = ($payload['data']['object'] ?? []);
-		$intentId = (string)($object['id'] ?? '');
-		$outcome = match ($type) {
-			'payment_intent.amount_capturable_updated' => PaymentReconciliationService::OUTCOME_AUTHORIZED,
-			'payment_intent.succeeded', 'charge.captured' => PaymentReconciliationService::OUTCOME_CAPTURED,
-			'payment_intent.payment_failed' => PaymentReconciliationService::OUTCOME_FAILED,
-			'charge.refunded', 'payment_intent.canceled' => PaymentReconciliationService::OUTCOME_VOIDED,
-			default => '',
-		};
-
-		if ($outcome === '' || $intentId === '') {
-			return null;
-		}
-
-		$lastError = ($object['last_payment_error'] ?? []);
-		$errorCode = null;
-		$errorMessage = null;
-		if (isset($lastError['code']) === true) {
-			$errorCode = (string)$lastError['code'];
-		}
-
-		if (isset($lastError['message']) === true) {
-			$errorMessage = (string)$lastError['message'];
-		}
-
-		return [
-			'paymentIntentId' => $intentId,
-			'outcome' => $outcome,
-			'errorCode' => $errorCode,
-			'errorMessage' => $errorMessage,
-		];
-	}//end extractStripeEvent()
-
-	/**
-	 * Normalise a Mollie webhook payload into a gateway-agnostic event.
-	 *
-	 * Mollie posts { "id": "tr_XXXX", "status": "paid|failed|canceled|expired" }.
-	 * iDEAL captures directly, so a Mollie "paid" maps to OUTCOME_CAPTURED.
-	 *
-	 * @param array<string, mixed> $payload The decoded JSON payload.
-	 *
-	 * @return array{paymentIntentId: string, outcome: string, errorCode: ?string, errorMessage: ?string}|null
-	 */
-	private function extractMollieEvent(array $payload): ?array {
-		$intentId = (string)($payload['id'] ?? '');
-		$status = (string)($payload['status'] ?? '');
-		$outcome = match ($status) {
-			'paid' => PaymentReconciliationService::OUTCOME_CAPTURED,
-			'failed' => PaymentReconciliationService::OUTCOME_FAILED,
-			'expired' => PaymentReconciliationService::OUTCOME_FAILED,
-			'canceled' => PaymentReconciliationService::OUTCOME_VOIDED,
-			default => '',
-		};
-
-		if ($outcome === '' || $intentId === '') {
-			return null;
-		}
-
-		$errorCode = null;
-		$errorMessage = null;
-		if ($status === 'failed' || $status === 'expired') {
-			$errorCode = $status;
-		}
-
-		if ($status === 'failed') {
-			$errorMessage = 'Payment failed at gateway.';
-		}
-
-		return [
-			'paymentIntentId' => $intentId,
-			'outcome' => $outcome,
-			'errorCode' => $errorCode,
-			'errorMessage' => $errorMessage,
-		];
-	}//end extractMollieEvent()
+	}//end handle()
 }//end class

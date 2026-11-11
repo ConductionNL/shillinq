@@ -50,6 +50,7 @@ use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
+use OCA\Shillinq\Service\Dunning\DunningStageChoice;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
 use OCA\Shillinq\Service\Dunning\DunningStageSelector;
 use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
@@ -171,13 +172,11 @@ class DunningRunService {
 		array $params = [],
 		?DateTimeImmutable $now = null,
 	): ?array {
-		$choice = $this->chooseStage(
-			administrationId: $administrationId,
-			invoice: $invoice,
-			baseLadderId: $baseLadderId,
-			params: $params,
-			now: ($now ?? new DateTimeImmutable())
-		);
+		$selection = new DunningStageChoice(administrationId: $administrationId, invoice: $invoice);
+		$selection->baseLadderId = $baseLadderId;
+		$selection->params = $params;
+		$selection->now = ($now ?? new DateTimeImmutable());
+		$choice = $this->chooseStage(choice: $selection);
 		if ($choice === null) {
 			return null;
 		}
@@ -205,13 +204,10 @@ class DunningRunService {
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
 	 */
 	public function previewInvoice(string $administrationId, array $invoice, string $baseLadderId = '', ?DateTimeImmutable $now = null): ?array {
-		$choice = $this->chooseStage(
-			administrationId: $administrationId,
-			invoice: $invoice,
-			baseLadderId: $baseLadderId,
-			params: [],
-			now: ($now ?? new DateTimeImmutable())
-		);
+		$selection = new DunningStageChoice(administrationId: $administrationId, invoice: $invoice);
+		$selection->baseLadderId = $baseLadderId;
+		$selection->now = ($now ?? new DateTimeImmutable());
+		$choice = $this->chooseStage(choice: $selection);
 		if ($choice === null) {
 			return null;
 		}
@@ -231,71 +227,76 @@ class DunningRunService {
 	 * invoice is overdue, not declined or paused, has a ladder, a stage is due
 	 * by DunningStageSelector, and that stage has not gone out yet.
 	 *
-	 * @param string              $administrationId Administration scope.
-	 * @param array<string,mixed> $invoice          The invoice.
-	 * @param string              $baseLadderId     The base ladder; empty resolves it.
-	 * @param array<string,mixed> $params           Dispatch overrides.
-	 * @param DateTimeImmutable   $now              Now.
+	 * @param DunningStageChoice $choice The invoice, base ladder, dispatch overrides and now.
 	 *
 	 * @return array<string,mixed>|null The executeStage() params.
 	 */
-	private function chooseStage(string $administrationId, array $invoice, string $baseLadderId, array $params, DateTimeImmutable $now): ?array {
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-		$selector = new DunningStageSelector(logger: $this->logger);
-		$daysInArrears = $selector->daysOverdue(invoice: $invoice, now: $now);
-		// A contribution the parent declined is never reminded (REQ-SCON-014).
-		if ($invoiceId === '' || $daysInArrears === null || $this->voluntary->isDeclined(invoice: $invoice) === true
-			|| $this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true
-		) {
-			return null;
-		}
-
-		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
-		if ($baseLadderId === '') {
-			$baseLadderId = $this->baseLadderFor(administrationId: $administrationId, customerId: $customerId);
-		}
-
-		if ($baseLadderId === '') {
-			return null;
-		}
-
-		$resolved = $this->resolveLadderForKlant(administrationId: $administrationId, customerId: $customerId, baseLadderId: $baseLadderId);
-		$runs = $this->findAll(schema: 'DunningRun', filters: ['administrationId' => $administrationId, 'invoiceId' => $invoiceId]);
-		$stage = $selector->next(stages: $resolved['stages'], runs: $runs, daysInArrears: $daysInArrears, now: $now);
-		if ($stage === null) {
+	private function chooseStage(DunningStageChoice $choice): ?array {
+		$choice->selector = new DunningStageSelector(logger: $this->logger);
+		if ($this->isRemindable(choice: $choice) === false || $this->resolveStage(choice: $choice) === false) {
 			return null;
 		}
 
 		// A voluntary contribution gets the first stage once, without costs (REQ-SCON-008).
-		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
-			if ($runs !== []) {
-				return null;
-			}
-
-			$stage = ($selector->definition(stages: $resolved['stages'], stageNr: VoluntaryContributionPolicy::ONLY_STAGE) ?? $stage);
-			$stage['nr'] = VoluntaryContributionPolicy::ONLY_STAGE;
-			$params = $this->voluntary->stripCosts(params: $params);
-		}
-
-		// Idempotency: never send a stage that already went out for this invoice.
-		$stageNr = (int)($stage['nr'] ?? 1);
-		if (array_key_exists($stageNr, $selector->sentOn(runs: $runs)) === true) {
+		if ($this->voluntary->isVoluntary(invoice: $choice->invoice) === true
+			&& $choice->useOnlyStageOnce(costFreeParams: $this->voluntary->stripCosts(params: $choice->params)) === false
+		) {
 			return null;
 		}
 
-		return array_merge(
-			[
-				'invoiceId' => $invoiceId,
-				'ladderId' => (string)$resolved['ladderId'],
-				'stageNr' => $stageNr,
-				'channel' => (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL')),
-				'templateId' => (string)($params['templateId'] ?? ($stage['templateId'] ?? '')),
-				'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
-				'stage' => $stage,
-			],
-			$params
-		);
+		// Idempotency: never send a stage that already went out for this invoice.
+		$stageNr = (int)($choice->stage['nr'] ?? 1);
+		if (array_key_exists($stageNr, $choice->selector->sentOn(runs: $choice->runs)) === true) {
+			return null;
+		}
+
+		return $choice->stageParams(stageNr: $stageNr);
 	}//end chooseStage()
+
+	/**
+	 * True when the invoice can be reminded: it has an id, is overdue, was
+	 * not declined (a contribution the parent declined is never reminded,
+	 * REQ-SCON-014) and is not paused.
+	 *
+	 * @param DunningStageChoice $choice The stage choice.
+	 *
+	 * @return bool Whether the invoice can be reminded.
+	 */
+	private function isRemindable(DunningStageChoice $choice): bool {
+		if ($choice->isOverdue() === false || $this->voluntary->isDeclined(invoice: $choice->invoice) === true) {
+			return false;
+		}
+
+		return $this->hasActivePause(administrationId: $choice->administrationId, invoiceId: $choice->invoiceId) === false;
+	}//end isRemindable()
+
+	/**
+	 * Resolve the customer's ladder, the invoice's prior runs and the stage
+	 * the selector finds due; false when there is no ladder or no stage.
+	 *
+	 * @param DunningStageChoice $choice The stage choice.
+	 *
+	 * @return bool Whether a stage is due.
+	 */
+	private function resolveStage(DunningStageChoice $choice): bool {
+		$choice->customerId = (string)($choice->invoice['customerReference'] ?? ($choice->invoice['customerId'] ?? ''));
+		$baseLadderId = $choice->baseLadderId;
+		if ($baseLadderId === '') {
+			$baseLadderId = $this->baseLadderFor(administrationId: $choice->administrationId, customerId: $choice->customerId);
+		}
+
+		if ($baseLadderId === '') {
+			return false;
+		}
+
+		$choice->ladder = $this->resolveLadderForKlant(
+			administrationId: $choice->administrationId,
+			customerId: $choice->customerId,
+			baseLadderId: $baseLadderId
+		);
+		$choice->runs = $this->findAll(schema: 'DunningRun', filters: ['administrationId' => $choice->administrationId, 'invoiceId' => $choice->invoiceId]);
+		return $choice->chooseDueStage();
+	}//end resolveStage()
 
 	/**
 	 * The base ladder of a customer: the DunningLadder its `dunningPolicyRef`

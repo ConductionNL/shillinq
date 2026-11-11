@@ -1,0 +1,628 @@
+{
+    "full": [
+        {
+            "type": "cover",
+            "title": "Jaarrekening",
+            "subtitle": "Titel 9 BW2 — jaarrekening",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Soort jaarrekening": "enkelvoudig",
+                "Jurisdictie": "NL",
+                "Stelsel": "BW2-Titel9",
+                "Boekjaar": "2025-01-01 t/m 2025-12-31",
+                "Taal": "nl",
+                "Valuta": "EUR",
+                "Grootteklasse": "klein",
+                "Balanstotaal": "EUR 150.000,00",
+                "Netto-omzet": "EUR 480.000,50"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Balans per 2025-12-31",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Activa",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Vaste activa",
+                    "amount": 100000
+                },
+                {
+                    "label": "Vlottende activa",
+                    "amount": 50000.25
+                }
+            ],
+            "total": {
+                "label": "Totaal activa",
+                "amount": 150000.25
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Passiva",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Eigen vermogen",
+                    "amount": 80000
+                },
+                {
+                    "label": "Voorzieningen",
+                    "amount": 10000
+                },
+                {
+                    "label": "Schulden",
+                    "amount": 60000.25
+                }
+            ],
+            "total": {
+                "label": "Totaal passiva",
+                "amount": 150000.25
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Winst- en verliesrekening",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Resultatenrekening",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Netto-omzet",
+                    "amount": 480000.5
+                },
+                {
+                    "label": "Bedrijfslasten",
+                    "amount": -400000
+                },
+                {
+                    "label": "Financiële baten en lasten",
+                    "amount": -2500
+                }
+            ],
+            "total": {
+                "label": "Resultaat boekjaar",
+                "amount": 77500.5
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "note",
+            "text": "Presentatiemodel: functioneel (cost-of-sales)."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Toelichting",
+            "depth": 2
+        },
+        {
+            "type": "text",
+            "text": "Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW, met toepassing van het regime voor de grootteklasse \"klein\".",
+            "style": "value",
+            "paragraphStyle": "default"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Controle en deponering",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Gecontroleerd": "Nee"
+            }
+        }
+    ],
+    "mismatchUsd": [
+        {
+            "type": "cover",
+            "title": "Jaarrekening",
+            "subtitle": "Titel 9 BW2 — jaarrekening",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Soort jaarrekening": "enkelvoudig",
+                "Jurisdictie": "NL",
+                "Stelsel": "BW2-Titel9",
+                "Boekjaar": "2025-01-01 t/m 2025-12-31",
+                "Taal": "nl",
+                "Valuta": "USD",
+                "Grootteklasse": "klein",
+                "Balanstotaal": "USD 150.000,00",
+                "Netto-omzet": "USD 480.000,50"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Balans per 2025-12-31",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Activa",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Vaste activa",
+                    "amount": 10
+                },
+                {
+                    "label": "Vlottende activa",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Totaal activa",
+                "amount": 10
+            },
+            "currency": "USD"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Passiva",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Eigen vermogen",
+                    "amount": 9.99
+                },
+                {
+                    "label": "Voorzieningen",
+                    "amount": 0
+                },
+                {
+                    "label": "Schulden",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Totaal passiva",
+                "amount": 9.99
+            },
+            "currency": "USD"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "note",
+            "text": "Let op: activa (USD 10,00) en passiva (USD 9,99) sluiten niet op elkaar aan."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Winst- en verliesrekening",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Resultatenrekening",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Netto-omzet",
+                    "amount": 480000.5
+                },
+                {
+                    "label": "Bedrijfslasten",
+                    "amount": -400000
+                },
+                {
+                    "label": "Financiële baten en lasten",
+                    "amount": -2500
+                }
+            ],
+            "total": {
+                "label": "Resultaat boekjaar",
+                "amount": 77500.5
+            },
+            "currency": "USD"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "note",
+            "text": "Presentatiemodel: categoriaal (type-of-expense)."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Toelichting",
+            "depth": 2
+        },
+        {
+            "type": "text",
+            "text": "Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW, met toepassing van het regime voor de grootteklasse \"klein\".",
+            "style": "value",
+            "paragraphStyle": "default"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Controle en deponering",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Gecontroleerd": "Nee"
+            }
+        }
+    ],
+    "balanced": [
+        {
+            "type": "cover",
+            "title": "Jaarrekening",
+            "subtitle": "Titel 9 BW2 — jaarrekening",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Soort jaarrekening": "enkelvoudig",
+                "Jurisdictie": "NL",
+                "Stelsel": "BW2-Titel9",
+                "Boekjaar": "2025-01-01 t/m 2025-12-31",
+                "Taal": "nl",
+                "Valuta": "EUR",
+                "Grootteklasse": "klein",
+                "Balanstotaal": "EUR 150.000,00",
+                "Netto-omzet": "EUR 480.000,50"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Balans per 2025-12-31",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Activa",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Vaste activa",
+                    "amount": 1
+                },
+                {
+                    "label": "Vlottende activa",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Totaal activa",
+                "amount": 1
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Passiva",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Eigen vermogen",
+                    "amount": 1.004
+                },
+                {
+                    "label": "Voorzieningen",
+                    "amount": 0
+                },
+                {
+                    "label": "Schulden",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Totaal passiva",
+                "amount": 1.004
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Winst- en verliesrekening",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Resultatenrekening",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Netto-omzet",
+                    "amount": 0
+                },
+                {
+                    "label": "Bedrijfslasten",
+                    "amount": 0
+                },
+                {
+                    "label": "Financiële baten en lasten",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Resultaat boekjaar",
+                "amount": 12
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "note",
+            "text": "Presentatiemodel: functioneel (cost-of-sales)."
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Toelichting",
+            "depth": 2
+        },
+        {
+            "type": "text",
+            "text": "Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW, met toepassing van het regime voor de grootteklasse \"klein\".",
+            "style": "value",
+            "paragraphStyle": "default"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Controle en deponering",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Gecontroleerd": "Nee"
+            }
+        }
+    ],
+    "bare": [
+        {
+            "type": "cover",
+            "title": "Jaarrekening",
+            "subtitle": "Titel 9 BW2 — jaarrekening",
+            "meta": [
+                "Administratie: adm-1",
+                "Gegenereerd: NOW"
+            ]
+        },
+        {
+            "type": "heading",
+            "text": "Kerngegevens",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Valuta": "EUR",
+                "Balanstotaal": "EUR 0,00",
+                "Netto-omzet": "EUR 0,00"
+            }
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Balans per ",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Activa",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Vaste activa",
+                    "amount": 0
+                },
+                {
+                    "label": "Vlottende activa",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Totaal activa",
+                "amount": 0
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Passiva",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Eigen vermogen",
+                    "amount": 0
+                },
+                {
+                    "label": "Voorzieningen",
+                    "amount": 0
+                },
+                {
+                    "label": "Schulden",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Totaal passiva",
+                "amount": 0
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Winst- en verliesrekening",
+            "depth": 2
+        },
+        {
+            "type": "amountTable",
+            "labelHead": "Resultatenrekening",
+            "amountHead": "Bedrag",
+            "lines": [
+                {
+                    "label": "Netto-omzet",
+                    "amount": 0
+                },
+                {
+                    "label": "Bedrijfslasten",
+                    "amount": 0
+                },
+                {
+                    "label": "Financiële baten en lasten",
+                    "amount": 0
+                }
+            ],
+            "total": {
+                "label": "Resultaat boekjaar",
+                "amount": 0
+            },
+            "currency": "EUR"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Toelichting",
+            "depth": 2
+        },
+        {
+            "type": "text",
+            "text": "Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW.",
+            "style": "value",
+            "paragraphStyle": "default"
+        },
+        {
+            "type": "textBreak",
+            "count": 1
+        },
+        {
+            "type": "heading",
+            "text": "Controle en deponering",
+            "depth": 2
+        },
+        {
+            "type": "detailsTable",
+            "rows": {
+                "Gecontroleerd": "Nee"
+            }
+        }
+    ]
+}

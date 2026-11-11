@@ -112,50 +112,7 @@ class BookingCancellationGuard {
 				return false;
 			}
 
-			$invoiceId = (string)($order['invoiceId'] ?? '');
-			if ($invoiceId === '') {
-				// Not yet invoiced — this transition does not apply; deny.
-				$this->logger->info(
-					'BookingCancellationGuard: order has no invoice — cancelAfterInvoice not applicable',
-					['orderId' => $orderId]
-				);
-				return false;
-			}
-
-			$invoice = $this->findOne(
-				schema: 'Invoice',
-				filters: [
-					'invoiceId' => $invoiceId,
-					'administrationId' => (string)($order['administrationId'] ?? ''),
-				]
-			);
-
-			if ($invoice === null) {
-				$this->logger->info(
-					'BookingCancellationGuard: linked invoice not found — denying cancellation',
-					['orderId' => $orderId, 'invoiceId' => $invoiceId]
-				);
-				return false;
-			}
-
-			if (in_array((string)($invoice['state'] ?? ''), self::REVERSIBLE_INVOICE_STATES, true) === false) {
-				$this->logger->info(
-					'BookingCancellationGuard: invoice not in a reversible state — denying cancellation',
-					['orderId' => $orderId, 'invoiceId' => $invoiceId, 'state' => ($invoice['state'] ?? '')]
-				);
-				return false;
-			}
-
-			// REQ-DI-006 idempotency: one CreditNote per invoice.
-			if ($this->creditNoteExistsFor(invoiceId: $invoiceId, administrationId: (string)($order['administrationId'] ?? '')) === true) {
-				$this->logger->info(
-					'BookingCancellationGuard: credit note already exists — denying duplicate reversal',
-					['orderId' => $orderId, 'invoiceId' => $invoiceId]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->invoicedOrderCancellable(orderId: $orderId, order: $order);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BookingCancellationGuard: canCancel failed — denying cancellation (fail-closed)',
@@ -165,6 +122,90 @@ class BookingCancellationGuard {
 		}//end try
 
 	}//end canCancel()
+
+	/**
+	 * An order is cancellable after invoicing while its invoice is reversible.
+	 *
+	 * @param string $orderId The Order.id.
+	 * @param array<string,mixed> $order The Order.
+	 *
+	 * @return bool True when the cancellation may proceed.
+	 */
+	private function invoicedOrderCancellable(string $orderId, array $order): bool {
+		$invoiceId = (string)($order['invoiceId'] ?? '');
+		if ($invoiceId === '') {
+			// Not yet invoiced — this transition does not apply; deny.
+			return $this->deny(
+				message: 'BookingCancellationGuard: order has no invoice — cancelAfterInvoice not applicable',
+				context: ['orderId' => $orderId]
+			);
+		}
+
+		$check = new CancelAfterInvoiceCheck(
+			orderId: $orderId,
+			invoiceId: $invoiceId,
+			administrationId: (string)($order['administrationId'] ?? '')
+		);
+		$invoice = $this->findOne(
+			schema: 'Invoice',
+			filters: [
+				'invoiceId' => $invoiceId,
+				'administrationId' => $check->administrationId,
+			]
+		);
+
+		return $this->invoiceReversible(check: $check, invoice: $invoice);
+
+	}//end invoicedOrderCancellable()
+
+	/**
+	 * The invoice exists, is in a reversible state and has no credit note yet.
+	 *
+	 * @param CancelAfterInvoiceCheck $check The order and invoice being checked.
+	 * @param array<string,mixed>|null $invoice The linked invoice, or null.
+	 *
+	 * @return bool True when a reversing credit note may be issued.
+	 */
+	private function invoiceReversible(CancelAfterInvoiceCheck $check, array|null $invoice): bool {
+		if ($invoice === null) {
+			return $this->deny(
+				message: 'BookingCancellationGuard: linked invoice not found — denying cancellation',
+				context: ['orderId' => $check->orderId, 'invoiceId' => $check->invoiceId]
+			);
+		}
+
+		if (in_array((string)($invoice['state'] ?? ''), self::REVERSIBLE_INVOICE_STATES, true) === false) {
+			return $this->deny(
+				message: 'BookingCancellationGuard: invoice not in a reversible state — denying cancellation',
+				context: ['orderId' => $check->orderId, 'invoiceId' => $check->invoiceId, 'state' => ($invoice['state'] ?? '')]
+			);
+		}
+
+		// REQ-DI-006 idempotency: one CreditNote per invoice.
+		if ($this->creditNoteExistsFor(invoiceId: $check->invoiceId, administrationId: $check->administrationId) === true) {
+			return $this->deny(
+				message: 'BookingCancellationGuard: credit note already exists — denying duplicate reversal',
+				context: ['orderId' => $check->orderId, 'invoiceId' => $check->invoiceId]
+			);
+		}
+
+		return true;
+
+	}//end invoiceReversible()
+
+	/**
+	 * Log a denial at info level and deny.
+	 *
+	 * @param string $message The log message.
+	 * @param array<string,mixed> $context The log context.
+	 *
+	 * @return false Always.
+	 */
+	private function deny(string $message, array $context): bool {
+		$this->logger->info($message, $context);
+		return false;
+
+	}//end deny()
 
 	/**
 	 * Compose the reversing CreditNote payload for a cancelled, invoiced order

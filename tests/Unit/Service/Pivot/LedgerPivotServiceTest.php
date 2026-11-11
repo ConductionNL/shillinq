@@ -212,4 +212,47 @@ class LedgerPivotServiceTest extends TestCase {
 		$this->assertSame([], RegisterSchema::errors('GLLine', $line));
 		$this->assertSame(['revenue', 'expenses'], GlLineResultStamps::PNL_ACCOUNT_TYPES);
 	}
+
+	/**
+	 * Golden: the pivot of every axis pair, and the refusal message of each bad request.
+	 *
+	 * @return void
+	 */
+	public function testEveryAxisPairMatchesTheGolden(): void {
+		$service = $this->service($this->vanDijk());
+		$answers = [];
+		foreach (LedgerPivotService::AXES as $rowAxis) {
+			foreach (LedgerPivotService::AXES as $columnAxis) {
+				if ($rowAxis !== $columnAxis) {
+					$answers[$rowAxis . ' x ' . $columnAxis] = $service->pivot(self::ADM, $rowAxis, $columnAxis, '2026-01-01', '2026-12-31');
+				}
+			}
+		}
+
+		$answers['period x account, one quarter'] = $service->pivot(self::ADM, 'period', 'account', '2026-04-01', '2026-06-30');
+		foreach ([
+			['vatCode', 'period', '2026-01-01', '2026-12-31'],
+			['period', 'vatCode', '2026-01-01', '2026-12-31'],
+			['period', 'period', '2026-01-01', '2026-12-31'],
+			['account', 'period', '2026-13-01', '2026-12-31'],
+			['account', 'period', '2026-01-01', '26-12-31'],
+			['account', 'period', '2026-12-31', '2026-01-01'],
+			['account', 'period', '2023-01-01', '2026-12-31'],
+		] as $request) {
+			try {
+				$service->pivot(self::ADM, ...$request);
+				$answers['refused ' . implode(' ', $request)] = 'accepted';
+			} catch (InvalidArgumentException $e) {
+				$answers['refused ' . implode(' ', $request)] = $e->getMessage();
+			}
+		}
+
+		$golden = __DIR__ . '/fixtures/ledger-pivot.golden.json';
+		$actual = json_decode(json_encode($answers, JSON_PRESERVE_ZERO_FRACTION), true);
+		if (getenv('UPDATE_GOLDEN') === '1') {
+			file_put_contents($golden, json_encode($actual, JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($golden), true), $actual);
+	}
 }

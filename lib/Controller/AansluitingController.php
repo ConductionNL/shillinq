@@ -103,29 +103,35 @@ class AansluitingController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function compute(string $reconciliationId): JSONResponse {
-		$authError = $this->requireUser();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$error = $this->validateId(value: $reconciliationId, label: 'reconciliationId');
-		if ($error !== null) {
-			return $error;
+		$refusal = $this->requireUser() ?? $this->validateId(value: $reconciliationId, label: 'reconciliationId');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$periodId = trim((string)$this->request->getParam('period_id', ''));
-		$error = $this->validateId(value: $periodId, label: 'period_id');
+		$error    = $this->validateId(value: $periodId, label: 'period_id');
 		if ($error !== null) {
 			return $error;
 		}
 
+		return $this->computed(reconciliationId: $reconciliationId, periodId: $periodId);
+	}//end compute()
+
+	/**
+	 * Compute the result for the definition and period.
+	 *
+	 * @param string $reconciliationId The Aansluiting definition id.
+	 * @param string $periodId         The fiscal period.
+	 *
+	 * @return JSONResponse
+	 */
+	private function computed(string $reconciliationId, string $periodId): JSONResponse {
 		return $this->run(
 			action: 'compute aansluiting',
 			compute: fn (): array => $this->reconciliationService->compute(reconciliationId: $reconciliationId, periodId: $periodId),
 			context: ['reconciliationId' => $reconciliationId, 'periodId' => $periodId]
 		);
-
-	}//end compute()
+	}//end computed()
 
 	/**
 	 * Record an explanation for an open AansluitingResult (REQ-AANS-006).
@@ -142,14 +148,9 @@ class AansluitingController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function explain(string $resultId): JSONResponse {
-		$authError = $this->requireUser();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$error = $this->validateId(value: $resultId, label: 'resultId');
-		if ($error !== null) {
-			return $error;
+		$refusal = $this->resultRefusal(resultId: $resultId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$reasonCode = trim((string)$this->request->getParam('reason_code', ''));
@@ -158,20 +159,31 @@ class AansluitingController extends Controller {
 			return new JSONResponse(['error' => 'reason_text is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$actor = (string)($this->userSession->getUser()?->getUID() ?? 'unknown');
+		return $this->explained(resultId: $resultId, reason: [$reasonCode, $reasonText]);
+	}//end explain()
+
+	/**
+	 * Record the explanation as the acting user.
+	 *
+	 * @param string                   $resultId The AansluitingResult id.
+	 * @param array{0:string,1:string} $reason   The trimmed reason code and reason text.
+	 *
+	 * @return JSONResponse
+	 */
+	private function explained(string $resultId, array $reason): JSONResponse {
+		$actor = $this->actor();
 
 		return $this->run(
 			action: 'explain aansluiting result',
 			compute: fn (): array => $this->reconciliationService->explain(
 				resultId: $resultId,
-				reasonCode: $reasonCode,
-				reasonText: $reasonText,
+				reasonCode: $reason[0],
+				reasonText: $reason[1],
 				actor: $actor
 			),
 			context: ['resultId' => $resultId]
 		);
-
-	}//end explain()
+	}//end explained()
 
 	/**
 	 * Confirm an explained AansluitingResult is settled (REQ-AANS-006).
@@ -184,24 +196,18 @@ class AansluitingController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function resolve(string $resultId): JSONResponse {
-		$authError = $this->requireUser();
-		if ($authError !== null) {
-			return $authError;
+		$refusal = $this->resultRefusal(resultId: $resultId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		$error = $this->validateId(value: $resultId, label: 'resultId');
-		if ($error !== null) {
-			return $error;
-		}
-
-		$actor = (string)($this->userSession->getUser()?->getUID() ?? 'unknown');
+		$actor = $this->actor();
 
 		return $this->run(
 			action: 'resolve aansluiting result',
 			compute: fn (): array => $this->reconciliationService->resolve(resultId: $resultId, actor: $actor),
 			context: ['resultId' => $resultId]
 		);
-
 	}//end resolve()
 
 	/**
@@ -218,26 +224,40 @@ class AansluitingController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function reopen(string $resultId): JSONResponse {
-		$authError = $this->requireUser();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$error = $this->validateId(value: $resultId, label: 'resultId');
-		if ($error !== null) {
-			return $error;
+		$refusal = $this->resultRefusal(resultId: $resultId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$reason = trim((string)$this->request->getParam('reason', ''));
-		$actor = (string)($this->userSession->getUser()?->getUID() ?? 'unknown');
+		$actor  = $this->actor();
 
 		return $this->run(
 			action: 'reopen aansluiting result',
 			compute: fn (): array => $this->reconciliationService->reopen(resultId: $resultId, actor: $actor, reason: $reason),
 			context: ['resultId' => $resultId]
 		);
-
 	}//end reopen()
+
+	/**
+	 * The 401 without a session, the 400 for a blank or malformed result id, or null.
+	 *
+	 * @param string $resultId The AansluitingResult id (path parameter).
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function resultRefusal(string $resultId): JSONResponse|null {
+		return $this->requireUser() ?? $this->validateId(value: $resultId, label: 'resultId');
+	}//end resultRefusal()
+
+	/**
+	 * The acting user's id for the audit trail, 'unknown' without a session.
+	 *
+	 * @return string
+	 */
+	private function actor(): string {
+		return (string)($this->userSession->getUser()?->getUID() ?? 'unknown');
+	}//end actor()
 
 	/**
 	 * Validate a short identifier parameter; returns a 400 JSONResponse or null.

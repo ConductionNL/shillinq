@@ -100,53 +100,39 @@ class BadoControleprotocolController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function aggregation(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$protocolId = trim((string)$this->request->getParam('protocol_id', ''));
-
-		if ($protocolId === '') {
-			return new JSONResponse(
-				['error' => 'protocol_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		// Reject obviously malformed identifiers before touching the data layer
-		// (REQ-001) — protocol identifiers are short slugs / UUIDs.
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $protocolId) !== 1) {
-			return new JSONResponse(
-				['error' => 'protocol_id must be a valid protocol identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		// ADR-005 / REQ-MA-001. The regex above validates the id's SHAPE; this
-		// authorises the caller for the tenant that owns it. The protocol's
-		// organisationId is the only tenant field in the bundle — the six child
-		// schemas carry none and hang off the protocol's FK.
-		$error = $this->requireAccessibleProtocol(protocolId: $protocolId);
-		if ($error !== null) {
-			return $error;
+		$protocolId = $this->accessibleProtocol();
+		if ($protocolId instanceof JSONResponse) {
+			return $protocolId;
 		}
 
 		try {
 			$result = $this->service->computeAggregation(protocolId: $protocolId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'BadoControleprotocolController: failed to compute audit aggregation',
-				['protocolId' => $protocolId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute audit aggregation'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return $this->aggregationFailed(protocolId: $protocolId, e: $e);
+		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
 	}//end aggregation()
+
+	/**
+	 * Log a failed aggregation and answer 500.
+	 *
+	 * @param string     $protocolId The protocol.
+	 * @param \Throwable $e          The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function aggregationFailed(string $protocolId, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'BadoControleprotocolController: failed to compute audit aggregation',
+			['protocolId' => $protocolId, 'exception' => $e->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute audit aggregation'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end aggregationFailed()
 
 	/**
 	 * Export the accountantsdossier bundle for a Controleprotocol (REQ-010, Task 16).
@@ -171,61 +157,109 @@ class BadoControleprotocolController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function exportAccountantsdossier(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$protocolId = trim((string)$this->request->getParam('protocol_id', ''));
-
-		if ($protocolId === '') {
-			return new JSONResponse(
-				['error' => 'protocol_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $protocolId) !== 1) {
-			return new JSONResponse(
-				['error' => 'protocol_id must be a valid protocol identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		// ADR-005 / REQ-MA-001. The regex above validates the id's SHAPE; this
-		// authorises the caller for the tenant that owns it. The protocol's
-		// organisationId is the only tenant field in the bundle — the six child
-		// schemas carry none and hang off the protocol's FK.
-		$error = $this->requireAccessibleProtocol(protocolId: $protocolId);
-		if ($error !== null) {
-			return $error;
+		$protocolId = $this->accessibleProtocol();
+		if ($protocolId instanceof JSONResponse) {
+			return $protocolId;
 		}
 
 		try {
 			$envelope = $this->exporter->exportDossier(protocolId: $protocolId);
 		} catch (\RuntimeException $e) {
-			$this->logger->info(
-				'BadoControleprotocolController: accountantsdossier export rejected',
-				['protocolId' => $protocolId, 'reason' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				['error' => 'Accountantsdossier not available for this protocol'],
-				Http::STATUS_NOT_FOUND
-			);
+			return $this->exportRejected(protocolId: $protocolId, e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'BadoControleprotocolController: failed to export accountantsdossier',
-				['protocolId' => $protocolId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to export accountantsdossier'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->exportFailed(protocolId: $protocolId, e: $e);
 		}//end try
 
 		return new JSONResponse($envelope, Http::STATUS_OK);
 	}//end exportAccountantsdossier()
+
+	/**
+	 * Log a refused export and answer 404.
+	 *
+	 * @param string            $protocolId The protocol.
+	 * @param \RuntimeException $e          The refusal.
+	 *
+	 * @return JSONResponse
+	 */
+	private function exportRejected(string $protocolId, \RuntimeException $e): JSONResponse {
+		$this->logger->info(
+			'BadoControleprotocolController: accountantsdossier export rejected',
+			['protocolId' => $protocolId, 'reason' => $e->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Accountantsdossier not available for this protocol'],
+			Http::STATUS_NOT_FOUND
+		);
+	}//end exportRejected()
+
+	/**
+	 * Log a failed export and answer 500.
+	 *
+	 * @param string     $protocolId The protocol.
+	 * @param \Throwable $e          The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function exportFailed(string $protocolId, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'BadoControleprotocolController: failed to export accountantsdossier',
+			['protocolId' => $protocolId, 'exception' => $e->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to export accountantsdossier'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end exportFailed()
+
+	/**
+	 * The protocol the caller may read, or the refusal: 401 anonymous, 400
+	 * without a well-formed protocol_id, a masked 404 for a protocol outside
+	 * the caller's tenant.
+	 *
+	 * Reject obviously malformed identifiers before touching the data layer
+	 * (REQ-001) — protocol identifiers are short slugs / UUIDs.
+	 *
+	 * ADR-005 / REQ-MA-001. The regex validates the id's SHAPE; the tenant
+	 * check authorises the caller for the tenant that owns it. The protocol's
+	 * organisationId is the only tenant field in the bundle — the six child
+	 * schemas carry none and hang off the protocol's FK.
+	 *
+	 * @return string|JSONResponse The protocol id, or the refusal.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function accessibleProtocol(): string|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$protocolId = trim((string)$this->request->getParam('protocol_id', ''));
+		if ($protocolId === '') {
+			return $this->badRequest(error: 'protocol_id is required');
+		}
+
+		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $protocolId) !== 1) {
+			return $this->badRequest(error: 'protocol_id must be a valid protocol identifier');
+		}
+
+		return $this->requireAccessibleProtocol(protocolId: $protocolId) ?? $protocolId;
+	}//end accessibleProtocol()
+
+	/**
+	 * A 400 with an error.
+	 *
+	 * @param string $error The error.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $error): JSONResponse {
+		return new JSONResponse(
+			['error' => $error],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end badRequest()
 
 	/**
 	 * Authorise the caller for the tenant that owns a Controleprotocol (ADR-005).

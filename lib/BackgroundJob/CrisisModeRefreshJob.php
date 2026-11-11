@@ -111,90 +111,96 @@ class CrisisModeRefreshJob extends TimedJob {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
-
-			$horizons = $objectService
-				->setRegister($registerSlug)
-				->setSchema('CashflowForecastHorizon')
-				->findAll(
-					[
-						'filters' => ['lifecycleState' => 'active'],
-					]
-				);
-
-			$refreshed = 0;
-			foreach ($horizons as $horizon) {
-				$horizonId = $this->extractField(entity: $horizon, field: 'horizonId');
-				if ($horizonId === null) {
-					continue;
-				}
-
-				// Find weeks 1-4 with negative eindSaldo.
-				$crisisWeeks = $objectService
-					->setRegister($registerSlug)
-					->setSchema('CashflowWeek')
-					->findAll(
-						[
-							'filters' => ['horizonId' => $horizonId],
-							'limit' => 4,
-							'order' => ['weekNumber' => 'ASC'],
-						]
-					);
-
-				$hasCrisis = false;
-				foreach ($crisisWeeks as $week) {
-					$balance = $this->extractField(entity: $week, field: 'closingBalance');
-					if ($balance !== null && (float)$balance < 0) {
-						$hasCrisis = true;
-						break;
-					}
-				}
-
-				if ($hasCrisis === true) {
-					// Bump rolledOp so the dashboard reflects the recompute.
-					$objectService
-						->setRegister($registerSlug)
-						->setSchema('CashflowForecastHorizon')
-						->saveObject(
-							object: [
-								'horizonId' => $horizonId,
-								'rolledOn' => date('c'),
-							]
-						);
-
-					$refreshed++;
-				}
-			}//end foreach
-
-			$this->logger->info('CrisisModeRefreshJob: refreshed ' . $refreshed . ' horizon(s).');
+			$this->refreshCrisisHorizons();
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'CrisisModeRefreshJob failed: ' . $e->getMessage(),
 				['exception' => $e]
 			);
-		}//end try
+		}
 
 	}//end runAsJob()
 
 	/**
-	 * Defensive field extractor.
+	 * Roll every active horizon in crisis and log how many were rolled.
 	 *
-	 * @param mixed $entity Entity or array.
-	 * @param string $field Field name.
-	 *
-	 * @return mixed
+	 * @return void
 	 */
-	private function extractField(mixed $entity, string $field): mixed {
-		if (is_array($entity) === true) {
-			return ($entity[$field] ?? null);
+	private function refreshCrisisHorizons(): void {
+		$run = new CashflowHorizonRun(
+			objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+			register: $this->settingsService->getRegisterSlug(),
+		);
+
+		foreach ($run->activeHorizons() as $horizon) {
+			$horizonId = $run->field(entity: $horizon, field: 'horizonId');
+			if ($horizonId !== null && $this->isInCrisis(run: $run, horizonId: $horizonId) === true) {
+				$this->markRolled(run: $run, horizonId: $horizonId);
+			}
 		}
 
-		$getter = 'get' . ucfirst($field);
-		if (method_exists($entity, $getter) === true) {
-			return $entity->{$getter}();
+		$this->logger->info('CrisisModeRefreshJob: refreshed ' . $run->count . ' horizon(s).');
+
+	}//end refreshCrisisHorizons()
+
+	/**
+	 * Whether one of the horizon's first four weeks closes negative.
+	 *
+	 * @param CashflowHorizonRun $run The run.
+	 * @param mixed $horizonId The horizon.
+	 *
+	 * @return bool
+	 */
+	private function isInCrisis(CashflowHorizonRun $run, mixed $horizonId): bool {
+		foreach ($this->firstWeeks(run: $run, horizonId: $horizonId) as $week) {
+			$balance = $run->field(entity: $week, field: 'closingBalance');
+			if ($balance !== null && (float)$balance < 0) {
+				return true;
+			}
 		}
 
-		return null;
-	}//end extractField()
+		return false;
+
+	}//end isInCrisis()
+
+	/**
+	 * The horizon's weeks 1-4, in order.
+	 *
+	 * @param CashflowHorizonRun $run The run.
+	 * @param mixed $horizonId The horizon.
+	 *
+	 * @return iterable<mixed>
+	 */
+	private function firstWeeks(CashflowHorizonRun $run, mixed $horizonId): iterable {
+		return $run->scoped(schema: 'CashflowWeek')
+			->findAll(
+				[
+					'filters' => ['horizonId' => $horizonId],
+					'limit' => 4,
+					'order' => ['weekNumber' => 'ASC'],
+				]
+			);
+
+	}//end firstWeeks()
+
+	/**
+	 * Bump rolledOn so the dashboard reflects the recompute.
+	 *
+	 * @param CashflowHorizonRun $run The run.
+	 * @param mixed $horizonId The horizon.
+	 *
+	 * @return void
+	 */
+	private function markRolled(CashflowHorizonRun $run, mixed $horizonId): void {
+		$run->scoped(schema: 'CashflowForecastHorizon')
+			->saveObject(
+				object: [
+					'horizonId' => $horizonId,
+					'rolledOn' => date('c'),
+				]
+			);
+		$run->count++;
+
+	}//end markRolled()
+
 }//end class

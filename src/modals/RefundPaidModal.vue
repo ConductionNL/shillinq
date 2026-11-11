@@ -160,6 +160,26 @@ export default {
 		 */
 		async submit() {
 			this.error = ''
+			const fields = this.paidFields()
+			if (fields === null) {
+				return
+			}
+			this.submitting = true
+			try {
+				await this.postPaid(fields)
+			} catch (error) {
+				this.error = refundError(error, t('shillinq', 'The refund could not be marked paid.'))
+			} finally {
+				this.submitting = false
+			}
+		},
+
+		/**
+		 * The bank reference and account, or null with an error when either is missing.
+		 *
+		 * @return {{bankReference: string, bankAccount: string}|null} The fields.
+		 */
+		paidFields() {
 			const bankReference = String(this.bankReference || '').trim()
 			const bankAccount = String(this.bankAccount?.value || '')
 			if (bankReference === '' || bankAccount === '') {
@@ -167,24 +187,21 @@ export default {
 					'shillinq',
 					'Fill in the bank reference and choose the bank account.',
 				)
-				return
+				return null
 			}
-			this.submitting = true
-			try {
-				const response = await axios.post(
-					refundStepUrl(this.paymentRequest.id, 'paid'),
-					{ bankReference, bankAccount },
-				)
-				showSuccess(t('shillinq', 'Refund marked paid.'))
-				this.$emit('close', response.data)
-			} catch (error) {
-				this.error = refundError(
-					error,
-					t('shillinq', 'The refund could not be marked paid.'),
-				)
-			} finally {
-				this.submitting = false
-			}
+			return { bankReference, bankAccount }
+		},
+
+		/**
+		 * Post the bank payment, announce it and close with the server's answer.
+		 *
+		 * @param {{bankReference: string, bankAccount: string}} fields The payment fields.
+		 * @return {Promise<void>}
+		 */
+		async postPaid(fields) {
+			const response = await axios.post(refundStepUrl(this.paymentRequest.id, 'paid'), fields)
+			showSuccess(t('shillinq', 'Refund marked paid.'))
+			this.$emit('close', response.data)
 		},
 
 		/**

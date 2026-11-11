@@ -107,65 +107,142 @@ class BbvProgrammeBudgetController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function programmeBudgetVsActuals(): JSONResponse {
+		$refusal = $this->unauthenticated();
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$query = $this->dashboardQuery();
+		if ($query instanceof JSONResponse) {
+			return $query;
+		}
+
+		return $this->dashboard(query: $query);
+
+	}//end programmeBudgetVsActuals()
+
+	/**
+	 * The 401 for an anonymous caller, or null.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function unauthenticated(): ?JSONResponse {
 		if ($this->adminContext->currentUserId() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Not logged in')],
-				Http::STATUS_UNAUTHORIZED
-			);
+			return $this->errorResponse(error: $this->l10n->t('Not logged in'), status: Http::STATUS_UNAUTHORIZED);
 		}
 
+		return null;
+	}//end unauthenticated()
+
+	/**
+	 * The validated filters, or the 400 for a malformed fiscal year, an
+	 * undeclared programme or an undeclared status — in that order.
+	 *
+	 * @return BbvDashboardQuery|JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
+	 */
+	private function dashboardQuery(): BbvDashboardQuery|JSONResponse {
+		$fiscalYear = $this->requestedFiscalYear();
+		if ($fiscalYear instanceof JSONResponse) {
+			return $fiscalYear;
+		}
+
+		return $this->filteredQuery(fiscalYear: $fiscalYear);
+	}//end dashboardQuery()
+
+	/**
+	 * The requested fiscal year: null for none or "all", or the 400 for one
+	 * that is not four digits.
+	 *
+	 * @return int|JSONResponse|null
+	 */
+	private function requestedFiscalYear(): int|JSONResponse|null {
 		$fiscalYearRaw = trim((string)$this->request->getParam('fiscalYear', ''));
-		$fiscalYear = null;
-		if ($fiscalYearRaw !== '' && $fiscalYearRaw !== 'all') {
-			if (preg_match('/^\d{4}$/', $fiscalYearRaw) !== 1) {
-				return new JSONResponse(
-					['error' => $this->l10n->t('fiscalYear must be a four-digit year')],
-					Http::STATUS_BAD_REQUEST
-				);
-			}
-
-			$fiscalYear = (int)$fiscalYearRaw;
+		if ($fiscalYearRaw === '' || $fiscalYearRaw === 'all') {
+			return null;
 		}
 
+		if (preg_match('/^\d{4}$/', $fiscalYearRaw) !== 1) {
+			return $this->errorResponse(error: $this->l10n->t('fiscalYear must be a four-digit year'), status: Http::STATUS_BAD_REQUEST);
+		}
+
+		return (int)$fiscalYearRaw;
+	}//end requestedFiscalYear()
+
+	/**
+	 * The query with the programme and status filters, or the 400 for an undeclared one.
+	 *
+	 * @param int|null $fiscalYear The fiscal year, null for all years.
+	 *
+	 * @return BbvDashboardQuery|JSONResponse
+	 */
+	private function filteredQuery(int|null $fiscalYear): BbvDashboardQuery|JSONResponse {
 		$programmes = $this->listParam(
 			name: 'programme',
 			allowed: BbvProgrammeBudgetService::PROGRAMMES
 		);
 		if ($programmes === false) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('programme must be one of the declared BBV programmes')],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->errorResponse(error: $this->l10n->t('programme must be one of the declared BBV programmes'), status: Http::STATUS_BAD_REQUEST);
 		}
 
 		$statuses = $this->listParam(name: 'status', allowed: self::BUDGET_STATUSES);
 		if ($statuses === false) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('status must be one of the declared budget statuses')],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->errorResponse(error: $this->l10n->t('status must be one of the declared budget statuses'), status: Http::STATUS_BAD_REQUEST);
 		}
 
+		return new BbvDashboardQuery(fiscalYear: $fiscalYear, programmes: $programmes, statuses: $statuses);
+	}//end filteredQuery()
+
+	/**
+	 * The programme budget-vs-actuals envelope; a failure is a logged 500.
+	 *
+	 * @param BbvDashboardQuery $query The validated filters.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
+	 */
+	private function dashboard(BbvDashboardQuery $query): JSONResponse {
 		try {
 			$envelope = $this->budgets->programmeBudgetVsActuals(
-				fiscalYear: $fiscalYear,
-				programmes: $programmes,
-				statuses: $statuses
+				fiscalYear: $query->fiscalYear,
+				programmes: $query->programmes,
+				statuses: $query->statuses
 			);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'BbvProgrammeBudgetController: failed to compute programme budget-vs-actuals',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['error' => $this->l10n->t('Could not compute the BBV compliance dashboard')],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->dashboardFailed(e: $e);
 		}
 
 		return new JSONResponse($envelope);
+	}//end dashboard()
 
-	}//end programmeBudgetVsActuals()
+	/**
+	 * Log a failed dashboard and answer 500 without a stack trace.
+	 *
+	 * @param Throwable $e The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function dashboardFailed(Throwable $e): JSONResponse {
+		$this->logger->error(
+			'BbvProgrammeBudgetController: failed to compute programme budget-vs-actuals',
+			['exception' => $e->getMessage()]
+		);
+		return $this->errorResponse(error: $this->l10n->t('Could not compute the BBV compliance dashboard'), status: Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end dashboardFailed()
+
+	/**
+	 * An `{error}` answer.
+	 *
+	 * @param string $error  The translated error.
+	 * @param int    $status The HTTP status.
+	 *
+	 * @return JSONResponse
+	 */
+	private function errorResponse(string $error, int $status): JSONResponse {
+		return new JSONResponse(['error' => $error], $status);
+	}//end errorResponse()
 
 	/**
 	 * Filter facets for the Budget-to-Programme Linker index (REQ-BBL-001).
@@ -176,29 +253,35 @@ class BbvProgrammeBudgetController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function glLineFacets(): JSONResponse {
-		if ($this->adminContext->currentUserId() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Not logged in')],
-				Http::STATUS_UNAUTHORIZED
-			);
+		$refusal = $this->unauthenticated();
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
 			$facets = $this->budgets->glLineFacets();
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'BbvProgrammeBudgetController: failed to build GL-line facets',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['error' => $this->l10n->t('Could not load the Budget Links filters')],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->facetsFailed(e: $e);
 		}
 
 		return new JSONResponse($facets);
 
 	}//end glLineFacets()
+
+	/**
+	 * Log failed facets and answer 500 without a stack trace.
+	 *
+	 * @param Throwable $e The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function facetsFailed(Throwable $e): JSONResponse {
+		$this->logger->error(
+			'BbvProgrammeBudgetController: failed to build GL-line facets',
+			['exception' => $e->getMessage()]
+		);
+		return $this->errorResponse(error: $this->l10n->t('Could not load the Budget Links filters'), status: Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end facetsFailed()
 
 	/**
 	 * Read a repeatable / comma-separated enum parameter.
@@ -221,6 +304,18 @@ class BbvProgrammeBudgetController extends Controller {
 			return null;
 		}
 
+		return $this->allowedValues(candidates: $this->listEntries(raw: $raw), allowed: $allowed);
+
+	}//end listParam()
+
+	/**
+	 * The trimmed entries of a list parameter: its array, or its comma-separated string.
+	 *
+	 * @param mixed $raw The raw parameter.
+	 *
+	 * @return array<int, string>
+	 */
+	private function listEntries(mixed $raw): array {
 		$entries = $raw;
 		if (is_array($entries) === false) {
 			$entries = explode(',', (string)$entries);
@@ -231,10 +326,22 @@ class BbvProgrammeBudgetController extends Controller {
 			$candidates[] = trim((string)$entry);
 		}
 
+		return $candidates;
+	}//end listEntries()
+
+	/**
+	 * The allowed values: null for an "All" selection (the absence of a
+	 * filter, not a value), false for any undeclared value.
+	 *
+	 * @param array<int, string> $candidates The trimmed entries.
+	 * @param array<int, string> $allowed    The declared values.
+	 *
+	 * @return array<int, string>|null|false
+	 */
+	private function allowedValues(array $candidates, array $allowed): array|null|false {
 		$values = [];
 		foreach ($candidates as $candidate) {
 			if ($candidate === '' || $candidate === 'all') {
-				// An "All" selection is the absence of a filter, not a value.
 				return null;
 			}
 
@@ -246,6 +353,5 @@ class BbvProgrammeBudgetController extends Controller {
 		}
 
 		return $values;
-
-	}//end listParam()
+	}//end allowedValues()
 }//end class

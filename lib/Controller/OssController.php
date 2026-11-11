@@ -57,12 +57,6 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssController extends Controller {
-	/**
-	 * Identifier validation pattern for short slugs (administration / period).
-	 *
-	 * @var string
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
 	/**
 	 * Constructor.
@@ -114,38 +108,56 @@ class OssController extends Controller {
 		// argument anywhere in its signature. The published EU VAT rate for a
 		// given country/category/date is the same fact for every caller; there
 		// is no per-tenant object here for an IDOR to target.
-		$country = strtoupper(trim((string)$this->request->getParam('country', '')));
-		$category = trim((string)$this->request->getParam('category', 'standard'));
-		$date = trim((string)$this->request->getParam('date', ''));
-
-		if (preg_match('/^[A-Z]{2}$/', $country) !== 1) {
-			return new JSONResponse(['error' => 'country must be an ISO 3166-1 alpha-2 code'], Http::STATUS_BAD_REQUEST);
+		$query = OssRateQuery::fromRequest(request: $this->request);
+		$refusal = $this->rateRefusal(query: $query);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
-			return new JSONResponse(['error' => 'date must be YYYY-MM-DD'], Http::STATUS_BAD_REQUEST);
+		return $this->resolvedRate(query: $query);
+	}//end resolveRate()
+
+	/**
+	 * The 400 for a malformed country or date, then for a country that is not an OSS destination.
+	 *
+	 * @param OssRateQuery $query The lookup parameters.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function rateRefusal(OssRateQuery $query): ?JSONResponse {
+		$formatError = $query->formatError();
+		if ($formatError !== null) {
+			return new JSONResponse(['error' => $formatError], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->rateResolver->isOssDestination(countryCode: $country) === false) {
+		if ($this->rateResolver->isOssDestination(countryCode: $query->country()) === false) {
 			return new JSONResponse(['error' => 'country is not an OSS destination (EU, non-NL)'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return null;
+	}//end rateRefusal()
+
+	/**
+	 * Resolve the rate: 200, a 404 with a hint when the reference table has none, or a logged 500.
+	 *
+	 * @param OssRateQuery $query The validated lookup parameters.
+	 *
+	 * @return JSONResponse
+	 */
+	private function resolvedRate(OssRateQuery $query): JSONResponse {
 		try {
-			$resolved = $this->rateResolver->resolve(countryCode: $country, rateCategory: $category, invoiceDate: $date);
+			$resolved = $this->rateResolver->resolve(countryCode: $query->country(), rateCategory: $query->category(), invoiceDate: $query->date());
 		} catch (\Throwable $e) {
 			$this->logger->error('OssController: rate resolution failed', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'Failed to resolve VAT rate'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		if ($resolved === null) {
-			return new JSONResponse(
-				['error' => 'oss.rate.missing', 'hint' => 'Run the TEDB refresh job or contact support.'],
-				Http::STATUS_NOT_FOUND
-			);
+			return new JSONResponse(['error' => 'oss.rate.missing', 'hint' => 'Run the TEDB refresh job or contact support.'], Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse($resolved, Http::STATUS_OK);
-	}//end resolveRate()
+	}//end resolvedRate()
 
 	/**
 	 * Generate a draft OSS return for a quarter (REQ-OSS-004).
@@ -172,41 +184,36 @@ class OssController extends Controller {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$periodYear = (int)$this->request->getParam('period_year', 0);
-		$periodQuarter = trim((string)$this->request->getParam('period_quarter', ''));
-		$registrationId = trim((string)$this->request->getParam('registration_id', ''));
-
-		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		$input = OssReturnRequest::fromRequest(request: $this->request);
+		$invalid = $input->firstInvalid();
+		if ($invalid !== null) {
+			return new JSONResponse(['error' => $invalid], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($periodYear < 2000 || $periodYear > 2200) {
-			return new JSONResponse(['error' => 'period_year must be a valid year'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (in_array($periodQuarter, ['Q1', 'Q2', 'Q3', 'Q4'], true) === false) {
-			return new JSONResponse(['error' => 'period_quarter must be one of Q1..Q4'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (preg_match(self::ID_PATTERN, $registrationId) !== 1) {
-			return new JSONResponse(['error' => 'registration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		// ⚠️ `preg_match(self::ID_PATTERN, ...)` is a character-class test, not a
-		// "server-validated administration". This draft exposes cross-border EU
-		// OSS turnover per member state, so the membership check belongs here
-		// (ADR-005 / REQ-MA-001).
-		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+		// ⚠️ A valid slug is a character-class test, not a "server-validated
+		// administration". This draft exposes cross-border EU OSS turnover per
+		// member state, so the membership check belongs here (ADR-005 / REQ-MA-001).
+		if ($this->context->canAccess(administrationId: $input->administrationId()) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return $this->generatedDraft(input: $input);
+	}//end generateReturn()
+
+	/**
+	 * Generate the draft; a failure is logged and a 500.
+	 *
+	 * @param OssReturnRequest $input The validated, authorised parameters.
+	 *
+	 * @return JSONResponse
+	 */
+	private function generatedDraft(OssReturnRequest $input): JSONResponse {
 		try {
 			$draft = $this->returnGenerator->generateDraft(
-				administrationId: $administrationId,
-				periodYear: $periodYear,
-				periodQuarter: $periodQuarter,
-				registrationId: $registrationId
+				administrationId: $input->administrationId(),
+				periodYear: $input->periodYear(),
+				periodQuarter: $input->periodQuarter(),
+				registrationId: $input->registrationId()
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error('OssController: return generation failed', ['exception' => $e->getMessage()]);
@@ -214,5 +221,5 @@ class OssController extends Controller {
 		}
 
 		return new JSONResponse($draft, Http::STATUS_OK);
-	}//end generateReturn()
+	}//end generatedDraft()
 }//end class

@@ -385,4 +385,46 @@ final class BbvProgrammeBudgetControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 	}//end testFacetEndpointRefusesAnonymousCallers()
+	/**
+	 * Every body is translated, and both failures log their own line.
+	 *
+	 * @return void
+	 */
+	public function testTranslatedBodiesAndLogLines(): void {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => 'nl:' . $text);
+		$logged = [];
+		$logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+		$logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+		$controller = new BbvProgrammeBudgetController($this->request, $l10n, $logger, $this->budgets, $this->adminContext);
+
+		$this->params = ['fiscalYear' => '26'];
+		self::assertSame(['error' => 'nl:fiscalYear must be a four-digit year'], $controller->programmeBudgetVsActuals()->getData());
+		$this->params = ['programme' => 'nope'];
+		self::assertSame(['error' => 'nl:programme must be one of the declared BBV programmes'], $controller->programmeBudgetVsActuals()->getData());
+		$this->params = ['status' => 'nope'];
+		self::assertSame(['error' => 'nl:status must be one of the declared budget statuses'], $controller->programmeBudgetVsActuals()->getData());
+
+		$this->params = ['fiscalYear' => 'all', 'programme' => ' all '];
+		$this->budgets->explode = true;
+		$failed = $controller->programmeBudgetVsActuals();
+		self::assertSame([500, ['error' => 'nl:Could not compute the BBV compliance dashboard']], [$failed->getStatus(), $failed->getData()]);
+		self::assertNull($this->budgets->seenFiscalYear);
+		self::assertNull($this->budgets->seenProgrammes);
+		$facets = $controller->glLineFacets();
+		self::assertSame([500, ['error' => 'nl:Could not load the Budget Links filters']], [$facets->getStatus(), $facets->getData()]);
+		self::assertSame(
+			[
+				'BbvProgrammeBudgetController: failed to compute programme budget-vs-actuals',
+				'BbvProgrammeBudgetController: failed to build GL-line facets',
+			],
+			array_column($logged, 0)
+		);
+		self::assertSame(['exception'], array_keys($logged[0][1]));
+
+	}//end testTranslatedBodiesAndLogLines()
 }//end class

@@ -93,12 +93,22 @@ class CashflowExportController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		// Security-endpoint-guards REQ-001 JUSTIFY: this endpoint takes NO
-		// caller-supplied object identifier — buildHorizonExport() resolves
-		// the forecast horizon entirely from the authenticated caller's own
-		// AdministrationMembership set (REQ-MA-001). There is no request-
-		// supplied id to check against another tenant's data, so no
-		// per-object guard applies beyond the authentication check above.
+		return $this->horizonExport();
+	}//end exportPdf()
+
+	/**
+	 * Build the export and answer it, the 404 without a horizon, or the logged 500.
+	 *
+	 * Security-endpoint-guards REQ-001 JUSTIFY: this endpoint takes NO
+	 * caller-supplied object identifier — buildHorizonExport() resolves
+	 * the forecast horizon entirely from the authenticated caller's own
+	 * AdministrationMembership set (REQ-MA-001). There is no request-
+	 * supplied id to check against another tenant's data, so no
+	 * per-object guard applies beyond the authentication check.
+	 *
+	 * @return DataDownloadResponse|JSONResponse
+	 */
+	private function horizonExport(): DataDownloadResponse|JSONResponse {
 		try {
 			$export = $this->exportService->buildHorizonExport();
 		} catch (Throwable $e) {
@@ -109,14 +119,21 @@ class CashflowExportController extends Controller {
 			return new JSONResponse(['error' => 'export_failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
+		return self::download(export: $export);
+	}//end horizonExport()
+
+	/**
+	 * The PDF download, or the 404 when the caller's administration has no horizon.
+	 *
+	 * @param array<string,mixed>|null $export The export: payload, filename, mimeType.
+	 *
+	 * @return DataDownloadResponse|JSONResponse
+	 */
+	private static function download(array|null $export): DataDownloadResponse|JSONResponse {
 		if ($export === null) {
 			return new JSONResponse(['error' => 'no_cashflow_horizon'], Http::STATUS_NOT_FOUND);
 		}
 
-		return new DataDownloadResponse(
-			$export['payload'],
-			$export['filename'],
-			$export['mimeType']
-		);
-	}//end exportPdf()
+		return new DataDownloadResponse($export['payload'], $export['filename'], $export['mimeType']);
+	}//end download()
 }//end class

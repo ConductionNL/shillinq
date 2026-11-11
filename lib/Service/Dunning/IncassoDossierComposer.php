@@ -68,36 +68,50 @@ class IncassoDossierComposer {
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
 	 */
 	public function compose(string $administrationId, string $invoiceId, string $customerId): array {
+		$invoice = [
+			'invoiceId' => $invoiceId,
+			'customerId' => $customerId,
+			'administrationId' => $administrationId,
+		];
+
+		return ['invoiceId' => $invoiceId, 'content' => $this->dossierContent(invoice: $invoice)];
+
+	}//end compose()
+
+	/**
+	 * Gather the audit trail for one invoice into the dossier content.
+	 *
+	 * @param array{invoiceId:string,customerId:string,administrationId:string} $invoice Invoice header.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function dossierContent(array $invoice): array {
 		$register = $this->register();
+		$filters = ['administrationId' => $invoice['administrationId'], 'invoiceId' => $invoice['invoiceId']];
+		$dunningRuns = $this->findAll(register: $register, schema: 'DunningRun', filters: $filters);
+		$costs = $this->findAll(register: $register, schema: 'IncassoKostenBerekening', filters: $filters);
 
-		$dunningRuns = $this->findAll(
-			register: $register,
-			schema: 'DunningRun',
-			filters: [
-				'administrationId' => $administrationId,
-				'invoiceId' => $invoiceId,
-			]
-		);
-		$incassoCostAll = $this->findAll(
-			register: $register,
-			schema: 'IncassoKostenBerekening',
-			filters: [
-				'administrationId' => $administrationId,
-				'invoiceId' => $invoiceId,
-			]
-		);
-		$pauseAll = $this->findAll(
-			register: $register,
-			schema: 'DunningPauseDispute',
-			filters: [
-				'administrationId' => $administrationId,
-				'invoiceId' => $invoiceId,
-			]
-		);
+		return [
+			'invoice' => $invoice,
+			'dunningRuns' => $dunningRuns,
+			'incassoKosten' => $this->latestCalculation(calculations: $costs),
+			'pauseEvents' => $this->findAll(register: $register, schema: 'DunningPauseDispute', filters: $filters),
+			'klantGegevens' => ['customerId' => $invoice['customerId']],
+			'evidenceRefs' => $this->evidenceRefs(runs: $dunningRuns),
+		];
 
-		// Pick the latest IncassoKostenBerekening (highest berekendOp date).
+	}//end dossierContent()
+
+	/**
+	 * Pick the latest IncassoKostenBerekening (highest calculatedOn date).
+	 *
+	 * @param array<int,array<string,mixed>> $calculations Calculations for the invoice.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function latestCalculation(array $calculations): ?array {
 		usort(
-			$incassoCostAll,
+			$calculations,
 			static function (array $a, array $b): int {
 				return strcmp(
 					(string)($b['statutoryRente']['calculatedOn'] ?? ''),
@@ -105,13 +119,24 @@ class IncassoDossierComposer {
 				);
 			}
 		);
-		$latestIncassoCost = null;
-		if ($incassoCostAll !== []) {
-			$latestIncassoCost = $incassoCostAll[0];
+		if ($calculations === []) {
+			return null;
 		}
 
+		return $calculations[0];
+
+	}//end latestCalculation()
+
+	/**
+	 * Evidence references for every rendered letter and PostNL barcode.
+	 *
+	 * @param array<int,array<string,mixed>> $runs Dunning runs.
+	 *
+	 * @return list<string>
+	 */
+	private function evidenceRefs(array $runs): array {
 		$evidenceRefs = [];
-		foreach ($dunningRuns as $run) {
+		foreach ($runs as $run) {
 			$hash = (string)($run['renderedPdfHash'] ?? '');
 			if ($hash !== '') {
 				$evidenceRefs[] = 'dunning-run:' . ((string)($run['id'] ?? '')) . ':sha256=' . $hash;
@@ -123,25 +148,9 @@ class IncassoDossierComposer {
 			}
 		}
 
-		return [
-			'invoiceId' => $invoiceId,
-			'content' => [
-				'invoice' => [
-					'invoiceId' => $invoiceId,
-					'customerId' => $customerId,
-					'administrationId' => $administrationId,
-				],
-				'dunningRuns' => $dunningRuns,
-				'incassoKosten' => $latestIncassoCost,
-				'pauseEvents' => $pauseAll,
-				'klantGegevens' => [
-					'customerId' => $customerId,
-				],
-				'evidenceRefs' => $evidenceRefs,
-			],
-		];
+		return $evidenceRefs;
 
-	}//end compose()
+	}//end evidenceRefs()
 
 	/**
 	 * Find all matching records via the canonical OR ObjectService API.
