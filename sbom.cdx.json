@@ -2,10 +2,8 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:3f955086-9106-4e04-a43e-10c7cc31a14e",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-11-11T17:27:30Z",
     "tools": [
       {
         "name": "composer",
@@ -82,10 +80,10 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/shillinq-dev-development",
+      "bom-ref": "conductionnl/shillinq-0.2.1.0",
       "type": "application",
       "name": "shillinq",
-      "version": "dev-development",
+      "version": "0.2.1",
       "group": "conductionnl",
       "description": "Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.",
       "author": "Conduction b.v.",
@@ -96,16 +94,8 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/shillinq@dev-development",
+      "purl": "pkg:composer/conductionnl/shillinq@0.2.1",
       "properties": [
-        {
-          "name": "cdx:composer:package:distReference",
-          "value": "247a16badfe9c75d0591e8ee84684553e2d56ef9"
-        },
-        {
-          "name": "cdx:composer:package:sourceReference",
-          "value": "247a16badfe9c75d0591e8ee84684553e2d56ef9"
-        },
         {
           "name": "cdx:composer:package:type",
           "value": "library"
@@ -23920,7 +23910,7 @@
   ],
   "dependencies": [
     {
-      "ref": "conductionnl/shillinq-dev-development"
+      "ref": "conductionnl/shillinq-0.2.1.0"
     }
   ]
 }
