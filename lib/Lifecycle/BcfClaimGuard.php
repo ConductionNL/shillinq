@@ -100,31 +100,7 @@ class BcfClaimGuard {
 				$claim = $this->resolveClaim(bcfClaimId: $bcfClaimId);
 			}
 
-			if ($claim === null) {
-				return false;
-			}
-
-			$administrationId = (string)($claim['administrationId'] ?? '');
-			$claimQuarter = (string)($claim['claimQuarter'] ?? '');
-			if ($administrationId === '' || $claimQuarter === '') {
-				return false;
-			}
-
-			// Server-authoritative recomputation — never trust the client total.
-			$computed = $this->claimService->computeClaim(
-				administrationId: $administrationId,
-				claimQuarter: $claimQuarter
-			);
-
-			$quarterClosed = $this->isQuarterClosed(
-				administrationId: $administrationId,
-				claimQuarter: $claimQuarter
-			);
-
-			return $this->calculator->canSubmit(
-				compensableTotal: $computed['totalCompensableAmount'],
-				quarterClosed: $quarterClosed
-			);
+			return $claim !== null && $this->claimSubmittable(claim: $claim);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'BcfClaimGuard: submit precondition check failed — denying submit transition (fail-closed)',
@@ -134,6 +110,34 @@ class BcfClaimGuard {
 		}//end try
 
 	}//end canSubmit()
+
+	/**
+	 * Whether the claim's recomputed total is positive and its quarter closed.
+	 *
+	 * The total is recomputed server-side — the client total is never trusted.
+	 *
+	 * @param array<string,mixed> $claim The BcfClaim.
+	 *
+	 * @return bool True when the claim may be submitted.
+	 */
+	private function claimSubmittable(array $claim): bool {
+		$administrationId = (string)($claim['administrationId'] ?? '');
+		$claimQuarter = (string)($claim['claimQuarter'] ?? '');
+		if ($administrationId === '' || $claimQuarter === '') {
+			return false;
+		}
+
+		$computed = $this->claimService->computeClaim(
+			administrationId: $administrationId,
+			claimQuarter: $claimQuarter
+		);
+
+		return $this->calculator->canSubmit(
+			compensableTotal: $computed['totalCompensableAmount'],
+			quarterClosed: $this->isQuarterClosed(administrationId: $administrationId, claimQuarter: $claimQuarter)
+		);
+
+	}//end claimSubmittable()
 
 	/**
 	 * Resolve the BcfClaim object by id when it was not supplied to the guard.
