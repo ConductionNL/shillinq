@@ -128,3 +128,7 @@ task-audit.json
 .stale/
 /.e2e-state/
 .phpunit.result.cache
+
+# Claude Code skills, agents and settings live in the hydra repository and in
+# each developer's own configuration, not in the app.
+/.claude/
