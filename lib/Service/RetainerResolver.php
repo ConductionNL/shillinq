@@ -83,88 +83,56 @@ class RetainerResolver {
 		// read at all (mirrors AdministrationContextService::canAccess(),
 		// which fails closed on '').
 		if ($administrationId === '') {
-			$this->logger->warning(
-				sprintf(
-					'RetainerResolver: refusing unscoped lookup for %s on %s (no administrationId)',
-					$scheduleId,
-					$invoiceMonth
-				)
-			);
-
+			$this->logger->warning(sprintf('RetainerResolver: refusing unscoped lookup for %s on %s (no administrationId)', $scheduleId, $invoiceMonth));
 			return $this->zeroSchedule(invoiceMonth: $invoiceMonth);
 		}
 
-		$best = $this->pickBestSchedule(
-			records: $this->findAll(
-				schema: 'RetainerSchedule',
-				filters: [
-					'scheduleId' => $scheduleId,
-					'administrationId' => $administrationId,
-				]
-			),
-			invoiceMonth: $invoiceMonth
-		);
-
+		$records = $this->findAll(schema: 'RetainerSchedule', filters: ['scheduleId' => $scheduleId, 'administrationId' => $administrationId]);
+		$best = (new EffectiveVersionPicker(endField: 'endDate'))->pick(records: $records, date: $invoiceMonth);
 		if ($best === null) {
 			$this->logger->warning(sprintf('RetainerResolver: no active schedule for %s on %s', $scheduleId, $invoiceMonth));
 			return $this->zeroSchedule(invoiceMonth: $invoiceMonth);
 		}
 
-		if (isset($best['overageHoursThreshold']) === true) {
-			$overageHoursThreshold = (float)$best['overageHoursThreshold'];
-		} else {
-			$overageHoursThreshold = null;
-		}
-
-		if (isset($best['overageHourlyRate']) === true) {
-			$overageHourlyRateCents = $this->toCents(value: $best['overageHourlyRate']);
-		} else {
-			$overageHourlyRateCents = null;
-		}
-
-		return [
-			'monthlyAmountCents' => $this->toCents(value: $best['monthlyAmount'] ?? 0),
-			'overageHoursThreshold' => $overageHoursThreshold,
-			'overageHourlyRateCents' => $overageHourlyRateCents,
-			'effectiveDate' => (string)($best['effectiveDate'] ?? $invoiceMonth),
-			'label' => (string)($best['label'] ?? 'Retainer'),
-		];
+		return $this->retainerAmounts(schedule: $best, invoiceMonth: $invoiceMonth);
 
 	}//end resolveRetainerAmount()
 
 	/**
-	 * Pick the latest-effective RetainerSchedule version that brackets the
-	 * invoice month.
+	 * The retainer shape of a resolved schedule version.
 	 *
-	 * Versions with a future effectiveDate, or an endDate already past, are
-	 * skipped; among the remainder the highest effectiveDate wins.
+	 * @param array<string,mixed> $schedule     The winning RetainerSchedule version.
+	 * @param string              $invoiceMonth ISO date — any day within the target month.
 	 *
-	 * @param array<int,array<string,mixed>> $records Candidate schedule versions.
-	 * @param string $invoiceMonth ISO date — any day within the target month.
-	 *
-	 * @return array<string,mixed>|null The winning version, or null when none apply.
+	 * @return array{monthlyAmountCents:int,overageHoursThreshold:?float,overageHourlyRateCents:?int,effectiveDate:string,label:string}
 	 */
-	private function pickBestSchedule(array $records, string $invoiceMonth): ?array {
-		$best = null;
-		foreach ($records as $record) {
-			$effective = (string)($record['effectiveDate'] ?? '');
-			$end = (string)($record['endDate'] ?? '');
+	private function retainerAmounts(array $schedule, string $invoiceMonth): array {
+		return ['monthlyAmountCents' => $this->toCents(value: $schedule['monthlyAmount'] ?? 0)]
+			+ $this->overageTerms(schedule: $schedule)
+			+ ['effectiveDate' => (string)($schedule['effectiveDate'] ?? $invoiceMonth), 'label' => (string)($schedule['label'] ?? 'Retainer')];
 
-			if ($effective !== '' && $effective > $invoiceMonth) {
-				continue;
-			}
+	}//end retainerAmounts()
 
-			if ($end !== '' && $end < $invoiceMonth) {
-				continue;
-			}
+	/**
+	 * The overage threshold and rate of a schedule version, null where unset.
+	 *
+	 * @param array<string,mixed> $schedule A RetainerSchedule version.
+	 *
+	 * @return array{overageHoursThreshold:?float,overageHourlyRateCents:?int}
+	 */
+	private function overageTerms(array $schedule): array {
+		$terms = ['overageHoursThreshold' => null, 'overageHourlyRateCents' => null];
+		if (isset($schedule['overageHoursThreshold']) === true) {
+			$terms['overageHoursThreshold'] = (float)$schedule['overageHoursThreshold'];
+		}
 
-			if ($best === null || (string)($best['effectiveDate'] ?? '') < $effective) {
-				$best = $record;
-			}
-		}//end foreach
+		if (isset($schedule['overageHourlyRate']) === true) {
+			$terms['overageHourlyRateCents'] = $this->toCents(value: $schedule['overageHourlyRate']);
+		}
 
-		return $best;
-	}//end pickBestSchedule()
+		return $terms;
+
+	}//end overageTerms()
 
 	/**
 	 * The zeroed retainer shape returned when no schedule resolves.
@@ -213,10 +181,7 @@ class RetainerResolver {
 	private function findAll(string $schema, array $filters): array {
 		try {
 			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
+			$rs = $svc->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
 
 			if (is_array($rs) === true) {
 				return $rs;
