@@ -25,7 +25,7 @@ use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
@@ -95,7 +95,7 @@ class ScheduledReportRunnerTest extends TestCase {
 			true
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($this->store);

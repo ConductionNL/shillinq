@@ -739,7 +739,7 @@ XML;
 		$clients = $this->createMock(IClientService::class);
 		$clients->method('newClient')->willReturn($client);
 
-		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $settings, $this->logger);
+		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->logger);
 
 	}//end vatNumberCheck()
 

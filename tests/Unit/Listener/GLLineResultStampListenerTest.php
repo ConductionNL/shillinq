@@ -32,6 +32,7 @@ use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCA\Shillinq\Repair\StampGlLineResults;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Ledger\GlLineResultStampsTest as Seed;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -78,7 +79,7 @@ class GLLineResultStampListenerTest extends TestCase {
 		$settings = $this->createStub(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new GlLineResultStamps($this->store, $settings);
+		return new GlLineResultStamps($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']));
 
 	}//end stamps()
 

@@ -40,7 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,7 +55,7 @@ class ScheduledReportRunner {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface       $objectService  OpenRegister object service.
-	 * @param SettingsService              $settings       Resolves the register slug.
+	 * @param RegisterLocation              $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ReportGenerationService      $reports        Produces the report.
 	 * @param ScheduledReportDelivery      $delivery       Files, shares and notifies.
 	 * @param ReportScheduleCalendar       $calendar       Next run and period.
@@ -65,7 +65,7 @@ class ScheduledReportRunner {
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly ReportGenerationService $reports,
 		private readonly ScheduledReportDelivery $delivery,
 		private readonly ReportScheduleCalendar $calendar,

@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service\Asset;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -44,12 +44,12 @@ class AssetRecords {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param ObjectTransitionRunner $transitions   Runs declared transitions.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunner $transitions,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 	) {
 	}//end __construct()
 
