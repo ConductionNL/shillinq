@@ -48,6 +48,19 @@ namespace OCA\Shillinq\Service;
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class IcpCalculator {
+
+	/**
+	 * The totals each supply type adds to: L and T are goods (the threshold
+	 * base per Art. 263 §1bis), S services, T also triangulation; every type
+	 * adds to the grand total.
+	 *
+	 * @var array<string,array<int,string>>
+	 */
+	private const TOTAL_BUCKETS = [
+		'L' => ['total', 'totalGoods'],
+		'T' => ['total', 'totalGoods', 'totalTriangulation'],
+		'S' => ['total', 'totalServices'],
+	];
 	/**
 	 * EUR 50,000 goods-supply periodicity threshold, in whole cents (REQ-ICP-002).
 	 *
@@ -109,46 +122,55 @@ class IcpCalculator {
 		foreach ($supplies as $supply) {
 			$buyer = (string)($supply['buyerVatId'] ?? '');
 			$type = (string)($supply['supplyType'] ?? '');
-			if ($buyer === '' || $type === '') {
-				continue;
+			if ($buyer !== '' && $type !== '') {
+				$byKey[$buyer . '|' . $type] ??= ['buyerVatId' => $buyer, 'supplyType' => $type, 'cents' => 0];
+				$byKey[$buyer . '|' . $type]['cents'] += $this->toCents(amount: ($supply['amountExclVat'] ?? 0));
 			}
-
-			$key = $buyer . '|' . $type;
-			if (isset($byKey[$key]) === false) {
-				$byKey[$key] = [
-					'buyerVatId' => $buyer,
-					'supplyType' => $type,
-					'cents' => 0,
-				];
-			}
-
-			$byKey[$key]['cents'] += $this->toCents(amount: ($supply['amountExclVat'] ?? 0));
-		}//end foreach
-
-		$lines = array_values($byKey);
-		usort(
-			$lines,
-			static function (array $a, array $b): int {
-				$cmp = strcmp($a['buyerVatId'], $b['buyerVatId']);
-				if ($cmp !== 0) {
-					return $cmp;
-				}
-
-				return strcmp($a['supplyType'], $b['supplyType']);
-			}
-		);
-
-		$result = [];
-		foreach ($lines as $line) {
-			$result[] = [
-				'buyerVatId' => $line['buyerVatId'],
-				'supplyType' => $line['supplyType'],
-				'amountExclVat' => $this->fromCents(cents: $line['cents']),
-			];
 		}
 
-		return $result;
+		return array_map(fn (array $line): array => $this->moneyLine(line: $line), $this->sortedLines(lines: array_values($byKey)));
 	}//end aggregateLines()
+
+	/**
+	 * Lines sorted by buyerVatId, then supplyType.
+	 *
+	 * @param array<int,array{buyerVatId:string,supplyType:string,cents:int}> $lines Cent lines.
+	 *
+	 * @return array<int,array{buyerVatId:string,supplyType:string,cents:int}>
+	 */
+	private function sortedLines(array $lines): array {
+		usort($lines, fn (array $a, array $b): int => $this->compareLines(a: $a, b: $b));
+
+		return $lines;
+	}//end sortedLines()
+
+	/**
+	 * Order two lines by buyerVatId, then supplyType.
+	 *
+	 * @param array{buyerVatId:string,supplyType:string,cents:int} $a First line.
+	 * @param array{buyerVatId:string,supplyType:string,cents:int} $b Second line.
+	 *
+	 * @return int
+	 */
+	private function compareLines(array $a, array $b): int {
+		$cmp = strcmp($a['buyerVatId'], $b['buyerVatId']);
+		if ($cmp !== 0) {
+			return $cmp;
+		}
+
+		return strcmp($a['supplyType'], $b['supplyType']);
+	}//end compareLines()
+
+	/**
+	 * A cent line as a money line.
+	 *
+	 * @param array{buyerVatId:string,supplyType:string,cents:int} $line Cent line.
+	 *
+	 * @return array{buyerVatId:string,supplyType:string,amountExclVat:float}
+	 */
+	private function moneyLine(array $line): array {
+		return ['buyerVatId' => $line['buyerVatId'], 'supplyType' => $line['supplyType'], 'amountExclVat' => $this->fromCents(cents: $line['cents'])];
+	}//end moneyLine()
 
 	/**
 	 * Sum the goods / services / triangulation / grand totals of a line set (REQ-ICP-002).
@@ -165,33 +187,15 @@ class IcpCalculator {
 	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
 	 */
 	public function totals(array $lines): array {
-		$total = 0;
-		$goods = 0;
-		$services = 0;
-		$triangulation = 0;
+		$cents = ['total' => 0, 'totalGoods' => 0, 'totalServices' => 0, 'totalTriangulation' => 0];
 		foreach ($lines as $line) {
-			$cents = $this->toCents(amount: ($line['amountExclVat'] ?? 0));
-			$type = (string)($line['supplyType'] ?? '');
-			$total += $cents;
-			if ($type === 'L' || $type === 'T') {
-				$goods += $cents;
+			$amount = $this->toCents(amount: ($line['amountExclVat'] ?? 0));
+			foreach ((self::TOTAL_BUCKETS[(string)($line['supplyType'] ?? '')] ?? ['total']) as $bucket) {
+				$cents[$bucket] += $amount;
 			}
+		}
 
-			if ($type === 'S') {
-				$services += $cents;
-			}
-
-			if ($type === 'T') {
-				$triangulation += $cents;
-			}
-		}//end foreach
-
-		return [
-			'total' => $this->fromCents(cents: $total),
-			'totalGoods' => $this->fromCents(cents: $goods),
-			'totalServices' => $this->fromCents(cents: $services),
-			'totalTriangulation' => $this->fromCents(cents: $triangulation),
-		];
+		return array_map(fn (int $total): float => $this->fromCents(cents: $total), $cents);
 
 	}//end totals()
 
