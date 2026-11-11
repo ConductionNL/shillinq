@@ -101,27 +101,32 @@ class EmuCalculator {
 		$balance = [];
 		foreach ($glLines as $line) {
 			$sector = $line['account']['esaClassifier'] ?? ($line['esaClassifier'] ?? null);
-			if ($sector === null) {
-				continue;
+			$rule   = $line['emuInclusionRule'] ?? 'included';
+			if ($sector !== null && $rule !== 'excluded') {
+				$balance[$sector] = ($balance[$sector] ?? 0) + self::netCents(line: $line, rule: $rule);
 			}
-
-			$rule = $line['emuInclusionRule'] ?? 'included';
-			if ($rule === 'excluded') {
-				continue;
-			}
-
-			$debitCents = (int)round((float)($line['debit'] ?? 0) * 100);
-			$creditCents = (int)round((float)($line['credit'] ?? 0) * 100);
-			$netCents = $debitCents - $creditCents;
-
-			if ($rule === 'partial') {
-				// Integer-safe 50 % — multiply by 1 then divide by 2 to avoid float.
-				$netCents = (int)round($netCents / 2);
-			}
-
-			$balance[$sector] = ($balance[$sector] ?? 0) + $netCents;
-		}//end foreach
+		}
 
 		return $balance;
 	}//end aggregateBySector()
+
+	/**
+	 * The line's debit minus credit in cents, halved for a partial inclusion.
+	 *
+	 * @param array<string, mixed> $line The GL line.
+	 * @param mixed                $rule The line's EMU inclusion rule.
+	 *
+	 * @return int
+	 */
+	private static function netCents(array $line, mixed $rule): int {
+		$debitCents  = (int)round((float)($line['debit'] ?? 0) * 100);
+		$creditCents = (int)round((float)($line['credit'] ?? 0) * 100);
+		$netCents    = $debitCents - $creditCents;
+		if ($rule === 'partial') {
+			// Integer-safe 50 % — multiply by 1 then divide by 2 to avoid float.
+			$netCents = (int)round($netCents / 2);
+		}
+
+		return $netCents;
+	}//end netCents()
 }//end class
