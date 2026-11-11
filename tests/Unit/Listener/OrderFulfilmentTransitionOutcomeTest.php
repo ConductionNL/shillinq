@@ -22,6 +22,9 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -94,7 +97,7 @@ final class OrderFulfilmentTransitionOutcomeTest extends TestCase {
 		};
 		$entity = new ObjectEntity();
 		$entity->setObject($object);
-		$event = new ObjectTransitionedEvent($entity, 'complete', 'in-progress', $to, 'alice', 'shillinq', 'OrderFulfilment');
+		$event = new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: 'complete', from: 'in-progress', to: $to), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'OrderFulfilment'), actor: new TransitionActor(userId: 'alice'));
 
 		(new OrderFulfilmentTransitionListener($emitter, $sync, $resolver, $logger))->handle($event);
 

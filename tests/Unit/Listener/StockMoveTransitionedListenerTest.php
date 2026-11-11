@@ -29,6 +29,9 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Service\CogsPosterService;
 use OCA\Shillinq\Service\FifoValuationService;
@@ -138,7 +141,7 @@ final class StockMoveTransitionedListenerTest extends TestCase {
 	 * @return ObjectTransitionedEvent The event.
 	 */
 	private static function event(array $move, string $to = 'posted', string $schema = 'StockMove'): ObjectTransitionedEvent {
-		return new ObjectTransitionedEvent((new ObjectEntity())->setObject($move), 'post', 'draft', $to, 'u', 'shillinq', $schema);
+		return new ObjectTransitionedEvent(object: (new ObjectEntity())->setObject($move), move: new TransitionMove(action: 'post', from: 'draft', to: $to), scope: new RegisterSchemaRef(register: 'shillinq', schema: $schema), actor: new TransitionActor(userId: 'u'));
 
 	}//end event()
 
