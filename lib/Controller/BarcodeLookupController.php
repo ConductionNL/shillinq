@@ -118,24 +118,27 @@ class BarcodeLookupController extends Controller {
 			return $guardResponse;
 		}
 
-		$code = trim($code);
-		if ($code === '') {
-			return new JSONResponse(['error' => 'Barcode not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$barcode = $this->findActiveBarcode(code: $code, uomCode: $uomCode);
+		$barcode = $this->findActiveBarcode(code: trim($code), uomCode: $uomCode);
 		if ($barcode === null) {
 			return new JSONResponse(['error' => 'Barcode not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		return new JSONResponse(
-			[
-				'barcode' => $this->presentBarcode(barcode: $barcode),
-				'product' => $this->findProduct(sku: (string)($barcode['productSku'] ?? '')),
-			]
-		);
-
+		return new JSONResponse($this->envelope(barcode: $barcode));
 	}//end lookup()
+
+	/**
+	 * The response envelope: the presented barcode and its product.
+	 *
+	 * @param array<string, mixed> $barcode The active barcode.
+	 *
+	 * @return array{barcode: array<string, mixed>, product: array<string, mixed>|null}
+	 */
+	private function envelope(array $barcode): array {
+		return [
+			'barcode' => $this->presentBarcode(barcode: $barcode),
+			'product' => $this->findProduct(sku: (string)($barcode['productSku'] ?? '')),
+		];
+	}//end envelope()
 
 	/**
 	 * Auth guard for the lookup endpoint (ADR-005, fail-secure).
@@ -196,23 +199,48 @@ class BarcodeLookupController extends Controller {
 	 * @return array<string, mixed>|null The matching active barcode, or null.
 	 */
 	private function findActiveBarcode(string $code, ?string $uomCode): ?array {
+		if ($code === '') {
+			return null;
+		}
+
+		$records = $this->findMany(schema: 'Barcode', params: ['filters' => self::barcodeFilters(code: $code, uomCode: $uomCode)]);
+		return self::firstActive(records: $records);
+	}//end findActiveBarcode()
+
+	/**
+	 * The exact-match filters for the code and, when given, the UoM.
+	 *
+	 * @param string      $code    The barcode value.
+	 * @param string|null $uomCode Optional UoM filter.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function barcodeFilters(string $code, string|null $uomCode): array {
 		$filters = ['barcode' => $code];
 		if ($uomCode !== null && $uomCode !== '') {
 			$filters['uomCode'] = $uomCode;
 		}
 
-		foreach ($this->findMany(schema: 'Barcode', filters: $filters) as $record) {
-			// REQ-SKU-008: inactive barcodes are never returned. isActive
-			// defaults to true when the field is absent on a record.
-			if (($record['isActive'] ?? true) === false) {
-				continue;
-			}
+		return $filters;
+	}//end barcodeFilters()
 
-			return $record;
+	/**
+	 * The first active record. REQ-SKU-008: inactive barcodes are never
+	 * returned; isActive defaults to true when the field is absent.
+	 *
+	 * @param array<int,array<string,mixed>> $records The matching records.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function firstActive(array $records): array|null {
+		foreach ($records as $record) {
+			if (($record['isActive'] ?? true) !== false) {
+				return $record;
+			}
 		}
 
 		return null;
-	}//end findActiveBarcode()
+	}//end firstActive()
 
 	/**
 	 * Resolve the related Product for the response envelope.
@@ -229,7 +257,7 @@ class BarcodeLookupController extends Controller {
 			return null;
 		}
 
-		$items = $this->findMany(schema: 'Product', filters: ['sku' => $sku], limit: 1);
+		$items = $this->findMany(schema: 'Product', params: ['filters' => ['sku' => $sku], 'limit' => 1]);
 		if (count($items) === 0) {
 			return null;
 		}
@@ -284,37 +312,50 @@ class BarcodeLookupController extends Controller {
 	 * Returns an empty array when OpenRegister or the schema is unavailable
 	 * — no stack trace leaks to the client per ADR-005.
 	 *
-	 * @param string $schema Schema name.
-	 * @param array<string, mixed> $filters Exact-match filters.
-	 * @param int|null $limit Optional result limit.
+	 * @param string               $schema Schema name.
+	 * @param array<string, mixed> $params The query: exact-match filters, and a limit when one applies.
 	 *
 	 * @return array<int, array<string, mixed>> Matching records.
 	 */
-	private function findMany(string $schema, array $filters, ?int $limit = null): array {
+	private function findMany(string $schema, array $params): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$params = ['filters' => $filters];
-			if ($limit !== null) {
-				$params['limit'] = $limit;
-			}
-
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: $schema)
-				->findAll($params);
-
-			if (is_array($result) === false) {
-				return [];
-			}
-
-			return $result;
+			return self::rowsOf(result: $this->objectsIn(schema: $schema, params: $params));
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'BarcodeLookupController: schema lookup unavailable — treating as empty',
 				['schema' => $schema, 'exception' => $e->getMessage()]
 			);
 			return [];
-		}//end try
-
+		}
 	}//end findMany()
+
+	/**
+	 * Ask OpenRegister for the schema's records in the configured register.
+	 *
+	 * @param string               $schema Schema name.
+	 * @param array<string, mixed> $params The query.
+	 *
+	 * @return mixed What findAll answered.
+	 */
+	private function objectsIn(string $schema, array $params): mixed {
+		return $this->container->get('OCA\OpenRegister\Service\ObjectService')
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: $schema)
+			->findAll($params);
+	}//end objectsIn()
+
+	/**
+	 * The store's answer when it is a list, else no rows.
+	 *
+	 * @param mixed $result What findAll answered.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function rowsOf(mixed $result): array {
+		if (is_array($result) === false) {
+			return [];
+		}
+
+		return $result;
+	}//end rowsOf()
 }//end class

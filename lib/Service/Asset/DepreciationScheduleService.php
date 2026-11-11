@@ -169,7 +169,10 @@ class DepreciationScheduleService {
 			method: $figures['method'],
 			rate: $figures['rate']
 		);
-		$this->writePlan(figures: $figures, plan: $plan, method: $figures['method'], months: $figures['months'], accumulatedCents: 0, reason: '');
+		$this->writePlan(
+			terms: new ScheduleTerms(figures: $figures, method: $figures['method'], months: $figures['months'], reason: '', accumulatedCents: 0),
+			plan: $plan
+		);
 
 		return $this->lines(assetId: $figures['id']);
 
@@ -198,18 +201,36 @@ class DepreciationScheduleService {
 
 		$this->ensureSchedule(asset: $asset);
 		$fromMonth = substr($date, 0, 7);
-		$kept = [];
-		foreach ($this->lines(assetId: $figures['id']) as $line) {
-			$start = (string)($line['periodStartDate'] ?? '');
-			$posted = (string)($line['status'] ?? '') === self::POSTED;
-			if ($start < $fromMonth . '-01' || $posted === true) {
-				if ($posted === true && $start >= $fromMonth . '-01' && (string)($line['rateType'] ?? '') !== self::EXTRA) {
-					throw new DomainException(sprintf(
-						'The depreciation of %s is already posted, so the revision cannot start before it.',
-						substr($start, 0, 7)
-					));
-				}
+		$kept = $this->keptLines(assetId: $figures['id'], fromMonth: $fromMonth);
 
+		$accumulated = 0;
+		foreach ($kept as $line) {
+			$accumulated += self::cents(amount: ($line['depreciationAmount'] ?? 0));
+		}
+
+		return $this->replan(
+			terms: new ScheduleTerms(figures: $figures, method: $method, months: $months, reason: $reason, accumulatedCents: $accumulated),
+			fromMonth: $fromMonth
+		);
+
+	}//end revise()
+
+	/**
+	 * Keep the lines before the month and every posted line; delete the rest.
+	 *
+	 * @param string $assetId   The asset's id.
+	 * @param string $fromMonth The first replanned month, YYYY-MM.
+	 *
+	 * @return list<array<string,mixed>> The kept lines.
+	 *
+	 * @throws DomainException When a posted month lies in the replanned range.
+	 */
+	private function keptLines(string $assetId, string $fromMonth): array {
+		$kept = [];
+		foreach ($this->lines(assetId: $assetId) as $line) {
+			$start = (string)($line['periodStartDate'] ?? '');
+			if ($start < $fromMonth . '-01' || (string)($line['status'] ?? '') === self::POSTED) {
+				$this->assertKeepable(line: $line, fromMonth: $fromMonth);
 				$kept[] = $line;
 				continue;
 			}
@@ -217,35 +238,63 @@ class DepreciationScheduleService {
 			$this->records->delete(schema: self::SCHEDULE, id: (string)$line['id']);
 		}
 
-		$accumulated = 0;
-		foreach ($kept as $line) {
-			$accumulated += self::cents(amount: ($line['depreciationAmount'] ?? 0));
+		return $kept;
+
+	}//end keptLines()
+
+	/**
+	 * Refuse a posted, non-extra line in the replanned range: posted lines
+	 * MUST NOT change, so the revision cannot start before it.
+	 *
+	 * @param array<string,mixed> $line      A kept line.
+	 * @param string              $fromMonth The first replanned month, YYYY-MM.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the line is posted on or after the month.
+	 */
+	private function assertKeepable(array $line, string $fromMonth): void {
+		$start = (string)($line['periodStartDate'] ?? '');
+		if ((string)($line['status'] ?? '') === self::POSTED && $start >= $fromMonth . '-01' && (string)($line['rateType'] ?? '') !== self::EXTRA) {
+			throw new DomainException(sprintf(
+				'The depreciation of %s is already posted, so the revision cannot start before it.',
+				substr($start, 0, 7)
+			));
 		}
 
-		$left = ($months - $this->monthsBetween(fromMonth: substr($figures['acquired'], 0, 7), toMonth: $fromMonth));
+	}//end assertKeepable()
+
+	/**
+	 * Plan and write the months left from a month on the book value.
+	 *
+	 * @param ScheduleTerms $terms     The figures, method, life, reason and depreciation so far.
+	 * @param string        $fromMonth The first planned month, YYYY-MM.
+	 *
+	 * @return array{fromMonth: string, bookValue: float, monthly: float, months: int} The new plan's start.
+	 *
+	 * @throws DomainException When no month of the useful life is left.
+	 */
+	private function replan(ScheduleTerms $terms, string $fromMonth): array {
+		$figures = $terms->figures;
+		$left = ($terms->months - $this->monthsBetween(fromMonth: substr($figures['acquired'], 0, 7), toMonth: $fromMonth));
 		if ($left < 1) {
-			throw new DomainException(sprintf('A useful life of %d months has ended before %s.', $months, $fromMonth));
+			throw new DomainException(sprintf('A useful life of %d months has ended before %s.', $terms->months, $fromMonth));
 		}
 
-		$book = ($figures['costCents'] - $accumulated);
+		$book = ($figures['costCents'] - $terms->accumulatedCents);
 		$plan = $this->planner->plan(
 			fromMonth: $fromMonth,
 			bookCents: $book,
 			residualCents: $figures['residualCents'],
 			months: $left,
-			method: $method,
+			method: $terms->method,
 			rate: $figures['rate']
 		);
-		$this->writePlan(figures: $figures, plan: $plan, method: $method, months: $months, accumulatedCents: $accumulated, reason: $reason);
+		$this->writePlan(terms: $terms, plan: $plan);
 
-		return [
-			'fromMonth' => $fromMonth,
-			'bookValue' => ($book / 100),
-			'monthly'   => ($plan[0]['cents'] / 100),
-			'months'    => $left,
-		];
+		return ['fromMonth' => $fromMonth, 'bookValue' => ($book / 100), 'monthly' => ($plan[0]['cents'] / 100), 'months' => $left];
 
-	}//end revise()
+	}//end replan()
 
 	/**
 	 * Book an extra depreciation at once and replan the months from its date.
@@ -264,44 +313,27 @@ class DepreciationScheduleService {
 	public function extra(array $asset, float $amount, string $date, string $reason): array {
 		$figures = $this->figures(asset: $asset);
 		$cents = self::cents(amount: $amount);
-		if ($cents <= 0) {
-			throw new DomainException('Extra depreciation needs an amount above zero.');
-		}
+		$this->assertExtraRequest(cents: $cents, reason: $reason);
 
-		if (trim($reason) === '') {
-			throw new DomainException('Extra depreciation needs a reason.');
-		}
-
-		$before = 0;
-		foreach ($this->ensureSchedule(asset: $asset) as $line) {
-			if ((string)($line['periodStartDate'] ?? '') < substr($date, 0, 7) . '-01' || (string)($line['status'] ?? '') === self::POSTED) {
-				$before += self::cents(amount: ($line['depreciationAmount'] ?? 0));
-			}
-		}
-
-		$room = ($figures['costCents'] - $figures['residualCents'] - $before);
-		if ($cents > $room) {
-			throw new DomainException(sprintf('Only %s is left to depreciate on this asset.', number_format(($room / 100), 2, '.', '')));
-		}
+		$before = $this->depreciatedBefore(asset: $asset, date: $date);
+		$terms = new ScheduleTerms(figures: $figures, method: $figures['method'], months: $figures['months'], reason: $reason, accumulatedCents: $before);
+		$this->assertRoomFor(terms: $terms, cents: $cents);
 
 		$line = $this->records->save(
 			schema: self::SCHEDULE,
 			object: $this->line(
-				figures: $figures,
-				line: ['month' => substr($date, 0, 7), 'start' => $date, 'end' => $date, 'cents' => $cents],
-				method: $figures['method'],
-				months: $figures['months'],
-				accumulatedCents: ($before + $cents),
-				reason: $reason,
-				rateType: self::EXTRA
+				terms: $terms,
+				entry: [
+					'month' => substr($date, 0, 7),
+					'start' => $date,
+					'end' => $date,
+					'cents' => $cents,
+					'accumulatedCents' => ($before + $cents),
+					'rateType' => self::EXTRA,
+				]
 			)
 		);
-		$journalId = $this->post(
-			administrationId: $figures['administrationId'],
-			period: $date,
-			entries: [['figures' => $figures, 'line' => $line]],
-			description: sprintf('Extra depreciation %s: %s', $figures['number'], $reason)
-		);
+		$journalId = $this->postExtra(terms: $terms, line: $line);
 
 		$this->revise(asset: $asset, date: $date, method: $figures['method'], months: $figures['months'], reason: $reason);
 
@@ -310,6 +342,86 @@ class DepreciationScheduleService {
 		return ['line' => ($posted ?? $line), 'journalId' => $journalId];
 
 	}//end extra()
+
+	/**
+	 * Refuse an extra depreciation above what is left to depreciate.
+	 *
+	 * @param ScheduleTerms $terms The figures and the depreciation before the extra line.
+	 * @param int           $cents The extra amount in cents.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the amount exceeds the room left.
+	 */
+	private function assertRoomFor(ScheduleTerms $terms, int $cents): void {
+		$room = ($terms->figures['costCents'] - $terms->figures['residualCents'] - $terms->accumulatedCents);
+		if ($cents > $room) {
+			throw new DomainException(sprintf('Only %s is left to depreciate on this asset.', number_format(($room / 100), 2, '.', '')));
+		}
+
+	}//end assertRoomFor()
+
+	/**
+	 * Post a saved extra line as its own journal entry, dated on its day.
+	 *
+	 * @param ScheduleTerms       $terms The figures and reason.
+	 * @param array<string,mixed> $line  The saved extra line.
+	 *
+	 * @return string The journal entry's id.
+	 */
+	private function postExtra(ScheduleTerms $terms, array $line): string {
+		$figures = $terms->figures;
+		return $this->post(
+			posting: new DepreciationPosting(
+				administrationId: $figures['administrationId'],
+				period: (string)$line['periodStartDate'],
+				entries: [['figures' => $figures, 'line' => $line]],
+				description: sprintf('Extra depreciation %s: %s', $figures['number'], $terms->reason)
+			)
+		);
+
+	}//end postExtra()
+
+	/**
+	 * Refuse an extra depreciation without an amount above zero or a reason.
+	 *
+	 * @param int    $cents  The amount in cents.
+	 * @param string $reason Why.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When either is missing.
+	 */
+	private function assertExtraRequest(int $cents, string $reason): void {
+		if ($cents <= 0) {
+			throw new DomainException('Extra depreciation needs an amount above zero.');
+		}
+
+		if (trim($reason) === '') {
+			throw new DomainException('Extra depreciation needs a reason.');
+		}
+
+	}//end assertExtraRequest()
+
+	/**
+	 * The depreciation of every line before the date's month and of every posted line, in cents.
+	 *
+	 * @param array<string,mixed> $asset The FixedAsset record.
+	 * @param string              $date  The date, YYYY-MM-DD.
+	 *
+	 * @return int
+	 */
+	private function depreciatedBefore(array $asset, string $date): int {
+		$before = 0;
+		foreach ($this->ensureSchedule(asset: $asset) as $line) {
+			if ((string)($line['periodStartDate'] ?? '') < substr($date, 0, 7) . '-01' || (string)($line['status'] ?? '') === self::POSTED) {
+				$before += self::cents(amount: ($line['depreciationAmount'] ?? 0));
+			}
+		}
+
+		return $before;
+
+	}//end depreciatedBefore()
 
 	/**
 	 * Post every planned line of active assets whose period ended in a month, one journal entry per administration.
@@ -334,10 +446,12 @@ class DepreciationScheduleService {
 		$lines = 0;
 		foreach ($byAdministration as $administrationId => $entries) {
 			$this->post(
-				administrationId: (string)$administrationId,
-				period: $month . '-28',
-				entries: $entries,
-				description: sprintf('Depreciation %s', $month)
+				posting: new DepreciationPosting(
+					administrationId: (string)$administrationId,
+					period: $month . '-28',
+					entries: $entries,
+					description: sprintf('Depreciation %s', $month)
+				)
 			);
 			$lines += count($entries);
 		}
@@ -392,10 +506,12 @@ class DepreciationScheduleService {
 			}
 
 			$this->post(
-				administrationId: $figures['administrationId'],
-				period: (string)$line['periodEndDate'],
-				entries: [['figures' => $figures, 'line' => $line]],
-				description: sprintf('Depreciation %s, %s', $row['period'], $figures['number'])
+				posting: new DepreciationPosting(
+					administrationId: $figures['administrationId'],
+					period: (string)$line['periodEndDate'],
+					entries: [['figures' => $figures, 'line' => $line]],
+					description: sprintf('Depreciation %s, %s', $row['period'], $figures['number'])
+				)
 			);
 		}
 
@@ -421,61 +537,17 @@ class DepreciationScheduleService {
 	/**
 	 * Post schedule lines as one journal entry and mark them posted.
 	 *
-	 * @param string                                                         $administrationId The administration.
-	 * @param string                                                         $period           A date in the period (the entry date is its end).
-	 * @param list<array{figures: array<string,mixed>, line: array<string,mixed>}> $entries          The lines with their assets.
-	 * @param string                                                         $description      The journal entry's description.
+	 * @param DepreciationPosting $posting The administration, period, lines and description.
 	 *
 	 * @return string The journal entry's id.
 	 *
 	 * @throws DomainException When an asset has no expense or accumulated depreciation account.
 	 */
-	private function post(string $administrationId, string $period, array $entries, string $description): string {
-		$lines = [];
-		$numbers = [];
-		$date = '';
-		foreach ($entries as $entry) {
-			$figures = $entry['figures'];
-			if ($figures['expenseAccount'] === '' || $figures['accumulatedAccount'] === '') {
-				throw new DomainException(sprintf('Asset %s has no depreciation expense or accumulated depreciation account.', $figures['number']));
-			}
+	private function post(DepreciationPosting $posting): string {
+		$batch = $this->journalBatch(posting: $posting);
+		$journalId = $this->records->postJournal(journal: $this->journal(posting: $posting, batch: $batch));
 
-			$amount = (round((float)$entry['line']['depreciationAmount'], 2));
-			$text = sprintf('%s %s', $figures['number'], substr((string)$entry['line']['periodEndDate'], 0, 10));
-			$lines[] = [
-				'accountNumber' => $figures['expenseAccount'],
-				'side' => 'debit',
-				'amount' => $amount,
-				'description' => $text,
-				'costCenterCode' => $figures['costCenter'],
-			];
-			$lines[] = ['accountNumber' => $figures['accumulatedAccount'], 'side' => 'credit', 'amount' => $amount, 'description' => $text];
-			$numbers[] = (string)$entry['line']['id'];
-			$date = max($date, substr((string)$entry['line']['periodEndDate'], 0, 10));
-		}
-
-		if ($date === '') {
-			$date = $period;
-		}
-
-		$journalId = $this->records->postJournal(
-			journal: [
-				'journalNumber'    => sprintf(
-					'AFS-%s-%s',
-					str_replace('-', '', $date),
-					substr(hash('sha256', $administrationId . '|' . implode('|', $numbers)), 0, 8)
-				),
-				'entryDate'        => $date,
-				'description'      => $description,
-				'lines'            => $lines,
-				'journalType'      => 'manual',
-				'approvalState'    => 'not-required',
-				'administrationId' => $administrationId,
-				'state'            => 'draft',
-			]
-		);
-
-		foreach ($numbers as $lineId) {
+		foreach ($batch['numbers'] as $lineId) {
 			$this->records->patch(schema: self::SCHEDULE, id: $lineId, fields: ['status' => self::POSTED, 'glTransactionRef' => $journalId]);
 		}
 
@@ -484,30 +556,104 @@ class DepreciationScheduleService {
 	}//end post()
 
 	/**
+	 * The journal lines, the schedule line ids and the entry date (the latest
+	 * period end, else the posting's period) of a posting.
+	 *
+	 * @param DepreciationPosting $posting The posting.
+	 *
+	 * @return array{lines: list<array<string,mixed>>, numbers: list<string>, date: string}
+	 *
+	 * @throws DomainException When an asset has no expense or accumulated depreciation account.
+	 */
+	private function journalBatch(DepreciationPosting $posting): array {
+		$batch = ['lines' => [], 'numbers' => [], 'date' => ''];
+		foreach ($posting->entries as $entry) {
+			array_push($batch['lines'], ...$this->journalLines(entry: $entry));
+			$batch['numbers'][] = (string)$entry['line']['id'];
+			$batch['date'] = max($batch['date'], substr((string)$entry['line']['periodEndDate'], 0, 10));
+		}
+
+		if ($batch['date'] === '') {
+			$batch['date'] = $posting->period;
+		}
+
+		return $batch;
+
+	}//end journalBatch()
+
+	/**
+	 * The debit (expense) and credit (accumulated depreciation) line of one schedule line.
+	 *
+	 * @param array{figures: array<string,mixed>, line: array<string,mixed>} $entry The line with its asset.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @throws DomainException When the asset has no expense or accumulated depreciation account.
+	 */
+	private function journalLines(array $entry): array {
+		$figures = $entry['figures'];
+		if ($figures['expenseAccount'] === '' || $figures['accumulatedAccount'] === '') {
+			throw new DomainException(sprintf('Asset %s has no depreciation expense or accumulated depreciation account.', $figures['number']));
+		}
+
+		$amount = (round((float)$entry['line']['depreciationAmount'], 2));
+		$text = sprintf('%s %s', $figures['number'], substr((string)$entry['line']['periodEndDate'], 0, 10));
+		return [
+			[
+				'accountNumber' => $figures['expenseAccount'],
+				'side' => 'debit',
+				'amount' => $amount,
+				'description' => $text,
+				'costCenterCode' => $figures['costCenter'],
+			],
+			['accountNumber' => $figures['accumulatedAccount'], 'side' => 'credit', 'amount' => $amount, 'description' => $text],
+		];
+
+	}//end journalLines()
+
+	/**
+	 * The draft journal entry of a posting.
+	 *
+	 * @param DepreciationPosting                                                           $posting The posting.
+	 * @param array{lines: list<array<string,mixed>>, numbers: list<string>, date: string} $batch   Its lines, line ids and date.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function journal(DepreciationPosting $posting, array $batch): array {
+		return [
+			'journalNumber'    => sprintf(
+				'AFS-%s-%s',
+				str_replace('-', '', $batch['date']),
+				substr(hash('sha256', $posting->administrationId . '|' . implode('|', $batch['numbers'])), 0, 8)
+			),
+			'entryDate'        => $batch['date'],
+			'description'      => $posting->description,
+			'lines'            => $batch['lines'],
+			'journalType'      => 'manual',
+			'approvalState'    => 'not-required',
+			'administrationId' => $posting->administrationId,
+			'state'            => 'draft',
+		];
+
+	}//end journal()
+
+	/**
 	 * Write a plan as planned lines.
 	 *
-	 * @param array<string,mixed>                                                               $figures          The asset's figures.
-	 * @param list<array{month: string, start: string, end: string, cents: int, bookCents: int}> $plan             The plan.
-	 * @param string                                                                            $method           The FixedAsset method.
-	 * @param int                                                                               $months           The total useful life.
-	 * @param int                                                                               $accumulatedCents Depreciation before the plan.
-	 * @param string                                                                            $reason           Why the plan was made, or empty.
+	 * @param ScheduleTerms                                                                     $terms The terms and depreciation before the plan.
+	 * @param list<array{month: string, start: string, end: string, cents: int, bookCents: int}> $plan  The plan.
 	 *
 	 * @return void
 	 */
-	private function writePlan(array $figures, array $plan, string $method, int $months, int $accumulatedCents, string $reason): void {
+	private function writePlan(ScheduleTerms $terms, array $plan): void {
+		$accumulatedCents = $terms->accumulatedCents;
 		foreach ($plan as $month) {
 			$accumulatedCents += $month['cents'];
 			$this->records->save(
 				schema: self::SCHEDULE,
 				object: $this->line(
-					figures: $figures,
-					line: $month,
-					method: $method,
-					months: $months,
-					accumulatedCents: $accumulatedCents,
-					reason: $reason,
-					rateType: 'fixed-amount'
+					terms: $terms,
+					entry: $month + ['accumulatedCents' => $accumulatedCents, 'rateType' => 'fixed-amount']
 				)
 			);
 		}
@@ -517,46 +663,65 @@ class DepreciationScheduleService {
 	/**
 	 * One DepreciationSchedule line.
 	 *
-	 * @param array<string,mixed>                                          $figures          The asset's figures.
-	 * @param array{month: string, start: string, end: string, cents: int} $line             The period and amount.
-	 * @param string                                                       $method           The FixedAsset method.
-	 * @param int                                                          $months           The total useful life.
-	 * @param int                                                          $accumulatedCents Accumulated depreciation including this line.
-	 * @param string                                                       $reason           Why, or empty.
-	 * @param string                                                       $rateType         fixed-amount, or extra.
+	 * @param ScheduleTerms       $terms The figures, method, life and reason.
+	 * @param array<string,mixed> $entry month, start, end, cents, accumulatedCents (including this line) and
+	 *                                   rateType (fixed-amount or extra).
 	 *
 	 * @return array<string,mixed> The line.
 	 */
-	private function line(array $figures, array $line, string $method, int $months, int $accumulatedCents, string $reason, string $rateType): array {
-		$rate = $figures['rate'];
-		if ($method !== 'degressive') {
-			$rate = round(12 / max(1, $months), 6);
-		}
-
-		$suffix = $line['month'];
-		if ($rateType === self::EXTRA) {
-			$suffix = 'X' . str_replace('-', '', $line['start']);
-		}
-
+	private function line(ScheduleTerms $terms, array $entry): array {
+		$figures = $terms->figures;
 		return [
-			'scheduleNumber'          => sprintf('%s-%s', $figures['number'], $suffix),
+			'scheduleNumber'          => sprintf('%s-%s', $figures['number'], $this->lineSuffix(entry: $entry)),
 			'assetRef'                => $figures['id'],
-			'depreciationMethod'      => self::SCHEDULE_METHOD[$method],
-			'annualRate'              => $rate,
-			'rateType'                => $rateType,
-			'periodStartDate'         => $line['start'],
-			'periodEndDate'           => $line['end'],
-			'depreciationAmount'      => ($line['cents'] / 100),
-			'accumulatedDepreciation' => ($accumulatedCents / 100),
-			'bookValue'               => (($figures['costCents'] - $accumulatedCents) / 100),
-			'fiscalYear'              => (int)substr($line['start'], 0, 4),
+			'depreciationMethod'      => self::SCHEDULE_METHOD[$terms->method],
+			'annualRate'              => $this->annualRate(terms: $terms),
+			'rateType'                => $entry['rateType'],
+			'periodStartDate'         => $entry['start'],
+			'periodEndDate'           => $entry['end'],
+			'depreciationAmount'      => ($entry['cents'] / 100),
+			'accumulatedDepreciation' => ($entry['accumulatedCents'] / 100),
+			'bookValue'               => (($figures['costCents'] - $entry['accumulatedCents']) / 100),
+			'fiscalYear'              => (int)substr($entry['start'], 0, 4),
 			'status'                  => self::PLANNED,
 			'costCenterCode'          => $this->orNull(value: $figures['costCenter']),
-			'reason'                  => $this->orNull(value: $reason),
+			'reason'                  => $this->orNull(value: $terms->reason),
 			'administrationId'        => $figures['administrationId'],
 		];
 
 	}//end line()
+
+	/**
+	 * The annual rate: the asset's own for degressive, else 12 / the useful life.
+	 *
+	 * @param ScheduleTerms $terms The figures, method and life.
+	 *
+	 * @return float
+	 */
+	private function annualRate(ScheduleTerms $terms): float {
+		if ($terms->method === 'degressive') {
+			return $terms->figures['rate'];
+		}
+
+		return round(12 / max(1, $terms->months), 6);
+
+	}//end annualRate()
+
+	/**
+	 * The schedule number suffix: the month, or X and the date for an extra line.
+	 *
+	 * @param array{month: string, start: string, rateType: string} $entry The line entry.
+	 *
+	 * @return string
+	 */
+	private function lineSuffix(array $entry): string {
+		if ($entry['rateType'] === self::EXTRA) {
+			return 'X' . str_replace('-', '', $entry['start']);
+		}
+
+		return $entry['month'];
+
+	}//end lineSuffix()
 
 	/**
 	 * Whole months from one month to another.

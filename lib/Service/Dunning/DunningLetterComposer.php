@@ -87,14 +87,14 @@ final class DunningLetterComposer {
 		$params['recipientName']  = ($params['recipientName'] ?? ($customer['legalName'] ?? ($customer['tradeName'] ?? null)));
 		// A consumer is charged collection costs only 15 days after the 14-day letter (REQ-RAD-007, design D7).
 		if ((float)($params['collectionCostAmount'] ?? 0.0) > 0.0) {
-			$params = $this->costHold->apply(
-				params: $params,
-				customer: $customer,
-				invoice: $invoice,
-				stages: $this->ladderStages(params: $params, find: $find),
-				runs: $findAll('DunningRun', ['invoiceId' => (string)($params['invoiceId'] ?? '')]),
-				now: new DateTimeImmutable()
-			);
+			$hold = new CostHoldRequest();
+			$hold->params   = $params;
+			$hold->customer = $customer;
+			$hold->invoice  = $invoice;
+			$hold->stages   = $this->ladderStages(params: $params, find: $find);
+			$hold->runs     = $findAll('DunningRun', ['invoiceId' => (string)($params['invoiceId'] ?? '')]);
+			$hold->now      = new DateTimeImmutable();
+			$params         = $this->costHold->apply(request: $hold);
 		}
 
 		if ((string)($params['renderedSubject'] ?? '') !== '' && (string)($params['renderedBody'] ?? '') !== '') {

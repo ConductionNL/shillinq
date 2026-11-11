@@ -72,6 +72,67 @@ use DateTimeImmutable;
  */
 class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'FinancialStatement' => [
+			// IT art. 2423 — rounded-to-euro presentation.
+			'roundedToEuro' => true,
+			// Inventory measurement (IT 2426 n.9/n.10, OIC 13, ES norma 10ª).
+			'inventoryMeasurementBasis' => 'lower-of-cost-and-nrv',
+			'inventoryCostFormula' => 'weighted-average',
+			'inventoryCostFormulaDisclosed' => true,
+			// Revenue standards in force for the seeded 2025 period.
+			'oic34Applied' => true,
+			'icac2021RevenueApplied' => true,
+			// Statement model (NBB full/abbreviated/micro; ES normal/abbreviated).
+			'statementModel' => 'full',
+			'cashFlowStatementPresent' => true,
+			'equityChangesStatementPresent' => true,
+			// Per-jurisdiction record retention — 10y meets every minimum.
+			'retentionYears' => 10,
+		],
+	];
+
+	/**
+	 * The data seedObjects() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_OBJECTS = [
+		'EInvoiceMandate' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'enabled' => true,
+				'structuredFormat' => 'Factur-X / FatturaPA / XRechnung / Peppol-BIS',
+				'transmissionChannel' => 'SdI / Peppol / KSeF / e-Factura / e-Fatura / AEAT / OnlineSzamla / AADE / VMI / PPF / EN16931 / regional',
+				'chainedRecords' => true,
+				'realTime' => true,
+				'qrCode' => true,
+				'atcud' => true,
+				'liveFrom' => '2024-01-01',
+			],
+		],
+		'SaftExportProfile' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'capable' => true,
+				'standard' => 'SAF-T (OECD) — PT / RO D406 / i.SAF-T / FAIA / FEC / JPK / financial / accounting',
+				'onDemand' => true,
+				'coveredAreas' => [
+					'general-ledger',
+					'accounts-receivable',
+					'accounts-payable',
+					'fixed-assets',
+					'inventory',
+				],
+			],
+		],
+	];
+
+	/**
 	 * Statutory minimum record-retention period (years) per jurisdiction, used by the
 	 * `*-retention-*` rules. The declared retentionYears must meet or exceed this.
 	 *
@@ -104,167 +165,651 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, callable>>
 	 */
 	public static function checks(): array {
-		$checks = [
+		return [
 			'FinancialStatement' => [
-				// ===== IT — Codice civile / OIC. =====
-				// art. 2423 c.c.: the financial statements are expressed in euro and
-				// may be rounded to the euro (currency EUR + roundedToEuro flag set).
-				'it-cc-art2423-euro-rounding' => static fn (array $o): bool => self::equalsField($o, 'currency', 'EUR')
-					&& self::isTrue($o, 'roundedToEuro'),
-
-				// art. 2424 c.c.: the balance sheet follows the statutory layout —
-				// assets and the equity/provisions/liabilities side are all present
-				// (the gross account-form layout already modelled).
-				'it-cc-art2424-balance-sheet-schema' => static fn (array $o): bool => self::balanceLayoutComplete($o),
-
-				// art. 2425 c.c.: the income statement follows the by-nature scalar
-				// layout — turnover (A), production costs (B), financial result (C)
-				// and the result are all present.
-				'it-cc-art2425-income-statement-schema' => static fn (array $o): bool => self::pnlLayoutComplete($o),
-
-				// OIC 12: the composition/layout of balance sheet, income statement and
-				// notes follow the OIC schemes — all three component statements present.
-				'it-oic12-statement-structure' => static fn (array $o): bool => self::hasComponent($o, 'balance')
-					&& self::hasComponent($o, 'pnl')
-					&& self::hasComponent($o, 'notes'),
-
-				// art. 2426 n.9 c.c. / OIC 13: inventories are measured at the lower of
-				// cost and net realisable value.
-				'it-cc-art2426-9-inventories-lower-of' => static fn (array $o): bool => self::inventoryLowerOf($o),
-				'it-oic13-inventories' => static fn (array $o): bool => self::inventoryLowerOf($o)
-					&& self::inventoryCostFormulaOk($o),
-
-				// art. 2426 n.10 c.c.: the cost of fungible inventories uses
-				// weighted-average / FIFO / LIFO; any difference from current cost is
-				// disclosed in the notes (formula stated + disclosure flag set).
-				'it-cc-art2426-10-inventory-cost-formula' => static fn (array $o): bool => self::inventoryCostFormulaOk($o)
-					&& self::isTrue($o, 'inventoryCostFormulaDisclosed'),
-
-				// art. 2435-bis c.c.: the abbreviated schema may only be used by an
-				// entity within the size thresholds — abbreviated implies micro/small.
-				'it-cc-art2435bis-abbreviated' => static fn (array $o): bool => self::abbreviatedAllowed($o),
-
-				// OIC 34 (Ricavi): applies to periods beginning on/after 2024-01-01 —
-				// a statement whose period starts on/after that date records that the
-				// standard was applied; an earlier period is out of scope.
-				'it-oic34-effective-2024' => static fn (array $o): bool => self::periodStartsBefore($o, '2024-01-01')
-					|| self::isTrue($o, 'oic34Applied'),
-
-				// ===== ES — Plan General de Contabilidad. =====
-				// norma 10ª: existencias measured at the lower of cost (weighted-average
-				// or FIFO) and net realisable value.
-				'es-pgc-norma10-existencias' => static fn (array $o): bool => self::inventoryLowerOf($o)
-					&& self::inventoryCostFormulaOk($o),
-
-				// Resolución ICAC 10-feb-2021 (norma 14ª revenue): applies to periods
-				// beginning on/after 2021-01-01 — such a statement records that the
-				// five-step revenue model is applied; an earlier period is out of scope.
-				'es-pgc-norma14-icac-2021' => static fn (array $o): bool => self::periodStartsBefore($o, '2021-01-01')
-					|| self::isTrue($o, 'icac2021RevenueApplied'),
-
-				// PGC parte 3ª (modelo normal): the annual accounts comprise balance,
-				// P&L, statement of changes in equity, cash-flow and notes — for an
-				// entity on the normal model all five components are present.
-				'es-pgc-cuentas-anuales-normal' => static fn (array $o): bool => self::isAbbreviatedModel($o)
-					|| self::normalModelComplete($o),
-
-				// PGC modelo abreviado: undertakings within the thresholds may use the
-				// abbreviated model and are exempt from the cash-flow statement —
-				// abbreviated implies micro/small.
-				'es-pgc-cuentas-anuales-abreviado' => static fn (array $o): bool => self::abbreviatedAllowed($o),
-
-				// PGC de PYMES: the simplified PGC may be applied only by an entity
-				// within the PYMES thresholds — pymes implies micro/small.
-				'es-pgc-pymes' => static fn (array $o): bool => self::pymesAllowed($o),
-
-				// ===== BE — NBB/BNB models. =====
-				// BNB/NBB models: annual accounts are drawn up on a standard model
-				// (full/abbreviated/micro) matching the size category — the declared
-				// statement model is consistent with the declared size class.
-				'be-car-annual-accounts-models' => static fn (array $o): bool => self::statementModelConsistent($o),
-
-				// NBB filing: accounts are filed within 30 days of approval and at most
-				// seven months after year-end.
-				'be-nbb-filing' => static fn (array $o): bool => self::filedAfterAdoptionWithinDays($o, 30)
-					&& self::filedWithinMonths($o, 7),
+				...self::italianStatementChecks(),
+				...self::spanishAndBelgianStatementChecks(),
+				...self::retentionChecks(),
 			],
+			// ===== Per-country e-invoicing mandates (EInvoiceMandate). =====
+			'EInvoiceMandate' => [
+				...self::southernAndWesternMandateChecks(),
+				...self::centralAndEasternMandateChecks(),
+			],
+			// ===== SAF-T / standard-audit-file export obligations (SaftExportProfile). =====
+			'SaftExportProfile' => self::saftExportProfileChecks(),
 		];
 
-		// ===== Per-jurisdiction record-retention minimums. =====
-		// Each maps onto FinancialStatement.retentionYears, jurisdiction-gated by the
-		// catalogue so only the matching country's minimum fires for a given audit.
+	}//end checks()
+
+	/**
+	 * The per-jurisdiction record-retention minimums, keyed by rule id in
+	 * RETENTION_MINIMUMS order. Each maps onto FinancialStatement.retentionYears,
+	 * jurisdiction-gated by the catalogue so only the matching country's minimum
+	 * fires for a given audit.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function retentionChecks(): array {
+		$checks = [];
 		foreach (self::RETENTION_MINIMUMS as $ruleId => $minimumYears) {
-			$checks['FinancialStatement'][$ruleId] = static fn (array $o): bool => self::retentionMeets($o, $minimumYears);
+			$checks[$ruleId] = static fn (array $o): bool => self::retentionMeets($o, $minimumYears);
 		}
 
-		// ===== Per-country e-invoicing mandates (EInvoiceMandate). =====
-		$checks['EInvoiceMandate'] = [
-			// Italy: FatturaPA XML transmitted through the Sistema di Interscambio.
-			'it-einvoice-sdi-b2b' => static fn (array $o): bool => self::mandateOk($o, 'FatturaPA', 'SdI'),
-			// Spain VERI*FACTU: tamper-evident, chained invoice records.
-			'es-verifactu-certified-software' => static fn (array $o): bool => self::mandateOk($o, 'VERIFACTU', 'AEAT')
-				&& self::isTrue($o, 'chainedRecords'),
-			// Spain Basque Country / Navarre: signed, chained TicketBAI records.
-			'es-ticketbai-basque' => static fn (array $o): bool => self::mandateOk($o, 'TicketBAI', 'regional')
-				&& self::isTrue($o, 'chainedRecords'),
-			// Spain SII: near-real-time VAT ledger submission to the AEAT.
-			'es-sii-real-time-vat' => static fn (array $o): bool => self::mandateOk($o, 'SII', 'AEAT')
-				&& self::isTrue($o, 'realTime'),
-			// Belgium: structured Peppol e-invoices for B2B from 2026-01-01.
-			'be-einvoice-b2b-peppol' => static fn (array $o): bool => self::mandateOk($o, 'Peppol-BIS', 'Peppol')
-				&& self::mandateLiveBy($o, '2026-01-01'),
-			// Portugal: certified billing software, e-Fatura reporting with ATCUD/QR.
-			'pt-saft-pt-billing' => static fn (array $o): bool => self::mandateOk($o, 'SAF-T-PT', 'e-Fatura')
-				&& self::isTrue($o, 'qrCode') && self::isTrue($o, 'atcud'),
-			// Romania: B2B invoices via RO e-Factura.
-			'ro-efactura-b2b' => static fn (array $o): bool => self::mandateOk($o, 'RO-CIUS', 'e-Factura'),
-			// Hungary RTIR: real-time invoice-data reporting via Online Számla.
-			'hu-rtir-online-szamla' => static fn (array $o): bool => self::mandateOk($o, 'NAV-XML', 'OnlineSzamla')
-				&& self::isTrue($o, 'realTime'),
-			// Greece myDATA: revenue/expense records transmitted to the AADE.
-			'gr-mydata-ledgers' => static fn (array $o): bool => self::mandateOk($o, 'myDATA', 'AADE'),
-			// Lithuania i.SAF: issued/received invoice registers to the tax authority.
-			'lt-isaf-vat-invoices' => static fn (array $o): bool => self::mandateOk($o, 'i.SAF', 'VMI'),
-			// France: receive from 2026-09-01; large/intermediate also issue from then.
-			'fr-einvoice-b2b-2026' => static fn (array $o): bool => self::mandateOk($o, 'Factur-X', 'PPF')
-				&& self::mandateLiveBy($o, '2026-09-01'),
-			// Poland KSeF: structured B2B invoices via the national system.
-			'pl-ksef-b2b' => static fn (array $o): bool => self::mandateOk($o, 'FA(2)', 'KSeF'),
-			// Germany: structured EN 16931 e-invoices; receive from 2025-01-01.
-			'de-einvoice-b2b-2025' => static fn (array $o): bool => self::mandateOk($o, 'XRechnung', 'EN16931')
-				&& self::mandateLiveBy($o, '2025-01-01'),
-		];
-
-		// ===== SAF-T / standard-audit-file export obligations (SaftExportProfile). =====
-		$checks['SaftExportProfile'] = [
-			// Portugal accounting SAF-T (PT) — postponed but the system must be capable.
-			'pt-saft-pt-accounting' => static fn (array $o): bool => self::saftOk($o, 'PT', 'accounting'),
-			// Romania SAF-T via Declaratia D406 (GL, AR/AP, fixed assets, inventory).
-			'ro-saft-d406' => static fn (array $o): bool => self::saftOk($o, 'RO', 'd406')
-				&& self::saftCovers($o, ['general-ledger', 'accounts-receivable', 'accounts-payable', 'fixed-assets', 'inventory']),
-			// Lithuania i.SAF-T accounting file on request.
-			'lt-isaft-accounting' => static fn (array $o): bool => self::saftOk($o, 'LT', 'i.SAF-T'),
-			// Norway SAF-T Financial on request.
-			'no-saft-financial' => static fn (array $o): bool => self::saftOk($o, 'NO', 'financial'),
-			// Austria SAF-T export on demand during an audit.
-			'at-saft-on-demand' => static fn (array $o): bool => self::saftOk($o, 'AT', 'saft')
-				&& self::isTrue($o, 'onDemand'),
-			// Luxembourg FAIA (Fichier d'Audit Informatisé AED).
-			'lu-saft-fec' => static fn (array $o): bool => self::saftOk($o, 'LU', 'FAIA'),
-			// France FEC produced at the start of a tax audit.
-			'fr-fec-on-demand' => static fn (array $o): bool => self::saftOk($o, 'FR', 'FEC')
-				&& self::isTrue($o, 'onDemand'),
-			// Poland JPK (JPK_VAT and other JPK files) periodically or on demand.
-			'pl-jpk-saft' => static fn (array $o): bool => self::saftOk($o, 'PL', 'JPK'),
-			// Denmark SAF-T export under the digital bookkeeping requirements.
-			'dk-saft-on-demand' => static fn (array $o): bool => self::saftOk($o, 'DK', 'saft')
-				&& self::isTrue($o, 'onDemand'),
-			// Bulgaria SAF-T phased from 2026.
-			'bg-saft-2026' => static fn (array $o): bool => self::saftOk($o, 'BG', 'saft'),
-		];
-
 		return $checks;
-	}//end checks()
+
+	}//end retentionChecks()
+
+	/**
+	 * The Italian Codice civile / OIC predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function italianStatementChecks(): array {
+		return [
+			// ===== IT — Codice civile / OIC. =====
+			'it-cc-art2423-euro-rounding' => self::itCcArt2423EuroRounding(...),
+			'it-cc-art2424-balance-sheet-schema' => self::itCcArt2424BalanceSheetSchema(...),
+			'it-cc-art2425-income-statement-schema' => self::itCcArt2425IncomeStatementSchema(...),
+			'it-oic12-statement-structure' => self::itOic12StatementStructure(...),
+			'it-cc-art2426-9-inventories-lower-of' => self::itCcArt24269InventoriesLowerOf(...),
+			'it-oic13-inventories' => self::itOic13Inventories(...),
+			'it-cc-art2426-10-inventory-cost-formula' => self::itCcArt242610InventoryCostFormula(...),
+			'it-cc-art2435bis-abbreviated' => self::itCcArt2435bisAbbreviated(...),
+			'it-oic34-effective-2024' => self::itOic34Effective2024(...),
+		];
+
+	}//end italianStatementChecks()
+
+	/**
+	 * The Spanish PGC and Belgian NBB predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function spanishAndBelgianStatementChecks(): array {
+		return [
+			// ===== ES — Plan General de Contabilidad. =====
+			'es-pgc-norma10-existencias' => self::esPgcNorma10Existencias(...),
+			'es-pgc-norma14-icac-2021' => self::esPgcNorma14Icac2021(...),
+			'es-pgc-cuentas-anuales-normal' => self::esPgcCuentasAnualesNormal(...),
+			'es-pgc-cuentas-anuales-abreviado' => self::esPgcCuentasAnualesAbreviado(...),
+			'es-pgc-pymes' => self::esPgcPymes(...),
+
+			// ===== BE — NBB/BNB models. =====
+			'be-car-annual-accounts-models' => self::beCarAnnualAccountsModels(...),
+			'be-nbb-filing' => self::beNbbFiling(...),
+		];
+
+	}//end spanishAndBelgianStatementChecks()
+
+	/**
+	 * The Italian, Spanish, Belgian, Portuguese and Romanian e-invoicing mandate predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function southernAndWesternMandateChecks(): array {
+		return [
+			'it-einvoice-sdi-b2b' => self::itEinvoiceSdiB2b(...),
+			'es-verifactu-certified-software' => self::esVerifactuCertifiedSoftware(...),
+			'es-ticketbai-basque' => self::esTicketbaiBasque(...),
+			'es-sii-real-time-vat' => self::esSiiRealTimeVat(...),
+			'be-einvoice-b2b-peppol' => self::beEinvoiceB2bPeppol(...),
+			'pt-saft-pt-billing' => self::ptSaftPtBilling(...),
+			'ro-efactura-b2b' => self::roEfacturaB2b(...),
+		];
+
+	}//end southernAndWesternMandateChecks()
+
+	/**
+	 * The Hungarian, Greek, Lithuanian, French, Polish and German e-invoicing mandate predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function centralAndEasternMandateChecks(): array {
+		return [
+			'hu-rtir-online-szamla' => self::huRtirOnlineSzamla(...),
+			'gr-mydata-ledgers' => self::grMydataLedgers(...),
+			'lt-isaf-vat-invoices' => self::ltIsafVatInvoices(...),
+			'fr-einvoice-b2b-2026' => self::frEinvoiceB2b2026(...),
+			'pl-ksef-b2b' => self::plKsefB2b(...),
+			'de-einvoice-b2b-2025' => self::deEinvoiceB2b2025(...),
+		];
+
+	}//end centralAndEasternMandateChecks()
+
+	/**
+	 * The SaftExportProfile predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function saftExportProfileChecks(): array {
+		return [
+			'pt-saft-pt-accounting' => self::ptSaftPtAccounting(...),
+			'ro-saft-d406' => self::roSaftD406(...),
+			'lt-isaft-accounting' => self::ltIsaftAccounting(...),
+			'no-saft-financial' => self::noSaftFinancial(...),
+			'at-saft-on-demand' => self::atSaftOnDemand(...),
+			'lu-saft-fec' => self::luSaftFec(...),
+			'fr-fec-on-demand' => self::frFecOnDemand(...),
+			'pl-jpk-saft' => self::plJpkSaft(...),
+			'dk-saft-on-demand' => self::dkSaftOnDemand(...),
+			'bg-saft-2026' => self::bgSaft2026(...),
+		];
+
+	}//end saftExportProfileChecks()
+
+	/**
+	 * art. 2423 c.c.: the financial statements are expressed in euro and
+	 * may be rounded to the euro (currency EUR + roundedToEuro flag set).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCcArt2423EuroRounding(array $o): bool {
+		return self::equalsField($o, 'currency', 'EUR')
+			&& self::isTrue($o, 'roundedToEuro');
+
+	}//end itCcArt2423EuroRounding()
+
+	/**
+	 * art. 2424 c.c.: the balance sheet follows the statutory layout —
+	 * assets and the equity/provisions/liabilities side are all present
+	 * (the gross account-form layout already modelled).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCcArt2424BalanceSheetSchema(array $o): bool {
+		return self::balanceLayoutComplete($o);
+
+	}//end itCcArt2424BalanceSheetSchema()
+
+	/**
+	 * art. 2425 c.c.: the income statement follows the by-nature scalar
+	 * layout — turnover (A), production costs (B), financial result (C)
+	 * and the result are all present.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCcArt2425IncomeStatementSchema(array $o): bool {
+		return self::pnlLayoutComplete($o);
+
+	}//end itCcArt2425IncomeStatementSchema()
+
+	/**
+	 * OIC 12: the composition/layout of balance sheet, income statement and
+	 * notes follow the OIC schemes — all three component statements present.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itOic12StatementStructure(array $o): bool {
+		return self::hasComponent($o, 'balance')
+			&& self::hasComponent($o, 'pnl')
+			&& self::hasComponent($o, 'notes');
+
+	}//end itOic12StatementStructure()
+
+	/**
+	 * art. 2426 n.9 c.c. / OIC 13: inventories are measured at the lower of
+	 * cost and net realisable value.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCcArt24269InventoriesLowerOf(array $o): bool {
+		return self::inventoryLowerOf($o);
+
+	}//end itCcArt24269InventoriesLowerOf()
+
+	/**
+	 * Rule it-oic13-inventories holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itOic13Inventories(array $o): bool {
+		return self::inventoryLowerOf($o)
+			&& self::inventoryCostFormulaOk($o);
+
+	}//end itOic13Inventories()
+
+	/**
+	 * art. 2426 n.10 c.c.: the cost of fungible inventories uses
+	 * weighted-average / FIFO / LIFO; any difference from current cost is
+	 * disclosed in the notes (formula stated + disclosure flag set).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCcArt242610InventoryCostFormula(array $o): bool {
+		return self::inventoryCostFormulaOk($o)
+			&& self::isTrue($o, 'inventoryCostFormulaDisclosed');
+
+	}//end itCcArt242610InventoryCostFormula()
+
+	/**
+	 * art. 2435-bis c.c.: the abbreviated schema may only be used by an
+	 * entity within the size thresholds — abbreviated implies micro/small.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itCcArt2435bisAbbreviated(array $o): bool {
+		return self::abbreviatedAllowed($o);
+
+	}//end itCcArt2435bisAbbreviated()
+
+	/**
+	 * OIC 34 (Ricavi): applies to periods beginning on/after 2024-01-01 —
+	 * a statement whose period starts on/after that date records that the
+	 * standard was applied; an earlier period is out of scope.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itOic34Effective2024(array $o): bool {
+		return self::periodStartsBefore($o, '2024-01-01')
+			|| self::isTrue($o, 'oic34Applied');
+
+	}//end itOic34Effective2024()
+
+	/**
+	 * norma 10ª: existencias measured at the lower of cost (weighted-average
+	 * or FIFO) and net realisable value.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esPgcNorma10Existencias(array $o): bool {
+		return self::inventoryLowerOf($o)
+			&& self::inventoryCostFormulaOk($o);
+
+	}//end esPgcNorma10Existencias()
+
+	/**
+	 * Resolución ICAC 10-feb-2021 (norma 14ª revenue): applies to periods
+	 * beginning on/after 2021-01-01 — such a statement records that the
+	 * five-step revenue model is applied; an earlier period is out of scope.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esPgcNorma14Icac2021(array $o): bool {
+		return self::periodStartsBefore($o, '2021-01-01')
+			|| self::isTrue($o, 'icac2021RevenueApplied');
+
+	}//end esPgcNorma14Icac2021()
+
+	/**
+	 * PGC parte 3ª (modelo normal): the annual accounts comprise balance,
+	 * P&L, statement of changes in equity, cash-flow and notes — for an
+	 * entity on the normal model all five components are present.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esPgcCuentasAnualesNormal(array $o): bool {
+		return self::isAbbreviatedModel($o)
+			|| self::normalModelComplete($o);
+
+	}//end esPgcCuentasAnualesNormal()
+
+	/**
+	 * PGC modelo abreviado: undertakings within the thresholds may use the
+	 * abbreviated model and are exempt from the cash-flow statement —
+	 * abbreviated implies micro/small.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esPgcCuentasAnualesAbreviado(array $o): bool {
+		return self::abbreviatedAllowed($o);
+
+	}//end esPgcCuentasAnualesAbreviado()
+
+	/**
+	 * PGC de PYMES: the simplified PGC may be applied only by an entity
+	 * within the PYMES thresholds — pymes implies micro/small.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esPgcPymes(array $o): bool {
+		return self::pymesAllowed($o);
+
+	}//end esPgcPymes()
+
+	/**
+	 * BNB/NBB models: annual accounts are drawn up on a standard model
+	 * (full/abbreviated/micro) matching the size category — the declared
+	 * statement model is consistent with the declared size class.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function beCarAnnualAccountsModels(array $o): bool {
+		return self::statementModelConsistent($o);
+
+	}//end beCarAnnualAccountsModels()
+
+	/**
+	 * NBB filing: accounts are filed within 30 days of approval and at most
+	 * seven months after year-end.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function beNbbFiling(array $o): bool {
+		return self::filedAfterAdoptionWithinDays($o, 30)
+			&& self::filedWithinMonths($o, 7);
+
+	}//end beNbbFiling()
+
+	/**
+	 * Italy: FatturaPA XML transmitted through the Sistema di Interscambio.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function itEinvoiceSdiB2b(array $o): bool {
+		return self::mandateOk($o, 'FatturaPA', 'SdI');
+
+	}//end itEinvoiceSdiB2b()
+
+	/**
+	 * Spain VERI*FACTU: tamper-evident, chained invoice records.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esVerifactuCertifiedSoftware(array $o): bool {
+		return self::mandateOk($o, 'VERIFACTU', 'AEAT')
+			&& self::isTrue($o, 'chainedRecords');
+
+	}//end esVerifactuCertifiedSoftware()
+
+	/**
+	 * Spain Basque Country / Navarre: signed, chained TicketBAI records.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esTicketbaiBasque(array $o): bool {
+		return self::mandateOk($o, 'TicketBAI', 'regional')
+			&& self::isTrue($o, 'chainedRecords');
+
+	}//end esTicketbaiBasque()
+
+	/**
+	 * Spain SII: near-real-time VAT ledger submission to the AEAT.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esSiiRealTimeVat(array $o): bool {
+		return self::mandateOk($o, 'SII', 'AEAT')
+			&& self::isTrue($o, 'realTime');
+
+	}//end esSiiRealTimeVat()
+
+	/**
+	 * Belgium: structured Peppol e-invoices for B2B from 2026-01-01.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function beEinvoiceB2bPeppol(array $o): bool {
+		return self::mandateOk($o, 'Peppol-BIS', 'Peppol')
+			&& self::mandateLiveBy($o, '2026-01-01');
+
+	}//end beEinvoiceB2bPeppol()
+
+	/**
+	 * Portugal: certified billing software, e-Fatura reporting with ATCUD/QR.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ptSaftPtBilling(array $o): bool {
+		return self::mandateOk($o, 'SAF-T-PT', 'e-Fatura')
+			&& self::isTrue($o, 'qrCode') && self::isTrue($o, 'atcud');
+
+	}//end ptSaftPtBilling()
+
+	/**
+	 * Romania: B2B invoices via RO e-Factura.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function roEfacturaB2b(array $o): bool {
+		return self::mandateOk($o, 'RO-CIUS', 'e-Factura');
+
+	}//end roEfacturaB2b()
+
+	/**
+	 * Hungary RTIR: real-time invoice-data reporting via Online Számla.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function huRtirOnlineSzamla(array $o): bool {
+		return self::mandateOk($o, 'NAV-XML', 'OnlineSzamla')
+			&& self::isTrue($o, 'realTime');
+
+	}//end huRtirOnlineSzamla()
+
+	/**
+	 * Greece myDATA: revenue/expense records transmitted to the AADE.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function grMydataLedgers(array $o): bool {
+		return self::mandateOk($o, 'myDATA', 'AADE');
+
+	}//end grMydataLedgers()
+
+	/**
+	 * Lithuania i.SAF: issued/received invoice registers to the tax authority.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ltIsafVatInvoices(array $o): bool {
+		return self::mandateOk($o, 'i.SAF', 'VMI');
+
+	}//end ltIsafVatInvoices()
+
+	/**
+	 * France: receive from 2026-09-01; large/intermediate also issue from then.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frEinvoiceB2b2026(array $o): bool {
+		return self::mandateOk($o, 'Factur-X', 'PPF')
+			&& self::mandateLiveBy($o, '2026-09-01');
+
+	}//end frEinvoiceB2b2026()
+
+	/**
+	 * Poland KSeF: structured B2B invoices via the national system.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function plKsefB2b(array $o): bool {
+		return self::mandateOk($o, 'FA(2)', 'KSeF');
+
+	}//end plKsefB2b()
+
+	/**
+	 * Germany: structured EN 16931 e-invoices; receive from 2025-01-01.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function deEinvoiceB2b2025(array $o): bool {
+		return self::mandateOk($o, 'XRechnung', 'EN16931')
+			&& self::mandateLiveBy($o, '2025-01-01');
+
+	}//end deEinvoiceB2b2025()
+
+	/**
+	 * Portugal accounting SAF-T (PT) — postponed but the system must be capable.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ptSaftPtAccounting(array $o): bool {
+		return self::saftOk($o, 'PT', 'accounting');
+
+	}//end ptSaftPtAccounting()
+
+	/**
+	 * Romania SAF-T via Declaratia D406 (GL, AR/AP, fixed assets, inventory).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function roSaftD406(array $o): bool {
+		return self::saftOk($o, 'RO', 'd406')
+			&& self::saftCovers($o, ['general-ledger', 'accounts-receivable', 'accounts-payable', 'fixed-assets', 'inventory']);
+
+	}//end roSaftD406()
+
+	/**
+	 * Lithuania i.SAF-T accounting file on request.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ltIsaftAccounting(array $o): bool {
+		return self::saftOk($o, 'LT', 'i.SAF-T');
+
+	}//end ltIsaftAccounting()
+
+	/**
+	 * Norway SAF-T Financial on request.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function noSaftFinancial(array $o): bool {
+		return self::saftOk($o, 'NO', 'financial');
+
+	}//end noSaftFinancial()
+
+	/**
+	 * Austria SAF-T export on demand during an audit.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function atSaftOnDemand(array $o): bool {
+		return self::saftOk($o, 'AT', 'saft')
+			&& self::isTrue($o, 'onDemand');
+
+	}//end atSaftOnDemand()
+
+	/**
+	 * Luxembourg FAIA (Fichier d'Audit Informatisé AED).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function luSaftFec(array $o): bool {
+		return self::saftOk($o, 'LU', 'FAIA');
+
+	}//end luSaftFec()
+
+	/**
+	 * France FEC produced at the start of a tax audit.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frFecOnDemand(array $o): bool {
+		return self::saftOk($o, 'FR', 'FEC')
+			&& self::isTrue($o, 'onDemand');
+
+	}//end frFecOnDemand()
+
+	/**
+	 * Poland JPK (JPK_VAT and other JPK files) periodically or on demand.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function plJpkSaft(array $o): bool {
+		return self::saftOk($o, 'PL', 'JPK');
+
+	}//end plJpkSaft()
+
+	/**
+	 * Denmark SAF-T export under the digital bookkeeping requirements.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function dkSaftOnDemand(array $o): bool {
+		return self::saftOk($o, 'DK', 'saft')
+			&& self::isTrue($o, 'onDemand');
+
+	}//end dkSaftOnDemand()
+
+	/**
+	 * Bulgaria SAF-T phased from 2026.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bgSaft2026(array $o): bool {
+		return self::saftOk($o, 'BG', 'saft');
+
+	}//end bgSaft2026()
 
 	/**
 	 * Field defaults this provider's checks read, backfilled onto the EXISTING
@@ -278,25 +823,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'FinancialStatement' => [
-				// IT art. 2423 — rounded-to-euro presentation.
-				'roundedToEuro' => true,
-				// Inventory measurement (IT 2426 n.9/n.10, OIC 13, ES norma 10ª).
-				'inventoryMeasurementBasis' => 'lower-of-cost-and-nrv',
-				'inventoryCostFormula' => 'weighted-average',
-				'inventoryCostFormulaDisclosed' => true,
-				// Revenue standards in force for the seeded 2025 period.
-				'oic34Applied' => true,
-				'icac2021RevenueApplied' => true,
-				// Statement model (NBB full/abbreviated/micro; ES normal/abbreviated).
-				'statementModel' => 'full',
-				'cashFlowStatementPresent' => true,
-				'equityChangesStatementPresent' => true,
-				// Per-jurisdiction record retention — 10y meets every minimum.
-				'retentionYears' => 10,
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
@@ -309,36 +836,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'EInvoiceMandate' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'enabled' => true,
-					'structuredFormat' => 'Factur-X / FatturaPA / XRechnung / Peppol-BIS',
-					'transmissionChannel' => 'SdI / Peppol / KSeF / e-Factura / e-Fatura / AEAT / OnlineSzamla / AADE / VMI / PPF / EN16931 / regional',
-					'chainedRecords' => true,
-					'realTime' => true,
-					'qrCode' => true,
-					'atcud' => true,
-					'liveFrom' => '2024-01-01',
-				],
-			],
-			'SaftExportProfile' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'capable' => true,
-					'standard' => 'SAF-T (OECD) — PT / RO D406 / i.SAF-T / FAIA / FEC / JPK / financial / accounting',
-					'onDemand' => true,
-					'coveredAreas' => [
-						'general-ledger',
-						'accounts-receivable',
-						'accounts-payable',
-						'fixed-assets',
-						'inventory',
-					],
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 

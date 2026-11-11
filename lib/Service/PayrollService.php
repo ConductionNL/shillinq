@@ -53,6 +53,61 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  */
 class PayrollService {
 	/**
+	 * The journal totals (integer cents) before any payslip is added.
+	 *
+	 * @var array<string,int>
+	 */
+	private const EMPTY_JOURNAL_TOTALS = [
+		'gross' => 0,
+		'free' => 0,
+		'svWg' => 0,
+		'zvw' => 0,
+		'pensWg' => 0,
+		'pensWn' => 0,
+		'lh' => 0,
+		'net' => 0,
+	];
+
+	/**
+	 * The Loonjournaalpost rules in order: debit lines gross wages, tax-free
+	 * allowances, employer social charges, employer ZVW, employer pension;
+	 * credit lines net payable, wage tax payable, SV+ZVW payable, pension
+	 * payable (employer + employee). Each sums the named journal totals.
+	 *
+	 * @var list<array{rekening:string,name:string,side:string,totals:list<string>}>
+	 */
+	private const JOURNAL_RULES = [
+		['rekening' => PayrollChartOfAccountsMapping::ACC_BRUTOLONEN, 'name' => 'Brutolonen', 'side' => 'debet', 'totals' => ['gross']],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_BELASTINGVRIJE_VERGOEDINGEN,
+			'name' => 'Belastingvrije vergoedingen',
+			'side' => 'debet',
+			'totals' => ['free'],
+		],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_SOCIALE_LASTEN_WG, 'name' => 'Sociale lasten WG', 'side' => 'debet', 'totals' => ['svWg']],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_ZVW_WG, 'name' => 'ZVW-bijdrage WG', 'side' => 'debet', 'totals' => ['zvw']],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_PENSIOEN_WG, 'name' => 'Pensioenpremie WG', 'side' => 'debet', 'totals' => ['pensWg']],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_TE_BETALEN_NETTO_LOON,
+			'name' => 'Te betalen netto loon',
+			'side' => 'credit',
+			'totals' => ['net'],
+		],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_LH, 'name' => 'Af te dragen loonheffing', 'side' => 'credit', 'totals' => ['lh']],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PREMIES_SV_ZVW,
+			'name' => 'Af te dragen premies SV+ZVW',
+			'side' => 'credit',
+			'totals' => ['svWg', 'zvw'],
+		],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PENSIOEN,
+			'name' => 'Af te dragen pensioenpremie',
+			'side' => 'credit',
+			'totals' => ['pensWg', 'pensWn'],
+		],
+	];
+	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -124,118 +179,183 @@ class PayrollService {
 		// Resolve the immutable wage-tax table for the period (REQ-PAY-002).
 		$tableRules = $this->resolveTabelRules(administrationId: $administrationId, period: $period, employee: $employee);
 
-		return $this->assemblePaySlip(
-			administrationId: $administrationId,
-			employee: $employee,
-			werkgever: $werkgever,
-			period: $period,
-			periodType: $periodType,
-			tableRules: $tableRules
-		);
+		$run = new PaySlipRun(administrationId: $administrationId, employee: $employee);
+		$run->werkgever = $werkgever;
+		$run->period = $period;
+		$run->periodType = $periodType;
+		$run->tableRules = $tableRules;
+		return $this->assemblePaySlip(run: $run);
 
 	}//end berekenLoonStrook()
 
 	/**
 	 * Assemble the full LoonStrook payload from calculator output.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param array<string,mixed> $employee Employee record.
-	 * @param array<string,mixed> $werkgever Employer record.
-	 * @param array<string,mixed> $period Period record.
-	 * @param string $periodType WEEK|4WEKEN|MAAND.
-	 * @param array<int,mixed> $tableRules Wage-tax bracket rows.
+	 * @param PaySlipRun $run The payslip run (employee, employer, period, period type, wage-tax table).
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function assemblePaySlip(
-		string $administrationId,
-		array $employee,
-		array $werkgever,
-		array $period,
-		string $periodType,
-		array $tableRules,
-	): array {
-		// Gross components: basissalaris + tax-free home-office allowance.
-		$basissalaris = (float)($employee['periodeBruto'] ?? $this->periodGrossOutAnnualPay(employee: $employee, periodType: $periodType));
-		$thuiswerkdagen = ((float)($employee['thuiswerkdagenPerWeek'] ?? 0) * $this->wekenInPeriod(periodType: $periodType));
-		$thuiswerkverg = $this->calculator->thuiswerkvergoeding(thuiswerkdagen: $thuiswerkdagen);
+	private function assemblePaySlip(PaySlipRun $run): array {
+		$this->composeGrossPay(run: $run);
+		$run->payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $run->fiscalPay, tableRules: $run->tableRules);
+		$premiums = $this->employerPremiums(run: $run);
+		$tail = ['netPaid' => $this->netPaid(run: $run, pension: $premiums['pension'])] + $this->accruals(run: $run);
+
+		return $this->paySlipHead(run: $run) + $premiums + $tail + ['administrationId' => $run->administrationId];
+
+	}//end assemblePaySlip()
+
+	/**
+	 * Gross components: basissalaris + tax-free home-office allowance, their
+	 * total, the tax-free total (allowance + 30% expat exemption) and the
+	 * fiscal pay.
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return void
+	 */
+	private function composeGrossPay(PaySlipRun $run): void {
+		$employee = $run->employee;
+		$run->basissalaris = (float)($employee['periodeBruto'] ?? $this->periodGrossOutAnnualPay(employee: $employee, periodType: $run->periodType));
+		$thuiswerkdagen = ((float)($employee['thuiswerkdagenPerWeek'] ?? 0) * $this->wekenInPeriod(periodType: $run->periodType));
+		$run->thuiswerkvergoeding = $this->calculator->thuiswerkvergoeding(thuiswerkdagen: $thuiswerkdagen);
 		$expatFree = $this->calculator->expat30PctVrijstelling(
-			grossPay: $basissalaris,
+			grossPay: $run->basissalaris,
 			applies: (bool)($employee['expat30PctScheme'] ?? false)
 		);
 
-		$grossComponents = [
-			'basissalaris' => $basissalaris,
-			'thuiswerkvergoeding' => $thuiswerkverg,
+		$run->grossComponents = [
+			'basissalaris' => $run->basissalaris,
+			'thuiswerkvergoeding' => $run->thuiswerkvergoeding,
 		];
-		$totalGross = $this->calculator->totaalBruto(componenten: $grossComponents);
+		$totalGross = $this->calculator->totaalBruto(componenten: $run->grossComponents);
+		$run->grossComponents['totaal_bruto'] = $totalGross;
 
-		$belastingvrijTotaal = $this->calculator->fromCents(
-			cents: ($this->calculator->toCents(amount: $thuiswerkverg) + $this->calculator->toCents(amount: $expatFree))
+		$run->belastingvrijTotaal = $this->calculator->fromCents(
+			cents: ($this->calculator->toCents(amount: $run->thuiswerkvergoeding) + $this->calculator->toCents(amount: $expatFree))
 		);
-		$fiscalPay = $this->calculator->fiscaalLoon(totalGross: $totalGross, belastingvrijTotaal: $belastingvrijTotaal);
-		$contributionPaySV = $basissalaris;
+		$run->fiscalPay = $this->calculator->fiscaalLoon(totalGross: $totalGross, belastingvrijTotaal: $run->belastingvrijTotaal);
+	}//end composeGrossPay()
 
-		$payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $fiscalPay, tableRules: $tableRules);
-
-		$svWg = $this->calculator->employerSocialInsurancePremiums(
-			contributionPaySV: $contributionPaySV,
-			periodType: $periodType,
-			awfRate: (string)($werkgever['awfRate'] ?? 'LOW'),
-			kleineWerkgever: true,
-			whkRate: (float)($employee['whkTarief2026'] ?? 0.0),
-			wkoRate: (float)($employee['wkoTarief2026'] ?? 0.0)
-		);
+	/**
+	 * The employer's social insurance premiums, ZVW and pension, over the
+	 * SV contribution pay (the base salary).
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> employerSocialInsurancePremiums, zvw and pension.
+	 */
+	private function employerPremiums(PaySlipRun $run): array {
+		$svWg = $this->socialInsurancePremiums(run: $run);
 		$zvw = $this->calculator->zvwWerkgever(
-			contributionPaySV: $contributionPaySV,
-			periodType: $periodType,
-			zvwRate: (string)($werkgever['zvwRate'] ?? 'LOW')
-		);
-		$pensioen = $this->calculator->pensioen(
-			basis: $basissalaris,
-			pctWerkgever: (float)($employee['pensionPremiumPctEmployer'] ?? 0),
-			pctEmployee: (float)($employee['pensionPremiumPctEmployee'] ?? 0)
+			contributionPaySV: $run->basissalaris,
+			periodType: $run->periodType,
+			zvwRate: (string)($run->werkgever['zvwRate'] ?? 'LOW')
 		);
 
-		$netPaid = $this->calculator->nettoBetaald(
-			fiscalPay: $fiscalPay,
-			payrollTax: $payrollTax,
+		return [
+			'employerSocialInsurancePremiums' => $svWg,
+			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
+			'pension' => $this->calculator->pensioen(
+				basis: $run->basissalaris,
+				pctWerkgever: (float)($run->employee['pensionPremiumPctEmployer'] ?? 0),
+				pctEmployee: (float)($run->employee['pensionPremiumPctEmployee'] ?? 0)
+			),
+		];
+	}//end employerPremiums()
+
+	/**
+	 * The employer's social insurance premiums (AWF, AOF, WHK, WKO).
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> The premiums.
+	 */
+	private function socialInsurancePremiums(PaySlipRun $run): array {
+		return $this->calculator->employerSocialInsurancePremiums(
+			contributionPaySV: $run->basissalaris,
+			periodType: $run->periodType,
+			awfRate: (string)($run->werkgever['awfRate'] ?? 'LOW'),
+			kleineWerkgever: true,
+			whkRate: (float)($run->employee['whkTarief2026'] ?? 0.0),
+			wkoRate: (float)($run->employee['wkoTarief2026'] ?? 0.0)
+		);
+	}//end socialInsurancePremiums()
+
+	/**
+	 * The net pay: fiscal pay minus wage tax and the employee's pension
+	 * share, plus the tax-free total.
+	 *
+	 * @param PaySlipRun          $run     The payslip run.
+	 * @param array<string,mixed> $pension The pension premiums.
+	 *
+	 * @return float The net pay.
+	 */
+	private function netPaid(PaySlipRun $run, array $pension): float {
+		return $this->calculator->nettoBetaald(
+			fiscalPay: $run->fiscalPay,
+			payrollTax: $run->payrollTax,
 			inhoudingSVEmployee: 0.0,
-			pensioenEmployee: (float)$pensioen['premie_wn_aandeel'],
-			belastingvrijTotaal: $belastingvrijTotaal
+			pensioenEmployee: (float)$pension['premie_wn_aandeel'],
+			belastingvrijTotaal: $run->belastingvrijTotaal
 		);
+	}//end netPaid()
 
-		$grossComponents['totaal_bruto'] = $totalGross;
+	/**
+	 * The holiday allowance accrued this period and the year-to-date totals
+	 * it adds to.
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> cumulatieven and holidayDaysAccrual.
+	 */
+	private function accruals(PaySlipRun $run): array {
 		$holidayOpbouw = $this->calculator->vakantiegeldOpbouw(
-			totalGross: $basissalaris,
-			pct: (float)($employee['holidayAllowancePct'] ?? 0.08)
+			totalGross: $run->basissalaris,
+			pct: (float)($run->employee['holidayAllowancePct'] ?? 0.08)
 		);
-		$employeeId = (string)($employee['id'] ?? ($employee['@self']['id'] ?? ''));
 		$cumulatieven = $this->stampCumulatieven(
-			administrationId: $administrationId,
-			employeeId: $employeeId,
-			fiscalPay: $fiscalPay,
+			administrationId: $run->administrationId,
+			employeeId: $this->employeeIdOf(run: $run),
+			fiscalPay: $run->fiscalPay,
 			holidayOpbouw: $holidayOpbouw
 		);
 
 		return [
-			'employeeId' => $employeeId,
-			'periodId' => (string)($period['id'] ?? ($period['@self']['id'] ?? '')),
-			'grossComponents' => $grossComponents,
-			'fiscalPay' => $fiscalPay,
-			'contribution_pay_sv' => $contributionPaySV,
-			'payrollTax' => $payrollTax,
-			'inhoudingenSV' => ['totaal_sv_wn' => 0],
-			'employerSocialInsurancePremiums' => $svWg,
-			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
-			'pension' => $pensioen,
-			'netPaid' => $netPaid,
 			'cumulatieven' => $cumulatieven,
 			'holidayDaysAccrual' => ['opgebouwdEuro' => $holidayOpbouw],
-			'administrationId' => $administrationId,
 		];
+	}//end accruals()
 
-	}//end assembleLoonStrook()
+	/**
+	 * The identifying and pay fields that open the payslip.
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> The opening fields, in payslip order.
+	 */
+	private function paySlipHead(PaySlipRun $run): array {
+		return [
+			'employeeId' => $this->employeeIdOf(run: $run),
+			'periodId' => (string)($run->period['id'] ?? ($run->period['@self']['id'] ?? '')),
+			'grossComponents' => $run->grossComponents,
+			'fiscalPay' => $run->fiscalPay,
+			'contribution_pay_sv' => $run->basissalaris,
+			'payrollTax' => $run->payrollTax,
+			'inhoudingenSV' => ['totaal_sv_wn' => 0],
+		];
+	}//end paySlipHead()
+
+	/**
+	 * The employee's id (top-level or @self).
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return string The employee id.
+	 */
+	private function employeeIdOf(PaySlipRun $run): string {
+		return (string)($run->employee['id'] ?? ($run->employee['@self']['id'] ?? ''));
+	}//end employeeIdOf()
 
 	/**
 	 * Aggregate the period's payslips into an LHAfdracht (REQ-PAY-011).
@@ -315,99 +435,87 @@ class PayrollService {
 	public function bouwLoonjournaalpost(string $administrationId, string $periodId): array {
 		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodId' => $periodId]);
 
-		$grossC = 0;
-		$freeC = 0;
-		$svWgC = 0;
-		$zvwC = 0;
-		$pensWgC = 0;
-		$pensWnC = 0;
-		$lhC = 0;
-		$netC = 0;
-		foreach ($stroken as $s) {
-			$totalGross = (float)($s['grossComponents']['totaal_bruto'] ?? 0);
-			$free = (float)($s['grossComponents']['thuiswerkvergoeding'] ?? 0);
-			$grossC += ($this->calculator->toCents(amount: $totalGross) - $this->calculator->toCents(amount: $free));
-			$freeC += $this->calculator->toCents(amount: $free);
-			$svWgC += $this->calculator->toCents(amount: ($s['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
-			$zvwC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
-			$pensWgC += $this->calculator->toCents(amount: ($s['pension']['premie_wg_aandeel'] ?? 0));
-			$pensWnC += $this->calculator->toCents(amount: ($s['pension']['premie_wn_aandeel'] ?? 0));
-			$lhC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
-			$netC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
-		}//end foreach
+		$totals = self::EMPTY_JOURNAL_TOTALS;
+		foreach ($stroken as $strook) {
+			$totals = $this->addStrookCents(totals: $totals, strook: $strook);
+		}
 
-		$f = (fn (int $c): float => $this->calculator->fromCents(cents: $c));
-
-		$rules = [
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_BRUTOLONEN,
-				'name' => 'Brutolonen',
-				'debet' => $f($grossC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_BELASTINGVRIJE_VERGOEDINGEN,
-				'name' => 'Belastingvrije vergoedingen',
-				'debet' => $f($freeC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_SOCIALE_LASTEN_WG,
-				'name' => 'Sociale lasten WG',
-				'debet' => $f($svWgC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_ZVW_WG,
-				'name' => 'ZVW-bijdrage WG',
-				'debet' => $f($zvwC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_PENSIOEN_WG,
-				'name' => 'Pensioenpremie WG',
-				'debet' => $f($pensWgC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_TE_BETALEN_NETTO_LOON,
-				'name' => 'Te betalen netto loon',
-				'debet' => 0.0,
-				'credit' => $f($netC),
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_LH,
-				'name' => 'Af te dragen loonheffing',
-				'debet' => 0.0,
-				'credit' => $f($lhC),
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PREMIES_SV_ZVW,
-				'name' => 'Af te dragen premies SV+ZVW',
-				'debet' => 0.0,
-				'credit' => $f(($svWgC + $zvwC)),
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PENSIOEN,
-				'name' => 'Af te dragen pensioenpremie',
-				'debet' => 0.0,
-				'credit' => $f(($pensWgC + $pensWnC)),
-			],
-		];
-
-		$debetTotal = ($grossC + $freeC + $svWgC + $zvwC + $pensWgC);
-		$creditTotal = ($netC + $lhC + $svWgC + $zvwC + $pensWgC + $pensWnC);
-		$balanced = ($debetTotal === $creditTotal);
+		$rules = [];
+		foreach (self::JOURNAL_RULES as $rule) {
+			$rules[] = $this->journalRule(rule: $rule, totals: $totals);
+		}
 
 		return [
 			'periodId' => $periodId,
 			'date' => (string)date('Y-m-d'),
 			'rules' => $rules,
-			'balanced' => $balanced,
+			'balanced' => $this->isBalanced(totals: $totals),
 			'administrationId' => $administrationId,
 		];
 
 	}//end bouwLoonjournaalpost()
+
+	/**
+	 * Add one payslip's amounts, in integer cents, to the journal totals.
+	 * Gross wages exclude the tax-free home-office allowance, which has its
+	 * own total.
+	 *
+	 * @param array<string,int>   $totals The totals so far.
+	 * @param array<string,mixed> $strook The LoonStrook.
+	 *
+	 * @return array<string,int> The new totals.
+	 */
+	private function addStrookCents(array $totals, array $strook): array {
+		$free = (float)($strook['grossComponents']['thuiswerkvergoeding'] ?? 0);
+		$totalGrossC = $this->calculator->toCents(amount: (float)($strook['grossComponents']['totaal_bruto'] ?? 0));
+		$totals['gross'] += ($totalGrossC - $this->calculator->toCents(amount: $free));
+		$totals['free'] += $this->calculator->toCents(amount: $free);
+		$totals['svWg'] += $this->calculator->toCents(amount: ($strook['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
+		$totals['zvw'] += $this->calculator->toCents(amount: ($strook['zvw']['afgedragen_wg'] ?? 0));
+		$totals['pensWg'] += $this->calculator->toCents(amount: ($strook['pension']['premie_wg_aandeel'] ?? 0));
+		$totals['pensWn'] += $this->calculator->toCents(amount: ($strook['pension']['premie_wn_aandeel'] ?? 0));
+		$totals['lh'] += $this->calculator->toCents(amount: ($strook['payrollTax'] ?? 0));
+		$totals['net'] += $this->calculator->toCents(amount: ($strook['netPaid'] ?? 0));
+		return $totals;
+	}//end addStrookCents()
+
+	/**
+	 * One journal rule: its account and name, with the sum of its totals on
+	 * its side (debet or credit) and 0.0 on the other.
+	 *
+	 * @param array{rekening:string,name:string,side:string,totals:list<string>} $rule   The rule definition.
+	 * @param array<string,int>                                                   $totals The journal totals.
+	 *
+	 * @return array<string,mixed> The rule.
+	 */
+	private function journalRule(array $rule, array $totals): array {
+		$cents = 0;
+		foreach ($rule['totals'] as $total) {
+			$cents += $totals[$total];
+		}
+
+		$entry = [
+			'rekening' => $rule['rekening'],
+			'name' => $rule['name'],
+			'debet' => 0.0,
+			'credit' => 0.0,
+		];
+		$entry[$rule['side']] = $this->calculator->fromCents(cents: $cents);
+		return $entry;
+	}//end journalRule()
+
+	/**
+	 * True when the journal's debits equal its credits in integer cents.
+	 *
+	 * @param array<string,int> $totals The journal totals.
+	 *
+	 * @return bool Whether the journal balances.
+	 */
+	private function isBalanced(array $totals): bool {
+		$debetTotal = ($totals['gross'] + $totals['free'] + $totals['svWg'] + $totals['zvw'] + $totals['pensWg']);
+		$creditTotal = ($totals['net'] + $totals['lh'] + $totals['svWg'] + $totals['zvw'] + $totals['pensWg'] + $totals['pensWn']);
+		return ($debetTotal === $creditTotal);
+	}//end isBalanced()
 
 	/*
 	 * NO PAYROLL PERSISTENCE HERE.

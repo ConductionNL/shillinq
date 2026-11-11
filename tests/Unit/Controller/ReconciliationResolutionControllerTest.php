@@ -446,4 +446,120 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 	}//end testBulkResolveWithoutSessionIsForbidden()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * resolve(): the id and payload refusals in order, then the forbidden
+	 * session; nothing reaches the service.
+	 *
+	 * @return void
+	 */
+	public function testResolveRefusals(): void {
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$this->service->expects($this->never())->method('resolveMatch');
+		$controller = $this->controller();
+
+		self::assertSame(['error' => 'reconId and matchId are required'], $controller->resolve(' ', 'm-1')->getData());
+		self::assertSame(['error' => 'reconId and matchId are required'], $controller->resolve('r-1', ' ')->getData());
+		self::assertSame(
+			['error' => 'resolutionStatus must be one of: matched, timing, pending, adjustment'],
+			$controller->resolve('r-1', 'm-1')->getData()
+		);
+		$params = ['resolutionStatus' => ' timing '];
+		self::assertSame(
+			['error' => 'resolutionReason is required (audit-trailed per REQ-REC-004)'],
+			$controller->resolve('r-1', 'm-1')->getData()
+		);
+
+		$params = ['resolutionStatus' => 'timing', 'resolutionReason' => 'bank delay'];
+		$anonymous = $this->createMock(IUserSession::class);
+		$anonymous->method('getUser')->willReturn(null);
+		$this->userSession = $anonymous;
+		$this->expectException(\OCP\AppFramework\OCS\OCSForbiddenException::class);
+		$this->controller()->resolve('r-1', 'm-1');
+
+	}//end testResolveRefusals()
+
+	/**
+	 * resolve(): the trimmed arguments and actor reach the service; each
+	 * failure kind has its own body, status and log line.
+	 *
+	 * @return void
+	 */
+	public function testResolveOutcomesAndLogLines(): void {
+		$this->withParams(['resolutionStatus' => ' matched ', 'resolutionReason' => ' same amount ']);
+		$this->service->expects($this->exactly(4))->method('resolveMatch')
+			->with('r-1', 'm-1', 'matched', 'same amount', 'alice')
+			->willReturnOnConsecutiveCalls(
+				['id' => 'm-1', 'resolutionStatus' => 'matched'],
+				self::throwException(new \OutOfBoundsException('no m-1')),
+				self::throwException(new \DomainException('locked')),
+				self::throwException(new \LogicException('db'))
+			);
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+		$controller = $this->controller();
+		$answer = static function ($response): array {
+			return [$response->getStatus(), $response->getData()];
+		};
+
+		self::assertSame([200, ['id' => 'm-1', 'resolutionStatus' => 'matched']], $answer($controller->resolve(' r-1 ', ' m-1 ')));
+		self::assertSame(
+			[404, ['message' => 'Unable to find the reconciliation match', 'error' => 'reconciliation-match-not-found']],
+			$answer($controller->resolve('r-1', 'm-1'))
+		);
+		self::assertSame(
+			[409, ['message' => 'Unable to resolve a match on a locked reconciliation', 'error' => 'reconciliation-match-locked']],
+			$answer($controller->resolve('r-1', 'm-1'))
+		);
+		self::assertSame([500, ['error' => 'resolution failed; see server log']], $answer($controller->resolve('r-1', 'm-1')));
+
+		$context = static fn (string $e): array => ['reconId' => 'r-1', 'matchId' => 'm-1', 'exception' => $e];
+		self::assertSame(
+			[
+				['ReconciliationResolutionController: resolve target not found', $context('no m-1')],
+				['ReconciliationResolutionController: resolve rejected by domain rule', $context('locked')],
+				['ReconciliationResolutionController: resolve failed', $context('db')],
+			],
+			$logged
+		);
+
+	}//end testResolveOutcomesAndLogLines()
+
+	/**
+	 * bulkResolve(): the per-match log line and the tally body.
+	 *
+	 * @return void
+	 */
+	public function testBulkResolveLogLineAndTally(): void {
+		$this->withParams(['matchIds' => [' m-1 ', 'm-2', ''], 'resolutionStatus' => 'pending', 'resolutionReason' => 'wait']);
+		$this->service->method('resolveMatch')->willReturnCallback(
+			static function (string $reconId, string $matchId): array {
+				if ($matchId === 'm-2') {
+					throw new \DomainException('locked');
+				}
+
+				return [];
+			}
+		);
+		$this->logger->expects($this->once())->method('error')->with(
+			'ReconciliationResolutionController: bulk resolve failed for one match',
+			['reconId' => 'r-1', 'matchId' => 'm-2', 'exception' => 'locked']
+		);
+
+		$response = $this->controller()->bulkResolve(' r-1 ');
+
+		self::assertSame(
+			[200, ['applied' => 1, 'failed' => ['m-2' => 'Unable to resolve a match on a locked reconciliation']]],
+			[$response->getStatus(), $response->getData()]
+		);
+
+	}//end testBulkResolveLogLineAndTally()
 }//end class

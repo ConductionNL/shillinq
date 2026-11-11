@@ -108,60 +108,7 @@ class PeriodStatusGuard {
 	 */
 	public function postingAllowed(array|string $transaction): bool {
 		try {
-			$resolved = $this->resolveTransaction(transaction: $transaction);
-			$periodId = (string)($resolved['periodId'] ?? '');
-			if ($periodId === '') {
-				return true;
-			}
-
-			$administrationId = (string)($resolved['administrationId'] ?? '');
-			$status = $this->findStatus(periodId: $periodId, administrationId: $administrationId);
-			if ($status === null) {
-				return true;
-			}
-
-			$stage = (string)($status['stage'] ?? 'open');
-			if ($stage === 'open') {
-				return true;
-			}
-
-			$postingKind = (string)($resolved['postingKind'] ?? 'regular');
-
-			if (in_array($stage, self::RESTRICTED_TO_REVERSALS_STAGES, true) === true) {
-				if (in_array($postingKind, self::REVERSAL_POSTING_KINDS, true) === true) {
-					return true;
-				}
-
-				$this->logger->info(
-					'PeriodStatusGuard: posting rejected — soft-closed period accepts only accrual reversals + corrections',
-					['periodId' => $periodId, 'stage' => $stage, 'postingKind' => $postingKind]
-				);
-				return false;
-			}
-
-			if (in_array($stage, self::RESTRICTED_STAGES, true) === true) {
-				if ($stage === 'locked') {
-					$this->logger->info(
-						'PeriodStatusGuard: posting rejected — period is locked',
-						['periodId' => $periodId, 'stage' => $stage]
-					);
-					return false;
-				}
-
-				$controllerOverride = ($resolved['controllerOverride'] ?? false) === true;
-				$exceptionJournal = ($resolved['exceptionJournal'] ?? false) === true;
-				if ($controllerOverride === true && $exceptionJournal === true) {
-					return true;
-				}
-
-				$this->logger->info(
-					'PeriodStatusGuard: posting rejected — restricted stage; controllerOverride + exceptionJournal required',
-					['periodId' => $periodId, 'stage' => $stage]
-				);
-				return false;
-			}//end if
-
-			return true;
+			return $this->resolvedPostingAllowed(resolved: $this->resolveTransaction(transaction: $transaction));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PeriodStatusGuard: postingAllowed check failed — denying post (fail-closed)',
@@ -171,6 +118,117 @@ class PeriodStatusGuard {
 		}//end try
 
 	}//end postingAllowed()
+
+	/**
+	 * Whether a resolved transaction may post into its period's stage; a
+	 * period without an id or a PeriodStatus record is not gated.
+	 *
+	 * @param array<string,mixed> $resolved The GLTransaction record.
+	 *
+	 * @return bool
+	 */
+	private function resolvedPostingAllowed(array $resolved): bool {
+		$periodId = (string)($resolved['periodId'] ?? '');
+		if ($periodId === '') {
+			return true;
+		}
+
+		$status = $this->findStatus(periodId: $periodId, administrationId: (string)($resolved['administrationId'] ?? ''));
+		if ($status === null) {
+			return true;
+		}
+
+		return $this->stageAllows(stage: (string)($status['stage'] ?? 'open'), resolved: $resolved);
+
+	}//end resolvedPostingAllowed()
+
+	/**
+	 * Whether the stage accepts the posting: open and unknown stages accept
+	 * everything, soft-closed only reversals and corrections, the restricted
+	 * stages only an override.
+	 *
+	 * @param string              $stage    The PeriodStatus stage.
+	 * @param array<string,mixed> $resolved The GLTransaction record.
+	 *
+	 * @return bool
+	 */
+	private function stageAllows(string $stage, array $resolved): bool {
+		if ($stage === 'open') {
+			return true;
+		}
+
+		if (in_array($stage, self::RESTRICTED_TO_REVERSALS_STAGES, true) === true) {
+			return $this->reversalAllowed(stage: $stage, resolved: $resolved);
+		}
+
+		if (in_array($stage, self::RESTRICTED_STAGES, true) === true) {
+			return $this->overrideAllowed(stage: $stage, resolved: $resolved);
+		}
+
+		return true;
+
+	}//end stageAllows()
+
+	/**
+	 * Soft-closed: only accrual reversals and corrections post.
+	 *
+	 * @param string              $stage    The PeriodStatus stage.
+	 * @param array<string,mixed> $resolved The GLTransaction record.
+	 *
+	 * @return bool
+	 */
+	private function reversalAllowed(string $stage, array $resolved): bool {
+		$postingKind = (string)($resolved['postingKind'] ?? 'regular');
+		if (in_array($postingKind, self::REVERSAL_POSTING_KINDS, true) === true) {
+			return true;
+		}
+
+		return $this->refuse(
+			message: 'PeriodStatusGuard: posting rejected — soft-closed period accepts only accrual reversals + corrections',
+			context: ['periodId' => (string)($resolved['periodId'] ?? ''), 'stage' => $stage, 'postingKind' => $postingKind]
+		);
+
+	}//end reversalAllowed()
+
+	/**
+	 * A restricted stage: a locked period refuses everything; the others
+	 * accept a posting carrying both controllerOverride and exceptionJournal.
+	 *
+	 * @param string              $stage    The PeriodStatus stage.
+	 * @param array<string,mixed> $resolved The GLTransaction record.
+	 *
+	 * @return bool
+	 */
+	private function overrideAllowed(string $stage, array $resolved): bool {
+		$context = ['periodId' => (string)($resolved['periodId'] ?? ''), 'stage' => $stage];
+		if ($stage === 'locked') {
+			return $this->refuse(message: 'PeriodStatusGuard: posting rejected — period is locked', context: $context);
+		}
+
+		if (($resolved['controllerOverride'] ?? false) === true && ($resolved['exceptionJournal'] ?? false) === true) {
+			return true;
+		}
+
+		return $this->refuse(
+			message: 'PeriodStatusGuard: posting rejected — restricted stage; controllerOverride + exceptionJournal required',
+			context: $context
+		);
+
+	}//end overrideAllowed()
+
+	/**
+	 * Log a refused posting and refuse it.
+	 *
+	 * @param string              $message The refusal log line.
+	 * @param array<string,mixed> $context The log context.
+	 *
+	 * @return bool Always false.
+	 */
+	private function refuse(string $message, array $context): bool {
+		$this->logger->info($message, $context);
+		return false;
+
+	}//end refuse()
 
 	/**
 	 * Resolve a transaction argument (record array or id) to a GLTransaction record.
@@ -204,16 +262,10 @@ class PeriodStatusGuard {
 	 *
 	 * @return array<string,mixed>|null The PeriodStatus record, or null when none exists.
 	 */
-	private function findStatus(string $periodId, string $administrationId): ?array {
-		// PeriodId is `${year}-${month}` per the schema; split into the two fields.
-		[$year, $month] = $this->splitPeriodId(periodId: $periodId);
-		if ($year === 0 || $month === 0) {
+	private function findStatus(string $periodId, string $administrationId): array|null {
+		$filters = $this->statusFilters(periodId: $periodId, administrationId: $administrationId);
+		if ($filters === null) {
 			return null;
-		}
-
-		$filters = ['periodYear' => $year, 'periodMonth' => $month];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
 		}
 
 		$found = $this->objectService
@@ -227,6 +279,31 @@ class PeriodStatusGuard {
 
 		return null;
 	}//end findStatus()
+
+	/**
+	 * The PeriodStatus filters for a period, scoped by administration when
+	 * known, or null when the period id does not parse.
+	 *
+	 * @param string $periodId         The period identifier (typically yyyy-mm).
+	 * @param string $administrationId The administration scope ('' to skip).
+	 *
+	 * @return array<string,int|string>|null
+	 */
+	private function statusFilters(string $periodId, string $administrationId): array|null {
+		// PeriodId is `${year}-${month}` per the schema; split into the two fields.
+		[$year, $month] = $this->splitPeriodId(periodId: $periodId);
+		if ($year === 0 || $month === 0) {
+			return null;
+		}
+
+		$filters = ['periodYear' => $year, 'periodMonth' => $month];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		return $filters;
+
+	}//end statusFilters()
 
 	/**
 	 * Split a yyyy-mm or yyyy-MM periodId into integer year + month.

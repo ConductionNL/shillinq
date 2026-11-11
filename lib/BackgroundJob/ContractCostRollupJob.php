@@ -96,40 +96,74 @@ class ContractCostRollupJob extends TimedJob {
 	 * TimedJob's run() signature; this job takes no argument.
 	 */
 	protected function run($argument): void {
-		$register = $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
-
-		try {
-			$contracts = $this->objectService
-				->setRegister($register)
-				->setSchema(ContractCostRollupService::SCHEMA)
-				->findAll(['limit' => 1000]);
-		} catch (\Throwable $e) {
-			$this->logger->error('Shillinq: the contract cost roll-up could not read the contracts', ['exception' => $e->getMessage()]);
+		$contracts = $this->contracts();
+		if ($contracts === null) {
 			return;
 		}
 
 		$done = 0;
 		foreach ($contracts as $contract) {
-			if (is_array($contract) === false || is_array($contract['linkedObjects'] ?? null) === false) {
-				continue;
-			}
-
-			if ($contract['linkedObjects'] === []) {
-				continue;
-			}
-
-			try {
-				$this->rollup->rollUp(contract: $contract);
-				$done++;
-			} catch (\Throwable $e) {
-				// One contract that cannot be computed must not stop the rest.
-				$this->logger->warning(
-					'Shillinq: one contract could not be rolled up',
-					['contract' => (string)($contract['id'] ?? ''), 'exception' => $e->getMessage()]
-				);
+			if (self::hasLinks(contract: $contract) === true) {
+				$done += $this->rolledUp(contract: $contract);
 			}
 		}
 
 		$this->logger->info('Shillinq: contract cost roll-up finished', ['contracts' => $done]);
 	}//end run()
+
+	/**
+	 * Up to 1000 contracts from the configured register, or null after logging a failed read.
+	 *
+	 * @return array<int,mixed>|null
+	 */
+	private function contracts(): array|null {
+		$register = $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
+
+		try {
+			return $this->objectService
+				->setRegister($register)
+				->setSchema(ContractCostRollupService::SCHEMA)
+				->findAll(['limit' => 1000]);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: the contract cost roll-up could not read the contracts', ['exception' => $e->getMessage()]);
+			return null;
+		}
+	}//end contracts()
+
+	/**
+	 * Whether the row is a contract with a non-empty list of links.
+	 *
+	 * @param mixed $contract One row from the store.
+	 *
+	 * @return bool
+	 */
+	private static function hasLinks(mixed $contract): bool {
+		if (is_array($contract) === false || is_array($contract['linkedObjects'] ?? null) === false) {
+			return false;
+		}
+
+		return $contract['linkedObjects'] !== [];
+	}//end hasLinks()
+
+	/**
+	 * Roll up one contract: 1 when it was saved, 0 after a logged warning.
+	 *
+	 * One contract that cannot be computed must not stop the rest.
+	 *
+	 * @param array<string,mixed> $contract The contract.
+	 *
+	 * @return int
+	 */
+	private function rolledUp(array $contract): int {
+		try {
+			$this->rollup->rollUp(contract: $contract);
+			return 1;
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: one contract could not be rolled up',
+				['contract' => (string)($contract['id'] ?? ''), 'exception' => $e->getMessage()]
+			);
+			return 0;
+		}
+	}//end rolledUp()
 }//end class

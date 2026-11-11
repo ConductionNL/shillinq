@@ -651,4 +651,86 @@ final class PurchaseOrderControllerTest extends TestCase {
 	}//end testTransmitEmailMalformedIdReturns400()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * The create payload, every refusal body, the runtime-exception mapping and
+	 * every failure log line, pinned before the actions share their steps.
+	 *
+	 * @return void
+	 */
+	public function testBodiesPayloadAndLogLines(): void {
+		$this->withParams(
+			[
+				'administrationId' => ' adm-1 ',
+				'supplierId' => ' s-1 ',
+				'lines' => 'one',
+				'notes' => 7,
+				'fallbackReason' => ' no peppol id ',
+			]
+		);
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+		$payload = ['supplierId' => 's-1', 'costCenter' => '', 'projectCode' => '', 'currency' => 'EUR', 'lines' => ['one'], 'notes' => '7'];
+		$this->purchaseOrderService->method('createPurchaseOrder')->with('adm-1', $payload)->willReturnOnConsecutiveCalls(
+			self::throwException(new \RuntimeException('supplierId missing')),
+			self::throwException(new \LogicException('db'))
+		);
+		$this->purchaseOrderService->method('blockSendUntilApproved')->with('adm-1', 'po-1')->willReturnOnConsecutiveCalls(
+			self::throwException(new \RuntimeException('Purchase order not found')),
+			self::throwException(new \RuntimeException('chain incomplete')),
+			self::throwException(new \LogicException('db'))
+		);
+		$this->purchaseOrderService->method('sendToPeppol')->willThrowException(new \LogicException('ap down'));
+		$this->purchaseOrderService->method('sendToPDFEmail')->with('adm-1', 'po-1', 'no peppol id')->willThrowException(new \LogicException('smtp down'));
+		$controller = $this->controller();
+
+		$rejected = $controller->create();
+		self::assertSame(
+			[Http::STATUS_BAD_REQUEST, ['message' => 'Unable to create purchase order — check the required fields', 'error' => 'purchase-order-create-invalid']],
+			[$rejected->getStatus(), $rejected->getData()]
+		);
+		$failed = $controller->create();
+		self::assertSame(
+			[Http::STATUS_INTERNAL_SERVER_ERROR, ['message' => 'Unable to create purchase order', 'error' => 'purchase-order-create-failed']],
+			[$failed->getStatus(), $failed->getData()]
+		);
+		$send = [$controller->send('po-1'), $controller->send('po-1'), $controller->send('po-1')];
+		self::assertSame(
+			[[404, ['error' => 'Purchase order not found']], [409, ['error' => 'chain incomplete']], [500, ['error' => 'Could not advance purchase order']]],
+			array_map(static fn ($r): array => [$r->getStatus(), $r->getData()], $send)
+		);
+		self::assertSame(['error' => 'Could not transmit purchase order'], $controller->transmitPeppol('po-1')->getData());
+		self::assertSame(['error' => 'Could not transmit purchase order'], $controller->transmitEmail('po-1')->getData());
+		self::assertSame(['error' => 'Invalid purchase order id'], $controller->send('a/b')->getData());
+
+		$order = static fn (string $e): array => ['purchaseOrderId' => 'po-1', 'administrationId' => 'adm-1', 'exception' => $e];
+		self::assertSame(
+			[
+				['PurchaseOrderController: purchase order creation rejected', ['administrationId' => 'adm-1', 'exception' => 'supplierId missing']],
+				['PurchaseOrderController: failed to create purchase order', ['administrationId' => 'adm-1', 'exception' => 'db']],
+				['PurchaseOrderController: failed to advance purchase order', $order('db')],
+				['PurchaseOrderController: Peppol transmission failed', $order('ap down')],
+				['PurchaseOrderController: PDF+email transmission failed', $order('smtp down')],
+			],
+			$logged
+		);
+
+	}//end testBodiesPayloadAndLogLines()
+
+	/**
+	 * The administration refusal bodies: create names the administration, the
+	 * order actions mask it as the order.
+	 *
+	 * @return void
+	 */
+	public function testAdministrationRefusalBodies(): void {
+		$this->withParams(['administrationId' => 'a b']);
+
+		self::assertSame(['error' => 'administrationId is required'], $this->controller()->create()->getData());
+		self::assertSame(['error' => 'administrationId is required'], $this->controller()->transmitEmail('po-1')->getData());
+
+	}//end testAdministrationRefusalBodies()
 }//end class

@@ -127,28 +127,53 @@ export async function loadGuidanceRows(schema, objectId) {
 	const { data: object } = await axios.get(
 		generateUrl(`/apps/openregister/api/objects/${REGISTER}/${schema}/${id}`),
 	)
-	let lines = Array.isArray(object?.lines) ? object.lines : []
-	if (schema === 'GLTransaction') {
-		const { data } = await axios.get(
-			objectsUrl('GLLine', { transactionId: String(objectId) }),
-		)
-		lines = resultsOf(data).sort(
-			(a, b) => Number(a?.lineNumber ?? 0) - Number(b?.lineNumber ?? 0),
-		)
-	}
+	const lines = schema === 'GLTransaction'
+		? await transactionLines(objectId)
+		: ownLines(object)
+	const accounts = await lineAccounts(lines, object?.administrationId)
+	return guidanceRows(lines, accounts)
+}
+
+/**
+ * The lines a journal entry carries itself.
+ *
+ * @param {object|null} object The journal entry.
+ * @return {Array<object>} The lines.
+ */
+function ownLines(object) {
+	return Array.isArray(object?.lines) ? object.lines : []
+}
+
+/**
+ * A ledger transaction's GL lines in line order.
+ *
+ * @param {string} objectId The transaction's id.
+ * @return {Promise<Array<object>>} The lines.
+ */
+async function transactionLines(objectId) {
+	const { data } = await axios.get(
+		objectsUrl('GLLine', { transactionId: String(objectId) }),
+	)
+	return resultsOf(data).sort(
+		(a, b) => Number(a?.lineNumber ?? 0) - Number(b?.lineNumber ?? 0),
+	)
+}
+
+/**
+ * The first account of the administration for each distinct account number on the lines.
+ *
+ * @param {Array<object>} lines The lines.
+ * @param {string} administrationId The administration.
+ * @return {Promise<Array<object>>} The accounts.
+ */
+async function lineAccounts(lines, administrationId) {
 	const numbers = [
 		...new Set(lines.map((line) => String(line?.accountNumber ?? ''))),
 	].filter((number) => number !== '')
 	const responses = await Promise.all(
 		numbers.map((accountNumber) =>
-			axios.get(
-				objectsUrl('Account', {
-					administrationId: object?.administrationId,
-					accountNumber,
-				}),
-			),
+			axios.get(objectsUrl('Account', { administrationId, accountNumber })),
 		),
 	)
-	const accounts = responses.flatMap(({ data }) => resultsOf(data).slice(0, 1))
-	return guidanceRows(lines, accounts)
+	return responses.flatMap(({ data }) => resultsOf(data).slice(0, 1))
 }

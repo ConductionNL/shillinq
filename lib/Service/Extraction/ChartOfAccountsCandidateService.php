@@ -99,50 +99,72 @@ class ChartOfAccountsCandidateService {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister($this->registerSlug())
-				->setSchema(self::SCHEMA_ACCOUNT)
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'lifecycleState' => self::ACTIVE_STATE,
-						],
-						'limit' => self::MAX_CANDIDATES,
-					]
-				);
+			$rows = $this->activeAccounts(administrationId: $administrationId);
 		} catch (Throwable $e) {
-			$this->logger->info(
-				'ChartOfAccountsCandidateService: OR query unavailable — no candidates supplied',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
+			$context = ['administrationId' => $administrationId, 'exception' => $e->getMessage()];
+			$this->logger->info('ChartOfAccountsCandidateService: OR query unavailable — no candidates supplied', $context);
 			return [];
-		}//end try
+		}
 
+		return $this->candidatesOf(rows: $rows);
+	}//end activeCandidates()
+
+	/**
+	 * The administration's active accounts, capped at MAX_CANDIDATES.
+	 *
+	 * @param string $administrationId The draft's administration id.
+	 *
+	 * @return mixed The findAll() result.
+	 */
+	private function activeAccounts(string $administrationId): mixed {
+		$query = [
+			'filters' => ['administrationId' => $administrationId, 'lifecycleState' => self::ACTIVE_STATE],
+			'limit' => self::MAX_CANDIDATES,
+		];
+
+		return $this->container->get('OCA\OpenRegister\Service\ObjectService')
+			->setRegister($this->registerSlug())
+			->setSchema(self::SCHEMA_ACCOUNT)
+			->findAll($query);
+	}//end activeAccounts()
+
+	/**
+	 * The candidates among the rows: account rows carrying an account number.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return array<int, array{code: string, label: mixed}>
+	 */
+	private function candidatesOf(mixed $rows): array {
 		if (is_array($rows) === false) {
 			return [];
 		}
 
 		$candidates = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === false) {
-				continue;
+			$code = $this->codeOf(row: $row);
+			if ($code !== '') {
+				$candidates[] = ['code' => $code, 'label' => ($row['name'] ?? null)];
 			}
-
-			$code = trim((string)($row['accountNumber'] ?? ''));
-			if ($code === '') {
-				continue;
-			}
-
-			$candidates[] = [
-				'code' => $code,
-				'label' => ($row['name'] ?? null),
-			];
 		}
 
 		return $candidates;
-	}//end activeCandidates()
+	}//end candidatesOf()
+
+	/**
+	 * A row's trimmed account number, or '' for a non-account row.
+	 *
+	 * @param mixed $row One findAll() row.
+	 *
+	 * @return string
+	 */
+	private function codeOf(mixed $row): string {
+		if (is_array($row) === false) {
+			return '';
+		}
+
+		return trim((string)($row['accountNumber'] ?? ''));
+	}//end codeOf()
 
 	/**
 	 * Resolve the configured register slug, falling back to 'shillinq'

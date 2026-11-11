@@ -275,26 +275,33 @@ export default {
 				})
 				this.rows = normaliseBudgetLineRows(data)
 			} catch (error) {
-				const status = error?.response?.status
-				if (status === 404 || status === 501) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Aggregation endpoint unavailable on this OpenRegister build.',
-					)
-				} else if (status === 401 || status === 403) {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Permission required to read budget-line data.',
-					)
-				} else {
-					this.errorMessage = this.t(
-						'shillinq',
-						'Failed to load budget lines.',
-					)
-				}
+				this.errorMessage = this.rowsLoadError(error)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The message of a failed budget-line load, by HTTP status.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		rowsLoadError(error) {
+			const status = error?.response?.status
+			if (status === 404 || status === 501) {
+				return this.t(
+					'shillinq',
+					'Aggregation endpoint unavailable on this OpenRegister build.',
+				)
+			}
+			if (status === 401 || status === 403) {
+				return this.t(
+					'shillinq',
+					'Permission required to read budget-line data.',
+				)
+			}
+			return this.t('shillinq', 'Failed to load budget lines.')
 		},
 
 		/**

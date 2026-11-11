@@ -316,4 +316,31 @@ final class BcfClaimControllerTest extends TestCase {
 	}//end testCompensationServiceFailureReturns500WithoutLeak()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * The failure log context and body, and the check order: both blanks
+	 * before either shape, both shapes before the membership check.
+	 *
+	 * @return void
+	 */
+	public function testFailureLogContextAndCheckOrder(): void {
+		$params = ['administration_id' => 'a/b'];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$this->context->method('canAccess')->willReturn(true);
+		self::assertSame(['error' => 'claim_quarter is required'], $this->controller->compensation()->getData());
+		$params = ['administration_id' => 'adm-1', 'claim_quarter' => '2026 Q1'];
+		self::assertSame(['error' => 'claim_quarter must be a valid quarter identifier'], $this->controller->compensation()->getData());
+
+		$params = ['administration_id' => ' adm-1 ', 'claim_quarter' => ' 2026-Q1 '];
+		$this->service->method('computeClaim')->with('adm-1', '2026-Q1')->willThrowException(new \RuntimeException('boom'));
+		$this->logger->expects($this->once())->method('error')->with(
+			'BcfClaimController: failed to compute compensable VAT',
+			['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1', 'exception' => 'boom']
+		);
+		self::assertSame(['error' => 'Failed to compute compensable VAT'], $this->controller->compensation()->getData());
+
+	}//end testFailureLogContextAndCheckOrder()
 }//end class

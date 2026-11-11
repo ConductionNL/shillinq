@@ -200,21 +200,37 @@ final class ContributionInvoiceBuilder {
 	public function beneficiaryFor(array $recipient, string $customerMasterId, string $registerSlug): array {
 		$given = ($recipient['beneficiary'] ?? null);
 		if ($given === null || $given === []) {
-			return [
-				'type' => 'customer',
-				'register' => $registerSlug,
-				'schema' => 'CustomerMaster',
-				'id' => $customerMasterId,
-			];
+			return ['type' => 'customer', 'register' => $registerSlug, 'schema' => 'CustomerMaster', 'id' => $customerMasterId];
 		}
 
-		if (is_array($given) === false
-			|| trim((string)($given['type'] ?? '')) === ''
-			|| trim((string)($given['id'] ?? '')) === ''
-		) {
+		$this->assertNamesTypeAndId(given: $given);
+
+		return $this->trimmedParts(given: $given);
+	}//end beneficiaryFor()
+
+	/**
+	 * Refuse a beneficiary that does not name at least a type and an id.
+	 *
+	 * @param mixed $given The beneficiary as given.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the type or the id is missing.
+	 */
+	private function assertNamesTypeAndId(mixed $given): void {
+		if (is_array($given) === false || trim((string)($given['type'] ?? '')) === '' || trim((string)($given['id'] ?? '')) === '') {
 			throw new InvalidArgumentException('A beneficiary names at least a type and an id.');
 		}
+	}//end assertNamesTypeAndId()
 
+	/**
+	 * The beneficiary's non-blank type, register, schema and id, trimmed.
+	 *
+	 * @param array<string,mixed> $given The beneficiary as given.
+	 *
+	 * @return array<string,string>
+	 */
+	private function trimmedParts(array $given): array {
 		$beneficiary = [];
 		foreach (['type', 'register', 'schema', 'id'] as $part) {
 			$value = trim((string)($given[$part] ?? ''));
@@ -224,7 +240,7 @@ final class ContributionInvoiceBuilder {
 		}
 
 		return $beneficiary;
-	}//end beneficiaryFor()
+	}//end trimmedParts()
 
 	/**
 	 * The issued invoice one recipient is billed with. No order stands behind it.

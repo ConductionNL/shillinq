@@ -126,10 +126,6 @@ class FinancialSeriesCalculator {
 	 * @return array<int,string> Month keys, ascending.
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.CountInLoopExpression) $months grows inside the
-	 *     loop body — the loop bound is genuinely the running count, it
-	 *     cannot be hoisted.
 	 */
 	public function monthsInRange(string $from, string $to): array {
 		if ($from === '' || $to === '') {
@@ -142,9 +138,25 @@ class FinancialSeriesCalculator {
 			return [];
 		}
 
+		return $this->monthKeysBetween(start: $start, endKey: $end->format('Y-m'));
+	}//end monthsInRange()
+
+	/**
+	 * Month keys from a start day's month up to an end key, at most
+	 * {@see MAX_RANGE_MONTHS}.
+	 *
+	 * @param DateTimeImmutable $start  The first day.
+	 * @param string            $endKey The last month key.
+	 *
+	 * @return array<int,string>
+	 *
+	 * @SuppressWarnings(PHPMD.CountInLoopExpression) $months grows inside the
+	 *     loop body — the loop bound is genuinely the running count, it
+	 *     cannot be hoisted.
+	 */
+	private function monthKeysBetween(DateTimeImmutable $start, string $endKey): array {
 		$months = [];
-		$index = (((int)$start->format('Y')) * 12) + ((int)$start->format('n') - 1);
-		$endKey = $end->format('Y-m');
+		$index  = (((int)$start->format('Y')) * 12) + ((int)$start->format('n') - 1);
 		while (count($months) < self::MAX_RANGE_MONTHS) {
 			$key = $this->monthKeyFromIndex(index: $index);
 			if ($key > $endKey) {
@@ -156,7 +168,7 @@ class FinancialSeriesCalculator {
 		}
 
 		return $months;
-	}//end monthsInRange()
+	}//end monthKeysBetween()
 
 	/**
 	 * Classify the chart of accounts into the sets the dashboard needs.
@@ -174,36 +186,58 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function classifyAccounts(array $accounts): array {
-		$revenue = [];
-		$expenses = [];
-		$liquid = [];
+		$classes = ['revenue' => [], 'expenses' => [], 'liquid' => []];
 		foreach ($accounts as $account) {
 			$number = $this->toStringValue(value: $account['accountNumber'] ?? null);
-			if ($number === '') {
-				continue;
+			$class  = $this->accountClass(account: $account, number: $number);
+			if ($class !== null) {
+				$classes[$class][$number] = true;
 			}
+		}
 
-			$type = ($account['accountType'] ?? null);
-			$name = $this->toStringValue(value: $account['name'] ?? null);
-			if ($type === 'revenue') {
-				$revenue[$number] = true;
-			} elseif ($type === 'expenses') {
-				$expenses[$number] = true;
-			} elseif ($type === 'assets'
-				&& (preg_match('/^10/', $number) === 1
-				|| preg_match('/\b(bank|kas|cash)\b/i', $name) === 1)
-			) {
-				$liquid[$number] = true;
-			}
-		}//end foreach
-
-		return [
-			'revenue' => $revenue,
-			'expenses' => $expenses,
-			'liquid' => $liquid,
-		];
+		return $classes;
 
 	}//end classifyAccounts()
+
+	/**
+	 * The dashboard class of one account: revenue, expenses, or liquid for an
+	 * asset that looks like bank/cash (number starting with `10`, or a
+	 * bank/kas/cash name); null otherwise or without a number.
+	 *
+	 * @param array<string,mixed> $account The Account object.
+	 * @param string              $number  Its account number.
+	 *
+	 * @return string|null
+	 */
+	private function accountClass(array $account, string $number): ?string {
+		$type = ($account['accountType'] ?? null);
+		if ($number === '' || in_array($type, ['revenue', 'expenses', 'assets'], true) === false) {
+			return null;
+		}
+
+		if ($type !== 'assets') {
+			return $type;
+		}
+
+		if ($this->isBankOrCash(number: $number, name: $this->toStringValue(value: $account['name'] ?? null)) === true) {
+			return 'liquid';
+		}
+
+		return null;
+	}//end accountClass()
+
+	/**
+	 * Whether an asset account looks like bank/cash: its number starts with
+	 * `10`, or its name says bank, kas or cash.
+	 *
+	 * @param string $number The account number.
+	 * @param string $name   The account name.
+	 *
+	 * @return bool
+	 */
+	private function isBankOrCash(string $number, string $name): bool {
+		return preg_match('/^10/', $number) === 1 || preg_match('/\b(bank|kas|cash)\b/i', $name) === 1;
+	}//end isBankOrCash()
 
 	/**
 	 * Index posted GL lines by month. Lines are matched to their parent
@@ -219,40 +253,48 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function postedLinesByMonth(array $transactions, array $lines): array {
+		$byRef   = $this->postedByReference(transactions: $transactions);
+		$buckets = [];
+		foreach ($lines as $line) {
+			$ref = $this->toStringValue(value: $line['transactionId'] ?? null);
+			$key = null;
+			if (isset($byRef[$ref]) === true) {
+				$key = $this->monthKey(dateStr: ($byRef[$ref]['postingDate'] ?? null));
+			}
+
+			if ($key !== null) {
+				$buckets[$key][] = $line;
+			}
+		}
+
+		return $buckets;
+	}//end postedLinesByMonth()
+
+	/**
+	 * The posted transactions keyed by their OR object id and by their
+	 * transactionNumber.
+	 *
+	 * @param array<int,array<string,mixed>> $transactions GLTransaction objects.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function postedByReference(array $transactions): array {
 		$byRef = [];
 		foreach ($transactions as $transaction) {
 			if (($transaction['state'] ?? null) !== 'posted') {
 				continue;
 			}
 
-			$id = $this->toStringValue(value: $transaction['@self']['id'] ?? $transaction['id'] ?? null);
-			if ($id !== '') {
-				$byRef[$id] = $transaction;
-			}
-
-			$number = $this->toStringValue(value: $transaction['transactionNumber'] ?? null);
-			if ($number !== '') {
-				$byRef[$number] = $transaction;
+			foreach ([$transaction['@self']['id'] ?? $transaction['id'] ?? null, $transaction['transactionNumber'] ?? null] as $reference) {
+				$reference = $this->toStringValue(value: $reference);
+				if ($reference !== '') {
+					$byRef[$reference] = $transaction;
+				}
 			}
 		}
 
-		$buckets = [];
-		foreach ($lines as $line) {
-			$ref = $this->toStringValue(value: $line['transactionId'] ?? null);
-			if (isset($byRef[$ref]) === false) {
-				continue;
-			}
-
-			$key = $this->monthKey(dateStr: ($byRef[$ref]['postingDate'] ?? null));
-			if ($key === null) {
-				continue;
-			}
-
-			$buckets[$key][] = $line;
-		}
-
-		return $buckets;
-	}//end postedLinesByMonth()
+		return $byRef;
+	}//end postedByReference()
 
 	/**
 	 * Signed contribution of a GL line for an account class. Revenue grows on
@@ -291,64 +333,72 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function monthlyFinancialSeries(array $input): array {
-		$months = ($input['months'] ?? []);
+		$months  = ($input['months'] ?? []);
 		$classes = $this->classifyAccounts(accounts: ($input['accounts'] ?? []));
 		$buckets = $this->postedLinesByMonth(
 			transactions: ($input['transactions'] ?? []),
 			lines: ($input['lines'] ?? [])
 		);
 
-		$result = [
-			'months' => $months,
-			'revenue' => [],
-			'costs' => [],
-			'margin' => [],
-			'marginPct' => [],
-			'cashIn' => [],
-			'cashOut' => [],
-			'cashNet' => [],
-		];
+		$result = ['months' => $months] + array_fill_keys(['revenue', 'costs', 'margin', 'marginPct', 'cashIn', 'cashOut', 'cashNet'], []);
 		foreach ($months as $key) {
-			$revenue = 0.0;
-			$costs = 0.0;
-			$cashIn = 0.0;
-			$cashOut = 0.0;
-			foreach (($buckets[$key] ?? []) as $line) {
-				$number = $this->toStringValue(value: $line['accountNumber'] ?? null);
-				if (isset($classes['revenue'][$number]) === true) {
-					$revenue += $this->signedAmount(line: $line, kind: 'revenue');
-				} elseif (isset($classes['expenses'][$number]) === true) {
-					$costs += $this->signedAmount(line: $line, kind: 'expenses');
-				}
-
-				if (isset($classes['liquid'][$number]) === true) {
-					$movement = $this->signedAmount(line: $line, kind: 'liquid');
-					if ($movement >= 0) {
-						$cashIn += $movement;
-					} else {
-						$cashOut += -$movement;
-					}
-				}
-			}//end foreach
-
-			$margin = ($revenue - $costs);
-
-			$marginPct = null;
-			if ($revenue > 0) {
-				$marginPct = $this->round2(value: ($margin / $revenue) * 100);
+			foreach ($this->monthFigures(totals: $this->monthTotals(lines: ($buckets[$key] ?? []), classes: $classes)) as $series => $value) {
+				$result[$series][] = $value;
 			}
-
-			$result['revenue'][] = $this->round2(value: $revenue);
-			$result['costs'][] = $this->round2(value: $costs);
-			$result['margin'][] = $this->round2(value: $margin);
-			$result['marginPct'][] = $marginPct;
-			$result['cashIn'][] = $this->round2(value: $cashIn);
-			$result['cashOut'][] = $this->round2(value: $cashOut);
-			$result['cashNet'][] = $this->round2(value: $cashIn - $cashOut);
-		}//end foreach
+		}
 
 		return $result;
 	}//end monthlyFinancialSeries()
+
+	/**
+	 * One month's revenue, costs, cash in and cash out from its posted lines.
+	 *
+	 * @param array<int,array<string,mixed>>             $lines   The month's posted lines.
+	 * @param array<string,array<int|string,bool>>       $classes The account classes (revenue, expenses, liquid).
+	 *
+	 * @return array{revenue: float, costs: float, cashIn: float, cashOut: float}
+	 */
+	private function monthTotals(array $lines, array $classes): array {
+		$totals = ['revenue' => 0.0, 'costs' => 0.0, 'cashIn' => 0.0, 'cashOut' => 0.0];
+		foreach ($lines as $line) {
+			$number = $this->toStringValue(value: $line['accountNumber'] ?? null);
+			if (isset($classes['revenue'][$number]) === true) {
+				$totals['revenue'] += $this->signedAmount(line: $line, kind: 'revenue');
+			} elseif (isset($classes['expenses'][$number]) === true) {
+				$totals['costs'] += $this->signedAmount(line: $line, kind: 'expenses');
+			}
+
+			if (isset($classes['liquid'][$number]) === true) {
+				$movement = $this->signedAmount(line: $line, kind: 'liquid');
+				$totals['cashIn']  += max(0.0, $movement);
+				$totals['cashOut'] += max(0.0, -$movement);
+			}
+		}
+
+		return $totals;
+	}//end monthTotals()
+
+	/**
+	 * One month's series values, rounded: revenue, costs, margin, margin
+	 * percentage (null without revenue) and cashflow.
+	 *
+	 * @param array{revenue: float, costs: float, cashIn: float, cashOut: float} $totals The month's totals.
+	 *
+	 * @return array<string,float|null>
+	 */
+	private function monthFigures(array $totals): array {
+		$margin = ($totals['revenue'] - $totals['costs']);
+
+		return [
+			'revenue' => $this->round2(value: $totals['revenue']),
+			'costs' => $this->round2(value: $totals['costs']),
+			'margin' => $this->round2(value: $margin),
+			'marginPct' => $this->percentOf(part: $margin, whole: $totals['revenue']),
+			'cashIn' => $this->round2(value: $totals['cashIn']),
+			'cashOut' => $this->round2(value: $totals['cashOut']),
+			'cashNet' => $this->round2(value: $totals['cashIn'] - $totals['cashOut']),
+		];
+	}//end monthFigures()
 
 	/**
 	 * Monthly billable vs non-billable hours from UrenRegistratie.
@@ -362,21 +412,9 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function billableSeries(array $entries, array $months): array {
-		$billableByMonth = [];
-		$totalByMonth = [];
-		foreach ($entries as $entry) {
-			$key = $this->monthKey(dateStr: ($entry['date'] ?? null));
-			if ($key === null) {
-				continue;
-			}
-
-			$hours = $this->toFloat(value: $entry['hours'] ?? null);
-
-			$totalByMonth[$key] = (($totalByMonth[$key] ?? 0.0) + $hours);
-			if ($this->toFloat(value: $entry['recognisedRate'] ?? null) > 0) {
-				$billableByMonth[$key] = (($billableByMonth[$key] ?? 0.0) + $hours);
-			}
-		}
+		$hours = $this->hoursByMonth(entries: $entries);
+		$totalByMonth    = $hours['total'];
+		$billableByMonth = $hours['billable'];
 
 		$billable = [];
 		$nonBillable = [];
@@ -386,12 +424,7 @@ class FinancialSeriesCalculator {
 			$bill = ($billableByMonth[$key] ?? 0.0);
 			$billable[] = $this->round2(value: $bill);
 			$nonBillable[] = $this->round2(value: $total - $bill);
-			$share = null;
-			if ($total > 0) {
-				$share = $this->round2(value: ($bill / $total) * 100);
-			}
-
-			$pct[] = $share;
+			$pct[] = $this->percentOf(part: $bill, whole: $total);
 		}
 
 		return [
@@ -401,6 +434,32 @@ class FinancialSeriesCalculator {
 		];
 
 	}//end billableSeries()
+
+	/**
+	 * Total and billable hours per month; billable = `recognisedRate` above
+	 * zero, and an entry without a readable date is skipped.
+	 *
+	 * @param array<int,array<string,mixed>> $entries UrenRegistratie objects.
+	 *
+	 * @return array{total: array<string,float>, billable: array<string,float>}
+	 */
+	private function hoursByMonth(array $entries): array {
+		$byMonth = ['total' => [], 'billable' => []];
+		foreach ($entries as $entry) {
+			$key = $this->monthKey(dateStr: ($entry['date'] ?? null));
+			if ($key === null) {
+				continue;
+			}
+
+			$hours = $this->toFloat(value: $entry['hours'] ?? null);
+			$byMonth['total'][$key] = (($byMonth['total'][$key] ?? 0.0) + $hours);
+			if ($this->toFloat(value: $entry['recognisedRate'] ?? null) > 0) {
+				$byMonth['billable'][$key] = (($byMonth['billable'][$key] ?? 0.0) + $hours);
+			}
+		}
+
+		return $byMonth;
+	}//end hoursByMonth()
 
 	/**
 	 * Open-receivables table rows from ARInvoice objects, sorted by due date
@@ -416,55 +475,15 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function openArRows(array $invoices, array $customers, DateTimeImmutable $now): array {
-		$names = [];
-		foreach ($customers as $customer) {
-			$key = $this->toStringValue(value: $customer['customerId'] ?? $customer['@self']['id'] ?? null);
-			$name = $this->toStringValue(value: $customer['legalName'] ?? null);
-			if ($name === '') {
-				$name = $this->toStringValue(value: $customer['tradeName'] ?? null);
-			}
+		$table = new OpenItemsTable();
+		$table->stateField   = 'lifecycleState';
+		$table->openStates   = self::OPEN_AR_STATES;
+		$table->partyField   = 'customerId';
+		$table->amountFields = ['grossAmount', 'netAmount'];
+		$table->names        = $this->partyNames(parties: $customers, fields: ['customerId', 'legalName', 'tradeName']);
+		$table->now          = $now;
 
-			$names[$key] = $name;
-		}
-
-		$rows = [];
-		foreach ($invoices as $invoice) {
-			$state = $this->toStringValue(value: $invoice['lifecycleState'] ?? null);
-			if (in_array($state, self::OPEN_AR_STATES, true) === false) {
-				continue;
-			}
-
-			$customerId = $this->toStringValue(value: $invoice['customerId'] ?? null);
-			$party = ($names[$customerId] ?? '');
-			if ($party === '') {
-				$party = $customerId;
-			}
-
-			$overdue = ($state === 'overdue');
-			if ($overdue === false) {
-				$overdue = $this->isPastDue(dueDate: ($invoice['dueDate'] ?? null), now: $now);
-			}
-
-			$rows[] = [
-				'id' => ($invoice['@self']['id'] ?? $invoice['id'] ?? null),
-				'invoiceNumber' => $this->toStringValue(value: $invoice['invoiceNumber'] ?? null),
-				'party' => $party,
-				'invoiceDate' => $this->toStringValue(value: $invoice['invoiceDate'] ?? null),
-				'dueDate' => $this->toStringValue(value: $invoice['dueDate'] ?? null),
-				'amount' => $this->toFloat(value: $invoice['grossAmount'] ?? $invoice['netAmount'] ?? null),
-				'state' => $state,
-				'overdue' => $overdue,
-			];
-		}//end foreach
-
-		usort(
-			$rows,
-			static function (array $left, array $right): int {
-				return strcmp((string)$left['dueDate'], (string)$right['dueDate']);
-			}
-		);
-
-		return $rows;
+		return $this->openRows(table: $table, records: $invoices);
 	}//end openArRows()
 
 	/**
@@ -480,46 +499,58 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function openApRows(array $transactions, array $vendors, DateTimeImmutable $now): array {
+		$table = new OpenItemsTable();
+		$table->stateField   = 'state';
+		$table->openStates   = self::OPEN_AP_STATES;
+		$table->partyField   = 'vendorId';
+		$table->amountFields = ['totalAmount'];
+		$table->names        = $this->partyNames(parties: $vendors, fields: ['vendorNumber', 'name', 'tradingName']);
+		$table->now          = $now;
+
+		return $this->openRows(table: $table, records: $transactions);
+	}//end openApRows()
+
+	/**
+	 * Party id => name: the id field (else the object id), the first name
+	 * field, falling back to the second when empty; a later party with the
+	 * same id wins.
+	 *
+	 * @param array<int,array<string,mixed>> $parties The party objects.
+	 * @param array{0:string,1:string,2:string}  $fields  The id, name and fallback-name fields.
+	 *
+	 * @return array<string,string>
+	 */
+	private function partyNames(array $parties, array $fields): array {
 		$names = [];
-		foreach ($vendors as $vendor) {
-			$key = $this->toStringValue(value: $vendor['vendorNumber'] ?? $vendor['@self']['id'] ?? null);
-			$name = $this->toStringValue(value: $vendor['name'] ?? null);
+		foreach ($parties as $party) {
+			$key  = $this->toStringValue(value: $party[$fields[0]] ?? $party['@self']['id'] ?? null);
+			$name = $this->toStringValue(value: $party[$fields[1]] ?? null);
 			if ($name === '') {
-				$name = $this->toStringValue(value: $vendor['tradingName'] ?? null);
+				$name = $this->toStringValue(value: $party[$fields[2]] ?? null);
 			}
 
 			$names[$key] = $name;
 		}
 
+		return $names;
+	}//end partyNames()
+
+	/**
+	 * The open rows of a table, sorted by due date ascending.
+	 *
+	 * @param OpenItemsTable                 $table   What the table reads.
+	 * @param array<int,array<string,mixed>> $records The invoices or transactions.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function openRows(OpenItemsTable $table, array $records): array {
 		$rows = [];
-		foreach ($transactions as $transaction) {
-			$state = $this->toStringValue(value: $transaction['state'] ?? null);
-			if (in_array($state, self::OPEN_AP_STATES, true) === false) {
-				continue;
+		foreach ($records as $record) {
+			$state = $this->toStringValue(value: $record[$table->stateField] ?? null);
+			if (in_array($state, $table->openStates, true) === true) {
+				$rows[] = $this->openRow(table: $table, record: $record);
 			}
-
-			$vendorId = $this->toStringValue(value: $transaction['vendorId'] ?? null);
-			$party = ($names[$vendorId] ?? '');
-			if ($party === '') {
-				$party = $vendorId;
-			}
-
-			$overdue = ($state === 'overdue');
-			if ($overdue === false) {
-				$overdue = $this->isPastDue(dueDate: ($transaction['dueDate'] ?? null), now: $now);
-			}
-
-			$rows[] = [
-				'id' => ($transaction['@self']['id'] ?? $transaction['id'] ?? null),
-				'invoiceNumber' => $this->toStringValue(value: $transaction['invoiceNumber'] ?? null),
-				'party' => $party,
-				'invoiceDate' => $this->toStringValue(value: $transaction['invoiceDate'] ?? null),
-				'dueDate' => $this->toStringValue(value: $transaction['dueDate'] ?? null),
-				'amount' => $this->toFloat(value: $transaction['totalAmount'] ?? null),
-				'state' => $state,
-				'overdue' => $overdue,
-			];
-		}//end foreach
+		}
 
 		usort(
 			$rows,
@@ -529,7 +560,41 @@ class FinancialSeriesCalculator {
 		);
 
 		return $rows;
-	}//end openApRows()
+	}//end openRows()
+
+	/**
+	 * One open row: the party's name (else its id), and `overdue` when the
+	 * state says so or the due date has passed.
+	 *
+	 * @param OpenItemsTable      $table  What the table reads.
+	 * @param array<string,mixed> $record One open invoice or transaction.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function openRow(OpenItemsTable $table, array $record): array {
+		$state   = $this->toStringValue(value: $record[$table->stateField] ?? null);
+		$partyId = $this->toStringValue(value: $record[$table->partyField] ?? null);
+		$party   = ($table->names[$partyId] ?? '');
+		if ($party === '') {
+			$party = $partyId;
+		}
+
+		$amount = null;
+		foreach ($table->amountFields as $field) {
+			$amount = ($amount ?? $record[$field] ?? null);
+		}
+
+		return [
+			'id' => ($record['@self']['id'] ?? $record['id'] ?? null),
+			'invoiceNumber' => $this->toStringValue(value: $record['invoiceNumber'] ?? null),
+			'party' => $party,
+			'invoiceDate' => $this->toStringValue(value: $record['invoiceDate'] ?? null),
+			'dueDate' => $this->toStringValue(value: $record['dueDate'] ?? null),
+			'amount' => $this->toFloat(value: $amount),
+			'state' => $state,
+			'overdue' => ($state === 'overdue' || $this->isPastDue(dueDate: ($record['dueDate'] ?? null), now: $table->now)),
+		];
+	}//end openRow()
 
 	/**
 	 * The six KPI-strip metrics: YTD turnover/margin, open AR/AP, the current
@@ -544,66 +609,63 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function computeKpis(array $data, DateTimeImmutable $now): array {
-		$year = (int)$now->format('Y');
-		$ytdMonths = [];
-		$current = (int)$now->format('n');
-		for ($month = 1; $month <= $current; $month++) {
-			$ytdMonths[] = sprintf('%04d-%02d', $year, $month);
-		}
-
-		$series = $this->monthlyFinancialSeries(
-			input: [
-				'accounts' => ($data['accounts'] ?? []),
-				'transactions' => ($data['transactions'] ?? []),
-				'lines' => ($data['lines'] ?? []),
-				'months' => $ytdMonths,
-			]
-		);
-		$turnoverYtd = $this->round2(value: $this->sumValues(values: $series['revenue']));
-		$marginYtd = $this->round2(value: $this->sumValues(values: $series['margin']));
-
-		// Cash position is all-time, not YTD: net of every posted liquid movement.
-		$classes = $this->classifyAccounts(accounts: ($data['accounts'] ?? []));
-		$buckets = $this->postedLinesByMonth(
-			transactions: ($data['transactions'] ?? []),
-			lines: ($data['lines'] ?? [])
-		);
-
-		$cashPosition = 0.0;
-		foreach ($buckets as $monthLines) {
-			foreach ($monthLines as $line) {
-				$number = $this->toStringValue(value: $line['accountNumber'] ?? null);
-				if (isset($classes['liquid'][$number]) === true) {
-					$cashPosition += $this->signedAmount(line: $line, kind: 'liquid');
-				}
-			}
-		}
-
+		$ytd    = $this->turnoverAndMargin(data: $data, months: $this->yearToDate(now: $now));
 		$openAr = $this->openArRows(invoices: ($data['arInvoices'] ?? []), customers: [], now: $now);
 		$openAp = $this->openApRows(transactions: ($data['apTransactions'] ?? []), vendors: [], now: $now);
-
-		$currentMonth = sprintf('%04d-%02d', $year, $current);
-		$billable = $this->billableSeries(entries: ($data['hourEntries'] ?? []), months: [$currentMonth]);
-
-		$marginPctYtd = null;
-		if ($turnoverYtd > 0) {
-			$marginPctYtd = $this->round2(value: ($marginYtd / $turnoverYtd) * 100);
-		}
+		$billable = $this->billableSeries(entries: ($data['hourEntries'] ?? []), months: [$now->format('Y-m')]);
 
 		return [
-			'turnoverYtd' => $turnoverYtd,
-			'marginYtd' => $marginYtd,
-			'marginPctYtd' => $marginPctYtd,
+			'turnoverYtd' => $ytd['turnover'],
+			'marginYtd' => $ytd['margin'],
+			'marginPctYtd' => $ytd['marginPct'],
 			'openArAmount' => $this->round2(value: $this->sumValues(values: array_column($openAr, 'amount'))),
 			'openArCount' => count($openAr),
 			'openApAmount' => $this->round2(value: $this->sumValues(values: array_column($openAp, 'amount'))),
 			'openApCount' => count($openAp),
 			'billableHours' => $billable['billable'][0],
 			'billablePct' => $billable['pct'][0],
-			'cashPosition' => $this->round2(value: $cashPosition),
+			'cashPosition' => $this->round2(value: $this->allTimeCash(data: $data)),
 		];
 
 	}//end computeKpis()
+
+	/**
+	 * The months of the year up to and including `now`'s month.
+	 *
+	 * @param DateTimeImmutable $now Reference date.
+	 *
+	 * @return list<string> Month keys, ascending.
+	 */
+	private function yearToDate(DateTimeImmutable $now): array {
+		$year   = (int)$now->format('Y');
+		$months = [];
+		for ($month = 1; $month <= (int)$now->format('n'); $month++) {
+			$months[] = sprintf('%04d-%02d', $year, $month);
+		}
+
+		return $months;
+	}//end yearToDate()
+
+	/**
+	 * The all-time cash position: net of every posted liquid movement.
+	 *
+	 * @param array<string,mixed> $data Bag with accounts, transactions and lines.
+	 *
+	 * @return float
+	 */
+	private function allTimeCash(array $data): float {
+		$liquid = $this->classifyAccounts(accounts: ($data['accounts'] ?? []))['liquid'];
+		$cash   = 0.0;
+		foreach ($this->postedLinesByMonth(transactions: ($data['transactions'] ?? []), lines: ($data['lines'] ?? [])) as $monthLines) {
+			foreach ($monthLines as $line) {
+				if (isset($liquid[$this->toStringValue(value: $line['accountNumber'] ?? null)]) === true) {
+					$cash += $this->signedAmount(line: $line, kind: 'liquid');
+				}
+			}
+		}
+
+		return $cash;
+	}//end allTimeCash()
 
 	/**
 	 * The cash position per bank account and combined (REQ-BCON-004).
@@ -632,6 +694,24 @@ class FinancialSeriesCalculator {
 			}
 		}
 
+		$balances = $this->liquidBalances(data: $data, liquid: $liquid);
+		$rows     = $this->withBankBalances(rows: $this->bankAccountRows(bankAccounts: $bankAccounts, balances: $balances), statements: $statements);
+		$other    = $this->sumValues(values: array_diff_key($balances, array_flip(array_column($rows, 'ledgerAccountNumber'))));
+
+		$total = $this->sumValues(values: array_column($rows, 'ledgerBalance')) + $other;
+		return ['accounts' => $rows, 'other' => $this->round2(value: $other), 'total' => $this->round2(value: $total)];
+
+	}//end cashPositionByAccount()
+
+	/**
+	 * The posted balance per liquid ledger account, in first-posted order.
+	 *
+	 * @param array<string,mixed>       $data   Bag with transactions and lines.
+	 * @param array<int|string,bool>    $liquid The liquid account numbers.
+	 *
+	 * @return array<int|string,float>
+	 */
+	private function liquidBalances(array $data, array $liquid): array {
 		$balances = [];
 		foreach ($this->postedLinesByMonth(transactions: ($data['transactions'] ?? []), lines: ($data['lines'] ?? [])) as $monthLines) {
 			foreach ($monthLines as $line) {
@@ -642,35 +722,51 @@ class FinancialSeriesCalculator {
 			}
 		}
 
-		$latest = $this->latestClosingBalances(statements: $statements);
+		return $balances;
+	}//end liquidBalances()
+
+	/**
+	 * One row per bank account with its ledger balance.
+	 *
+	 * @param array<int,array<string,mixed>> $bankAccounts BankAccount records.
+	 * @param array<int|string,float>        $balances     Posted balance per ledger account.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function bankAccountRows(array $bankAccounts, array $balances): array {
 		$rows = [];
-		$named = [];
 		foreach ($bankAccounts as $bankAccount) {
 			$ledger = $this->toStringValue(value: $bankAccount['ledgerAccountNumber'] ?? null);
-			$iban = strtoupper(str_replace(' ', '', $this->toStringValue(value: $bankAccount['iban'] ?? null)));
-			$named[$ledger] = true;
 			$rows[] = [
 				'bankAccountId' => $this->toStringValue(value: $bankAccount['id'] ?? ($bankAccount['@self']['id'] ?? null)),
 				'accountName' => $this->toStringValue(value: $bankAccount['accountName'] ?? null),
-				'iban' => $iban,
+				'iban' => strtoupper(str_replace(' ', '', $this->toStringValue(value: $bankAccount['iban'] ?? null))),
 				'ledgerAccountNumber' => $ledger,
 				'ledgerBalance' => $this->round2(value: ($balances[$ledger] ?? 0.0)),
-				'bankBalance' => ($latest[$iban]['balance'] ?? null),
-				'bankBalanceDate' => ($latest[$iban]['date'] ?? null),
 			];
 		}
 
-		$other = 0.0;
-		foreach ($balances as $number => $balance) {
-			if (isset($named[$number]) === false) {
-				$other += $balance;
-			}
+		return $rows;
+	}//end bankAccountRows()
+
+	/**
+	 * The rows with the closing balance and date of each IBAN's most recent
+	 * statement that carries one.
+	 *
+	 * @param array<int,array<string,mixed>> $rows       The bank account rows.
+	 * @param array<int,array<string,mixed>> $statements BankStatement records.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function withBankBalances(array $rows, array $statements): array {
+		$latest = $this->latestClosingBalances(statements: $statements);
+		foreach ($rows as $index => $row) {
+			$rows[$index]['bankBalance']     = ($latest[$row['iban']]['balance'] ?? null);
+			$rows[$index]['bankBalanceDate'] = ($latest[$row['iban']]['date'] ?? null);
 		}
 
-		$total = $this->sumValues(values: array_column($rows, 'ledgerBalance')) + $other;
-		return ['accounts' => $rows, 'other' => $this->round2(value: $other), 'total' => $this->round2(value: $total)];
-
-	}//end cashPositionByAccount()
+		return $rows;
+	}//end withBankBalances()
 
 	/**
 	 * The most recent closing balance per IBAN.
@@ -714,6 +810,29 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function computeRangeKpis(array $data, array $months): array {
+		$figures = $this->turnoverAndMargin(data: $data, months: $months);
+
+		$bill          = $this->billableSeries(entries: ($data['hourEntries'] ?? []), months: $months);
+		$billableHours = $this->sumValues(values: $bill['billable']);
+		$totalHours    = ($billableHours + $this->sumValues(values: $bill['nonBillable']));
+
+		return $figures + [
+			'billableHours' => $this->round2(value: $billableHours),
+			'billablePct' => $this->percentOf(part: $billableHours, whole: $totalHours),
+		];
+
+	}//end computeRangeKpis()
+
+	/**
+	 * Turnover and margin (EUR, rounded) over months, and the margin
+	 * percentage of the rounded figures (null without turnover).
+	 *
+	 * @param array<string,mixed> $data   Bag with accounts, transactions and lines.
+	 * @param array<int,string>   $months Month keys to aggregate over.
+	 *
+	 * @return array{turnover: float, margin: float, marginPct: float|null}
+	 */
+	private function turnoverAndMargin(array $data, array $months): array {
 		$series = $this->monthlyFinancialSeries(
 			input: [
 				'accounts' => ($data['accounts'] ?? []),
@@ -723,31 +842,26 @@ class FinancialSeriesCalculator {
 			]
 		);
 		$turnover = $this->round2(value: $this->sumValues(values: $series['revenue']));
-		$margin = $this->round2(value: $this->sumValues(values: $series['margin']));
+		$margin   = $this->round2(value: $this->sumValues(values: $series['margin']));
 
-		$bill = $this->billableSeries(entries: ($data['hourEntries'] ?? []), months: $months);
-		$billableHours = $this->sumValues(values: $bill['billable']);
-		$totalHours = ($billableHours + $this->sumValues(values: $bill['nonBillable']));
+		return ['turnover' => $turnover, 'margin' => $margin, 'marginPct' => $this->percentOf(part: $margin, whole: $turnover)];
+	}//end turnoverAndMargin()
 
-		$marginPct = null;
-		if ($turnover > 0) {
-			$marginPct = $this->round2(value: ($margin / $turnover) * 100);
+	/**
+	 * A share as a rounded percentage, or null when the whole is not positive.
+	 *
+	 * @param float $part  The part.
+	 * @param float $whole The whole.
+	 *
+	 * @return float|null
+	 */
+	private function percentOf(float $part, float $whole): ?float {
+		if ($whole > 0) {
+			return $this->round2(value: ($part / $whole) * 100);
 		}
 
-		$billablePct = null;
-		if ($totalHours > 0) {
-			$billablePct = $this->round2(value: ($billableHours / $totalHours) * 100);
-		}
-
-		return [
-			'turnover' => $turnover,
-			'margin' => $margin,
-			'marginPct' => $marginPct,
-			'billableHours' => $this->round2(value: $billableHours),
-			'billablePct' => $billablePct,
-		];
-
-	}//end computeRangeKpis()
+		return null;
+	}//end percentOf()
 
 	/**
 	 * Whether a due date lies strictly before `now`'s UTC calendar date

@@ -119,46 +119,50 @@ class ProgrammaLinkGuard {
 	 */
 	public function validateOnSave(array $glLine): bool {
 		try {
+			// Unmapped line — ordinary GL posting, never gated (REQ-BBL-001).
 			$programme = ($glLine['programmeStructure'] ?? null);
 			if ($programme === null || $programme === '') {
-				// Unmapped line — ordinary GL posting, never gated (REQ-BBL-001).
 				return true;
 			}
 
-			if ($this->isCanonicalProgramme(programme: (string)$programme) === false) {
-				$this->logger->warning(
-					'ProgrammaLinkGuard: rejecting non-canonical BBV provincie programme',
-					['programmeStructure' => $programme]
-				);
-				return false;
+			$refusal = $this->refusal(glLine: $glLine);
+			if ($refusal === null) {
+				return true;
 			}
 
-			if ($this->isEffectiveDateValid(assignedAt: ($glLine['programmeAssignedAt'] ?? null)) === false) {
-				$this->logger->warning(
-					'ProgrammaLinkGuard: rejecting future programmaAssignedAt',
-					['programmeAssignedAt' => ($glLine['programmeAssignedAt'] ?? null)]
-				);
-				return false;
-			}
-
-			if ($this->hasConflictingPriorAssignment(glLine: $glLine, programme: (string)$programme) === true) {
-				$this->logger->warning(
-					'ProgrammaLinkGuard: rejecting conflicting programme re-assignment (double-mapping)',
-					['target' => $programme]
-				);
-				return false;
-			}
-
-			return true;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ProgrammaLinkGuard: denying save on unexpected error (fail-closed)',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->warning($refusal[0], $refusal[1]);
 			return false;
-		}//end try
-
+		} catch (\Throwable $e) {
+			$this->logger->error('ProgrammaLinkGuard: denying save on unexpected error (fail-closed)', ['exception' => $e->getMessage()]);
+			return false;
+		}
 	}//end validateOnSave()
+
+	/**
+	 * The first rule a mapped line breaks, in order: a canonical programme, a
+	 * non-future effective date, no conflicting prior assignment (REQ-BBL-002/005).
+	 *
+	 * @param array<string, mixed> $glLine GLLine object array with a programme set.
+	 *
+	 * @return array{0: string, 1: array<string, mixed>}|null The warning and its context, or null when the line may be saved.
+	 */
+	private function refusal(array $glLine): ?array {
+		$programme = $glLine['programmeStructure'];
+		if ($this->isCanonicalProgramme(programme: (string)$programme) === false) {
+			return ['ProgrammaLinkGuard: rejecting non-canonical BBV provincie programme', ['programmeStructure' => $programme]];
+		}
+
+		$assignedAt = ($glLine['programmeAssignedAt'] ?? null);
+		if ($this->isEffectiveDateValid(assignedAt: $assignedAt) === false) {
+			return ['ProgrammaLinkGuard: rejecting future programmaAssignedAt', ['programmeAssignedAt' => $assignedAt]];
+		}
+
+		if ($this->hasConflictingPriorAssignment(glLine: $glLine, programme: (string)$programme) === true) {
+			return ['ProgrammaLinkGuard: rejecting conflicting programme re-assignment (double-mapping)', ['target' => $programme]];
+		}
+
+		return null;
+	}//end refusal()
 
 	/**
 	 * Whether the supplied value is one of the seven canonical provincie programmes.
@@ -240,35 +244,60 @@ class ProgrammaLinkGuard {
 	 */
 	private function fetchStoredProgramme(string $id): ?string {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = ObjectIdentifier::findScoped(
-				scoped: $objectService
-					->setRegister(register: $this->getRegisterSlug())
-					->setSchema(schema: 'GLLine'),
-				id: $id
-			);
-
-			if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-				$result = $result->jsonSerialize();
-			}
-
-			if (is_array($result) === false) {
-				return null;
-			}
-
-			$stored = ($result['programmeStructure'] ?? null);
-			if ($stored === null) {
-				return null;
-			}
-
-			return (string)$stored;
+			return self::programmeOf(record: $this->storedLine(id: $id));
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'ProgrammaLinkGuard: GLLine lookup unavailable — treating as unmapped',
 				['id' => $id, 'exception' => $e->getMessage()]
 			);
 			return null;
-		}//end try
-
+		}
 	}//end fetchStoredProgramme()
+
+	/**
+	 * The persisted GL line, as find() answers it.
+	 *
+	 * @param string $id GL line object id.
+	 *
+	 * @return mixed
+	 */
+	private function storedLine(string $id): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+		return ObjectIdentifier::findScoped(
+			scoped: $objectService->setRegister(register: $this->getRegisterSlug())->setSchema(schema: 'GLLine'),
+			id: $id
+		);
+	}//end storedLine()
+
+	/**
+	 * A stored line's programmaStructure: read through jsonSerialize() for an entity; null when absent.
+	 *
+	 * @param mixed $record The stored line.
+	 *
+	 * @return string|null
+	 */
+	private static function programmeOf(mixed $record): ?string {
+		$record = self::serialized(record: $record);
+		if (is_array($record) === false || isset($record['programmeStructure']) === false) {
+			return null;
+		}
+
+		return (string)$record['programmeStructure'];
+	}//end programmeOf()
+
+	/**
+	 * An entity's jsonSerialize() payload; any other value unchanged.
+	 *
+	 * @param mixed $record The stored line.
+	 *
+	 * @return mixed
+	 */
+	private static function serialized(mixed $record): mixed {
+		if (is_object($record) === true && method_exists($record, 'jsonSerialize') === true) {
+			return $record->jsonSerialize();
+		}
+
+		return $record;
+	}//end serialized()
 }//end class

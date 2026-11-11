@@ -105,43 +105,93 @@ class LinkedObjectsLockListener implements IEventListener {
 			return;
 		}
 
-		$old = $event->getOldObject();
-		$new = $event->getNewObject();
-		if ($old === null || $new === null) {
-			return;
-		}
-
-		$document = $this->documentOf(entity: $new);
+		$document = $this->documentFor(event: $event);
 		if ($document === null) {
 			return;
 		}
 
-		$before = $old->getObject();
-		$after  = $new->getObject();
-		$list   = LinkedObjectReferences::references(list: ($after[self::FIELD] ?? []));
-		if ($list === null) {
-			$event->setErrors(['message' => self::MALFORMED, 'field' => self::FIELD]);
-			$event->stopPropagation();
+		$refusal = $this->refusal(document: $document, event: $event);
+		if ($refusal === null) {
 			return;
 		}
 
-		[$stateField, $openStates] = self::DOCUMENTS[$document];
-		if (in_array((string)($before[$stateField] ?? ''), $openStates, true) === true) {
-			return;
-		}
-
-		$kept = LinkedObjectReferences::references(list: ($before[self::FIELD] ?? [])) ?? [];
-		if ($kept === $list) {
-			return;
-		}
-
-		if ($kept === [] && $document === 'PaymentRequest' && $list === LinkedObjectReferences::references(list: [($before['subject'] ?? [])])) {
-			return;
-		}
-
-		$event->setErrors(['message' => self::MESSAGE, 'field' => self::FIELD]);
+		$event->setErrors(['message' => $refusal, 'field' => self::FIELD]);
 		$event->stopPropagation();
 	}//end handle()
+
+	/**
+	 * The guarded document schema an update with both versions is about, or null.
+	 *
+	 * @param ObjectUpdatingEvent $event The pre-save event.
+	 *
+	 * @return string|null
+	 */
+	private function documentFor(ObjectUpdatingEvent $event): string|null {
+		$new = $event->getNewObject();
+		if ($event->getOldObject() === null || $new === null) {
+			return null;
+		}
+
+		return $this->documentOf(entity: $new);
+	}//end documentFor()
+
+	/**
+	 * Why the update is refused — a malformed list, or a change to a kept
+	 * one — or null when it may proceed.
+	 *
+	 * @param string              $document The document schema.
+	 * @param ObjectUpdatingEvent $event    The pre-save event.
+	 *
+	 * @return string|null
+	 */
+	private function refusal(string $document, ObjectUpdatingEvent $event): string|null {
+		$before = $event->getOldObject()->getObject();
+		$list   = LinkedObjectReferences::references(list: ($event->getNewObject()->getObject()[self::FIELD] ?? []));
+		if ($list === null) {
+			return self::MALFORMED;
+		}
+
+		if ($this->isOpen(document: $document, before: $before) === true
+			|| in_array($list, $this->allowedLists(document: $document, before: $before), true) === true
+		) {
+			return null;
+		}
+
+		return self::MESSAGE;
+	}//end refusal()
+
+	/**
+	 * Whether the stored document is still in a state whose list may change.
+	 *
+	 * @param string               $document The document schema.
+	 * @param array<string, mixed> $before   The stored object.
+	 *
+	 * @return bool
+	 */
+	private function isOpen(string $document, array $before): bool {
+		[$stateField, $openStates] = self::DOCUMENTS[$document];
+		return in_array((string)($before[$stateField] ?? ''), $openStates, true);
+	}//end isOpen()
+
+	/**
+	 * The lists a kept document may carry: its kept list (a malformed one
+	 * reads as empty) and, for a payment request whose list is empty, the
+	 * request's own subject.
+	 *
+	 * @param string               $document The document schema.
+	 * @param array<string, mixed> $before   The stored object.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function allowedLists(string $document, array $before): array {
+		$kept = LinkedObjectReferences::references(list: ($before[self::FIELD] ?? [])) ?? [];
+		$allowed = [$kept];
+		if ($kept === [] && $document === 'PaymentRequest') {
+			$allowed[] = LinkedObjectReferences::references(list: [($before['subject'] ?? [])]);
+		}
+
+		return $allowed;
+	}//end allowedLists()
 
 	/**
 	 * Which guarded document schema an entity is, if any.

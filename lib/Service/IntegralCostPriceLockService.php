@@ -39,10 +39,6 @@ use InvalidArgumentException;
  * Side-effect-free year-end IKP definitief lock (REQ-WMO-002 §year-end lock).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-8
- *
- * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
- *     #506): inherent branch complexity in this domain logic; deferred
- *     pending a dedicated refactor.
  */
 class IntegralCostPriceLockService {
 	/**
@@ -61,13 +57,35 @@ class IntegralCostPriceLockService {
 	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-002
 	 */
 	public function lock(array $input): array {
-		$provisional = (array)($input['voorlopigRecords'] ?? []);
-		if ($provisional === []) {
+		$this->assertLockable(input: $input);
+
+		$totals = new ProvisionalCostTotals();
+		foreach ((array)($input['voorlopigRecords'] ?? []) as $record) {
+			if (is_array($record) === true) {
+				$totals->add(record: $record);
+			}
+		}
+
+		return $this->finalRecord(input: $input, totals: $totals);
+
+	}//end lock()
+
+	/**
+	 * Refuse a lock without provisional records, without a signing
+	 * accountant or with a malformed fiscal year.
+	 *
+	 * @param array<string,mixed> $input Lock inputs.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When inputs are invalid.
+	 */
+	private function assertLockable(array $input): void {
+		if ((array)($input['voorlopigRecords'] ?? []) === []) {
 			throw new InvalidArgumentException('Cannot lock without any voorlopig IKP records');
 		}
 
-		$signedBy = (string)($input['signedBy'] ?? '');
-		if (trim($signedBy) === '') {
+		if (trim((string)($input['signedBy'] ?? '')) === '') {
 			throw new InvalidArgumentException('Year-end lock requires an accountant user-id (signedBy)');
 		}
 
@@ -75,98 +93,37 @@ class IntegralCostPriceLockService {
 		if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
 			throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): ' . $fiscalYear);
 		}
+	}//end assertLockable()
 
-		$payrollCostSum = 0.0;
-		$materialenSum = 0.0;
-		$depreciationsSum = 0.0;
-		$vermogensSum = 0.0;
-		$profitMarkupSum = 0.0;
-		$overheadBuckets = [];
-		$totaleCostSum = 0.0;
-
-		foreach ($provisional as $record) {
-			if (is_array($record) === false) {
-				continue;
-			}
-
-			$componenten = (array)($record['componenten'] ?? []);
-
-			$payrollCostSum += (float)($componenten['directPayrollCost'] ?? 0);
-			$materialenSum += (float)($componenten['directMaterials'] ?? 0);
-			$depreciationsSum += (float)($componenten['directDepreciations'] ?? 0);
-			$vermogensSum += (float)($componenten['capitalCost'] ?? 0);
-			$profitMarkupSum += (float)($componenten['profitMarkup'] ?? 0);
-
-			$overheadInRecord = (array)($componenten['indirecteOverhead'] ?? []);
-			foreach ($overheadInRecord as $bucket => $amount) {
-				$overheadBuckets[(string)$bucket] = ($overheadBuckets[(string)$bucket] ?? 0.0) + (float)$amount;
-			}
-
-			$totaleCostSum += (float)($record['totalCost'] ?? 0);
-		}
-
-		$soldUnits = (float)($input['soldUnits'] ?? 0);
-		$costPricePerUnit = null;
-		if ($soldUnits > 0.0) {
-			$costPricePerUnit = round(($totaleCostSum / $soldUnits), 4);
-		}
-
-		$appliedRate = null;
-		if (isset($input['appliedRate']) === true) {
-			$appliedRate = (float)$input['appliedRate'];
-		}
-
-		$marge = null;
-		$margePercentage = null;
-		if ($appliedRate !== null && $costPricePerUnit !== null) {
-			$marge = round(($appliedRate - $costPricePerUnit), 4);
-			$base = 1.0;
-			if ($costPricePerUnit > 0.0) {
-				$base = $costPricePerUnit;
-			}
-
-			$margePercentage = round((($marge / $base) * 100), 4);
-		}
-
-		$compliant = false;
-		if ($appliedRate !== null && $costPricePerUnit !== null) {
-			$compliant = ($appliedRate >= $costPricePerUnit);
-		}
-
-		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-
-		$verkochteUnitsOut = null;
-		if ($soldUnits > 0.0) {
-			$verkochteUnitsOut = $soldUnits;
-		}
+	/**
+	 * The definitief record: identity, totals, price fields and signature.
+	 *
+	 * @param array<string,mixed>   $input  Lock inputs.
+	 * @param ProvisionalCostTotals $totals The aggregated provisional records.
+	 *
+	 * @return array<string,mixed> Definitief IKP record.
+	 */
+	private function finalRecord(array $input, ProvisionalCostTotals $totals): array {
+		$pricing = new UnitCostPricing(
+			input: $input,
+			costPricePerUnit: $totals->costPricePerUnit(soldUnits: (float)($input['soldUnits'] ?? 0))
+		);
+		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
 
 		return [
 			'commercialActivityId' => (string)$input['commercialActivityId'],
-			'period' => $fiscalYear . '-YTD',
-			'calculatedOn' => $now->format(DateTimeImmutable::ATOM),
+			'period' => (string)($input['fiscalYear'] ?? '') . '-YTD',
+			'calculatedOn' => $now,
 			'status' => 'final',
-			'componenten' => [
-				'directPayrollCost' => round($payrollCostSum, 2),
-				'directMaterials' => round($materialenSum, 2),
-				'directDepreciations' => round($depreciationsSum, 2),
-				'indirecteOverhead' => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
-				'capitalCost' => round($vermogensSum, 2),
-				'profitMarkup' => round($profitMarkupSum, 2),
-			],
-			'totalCost' => round($totaleCostSum, 2),
-			'soldUnits' => $verkochteUnitsOut,
-			'unitLabel' => ($input['unitLabel'] ?? null),
-			'costPricePerUnit' => $costPricePerUnit,
-			'appliedRate' => $appliedRate,
-			'marge' => $marge,
-			'margePercentage' => $margePercentage,
-			'compliant' => $compliant,
-			'finalSignedBy' => $signedBy,
-			'finalSignedAt' => $now->format(DateTimeImmutable::ATOM),
+			'componenten' => $totals->componenten(),
+			'totalCost' => round($totals->totalCost, 2),
+		] + $pricing->fields() + [
+			'compliant' => $pricing->coversCostPrice(),
+			'finalSignedBy' => (string)($input['signedBy'] ?? ''),
+			'finalSignedAt' => $now,
 			'administrationId' => (string)$input['administrationId'],
 		];
-
-	}//end lock()
+	}//end finalRecord()
 
 	/**
 	 * Determine whether today is past the year-end lock trigger date (31 March of FY+1).

@@ -266,18 +266,7 @@ final class UrenPrognoseService {
 		}
 
 		$startMonth = (int)gmdate('n', $startTs);
-		$overridesByMonth = [];
-		foreach ($plannedAssignments as $assignment) {
-			if (is_array($assignment) === false) {
-				continue;
-			}
-
-			$month = (string)($assignment['month'] ?? '');
-			$hours = (float)($assignment['hours'] ?? 0);
-			if ($month !== '') {
-				$overridesByMonth[$month] = $hours;
-			}
-		}
+		$overridesByMonth = self::plannedHoursByMonth(plannedAssignments: $plannedAssignments);
 
 		$holidayMonths = $this->holidayMonths(vakanties: $vakanties);
 
@@ -308,6 +297,30 @@ final class UrenPrognoseService {
 	}//end perMaandPrognose()
 
 	/**
+	 * The planned hours per month (YYYY-MM); a later plan for a month replaces
+	 * an earlier one, plans without a month are left out.
+	 *
+	 * @param array<int, mixed> $plannedAssignments The planned assignments.
+	 *
+	 * @return array<string, float>
+	 */
+	private static function plannedHoursByMonth(array $plannedAssignments): array {
+		$overridesByMonth = [];
+		foreach ($plannedAssignments as $assignment) {
+			if (is_array($assignment) === false) {
+				continue;
+			}
+
+			$month = (string)($assignment['month'] ?? '');
+			if ($month !== '') {
+				$overridesByMonth[$month] = (float)($assignment['hours'] ?? 0);
+			}
+		}
+
+		return $overridesByMonth;
+	}//end plannedHoursByMonth()
+
+	/**
 	 * Resolve which months (YYYY-MM) are fully or partially blocked by vakantie ranges.
 	 *
 	 * @param array<int, string> $vakanties ISO date ranges ("2026-07-15/2026-08-09").
@@ -317,39 +330,80 @@ final class UrenPrognoseService {
 	private function holidayMonths(array $vakanties): array {
 		$months = [];
 		foreach ($vakanties as $range) {
-			if (is_string($range) === false || str_contains($range, '/') === false) {
-				continue;
+			$bounds = self::rangeBounds(range: $range);
+			if ($bounds !== null) {
+				$months = self::withRangeMonths(months: $months, bounds: $bounds);
 			}
-
-			[$startStr, $endStr] = explode('/', $range, 2);
-			$start = strtotime($startStr);
-			$end = strtotime($endStr);
-			if ($start === false || $end === false) {
-				continue;
-			}
-
-			$cursor = $start;
-			while ($cursor <= $end) {
-				$key = gmdate('Y-m', $cursor);
-				if (isset($months[$key]) === false) {
-					$months[$key] = 'partial';
-				}
-
-				$cursor += 86400;
-			}
-
-			// If the entire month is covered, mark full.
-			$firstOfStartMonth = strtotime(gmdate('Y-m-01', $start));
-			$lastOfStartMonth = strtotime(gmdate('Y-m-t', $start));
-			if ($firstOfStartMonth !== false && $lastOfStartMonth !== false
-				&& $start <= $firstOfStartMonth && $end >= $lastOfStartMonth
-			) {
-				$months[gmdate('Y-m', $start)] = 'full';
-			}
-		}//end foreach
+		}
 
 		return $months;
-	}//end vakantieMonths()
+	}//end holidayMonths()
+
+	/**
+	 * The start and end timestamps of a 'start/end' vakantie range, or null
+	 * when it is not such a range or a date does not parse.
+	 *
+	 * @param mixed $range The vakantie entry.
+	 *
+	 * @return array{0:int,1:int}|null
+	 */
+	private static function rangeBounds(mixed $range): ?array {
+		if (is_string($range) === false || str_contains($range, '/') === false) {
+			return null;
+		}
+
+		[$startStr, $endStr] = explode('/', $range, 2);
+		$start = strtotime($startStr);
+		$end = strtotime($endStr);
+		if ($start === false || $end === false) {
+			return null;
+		}
+
+		return [$start, $end];
+	}//end rangeBounds()
+
+	/**
+	 * The month map with every month the range touches marked 'partial' (a
+	 * month already marked keeps its mark), and the range's start month marked
+	 * 'full' when the range covers all of it.
+	 *
+	 * @param array<string,string> $months The month map so far.
+	 * @param array{0:int,1:int}   $bounds The range's start and end timestamps.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function withRangeMonths(array $months, array $bounds): array {
+		[$start, $end] = $bounds;
+		for ($cursor = $start; $cursor <= $end; $cursor += 86400) {
+			$key = gmdate('Y-m', $cursor);
+			if (isset($months[$key]) === false) {
+				$months[$key] = 'partial';
+			}
+		}
+
+		// If the entire month is covered, mark full.
+		if (self::coversStartMonth(bounds: $bounds) === true) {
+			$months[gmdate('Y-m', $start)] = 'full';
+		}
+
+		return $months;
+	}//end withRangeMonths()
+
+	/**
+	 * Whether the range covers the whole calendar month it starts in.
+	 *
+	 * @param array{0:int,1:int} $bounds The range's start and end timestamps.
+	 *
+	 * @return bool
+	 */
+	private static function coversStartMonth(array $bounds): bool {
+		[$start, $end] = $bounds;
+		$firstOfStartMonth = strtotime(gmdate('Y-m-01', $start));
+		$lastOfStartMonth = strtotime(gmdate('Y-m-t', $start));
+
+		return $firstOfStartMonth !== false && $lastOfStartMonth !== false
+			&& $start <= $firstOfStartMonth && $end >= $lastOfStartMonth;
+	}//end coversStartMonth()
 
 	/**
 	 * Estimate the probability the norm is reached given a forecast and confidence.

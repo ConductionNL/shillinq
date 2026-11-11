@@ -273,102 +273,125 @@ class IntegralCostPriceCalculator {
 	 * @return array<string,mixed> IKP record matching the schema.
 	 */
 	public function compose(array $input): array {
-		$glLines = (array)($input['glLines'] ?? []);
-		$kp = (string)$input['costCentre'];
-		$kd = (string)$input['costObject'];
-
-		$payrollCostCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'payrollCost');
-		$materialenCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'materialen');
-		$depreciationsCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'depreciations');
-
-		$overheadBuckets = $this->distributeOverhead(
-			corporateOverheadCents: (int)($input['corporateOverheadCents'] ?? 0),
-			rule: (array)($input['overheadRule'] ?? []),
-			costObject: $kd
+		$costs = $this->composeCosts(input: $input);
+		$totaleCostCents = $costs->total();
+		$pricing = new UnitCostPricing(
+			input: $input,
+			costPricePerUnit: $this->calculateKostprijsPerEenheid(
+				totaleCostCents: $totaleCostCents,
+				soldUnits: (float)($input['soldUnits'] ?? 0)
+			)
 		);
 
-		$overheadTotalCents = 0;
-		foreach ($overheadBuckets as $cents) {
-			$overheadTotalCents += $cents;
-		}
+		return $this->recordHeader(input: $input) + [
+			'componenten' => $this->componentAmounts(costs: $costs),
+			'totalCost' => $this->fromCents(cents: $totaleCostCents),
+		] + $pricing->fields() + [
+			'compliant' => $this->isCompliantPricing(pricing: $pricing, totaleCostCents: $totaleCostCents),
+			'administrationId' => (string)$input['administrationId'],
+		];
 
-		$vermogensCents = $this->calculateVermogenskosten(
-			investedBookValueCents: (int)($input['investedBookValueCents'] ?? 0),
-			waccRate: (float)($input['waccRate'] ?? self::DEFAULT_WACC),
-			periodFraction: (float)($input['periodFraction'] ?? 1.0)
-		);
+	}//end compose()
 
-		$baseBeforeMarkup = ($payrollCostCents + $materialenCents + $depreciationsCents + $overheadTotalCents + $vermogensCents);
-		// The old spelling is still read: a caller that has not been updated would
-		// otherwise fall through to the DEFAULT rate, which is not an error but a
-		// silently different price.
-		$profitMarkupCents = $this->calculateProfitMarkup(
-			baseCents: $baseBeforeMarkup,
-			rate: (float)($input['profitMarkupRate'] ?? $input['winstopslagRate'] ?? self::DEFAULT_PROFIT_MARKUP)
-		);
-
-		$totaleCostCents = ($baseBeforeMarkup + $profitMarkupCents);
-
-		$soldUnits = (float)($input['soldUnits'] ?? 0);
-		$costPricePerUnit = $this->calculateKostprijsPerEenheid(totaleCostCents: $totaleCostCents, soldUnits: $soldUnits);
-
-		$appliedRate = null;
-		if (isset($input['appliedRate']) === true) {
-			$appliedRate = (float)$input['appliedRate'];
-		}
-
-		$marge = null;
-		$margePercentage = null;
-		if ($appliedRate !== null && $costPricePerUnit !== null) {
-			$marge = round(($appliedRate - $costPricePerUnit), 4);
-			$base = 1.0;
-			if ($costPricePerUnit > 0.0) {
-				$base = $costPricePerUnit;
-			}
-
-			$margePercentage = round((($marge / $base) * 100), 4);
-		}
-
-		$revenueEur = null;
-		if (isset($input['omzetEur']) === true) {
-			$revenueEur = (float)$input['omzetEur'];
-		}
-
-		$compliant = $this->isCompliant(
-			appliedRate: $appliedRate,
-			costPricePerUnit: $costPricePerUnit,
-			totaleCostCents: $totaleCostCents,
-			revenueEur: $revenueEur
-		);
-
-		$verkochteUnitsOut = null;
-		if ($soldUnits > 0.0) {
-			$verkochteUnitsOut = $soldUnits;
-		}
-
+	/**
+	 * The identity fields of a composed record.
+	 *
+	 * @param array<string,mixed> $input Calculation inputs.
+	 *
+	 * @return array<string,string> commercialActivityId, period, calculatedOn, status.
+	 */
+	private function recordHeader(array $input): array {
 		return [
 			'commercialActivityId' => (string)$input['commercialActivityId'],
 			'period' => (string)$input['period'],
 			'calculatedOn' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
 			'status' => (string)($input['status'] ?? 'voorlopig'),
-			'componenten' => [
-				'directPayrollCost' => $this->fromCents(cents: $payrollCostCents),
-				'directMaterials' => $this->fromCents(cents: $materialenCents),
-				'directDepreciations' => $this->fromCents(cents: $depreciationsCents),
-				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
-				'capitalCost' => $this->fromCents(cents: $vermogensCents),
-				'profitMarkup' => $this->fromCents(cents: $profitMarkupCents),
-			],
-			'totalCost' => $this->fromCents(cents: $totaleCostCents),
-			'soldUnits' => $verkochteUnitsOut,
-			'unitLabel' => ($input['unitLabel'] ?? null),
-			'costPricePerUnit' => $costPricePerUnit,
-			'appliedRate' => $appliedRate,
-			'marge' => $marge,
-			'margePercentage' => $margePercentage,
-			'compliant' => $compliant,
-			'administrationId' => (string)$input['administrationId'],
 		];
+	}//end recordHeader()
 
-	}//end compose()
+	/**
+	 * Whether the pricing complies, per unit or per period (isCompliant).
+	 *
+	 * @param UnitCostPricing $pricing         The unit pricing.
+	 * @param int             $totaleCostCents The total cost in cents.
+	 *
+	 * @return bool Compliance.
+	 */
+	private function isCompliantPricing(UnitCostPricing $pricing, int $totaleCostCents): bool {
+		return $this->isCompliant(
+			appliedRate: $pricing->appliedRate,
+			costPricePerUnit: $pricing->costPricePerUnit,
+			totaleCostCents: $totaleCostCents,
+			revenueEur: $pricing->revenueEur
+		);
+	}//end isCompliantPricing()
+
+	/**
+	 * Compose the cost components: direct costs on the cost centre / cost
+	 * object pair, the distributed overhead, the capital cost and the profit
+	 * markup over their sum.
+	 *
+	 * @param array<string,mixed> $input Calculation inputs.
+	 *
+	 * @return ComposedCostCents The components in cents.
+	 */
+	private function composeCosts(array $input): ComposedCostCents {
+		$costs = $this->directCosts(input: $input);
+		$costs->overheadBuckets = $this->distributeOverhead(
+			corporateOverheadCents: (int)($input['corporateOverheadCents'] ?? 0),
+			rule: (array)($input['overheadRule'] ?? []),
+			costObject: (string)$input['costObject']
+		);
+		$costs->capitalCost = $this->calculateVermogenskosten(
+			investedBookValueCents: (int)($input['investedBookValueCents'] ?? 0),
+			waccRate: (float)($input['waccRate'] ?? self::DEFAULT_WACC),
+			periodFraction: (float)($input['periodFraction'] ?? 1.0)
+		);
+		// The old spelling is still read: a caller that has not been updated would
+		// otherwise fall through to the DEFAULT rate, which is not an error but a
+		// silently different price.
+		$costs->profitMarkup = $this->calculateProfitMarkup(
+			baseCents: $costs->baseBeforeMarkup(),
+			rate: (float)($input['profitMarkupRate'] ?? $input['winstopslagRate'] ?? self::DEFAULT_PROFIT_MARKUP)
+		);
+		return $costs;
+	}//end composeCosts()
+
+	/**
+	 * The direct payroll, materials and depreciation costs booked on the
+	 * input's cost centre and cost object.
+	 *
+	 * @param array<string,mixed> $input Calculation inputs.
+	 *
+	 * @return ComposedCostCents The components, direct costs filled in.
+	 */
+	private function directCosts(array $input): ComposedCostCents {
+		$glLines = (array)($input['glLines'] ?? []);
+		$kp = (string)$input['costCentre'];
+		$kd = (string)$input['costObject'];
+
+		$costs = new ComposedCostCents();
+		$costs->payrollCost = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'payrollCost');
+		$costs->materials = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'materialen');
+		$costs->depreciations = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'depreciations');
+		return $costs;
+	}//end directCosts()
+
+	/**
+	 * The componenten block of the record, in euros.
+	 *
+	 * @param ComposedCostCents $costs The components in cents.
+	 *
+	 * @return array<string,mixed> The components in record order.
+	 */
+	private function componentAmounts(ComposedCostCents $costs): array {
+		return [
+			'directPayrollCost' => $this->fromCents(cents: $costs->payrollCost),
+			'directMaterials' => $this->fromCents(cents: $costs->materials),
+			'directDepreciations' => $this->fromCents(cents: $costs->depreciations),
+			'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $costs->overheadBuckets),
+			'capitalCost' => $this->fromCents(cents: $costs->capitalCost),
+			'profitMarkup' => $this->fromCents(cents: $costs->profitMarkup),
+		];
+	}//end componentAmounts()
 }//end class

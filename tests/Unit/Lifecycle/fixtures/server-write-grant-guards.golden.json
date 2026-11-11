@@ -1,0 +1,578 @@
+{
+    "reconcile": {
+        "none": {
+            "byId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            }
+        },
+        "own": {
+            "byId": {
+                "allowed": true,
+                "message": null
+            },
+            "bySelf": {
+                "allowed": true,
+                "message": null
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "emptyChain": {
+                "allowed": true,
+                "message": null
+            },
+            "noChain": {
+                "allowed": true,
+                "message": null
+            },
+            "pendingEntry": {
+                "allowed": true,
+                "message": null
+            },
+            "undatedEntry": {
+                "allowed": true,
+                "message": null
+            },
+            "scalarChain": {
+                "allowed": true,
+                "message": null
+            }
+        },
+        "otherObject": {
+            "byId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            }
+        },
+        "otherPurpose": {
+            "byId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            }
+        },
+        "emptyId": {
+            "byId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A payment run is reconciled by matching it against a CAMT.053 bank statement. Upload the statement to reconcile it."
+            }
+        }
+    },
+    "exception": {
+        "none": {
+            "byId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            }
+        },
+        "own": {
+            "byId": {
+                "allowed": true,
+                "message": null
+            },
+            "bySelf": {
+                "allowed": true,
+                "message": null
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "emptyChain": {
+                "allowed": true,
+                "message": null
+            },
+            "noChain": {
+                "allowed": true,
+                "message": null
+            },
+            "pendingEntry": {
+                "allowed": true,
+                "message": null
+            },
+            "undatedEntry": {
+                "allowed": true,
+                "message": null
+            },
+            "scalarChain": {
+                "allowed": true,
+                "message": null
+            }
+        },
+        "otherObject": {
+            "byId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            }
+        },
+        "otherPurpose": {
+            "byId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            }
+        },
+        "emptyId": {
+            "byId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "An invoice in exception is approved by accepting its three-way-match exception with a motivation."
+            }
+        }
+    },
+    "purchaseOrder": {
+        "none": {
+            "byId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            }
+        },
+        "own": {
+            "byId": {
+                "allowed": true,
+                "message": null
+            },
+            "bySelf": {
+                "allowed": true,
+                "message": null
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "The purchase order cannot be approved: not every approver in its chain has approved it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "The purchase order cannot be approved: not every approver in its chain has approved it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "The purchase order cannot be approved: not every approver in its chain has approved it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "The purchase order cannot be approved: not every approver in its chain has approved it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "The purchase order cannot be approved: not every approver in its chain has approved it."
+            }
+        },
+        "otherObject": {
+            "byId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            }
+        },
+        "otherPurpose": {
+            "byId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            }
+        },
+        "emptyId": {
+            "byId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "bySelf": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "idWins": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noId": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "emptyChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "noChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "pendingEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "undatedEntry": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            },
+            "scalarChain": {
+                "allowed": false,
+                "message": "A purchase order is approved by its approvers. Ask each approver in the chain to approve it."
+            }
+        }
+    }
+}

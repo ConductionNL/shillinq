@@ -150,38 +150,53 @@ class UsageRatingCalculator {
 
 		$normalised = [];
 		foreach ($tiers as $tier) {
-			if (is_array($tier) === false) {
-				continue;
+			if (is_array($tier) === true) {
+				$normalised[] = [
+					'upTo' => self::tierBound(raw: ($tier['upTo'] ?? null)),
+					'unitPriceCents' => (int)round((float)($tier['unitPriceCents'] ?? 0)),
+				];
 			}
+		}
 
-			$upToRaw = ($tier['upTo'] ?? null);
-			if ($upToRaw === null || $upToRaw === '') {
-				$upTo = null;
-			} else {
-				$upTo = (float)$upToRaw;
-			}
-
-			$normalised[] = [
-				'upTo' => $upTo,
-				'unitPriceCents' => (int)round((float)($tier['unitPriceCents'] ?? 0)),
-			];
-		}//end foreach
-
-		usort(
-			$normalised,
-			static function (array $a, array $b): int {
-				if ($a['upTo'] === null) {
-					return 1;
-				}
-
-				if ($b['upTo'] === null) {
-					return -1;
-				}
-
-				return ($a['upTo'] <=> $b['upTo']);
-			}
-		);
+		usort($normalised, self::compareTiers(...));
 
 		return $normalised;
 	}//end normaliseTiers()
+
+	/**
+	 * A tier's upper bound, or null for the open top tier.
+	 *
+	 * @param mixed $raw The tier's raw `upTo`.
+	 *
+	 * @return float|null
+	 */
+	private static function tierBound(mixed $raw): ?float {
+		if ($raw === null || $raw === '') {
+			return null;
+		}
+
+		return (float)$raw;
+
+	}//end tierBound()
+
+	/**
+	 * Order tiers by bound, the open tier last.
+	 *
+	 * @param array{upTo: float|null} $a A tier.
+	 * @param array{upTo: float|null} $b Another tier.
+	 *
+	 * @return int
+	 */
+	private static function compareTiers(array $a, array $b): int {
+		if ($a['upTo'] === null) {
+			return 1;
+		}
+
+		if ($b['upTo'] === null) {
+			return -1;
+		}
+
+		return ($a['upTo'] <=> $b['upTo']);
+
+	}//end compareTiers()
 }//end class

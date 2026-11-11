@@ -156,35 +156,11 @@ class SettlementGuard {
 	 */
 	public function requireSettlementClassification(array $claim): bool {
 		try {
-			$claimMode = $this->normaliseMode(value: ($claim['settlementMode'] ?? null));
-			$claimId = (string)($claim['id'] ?? '');
-			$receipts = $this->loadReceipts(claimId: $claimId);
-
-			foreach ($receipts as $receipt) {
-				$mode = $this->normaliseMode(value: ($receipt['settlementMode'] ?? null));
-
-				// Mixed-mode rejection: a classified line must match the claim mode.
-				if ($mode !== null && $claimMode !== null && $mode !== $claimMode) {
-					$this->logger->info(
-						'SettlementGuard: mixed settlement mode — denying submit',
-						['claimId' => $claimId, 'claimMode' => $claimMode, 'receiptMode' => $mode]
-					);
+			foreach ($this->loadReceipts(claimId: (string)($claim['id'] ?? '')) as $receipt) {
+				if ($this->receiptClassified(claim: $claim, receipt: $receipt) === false) {
 					return false;
 				}
-
-				// Pass-through completeness: customer + AR account required.
-				if ($mode === 'pass-through') {
-					$customer = trim(string: (string)($receipt['linkedCustomerId'] ?? ''));
-					$account = trim(string: (string)($receipt['passthroughDebitAccountCode'] ?? ''));
-					if ($customer === '' || $account === '') {
-						$this->logger->info(
-							'SettlementGuard: pass-through receipt missing customer or AR account — denying submit',
-							['claimId' => $claimId, 'receiptId' => ($receipt['id'] ?? 'unknown')]
-						);
-						return false;
-					}
-				}
-			}//end foreach
+			}
 
 			return true;
 		} catch (\Throwable $e) {
@@ -196,6 +172,54 @@ class SettlementGuard {
 		}//end try
 
 	}//end requireSettlementClassification()
+
+	/**
+	 * Whether a receipt's mode agrees with the claim and a pass-through receipt is complete.
+	 *
+	 * @param array<string, mixed> $claim The ExpenseClaimEntry.
+	 * @param mixed $receipt The child Receipt.
+	 *
+	 * @return bool False, with the reason logged, for a mixed mode or an incomplete pass-through.
+	 */
+	private function receiptClassified(array $claim, mixed $receipt): bool {
+		$claimMode = $this->normaliseMode(value: ($claim['settlementMode'] ?? null));
+		$mode = $this->normaliseMode(value: ($receipt['settlementMode'] ?? null));
+
+		// Mixed-mode rejection: a classified line must match the claim mode.
+		if ($mode !== null && $claimMode !== null && $mode !== $claimMode) {
+			$this->logger->info(
+				'SettlementGuard: mixed settlement mode — denying submit',
+				['claimId' => (string)($claim['id'] ?? ''), 'claimMode' => $claimMode, 'receiptMode' => $mode]
+			);
+			return false;
+		}
+
+		return $mode !== 'pass-through' || $this->passThroughComplete(claim: $claim, receipt: $receipt);
+
+	}//end receiptClassified()
+
+	/**
+	 * Pass-through completeness: a customer and an AR account are required.
+	 *
+	 * @param array<string, mixed> $claim The ExpenseClaimEntry.
+	 * @param mixed $receipt The pass-through Receipt.
+	 *
+	 * @return bool False, with the receipt logged, when either is missing.
+	 */
+	private function passThroughComplete(array $claim, mixed $receipt): bool {
+		$customer = trim(string: (string)($receipt['linkedCustomerId'] ?? ''));
+		$account = trim(string: (string)($receipt['passthroughDebitAccountCode'] ?? ''));
+		if ($customer !== '' && $account !== '') {
+			return true;
+		}
+
+		$this->logger->info(
+			'SettlementGuard: pass-through receipt missing customer or AR account — denying submit',
+			['claimId' => (string)($claim['id'] ?? ''), 'receiptId' => ($receipt['id'] ?? 'unknown')]
+		);
+		return false;
+
+	}//end passThroughComplete()
 
 	/**
 	 * Authorisation for a post-submission settlement-mode change (REQ-ERP-011).
@@ -308,22 +332,17 @@ class SettlementGuard {
 		}
 
 		try {
-			$filters = ['administrationId' => $administrationId];
-			if ($fiscalYear > 0) {
-				$filters['effectiveFromYear'] = ['lte' => $fiscalYear];
-			}
-
 			$rules = $objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'PassThroughMarkupRule')
-				->findAll(['filters' => $filters]);
+				->findAll(['filters' => self::markupRuleFilters(administrationId: $administrationId, fiscalYear: $fiscalYear)]);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'SettlementGuard: markup-rule lookup failed',
 				['customerId' => $customerId, 'exception' => $e->getMessage()]
 			);
 			return null;
-		}//end try
+		}
 
 		if (is_array(value: $rules) === false || count($rules) === 0) {
 			return null;
@@ -331,6 +350,25 @@ class SettlementGuard {
 
 		return $this->selectByPriority(rules: $rules, customerId: $customerId, category: $category);
 	}//end matchMarkupRule()
+
+	/**
+	 * The markup-rule filters: the administration, and for a known fiscal
+	 * year only the rules effective from that year or earlier.
+	 *
+	 * @param string $administrationId The administration id.
+	 * @param int    $fiscalYear       The fiscal year, 0 or less when unknown.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function markupRuleFilters(string $administrationId, int $fiscalYear): array {
+		$filters = ['administrationId' => $administrationId];
+		if ($fiscalYear > 0) {
+			$filters['effectiveFromYear'] = ['lte' => $fiscalYear];
+		}
+
+		return $filters;
+
+	}//end markupRuleFilters()
 
 	/**
 	 * Score a single rule against a target by specificity (REQ-ERP-005).

@@ -120,42 +120,71 @@ class TaxReportCalculator {
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-8
 	 */
 	public function aggregate(array $rows): array {
-		$revenue = 0;
-		$operating = 0;
-		$nonOperating = 0;
-		$special = 0;
-		$untagged = 0;
-		$byAccount = [];
-
+		$run = new VpbStatementRun();
 		foreach ($rows as $row) {
-			$accountType = (string)($row['accountType'] ?? '');
-			$taxTreatment = (string)($row['taxTreatment'] ?? '');
-			$amountCents = abs($this->toCents(amount: ($row['amount'] ?? 0)));
+			$this->addPosting(run: $run, row: $row);
+		}
 
-			$bucket = $this->bucketFor(accountType: $accountType, taxTreatment: $taxTreatment);
-			if ($bucket === 'special') {
-				$special += $amountCents;
-			} elseif ($bucket === 'nonOperating') {
-				$nonOperating += $amountCents;
-			} elseif ($bucket === 'revenue') {
-				$revenue += $amountCents;
-			} elseif ($bucket === 'operating') {
-				$operating += $amountCents;
-			}
+		return $this->statement(run: $run);
+	}//end aggregate()
 
-			if ($this->isTaxRelevant(accountType: $accountType) === true && $taxTreatment === '') {
-				$untagged++;
-			}
+	/**
+	 * Add one posting to its bucket, the untagged count and the breakdown.
+	 *
+	 * @param VpbStatementRun     $run The aggregation in progress.
+	 * @param array<string,mixed> $row The GLLine row joined with accountType.
+	 *
+	 * @return void
+	 */
+	private function addPosting(VpbStatementRun $run, array $row): void {
+		$accountType = (string)($row['accountType'] ?? '');
+		$taxTreatment = (string)($row['taxTreatment'] ?? '');
+		$amountCents = abs($this->toCents(amount: ($row['amount'] ?? 0)));
 
-			$byAccount = $this->accumulateAccount(
-				byAccount: $byAccount,
-				row: $row,
-				amountCents: $amountCents
-			);
-		}//end foreach
+		$bucket = $this->bucketFor(accountType: $accountType, taxTreatment: $taxTreatment);
+		if (isset($run->bucketCents[$bucket]) === true) {
+			$run->bucketCents[$bucket] += $amountCents;
+		}
 
-		$netCents = ($revenue - $operating + $nonOperating - $special);
+		if ($this->isTaxRelevant(accountType: $accountType) === true && $taxTreatment === '') {
+			$run->untagged++;
+		}
 
+		$run->byAccount = $this->accumulateAccount(byAccount: $run->byAccount, row: $row, amountCents: $amountCents);
+
+	}//end addPosting()
+
+	/**
+	 * The statement of an aggregation: bucket totals, net taxable income,
+	 * untagged count and the breakdown.
+	 *
+	 * @param VpbStatementRun $run The finished aggregation.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function statement(VpbStatementRun $run): array {
+		$cents = $run->bucketCents;
+
+		return [
+			'revenue' => $this->fromCents(cents: $cents['revenue']),
+			'operatingExpenses' => $this->fromCents(cents: $cents['operating']),
+			'nonOperating' => $this->fromCents(cents: $cents['nonOperating']),
+			'specialDeductions' => $this->fromCents(cents: $cents['special']),
+			'netTaxableIncome' => $this->fromCents(cents: $run->netCents()),
+			'untaggedCount' => $run->untagged,
+			'breakdown' => $this->breakdown(byAccount: $run->byAccount),
+		];
+
+	}//end statement()
+
+	/**
+	 * The per-account breakdown rows, sorted by account number.
+	 *
+	 * @param array<string,array<string,mixed>> $byAccount Accumulated breakdown keyed by accountNumber.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function breakdown(array $byAccount): array {
 		$breakdown = [];
 		ksort($byAccount);
 		foreach ($byAccount as $entry) {
@@ -168,17 +197,9 @@ class TaxReportCalculator {
 			];
 		}
 
-		return [
-			'revenue' => $this->fromCents(cents: $revenue),
-			'operatingExpenses' => $this->fromCents(cents: $operating),
-			'nonOperating' => $this->fromCents(cents: $nonOperating),
-			'specialDeductions' => $this->fromCents(cents: $special),
-			'netTaxableIncome' => $this->fromCents(cents: $netCents),
-			'untaggedCount' => $untagged,
-			'breakdown' => $breakdown,
-		];
+		return $breakdown;
 
-	}//end aggregate()
+	}//end breakdown()
 
 	/**
 	 * Classify a posting into a taxable-income bucket (REQ-VPB-009).
@@ -231,26 +252,39 @@ class TaxReportCalculator {
 			return $byAccount;
 		}
 
-		$taxTreatment = (string)($row['taxTreatment'] ?? '');
-		$rowTreatment = 'normal';
-		if ($taxTreatment !== '') {
-			$rowTreatment = $taxTreatment;
-		}
-
 		if (isset($byAccount[$accountKey]) === false) {
-			$byAccount[$accountKey] = [
-				'accountNumber' => $accountKey,
-				'accountName' => ($row['accountName'] ?? null),
-				'accountType' => (string)($row['accountType'] ?? ''),
-				'taxTreatment' => $rowTreatment,
-				'amountCents' => 0,
-			];
+			$byAccount[$accountKey] = $this->breakdownEntry(accountKey: $accountKey, row: $row);
 		}
 
 		$byAccount[$accountKey]['amountCents'] += $amountCents;
 
 		return $byAccount;
 	}//end accumulateAccount()
+
+	/**
+	 * A fresh breakdown entry for the account a posting books to; a blank
+	 * tax treatment reads as 'normal'.
+	 *
+	 * @param string              $accountKey The account number.
+	 * @param array<string,mixed> $row        The first posting on the account.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function breakdownEntry(string $accountKey, array $row): array {
+		$rowTreatment = (string)($row['taxTreatment'] ?? '');
+		if ($rowTreatment === '') {
+			$rowTreatment = 'normal';
+		}
+
+		return [
+			'accountNumber' => $accountKey,
+			'accountName' => ($row['accountName'] ?? null),
+			'accountType' => (string)($row['accountType'] ?? ''),
+			'taxTreatment' => $rowTreatment,
+			'amountCents' => 0,
+		];
+
+	}//end breakdownEntry()
 
 	/**
 	 * Estimate the Vpb liability from net taxable income (REQ-VPB-012).

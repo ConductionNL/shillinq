@@ -62,9 +62,6 @@ use Throwable;
  * the sweep runs for the just-closed month.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
  */
@@ -85,6 +82,13 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 * @var string
 	 */
 	private const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
+
+	/**
+	 * The sweep's summary log line: period, scorecards, administrations, failed.
+	 *
+	 * @var string
+	 */
+	private const SUMMARY = 'VendorPerformanceAggregationJob: period=%s scorecards=%d administrations=%d failed=%d';
 
 	/**
 	 * Time factory captured at construction (the parent stores it
@@ -155,60 +159,98 @@ class VendorPerformanceAggregationJob extends TimedJob {
 			return;
 		}
 
+		$period = $this->currentPeriod();
+		if ($period === null) {
+			return;
+		}
+
+		$administrations = $this->activeAdministrations(period: $period);
+		if ($administrations === null) {
+			return;
+		}
+
+		$this->aggregateAll(period: $period, administrations: $administrations);
+	}//end runAsJob()
+
+	/**
+	 * The period just closed; a failing clock is logged.
+	 *
+	 * @return string|null Period code (YYYY-MM), or null when it cannot be computed.
+	 */
+	private function currentPeriod(): ?string {
 		try {
-			$now = $this->timeFactory->getDateTime();
-			$period = $this->previousMonthPeriod(now: $now);
+			return $this->previousMonthPeriod(now: $this->timeFactory->getDateTime());
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'VendorPerformanceAggregationJob: failed to compute period',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
+	}//end currentPeriod()
 
+	/**
+	 * The administrations active in the period; a failing lookup is logged.
+	 *
+	 * @param string $period Period code (YYYY-MM).
+	 *
+	 * @return array<int,string>|null Administration ids, or null when discovery failed.
+	 */
+	private function activeAdministrations(string $period): ?array {
 		try {
-			$administrations = $this->discoverAdministrationsForPeriod(period: $period);
+			return $this->discoverAdministrationsForPeriod(period: $period);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'VendorPerformanceAggregationJob: failed to discover administrations',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
+	}//end activeAdministrations()
 
+	/**
+	 * Aggregate every administration, continuing past failures, then log the summary.
+	 *
+	 * @param string            $period          Period code (YYYY-MM).
+	 * @param array<int,string> $administrations Administration ids.
+	 *
+	 * @return void
+	 */
+	private function aggregateAll(string $period, array $administrations): void {
 		$totalScorecards = 0;
 		$failedAdmins = 0;
 		foreach ($administrations as $administrationId) {
-			try {
-				$scorecards = $this->aggregation->aggregateAdministrationForPeriod(
-					administrationId: $administrationId,
-					period:           $period
-				);
-				$totalScorecards += count($scorecards);
-			} catch (Throwable $e) {
+			$scorecards = $this->aggregateOne(administrationId: $administrationId, period: $period);
+			if ($scorecards === null) {
 				$failedAdmins++;
-				$this->logger->error(
-					'VendorPerformanceAggregationJob: aggregation failed for administration',
-					[
-						'administrationId' => $administrationId,
-						'period' => $period,
-						'exception' => $e->getMessage(),
-					]
-				);
+				continue;
 			}
+
+			$totalScorecards += $scorecards;
 		}
 
-		$this->logger->info(
-			sprintf(
-				'VendorPerformanceAggregationJob: period=%s scorecards=%d administrations=%d failed=%d',
-				$period,
-				$totalScorecards,
-				count($administrations),
-				$failedAdmins
-			)
-		);
+		$this->logger->info(sprintf(self::SUMMARY, $period, $totalScorecards, count($administrations), $failedAdmins));
+	}//end aggregateAll()
 
-	}//end runAsJob()
+	/**
+	 * Aggregate one administration; a failure is logged.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $period           Period code (YYYY-MM).
+	 *
+	 * @return int|null The number of scorecards written, or null when aggregation failed.
+	 */
+	private function aggregateOne(string $administrationId, string $period): ?int {
+		try {
+			return count($this->aggregation->aggregateAdministrationForPeriod(administrationId: $administrationId, period: $period));
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'VendorPerformanceAggregationJob: aggregation failed for administration',
+				['administrationId' => $administrationId, 'period' => $period, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end aggregateOne()
 
 	/**
 	 * Compute the YYYY-MM code of the calendar month before $now.
@@ -239,46 +281,103 @@ class VendorPerformanceAggregationJob extends TimedJob {
 			return [];
 		}
 
-		$from = $period . '-01';
-		$to = (new DateTimeImmutable($from))->modify('last day of this month')->format('Y-m-d');
-
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
-			->setRegister($this->settings->getRegisterSlug())
-			->setSchema(self::SCHEMA_SUPPLIER_INVOICE)
-			->findAll(['filters' => []]);
-
+		$window = self::monthWindow(period: $period);
 		$administrations = [];
-		foreach ($rows as $row) {
-			$data = $row;
-			if (is_array($row) === false) {
-				if (method_exists($row, 'jsonSerialize') === true) {
-					$serialized = $row->jsonSerialize();
-					if (is_array($serialized) === true) {
-						$data = $serialized;
-					} else {
-						continue;
-					}
-				} else {
-					continue;
-				}
+		foreach ($this->supplierInvoiceRows() as $row) {
+			$admin = $this->administrationInWindow(data: self::rowData(row: $row), window: $window);
+			if ($admin !== '') {
+				$administrations[$admin] = true;
 			}
-
-			$admin = trim((string)($data['administrationId'] ?? ''));
-			if ($admin === '') {
-				continue;
-			}
-
-			$invoiceDate = $this->dateOnly(iso: (string)($data['invoiceDate'] ?? ''));
-			if ($invoiceDate === '' || $invoiceDate < $from || $invoiceDate > $to) {
-				continue;
-			}
-
-			$administrations[$admin] = true;
-		}//end foreach
+		}
 
 		return array_keys($administrations);
 	}//end discoverAdministrationsForPeriod()
+
+	/**
+	 * The first and last day (YYYY-MM-DD) of a period.
+	 *
+	 * @param string $period Period code (YYYY-MM).
+	 *
+	 * @return array{from: string, to: string}
+	 */
+	private static function monthWindow(string $period): array {
+		$from = $period . '-01';
+		$to = (new DateTimeImmutable($from))->modify('last day of this month')->format('Y-m-d');
+
+		return ['from' => $from, 'to' => $to];
+	}//end monthWindow()
+
+	/**
+	 * Every SupplierInvoice row on the configured register.
+	 *
+	 * @return mixed What findAll answers.
+	 */
+	private function supplierInvoiceRows(): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+		return $objectService
+			->setRegister($this->settings->getRegisterSlug())
+			->setSchema(self::SCHEMA_SUPPLIER_INVOICE)
+			->findAll(['filters' => []]);
+	}//end supplierInvoiceRows()
+
+	/**
+	 * A row as an array: an array as is, an object through jsonSerialize(), else null.
+	 *
+	 * @param mixed $row A SupplierInvoice row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function rowData(mixed $row): ?array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (method_exists($row, 'jsonSerialize') === false) {
+			return null;
+		}
+
+		$serialized = $row->jsonSerialize();
+		if (is_array($serialized) === true) {
+			return $serialized;
+		}
+
+		return null;
+	}//end rowData()
+
+	/**
+	 * The row's administration when its invoiceDate falls inside the window, else ''.
+	 *
+	 * @param array<string,mixed>|null       $data   The row data, or null for an unreadable row.
+	 * @param array{from: string, to: string} $window The period's first and last day.
+	 *
+	 * @return string
+	 */
+	private function administrationInWindow(?array $data, array $window): string {
+		if ($data === null) {
+			return '';
+		}
+
+		$admin = trim((string)($data['administrationId'] ?? ''));
+		$invoiceDate = $this->dateOnly(iso: (string)($data['invoiceDate'] ?? ''));
+		if ($admin === '' || self::inWindow(date: $invoiceDate, window: $window) === false) {
+			return '';
+		}
+
+		return $admin;
+	}//end administrationInWindow()
+
+	/**
+	 * Whether a non-empty YYYY-MM-DD date lies within the window (both ends inclusive).
+	 *
+	 * @param string                          $date   The date, or ''.
+	 * @param array{from: string, to: string} $window The period's first and last day.
+	 *
+	 * @return bool
+	 */
+	private static function inWindow(string $date, array $window): bool {
+		return $date !== '' && $date >= $window['from'] && $date <= $window['to'];
+	}//end inWindow()
 
 	/**
 	 * Reduce an ISO timestamp to its date component.

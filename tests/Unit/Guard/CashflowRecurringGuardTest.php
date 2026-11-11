@@ -392,4 +392,142 @@ final class CashflowRecurringGuardTest extends TestCase {
 		self::assertTrue($this->guard->validateOnSave($recurring));
 
 	}//end testAbsentContractReferenceSkipsCheck()
+	/**
+	 * A contractReference that resolves to no Contract imposes no bound.
+	 *
+	 * @return void
+	 */
+	public function testUnresolvableContractReferenceSkipsCheck(): void {
+		$recurring = [
+			'recurId' => 'rec-dangling',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 500.0,
+			'validFrom' => '2020-01-01',
+			'validTo' => '2030-01-01',
+			'contractReference' => 'contract-missing',
+		];
+
+		self::assertTrue($this->buildGuard([])->validateOnSave($recurring));
+
+	}//end testUnresolvableContractReferenceSkipsCheck()
+
+	/**
+	 * Inside the Contract window an unparseable validTo is left to the
+	 * validity-window check, which denies it first.
+	 *
+	 * @return void
+	 */
+	public function testUnparseableValidToIsDeniedByTheValidityWindowCheck(): void {
+		$this->logger->expects(self::once())->method('info')->with(
+			'CashflowRecurringGuard: unparseable geldigTot — denying save',
+			['recurId' => 'rec-bad-to']
+		);
+		$guard = $this->buildGuard([['id' => 'contract-1', 'startDate' => '2020-01-01', 'endDate' => '2020-06-30']]);
+
+		self::assertFalse(
+			$guard->validateOnSave(
+				[
+					'recurId' => 'rec-bad-to',
+					'frequency' => 'MONTHLY',
+					'dagFromMonth' => 1,
+					'standardAmount' => 1.0,
+					'validFrom' => '2020-01-01',
+					'validTo' => 'not-a-date',
+					'contractReference' => 'contract-1',
+				]
+			)
+		);
+
+	}//end testUnparseableValidToIsDeniedByTheValidityWindowCheck()
+
+	/**
+	 * Every denial logs its own reason with the recurId (and the
+	 * contractReference for a Contract-window denial), exactly once.
+	 *
+	 * @param array<string,mixed>  $recurring The recurring definition.
+	 * @param string               $message   The expected log message.
+	 * @param array<string,string> $context   The expected log context.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider denialProvider
+	 */
+	public function testDenialLogsItsReason(array $recurring, string $message, array $context): void {
+		$this->logger->expects(self::once())->method('info')->with($message, $context);
+		$guard = $this->buildGuard(
+			[
+				['id' => 'contract-1', 'startDate' => '2025-01-01', 'endDate' => '2025-12-31'],
+			]
+		);
+
+		self::assertFalse($guard->validateOnSave($recurring));
+
+	}//end testDenialLogsItsReason()
+
+	/**
+	 * Denied definitions with the reason each one logs.
+	 *
+	 * @return array<string, array{0: array<string,mixed>, 1: string, 2: array<string,string>}>
+	 */
+	public static function denialProvider(): array {
+		$base = [
+			'recurId' => 'rec-x',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 10.0,
+			'validFrom' => '2025-02-01',
+		];
+		$recur = ['recurId' => 'rec-x'];
+		$contract = ['recurId' => 'rec-x', 'contractReference' => 'contract-1'];
+
+		return [
+			'missing amount' => [
+				array_diff_key($base, ['standardAmount' => true]),
+				'CashflowRecurringGuard: missing or negative standaardBedrag — denying save',
+				$recur,
+			],
+			'monthly without day' => [
+				['dagFromMonth' => 0] + $base,
+				'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
+				$recur,
+			],
+			'annual without month' => [
+				['frequency' => 'ANNUALLY', 'monthOfYear' => 13] + $base,
+				'CashflowRecurringGuard: JAARLIJKS requires a valid maandVanJaar (1-12) — denying save',
+				$recur,
+			],
+			'annual with a bad day' => [
+				['frequency' => 'ANNUALLY', 'monthOfYear' => 3, 'dagFromMonth' => 32] + $base,
+				'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
+				$recur,
+			],
+			'no validFrom' => [
+				['validFrom' => ''] + $base,
+				'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
+				$recur,
+			],
+			'validTo before validFrom' => [
+				['validTo' => '2025-01-15'] + $base,
+				'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save',
+				$recur,
+			],
+			'CPI on monthly' => [
+				['indexationRule' => 'CPI_PAST_YEAR'] + $base,
+				'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
+				$recur,
+			],
+			'before the contract start' => [
+				['validFrom' => '2024-12-01', 'contractReference' => 'contract-1'] + $base,
+				'CashflowRecurringGuard: validFrom precedes the linked Contract\'s startDate — denying save',
+				$contract,
+			],
+			'after the contract end' => [
+				['validTo' => '2026-01-31', 'contractReference' => 'contract-1'] + $base,
+				'CashflowRecurringGuard: validTo follows the linked Contract\'s endDate — denying save',
+				$contract,
+			],
+		];
+
+	}//end denialProvider()
 }//end class

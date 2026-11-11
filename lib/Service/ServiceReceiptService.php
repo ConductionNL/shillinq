@@ -454,9 +454,28 @@ class ServiceReceiptService {
 				'administrationId' => $administrationId,
 			]
 		);
+		$received = $this->receivedQuantities(
+			administrationId: $administrationId,
+			acceptedReceiptIds: $this->acceptedReceiptIds(administrationId: $administrationId)
+		);
+		$lifecycle = $received->lifecycleFor(po: $po, poLines: $poLines);
+		if ($lifecycle !== null) {
+			$po['statusCode'] = $lifecycle;
+			$this->records()->saveObject(schema: self::SCHEMA_PO, object: $po);
+		}
 
-		// Only accepted receipts contribute — a confirmed-but-not-yet-accepted
-		// line has not settled anything yet.
+	}//end updatePurchaseOrderReceiptLifecycle()
+
+	/**
+	 * The ids of the administration's accepted receipts. Only accepted
+	 * receipts contribute — a confirmed-but-not-yet-accepted line has not
+	 * settled anything yet.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,true> Accepted receipt ids as keys.
+	 */
+	private function acceptedReceiptIds(string $administrationId): array {
 		$acceptedReceiptIds = [];
 		$receipts = $this->records()->findAll(
 			schema: self::SCHEMA_SVC_RECEIPT,
@@ -465,19 +484,25 @@ class ServiceReceiptService {
 			]
 		);
 		foreach ($receipts as $receiptRow) {
-			$status = (string)($receiptRow['statusCode'] ?? '');
-			if ($status !== 'accepted') {
-				continue;
-			}
-
 			$id = (string)($receiptRow['id'] ?? ($receiptRow['@self']['id'] ?? ''));
-			if ($id !== '') {
+			if ((string)($receiptRow['statusCode'] ?? '') === 'accepted' && $id !== '') {
 				$acceptedReceiptIds[$id] = true;
 			}
 		}
 
-		// Total accepted per PO-line across every accepted receipt's lines.
-		$acceptedByPoLine = [];
+		return $acceptedReceiptIds;
+	}//end acceptedReceiptIds()
+
+	/**
+	 * Total accepted per PO-line across every accepted receipt's lines.
+	 *
+	 * @param string             $administrationId   Administration scope.
+	 * @param array<string,true> $acceptedReceiptIds Accepted receipt ids as keys.
+	 *
+	 * @return ReceivedQuantities The accepted quantities.
+	 */
+	private function receivedQuantities(string $administrationId, array $acceptedReceiptIds): ReceivedQuantities {
+		$received = new ReceivedQuantities();
 		$allReceiptLines = $this->records()->findAll(
 			schema: self::SCHEMA_SVC_RECEIPT_LINE,
 			filters: [
@@ -485,55 +510,13 @@ class ServiceReceiptService {
 			]
 		);
 		foreach ($allReceiptLines as $receiptLine) {
-			$parentReceiptId = (string)($receiptLine['serviceReceiptId'] ?? '');
-			if (isset($acceptedReceiptIds[$parentReceiptId]) === false) {
-				continue;
-			}
-
-			$linePoLineId = (string)($receiptLine['poLineId'] ?? '');
-			if ($linePoLineId === '') {
-				continue;
-			}
-
-			$thousandths = $this->thousandths(value: (float)($receiptLine['quantityAccepted'] ?? 0));
-			$acceptedByPoLine[$linePoLineId] = (($acceptedByPoLine[$linePoLineId] ?? 0) + $thousandths);
-		}
-
-		$allFullyReceived = true;
-		$anyReceived = false;
-		foreach ($poLines as $line) {
-			$lineId = (string)($line['id'] ?? ($line['@self']['id'] ?? ''));
-			$orderedAmount = $this->thousandths(value: (float)($line['quantityOrdered'] ?? 0));
-			$acceptedAmount = (int)($acceptedByPoLine[$lineId] ?? 0);
-
-			if ($acceptedAmount > 0) {
-				$anyReceived = true;
-			}
-
-			if ($acceptedAmount < $orderedAmount) {
-				$allFullyReceived = false;
+			if (isset($acceptedReceiptIds[(string)($receiptLine['serviceReceiptId'] ?? '')]) === true) {
+				$received->add(poLineId: (string)($receiptLine['poLineId'] ?? ''), quantityAccepted: ($receiptLine['quantityAccepted'] ?? 0));
 			}
 		}
 
-		if ($poLines === []) {
-			return;
-		}
-
-		$newLifecycle = $po['statusCode'] ?? '';
-		if ($allFullyReceived === true) {
-			$newLifecycle = 'fully_received';
-		} elseif ($anyReceived === true) {
-			$newLifecycle = 'partial_received';
-		}
-
-		if ($newLifecycle === ($po['statusCode'] ?? '')) {
-			return;
-		}
-
-		$po['statusCode'] = $newLifecycle;
-		$this->records()->saveObject(schema: self::SCHEMA_PO, object: $po);
-
-	}//end updatePurchaseOrderReceiptLifecycle()
+		return $received;
+	}//end receivedQuantities()
 
 	/**
 	 * The record store on the app's register, logging as this service.
@@ -716,18 +699,6 @@ class ServiceReceiptService {
 		// Round to thousandths so multipleOf 0.001 enforcement is exact.
 		return (((float)round($float * 1000.0)) / 1000.0);
 	}//end normaliseQuantity()
-
-	/**
-	 * Convert a quantity float to integer thousandths (multipleOf 0.001) so
-	 * the partial-confirmation allocator stays bit-exact.
-	 *
-	 * @param float $value Quantity value.
-	 *
-	 * @return int Thousandths.
-	 */
-	private function thousandths(float $value): int {
-		return (int)round(($value * 1000.0), 0, PHP_ROUND_HALF_UP);
-	}//end thousandths()
 
 	/**
 	 * Assert the caller can access the requested administration; mask as

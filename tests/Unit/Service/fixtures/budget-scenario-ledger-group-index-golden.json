@@ -1,0 +1,100 @@
+{
+    "entries": [
+        {
+            "id": "g-root",
+            "slug": "root",
+            "parentRef": null,
+            "accountRanges": [
+                {
+                    "from": "4000",
+                    "to": "4999"
+                }
+            ],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": []
+        },
+        {
+            "id": "g-a",
+            "slug": "g-a",
+            "parentRef": "root",
+            "accountRanges": [],
+            "includedAccountNumbers": [
+                "4100"
+            ],
+            "excludedAccountNumbers": []
+        },
+        {
+            "id": "g-b",
+            "slug": "b",
+            "parentRef": "g-root",
+            "accountRanges": [],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": [
+                "4200"
+            ]
+        },
+        {
+            "id": "g-c",
+            "slug": "",
+            "parentRef": "missing",
+            "accountRanges": [],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": []
+        },
+        {
+            "id": "",
+            "slug": "only-slug",
+            "parentRef": "",
+            "accountRanges": [],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": []
+        },
+        {
+            "id": "7",
+            "slug": "seven",
+            "parentRef": "7",
+            "accountRanges": [],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": []
+        },
+        {
+            "id": "b",
+            "slug": "",
+            "parentRef": "b",
+            "accountRanges": [],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": []
+        },
+        {
+            "id": "",
+            "slug": "",
+            "parentRef": null,
+            "accountRanges": [],
+            "includedAccountNumbers": [],
+            "excludedAccountNumbers": []
+        }
+    ],
+    "keyToIndex": {
+        "g-root": 0,
+        "root": 0,
+        "g-a": 1,
+        "g-b": 2,
+        "b": 6,
+        "g-c": 3,
+        "only-slug": 4,
+        "7": 5,
+        "seven": 5
+    },
+    "childrenByIndex": {
+        "0": [
+            1,
+            2
+        ],
+        "5": [
+            5
+        ],
+        "6": [
+            6
+        ]
+    }
+}

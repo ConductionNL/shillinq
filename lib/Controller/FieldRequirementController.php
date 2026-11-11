@@ -104,12 +104,7 @@ class FieldRequirementController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		try {
-			$requirement = $this->requirements->find(id: $id);
-		} catch (Throwable $e) {
-			$requirement = null;
-		}
-
+		$requirement = $this->requirementOrNull(id: $id);
 		if ($requirement === null
 			|| $this->context->canAccess(administrationId: (string)($requirement['administrationId'] ?? '')) === false
 		) {
@@ -117,6 +112,20 @@ class FieldRequirementController extends Controller {
 		}
 
 		return $requirement;
-
 	}//end authorizeRequirement()
+
+	/**
+	 * The requirement, or null when it is unknown or cannot be read.
+	 *
+	 * @param string $id The requirement id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function requirementOrNull(string $id): array|null {
+		try {
+			return $this->requirements->find(id: $id);
+		} catch (Throwable $e) {
+			return null;
+		}
+	}//end requirementOrNull()
 }//end class

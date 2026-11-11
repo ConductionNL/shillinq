@@ -393,7 +393,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 *
 	 * @return array<string, mixed>|null Current body, or null when gone.
 	 */
-	private function reresolveDossier(string $uuid, string $schema): ?array {
+	private function reresolveDossier(string $uuid, string $schema): array|null {
 		if ($uuid === '' || $schema === '') {
 			return null;
 		}
@@ -416,13 +416,22 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			return null;
 		}
 
-		if ($object === null) {
-			return null;
-		}
+		return $this->liveBody(object: $object);
 
-		// Soft-deleted counts as gone. `deleted` is a JSON column that is an
-		// empty array on a live object, so emptiness — not null — is the test.
-		if (empty($object->getDeleted()) === false) {
+	}//end reresolveDossier()
+
+	/**
+	 * The dossier's body, or null when it is gone, soft-deleted or has none.
+	 *
+	 * Soft-deleted counts as gone. `deleted` is a JSON column that is an
+	 * empty array on a live object, so emptiness — not null — is the test.
+	 *
+	 * @param object|null $object The found dossier.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function liveBody(object|null $object): array|null {
+		if ($object === null || empty($object->getDeleted()) === false) {
 			return null;
 		}
 
@@ -433,7 +442,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 
 		return $body;
 
-	}//end reresolveDossier()
+	}//end liveBody()
 
 	/**
 	 * Resolve OpenRegister's deferral service from the container (lazy).
@@ -487,26 +496,54 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			return;
 		}
 
-		$existing = $this->findExistingBySourceReference(
-			objectService: $objectService,
-			sourceReference: $tenderId
-		);
-
-		if ($existing !== null) {
-			// REQ-002 idempotency: an obligation already exists for this
-			// aanbestedingId. Nothing to do beyond re-emitting the budget
-			// impact CloudEvent (in case launchpad missed the original).
-			$this->budget->emitActivated(commitment: $existing, source: $payload);
+		if ($this->reemitIfPromoted(objectService: $objectService, payload: $payload) === true) {
 			return;
 		}
 
-		$plan = $this->safeGeneratePlan(
-			assignmentType: (string)($payload['assignmentType'] ?? 'other'),
-			termStart: (string)($payload['termStart'] ?? ''),
-			termEnd: (string)($payload['termEnd'] ?? '')
-		);
+		$commitment = $this->commitmentFor(payload: $payload);
+		if ($this->saveCommitment(objectService: $objectService, commitment: $commitment) === false) {
+			return;
+		}
 
-		$commitment = [
+		$payload = $this->markInExecution(objectService: $objectService, payload: $payload);
+		$this->budget->emitActivated(commitment: $commitment, source: $payload);
+
+	}//end promote()
+
+	/**
+	 * REQ-002 idempotency: when an obligation already exists for this
+	 * aanbestedingId, only re-emit the budget impact CloudEvent (in case
+	 * launchpad missed the original).
+	 *
+	 * @param object               $objectService OpenRegister's ObjectService.
+	 * @param array<string, mixed> $payload       Aanbesteding payload.
+	 *
+	 * @return bool Whether the aanbesteding was promoted before.
+	 */
+	private function reemitIfPromoted(object $objectService, array $payload): bool {
+		$existing = $this->findExistingBySourceReference(
+			objectService: $objectService,
+			sourceReference: (string)($payload['tenderId'] ?? '')
+		);
+		if ($existing === null) {
+			return false;
+		}
+
+		$this->budget->emitActivated(commitment: $existing, source: $payload);
+		return true;
+
+	}//end reemitIfPromoted()
+
+	/**
+	 * The Commitment an awarded aanbesteding becomes, with its milestone plan.
+	 *
+	 * @param array<string, mixed> $payload Aanbesteding payload.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function commitmentFor(array $payload): array {
+		$tenderId = (string)($payload['tenderId'] ?? '');
+		return [
 			'commitmentNumber' => 'TN-' . $tenderId,
 			'description' => (string)($payload['title'] ?? $tenderId),
 			'source' => 'tenderned',
@@ -514,30 +551,57 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			'amount' => (float)($payload['contractValue'] ?? 0),
 			'termStart' => (string)($payload['termStart'] ?? ''),
 			'termEnd' => (string)($payload['termEnd'] ?? ''),
-			'milestones' => $plan,
+			'milestones' => $this->safeGeneratePlan(
+				assignmentType: (string)($payload['assignmentType'] ?? 'other'),
+				termStart: (string)($payload['termStart'] ?? ''),
+				termEnd: (string)($payload['termEnd'] ?? '')
+			),
 			'status' => 'active',
 			'administrationId' => (string)($payload['administrationId'] ?? ''),
 		];
 
+	}//end commitmentFor()
+
+	/**
+	 * Save the Commitment; a failure is logged (fail-soft).
+	 *
+	 * @param object               $objectService OpenRegister's ObjectService.
+	 * @param array<string, mixed> $commitment    The Commitment.
+	 *
+	 * @return bool Whether it was saved.
+	 */
+	private function saveCommitment(object $objectService, array $commitment): bool {
 		try {
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'Commitment')
 				->saveObject(object: $commitment);
+			return true;
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'TenderNedAwardDetectedListener: saveObject failed — fail-soft',
-				['tenderId' => $tenderId, 'exception' => $e->getMessage()]
+				['tenderId' => $commitment['sourceReference'], 'exception' => $e->getMessage()]
 			);
-			return;
+			return false;
 		}
 
-		// Move the aanbesteding to in-uitvoering so it surfaces in the
-		// execution view. Fail-soft if the update fails — the obligation
-		// has been created and the next polling tick will re-attempt.
+	}//end saveCommitment()
+
+	/**
+	 * Move the aanbesteding to in-uitvoering so it surfaces in the execution
+	 * view. Fail-soft if the update fails — the obligation has been created
+	 * and the next polling tick will re-attempt.
+	 *
+	 * @param object               $objectService OpenRegister's ObjectService.
+	 * @param array<string, mixed> $payload       Aanbesteding payload.
+	 *
+	 * @return array<string, mixed> The payload with its new status and commitment id.
+	 */
+	private function markInExecution(object $objectService, array $payload): array {
+		$tenderId = (string)($payload['tenderId'] ?? '');
+		$payload['status'] = 'in-uitvoering';
+		$payload['commitmentId'] = 'TN-' . $tenderId;
 		try {
-			$payload['status'] = 'in-uitvoering';
-			$payload['commitmentId'] = 'TN-' . $tenderId;
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'TenderNedProcurement')
@@ -549,9 +613,9 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			);
 		}//end try
 
-		$this->budget->emitActivated(commitment: $commitment, source: $payload);
+		return $payload;
 
-	}//end promote()
+	}//end markInExecution()
 
 	/**
 	 * Generate the milestone plan, catching invalid-date exceptions so a

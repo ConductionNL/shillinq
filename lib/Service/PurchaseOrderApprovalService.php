@@ -192,107 +192,242 @@ class PurchaseOrderApprovalService {
 		string $decision,
 		?string $comment = null,
 	): array {
-		$this->assertAccess(administrationId: $administrationId);
-		if ($purchaseOrderId === '') {
-			throw new RuntimeException('Purchase order not found');
-		}
+		$approval = new ApprovalDecision();
+		$approval->administrationId = $administrationId;
+		$approval->purchaseOrderId  = $purchaseOrderId;
+		$approval->decision         = $decision;
+		$approval->comment          = $comment;
 
-		if (in_array($decision, self::ALLOWED_DECISIONS, true) === false) {
-			throw new RuntimeException('Invalid approval decision');
-		}
+		return $this->recordDecision(approval: $approval);
+	}//end recordApprovalDecision()
 
-		$purchaseOrder = $this->loadPurchaseOrder(
-			administrationId: $administrationId,
-			purchaseOrderId: $purchaseOrderId
-		);
+	/**
+	 * Check, sign, save and announce one decision.
+	 *
+	 * @param ApprovalDecision $approval The decision asked for.
+	 *
+	 * @return array<string,mixed> The updated PurchaseOrder record.
+	 *
+	 * @throws \RuntimeException When a check refuses the decision.
+	 */
+	private function recordDecision(ApprovalDecision $approval): array {
+		$purchaseOrder = $this->decidablePurchaseOrder(approval: $approval);
 
-		// A PO waiting for approval is in the schema's `draft` state (#1753);
-		// the chain check below refuses one with nothing left to sign.
-		$lifecycleState = (string)($purchaseOrder['statusCode'] ?? '');
-		if ($lifecycleState !== 'draft') {
-			throw new RuntimeException('Purchase order is not pending approval');
-		}
-
-		$chain = (array)($purchaseOrder['approvalChain'] ?? []);
-		if ($chain === []) {
-			throw new RuntimeException('Approval chain is empty');
-		}
-
-		$decidedAt = $this->nowIso();
-		$userId = $this->currentUserId();
-		$signed = false;
-		foreach ($chain as $index => $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			if (self::isPendingEntry(entry: $entry) === false) {
-				continue;
-			}
-
-			// An entry written before #1716 carries status/signedAt/signedBy;
-			// signing it moves it onto the one shape the schema declares.
-			unset($entry['status'], $entry['signedAt'], $entry['signedBy']);
-			$entry['userId'] = $userId;
-			$entry['decision'] = $decision;
-			$entry['decidedAt'] = $decidedAt;
-			if ($comment !== null) {
-				$trimmed = trim($comment);
-				if ($trimmed !== '') {
-					$entry['comment'] = $trimmed;
-				}
-			}
-
-			$chain[$index] = $entry;
-			$signed = true;
-			break;
-		}//end foreach
-
-		if ($signed === false) {
-			throw new RuntimeException('Approval chain is fully signed');
-		}
-
-		$purchaseOrder['approvalChain'] = $chain;
-		$purchaseOrder['statusCode'] = $this->nextLifecycleState(
-			decision: $decision,
-			chain: $chain,
-			current: $lifecycleState
-		);
+		$approval->decidedAt = $this->nowIso();
+		$approval->userId    = $this->currentUserId();
+		$purchaseOrder       = $this->applyDecision(purchaseOrder: $purchaseOrder, approval: $approval);
 
 		$saved = $this->writeAuthority->during(
 			purpose: PurchaseOrderApprovalGuard::PURPOSE,
-			objectId: $purchaseOrderId,
+			objectId: $approval->purchaseOrderId,
 			work: fn (): array => $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder)
 		);
 
-		// Emit a Nextcloud Activity event per REQ-RAP-006 so the
-		// BookkeepingActivityFeed manifest entry surfaces the decision
-		// in the user-facing timeline. The emitter is optional (nullable)
-		// so unit tests don't have to wire IActivityManager; production
-		// DI always provides it via ApplicationServer.
-		if ($this->activityEmitter !== null) {
-			$summary = sprintf('Purchase order %s', (string)($purchaseOrder['poNumber'] ?? $purchaseOrderId));
-			if ($decision === self::DECISION_APPROVED) {
-				$this->activityEmitter->emitApprovalApproved(
-					objectType:  self::SCHEMA_PURCHASE_ORDER,
-					objectId:    $purchaseOrderId,
-					actorUid:    $userId,
-					summaryHint: $summary,
-					comment:     (string)($comment ?? '')
-				);
-			} elseif ($decision === self::DECISION_REJECTED) {
-				$this->activityEmitter->emitApprovalRejected(
-					objectType:  self::SCHEMA_PURCHASE_ORDER,
-					objectId:    $purchaseOrderId,
-					actorUid:    $userId,
-					summaryHint: $summary,
-					reason:      (string)($comment ?? '')
-				);
-			}
-		}
+		$this->emitDecisionActivity(purchaseOrder: $purchaseOrder, approval: $approval);
 
 		return $saved;
-	}//end recordApprovalDecision()
+	}//end recordDecision()
+
+	/**
+	 * The purchase order the decision is for, once the tenant, the input and
+	 * the order's own state allow a decision.
+	 *
+	 * @param ApprovalDecision $approval The decision asked for.
+	 *
+	 * @return array<string,mixed> The loaded PurchaseOrder record.
+	 *
+	 * @throws \RuntimeException When the tenant, the input or the order refuses.
+	 */
+	private function decidablePurchaseOrder(ApprovalDecision $approval): array {
+		$this->assertAccess(administrationId: $approval->administrationId);
+		$this->assertDecisionInput(approval: $approval);
+
+		$purchaseOrder = $this->loadPurchaseOrder(
+			administrationId: $approval->administrationId,
+			purchaseOrderId: $approval->purchaseOrderId
+		);
+		$this->assertAwaitingApproval(purchaseOrder: $purchaseOrder);
+
+		return $purchaseOrder;
+	}//end decidablePurchaseOrder()
+
+	/**
+	 * Refuse an empty purchase order id or a decision outside the enum.
+	 *
+	 * @param ApprovalDecision $approval The decision asked for.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the input is unusable.
+	 */
+	private function assertDecisionInput(ApprovalDecision $approval): void {
+		if ($approval->purchaseOrderId === '') {
+			throw new RuntimeException('Purchase order not found');
+		}
+
+		if (in_array($approval->decision, self::ALLOWED_DECISIONS, true) === false) {
+			throw new RuntimeException('Invalid approval decision');
+		}
+	}//end assertDecisionInput()
+
+	/**
+	 * Refuse a purchase order that is not waiting for its chain.
+	 *
+	 * A PO waiting for approval is in the schema's `draft` state (#1753); a
+	 * draft with an empty chain has nothing to sign.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The loaded PurchaseOrder record.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the order is not pending or its chain is empty.
+	 */
+	private function assertAwaitingApproval(array $purchaseOrder): void {
+		if ((string)($purchaseOrder['statusCode'] ?? '') !== 'draft') {
+			throw new RuntimeException('Purchase order is not pending approval');
+		}
+
+		if ((array)($purchaseOrder['approvalChain'] ?? []) === []) {
+			throw new RuntimeException('Approval chain is empty');
+		}
+	}//end assertAwaitingApproval()
+
+	/**
+	 * The purchase order with the decision signed into its chain and its
+	 * statusCode advanced.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The loaded PurchaseOrder record.
+	 * @param ApprovalDecision    $approval      The checked decision.
+	 *
+	 * @return array<string,mixed> The record to save.
+	 *
+	 * @throws \RuntimeException When no entry is left to sign.
+	 */
+	private function applyDecision(array $purchaseOrder, ApprovalDecision $approval): array {
+		$chain = $this->signNextPending(chain: (array)($purchaseOrder['approvalChain'] ?? []), approval: $approval);
+
+		$purchaseOrder['approvalChain'] = $chain;
+		$purchaseOrder['statusCode']    = $this->nextLifecycleState(
+			decision: $approval->decision,
+			chain: $chain,
+			current: (string)($purchaseOrder['statusCode'] ?? '')
+		);
+
+		return $purchaseOrder;
+	}//end applyDecision()
+
+	/**
+	 * The chain with its first pending entry signed.
+	 *
+	 * @param array<int|string,mixed> $chain    The approval chain.
+	 * @param ApprovalDecision        $approval The checked decision.
+	 *
+	 * @return array<int|string,mixed> The signed chain.
+	 *
+	 * @throws \RuntimeException When every entry is already signed.
+	 */
+	private function signNextPending(array $chain, ApprovalDecision $approval): array {
+		foreach ($chain as $index => $entry) {
+			if (is_array($entry) === false || self::isPendingEntry(entry: $entry) === false) {
+				continue;
+			}
+
+			$chain[$index] = $this->signedEntry(entry: $entry, approval: $approval);
+			return $chain;
+		}
+
+		throw new RuntimeException('Approval chain is fully signed');
+	}//end signNextPending()
+
+	/**
+	 * One pending entry, signed.
+	 *
+	 * An entry written before #1716 carries status/signedAt/signedBy; signing
+	 * it moves it onto the one shape the schema declares. A comment is kept
+	 * trimmed, and only when something is left.
+	 *
+	 * @param array<string,mixed> $entry    The pending entry.
+	 * @param ApprovalDecision    $approval The checked decision.
+	 *
+	 * @return array<string,mixed> The signed entry.
+	 */
+	private function signedEntry(array $entry, ApprovalDecision $approval): array {
+		unset($entry['status'], $entry['signedAt'], $entry['signedBy']);
+		$entry['userId']    = $approval->userId;
+		$entry['decision']  = $approval->decision;
+		$entry['decidedAt'] = $approval->decidedAt;
+
+		$trimmed = trim((string)$approval->comment);
+		if ($trimmed !== '') {
+			$entry['comment'] = $trimmed;
+		}
+
+		return $entry;
+	}//end signedEntry()
+
+	/**
+	 * Emit the Nextcloud Activity event for the decision (REQ-RAP-006), so the
+	 * BookkeepingActivityFeed manifest entry surfaces it in the user-facing
+	 * timeline. The emitter is optional so unit tests don't have to wire
+	 * IActivityManager; production DI always provides it. A delegation emits
+	 * nothing.
+	 *
+	 * @param array<string,mixed> $purchaseOrder The saved PurchaseOrder record.
+	 * @param ApprovalDecision    $approval      The recorded decision.
+	 *
+	 * @return void
+	 */
+	private function emitDecisionActivity(array $purchaseOrder, ApprovalDecision $approval): void {
+		if ($this->activityEmitter === null) {
+			return;
+		}
+
+		$summary = sprintf('Purchase order %s', (string)($purchaseOrder['poNumber'] ?? $approval->purchaseOrderId));
+		if ($approval->decision === self::DECISION_APPROVED) {
+			$this->emitApproved(approval: $approval, summary: $summary);
+			return;
+		}
+
+		if ($approval->decision === self::DECISION_REJECTED) {
+			$this->emitRejected(approval: $approval, summary: $summary);
+		}
+	}//end emitDecisionActivity()
+
+	/**
+	 * Emit the approved activity event.
+	 *
+	 * @param ApprovalDecision $approval The recorded decision.
+	 * @param string           $summary  The purchase order label.
+	 *
+	 * @return void
+	 */
+	private function emitApproved(ApprovalDecision $approval, string $summary): void {
+		$this->activityEmitter?->emitApprovalApproved(
+			objectType:  self::SCHEMA_PURCHASE_ORDER,
+			objectId:    $approval->purchaseOrderId,
+			actorUid:    $approval->userId,
+			summaryHint: $summary,
+			comment:     (string)($approval->comment ?? '')
+		);
+	}//end emitApproved()
+
+	/**
+	 * Emit the rejected activity event, the comment as its reason.
+	 *
+	 * @param ApprovalDecision $approval The recorded decision.
+	 * @param string           $summary  The purchase order label.
+	 *
+	 * @return void
+	 */
+	private function emitRejected(ApprovalDecision $approval, string $summary): void {
+		$this->activityEmitter?->emitApprovalRejected(
+			objectType:  self::SCHEMA_PURCHASE_ORDER,
+			objectId:    $approval->purchaseOrderId,
+			actorUid:    $approval->userId,
+			summaryHint: $summary,
+			reason:      (string)($approval->comment ?? '')
+		);
+	}//end emitRejected()
 
 	/**
 	 * Whether an approval-chain entry still waits for its approver.
@@ -361,25 +496,30 @@ class PurchaseOrderApprovalService {
 			return $current;
 		}
 
-		$fullyApproved = true;
-		foreach ($chain as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$entryDecision = (string)($entry['decision'] ?? '');
-			if ($entryDecision !== self::DECISION_APPROVED) {
-				$fullyApproved = false;
-				break;
-			}
-		}
-
-		if ($fullyApproved === true) {
+		if ($this->isFullyApproved(chain: $chain) === true) {
 			return 'approved';
 		}
 
 		return $current;
 	}//end nextLifecycleState()
+
+	/**
+	 * Whether every entry of the chain is approved; a malformed entry is
+	 * skipped.
+	 *
+	 * @param array<int|string,mixed> $chain The approval chain.
+	 *
+	 * @return bool
+	 */
+	private function isFullyApproved(array $chain): bool {
+		foreach ($chain as $entry) {
+			if (is_array($entry) === true && (string)($entry['decision'] ?? '') !== self::DECISION_APPROVED) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isFullyApproved()
 
 	/**
 	 * Load a PurchaseOrder by id, scoped to the administration so a

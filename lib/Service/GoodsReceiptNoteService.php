@@ -641,9 +641,23 @@ class GoodsReceiptNoteService {
 				'administrationId' => $administrationId,
 			]
 		);
+		$lifecycle = $this->receivedQuantities(administrationId: $administrationId)->lifecycleFor(po: $po, poLines: $poLines);
+		if ($lifecycle !== null) {
+			$po['statusCode'] = $lifecycle;
+			$this->records()->saveObject(schema: self::SCHEMA_PO, object: $po);
+		}
 
-		// Total accepted per PO-line across every GRN line that targets it.
-		$acceptedByPoLine = [];
+	}//end updatePurchaseOrderReceiptLifecycle()
+
+	/**
+	 * Total accepted per PO-line across every GRN line that targets it.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return ReceivedQuantities The accepted quantities.
+	 */
+	private function receivedQuantities(string $administrationId): ReceivedQuantities {
+		$received = new ReceivedQuantities();
 		$allGrnLines = $this->records()->findAll(
 			schema: self::SCHEMA_GRN_LINE,
 			filters: [
@@ -651,51 +665,11 @@ class GoodsReceiptNoteService {
 			]
 		);
 		foreach ($allGrnLines as $grnLine) {
-			$linePoLineId = (string)($grnLine['poLineId'] ?? '');
-			if ($linePoLineId === '') {
-				continue;
-			}
-
-			$thousandths = $this->thousandths(value: (float)($grnLine['quantityAccepted'] ?? 0));
-			$acceptedByPoLine[$linePoLineId] = (($acceptedByPoLine[$linePoLineId] ?? 0) + $thousandths);
+			$received->add(poLineId: (string)($grnLine['poLineId'] ?? ''), quantityAccepted: ($grnLine['quantityAccepted'] ?? 0));
 		}
 
-		$allFullyReceived = true;
-		$anyReceived = false;
-		foreach ($poLines as $line) {
-			$lineId = (string)($line['id'] ?? ($line['@self']['id'] ?? ''));
-			$orderedAmount = $this->thousandths(value: (float)($line['quantityOrdered'] ?? 0));
-			$acceptedAmount = (int)($acceptedByPoLine[$lineId] ?? 0);
-
-			if ($acceptedAmount > 0) {
-				$anyReceived = true;
-			}
-
-			if ($acceptedAmount < $orderedAmount) {
-				$allFullyReceived = false;
-			}
-		}
-
-		if ($poLines === []) {
-			// Nothing to update; PO lifecycle stays in its current state.
-			return;
-		}
-
-		$newLifecycle = $po['statusCode'] ?? '';
-		if ($allFullyReceived === true) {
-			$newLifecycle = 'fully_received';
-		} elseif ($anyReceived === true) {
-			$newLifecycle = 'partial_received';
-		}
-
-		if ($newLifecycle === ($po['statusCode'] ?? '')) {
-			return;
-		}
-
-		$po['statusCode'] = $newLifecycle;
-		$this->records()->saveObject(schema: self::SCHEMA_PO, object: $po);
-
-	}//end updatePurchaseOrderReceiptLifecycle()
+		return $received;
+	}//end receivedQuantities()
 
 	/**
 	 * Build the per-line StockMove movement number for the GRN-accept credit.

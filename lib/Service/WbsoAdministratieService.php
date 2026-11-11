@@ -79,21 +79,10 @@ class WbsoAdministratieService {
 
 		$rows = [];
 		foreach ($beschikkingen as $decisionNumber => $decision) {
-			$grantedTenths = (int)round(((float)($decision['grantedSoHours'] ?? 0)) * 10);
-			$realised = (int)($realisedTenths[$decisionNumber] ?? 0);
-			$remaining = ($grantedTenths - $realised);
-			$rows[] = [
-				'decisionNumber' => (string)$decisionNumber,
-				'rvoReference' => (string)($decision['rvoReference'] ?? ''),
-				'projectNumber' => (string)($decision['projectNumber'] ?? ''),
-				'state' => (string)($decision['state'] ?? ''),
-				'grantedSoHours' => ((float)$grantedTenths / 10),
-				'realisedSoHours' => ((float)$realised / 10),
-				'remainingSoHours' => ((float)$remaining / 10),
-				'exceeded' => ($realised > $grantedTenths),
-				'administrationId' => $administrationId,
-			];
-		}//end foreach
+			$rows[] = ['decisionNumber' => (string)$decisionNumber]
+				+ $this->hoursRow(decision: $decision, realised: (int)($realisedTenths[$decisionNumber] ?? 0))
+				+ ['administrationId' => $administrationId];
+		}
 
 		usort(
 			$rows,
@@ -108,6 +97,29 @@ class WbsoAdministratieService {
 		];
 
 	}//end realisatieSummary()
+
+	/**
+	 * One beschikking's references and hours; hours are compared in tenths and returned as floats.
+	 *
+	 * @param array<string,mixed> $decision The beschikking.
+	 * @param int                 $realised The realised hours in tenths.
+	 *
+	 * @return array<string,mixed> The references, the granted, realised and remaining hours and the exceeded flag.
+	 */
+	private function hoursRow(array $decision, int $realised): array {
+		$grantedTenths = (int)round(((float)($decision['grantedSoHours'] ?? 0)) * 10);
+		$remaining = ($grantedTenths - $realised);
+		return [
+			'rvoReference' => (string)($decision['rvoReference'] ?? ''),
+			'projectNumber' => (string)($decision['projectNumber'] ?? ''),
+			'state' => (string)($decision['state'] ?? ''),
+			'grantedSoHours' => ((float)$grantedTenths / 10),
+			'realisedSoHours' => ((float)$realised / 10),
+			'remainingSoHours' => ((float)$remaining / 10),
+			'exceeded' => ($realised > $grantedTenths),
+		];
+
+	}//end hoursRow()
 
 	/**
 	 * Sum realised S&O hours (confirmed + locked entries) per beschikking, in tenths.

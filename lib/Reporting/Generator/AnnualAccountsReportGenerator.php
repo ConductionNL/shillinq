@@ -116,7 +116,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 		// --- Toelichting ---
 		$section->addTextBreak(1);
 		$this->addHeading($section, 'Toelichting');
-		$this->buildNotes($section, $statement, $currency);
+		$this->buildNotes($section, $statement);
 
 	}//end build()
 
@@ -136,52 +136,70 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 			$balance = [];
 		}
 
-		$fixedAssets = $this->num($balance, 'fixedAssets');
-		$currentAssets = $this->num($balance, 'currentAssets');
-		$equity = $this->num($balance, 'equity');
-		$provisions = $this->num($balance, 'provisions');
-		$liabilities = $this->num($balance, 'liabilities');
+		$debit = [
+			['label' => 'Vaste activa', 'amount' => $this->num($balance, 'fixedAssets')],
+			['label' => 'Vlottende activa', 'amount' => $this->num($balance, 'currentAssets')],
+		];
+		$credit = [
+			['label' => 'Eigen vermogen', 'amount' => $this->num($balance, 'equity')],
+			['label' => 'Voorzieningen', 'amount' => $this->num($balance, 'provisions')],
+			['label' => 'Schulden', 'amount' => $this->num($balance, 'liabilities')],
+		];
+		$totals = ['assets' => self::sideTotal(rows: $debit), 'credit' => self::sideTotal(rows: $credit), 'currency' => $currency];
 
-		$totalAssets = ($fixedAssets + $currentAssets);
-		$totalCredit = ($equity + $provisions + $liabilities);
-
-		$this->addAmountTable(
-			$section,
-			'Activa',
-			'Bedrag',
-			[
-				['label' => 'Vaste activa', 'amount' => $fixedAssets],
-				['label' => 'Vlottende activa', 'amount' => $currentAssets],
-			],
-			['label' => 'Totaal activa', 'amount' => $totalAssets],
-			$currency
-		);
-
+		$this->addAmountTable($section, 'Activa', 'Bedrag', $debit, ['label' => 'Totaal activa', 'amount' => $totals['assets']], $currency);
 		$section->addTextBreak(1);
+		$this->addAmountTable($section, 'Passiva', 'Bedrag', $credit, ['label' => 'Totaal passiva', 'amount' => $totals['credit']], $currency);
 
-		$this->addAmountTable(
-			$section,
-			'Passiva',
-			'Bedrag',
-			[
-				['label' => 'Eigen vermogen', 'amount' => $equity],
-				['label' => 'Voorzieningen', 'amount' => $provisions],
-				['label' => 'Schulden', 'amount' => $liabilities],
-			],
-			['label' => 'Totaal passiva', 'amount' => $totalCredit],
-			$currency
-		);
-
-		if (abs($totalAssets - $totalCredit) > 0.005) {
-			$section->addTextBreak(1);
-			$this->addNote(
-				$section,
-				'Let op: activa (' . $this->money($totalAssets, $currency) . ') en passiva ('
-				. $this->money($totalCredit, $currency) . ') sluiten niet op elkaar aan.'
-			);
-		}
+		$this->addMismatchNote(section: $section, totals: $totals);
 
 	}//end buildBalanceSheet()
+
+	/**
+	 * The total of one side of the balance sheet, summed in row order. The
+	 * first row starts the sum (not 0.0), so the total is exactly
+	 * `first + second (+ third)` as written out before.
+	 *
+	 * @param list<array{label: string, amount: float}> $rows The side's rows.
+	 *
+	 * @return float
+	 */
+	private static function sideTotal(array $rows): float {
+		$total = 0.0;
+		foreach ($rows as $index => $row) {
+			if ($index === 0) {
+				$total = $row['amount'];
+				continue;
+			}
+
+			$total = ($total + $row['amount']);
+		}
+
+		return $total;
+
+	}//end sideTotal()
+
+	/**
+	 * Note that assets and liabilities do not tie out (beyond half a cent).
+	 *
+	 * @param ReportSection        $section The block accumulator.
+	 * @param array<string, mixed> $totals  assets, credit and currency.
+	 *
+	 * @return void
+	 */
+	private function addMismatchNote(ReportSection $section, array $totals): void {
+		if (abs($totals['assets'] - $totals['credit']) <= 0.005) {
+			return;
+		}
+
+		$section->addTextBreak(1);
+		$this->addNote(
+			$section,
+			'Let op: activa (' . $this->money($totals['assets'], $totals['currency']) . ') en passiva ('
+			. $this->money($totals['credit'], $totals['currency']) . ') sluiten niet op elkaar aan.'
+		);
+
+	}//end addMismatchNote()
 
 	/**
 	 * Lay out the profit-and-loss account from FinancialStatement.profitAndLoss.
@@ -235,67 +253,144 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 *
 	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The statement object.
-	 * @param string $currency The presentation currency.
 	 *
 	 * @return void
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $currency kept for
-	 *     signature parity with the sibling buildBalanceSheet()/
-	 *     buildProfitAndLoss() phases the orchestrator calls uniformly;
-	 *     this phase does not itself render a currency-denominated figure.
 	 */
-	private function buildNotes(ReportSection $section, array $statement, string $currency): void {
-		$sizeClass = $this->str($statement, 'sizeClass');
-		$intro = 'Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW';
-		if ($this->str($statement, 'jurisdiction') !== '' && strtoupper($this->str($statement, 'jurisdiction')) !== 'NL') {
-			$intro = 'Deze jaarrekening is opgesteld op grond van het toepasselijke verslaggevingsstelsel ('
-				. $this->str($statement, 'framework') . ')';
-		}
-
-		if ($sizeClass !== '') {
-			$intro .= ', met toepassing van het regime voor de grootteklasse "' . $sizeClass . '"';
-		}
-
-		$intro .= '.';
-		$this->addParagraph($section, $intro);
-
-		$comparatives = ($statement['priorYearComparatives'] ?? null);
-		if ($comparatives !== null) {
-			$this->addParagraph(
-				$section,
-				((bool)$comparatives === true) ? 'De posten zijn voorzien van vergelijkende cijfers over het voorgaande boekjaar (art. 2:363 BW).' : 'Vergelijkende cijfers over het voorgaande boekjaar ontbreken; dit dient nog te worden aangevuld (art. 2:363 BW).'
-			);
-		}
-
-		$netted = ($statement['itemsNetted'] ?? null);
-		if ($netted !== null && (bool)$netted === true) {
-			$this->addParagraph(
-				$section,
-				'Er is gebruikgemaakt van saldering van posten. Het bruto-principe (art. 2:363 BW) verbiedt saldering '
-				. 'tenzij dit uitdrukkelijk is toegestaan.'
-			);
-		}
-
-		// Components present.
-		$components = ($statement['components'] ?? []);
-		if (is_array($components) === true && $components !== []) {
-			$this->addParagraph($section, 'Aanwezige onderdelen: ' . implode(', ', array_map('strval', $components)) . '.');
+	private function buildNotes(ReportSection $section, array $statement): void {
+		$this->addParagraph($section, $this->notesIntro($statement));
+		foreach ($this->optionalNotes($statement) as $paragraph) {
+			$this->addParagraph($section, $paragraph);
 		}
 
 		$section->addTextBreak(1);
 		$this->addHeading($section, 'Controle en deponering');
-		$this->addDetailsTable(
-			$section,
-			[
-				'Gecontroleerd' => (($statement['audited'] ?? false) === true ? 'Ja' : 'Nee'),
-				'Accountantskwalificatie' => $this->str($statement, 'auditorType'),
-				'Opgemaakt op' => $this->str($statement, 'preparedDate'),
-				'Vastgesteld op' => $this->str($statement, 'adoptionDate'),
-				'Gedeponeerd op' => $this->str($statement, 'filedDate'),
-			]
-		);
+		$this->addDetailsTable($section, $this->auditDetails($statement));
 
 	}//end buildNotes()
+
+	/**
+	 * The opening sentence: the reporting basis (Titel 9 BW2 for a Dutch or
+	 * unspecified jurisdiction, else the framework) and the size regime.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return string
+	 */
+	private function notesIntro(array $statement): string {
+		$jurisdiction = $this->str($statement, 'jurisdiction');
+		$intro = 'Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW';
+		if ($jurisdiction !== '' && strtoupper($jurisdiction) !== 'NL') {
+			$intro = 'Deze jaarrekening is opgesteld op grond van het toepasselijke verslaggevingsstelsel ('
+				. $this->str($statement, 'framework') . ')';
+		}
+
+		$sizeClass = $this->str($statement, 'sizeClass');
+		if ($sizeClass !== '') {
+			$intro .= ', met toepassing van het regime voor de grootteklasse "' . $sizeClass . '"';
+		}
+
+		return $intro . '.';
+
+	}//end notesIntro()
+
+	/**
+	 * The notes the statement calls for, in order: comparatives, netting,
+	 * components present.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return list<string>
+	 */
+	private function optionalNotes(array $statement): array {
+		$notes = [
+			$this->comparativesNote($statement),
+			$this->nettingNote($statement),
+			$this->componentsNote($statement),
+		];
+
+		return array_values(array_filter($notes, static fn (?string $note): bool => $note !== null));
+
+	}//end optionalNotes()
+
+	/**
+	 * Whether comparative figures are present or still missing, or null when
+	 * the statement does not say.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return string|null
+	 */
+	private function comparativesNote(array $statement): string|null {
+		$comparatives = ($statement['priorYearComparatives'] ?? null);
+		if ($comparatives === null) {
+			return null;
+		}
+
+		if ((bool)$comparatives === true) {
+			return 'De posten zijn voorzien van vergelijkende cijfers over het voorgaande boekjaar (art. 2:363 BW).';
+		}
+
+		return 'Vergelijkende cijfers over het voorgaande boekjaar ontbreken; dit dient nog te worden aangevuld (art. 2:363 BW).';
+
+	}//end comparativesNote()
+
+	/**
+	 * The gross-principle warning when items were netted, else null.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return string|null
+	 */
+	private function nettingNote(array $statement): string|null {
+		$netted = ($statement['itemsNetted'] ?? null);
+		if ($netted === null || (bool)$netted === false) {
+			return null;
+		}
+
+		return 'Er is gebruikgemaakt van saldering van posten. Het bruto-principe (art. 2:363 BW) verbiedt saldering '
+			. 'tenzij dit uitdrukkelijk is toegestaan.';
+
+	}//end nettingNote()
+
+	/**
+	 * The components present, or null when the statement lists none.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return string|null
+	 */
+	private function componentsNote(array $statement): string|null {
+		$components = ($statement['components'] ?? []);
+		if (is_array($components) === false || $components === []) {
+			return null;
+		}
+
+		return 'Aanwezige onderdelen: ' . implode(', ', array_map('strval', $components)) . '.';
+
+	}//end componentsNote()
+
+	/**
+	 * The audit and filing details.
+	 *
+	 * @param array<string, mixed> $statement The statement object.
+	 *
+	 * @return array<string, string>
+	 */
+	private function auditDetails(array $statement): array {
+		$audited = 'Nee';
+		if (($statement['audited'] ?? false) === true) {
+			$audited = 'Ja';
+		}
+
+		return [
+			'Gecontroleerd' => $audited,
+			'Accountantskwalificatie' => $this->str($statement, 'auditorType'),
+			'Opgemaakt op' => $this->str($statement, 'preparedDate'),
+			'Vastgesteld op' => $this->str($statement, 'adoptionDate'),
+			'Gedeponeerd op' => $this->str($statement, 'filedDate'),
+		];
+
+	}//end auditDetails()
 
 	/**
 	 * Resolve the FinancialStatement object for the report. When the context

@@ -809,4 +809,153 @@ final class ExceptionResolutionServiceTest extends TestCase {
 		self::assertCount(0, $defaultQueue);
 
 	}//end testNotifyOnExceptionHonoursToleranceProfileRouting()
+
+	/**
+	 * Run one resolution call and report its outcome: the refusal message or
+	 * `ok`, plus the side effects (saves, dispatches, notifications).
+	 *
+	 * @param array<string,mixed> $seedPatch Per-case edits to the baseline seed.
+	 * @param array<int,mixed>    $call      [method, administrationId, matchId, text].
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function outcomeOf(array $seedPatch, array $call): array {
+		$this->dispatchedPayloads = [];
+		$this->notifications = [];
+		$saved = [];
+		$service = $this->buildService(array_replace($this->baselineSeed(), $seedPatch), $saved, ['adm-1']);
+		[$method, $administrationId, $matchId, $text] = $call;
+		try {
+			$service->$method($administrationId, $matchId, $text);
+			$outcome = 'ok';
+		} catch (\RuntimeException $exception) {
+			$outcome = $exception->getMessage();
+		}
+
+		return [$outcome, count($saved), count($this->dispatchedPayloads), count($this->notifications)];
+
+	}//end outcomeOf()
+
+	/**
+	 * Pin every allowed and refused outcome of the three resolution actions,
+	 * including which guard wins when several inputs are bad at once.
+	 *
+	 * @return void
+	 */
+	public function testResolutionGuardsAllowAndRefuseInOrder(): void {
+		$seed = $this->baselineSeed();
+		$resolved = ['ThreeWayMatch' => [array_replace($seed['ThreeWayMatch'][0], ['matchStatus' => 'matched'])]];
+		$noInvoiceId = ['ThreeWayMatch' => [array_replace($seed['ThreeWayMatch'][0], ['invoiceId' => ''])]];
+		$cases = [
+			'ok' => [[], 'adm-1', 'twm-1', ' why '],
+			'noAdmin' => [[], '', '', ''],
+			'foreignAdmin' => [[], 'adm-9', '', ''],
+			'noMatchId' => [[], 'adm-1', '', ''],
+			'blankText' => [[], 'adm-1', 'twm-x', "  \t"],
+			'unknownMatch' => [[], 'adm-1', 'twm-x', 'why'],
+			'resolved' => [$resolved, 'adm-1', 'twm-1', 'why'],
+			'noInvoiceId' => [$noInvoiceId, 'adm-1', 'twm-1', 'why'],
+			'missingInvoice' => [['SupplierInvoice' => []], 'adm-1', 'twm-1', 'why'],
+		];
+		$actual = [];
+		foreach (['acceptWithMotivation', 'fileDispute', 'rejectAndBlockPayment'] as $method) {
+			foreach ($cases as $label => [$patch, $administrationId, $matchId, $text]) {
+				$actual[$method][$label] = $this->outcomeOf($patch, [$method, $administrationId, $matchId, $text]);
+			}
+		}
+
+		$refusals = [
+			'noAdmin' => ['administrationId is required', 0, 0, 0],
+			'foreignAdmin' => ['Administration not found', 0, 0, 0],
+			'noMatchId' => ['ThreeWayMatch not found', 0, 0, 0],
+			'unknownMatch' => ['ThreeWayMatch not found', 0, 0, 0],
+			'resolved' => ['Match is not in an exception state', 0, 0, 0],
+		];
+		self::assertSame(
+			[
+				'acceptWithMotivation' => [
+					'ok' => ['ok', 2, 0, 0],
+					'blankText' => ['resolutionNotes is required', 0, 0, 0],
+					'noInvoiceId' => ['ok', 1, 0, 0],
+					'missingInvoice' => ['ok', 1, 0, 0],
+				] + $refusals,
+				'fileDispute' => [
+					'ok' => ['ok', 1, 1, 1],
+					'blankText' => ['disputeReason is required', 0, 0, 0],
+					'noInvoiceId' => ['Match has no linked invoice', 0, 0, 0],
+					'missingInvoice' => ['Supplier invoice not found', 0, 0, 0],
+				] + $refusals,
+				'rejectAndBlockPayment' => [
+					'ok' => ['ok', 2, 0, 0],
+					'blankText' => ['rejectionReason is required', 0, 0, 0],
+					'noInvoiceId' => ['ok', 1, 0, 0],
+					'missingInvoice' => ['ok', 1, 0, 0],
+				] + $refusals,
+			],
+			array_map(
+				static function (array $byCase): array {
+					$order = ['ok', 'blankText', 'noInvoiceId', 'missingInvoice', 'noAdmin', 'foreignAdmin', 'noMatchId', 'unknownMatch', 'resolved'];
+					return array_replace(array_flip($order), $byCase);
+				},
+				$actual
+			)
+		);
+
+	}//end testResolutionGuardsAllowAndRefuseInOrder()
+
+	/**
+	 * Pin the exact records written by a successful dispute and a successful
+	 * accept: stamped fields in order, trimmed text, the dispatch id suffix,
+	 * the payload and the requestedAt/resolvedAt equality.
+	 *
+	 * @return void
+	 */
+	public function testResolutionRecordsAndDisputePayloadAreExact(): void {
+		$saved = [];
+		$service = $this->buildService($this->baselineSeed(), $saved, ['adm-1']);
+		$dispute = $service->fileDispute('adm-1', 'twm-1', '  te duur  ');
+		$match = $dispute['match'];
+		$at = $match['resolvedAt'];
+		self::assertMatchesRegularExpression('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/', $at);
+		$expectedMatch = $this->baselineSeed()['ThreeWayMatch'][0] + [
+			'resolutionAction' => 'credit_note_requested',
+			'resolutionNotes' => 'te duur [creditNoteDispatchId=urn:uuid:cn-test]',
+			'resolvedBy' => 'alice',
+			'resolvedAt' => $at,
+		];
+		self::assertSame([['schema' => 'ThreeWayMatch', 'object' => $expectedMatch]], $saved);
+		self::assertSame(['accepted' => true, 'dispatchId' => 'urn:uuid:cn-test', 'error' => null], $dispute['dispatch']);
+		self::assertSame(
+			[
+				[
+					'matchId' => 'twm-1',
+					'invoiceId' => 'inv-1',
+					'invoiceNumber' => 'INV-NW-001',
+					'supplierId' => 'sup-1',
+					'administrationId' => 'adm-1',
+					'currency' => 'EUR',
+					'totalExclVat' => 1900000,
+					'totalVat' => 25000,
+					'totalInclVat' => 1925000,
+					'reason' => 'te duur',
+					'divergenceDetails' => $this->baselineSeed()['ThreeWayMatch'][0]['divergenceDetails'],
+					'matchedPoIds' => ['po-1'],
+					'requestedAt' => $at,
+				],
+			],
+			$this->dispatchedPayloads
+		);
+		self::assertSame(['inkoper-bob'], array_column($this->notifications, 'user'));
+
+		$saved = [];
+		$service = $this->buildService($this->baselineSeed(), $saved, ['adm-1']);
+		$service->acceptWithMotivation('adm-1', 'twm-1', ' ok ');
+		self::assertSame(['ThreeWayMatch', 'SupplierInvoice'], array_column($saved, 'schema'));
+		self::assertSame(
+			['accepted', 'ok', 'alice'],
+			[$saved[0]['object']['resolutionAction'], $saved[0]['object']['resolutionNotes'], $saved[0]['object']['resolvedBy']]
+		);
+		self::assertSame('approved', $saved[1]['object']['statusCode']);
+
+	}//end testResolutionRecordsAndDisputePayloadAreExact()
 }//end class

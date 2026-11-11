@@ -1,0 +1,354 @@
+{
+    "notFound": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "Commitment",
+                {
+                    "filters": {
+                        "commitmentNumber": "PO-404"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "BudgetBlocker: commitment not found \u2014 denying commitment",
+                {
+                    "commitment": "PO-404"
+                }
+            ]
+        ]
+    },
+    "loadedFits": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "Commitment",
+                {
+                    "filters": {
+                        "commitmentNumber": "PO-STORED"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "withinBudget": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "secondRuleOver": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.2",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "BudgetBlocker: insufficient budget \u2014 denying commitment",
+                {
+                    "commitment": "PO-1",
+                    "programme": "5.2",
+                    "financialYear": 2026
+                }
+            ]
+        ]
+    },
+    "noBudgetForYear": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2030
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "BudgetBlocker: insufficient budget \u2014 denying commitment",
+                {
+                    "commitment": "PO-1",
+                    "programme": "5.1",
+                    "financialYear": 2030
+                }
+            ]
+        ]
+    },
+    "unreadableAmount": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "error",
+                "BudgetBlocker: rule carries no readable amount \u2014 denying commitment (fail-closed)",
+                {
+                    "administrationId": "adm-1",
+                    "programme": "5.1",
+                    "financialYear": 2026,
+                    "regelKeys": [
+                        "programme",
+                        "financialYear",
+                        "amount"
+                    ]
+                }
+            ],
+            [
+                "log",
+                "info",
+                "BudgetBlocker: insufficient budget \u2014 denying commitment",
+                {
+                    "commitment": "PO-1",
+                    "programme": "5.1",
+                    "financialYear": 2026
+                }
+            ]
+        ]
+    },
+    "linesFromStore": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentLine",
+                {
+                    "filters": {
+                        "commitment": "PO-2"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.2",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "headerFallback": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentLine",
+                {
+                    "filters": {
+                        "commitment": "PO-3"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "headerNoNumber": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "findAll",
+                "CommitmentBudget",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "programmeCode": "5.1",
+                        "financialYear": 2026
+                    },
+                    "limit": 1
+                }
+            ]
+        ]
+    },
+    "overrideMandate": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                "SpendingMandate",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "storeBroken": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "debug",
+                "BudgetBlocker: schema lookup unavailable \u2014 treating as absent",
+                {
+                    "schema": "Commitment",
+                    "exception": "no object service"
+                }
+            ],
+            [
+                "log",
+                "info",
+                "BudgetBlocker: commitment not found \u2014 denying commitment",
+                {
+                    "commitment": "PO-1"
+                }
+            ]
+        ]
+    }
+}

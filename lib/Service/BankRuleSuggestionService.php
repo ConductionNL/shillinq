@@ -94,71 +94,10 @@ class BankRuleSuggestionService {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
 	 */
 	public function suggestRulesFromHistory(array $history, int $k = self::DEFAULT_THRESHOLD, ?object $aiRanker = null): array {
-		if ($k < 1) {
-			$k = 1;
-		}
-
-		// Aggregate occurrences per (counterparty, GL account).
-		$groups = [];
-		foreach ($history as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$name = trim((string)($entry['counterpartyName'] ?? ''));
-			$iban = trim((string)($entry['counterpartyIban'] ?? ''));
-			$gl = trim((string)($entry['targetGlAccount'] ?? ''));
-
-			// A categorisation needs a counterparty signal AND a GL target.
-			$counterpartyKey = $iban;
-			if ($name !== '') {
-				$counterpartyKey = $name;
-			}
-
-			if ($counterpartyKey === '' || $gl === '') {
-				continue;
-			}
-
-			$groupKey = $counterpartyKey . '|' . $gl;
-			if (isset($groups[$groupKey]) === false) {
-				$groups[$groupKey] = [
-					'counterpartyName' => $name,
-					'counterpartyIban' => $iban,
-					'targetType' => (string)($entry['targetType'] ?? 'gl-transaction'),
-					'targetGlAccount' => $gl,
-					'occurrences' => 0,
-				];
-			}
-
-			$groups[$groupKey]['occurrences']++;
-
-			// Preserve an IBAN if a later occurrence carries one.
-			if ($iban !== '' && $groups[$groupKey]['counterpartyIban'] === '') {
-				$groups[$groupKey]['counterpartyIban'] = $iban;
-			}
-		}//end foreach
-
-		// Emit a proposal for every group at or above the threshold.
-		$proposals = [];
-		foreach ($groups as $group) {
-			if ($group['occurrences'] < $k) {
-				continue;
-			}
-
-			$proposals[] = $this->toProposal(group: $group);
-		}
+		$proposals = $this->proposalsAtThreshold(groups: $this->groupHistory(history: $history), threshold: max(1, $k));
 
 		// Deterministic order: occurrences desc, then counterparty asc.
-		usort(
-			$proposals,
-			static function (array $left, array $right): int {
-				if ($left['occurrences'] !== $right['occurrences']) {
-					return ($right['occurrences'] <=> $left['occurrences']);
-				}
-
-				return strcmp((string)$left['ruleName'], (string)$right['ruleName']);
-			}
-		);
+		usort($proposals, self::compareProposals(...));
 
 		if ($aiRanker === null) {
 			return $proposals;
@@ -166,6 +105,123 @@ class BankRuleSuggestionService {
 
 		return $this->applyRankerOrFallback(aiRanker: $aiRanker, deterministic: $proposals);
 	}//end suggestRulesFromHistory()
+
+	/**
+	 * Aggregate occurrences per (counterparty, GL account), in first-seen order.
+	 *
+	 * @param list<mixed> $history Prior categorisations.
+	 *
+	 * @return array<string, array<string, mixed>> Group key => aggregated group.
+	 */
+	private function groupHistory(array $history): array {
+		$groups = [];
+		foreach ($history as $entry) {
+			$categorisation = $this->categorisation(entry: $entry);
+			if ($categorisation === null) {
+				continue;
+			}
+
+			$key = $categorisation['key'];
+			$groups[$key] = $this->countOccurrence(group: ($groups[$key] ?? null), categorisation: $categorisation);
+		}
+
+		return $groups;
+	}//end groupHistory()
+
+	/**
+	 * Read one history entry. A categorisation needs a counterparty signal
+	 * (the name, else the IBAN) AND a GL target; anything else is ignored.
+	 *
+	 * @param mixed $entry One history item.
+	 *
+	 * @return array<string, string>|null The categorisation (key, counterparty, target), or null.
+	 */
+	private function categorisation(mixed $entry): array|null {
+		if (is_array($entry) === false) {
+			return null;
+		}
+
+		$name = trim((string)($entry['counterpartyName'] ?? ''));
+		$iban = trim((string)($entry['counterpartyIban'] ?? ''));
+		$gl = trim((string)($entry['targetGlAccount'] ?? ''));
+		$counterpartyKey = $this->counterpartyLabel(name: $name, iban: $iban);
+		if ($counterpartyKey === '' || $gl === '') {
+			return null;
+		}
+
+		return [
+			'key' => $counterpartyKey . '|' . $gl,
+			'counterpartyName' => $name,
+			'counterpartyIban' => $iban,
+			'targetType' => (string)($entry['targetType'] ?? 'gl-transaction'),
+			'targetGlAccount' => $gl,
+		];
+	}//end categorisation()
+
+	/**
+	 * Count one more occurrence of a group, starting it from the first
+	 * categorisation and keeping an IBAN a later occurrence carries.
+	 *
+	 * @param array<string, mixed>|null $group          The group so far, or null.
+	 * @param array<string, string>     $categorisation The categorisation.
+	 *
+	 * @return array<string, mixed> The updated group.
+	 */
+	private function countOccurrence(array|null $group, array $categorisation): array {
+		if ($group === null) {
+			$group = [
+				'counterpartyName' => $categorisation['counterpartyName'],
+				'counterpartyIban' => $categorisation['counterpartyIban'],
+				'targetType' => $categorisation['targetType'],
+				'targetGlAccount' => $categorisation['targetGlAccount'],
+				'occurrences' => 0,
+			];
+		}
+
+		$group['occurrences']++;
+
+		// Preserve an IBAN if a later occurrence carries one.
+		if ($categorisation['counterpartyIban'] !== '' && $group['counterpartyIban'] === '') {
+			$group['counterpartyIban'] = $categorisation['counterpartyIban'];
+		}
+
+		return $group;
+	}//end countOccurrence()
+
+	/**
+	 * A proposal for every group at or above the threshold.
+	 *
+	 * @param array<string, array<string, mixed>> $groups    The aggregated groups.
+	 * @param int                                 $threshold Repeat threshold (>= 1).
+	 *
+	 * @return list<array<string,mixed>> The proposals, in group order.
+	 */
+	private function proposalsAtThreshold(array $groups, int $threshold): array {
+		$proposals = [];
+		foreach ($groups as $group) {
+			if ($group['occurrences'] >= $threshold) {
+				$proposals[] = $this->toProposal(group: $group);
+			}
+		}
+
+		return $proposals;
+	}//end proposalsAtThreshold()
+
+	/**
+	 * Order proposals by occurrences (desc), then rule name (asc).
+	 *
+	 * @param array<string,mixed> $left  One proposal.
+	 * @param array<string,mixed> $right The other proposal.
+	 *
+	 * @return int The comparison.
+	 */
+	private static function compareProposals(array $left, array $right): int {
+		if ($left['occurrences'] !== $right['occurrences']) {
+			return ($right['occurrences'] <=> $left['occurrences']);
+		}
+
+		return strcmp((string)$left['ruleName'], (string)$right['ruleName']);
+	}//end compareProposals()
 
 	/**
 	 * Build a proposal (an unsaved MatchingRule shape) from an aggregated group.
@@ -178,31 +234,7 @@ class BankRuleSuggestionService {
 		$name = (string)$group['counterpartyName'];
 		$iban = (string)$group['counterpartyIban'];
 		$gl = (string)$group['targetGlAccount'];
-
-		// Prefer an exact IBAN predicate when we have one (higher precision);
-		// otherwise a fuzzy name predicate.
-		if ($iban !== '') {
-			$predicates = [
-				[
-					'op' => 'counterparty-iban',
-					'iban' => $iban,
-				],
-			];
-			$label = $iban;
-			if ($name !== '') {
-				$label = $name;
-			}
-		} else {
-			$predicates = [
-				[
-					'op' => 'counterparty-fuzzy',
-					'name' => $name,
-					'threshold' => 0.9,
-				],
-			];
-			$label = $name;
-		}//end if
-
+		$label = $this->counterpartyLabel(name: $name, iban: $iban);
 		$occurrences = (int)$group['occurrences'];
 
 		// Confidence grows with evidence, capped just under 1.0 (never certain
@@ -211,7 +243,7 @@ class BankRuleSuggestionService {
 
 		return [
 			'ruleName' => $label . ' → ' . $gl,
-			'predicates' => $predicates,
+			'predicates' => $this->counterpartyPredicates(name: $name, iban: $iban),
 			'targetType' => (string)$group['targetType'],
 			'targetGlAccount' => $gl,
 			'occurrences' => $occurrences,
@@ -220,6 +252,39 @@ class BankRuleSuggestionService {
 		];
 
 	}//end toProposal()
+
+	/**
+	 * The counterparty as a group key or rule label: the name, else the IBAN.
+	 *
+	 * @param string $name The counterparty name.
+	 * @param string $iban The counterparty IBAN.
+	 *
+	 * @return string The label.
+	 */
+	private function counterpartyLabel(string $name, string $iban): string {
+		if ($name !== '') {
+			return $name;
+		}
+
+		return $iban;
+	}//end counterpartyLabel()
+
+	/**
+	 * Prefer an exact IBAN predicate when we have one (higher precision);
+	 * otherwise a fuzzy name predicate.
+	 *
+	 * @param string $name The counterparty name.
+	 * @param string $iban The counterparty IBAN.
+	 *
+	 * @return list<array<string,mixed>> The predicates.
+	 */
+	private function counterpartyPredicates(string $name, string $iban): array {
+		if ($iban !== '') {
+			return [['op' => 'counterparty-iban', 'iban' => $iban]];
+		}
+
+		return [['op' => 'counterparty-fuzzy', 'name' => $name, 'threshold' => 0.9]];
+	}//end counterpartyPredicates()
 
 	/**
 	 * Ask the optional AI ranker to re-order the proposals, falling back to the
@@ -245,22 +310,43 @@ class BankRuleSuggestionService {
 			return $deterministic;
 		}
 
-		// A ranker MUST return the same set (just re-ordered). Any shape drift
-		// (non-array, wrong count) is treated as unusable — fail safe.
+		return $this->validRanking(ranked: $ranked, deterministic: $deterministic);
+	}//end applyRankerOrFallback()
+
+	/**
+	 * The ranker's order when it is usable, else the deterministic order. A
+	 * ranker MUST return the same set (just re-ordered). Any shape drift
+	 * (non-array, wrong count, an item without a GL target) is treated as
+	 * unusable — fail safe.
+	 *
+	 * @param mixed                     $ranked        What the ranker returned.
+	 * @param list<array<string,mixed>> $deterministic The deterministic proposals.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function validRanking(mixed $ranked, array $deterministic): array {
 		if (is_array($ranked) === false || count($ranked) !== count($deterministic)) {
 			$this->logger->debug('BankRuleSuggestionService: AI ranker returned a malformed result; using deterministic order');
 			return $deterministic;
 		}
 
-		$clean = [];
 		foreach ($ranked as $item) {
-			if (is_array($item) === false || isset($item['targetGlAccount']) === false) {
+			if ($this->isRankedProposal(item: $item) === false) {
 				return $deterministic;
 			}
-
-			$clean[] = $item;
 		}
 
-		return $clean;
-	}//end applyRankerOrFallback()
+		return array_values($ranked);
+	}//end validRanking()
+
+	/**
+	 * Whether a ranked item is a proposal with a GL target.
+	 *
+	 * @param mixed $item One ranked item.
+	 *
+	 * @return bool True when usable.
+	 */
+	private function isRankedProposal(mixed $item): bool {
+		return is_array($item) === true && isset($item['targetGlAccount']) === true;
+	}//end isRankedProposal()
 }//end class

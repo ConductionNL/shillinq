@@ -64,6 +64,13 @@ class OrdersAuditCommand extends Command {
 	];
 
 	/**
+	 * One per-schema output line: schema, orderType, source count, migrated count, status.
+	 *
+	 * @var string
+	 */
+	private const LINE_FORMAT = '  %-14s (orderType=%-10s) source=%-4d migrated=%-4d %s';
+
+	/**
 	 * Construct the orders-audit command.
 	 *
 	 * @param SettingsService $settingsService Provides the shillinq register slug.
@@ -110,35 +117,49 @@ class OrdersAuditCommand extends Command {
 			return 1;
 		}
 
-		$registerSlug = $this->settingsService->getRegisterSlug();
-		$allMatched = true;
-
+		$scope = new AuditScope(objectService: $objectService, registerSlug: $this->settingsService->getRegisterSlug());
 		$output->writeln('<info>Shillinq Order-fold count-equality audit</info>');
 
-		foreach (self::SOURCE_SCHEMAS as $sourceSchema => $orderType) {
-			$sourceRows = $this->countRows($objectService, $registerSlug, $sourceSchema);
-			$orderRows = $this->countMigrated($objectService, $registerSlug, $sourceSchema);
-			$matched = ($orderRows >= $sourceRows);
+		$allMatched = true;
+		foreach (array_keys(self::SOURCE_SCHEMAS) as $sourceSchema) {
+			[$line, $matched] = $this->schemaLine(scope: $scope, sourceSchema: $sourceSchema);
+			$output->writeln($line);
+			$allMatched = ($allMatched && $matched);
+		}
 
-			$statusLabel = '<error>MISMATCH</error>';
-			if ($matched === true) {
-				$statusLabel = '<info>OK</info>';
-			} else {
-				$allMatched = false;
-			}
+		return self::verdict(output: $output, allMatched: $allMatched);
+	}//end execute()
 
-			$output->writeln(
-				sprintf(
-					'  %-14s (orderType=%-10s) source=%-4d migrated=%-4d %s',
-					$sourceSchema,
-					$orderType,
-					$sourceRows,
-					$orderRows,
-					$statusLabel
-				)
-			);
-		}//end foreach
+	/**
+	 * The count comparison of one source schema, and whether it matched.
+	 *
+	 * @param AuditScope $scope        The object service and register.
+	 * @param string     $sourceSchema The source schema slug.
+	 *
+	 * @return array{0: string, 1: bool} The output line and the match.
+	 */
+	private function schemaLine(AuditScope $scope, string $sourceSchema): array {
+		$sourceRows = $this->countRows(scope: $scope, schema: $sourceSchema);
+		$orderRows = $this->countMigrated(scope: $scope, sourceSchema: $sourceSchema);
+		$matched = ($orderRows >= $sourceRows);
 
+		$statusLabel = '<error>MISMATCH</error>';
+		if ($matched === true) {
+			$statusLabel = '<info>OK</info>';
+		}
+
+		return [sprintf(self::LINE_FORMAT, $sourceSchema, self::SOURCE_SCHEMAS[$sourceSchema], $sourceRows, $orderRows, $statusLabel), $matched];
+	}//end schemaLine()
+
+	/**
+	 * Print the verdict and answer the exit code.
+	 *
+	 * @param OutputInterface $output     Console output.
+	 * @param bool            $allMatched Whether every source schema matched.
+	 *
+	 * @return int 0 on PASS, 1 on FAIL.
+	 */
+	private static function verdict(OutputInterface $output, bool $allMatched): int {
 		if ($allMatched === true) {
 			$output->writeln('<info>PASS — every source row has a matching folded Order.</info>');
 			return 0;
@@ -146,55 +167,41 @@ class OrdersAuditCommand extends Command {
 
 		$output->writeln('<error>FAIL — one or more source schemas have unmigrated rows. Run `occ maintenance:repair` to fold them.</error>');
 		return 1;
-	}//end execute()
+	}//end verdict()
 
 	/**
 	 * Count rows of a source schema. Returns 0 when the schema is absent.
 	 *
-	 * @param object $objectService The OR ObjectService.
-	 * @param string $registerSlug The shillinq register slug.
-	 * @param string $schema The schema slug.
+	 * @param AuditScope $scope  The object service and register.
+	 * @param string     $schema The schema slug.
 	 *
 	 * @return int The row count.
 	 */
-	private function countRows(object $objectService, string $registerSlug, string $schema): int {
+	private function countRows(AuditScope $scope, string $schema): int {
 		try {
-			return count($this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema));
+			return count($this->readAllRows(objectService: $scope->objectService, registerSlug: $scope->registerSlug, schema: $schema));
 		} catch (\Throwable) {
 			return 0;
 		}
-
 	}//end countRows()
 
 	/**
 	 * Count Order rows carrying `migratedFrom.schema = $sourceSchema`.
 	 *
-	 * @param object $objectService The OR ObjectService.
-	 * @param string $registerSlug The shillinq register slug.
-	 * @param string $sourceSchema The source schema slug the marker names.
+	 * @param AuditScope $scope        The object service and register.
+	 * @param string     $sourceSchema The source schema slug the marker names.
 	 *
 	 * @return int The migrated-Order count.
 	 */
-	private function countMigrated(object $objectService, string $registerSlug, string $sourceSchema): int {
+	private function countMigrated(AuditScope $scope, string $sourceSchema): int {
 		try {
 			// OpenRegister does NOT support dot-path filters on nested properties,
 			// so `['migratedFrom.schema' => ...]` matches nothing (it silently
 			// returned 0, making the audit report a false PASS). Read every
 			// OrderPrimitive row and match the nested marker in PHP instead.
 			$count = 0;
-			foreach ($this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'OrderPrimitive') as $row) {
-				$data = $row;
-				if (is_object($row) === true) {
-					try {
-						$data = $row->getObject();
-					} catch (\Throwable) {
-						$data = [];
-					}
-				}
-
-				if (is_array($data) === true
-					&& (string)(($data['migratedFrom']['schema'] ?? '')) === $sourceSchema
-				) {
+			foreach ($this->readAllRows(objectService: $scope->objectService, registerSlug: $scope->registerSlug, schema: 'OrderPrimitive') as $row) {
+				if (self::migratedFrom(row: $row) === $sourceSchema) {
 					$count++;
 				}
 			}
@@ -202,7 +209,41 @@ class OrdersAuditCommand extends Command {
 			return $count;
 		} catch (\Throwable) {
 			return 0;
-		}//end try
-
+		}
 	}//end countMigrated()
+
+	/**
+	 * The `migratedFrom.schema` marker of an Order row ('' when absent or unreadable).
+	 *
+	 * @param mixed $row An OrderPrimitive row: an array, or an entity exposing getObject().
+	 *
+	 * @return string|null The marker, or null for a row that does not read as an array.
+	 */
+	private static function migratedFrom(mixed $row): ?string {
+		$data = $row;
+		if (is_object($row) === true) {
+			$data = self::entityData(row: $row);
+		}
+
+		if (is_array($data) === false) {
+			return null;
+		}
+
+		return (string)(($data['migratedFrom']['schema'] ?? ''));
+	}//end migratedFrom()
+
+	/**
+	 * An entity row's getObject() payload, or [] when it throws.
+	 *
+	 * @param object $row The entity.
+	 *
+	 * @return mixed
+	 */
+	private static function entityData(object $row): mixed {
+		try {
+			return $row->getObject();
+		} catch (\Throwable) {
+			return [];
+		}
+	}//end entityData()
 }//end class

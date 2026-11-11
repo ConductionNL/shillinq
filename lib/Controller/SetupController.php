@@ -109,17 +109,8 @@ class SetupController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function status(): DataResponse {
-		$countryDone = $this->config(key: 'legal_country') !== '';
-		$regionDone = $this->config(key: 'legal_region') !== '';
-		$rgsDone = $this->config(key: 'rgs_template') !== '';
-		$adminDone = $this->config(key: 'administration_id') !== '';
-		$seedDone = $this->config(key: 'setup_seed_done') === '1';
-		// DEALT WITH, not "demo objects exist". An operator who declines demo
-		// data has finished the step; re-offering it every visit would make
-		// "no thanks" impossible to express.
-		$demoDecided = $this->config(key: self::DEMO_DATA_DECIDED_KEY) !== '';
-		$pickedDataset = $this->config(key: self::DATASET_KEY);
-		$requiredDone = ($countryDone === true && $regionDone === true && $rgsDone === true && $adminDone === true);
+		$done = $this->stepsDone();
+		$requiredDone = $this->requiredStepsDone(done: $done);
 
 		if ($requiredDone === true) {
 			$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_completed_version', (string)self::SETUP_VERSION);
@@ -133,23 +124,72 @@ class SetupController extends Controller {
 				// `optionsSource: datasets` and no options of its own, so a
 				// dataset missing from this list is a dataset nobody can pick.
 				'datasets' => $this->demoDataService->listChoices(),
-				// Exactly the ids of `manifest.setup.steps`: a step the server
-				// never reports stays open and reopens the wizard.
-				'steps' => [
-					'welcome' => ['done' => true],
-					// A pick without a load still counts: a wizard that
-					// predates `loadAction` can only record the pick.
-					'demo-data' => ['done' => ($demoDecided === true || $pickedDataset !== '')],
-					'country' => ['done' => $countryDone],
-					'organisation' => ['done' => $regionDone],
-					'rgs-template' => ['done' => $rgsDone],
-					'administration' => ['done' => $adminDone],
-					'seed' => ['done' => $seedDone],
-					'done' => ['done' => $requiredDone],
-				],
+				'steps' => $this->stepReport(done: $done, requiredDone: $requiredDone),
 			]
 		);
 	}//end status()
+
+	/**
+	 * Whether each configurable step is done, read from app config.
+	 *
+	 * @return array<string, bool> Keyed by step id.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	private function stepsDone(): array {
+		$done = [
+			'country' => $this->config(key: 'legal_country') !== '',
+			'organisation' => $this->config(key: 'legal_region') !== '',
+			'rgs-template' => $this->config(key: 'rgs_template') !== '',
+			'administration' => $this->config(key: 'administration_id') !== '',
+			'seed' => $this->config(key: 'setup_seed_done') === '1',
+		];
+		// DEALT WITH, not "demo objects exist". An operator who declines demo
+		// data has finished the step; re-offering it every visit would make
+		// "no thanks" impossible to express.
+		$demoDecided = $this->config(key: self::DEMO_DATA_DECIDED_KEY) !== '';
+		$pickedDataset = $this->config(key: self::DATASET_KEY);
+		// A pick without a load still counts: a wizard that
+		// predates `loadAction` can only record the pick.
+		$done['demo-data'] = ($demoDecided === true || $pickedDataset !== '');
+
+		return $done;
+	}//end stepsDone()
+
+	/**
+	 * Whether every required step (country, region, RGS template, administration) is done.
+	 *
+	 * @param array<string, bool> $done The steps done.
+	 *
+	 * @return bool
+	 */
+	private function requiredStepsDone(array $done): bool {
+		return ($done['country'] === true && $done['organisation'] === true && $done['rgs-template'] === true && $done['administration'] === true);
+	}//end requiredStepsDone()
+
+	/**
+	 * The per-step report. Exactly the ids of `manifest.setup.steps`: a step
+	 * the server never reports stays open and reopens the wizard.
+	 *
+	 * @param array<string, bool> $done         The steps done.
+	 * @param bool                $requiredDone Whether every required step is done.
+	 *
+	 * @return array<string, array{done: bool}>
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	private function stepReport(array $done, bool $requiredDone): array {
+		return [
+			'welcome' => ['done' => true],
+			'demo-data' => ['done' => $done['demo-data']],
+			'country' => ['done' => $done['country']],
+			'organisation' => ['done' => $done['organisation']],
+			'rgs-template' => ['done' => $done['rgs-template']],
+			'administration' => ['done' => $done['administration']],
+			'seed' => ['done' => $done['seed']],
+			'done' => ['done' => $requiredDone],
+		];
+	}//end stepReport()
 
 	/**
 	 * Persist app-config values from a `choice` / `config-fields` step.
@@ -166,19 +206,46 @@ class SetupController extends Controller {
 		// the load step reads it back and hands it to the importer, so an
 		// unknown value would surface a step later as a failed import with no
 		// clue why.
-		$dataset = $this->request->getParam(self::DATASET_KEY);
-		if ($dataset !== null) {
-			$named = 'that';
-			if (is_scalar($dataset) === true) {
-				$named = (string)$dataset;
-			}
-
-			$known = array_column($this->demoDataService->listChoices(), 'id');
-			if (in_array($named, $known, true) === false) {
-				return new DataResponse(['success' => false, 'message' => 'No dataset is called "' . $named . '".']);
-			}
+		$refusal = $this->storedDatasetRefusal(dataset: $this->request->getParam(self::DATASET_KEY));
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
+		$this->storeParams();
+
+		return new DataResponse(['success' => true]);
+	}//end saveConfig()
+
+	/**
+	 * The refusal of a posted dataset nobody can import, or null when none was
+	 * posted or it is known.
+	 *
+	 * @param mixed $dataset The posted dataset (null when not posted).
+	 *
+	 * @return DataResponse|null
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	private function storedDatasetRefusal(mixed $dataset): ?DataResponse {
+		if ($dataset === null) {
+			return null;
+		}
+
+		$named = $this->datasetName(value: $dataset);
+		if (in_array($named, $this->knownDatasets(), true) === false) {
+			return new DataResponse(['success' => false, 'message' => 'No dataset is called "' . $named . '".']);
+		}
+
+		return null;
+	}//end storedDatasetRefusal()
+
+	/**
+	 * Write every posted param except the route to app config, as posted
+	 * (non-scalars JSON-encoded).
+	 *
+	 * @return void
+	 */
+	private function storeParams(): void {
 		foreach ($this->request->getParams() as $key => $value) {
 			if ($key === '_route') {
 				continue;
@@ -190,9 +257,31 @@ class SetupController extends Controller {
 				is_scalar($value) ? (string)$value : json_encode($value),
 			);
 		}
+	}//end storeParams()
 
-		return new DataResponse(['success' => true]);
-	}//end saveConfig()
+	/**
+	 * How a posted dataset is named back: its value when scalar, else "that".
+	 *
+	 * @param mixed $value The posted dataset.
+	 *
+	 * @return string
+	 */
+	private function datasetName(mixed $value): string {
+		if (is_scalar($value) === true) {
+			return (string)$value;
+		}
+
+		return 'that';
+	}//end datasetName()
+
+	/**
+	 * The ids of the datasets this app can import.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function knownDatasets(): array {
+		return array_column($this->demoDataService->listChoices(), 'id');
+	}//end knownDatasets()
 
 	/**
 	 * Run a privileged server-side setup action.
@@ -208,72 +297,111 @@ class SetupController extends Controller {
 		// `install-demo-data` is the id the step used before it asked WHICH
 		// dataset, and it still means "import the one this app ships". Kept so
 		// an older manifest, a runbook or a script that posts it keeps working.
-		if ($actionId === 'load-demo-data') {
-			return $this->loadDataset();
-		}
-
-		if ($actionId === 'install-demo-data') {
-			return $this->installDemoData(dataset: DemoDataService::DEMO_DATASET);
-		}
-
-		if ($actionId === 'skip-demo-data') {
-			return $this->skipDemoData();
-		}
-
-		if ($actionId === 'init-administration') {
-			$this->settingsService->loadConfigurationForced();
-			$result = $this->settingsService->seedDefaultAdministration();
-
-			if (($result['success'] ?? false) !== true) {
-				return new DataResponse(
-					['success' => false, 'message' => ($result['message'] ?? 'Failed to create default administration.')],
-					Http::STATUS_INTERNAL_SERVER_ERROR,
-				);
-			}
-
-			// Read the real administrationCode the seed created/found — never
-			// guess it, so a future change to the seed file (or seeding onto an
-			// instance where it was already created under a different code)
-			// never silently sets the wrong administration_id.
-			$adminId = (string)($result['administrationCode'] ?? '');
-			if ($adminId === '') {
-				return new DataResponse(
-					['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
-					Http::STATUS_INTERNAL_SERVER_ERROR,
-				);
-			}
-
-			$this->appConfig->setValueString(AppIdentity::APP_ID, 'administration_id', $adminId);
-			return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
-		}//end if
-
-		if ($actionId === 'seed') {
-			$region = $this->config(key: 'legal_region');
-			$template = $this->config(key: 'rgs_template');
-			$adminId = $this->config(key: 'administration_id');
-			if ($region === '' || $template === '' || $adminId === '') {
-				return new DataResponse(
-					['success' => false, 'message' => 'Choose region, RGS template and administration before seeding.'],
-					Http::STATUS_UNPROCESSABLE_ENTITY,
-				);
-			}
-
-			$this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
-			$this->settingsService->seedBtwTariffs();
-			$this->settingsService->seedBbvTaakvelden();
-			// Statutory retention rules (region-specific per REQ-ARC-002); idempotent,
-			// and re-running here matters when OpenRegister was enabled AFTER shillinq
-			// so the install-time repair step never seeded it (ADR-042 recovery path).
-			$this->settingsService->seedSelectielijst();
-			$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_seed_done', '1');
-			return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
-		}//end if
-
-		return new DataResponse(
-			['success' => false, 'message' => 'Unknown setup action: ' . $actionId],
-			Http::STATUS_NOT_FOUND,
-		);
+		return match ($actionId) {
+			'load-demo-data' => $this->loadDataset(),
+			'install-demo-data' => $this->installDemoData(dataset: DemoDataService::DEMO_DATASET),
+			'skip-demo-data' => $this->skipDemoData(),
+			'init-administration' => $this->initAdministration(),
+			'seed' => $this->seedReferenceData(),
+			default => new DataResponse(
+				['success' => false, 'message' => 'Unknown setup action: ' . $actionId],
+				Http::STATUS_NOT_FOUND,
+			),
+		};
 	}//end runAction()
+
+	/**
+	 * Create (or find) the default administration and record its real code.
+	 *
+	 * @return DataResponse 200 with the seed detail; 500 when the seed fails.
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	private function initAdministration(): DataResponse {
+		$this->settingsService->loadConfigurationForced();
+		$result = $this->settingsService->seedDefaultAdministration();
+
+		if (($result['success'] ?? false) !== true) {
+			return new DataResponse(
+				['success' => false, 'message' => ($result['message'] ?? 'Failed to create default administration.')],
+				Http::STATUS_INTERNAL_SERVER_ERROR,
+			);
+		}
+
+		return $this->recordAdministration(result: $result);
+	}//end initAdministration()
+
+	/**
+	 * Record the administrationCode the seed created/found.
+	 *
+	 * Read the real administrationCode the seed created/found — never
+	 * guess it, so a future change to the seed file (or seeding onto an
+	 * instance where it was already created under a different code)
+	 * never silently sets the wrong administration_id.
+	 *
+	 * @param array<string, mixed> $result The successful seed result.
+	 *
+	 * @return DataResponse 200 with the seed detail; 500 when no code was reported.
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	private function recordAdministration(array $result): DataResponse {
+		$adminId = (string)($result['administrationCode'] ?? '');
+		if ($adminId === '') {
+			return new DataResponse(
+				['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
+				Http::STATUS_INTERNAL_SERVER_ERROR,
+			);
+		}
+
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'administration_id', $adminId);
+		return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
+	}//end recordAdministration()
+
+	/**
+	 * Seed the chart of accounts and statutory reference data once region,
+	 * RGS template and administration are chosen.
+	 *
+	 * @return DataResponse 200 when seeded; 422 while a required step is open.
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	private function seedReferenceData(): DataResponse {
+		$region = $this->config(key: 'legal_region');
+		$template = $this->config(key: 'rgs_template');
+		$adminId = $this->config(key: 'administration_id');
+		if ($region === '' || $template === '' || $adminId === '') {
+			return new DataResponse(
+				['success' => false, 'message' => 'Choose region, RGS template and administration before seeding.'],
+				Http::STATUS_UNPROCESSABLE_ENTITY,
+			);
+		}
+
+		return $this->seedFor(template: $template, adminId: $adminId);
+	}//end seedReferenceData()
+
+	/**
+	 * Seed the RGS template for the administration, then the BTW tariffs, BBV
+	 * taakvelden and selectielijst, and mark the seed step done.
+	 *
+	 * @param string $template The RGS template variant.
+	 * @param string $adminId  The administration.
+	 *
+	 * @return DataResponse
+	 *
+	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 */
+	private function seedFor(string $template, string $adminId): DataResponse {
+		$this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
+		$this->settingsService->seedBtwTariffs();
+		$this->settingsService->seedBbvTaakvelden();
+		// Statutory retention rules (region-specific per REQ-ARC-002); idempotent,
+		// and re-running here matters when OpenRegister was enabled AFTER shillinq
+		// so the install-time repair step never seeded it (ADR-042 recovery path).
+		$this->settingsService->seedSelectielijst();
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_seed_done', '1');
+		return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
+	}//end seedFor()
 
 	/**
 	 * Install the dataset a card's Load button posted as `dataset`, or the
@@ -284,20 +412,9 @@ class SetupController extends Controller {
 	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	private function loadDataset(): DataResponse {
-		$picked = $this->config(key: self::DATASET_KEY);
-
-		// The card's Load button names its dataset in the body. An older wizard
-		// posts nothing and relies on the pick stored a step earlier. Nothing is
-		// stored before the load succeeds: a failed load must leave the step
-		// open for an operator who asked for data and got none.
-		$posted = $this->request->getParam('dataset');
-		if ($posted !== null) {
-			$refusal = $this->refuseDataset(value: $posted);
-			if ($refusal !== null) {
-				return $refusal;
-			}
-
-			$picked = (string)$posted;
+		$picked = $this->pickedDataset();
+		if ($picked instanceof DataResponse) {
+			return $picked;
 		}
 
 		// 🔴 NO SILENT DEFAULT. Importing here because the operator clicked Run
@@ -318,6 +435,29 @@ class SetupController extends Controller {
 	}//end loadDataset()
 
 	/**
+	 * The dataset to load: the one the card posts, else the pick stored a step earlier.
+	 *
+	 * The card's Load button names its dataset in the body. An older wizard
+	 * posts nothing and relies on the pick stored a step earlier. Nothing is
+	 * stored before the load succeeds: a failed load must leave the step
+	 * open for an operator who asked for data and got none.
+	 *
+	 * @return string|DataResponse The dataset ('' when none), or the refusal of an unknown posted one.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	private function pickedDataset(): string|DataResponse {
+		$picked = $this->config(key: self::DATASET_KEY);
+
+		$posted = $this->request->getParam('dataset');
+		if ($posted === null) {
+			return $picked;
+		}
+
+		return $this->refuseDataset(value: $posted) ?? (string)$posted;
+	}//end pickedDataset()
+
+	/**
 	 * Refuse a posted dataset id no dataset answers to.
 	 *
 	 * @param mixed $value The posted value.
@@ -327,12 +467,9 @@ class SetupController extends Controller {
 	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	private function refuseDataset(mixed $value): ?DataResponse {
-		$named = 'that';
-		if (is_scalar($value) === true) {
-			$named = (string)$value;
-		}
+		$named = $this->datasetName(value: $value);
 
-		$known = array_column($this->demoDataService->listChoices(), 'id');
+		$known = $this->knownDatasets();
 		if (is_scalar($value) === true && in_array($named, $known, true) === true) {
 			return null;
 		}
@@ -366,8 +503,20 @@ class SetupController extends Controller {
 		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, $dataset);
 		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'installed');
 
-		// 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be
-		// told apart from an import that wrote nothing.
+		return $this->installedResponse(imported: $imported);
+	}//end installDemoData()
+
+	/**
+	 * The answer to a finished import.
+	 *
+	 * 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be
+	 * told apart from an import that wrote nothing.
+	 *
+	 * @param array<string, mixed> $imported The importer's counts.
+	 *
+	 * @return DataResponse
+	 */
+	private function installedResponse(array $imported): DataResponse {
 		return new DataResponse(
 			[
 				'success' => true,
@@ -379,7 +528,7 @@ class SetupController extends Controller {
 				'detail'  => $imported,
 			]
 		);
-	}//end installDemoData()
+	}//end installedResponse()
 
 	/**
 	 * Record that the operator declined the demo dataset.

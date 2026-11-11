@@ -71,22 +71,28 @@ class UrencriteriumGuard {
 
 		$total = 0.0;
 		foreach ($hourRecords as $record) {
-			if (($record['personId'] ?? null) !== $personId) {
-				continue;
+			if (($record['personId'] ?? null) === $personId && self::countsInYear(record: $record, year: $year) === true) {
+				$total += (float)($record['hours'] ?? 0);
 			}
-
-			$workDate = (string)($record['workDate'] ?? '');
-			if (substr($workDate, 0, 4) !== (string)$year) {
-				continue;
-			}
-
-			if (($record['category'] ?? '') === 'excluded') {
-				continue;
-			}
-
-			$total += (float)($record['hours'] ?? 0);
-		}//end foreach
+		}
 
 		return $total;
 	}//end currentYtdHours()
+
+	/**
+	 * Whether the record's work date falls in the year and its category is not excluded.
+	 *
+	 * @param array<string, mixed> $record The hour record.
+	 * @param int                  $year   The year.
+	 *
+	 * @return bool
+	 */
+	private static function countsInYear(array $record, int $year): bool {
+		$workDate = (string)($record['workDate'] ?? '');
+		if (substr($workDate, 0, 4) !== (string)$year) {
+			return false;
+		}
+
+		return ($record['category'] ?? '') !== 'excluded';
+	}//end countsInYear()
 }//end class
