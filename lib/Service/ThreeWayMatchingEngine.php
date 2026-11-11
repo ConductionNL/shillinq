@@ -237,6 +237,8 @@ class ThreeWayMatchingEngine {
 	 * @var array<string,string>
 	 */
 	private const FAILED_AXIS = [
+		'po_line' => 'missing_po',
+		'grn_line' => 'missing_grn',
 		'unitPrice' => 'price',
 		'lineTotal' => 'price',
 		'vat' => 'price',
@@ -249,6 +251,8 @@ class ThreeWayMatchingEngine {
 	 * @var array<string,string>
 	 */
 	private const OUTCOME_STATUS = [
+		'missing_po' => self::STATUS_EXCEPTION_MISSING_PO,
+		'missing_grn' => self::STATUS_EXCEPTION_MISSING_GRN,
 		'price' => self::STATUS_EXCEPTION_PRICE,
 		'quantity' => self::STATUS_EXCEPTION_QUANTITY,
 		'delta' => self::STATUS_WITHIN_TOLERANCE,
@@ -550,7 +554,10 @@ class ThreeWayMatchingEngine {
 	}//end hasAcceptedReceipt()
 
 	/**
-	 * Load the lines of every receipt that has an id.
+	 * Load the lines of every accepted receipt.
+	 *
+	 * Draft and rejected receipts do not count as delivered, so their lines
+	 * are left out of the match.
 	 *
 	 * SvcReceiptLine carries the same quantity field names as
 	 * GoodsReceiptLine (see ServiceReceiptService), so the line matcher
@@ -566,7 +573,8 @@ class ThreeWayMatchingEngine {
 			[$lineSchema, $receiptKey] = self::RECEIPT_LINES[$schema];
 			foreach ($rows as $row) {
 				$receiptId = $this->idOf(row: $row);
-				if ($receiptId !== '') {
+				$accepted = in_array((string)($row['statusCode'] ?? ''), self::ACCEPTED_RECEIPT_STATUSES[$schema], true);
+				if ($receiptId !== '' && $accepted === true) {
 					array_push(
 						$lines,
 						...$this->findAll(
@@ -665,8 +673,9 @@ class ThreeWayMatchingEngine {
 	}//end hasDelta()
 
 	/**
-	 * The match status of the strongest outcome: a price failure beats a
-	 * quantity failure, which beats a delta within tolerance.
+	 * The match status of the strongest outcome: a line without a PO line,
+	 * then a line without a receipt line, then a price failure, then a
+	 * quantity failure, then a delta within tolerance.
 	 *
 	 * @param array<string,bool> $outcomes The outcomes seen.
 	 *
@@ -783,6 +792,10 @@ class ThreeWayMatchingEngine {
 			$this->vatDelta(invoiceLine: $invoiceLine, poLine: $poLine),
 		];
 
+		if ($grnLine === null) {
+			$deltas[] = $this->missingGrnLineDelta();
+		}
+
 		// Delivery-date delta in days (only meaningful when a GRN is
 		// present, since the PO's expected date is what the receipt
 		// matched against).
@@ -809,6 +822,22 @@ class ThreeWayMatchingEngine {
 		];
 
 	}//end missingPoLineDelta()
+
+	/**
+	 * The presence marker of an invoice line without an accepted receipt line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function missingGrnLineDelta(): array {
+		return [
+			'field' => 'grn_line',
+			'expected' => 'received',
+			'actual' => 'missing',
+			'deltaCents' => null,
+			'deltaPercentage' => null,
+		];
+
+	}//end missingGrnLineDelta()
 
 	/**
 	 * Unit-price delta in cents (integer arithmetic), with its percentage in
@@ -854,7 +883,8 @@ class ThreeWayMatchingEngine {
 	/**
 	 * The quantity the invoice line is held against, in thousandths: the GRN
 	 * accepted (else received) quantity, falling back to the PO ordered
-	 * quantity when the GRN line is absent (services case).
+	 * quantity when the GRN line is absent. The missing receipt line is
+	 * reported by its own presence marker.
 	 *
 	 * @param array<string,mixed>      $poLine  Matched PO line.
 	 * @param array<string,mixed>|null $grnLine Matched GRN line (or null).

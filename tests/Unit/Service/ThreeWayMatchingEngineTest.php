@@ -654,4 +654,212 @@ final class ThreeWayMatchingEngineTest extends TestCase {
 		$engine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-missing');
 
 	}//end testEvaluateMatchMasksUnknownInvoiceAsNotFound()
+
+	/**
+	 * A two-line PO with an accepted receipt for line 1, for the line-routing tests.
+	 *
+	 * @param array<int,array<string,mixed>> $invoiceLines The invoice lines.
+	 * @param array<int,array<string,mixed>> $grns         Extra goods receipts.
+	 * @param array<int,array<string,mixed>> $grnLines     Extra goods receipt lines.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private function twoLineData(array $invoiceLines, array $grns=[], array $grnLines=[]): array {
+		return [
+			'SupplierInvoice' => [
+				[
+					'id' => 'inv-1',
+					'invoiceNumber' => 'INV-001',
+					'supplierId' => 'vendor-001',
+					'statusCode' => 'received',
+					'administrationId' => 'adm-1',
+					'matchedPoIds' => ['po-1'],
+					'lines' => $invoiceLines,
+				],
+			],
+			'PurchaseOrder' => [
+				['id' => 'po-1', 'poNumber' => 'PO-001', 'supplierId' => 'vendor-001', 'administrationId' => 'adm-1'],
+			],
+			'PurchaseOrderLine' => [
+				[
+					'id' => 'pol-1',
+					'poId' => 'po-1',
+					'lineNumber' => 1,
+					'productOrServiceCode' => 'COFFEE-PRO-1',
+					'quantityOrdered' => 10.0,
+					'unitPrice' => 200000,
+					'vatRate' => 2100,
+					'vatAmount' => 420000,
+					'administrationId' => 'adm-1',
+				],
+				[
+					'id' => 'pol-2',
+					'poId' => 'po-1',
+					'lineNumber' => 2,
+					'productOrServiceCode' => 'FILTER-1',
+					'quantityOrdered' => 5.0,
+					'unitPrice' => 1000,
+					'vatRate' => 2100,
+					'vatAmount' => 1050,
+					'administrationId' => 'adm-1',
+				],
+			],
+			'GoodsReceiptNote' => array_merge(
+				[['id' => 'grn-1', 'poIds' => ['po-1'], 'statusCode' => 'accepted', 'administrationId' => 'adm-1']],
+				$grns
+			),
+			'GoodsReceiptLine' => array_merge(
+				[
+					[
+						'id' => 'grl-1',
+						'grnId' => 'grn-1',
+						'poLineId' => 'pol-1',
+						'quantityReceived' => 10.0,
+						'quantityAccepted' => 10.0,
+						'administrationId' => 'adm-1',
+					],
+				],
+				$grnLines
+			),
+			'ThreeWayMatch' => [],
+		];
+
+	}//end twoLineData()
+
+	/**
+	 * The first invoice line, matching pol-1 exactly.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function coffeeLine(): array {
+		return [
+			'lineNumber' => 1,
+			'productCode' => 'COFFEE-PRO-1',
+			'quantity' => 10.0,
+			'unitPrice' => 200000,
+			'lineExtension' => 2000000,
+			'vatRate' => 0.21,
+		];
+
+	}//end coffeeLine()
+
+	/**
+	 * The second invoice line, matching pol-2 exactly.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function filterLine(): array {
+		return ['lineNumber' => 2, 'productCode' => 'FILTER-1', 'quantity' => 5.0, 'unitPrice' => 1000, 'lineExtension' => 5000, 'vatRate' => 0.21];
+
+	}//end filterLine()
+
+	/**
+	 * An invoice line with no PO line routes the invoice to exception_missing_po.
+	 *
+	 * @return void
+	 */
+	public function testInvoiceLineWithoutPoLineRoutesToMissingPo(): void {
+		$saved = [];
+		$extra = [
+			'lineNumber' => 9,
+			'productCode' => 'NOT-ORDERED',
+			'quantity' => 1.0,
+			'unitPrice' => 99999,
+			'lineExtension' => 99999,
+			'vatRate' => 0.21,
+		];
+		$engine = $this->buildEngine(data: $this->twoLineData(invoiceLines: [$this->coffeeLine(), $extra]), saved: $saved);
+
+		$result = $engine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-1');
+
+		self::assertSame(ThreeWayMatchingEngine::STATUS_EXCEPTION_MISSING_PO, $result['matchStatus']);
+		$invoiceSaves = array_values(array_filter($saved, static fn ($r) => $r['schema'] === 'SupplierInvoice'));
+		self::assertSame('exception', end($invoiceSaves)['object']['statusCode']);
+
+	}//end testInvoiceLineWithoutPoLineRoutesToMissingPo()
+
+	/**
+	 * An invoice line whose PO line has no receipt line routes to exception_missing_grn.
+	 *
+	 * @return void
+	 */
+	public function testInvoiceLineWithoutReceiptLineRoutesToMissingGrn(): void {
+		$saved = [];
+		$engine = $this->buildEngine(data: $this->twoLineData(invoiceLines: [$this->coffeeLine(), $this->filterLine()]), saved: $saved);
+
+		$result = $engine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-1');
+
+		self::assertSame(ThreeWayMatchingEngine::STATUS_EXCEPTION_MISSING_GRN, $result['matchStatus']);
+		$fields = array_column($result['divergenceDetails'], 'field');
+		self::assertContains('grn_line', $fields);
+
+	}//end testInvoiceLineWithoutReceiptLineRoutesToMissingGrn()
+
+	/**
+	 * Lines of a draft or rejected receipt do not count as received.
+	 *
+	 * @return void
+	 */
+	public function testDraftAndRejectedReceiptLinesAreIgnored(): void {
+		$saved = [];
+		$data = $this->twoLineData(
+			invoiceLines: [$this->coffeeLine(), $this->filterLine()],
+			grns: [
+				['id' => 'grn-2', 'poIds' => ['po-1'], 'statusCode' => 'draft', 'administrationId' => 'adm-1'],
+				['id' => 'grn-3', 'poIds' => ['po-1'], 'statusCode' => 'rejected', 'administrationId' => 'adm-1'],
+			],
+			grnLines: [
+				[
+					'id' => 'grl-2',
+					'grnId' => 'grn-2',
+					'poLineId' => 'pol-2',
+					'quantityReceived' => 5.0,
+					'quantityAccepted' => 5.0,
+					'administrationId' => 'adm-1',
+				],
+				[
+					'id' => 'grl-3',
+					'grnId' => 'grn-3',
+					'poLineId' => 'pol-2',
+					'quantityReceived' => 5.0,
+					'quantityAccepted' => 5.0,
+					'administrationId' => 'adm-1',
+				],
+			]
+		);
+		$engine = $this->buildEngine(data: $data, saved: $saved);
+
+		$result = $engine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-1');
+
+		self::assertSame(ThreeWayMatchingEngine::STATUS_EXCEPTION_MISSING_GRN, $result['matchStatus']);
+
+	}//end testDraftAndRejectedReceiptLinesAreIgnored()
+
+	/**
+	 * With an accepted receipt line for every invoice line the match still auto-approves.
+	 *
+	 * @return void
+	 */
+	public function testEveryLineReceivedStillAutoApproves(): void {
+		$saved = [];
+		$data = $this->twoLineData(
+			invoiceLines: [$this->coffeeLine(), $this->filterLine()],
+			grnLines: [
+				[
+					'id' => 'grl-2',
+					'grnId' => 'grn-1',
+					'poLineId' => 'pol-2',
+					'quantityReceived' => 5.0,
+					'quantityAccepted' => 5.0,
+					'administrationId' => 'adm-1',
+				],
+			]
+		);
+		$engine = $this->buildEngine(data: $data, saved: $saved);
+
+		$result = $engine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-1');
+
+		self::assertSame(ThreeWayMatchingEngine::STATUS_AUTO_APPROVED, $result['matchStatus']);
+
+	}//end testEveryLineReceivedStillAutoApproves()
 }//end class
