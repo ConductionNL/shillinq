@@ -480,7 +480,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ledgerDoubleEntryBalance(array $o): bool {
-		return self::balanced($o);
+		return GlTransactionLines::balanced(transaction: $o);
 
 	}//end ledgerDoubleEntryBalance()
 
@@ -1014,54 +1014,6 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * GLTransaction helpers.
 	 * ----------------------------------------------------------------------
 	 */
-
-	/**
-	 * The GLLine children of a transaction (injected under `lines`), normalised to a
-	 * list of arrays.
-	 *
-	 * @param array<string, mixed> $o The GL transaction.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function lines(array $o): array {
-		$lines = ($o['lines'] ?? []);
-		if (is_array($lines) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($lines, 'is_array'));
-	}//end lines()
-
-	/**
-	 * Double-entry balance: Σ debit-side amounts = Σ credit-side amounts (to the
-	 * cent). Fail-closed on no lines or an unsided line.
-	 *
-	 * @param array<string, mixed> $o The GL transaction, with `lines`.
-	 *
-	 * @return bool
-	 */
-	private static function balanced(array $o): bool {
-		$lines = self::lines($o);
-		if ($lines === []) {
-			return false;
-		}
-
-		$debit = 0;
-		$credit = 0;
-		foreach ($lines as $line) {
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			$side = (string)($line['side'] ?? '');
-			if ($side === 'debit') {
-				$debit += $cents;
-			} elseif ($side === 'credit') {
-				$credit += $cents;
-			} else {
-				return false;
-			}
-		}
-
-		return $debit === $credit;
-	}//end balanced()
 
 	/**
 	 * An electronic payment posting carries a matching bank / payment-service

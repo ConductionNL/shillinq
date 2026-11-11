@@ -207,7 +207,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function glDoubleEntryBalanced(array $o): bool {
-		return self::balanced($o);
+		return GlTransactionLines::balanced(transaction: $o);
 
 	}//end glDoubleEntryBalanced()
 
@@ -220,7 +220,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function glTrialBalanceReconciles(array $o): bool {
-		return self::balanced($o);
+		return GlTransactionLines::balanced(transaction: $o);
 
 	}//end glTrialBalanceReconciles()
 
@@ -947,54 +947,6 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	}//end isBool()
 
 	/**
-	 * The GLLine children of the transaction (injected under `lines`), normalised
-	 * to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The GL transaction.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function lines(array $o): array {
-		$lines = ($o['lines'] ?? []);
-		if (is_array($lines) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($lines, 'is_array'));
-	}//end lines()
-
-	/**
-	 * Double-entry balance: Σ debit-side amounts = Σ credit-side amounts (to the
-	 * cent). Fail-closed on no lines.
-	 *
-	 * @param array<string, mixed> $o The GL transaction, with `lines`.
-	 *
-	 * @return bool
-	 */
-	private static function balanced(array $o): bool {
-		$lines = self::lines($o);
-		if ($lines === []) {
-			return false;
-		}
-
-		$debit = 0;
-		$credit = 0;
-		foreach ($lines as $line) {
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			$side = (string)($line['side'] ?? '');
-			if ($side === 'debit') {
-				$debit += $cents;
-			} elseif ($side === 'credit') {
-				$credit += $cents;
-			} else {
-				return false;
-			}
-		}
-
-		return $debit === $credit;
-	}//end balanced()
-
-	/**
 	 * Completeness + timeliness: at least two lines (each accounted + sided +
 	 * non-zero) and a posting date present.
 	 *
@@ -1003,7 +955,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function completeAndDated(array $o): bool {
-		$lines = self::lines($o);
+		$lines = GlTransactionLines::of(transaction: $o);
 		if (count($lines) < 2) {
 			return false;
 		}
@@ -1134,7 +1086,7 @@ final class LedgerIntegrityChecks implements CheckProvider {
 			return false;
 		}
 
-		$lines = self::lines($o);
+		$lines = GlTransactionLines::of(transaction: $o);
 		if ($lines === []) {
 			return false;
 		}
