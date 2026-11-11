@@ -1,0 +1,204 @@
+{
+    "b2b-table": {
+        "invoiceId": "inv-1",
+        "principal": 8400.0,
+        "calculation": {
+            "scale1_0_2500": 375.0,
+            "scale2_2500_5000": 250.0,
+            "scale3_5000_10000": 170.0,
+            "scale4_10000_200000": 0.0,
+            "scale5_200000plus": 0.0,
+            "total": 795.0,
+            "minimum": 40.0,
+            "maximum": 6775.0,
+            "applied": 795.0,
+            "vatOffsettable": true,
+            "vatPercentage": 0.0,
+            "vatAmount": 0.0,
+            "appliedInclVat": 795.0
+        },
+        "statutoryRente": {
+            "rate": 0.1015,
+            "type": "COMMERCIAL_INTEREST_B2_B_6_119_A_BW",
+            "ingangsdatum": "2026-05-30",
+            "calculatedOn": "2026-06-21",
+            "days": 22,
+            "amount": 51.39,
+            "periods": [
+                {
+                    "van": "2026-05-30",
+                    "tot": "2026-06-21",
+                    "days": 22,
+                    "rate": 0.1015,
+                    "amount": 51.39
+                }
+            ]
+        },
+        "partyType": "B2B",
+        "totalDue": 9246.39,
+        "administrationId": "adm-1"
+    },
+    "b2c-boundary": {
+        "invoiceId": "inv-2",
+        "principal": 10000.0,
+        "calculation": {
+            "scale1_0_2500": 375.0,
+            "scale2_2500_5000": 250.0,
+            "scale3_5000_10000": 250.0,
+            "scale4_10000_200000": 0.0,
+            "scale5_200000plus": 0.0,
+            "total": 875.0,
+            "minimum": 40.0,
+            "maximum": 6775.0,
+            "applied": 875.0,
+            "vatOffsettable": true,
+            "vatPercentage": 0.0,
+            "vatAmount": 0.0,
+            "appliedInclVat": 875.0
+        },
+        "statutoryRente": {
+            "rate": 0.04,
+            "type": "STATUTORY_INTEREST_B2_C_6_119_BW",
+            "ingangsdatum": "2025-12-17",
+            "calculatedOn": "2026-01-16",
+            "days": 30,
+            "amount": 41.1,
+            "periods": [
+                {
+                    "van": "2025-12-17",
+                    "tot": "2026-01-01",
+                    "days": 15,
+                    "rate": 0.06,
+                    "amount": 24.66
+                },
+                {
+                    "van": "2026-01-01",
+                    "tot": "2026-01-16",
+                    "days": 15,
+                    "rate": 0.04,
+                    "amount": 16.44
+                }
+            ]
+        },
+        "partyType": "B2C",
+        "totalDue": 10916.1,
+        "administrationId": "adm-1"
+    },
+    "b2c-override-vat": {
+        "invoiceId": "inv-3",
+        "principal": 820.0,
+        "calculation": {
+            "scale1_0_2500": 123.0,
+            "scale2_2500_5000": 0.0,
+            "scale3_5000_10000": 0.0,
+            "scale4_10000_200000": 0.0,
+            "scale5_200000plus": 0.0,
+            "total": 123.0,
+            "minimum": 40.0,
+            "maximum": 6775.0,
+            "applied": 123.0,
+            "vatOffsettable": false,
+            "vatPercentage": 0.21,
+            "vatAmount": 25.83,
+            "appliedInclVat": 148.83
+        },
+        "statutoryRente": {
+            "rate": 0.07,
+            "type": "STATUTORY_INTEREST_B2_C_6_119_BW",
+            "ingangsdatum": "2026-05-30",
+            "calculatedOn": "2026-06-30",
+            "days": 31,
+            "amount": 4.88,
+            "periods": [
+                {
+                    "van": "2026-05-30",
+                    "tot": "2026-06-30",
+                    "days": 31,
+                    "rate": 0.07,
+                    "amount": 4.88
+                }
+            ]
+        },
+        "partyType": "B2C",
+        "totalDue": 973.71,
+        "administrationId": "adm-2"
+    },
+    "government-b2b-override": {
+        "invoiceId": "inv-4",
+        "principal": 250000.0,
+        "calculation": {
+            "scale1_0_2500": 375.0,
+            "scale2_2500_5000": 250.0,
+            "scale3_5000_10000": 250.0,
+            "scale4_10000_200000": 1900.0,
+            "scale5_200000plus": 250.0,
+            "total": 3025.0,
+            "minimum": 40.0,
+            "maximum": 6775.0,
+            "applied": 3025.0,
+            "vatOffsettable": true,
+            "vatPercentage": 0.0,
+            "vatAmount": 0.0,
+            "appliedInclVat": 3025.0
+        },
+        "statutoryRente": {
+            "rate": 0.12,
+            "type": "COMMERCIAL_INTEREST_B2_B_6_119_A_BW",
+            "ingangsdatum": "2024-11-01",
+            "calculatedOn": "2026-02-01",
+            "days": 457,
+            "amount": 37561.64,
+            "periods": [
+                {
+                    "van": "2024-11-01",
+                    "tot": "2026-02-01",
+                    "days": 457,
+                    "rate": 0.12,
+                    "amount": 37561.64
+                }
+            ]
+        },
+        "partyType": "GOVERNMENT",
+        "totalDue": 290586.64,
+        "administrationId": "adm-2"
+    },
+    "same-day": {
+        "invoiceId": "inv-5",
+        "principal": 0.0,
+        "calculation": {
+            "scale1_0_2500": 0.0,
+            "scale2_2500_5000": 0.0,
+            "scale3_5000_10000": 0.0,
+            "scale4_10000_200000": 0.0,
+            "scale5_200000plus": 0.0,
+            "total": 0.0,
+            "minimum": 40.0,
+            "maximum": 6775.0,
+            "applied": 40.0,
+            "vatOffsettable": true,
+            "vatPercentage": 0.0,
+            "vatAmount": 0.0,
+            "appliedInclVat": 40.0
+        },
+        "statutoryRente": {
+            "rate": 0.1015,
+            "type": "COMMERCIAL_INTEREST_B2_B_6_119_A_BW",
+            "ingangsdatum": "2026-03-01",
+            "calculatedOn": "2026-03-01",
+            "days": 0,
+            "amount": 0.0,
+            "periods": [
+                {
+                    "van": "2026-03-01",
+                    "tot": "2026-03-01",
+                    "days": 0,
+                    "rate": 0.1015,
+                    "amount": 0.0
+                }
+            ]
+        },
+        "partyType": "B2B",
+        "totalDue": 40.0,
+        "administrationId": "adm-1"
+    }
+}

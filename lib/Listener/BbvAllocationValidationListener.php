@@ -185,27 +185,56 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * @return string|null
 	 */
 	private function mappingRefusal(array $data, string $self): ?string {
-		$administrationId = (string)($data['administrationId'] ?? '');
-		$account = trim((string)($data['glAccountNumber'] ?? ''));
-		if ($account === '') {
+		if (trim((string)($data['glAccountNumber'] ?? '')) === '') {
 			return null;
 		}
 
-		$accounts = $this->others(
-			schema: 'Account',
-			filters: ['administrationId' => $administrationId, 'accountNumber' => $account],
-			self: ''
-		);
-		if ($accounts === []) {
+		if ($this->mappedAccountExists(data: $data) === false) {
 			return self::MESSAGE_UNKNOWN_ACCOUNT;
 		}
 
+		if ($this->allocatedTotal(data: $data, self: $self) > self::MAX_ALLOCATION) {
+			return self::MESSAGE_OVER_ALLOCATED;
+		}
+
+		return null;
+	}//end mappingRefusal()
+
+	/**
+	 * Whether the mapping's GL account exists in its administration.
+	 *
+	 * @param array<string, mixed> $data The mapping as it would be saved.
+	 *
+	 * @return bool
+	 */
+	private function mappedAccountExists(array $data): bool {
+		$accounts = $this->others(
+			schema: 'Account',
+			filters: [
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'accountNumber' => trim((string)($data['glAccountNumber'] ?? '')),
+			],
+			self: ''
+		);
+		return $accounts !== [];
+	}//end mappedAccountExists()
+
+	/**
+	 * The mapping's allocation plus that of every other mapping of the same
+	 * account and fiscal year in its administration.
+	 *
+	 * @param array<string, mixed> $data The mapping as it would be saved.
+	 * @param string               $self Its id, empty on create.
+	 *
+	 * @return float
+	 */
+	private function allocatedTotal(array $data, string $self): float {
 		$total = (float)($data['allocationPercentage'] ?? 0);
 		$siblings = $this->others(
 			schema: 'BudgetBBVMapping',
 			filters: [
-				'administrationId' => $administrationId,
-				'glAccountNumber' => $account,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'glAccountNumber' => trim((string)($data['glAccountNumber'] ?? '')),
 				'fiscalYear' => ($data['fiscalYear'] ?? null),
 			],
 			self: $self
@@ -214,12 +243,8 @@ class BbvAllocationValidationListener implements IEventListener {
 			$total += (float)($sibling['allocationPercentage'] ?? 0);
 		}
 
-		if ($total > self::MAX_ALLOCATION) {
-			return self::MESSAGE_OVER_ALLOCATED;
-		}
-
-		return null;
-	}//end mappingRefusal()
+		return $total;
+	}//end allocatedTotal()
 
 	/**
 	 * The rows matching the filters, except the record itself.

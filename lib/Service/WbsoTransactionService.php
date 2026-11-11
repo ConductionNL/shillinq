@@ -94,34 +94,71 @@ class WbsoTransactionService {
 		return array_values(
 			array_filter(
 				$transactions,
-				static function (array $row) use ($filters): bool {
-					if (isset($filters['status']) === true && $filters['status'] !== ''
-						&& (string)($row['status'] ?? '') !== (string)$filters['status']
-					) {
-						return false;
-					}
-
-					if (isset($filters['type']) === true && $filters['type'] !== ''
-						&& (string)($row['transactionType'] ?? '') !== (string)$filters['type']
-					) {
-						return false;
-					}
-
-					$date = (string)($row['transactionDate'] ?? '');
-					if (isset($filters['dateFrom']) === true && $filters['dateFrom'] !== '' && $date < (string)$filters['dateFrom']) {
-						return false;
-					}
-
-					if (isset($filters['dateTo']) === true && $filters['dateTo'] !== '' && $date > (string)$filters['dateTo']) {
-						return false;
-					}
-
-					return true;
-				}
+				static fn (array $row): bool => self::matchesTransactionFilters(row: $row, filters: $filters)
 			)
 		);
 
 	}//end listTransactions()
+
+	/**
+	 * Whether a transaction passes the status, type and date filters that are
+	 * set.
+	 *
+	 * @param array<string,mixed> $row     The Transaction record.
+	 * @param array<string,mixed> $filters The list filters.
+	 *
+	 * @return bool
+	 */
+	private static function matchesTransactionFilters(array $row, array $filters): bool {
+		$status = self::activeFilter(filters: $filters, key: 'status');
+		if ($status !== null && (string)($row['status'] ?? '') !== $status) {
+			return false;
+		}
+
+		$type = self::activeFilter(filters: $filters, key: 'type');
+		if ($type !== null && (string)($row['transactionType'] ?? '') !== $type) {
+			return false;
+		}
+
+		return self::withinDateFilters(row: $row, filters: $filters);
+	}//end matchesTransactionFilters()
+
+	/**
+	 * Whether the transaction date lies inside the dateFrom / dateTo filters
+	 * that are set.
+	 *
+	 * @param array<string,mixed> $row     The Transaction record.
+	 * @param array<string,mixed> $filters The list filters.
+	 *
+	 * @return bool
+	 */
+	private static function withinDateFilters(array $row, array $filters): bool {
+		$date = (string)($row['transactionDate'] ?? '');
+
+		$from = self::activeFilter(filters: $filters, key: 'dateFrom');
+		if ($from !== null && $date < $from) {
+			return false;
+		}
+
+		$to = self::activeFilter(filters: $filters, key: 'dateTo');
+		return ($to === null || $date <= $to);
+	}//end withinDateFilters()
+
+	/**
+	 * A filter's value as text, or null when it is not set or empty.
+	 *
+	 * @param array<string,mixed> $filters The list filters.
+	 * @param string              $key     The filter name.
+	 *
+	 * @return string|null
+	 */
+	private static function activeFilter(array $filters, string $key): ?string {
+		if (isset($filters[$key]) === false || $filters[$key] === '') {
+			return null;
+		}
+
+		return (string)$filters[$key];
+	}//end activeFilter()
 
 	/**
 	 * Fetch a single transaction by id within an administration scope.

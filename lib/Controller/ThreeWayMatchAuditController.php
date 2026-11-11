@@ -141,47 +141,16 @@ class ThreeWayMatchAuditController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function ledger(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$invoiceId = $this->scopeParam(name: 'invoiceId');
-		if ($invoiceId === '') {
-			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		$scope = $this->auditScope();
+		if ($scope instanceof JSONResponse) {
+			return $scope;
 		}
 
 		try {
-			$bundle = $this->loadBundle(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId
-			);
-			if ($bundle === null) {
-				return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$ledger = $this->auditExportService->buildLedger(bundle: $bundle);
+			return $this->ledgerFor(scope: $scope);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ThreeWayMatchAuditController: failed to build ledger',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(['error' => 'Could not load audit trail'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
-
-		return new JSONResponse($ledger, Http::STATUS_OK);
+			return $this->ledgerFailure(scope: $scope, failure: $e);
+		}
 	}//end ledger()
 
 	/**
@@ -200,50 +169,25 @@ class ThreeWayMatchAuditController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function export(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$invoiceId = $this->scopeParam(name: 'invoiceId');
-		if ($invoiceId === '') {
-			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		$scope = $this->auditScope();
+		if ($scope instanceof JSONResponse) {
+			return $scope;
 		}
 
 		try {
-			$envelope = $this->auditExportService->generateAuditPackage(
-				administrationId: $administrationId,
-				invoiceId:        $invoiceId
-			);
+			$envelope = $this->auditPackage(scope: $scope);
 		} catch (\RuntimeException $e) {
 			return $this->mapRuntimeException(exception: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ThreeWayMatchAuditController: failed to export audit package',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(['error' => 'Could not export audit package'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->exportFailure(scope: $scope, failure: $e);
 		}
 
 		// Strip the local zipPath from the response — the path is a
 		// server-only handle so the file can be streamed by a follow-up
 		// download endpoint or handed to docudesk; exposing the FS path
 		// would leak the temp-dir layout.
-		$payload = $envelope;
-		unset($payload['zipPath']);
-		return new JSONResponse($payload, Http::STATUS_OK);
+		unset($envelope['zipPath']);
+		return new JSONResponse($envelope, Http::STATUS_OK);
 	}//end export()
 
 	/**
@@ -253,9 +197,7 @@ class ThreeWayMatchAuditController extends Controller {
 	 * controller surfaces a 404 so cross-tenant probes never leak the
 	 * existence of an invoice from another administration.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $invoiceId SupplierInvoice id.
-	 *
+	 * @param ThreeWayAuditScope $scope The administration and invoice.
 	 * @return array{
 	 *     invoice:array<string,mixed>,
 	 *     purchaseOrders:array<int,array<string,mixed>>,
@@ -263,76 +205,20 @@ class ThreeWayMatchAuditController extends Controller {
 	 *     threeWayMatches:array<int,array<string,mixed>>
 	 * }|null
 	 */
-	private function loadBundle(string $administrationId, string $invoiceId): ?array {
-		$invoice = $this->findOne(
-			schema: self::SCHEMA_SUPPLIER_INVOICE,
-			filters: [
-				'id' => $invoiceId,
-				'administrationId' => $administrationId,
-			]
-		);
+	private function loadBundle(ThreeWayAuditScope $scope): ?array {
+		$invoice = $this->findInvoice(scope: $scope);
 		if ($invoice === null) {
 			return null;
 		}
 
-		$matches = $this->findAll(
-			schema: self::SCHEMA_THREE_WAY_MATCH,
-			filters: [
-				'invoiceId' => $invoiceId,
-				'administrationId' => $administrationId,
-			]
-		);
-
-		$poIds = [];
-		$grnIds = [];
-		foreach ($matches as $match) {
-			foreach ((array)($match['matchedPoIds'] ?? []) as $poId) {
-				$value = trim((string)$poId);
-				if ($value !== '' && in_array($value, $poIds, true) === false) {
-					$poIds[] = $value;
-				}
-			}
-
-			foreach ((array)($match['matchedGrnIds'] ?? []) as $grnId) {
-				$value = trim((string)$grnId);
-				if ($value !== '' && in_array($value, $grnIds, true) === false) {
-					$grnIds[] = $value;
-				}
-			}
-		}
-
-		$purchaseOrders = [];
-		foreach ($poIds as $poId) {
-			$purchaseOrder = $this->findOne(
-				schema: self::SCHEMA_PURCHASE_ORDER,
-				filters: [
-					'id' => $poId,
-					'administrationId' => $administrationId,
-				]
-			);
-			if ($purchaseOrder !== null) {
-				$purchaseOrders[] = $purchaseOrder;
-			}
-		}
-
-		$goodsReceiptNotes = [];
-		foreach ($grnIds as $grnId) {
-			$grn = $this->findOne(
-				schema: self::SCHEMA_GOODS_RECEIPT_NOTE,
-				filters: [
-					'id' => $grnId,
-					'administrationId' => $administrationId,
-				]
-			);
-			if ($grn !== null) {
-				$goodsReceiptNotes[] = $grn;
-			}
-		}
+		$matches = $this->findMatches(scope: $scope);
+		$poFilters = $scope->filtersFor(ids: self::linkedIds(matches: $matches, field: 'matchedPoIds'));
+		$grnFilters = $scope->filtersFor(ids: self::linkedIds(matches: $matches, field: 'matchedGrnIds'));
 
 		return [
 			'invoice' => $invoice,
-			'purchaseOrders' => $purchaseOrders,
-			'goodsReceiptNotes' => $goodsReceiptNotes,
+			'purchaseOrders' => $this->findEach(schema: self::SCHEMA_PURCHASE_ORDER, filters: $poFilters),
+			'goodsReceiptNotes' => $this->findEach(schema: self::SCHEMA_GOODS_RECEIPT_NOTE, filters: $grnFilters),
 			'threeWayMatches' => $matches,
 		];
 
@@ -383,11 +269,7 @@ class ThreeWayMatchAuditController extends Controller {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister('shillinq')
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
+			$rows = $this->query(schema: $schema, filters: $filters);
 		} catch (\Throwable $exception) {
 			$this->logger->error(
 				'ThreeWayMatchAuditController: failed to query OpenRegister',
@@ -396,14 +278,7 @@ class ThreeWayMatchAuditController extends Controller {
 			return [];
 		}
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
+		return self::recordsOnly(rows: $rows);
 	}//end findAll()
 
 	/**
@@ -421,4 +296,246 @@ class ThreeWayMatchAuditController extends Controller {
 
 		return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
 	}//end mapRuntimeException()
+
+	/**
+	 * The scope of an audit-trail request: 401 without a user, 400 without a
+	 * well-formed administration or invoice, a masked 404 for an
+	 * administration the caller may not access.
+	 *
+	 * @return ThreeWayAuditScope|JSONResponse
+	 */
+	private function auditScope(): ThreeWayAuditScope|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->invoiceScope(administrationId: $administrationId);
+
+	}//end auditScope()
+
+	/**
+	 * The scope with the request's invoice; 400 without a well-formed one.
+	 *
+	 * @param string $administrationId The checked administration.
+	 *
+	 * @return ThreeWayAuditScope|JSONResponse
+	 */
+	private function invoiceScope(string $administrationId): ThreeWayAuditScope|JSONResponse {
+		$invoiceId = $this->scopeParam(name: 'invoiceId');
+		if ($invoiceId === '') {
+			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return new ThreeWayAuditScope(administrationId: $administrationId, invoiceId: $invoiceId);
+
+	}//end invoiceScope()
+
+	/**
+	 * Log a failed ledger build and answer a 500 without its details.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function ledgerFailure(ThreeWayAuditScope $scope, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'ThreeWayMatchAuditController: failed to build ledger',
+			self::failureContext(scope: $scope, failure: $failure)
+		);
+		return new JSONResponse(['error' => 'Could not load audit trail'], Http::STATUS_INTERNAL_SERVER_ERROR);
+
+	}//end ledgerFailure()
+
+	/**
+	 * Log a failed export and answer a 500 without its details.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function exportFailure(ThreeWayAuditScope $scope, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'ThreeWayMatchAuditController: failed to export audit package',
+			self::failureContext(scope: $scope, failure: $failure)
+		);
+		return new JSONResponse(['error' => 'Could not export audit package'], Http::STATUS_INTERNAL_SERVER_ERROR);
+
+	}//end exportFailure()
+
+	/**
+	 * The log context of a failure.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function failureContext(ThreeWayAuditScope $scope, \Throwable $failure): array {
+		return [
+			'administrationId' => $scope->administrationId,
+			'invoiceId' => $scope->invoiceId,
+			'exception' => $failure->getMessage(),
+		];
+
+	}//end failureContext()
+
+	/**
+	 * The distinct, trimmed, non-empty ids a field of the matches links to, in
+	 * first-seen order.
+	 *
+	 * @param array<int,array<string,mixed>> $matches The three-way matches.
+	 * @param string $field matchedPoIds or matchedGrnIds.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function linkedIds(array $matches, string $field): array {
+		$ids = [];
+		foreach ($matches as $match) {
+			foreach ((array)($match[$field] ?? []) as $id) {
+				$value = trim((string)$id);
+				if ($value !== '' && in_array($value, $ids, true) === false) {
+					$ids[] = $value;
+				}
+			}
+		}
+
+		return $ids;
+
+	}//end linkedIds()
+
+	/**
+	 * The first record for each set of filters, skipping the sets without one.
+	 *
+	 * @param string $schema The schema.
+	 * @param array<int,array<string,string>> $filters One filter set per record.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findEach(string $schema, array $filters): array {
+		$records = [];
+		foreach ($filters as $filter) {
+			$record = $this->findOne(schema: $schema, filters: $filter);
+			if ($record !== null) {
+				$records[] = $record;
+			}
+		}
+
+		return $records;
+
+	}//end findEach()
+
+	/**
+	 * The rows that are records.
+	 *
+	 * @param iterable<mixed> $rows The rows.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function recordsOnly(iterable $rows): array {
+		$result = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$result[] = $row;
+			}
+		}
+
+		return $result;
+
+	}//end recordsOnly()
+
+	/**
+	 * The ledger of the invoice's bundle; a 404 without the invoice.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 *
+	 * @return JSONResponse
+	 */
+	private function ledgerFor(ThreeWayAuditScope $scope): JSONResponse {
+		$bundle = $this->loadBundle(scope: $scope);
+		if ($bundle === null) {
+			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return new JSONResponse($this->auditExportService->buildLedger(bundle: $bundle), Http::STATUS_OK);
+
+	}//end ledgerFor()
+
+	/**
+	 * Generate the audit package of the invoice.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 *
+	 * @return array<string,mixed> The package envelope.
+	 */
+	private function auditPackage(ThreeWayAuditScope $scope): array {
+		return $this->auditExportService->generateAuditPackage(
+			administrationId: $scope->administrationId,
+			invoiceId:        $scope->invoiceId
+		);
+
+	}//end auditPackage()
+
+	/**
+	 * The supplier invoice within the administration.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findInvoice(ThreeWayAuditScope $scope): ?array {
+		return $this->findOne(
+			schema: self::SCHEMA_SUPPLIER_INVOICE,
+			filters: [
+				'id' => $scope->invoiceId,
+				'administrationId' => $scope->administrationId,
+			]
+		);
+
+	}//end findInvoice()
+
+	/**
+	 * The three-way matches of the invoice within the administration.
+	 *
+	 * @param ThreeWayAuditScope $scope The scope.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findMatches(ThreeWayAuditScope $scope): array {
+		return $this->findAll(
+			schema: self::SCHEMA_THREE_WAY_MATCH,
+			filters: [
+				'invoiceId' => $scope->invoiceId,
+				'administrationId' => $scope->administrationId,
+			]
+		);
+
+	}//end findMatches()
+
+	/**
+	 * Query a schema of the shillinq register.
+	 *
+	 * @param string $schema The schema.
+	 * @param array<string,mixed> $filters The filters.
+	 *
+	 * @return iterable<mixed>
+	 */
+	private function query(string $schema, array $filters): iterable {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $objectService
+			->setRegister('shillinq')
+			->setSchema($schema)
+			->findAll(['filters' => $filters]);
+
+	}//end query()
 }//end class

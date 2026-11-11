@@ -466,4 +466,59 @@ class VatPreconditionGuardTest extends TestCase {
 			}//end findAll()
 		};
 	}//end buildFailingObjectServiceStub()
+
+	/**
+	 * Characterisation: missing GL accounts log one warning with both ids.
+	 *
+	 * @return void
+	 */
+	public function testMissingVatGlAccountsLogsTheBlock(): void {
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(vatGlAccounts: [], lines: [], overrides: [])
+		);
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->logger->expects($this->once())->method('warning')->with(
+			'VatPreconditionGuard: VAT GL accounts not configured — blocking issuance',
+			['administrationId' => 'adm-1', 'invoiceId' => 'inv-7']
+		);
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->validate(invoiceId: 'inv-7', administrationId: 'adm-1'));
+
+	}//end testMissingVatGlAccountsLogsTheBlock()
+
+	/**
+	 * Characterisation: only the FIRST rejected line is logged, with its
+	 * defaults applied (category product, rate 21, sequence 0 when absent).
+	 *
+	 * @return void
+	 */
+	public function testFirstRejectedLineIsLoggedWithItsFields(): void {
+		$lines = [
+			['invoiceId' => 'inv-8', 'lineSequence' => 1, 'serviceCategory' => 'product', 'vatRate' => 21],
+			['invoiceId' => 'inv-8', 'serviceCategory' => 'exempt'],
+			['invoiceId' => 'inv-8', 'lineSequence' => 3, 'serviceCategory' => 'service', 'vatRate' => 6],
+		];
+		$this->wireObjectService(
+			store: $this->buildObjectServiceStub(
+				vatGlAccounts: [$this->defaultGlAccounts()],
+				lines: $lines,
+				overrides: []
+			)
+		);
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		$this->logger->expects($this->once())->method('warning')->with(
+			'VatPreconditionGuard: line rejected — serviceCategory does not permit vatRate',
+			[
+				'invoiceId' => 'inv-8',
+				'lineSequence' => 0,
+				'serviceCategory' => 'exempt',
+				'vatRate' => 21,
+			]
+		);
+
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->validate(invoiceId: 'inv-8', administrationId: 'adm-1'));
+
+	}//end testFirstRejectedLineIsLoggedWithItsFields()
 }//end class

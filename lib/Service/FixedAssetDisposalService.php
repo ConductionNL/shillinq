@@ -65,6 +65,9 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 /**
  * Posts the closing GL journal for a disposed FixedAsset (REQ-GLTAX-001).
  *
+ * @phpstan-type DisposalJournal array{header: array<string,mixed>, lines: array<int,array<string,mixed>>, bookValue: float, gain: float, loss: float}
+ * @psalm-type DisposalJournal = array{header: array<string,mixed>, lines: array<int,array<string,mixed>>, bookValue: float, gain: float, loss: float}
+ *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
 class FixedAssetDisposalService {
@@ -119,6 +122,49 @@ class FixedAssetDisposalService {
 	private const JOURNAL_CODE = 'FA-DISP';
 
 	/**
+	 * The emitter's field names, each with the spellings it accepts in order
+	 * (the shipped schema's first, the demo seed's second; design D4).
+	 *
+	 * @var array<string,list<string>>
+	 */
+	private const FIELD_ALIASES = [
+		'acquisitionCost' => ['acquisitionCost', 'purchaseCost'],
+		'assetAccountNumber' => ['assetAccountNumber', 'capitalizationAccountNumber'],
+		'accumulatedDepAccountNumber' => ['accumulatedDepAccountNumber', 'accumulatedDepreciationAccountNumber'],
+		'disposalProceeds' => ['disposalProceeds', 'salvageProceeds'],
+	];
+
+	/**
+	 * The aliased fields that hold amounts rather than codes.
+	 *
+	 * @var array<string,true>
+	 */
+	private const NUMERIC_FIELDS = [
+		'acquisitionCost' => true,
+		'disposalProceeds' => true,
+	];
+
+	/**
+	 * The result when the asset carries no acquisition cost.
+	 *
+	 * @var array{posted:bool,message:string}
+	 */
+	private const SKIPPED_WITHOUT_COST = [
+		'posted' => false,
+		'message' => 'FixedAsset carries no acquisition cost; disposal posting skipped',
+	];
+
+	/**
+	 * The result when the disposal produced no GL lines.
+	 *
+	 * @var array{posted:bool,message:string}
+	 */
+	private const SKIPPED_WITHOUT_LINES = [
+		'posted' => false,
+		'message' => 'Disposal produced no GL lines; nothing to post',
+	];
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param IAppConfig $appConfig App config (account codes + register slug).
@@ -164,65 +210,100 @@ class FixedAssetDisposalService {
 		$this->assertAccess(administrationId: $administrationId);
 
 		$normalised = $this->normaliseAsset(asset: $asset);
-
-		$costCents = (int)round(((float)($normalised['acquisitionCost'] ?? 0)) * 100.0);
-		if ($costCents <= 0) {
-			return [
-				'posted' => false,
-				'message' => 'FixedAsset carries no acquisition cost; disposal posting skipped',
-			];
+		if ((int)round(((float)($normalised['acquisitionCost'] ?? 0)) * 100.0) <= 0) {
+			return self::SKIPPED_WITHOUT_COST;
 		}
 
-		$disposal = [
-			'disposalDate' => $this->disposalDate(asset: $normalised),
-			'disposalAccountingTreatment' => (string)($normalised['disposalAccountingTreatment'] ?? 'sale'),
-			'disposalProceeds' => (float)($normalised['disposalProceeds'] ?? 0),
-		];
+		$run = new AssetDisposalRun();
+		$run->administrationId = $administrationId;
+		$run->asset            = $normalised;
+		$run->disposal         = $this->disposalTerms(asset: $normalised);
+		$run->toReserve        = $this->gainGoesToReserve(asset: $normalised);
 
-		$bookValue = $this->postedBookValue(
-			administrationId: $administrationId,
-			asset: $normalised
-		);
+		return $this->postJournal(run: $run);
 
-		$toReserve = ($this->reserves !== null && filter_var(($normalised['disposalGainToReserve'] ?? false), FILTER_VALIDATE_BOOLEAN) === true);
-		$accounts = $this->accounts();
-		if ($toReserve === true) {
-			$accounts['gainAccountNumber'] = $this->reserves->reserveAccount();
-		}
+	}//end postDisposalJournal()
 
-		$journal = $this->emitter->emit(
-			asset: $normalised,
-			disposal: $disposal,
-			accounts: $accounts,
-			bookValue: $bookValue
-		);
-
-		$lines = $journal['lines'];
-		if ($this->emitter->linesBalance(lines: $lines) === false) {
+	/**
+	 * Emit, check and persist the disposal journal, forming the reserve when
+	 * the gain goes to one.
+	 *
+	 * @param AssetDisposalRun $run The disposal being posted.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 *
+	 * @throws \RuntimeException When the lines do not balance or persistence fails.
+	 */
+	private function postJournal(AssetDisposalRun $run): array {
+		$journal = $this->emitJournal(run: $run);
+		if ($this->emitter->linesBalance(lines: $journal['lines']) === false) {
 			throw new RuntimeException('FixedAssetDisposalService: GL balance invariant failed for the disposal journal');
 		}
 
-		if ($lines === []) {
-			return [
-				'posted' => false,
-				'message' => 'Disposal produced no GL lines; nothing to post',
-			];
+		if ($journal['lines'] === []) {
+			return self::SKIPPED_WITHOUT_LINES;
 		}
 
-		$result = $this->persist(
-			administrationId: $administrationId,
-			journal: $journal,
-			asset: $normalised
-		);
+		$result = $this->persist(run: $run, journal: $journal);
 
 		// REQ-AMCR-004: the gain went to the reserve account; keep it as a reserve for a replacement.
-		if ($toReserve === true && (float)($journal['gain'] ?? 0) > 0) {
-			$result['reserve'] = $this->reserves->form(asset: $normalised, gain: (float)$journal['gain'], formedOn: $disposal['disposalDate']);
+		if ($run->toReserve === true && (float)($journal['gain'] ?? 0) > 0) {
+			$result['reserve'] = $this->reserves?->form(asset: $run->asset, gain: (float)$journal['gain'], formedOn: $run->disposal['disposalDate']);
 		}
 
 		return $result;
+	}//end postJournal()
 
-	}//end postDisposalJournal()
+	/**
+	 * The disposal journal for the asset, valued at the posted book value and
+	 * booked on the configured (or reserve) accounts.
+	 *
+	 * @param AssetDisposalRun $run The disposal being posted.
+	 *
+	 * @return DisposalJournal The emitter's journal.
+	 */
+	private function emitJournal(AssetDisposalRun $run): array {
+		$bookValue = $this->postedBookValue(administrationId: $run->administrationId, asset: $run->asset);
+
+		$accounts = $this->accounts();
+		if ($run->toReserve === true) {
+			$accounts['gainAccountNumber'] = $this->reserves?->reserveAccount();
+		}
+
+		return $this->emitter->emit(
+			asset: $run->asset,
+			disposal: $run->disposal,
+			accounts: $accounts,
+			bookValue: $bookValue
+		);
+	}//end emitJournal()
+
+	/**
+	 * Whether the asset asks for its gain to form a reinvestment reserve, and
+	 * reserves are wired.
+	 *
+	 * @param array<string,mixed> $asset The normalised FixedAsset record.
+	 *
+	 * @return bool
+	 */
+	private function gainGoesToReserve(array $asset): bool {
+		return $this->reserves !== null && filter_var(($asset['disposalGainToReserve'] ?? false), FILTER_VALIDATE_BOOLEAN) === true;
+	}//end gainGoesToReserve()
+
+	/**
+	 * Disposal date, accounting treatment and proceeds of the asset.
+	 *
+	 * @param array<string,mixed> $asset The normalised FixedAsset record.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function disposalTerms(array $asset): array {
+		return [
+			'disposalDate' => $this->disposalDate(asset: $asset),
+			'disposalAccountingTreatment' => (string)($asset['disposalAccountingTreatment'] ?? 'sale'),
+			'disposalProceeds' => (float)($asset['disposalProceeds'] ?? 0),
+		];
+	}//end disposalTerms()
 
 	/**
 	 * Normalise a persisted FixedAsset into the shape the emitter reads (design D4).
@@ -248,38 +329,34 @@ class FixedAssetDisposalService {
 			]
 		);
 
-		$normalised['acquisitionCost'] = $this->firstNumeric(
-			candidates: [
-				($asset['acquisitionCost'] ?? null),
-				($asset['purchaseCost'] ?? null),
-			]
-		);
-
-		$normalised['assetAccountNumber'] = $this->firstNonEmpty(
-			candidates: [
-				($asset['assetAccountNumber'] ?? null),
-				($asset['capitalizationAccountNumber'] ?? null),
-			]
-		);
-
-		$normalised['accumulatedDepAccountNumber'] = $this->firstNonEmpty(
-			candidates: [
-				($asset['accumulatedDepAccountNumber'] ?? null),
-				($asset['accumulatedDepreciationAccountNumber'] ?? null),
-			]
-		);
-
-		$normalised['disposalProceeds'] = $this->firstNumeric(
-			candidates: [
-				($asset['disposalProceeds'] ?? null),
-				($asset['salvageProceeds'] ?? null),
-			]
-		);
-
+		$normalised = array_merge($normalised, $this->aliasedFields(asset: $asset));
 		$normalised['currency'] = $this->firstNonEmpty(candidates: [($asset['currency'] ?? null), 'EUR']);
 
 		return $normalised;
 	}//end normaliseAsset()
+
+	/**
+	 * The value of every aliased field: the first numeric spelling for an
+	 * amount, the first non-empty one for a code.
+	 *
+	 * @param array<string,mixed> $asset The raw FixedAsset record.
+	 *
+	 * @return array<string,float|string> Field => value, in FIELD_ALIASES order.
+	 */
+	private function aliasedFields(array $asset): array {
+		$fields = [];
+		foreach (self::FIELD_ALIASES as $field => $aliases) {
+			$candidates = array_map(static fn (string $alias): mixed => ($asset[$alias] ?? null), $aliases);
+			if (isset(self::NUMERIC_FIELDS[$field]) === true) {
+				$fields[$field] = $this->firstNumeric(candidates: $candidates);
+				continue;
+			}
+
+			$fields[$field] = $this->firstNonEmpty(candidates: $candidates);
+		}
+
+		return $fields;
+	}//end aliasedFields()
 
 	/**
 	 * Resolve the disposal date from the record (design D4).
@@ -320,56 +397,12 @@ class FixedAssetDisposalService {
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
 	 */
 	private function postedBookValue(string $administrationId, array $asset): ?float {
-		$assetId = (string)($asset['id'] ?? (($asset['@self'] ?? [])['id'] ?? ''));
-		$assetNumber = (string)($asset['assetNumber'] ?? '');
-
-		$rows = [];
-		if ($assetId !== '') {
-			$rows = $this->findAll(
-				schema: self::SCHEMA_SCHEDULE,
-				filters: [
-					'assetRef' => $assetId,
-					'administrationId' => $administrationId,
-				]
-			);
-		}
-
-		if ($rows === [] && $assetNumber !== '') {
-			$rows = $this->findAll(
-				schema: self::SCHEMA_SCHEDULE,
-				filters: [
-					'assetNumber' => $assetNumber,
-					'administrationId' => $administrationId,
-				]
-			);
-		}
-
+		$rows = $this->scheduleRows(administrationId: $administrationId, asset: $asset);
 		if ($rows === []) {
 			return null;
 		}
 
-		$disposalDate = $this->disposalDate(asset: $asset);
-		$bestDate = '';
-		$accumulatedCents = null;
-		foreach ($rows as $row) {
-			$status = (string)($row['status'] ?? '');
-			if ($status === 'planned') {
-				continue;
-			}
-
-			$periodEnd = substr((string)($row['periodEndDate'] ?? ''), 0, 10);
-			if ($periodEnd !== '' && $periodEnd > $disposalDate) {
-				continue;
-			}
-
-			if ($periodEnd < $bestDate) {
-				continue;
-			}
-
-			$bestDate = $periodEnd;
-			$accumulatedCents = (int)round(((float)($row['accumulatedDepreciation'] ?? 0)) * 100.0);
-		}
-
+		$accumulatedCents = $this->accumulatedCentsAt(rows: $rows, disposalDate: $this->disposalDate(asset: $asset));
 		if ($accumulatedCents === null) {
 			return null;
 		}
@@ -381,77 +414,91 @@ class FixedAssetDisposalService {
 	}//end postedBookValue()
 
 	/**
+	 * The asset's depreciation schedule rows in the tenant: by asset id, else
+	 * by asset number.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $asset            The normalised FixedAsset record.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function scheduleRows(string $administrationId, array $asset): array {
+		$assetId     = (string)($asset['id'] ?? (($asset['@self'] ?? [])['id'] ?? ''));
+		$assetNumber = (string)($asset['assetNumber'] ?? '');
+
+		$rows = [];
+		if ($assetId !== '') {
+			$rows = $this->findAll(schema: self::SCHEMA_SCHEDULE, filters: ['assetRef' => $assetId, 'administrationId' => $administrationId]);
+		}
+
+		if ($rows === [] && $assetNumber !== '') {
+			$rows = $this->findAll(schema: self::SCHEMA_SCHEDULE, filters: ['assetNumber' => $assetNumber, 'administrationId' => $administrationId]);
+		}
+
+		return $rows;
+	}//end scheduleRows()
+
+	/**
+	 * Accumulated depreciation, in cents, of the latest posted row ending on
+	 * or before the disposal date (a later row on the same date wins); null
+	 * when no row qualifies.
+	 *
+	 * @param array<int,array<string,mixed>> $rows         Schedule rows.
+	 * @param string                         $disposalDate Disposal date (Y-m-d).
+	 *
+	 * @return int|null
+	 */
+	private function accumulatedCentsAt(array $rows, string $disposalDate): ?int {
+		$bestDate         = '';
+		$accumulatedCents = null;
+		foreach ($rows as $row) {
+			$periodEnd = substr((string)($row['periodEndDate'] ?? ''), 0, 10);
+			if ($this->isPostedBy(row: $row, disposalDate: $disposalDate) === false || $periodEnd < $bestDate) {
+				continue;
+			}
+
+			$bestDate         = $periodEnd;
+			$accumulatedCents = (int)round(((float)($row['accumulatedDepreciation'] ?? 0)) * 100.0);
+		}
+
+		return $accumulatedCents;
+	}//end accumulatedCentsAt()
+
+	/**
+	 * Whether a schedule row is posted (not planned) and does not end after
+	 * the disposal date.
+	 *
+	 * @param array<string,mixed> $row          One schedule row.
+	 * @param string              $disposalDate Disposal date (Y-m-d).
+	 *
+	 * @return bool
+	 */
+	private function isPostedBy(array $row, string $disposalDate): bool {
+		$periodEnd = substr((string)($row['periodEndDate'] ?? ''), 0, 10);
+		return (string)($row['status'] ?? '') !== 'planned'
+			&& ($periodEnd === '' || $periodEnd <= $disposalDate);
+	}//end isPostedBy()
+
+	/**
 	 * Persist the emitted header + lines through the real ObjectService API.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param array<string,mixed> $journal The emitter's payload.
-	 * @param array<string,mixed> $asset The normalised FixedAsset record.
+	 * @param AssetDisposalRun    $run     The disposal being posted.
+	 * @param DisposalJournal $journal The emitter's payload.
 	 *
 	 * @return array<string,mixed> Result envelope.
 	 *
 	 * @throws \RuntimeException When persistence fails.
 	 */
-	private function persist(string $administrationId, array $journal, array $asset): array {
+	private function persist(AssetDisposalRun $run, array $journal): array {
 		$header = $journal['header'];
-		$lines = $journal['lines'];
-		$assetNumber = (string)($asset['assetNumber'] ?? '');
-		$postingDate = (string)($header['postingDate'] ?? date('Y-m-d'));
-		$periodId = $this->periodId(postingDate: $postingDate);
-
-		$transaction = [
-			'transactionNumber' => self::JOURNAL_CODE . '-' . $assetNumber,
-			'postingDate' => $postingDate,
-			'periodId' => $periodId,
-			'currency' => (string)($header['currency'] ?? 'EUR'),
-			'description' => (string)($header['description'] ?? 'Fixed asset disposal'),
-			'sourceReference' => (string)($header['sourceReference'] ?? ''),
-			'state' => 'draft',
-			'administrationId' => $administrationId,
-		];
+		$run->postingDate = (string)($header['postingDate'] ?? date('Y-m-d'));
+		$run->periodId    = $this->periodId(postingDate: $run->postingDate);
+		$transaction      = $this->transactionFor(run: $run, header: $header);
 
 		try {
-			$saved = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
-			$headerId = (string)($saved['id'] ?? (($saved['@self'] ?? [])['id'] ?? ''));
-
-			$lineNumber = 1;
-			$persistedLines = [];
-			$debitCents = 0;
-			foreach ($lines as $line) {
-				$amountCents = (int)round(((float)($line['amount'] ?? 0)) * 100.0);
-				if ((string)($line['side'] ?? '') === 'debit') {
-					$debitCents += $amountCents;
-				}
-
-				$persistedLines[] = $this->saveOnSchema(
-					schema: self::SCHEMA_GL_LINE,
-					data: [
-						'transactionId' => $headerId,
-						'lineNumber' => $lineNumber,
-						'accountNumber' => (string)($line['accountNumber'] ?? ''),
-						'side' => (string)($line['side'] ?? ''),
-						'amount' => round(((float)($line['amount'] ?? 0)), 2),
-						'currency' => (string)($header['currency'] ?? 'EUR'),
-						'description' => (string)($line['description'] ?? ''),
-						'subLedgerType' => 'fixed-asset',
-						'subLedgerRef' => $assetNumber,
-						'costCenterCode' => (string)($asset['costCenterCode'] ?? ''),
-						'periodId' => $periodId,
-						'administrationId' => $administrationId,
-					]
-				);
-				$lineNumber++;
-			}//end foreach
-
-			return [
-				'posted' => true,
-				'transaction' => $saved,
-				'lines' => $persistedLines,
-				'bookValue' => (float)($journal['bookValue'] ?? 0),
-				'gain' => (float)($journal['gain'] ?? 0),
-				'loss' => (float)($journal['loss'] ?? 0),
-				'amountCents' => $debitCents,
-				'message' => 'Fixed-asset disposal journal materialised',
-			];
+			$run->transaction = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
+			$this->persistLines(run: $run, journal: $journal);
+			return $this->postedResult(run: $run, journal: $journal);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'FixedAssetDisposalService: failed to persist the disposal journal',
@@ -464,6 +511,87 @@ class FixedAssetDisposalService {
 		}//end try
 
 	}//end persist()
+
+	/**
+	 * The draft GLTransaction header of the disposal.
+	 *
+	 * @param AssetDisposalRun    $run    The disposal being posted.
+	 * @param array<string,mixed> $header The emitter's header.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function transactionFor(AssetDisposalRun $run, array $header): array {
+		return [
+			'transactionNumber' => self::JOURNAL_CODE . '-' . (string)($run->asset['assetNumber'] ?? ''),
+			'postingDate' => $run->postingDate,
+			'periodId' => $run->periodId,
+			'currency' => (string)($header['currency'] ?? 'EUR'),
+			'description' => (string)($header['description'] ?? 'Fixed asset disposal'),
+			'sourceReference' => (string)($header['sourceReference'] ?? ''),
+			'state' => 'draft',
+			'administrationId' => $run->administrationId,
+		];
+	}//end transactionFor()
+
+	/**
+	 * Save every emitted line, numbered from 1, under the saved header.
+	 *
+	 * @param AssetDisposalRun    $run     The disposal being posted.
+	 * @param DisposalJournal $journal The emitter's payload.
+	 *
+	 * @return void
+	 */
+	private function persistLines(AssetDisposalRun $run, array $journal): void {
+		$headerId = (string)($run->transaction['id'] ?? (($run->transaction['@self'] ?? [])['id'] ?? ''));
+		$currency = (string)($journal['header']['currency'] ?? 'EUR');
+		foreach (array_values($journal['lines']) as $index => $line) {
+			$run->lines[] = $this->saveOnSchema(
+				schema: self::SCHEMA_GL_LINE,
+				data: [
+					'transactionId' => $headerId,
+					'lineNumber' => ($index + 1),
+					'accountNumber' => (string)($line['accountNumber'] ?? ''),
+					'side' => (string)($line['side'] ?? ''),
+					'amount' => round(((float)($line['amount'] ?? 0)), 2),
+					'currency' => $currency,
+					'description' => (string)($line['description'] ?? ''),
+					'subLedgerType' => 'fixed-asset',
+					'subLedgerRef' => (string)($run->asset['assetNumber'] ?? ''),
+					'costCenterCode' => (string)($run->asset['costCenterCode'] ?? ''),
+					'periodId' => $run->periodId,
+					'administrationId' => $run->administrationId,
+				]
+			);
+		}
+	}//end persistLines()
+
+	/**
+	 * The posted result envelope.
+	 *
+	 * @param AssetDisposalRun    $run     The posted disposal.
+	 * @param DisposalJournal $journal The emitter's payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function postedResult(AssetDisposalRun $run, array $journal): array {
+		$debitCents = 0;
+		foreach ($journal['lines'] as $line) {
+			if ((string)($line['side'] ?? '') === 'debit') {
+				$debitCents += (int)round(((float)($line['amount'] ?? 0)) * 100.0);
+			}
+		}
+
+		return [
+			'posted' => true,
+			'transaction' => $run->transaction,
+			'lines' => $run->lines,
+			'bookValue' => (float)($journal['bookValue'] ?? 0),
+			'gain' => (float)($journal['gain'] ?? 0),
+			'loss' => (float)($journal['loss'] ?? 0),
+			'amountCents' => $debitCents,
+			'message' => 'Fixed-asset disposal journal materialised',
+		];
+	}//end postedResult()
 
 	/**
 	 * Resolve the configured gain / loss / clearing accounts.

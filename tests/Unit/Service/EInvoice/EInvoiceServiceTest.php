@@ -413,4 +413,94 @@ final class EInvoiceServiceTest extends TestCase {
 		self::assertSame([], array_filter($saved, static fn (array $s): bool => ($s['schema'] === 'ARInvoice')));
 
 	}//end testUnknownParticipantFallsBackWithoutEmitting()
+	/**
+	 * The refusals before any save, in order, with their messages: no
+	 * administration, an inaccessible one (masked as not found), an unknown
+	 * invoice.
+	 *
+	 * @return void
+	 */
+	public function testRefusalsAndTheirMessages(): void {
+		$messages = [];
+		foreach ([['', '2026-0042'], ['adm-2', '2026-0042'], ['adm-1', 'nope']] as [$administrationId, $invoiceNumber]) {
+			$saved      = [];
+			$dispatcher = $this->createMock(IEventDispatcher::class);
+			$dispatcher->expects(self::never())->method('dispatch');
+			$service = $this->buildService(data: ['ARInvoice' => [$this->issuedInvoice()]], saved: $saved, dispatcher: $dispatcher);
+			try {
+				$service->sendEInvoice($administrationId, $invoiceNumber);
+				$messages[] = 'accepted';
+			} catch (RuntimeException $e) {
+				$messages[] = $e->getMessage();
+			}
+
+			self::assertSame([], $saved);
+		}
+
+		self::assertSame(['administrationId is required', 'ARInvoice not found', 'ARInvoice not found'], $messages);
+
+	}//end testRefusalsAndTheirMessages()
+
+	/**
+	 * A failed Peppol submit answers the PDF fallback with the extra warning,
+	 * saves nothing and emits nothing; a queued send answers its exact
+	 * envelope and saves the invoice with its provenance.
+	 *
+	 * @return void
+	 */
+	public function testSubmitFailureAndTheQueuedEnvelope(): void {
+		$saved      = [];
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects(self::never())->method('dispatch');
+		$service = $this->buildService(
+			data: ['ARInvoice' => [$this->issuedInvoice()]],
+			saved: $saved,
+			dispatcher: $dispatcher,
+			peppolPort: $this->stubPort('0106:00000000', true)
+		);
+
+		$failed = $service->sendEInvoice('adm-1', '2026-0042');
+		self::assertSame(['deliveryStatus', 'transmissionId', 'payloadFileUri', 'fallback', 'warnings'], array_keys($failed));
+		self::assertSame(['not-sent', null, null, true], array_slice(array_values($failed), 0, 4));
+		self::assertSame(
+			['field' => 'transmission', 'code' => 'peppol_send_failed', 'message' => 'Peppol transmission failed — falling back to PDF + email'],
+			end($failed['warnings'])
+		);
+		self::assertSame([], $saved);
+
+		$saved      = [];
+		$events     = [];
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatch')->willReturnCallback(
+			static function (string $name, Event $event) use (&$events): void {
+				$events[] = [$name, $event->getArguments()];
+			}
+		);
+		$service = $this->buildService(data: ['ARInvoice' => [$this->issuedInvoice()]], saved: $saved, dispatcher: $dispatcher);
+
+		$queued = $service->sendEInvoice('adm-1', '2026-0042');
+		$transmissionId = 'urn:uuid:' . substr(hash('sha256', '0106:00000000'), 0, 32);
+		self::assertSame(['queued', $transmissionId, false], [$queued['deliveryStatus'], $queued['transmissionId'], $queued['fallback']]);
+		self::assertMatchesRegularExpression('#^docudesk://file/[0-9a-f]{16}$#', (string)$queued['payloadFileUri']);
+		self::assertCount(1, $saved);
+		self::assertSame(['queued', $transmissionId, $queued['payloadFileUri'], '0106:00000000'], [$saved[0]['object']['deliveryStatus'], $saved[0]['object']['transmissionId'], $saved[0]['object']['payloadFileUri'], $saved[0]['object']['buyerPeppolParticipantId']]);
+		self::assertSame(
+			[
+				[
+					EInvoiceService::EVENT_OUTBOUND_REQUESTED,
+					[
+						'sourceApp' => 'shillinq',
+						'objectType' => 'ar-invoice',
+						'objectUri' => 'openregister://shillinq/ARInvoice/invoice-obj-1',
+						'recipientPeppolId' => '0106:00000000',
+						'documentType' => EInvoiceService::DOCUMENT_TYPE,
+						'payloadFileUri' => $queued['payloadFileUri'],
+						'administrationId' => 'adm-1',
+					],
+				],
+			],
+			$events
+		);
+
+	}//end testSubmitFailureAndTheQueuedEnvelope()
 }//end class

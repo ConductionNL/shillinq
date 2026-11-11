@@ -121,14 +121,43 @@ class BcfClaimService {
 	 * @return array<string,float> accountNumber => posted amount in currency units.
 	 */
 	private function compensableAmountsByAccount(string $administrationId, string $claimQuarter): array {
-		$register = $this->register();
+		$scope = new BcfClaimScope(
+			register: $this->register(),
+			administrationId: $administrationId,
+			claimQuarter: $claimQuarter
+		);
 
-		// Transactions that belong to this administration + quarter (REQ-BCF-012 scoping).
+		// No transactions for this administration+quarter → no lines can be in scope.
+		// Guard prevents the GLLine query from matching lines from other administrations
+		// when the transactionIds set is empty (CWE-284 / REQ-BCF-012).
+		$transactionIds = $this->quarterTransactionIds(scope: $scope);
+		if ($transactionIds === []) {
+			return [];
+		}
+
+		// Return currency-unit floats — the calculator re-converts to cents and
+		// applies the compensablePercentage weighting (REQ-BCF-002).
+		$byAccount = [];
+		foreach ($this->debitCentsByAccount(scope: $scope, transactionIds: $transactionIds) as $account => $cents) {
+			$byAccount[$account] = $this->calculator->fromCents(cents: $cents);
+		}
+
+		return $byAccount;
+	}//end compensableAmountsByAccount()
+
+	/**
+	 * The ids of the administration's GLTransactions in the quarter (REQ-BCF-012 scoping).
+	 *
+	 * @param BcfClaimScope $scope The claim scope.
+	 *
+	 * @return array<string,true> The transaction id set.
+	 */
+	private function quarterTransactionIds(BcfClaimScope $scope): array {
 		$transactions = $this->objectService
-			->setRegister($register)
+			->setRegister($scope->register)
 			->setSchema('GLTransaction')
 			->findAll(
-				['filters' => ['administrationId' => $administrationId, 'periodId' => $claimQuarter]]
+				['filters' => ['administrationId' => $scope->administrationId, 'periodId' => $scope->claimQuarter]]
 			);
 
 		$transactionIds = [];
@@ -139,42 +168,38 @@ class BcfClaimService {
 			}
 		}
 
-		// No transactions for this administration+quarter → no lines can be in scope.
-		// Guard prevents the GLLine query from matching lines from other administrations
-		// when the transactionIds set is empty (CWE-284 / REQ-BCF-012).
-		if ($transactionIds === []) {
-			return [];
-		}
+		return $transactionIds;
 
-		// GLLines for the quarter; cross-check the parent transaction is in scope.
+	}//end quarterTransactionIds()
+
+	/**
+	 * Sum the quarter's in-scope debit GLLines per account, in cents.
+	 *
+	 * GLLines are read for the quarter, then each is cross-checked against the
+	 * in-scope parent transactions.
+	 *
+	 * @param BcfClaimScope $scope The claim scope.
+	 * @param array<string,true> $transactionIds The in-scope transaction ids.
+	 *
+	 * @return array<string,int> accountNumber => posted cents.
+	 */
+	private function debitCentsByAccount(BcfClaimScope $scope, array $transactionIds): array {
 		$lines = $this->objectService
-			->setRegister($register)
+			->setRegister($scope->register)
 			->setSchema('GLLine')
-			->findAll(['filters' => ['periodId' => $claimQuarter]]);
+			->findAll(['filters' => ['periodId' => $scope->claimQuarter]]);
 
 		$centsByAccount = [];
 		foreach ($lines as $line) {
-			if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === false) {
-				continue;
+			if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === true) {
+				$account = (string)($line['accountNumber'] ?? '');
+				$centsByAccount[$account] = ($centsByAccount[$account] ?? 0) + $this->calculator->toCents(amount: ($line['amount'] ?? 0));
 			}
-
-			$account = (string)($line['accountNumber'] ?? '');
-			if (isset($centsByAccount[$account]) === false) {
-				$centsByAccount[$account] = 0;
-			}
-
-			$centsByAccount[$account] += $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-		}//end foreach
-
-		// Return currency-unit floats — the calculator re-converts to cents and
-		// applies the compensablePercentage weighting (REQ-BCF-002).
-		$byAccount = [];
-		foreach ($centsByAccount as $account => $cents) {
-			$byAccount[$account] = $this->calculator->fromCents(cents: $cents);
 		}
 
-		return $byAccount;
-	}//end compensableAmountsByAccount()
+		return $centsByAccount;
+
+	}//end debitCentsByAccount()
 
 	/**
 	 * Decide whether a GLLine counts toward the BCF compensable claim.

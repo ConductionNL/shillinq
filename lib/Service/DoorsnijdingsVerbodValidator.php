@@ -49,6 +49,14 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     verification of each branch.
  */
 class DoorsnijdingsVerbodValidator {
+
+	/**
+	 * The message of a duplication finding: amount, account, kostenplaats.
+	 *
+	 * @var string
+	 */
+	private const DUPLICATE_MESSAGE = 'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '
+		. 'allocation AND GL regular deduction. Resolve conflict before year-end close.';
 	/**
 	 * Construct the validator with OpenRegister's ObjectService injected
 	 * (ADR-083 rule 1).
@@ -87,44 +95,42 @@ class DoorsnijdingsVerbodValidator {
 	public function validateNoDuplication(string $administrationId, int $financialYear): array {
 		$allocations = $this->fetchExclusiveAllocations(administrationId: $administrationId, financialYear: $financialYear);
 		$glLines = $this->fetchGlDeductions(administrationId: $administrationId, financialYear: $financialYear);
-
 		$findings = $this->detectDuplicates(allocations: $allocations, glLines: $glLines);
-
 		if ($this->auditLogger !== null) {
-			$totalAmount = 0.0;
-			foreach ($findings as $finding) {
-				$totalAmount += (float)($finding['amount'] ?? 0);
-			}
+			$event = [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN,
+				'administrationId' => $administrationId,
+				'financialYear' => $financialYear,
+			];
+			$this->auditLogger->record(options: ($event + $this->checkRunOutcome(findings: $findings)));
+		}
 
-			if ($findings !== []) {
-				$auditReason = 'doorsnijdingsverbod_duplicate';
-			} else {
-				$auditReason = null;
-			}
-
-			$this->auditLogger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN,
-					'administrationId' => $administrationId,
-					'financialYear' => $financialYear,
-					'reason' => $auditReason,
-					'details' => [
-						'findings' => $findings,
-						'total_pairs' => count($findings),
-						'total_bedrag' => $totalAmount,
-						'blocking' => ($findings !== []),
-					],
-				]
-			);
-		}//end if
-
-		return [
-			'findings' => $findings,
-			'blocking' => ($findings !== []),
-			'total' => count($findings),
-		];
+		return ['findings' => $findings, 'blocking' => ($findings !== []), 'total' => count($findings)];
 
 	}//end validateNoDuplication()
+
+	/**
+	 * The reason and details of a check-run audit event (REQ-IBA-008).
+	 *
+	 * @param array<int,array<string,mixed>> $findings Duplication findings.
+	 *
+	 * @return array{reason: ?string, details: array<string,mixed>}
+	 */
+	private function checkRunOutcome(array $findings): array {
+		$reason = null;
+		if ($findings !== []) {
+			$reason = 'doorsnijdingsverbod_duplicate';
+		}
+
+		$totalAmount = 0.0;
+		foreach ($findings as $finding) {
+			$totalAmount += (float)($finding['amount'] ?? 0);
+		}
+
+		$details = ['findings' => $findings, 'total_pairs' => count($findings), 'total_bedrag' => $totalAmount, 'blocking' => ($findings !== [])];
+
+		return ['reason' => $reason, 'details' => $details];
+	}//end checkRunOutcome()
 
 	/**
 	 * Pure-logic duplication detection (REQ-IBA-004).
@@ -142,53 +148,82 @@ class DoorsnijdingsVerbodValidator {
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
 	 */
 	public function detectDuplicates(array $allocations, array $glLines): array {
-		$glPairs = [];
-		foreach ($glLines as $line) {
-			$account = (string)($line['accountNumber'] ?? ($line['generalLedgerAccount'] ?? ''));
-			$place = (string)($line['costCentre'] ?? '');
-			if ($account === '') {
-				continue;
-			}
-
-			$glPairs[$account . '|' . $place] = true;
-		}
-
+		$glPairs = $this->glPairs(glLines: $glLines);
 		$findings = [];
 		foreach ($allocations as $allocation) {
-			if (($allocation['excluding_in_profitdetermination'] ?? false) !== true) {
-				continue;
+			if ($this->duplicatesGl(allocation: $allocation, glPairs: $glPairs) === true) {
+				$findings[] = $this->duplicateFinding(allocation: $allocation);
 			}
-
-			$account = (string)($allocation['generalLedgerAccount'] ?? '');
-			$place = (string)($allocation['costCentre'] ?? '');
-			if ($account === '') {
-				continue;
-			}
-
-			if (isset($glPairs[$account . '|' . $place]) === true) {
-				$amount = (float)($allocation['amount'] ?? 0);
-				$placeText = '-';
-				if ($place !== '') {
-					$placeText = $place;
-				}
-
-				$findings[] = [
-					'generalLedgerAccount' => $account,
-					'costCentre' => $place,
-					'amount' => $amount,
-					'message' => sprintf(
-						'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '
-						. 'allocation AND GL regular deduction. Resolve conflict before year-end close.',
-						number_format($amount, 0, ',', '.'),
-						$account,
-						$placeText
-					),
-				];
-			}
-		}//end foreach
+		}
 
 		return $findings;
 	}//end detectDuplicates()
+
+	/**
+	 * The (grootboekrekening, kostenplaats) pairs present in the GL deduction lines.
+	 *
+	 * @param array<int,array<string,mixed>> $glLines GL deduction lines.
+	 *
+	 * @return array<string,true> "account|kostenplaats" => true.
+	 */
+	private function glPairs(array $glLines): array {
+		$glPairs = [];
+		foreach ($glLines as $line) {
+			$account = (string)($line['accountNumber'] ?? ($line['generalLedgerAccount'] ?? ''));
+			if ($account !== '') {
+				$glPairs[$account . '|' . (string)($line['costCentre'] ?? '')] = true;
+			}
+		}
+
+		return $glPairs;
+	}//end glPairs()
+
+	/**
+	 * Whether an exclusive allocation's pair is also deducted in the GL.
+	 *
+	 * @param array<string,mixed> $allocation One IBExpenseAllocation row.
+	 * @param array<string,true>  $glPairs    Pairs present in the GL.
+	 *
+	 * @return boolean
+	 */
+	private function duplicatesGl(array $allocation, array $glPairs): bool {
+		$account = (string)($allocation['generalLedgerAccount'] ?? '');
+
+		return ($allocation['excluding_in_profitdetermination'] ?? false) === true
+			&& $account !== ''
+			&& isset($glPairs[$account . '|' . (string)($allocation['costCentre'] ?? '')]) === true;
+	}//end duplicatesGl()
+
+	/**
+	 * The finding for a duplicated allocation.
+	 *
+	 * @param array<string,mixed> $allocation One IBExpenseAllocation row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function duplicateFinding(array $allocation): array {
+		$account = (string)($allocation['generalLedgerAccount'] ?? '');
+		$place = (string)($allocation['costCentre'] ?? '');
+		$amount = (float)($allocation['amount'] ?? 0);
+		$message = sprintf(self::DUPLICATE_MESSAGE, number_format($amount, 0, ',', '.'), $account, $this->placeLabel(place: $place));
+
+		return ['generalLedgerAccount' => $account, 'costCentre' => $place, 'amount' => $amount, 'message' => $message];
+	}//end duplicateFinding()
+
+	/**
+	 * A kostenplaats for a message: itself, or '-' when none.
+	 *
+	 * @param string $place The kostenplaats.
+	 *
+	 * @return string
+	 */
+	private function placeLabel(string $place): string {
+		if ($place === '') {
+			return '-';
+		}
+
+		return $place;
+	}//end placeLabel()
 
 	/**
 	 * Fetch the exclusive IBExpenseAllocation rows for an administration + year.

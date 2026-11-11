@@ -1,0 +1,1241 @@
+{
+ "milestone": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "milestone",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [],
+   "expenseIds": [
+    "exp-attacker-1"
+   ],
+   "meterReadingIds": [],
+   "rateCardId": null,
+   "retainerScheduleId": null,
+   "lineItemsByModel": {
+    "fixed_fee": {
+     "count": 1,
+     "totalCents": 50000
+    },
+    "expense": {
+     "count": 1,
+     "totalCents": 5000
+    }
+   },
+   "summary": {
+    "netAmount": 550,
+    "vatAmount": 115.5,
+    "grossAmount": 665.5,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 550,
+      "vat": 115.5,
+      "gross": 665.5
+     }
+    ]
+   },
+   "netAmount": 550,
+   "vatAmount": 115.5,
+   "grossAmount": 665.5,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "milestone",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [],
+     "expenseIds": [
+      "exp-attacker-1"
+     ],
+     "meterReadingIds": [],
+     "rateCardId": null,
+     "retainerScheduleId": null,
+     "lineItemsByModel": {
+      "fixed_fee": {
+       "count": 1,
+       "totalCents": 50000
+      },
+      "expense": {
+       "count": 1,
+       "totalCents": 5000
+      }
+     },
+     "summary": {
+      "netAmount": 550,
+      "vatAmount": 115.5,
+      "grossAmount": 665.5,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 550,
+        "vat": 115.5,
+        "gross": 665.5
+       }
+      ]
+     },
+     "netAmount": 550,
+     "vatAmount": 115.5,
+     "grossAmount": 665.5,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "fixed_fee",
+     "sourceId": "ms-attacker-1",
+     "description": "Attacker milestone",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 500,
+     "vatRate": 21,
+     "vatAmount": 105,
+     "modelSpecificFields": {
+      "milestoneId": "ms-attacker-1",
+      "milestoneCompletedAt": "2026-03-01",
+      "milestoneName": "Attacker milestone",
+      "milestoneBudget": 50000
+     },
+     "id": "billableinvoiceline-2"
+    },
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 2,
+     "sourceType": "expense",
+     "sourceId": "exp-attacker-1",
+     "description": "Attacker travel",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 50,
+     "vatRate": 21,
+     "vatAmount": 10.5,
+     "modelSpecificFields": null,
+     "id": "billableinvoiceline-3"
+    }
+   ]
+  }
+ },
+ "fixed_fee plain": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "fixed_fee",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [],
+   "expenseIds": [
+    "exp-attacker-1"
+   ],
+   "meterReadingIds": [],
+   "rateCardId": null,
+   "retainerScheduleId": null,
+   "lineItemsByModel": {
+    "fixed_fee": {
+     "count": 1,
+     "totalCents": 99999
+    },
+    "expense": {
+     "count": 1,
+     "totalCents": 5000
+    }
+   },
+   "summary": {
+    "netAmount": 1049.99,
+    "vatAmount": 220.5,
+    "grossAmount": 1270.49,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 1049.99,
+      "vat": 220.5,
+      "gross": 1270.49
+     }
+    ]
+   },
+   "netAmount": 1049.99,
+   "vatAmount": 220.5,
+   "grossAmount": 1270.49,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "fixed_fee",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [],
+     "expenseIds": [
+      "exp-attacker-1"
+     ],
+     "meterReadingIds": [],
+     "rateCardId": null,
+     "retainerScheduleId": null,
+     "lineItemsByModel": {
+      "fixed_fee": {
+       "count": 1,
+       "totalCents": 99999
+      },
+      "expense": {
+       "count": 1,
+       "totalCents": 5000
+      }
+     },
+     "summary": {
+      "netAmount": 1049.99,
+      "vatAmount": 220.5,
+      "grossAmount": 1270.49,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 1049.99,
+        "vat": 220.5,
+        "gross": 1270.49
+       }
+      ]
+     },
+     "netAmount": 1049.99,
+     "vatAmount": 220.5,
+     "grossAmount": 1270.49,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "fixed_fee",
+     "sourceId": null,
+     "description": "Fixed-fee engagement",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 999.99,
+     "vatRate": 21,
+     "vatAmount": 210,
+     "modelSpecificFields": {
+      "informationalHourCount": 0
+     },
+     "id": "billableinvoiceline-2"
+    },
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 2,
+     "sourceType": "expense",
+     "sourceId": "exp-attacker-1",
+     "description": "Attacker travel",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 50,
+     "vatRate": 21,
+     "vatAmount": 10.5,
+     "modelSpecificFields": null,
+     "id": "billableinvoiceline-3"
+    }
+   ]
+  }
+ },
+ "mixed notes": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "mixed",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [],
+   "expenseIds": [],
+   "meterReadingIds": [],
+   "rateCardId": null,
+   "retainerScheduleId": "ret-1",
+   "lineItemsByModel": {
+    "retainer_charge": {
+     "count": 1,
+     "totalCents": 200000
+    },
+    "fixed_fee": {
+     "count": 1,
+     "totalCents": 25000
+    }
+   },
+   "summary": {
+    "netAmount": 2250,
+    "vatAmount": 472.5,
+    "grossAmount": 2722.5,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 2250,
+      "vat": 472.5,
+      "gross": 2722.5
+     }
+    ]
+   },
+   "netAmount": 2250,
+   "vatAmount": 472.5,
+   "grossAmount": 2722.5,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": "Onboarding",
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "mixed",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [],
+     "expenseIds": [],
+     "meterReadingIds": [],
+     "rateCardId": null,
+     "retainerScheduleId": "ret-1",
+     "lineItemsByModel": {
+      "retainer_charge": {
+       "count": 1,
+       "totalCents": 200000
+      },
+      "fixed_fee": {
+       "count": 1,
+       "totalCents": 25000
+      }
+     },
+     "summary": {
+      "netAmount": 2250,
+      "vatAmount": 472.5,
+      "grossAmount": 2722.5,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 2250,
+        "vat": 472.5,
+        "gross": 2722.5
+       }
+      ]
+     },
+     "netAmount": 2250,
+     "vatAmount": 472.5,
+     "grossAmount": 2722.5,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": "Onboarding",
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "retainer_charge",
+     "sourceId": null,
+     "description": "Retainer — 2026-03",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 2000,
+     "vatRate": 21,
+     "vatAmount": 420,
+     "modelSpecificFields": {
+      "retainerMonth": "2026-03"
+     },
+     "id": "billableinvoiceline-2"
+    },
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 2,
+     "sourceType": "fixed_fee",
+     "sourceId": null,
+     "description": "Onboarding",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 250,
+     "vatRate": 21,
+     "vatAmount": 52.5,
+     "modelSpecificFields": {
+      "oneTime": true
+     },
+     "id": "billableinvoiceline-3"
+    }
+   ]
+  }
+ },
+ "t_and_m": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "t_and_m",
+   "customerId": "cust-1",
+   "projectId": "p-1",
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [
+    "ure-attacker-1"
+   ],
+   "expenseIds": [
+    "exp-attacker-1"
+   ],
+   "meterReadingIds": [],
+   "rateCardId": "rc-none",
+   "retainerScheduleId": null,
+   "lineItemsByModel": {
+    "time_entry": {
+     "count": 1,
+     "totalCents": 50000
+    },
+    "expense": {
+     "count": 1,
+     "totalCents": 5000
+    }
+   },
+   "summary": {
+    "netAmount": 550,
+    "vatAmount": 115.5,
+    "grossAmount": 665.5,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 550,
+      "vat": 115.5,
+      "gross": 665.5
+     }
+    ]
+   },
+   "netAmount": 550,
+   "vatAmount": 115.5,
+   "grossAmount": 665.5,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "t_and_m",
+     "customerId": "cust-1",
+     "projectId": "p-1",
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [
+      "ure-attacker-1"
+     ],
+     "expenseIds": [
+      "exp-attacker-1"
+     ],
+     "meterReadingIds": [],
+     "rateCardId": "rc-none",
+     "retainerScheduleId": null,
+     "lineItemsByModel": {
+      "time_entry": {
+       "count": 1,
+       "totalCents": 50000
+      },
+      "expense": {
+       "count": 1,
+       "totalCents": 5000
+      }
+     },
+     "summary": {
+      "netAmount": 550,
+      "vatAmount": 115.5,
+      "grossAmount": 665.5,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 550,
+        "vat": 115.5,
+        "gross": 665.5
+       }
+      ]
+     },
+     "netAmount": 550,
+     "vatAmount": 115.5,
+     "grossAmount": 665.5,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "time_entry",
+     "sourceId": "ure-attacker-1",
+     "description": "Consultant — 5 hours @ €100.00/hr",
+     "billableUnits": 5,
+     "rateApplied": {
+      "rateCents": 10000,
+      "currency": "EUR",
+      "rateCardVersion": "fallback",
+      "effectiveDate": "2026-03-10"
+     },
+     "markup": 0,
+     "costAmount": 500,
+     "vatRate": 21,
+     "vatAmount": 105,
+     "modelSpecificFields": {
+      "sourceIds": [
+       "ure-attacker-1"
+      ]
+     },
+     "id": "billableinvoiceline-2"
+    },
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 2,
+     "sourceType": "expense",
+     "sourceId": "exp-attacker-1",
+     "description": "Attacker travel",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 50,
+     "vatRate": 21,
+     "vatAmount": 10.5,
+     "modelSpecificFields": null,
+     "id": "billableinvoiceline-3"
+    }
+   ]
+  }
+ },
+ "retainer": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "retainer",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [
+    "ure-attacker-1"
+   ],
+   "expenseIds": [],
+   "meterReadingIds": [],
+   "rateCardId": null,
+   "retainerScheduleId": "ret-1",
+   "lineItemsByModel": {
+    "retainer_charge": {
+     "count": 1,
+     "totalCents": 200000
+    }
+   },
+   "summary": {
+    "netAmount": 2000,
+    "vatAmount": 420,
+    "grossAmount": 2420,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 2000,
+      "vat": 420,
+      "gross": 2420
+     }
+    ]
+   },
+   "netAmount": 2000,
+   "vatAmount": 420,
+   "grossAmount": 2420,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "retainer",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [
+      "ure-attacker-1"
+     ],
+     "expenseIds": [],
+     "meterReadingIds": [],
+     "rateCardId": null,
+     "retainerScheduleId": "ret-1",
+     "lineItemsByModel": {
+      "retainer_charge": {
+       "count": 1,
+       "totalCents": 200000
+      }
+     },
+     "summary": {
+      "netAmount": 2000,
+      "vatAmount": 420,
+      "grossAmount": 2420,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 2000,
+        "vat": 420,
+        "gross": 2420
+       }
+      ]
+     },
+     "netAmount": 2000,
+     "vatAmount": 420,
+     "grossAmount": 2420,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "retainer_charge",
+     "sourceId": null,
+     "description": "Retainer — 2026-03",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 2000,
+     "vatRate": 21,
+     "vatAmount": 420,
+     "modelSpecificFields": {
+      "retainerMonth": "2026-03"
+     },
+     "id": "billableinvoiceline-2"
+    }
+   ]
+  }
+ },
+ "usage": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "usage",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [],
+   "expenseIds": [],
+   "meterReadingIds": [
+    "mr-attacker-1"
+   ],
+   "rateCardId": null,
+   "retainerScheduleId": null,
+   "lineItemsByModel": {
+    "usage": {
+     "count": 1,
+     "totalCents": 500
+    }
+   },
+   "summary": {
+    "netAmount": 5,
+    "vatAmount": 1.05,
+    "grossAmount": 6.05,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 5,
+      "vat": 1.05,
+      "gross": 6.05
+     }
+    ]
+   },
+   "netAmount": 5,
+   "vatAmount": 1.05,
+   "grossAmount": 6.05,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "usage",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [],
+     "expenseIds": [],
+     "meterReadingIds": [
+      "mr-attacker-1"
+     ],
+     "rateCardId": null,
+     "retainerScheduleId": null,
+     "lineItemsByModel": {
+      "usage": {
+       "count": 1,
+       "totalCents": 500
+      }
+     },
+     "summary": {
+      "netAmount": 5,
+      "vatAmount": 1.05,
+      "grossAmount": 6.05,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 5,
+        "vat": 1.05,
+        "gross": 6.05
+       }
+      ]
+     },
+     "netAmount": 5,
+     "vatAmount": 1.05,
+     "grossAmount": 6.05,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "usage",
+     "sourceId": "mr-attacker-1",
+     "description": "Attacker plan — 100 calls",
+     "billableUnits": 100,
+     "rateApplied": {
+      "ratePlanId": "urp-attacker",
+      "ratingMethod": "flat",
+      "unitPriceCents": 5
+     },
+     "markup": 0,
+     "costAmount": 5,
+     "vatRate": 21,
+     "vatAmount": 1.05,
+     "modelSpecificFields": {
+      "meterId": "meter-attacker",
+      "resourceType": "api_calls",
+      "unit": "calls",
+      "periodStart": "2026-03-01",
+      "periodEnd": "2026-03-31"
+     },
+     "id": "billableinvoiceline-2"
+    }
+   ]
+  }
+ },
+ "mixed plain": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "mixed",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [
+    "ure-attacker-1"
+   ],
+   "expenseIds": [],
+   "meterReadingIds": [],
+   "rateCardId": null,
+   "retainerScheduleId": "ret-1",
+   "lineItemsByModel": {
+    "retainer_charge": {
+     "count": 1,
+     "totalCents": 200000
+    },
+    "fixed_fee": {
+     "count": 1,
+     "totalCents": 25000
+    }
+   },
+   "summary": {
+    "netAmount": 2250,
+    "vatAmount": 472.5,
+    "grossAmount": 2722.5,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 2250,
+      "vat": 472.5,
+      "gross": 2722.5
+     }
+    ]
+   },
+   "netAmount": 2250,
+   "vatAmount": 472.5,
+   "grossAmount": 2722.5,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "mixed",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [
+      "ure-attacker-1"
+     ],
+     "expenseIds": [],
+     "meterReadingIds": [],
+     "rateCardId": null,
+     "retainerScheduleId": "ret-1",
+     "lineItemsByModel": {
+      "retainer_charge": {
+       "count": 1,
+       "totalCents": 200000
+      },
+      "fixed_fee": {
+       "count": 1,
+       "totalCents": 25000
+      }
+     },
+     "summary": {
+      "netAmount": 2250,
+      "vatAmount": 472.5,
+      "grossAmount": 2722.5,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 2250,
+        "vat": 472.5,
+        "gross": 2722.5
+       }
+      ]
+     },
+     "netAmount": 2250,
+     "vatAmount": 472.5,
+     "grossAmount": 2722.5,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "retainer_charge",
+     "sourceId": null,
+     "description": "Retainer — 2026-03",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 2000,
+     "vatRate": 21,
+     "vatAmount": 420,
+     "modelSpecificFields": {
+      "retainerMonth": "2026-03"
+     },
+     "id": "billableinvoiceline-2"
+    },
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 2,
+     "sourceType": "fixed_fee",
+     "sourceId": null,
+     "description": "Setup fee",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 250,
+     "vatRate": 21,
+     "vatAmount": 52.5,
+     "modelSpecificFields": {
+      "oneTime": true
+     },
+     "id": "billableinvoiceline-3"
+    }
+   ]
+  }
+ },
+ "fixed_fee notes": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "fixed_fee",
+   "customerId": "cust-1",
+   "projectId": null,
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [
+    "ure-attacker-1"
+   ],
+   "expenseIds": [],
+   "meterReadingIds": [],
+   "rateCardId": null,
+   "retainerScheduleId": null,
+   "lineItemsByModel": {
+    "fixed_fee": {
+     "count": 1,
+     "totalCents": 150000
+    }
+   },
+   "summary": {
+    "netAmount": 1500,
+    "vatAmount": 315,
+    "grossAmount": 1815,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 1500,
+      "vat": 315,
+      "gross": 1815
+     }
+    ]
+   },
+   "netAmount": 1500,
+   "vatAmount": 315,
+   "grossAmount": 1815,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "draft",
+   "posted": false,
+   "obligationId": null,
+   "notes": "Website build",
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "fixed_fee",
+     "customerId": "cust-1",
+     "projectId": null,
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [
+      "ure-attacker-1"
+     ],
+     "expenseIds": [],
+     "meterReadingIds": [],
+     "rateCardId": null,
+     "retainerScheduleId": null,
+     "lineItemsByModel": {
+      "fixed_fee": {
+       "count": 1,
+       "totalCents": 150000
+      }
+     },
+     "summary": {
+      "netAmount": 1500,
+      "vatAmount": 315,
+      "grossAmount": 1815,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 1500,
+        "vat": 315,
+        "gross": 1815
+       }
+      ]
+     },
+     "netAmount": 1500,
+     "vatAmount": 315,
+     "grossAmount": 1815,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "draft",
+     "posted": false,
+     "obligationId": null,
+     "notes": "Website build",
+     "id": "billableinvoice-1"
+    }
+   ],
+   "BillableInvoiceLine": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceId": "billableinvoice-1",
+     "lineNumber": 1,
+     "sourceType": "fixed_fee",
+     "sourceId": null,
+     "description": "Website build",
+     "billableUnits": 1,
+     "rateApplied": null,
+     "markup": 0,
+     "costAmount": 1500,
+     "vatRate": 21,
+     "vatAmount": 315,
+     "modelSpecificFields": {
+      "informationalHourCount": 5
+     },
+     "id": "billableinvoiceline-2"
+    }
+   ]
+  }
+ },
+ "post": {
+  "returned": {
+   "administrationId": "adm-attacker",
+   "invoiceNumber": "BIL-2026-0001",
+   "billingModel": "t_and_m",
+   "customerId": "cust-1",
+   "projectId": "p-1",
+   "invoiceDate": "2026-03-31",
+   "dueDate": "2026-04-30",
+   "timeEntryIds": [
+    "ure-attacker-1"
+   ],
+   "expenseIds": [
+    "exp-attacker-1"
+   ],
+   "meterReadingIds": [],
+   "rateCardId": "rc-none",
+   "retainerScheduleId": null,
+   "lineItemsByModel": {
+    "time_entry": {
+     "count": 1,
+     "totalCents": 50000
+    },
+    "expense": {
+     "count": 1,
+     "totalCents": 5000
+    }
+   },
+   "summary": {
+    "netAmount": 550,
+    "vatAmount": 115.5,
+    "grossAmount": 665.5,
+    "currency": "EUR",
+    "breakdown": [
+     {
+      "rate": 21,
+      "net": 550,
+      "vat": 115.5,
+      "gross": 665.5
+     }
+    ]
+   },
+   "netAmount": 550,
+   "vatAmount": 115.5,
+   "grossAmount": 665.5,
+   "currency": "EUR",
+   "paymentTerms": "net 30",
+   "status": "posted",
+   "posted": true,
+   "obligationId": "obligation-4",
+   "notes": null,
+   "id": "billableinvoice-1"
+  },
+  "saved": {
+   "Obligation": [
+    {
+     "administrationId": "adm-attacker",
+     "obligationNumber": "OBL-BIL-2026-0001",
+     "invoiceId": "billableinvoice-1",
+     "customerId": "cust-1",
+     "amount": 665.5,
+     "currency": "EUR",
+     "dueDate": "2026-04-30",
+     "status": "open",
+     "id": "obligation-4"
+    }
+   ],
+   "GLTransaction": [
+    {
+     "administrationId": "adm-attacker",
+     "description": "Invoice BIL-2026-0001",
+     "journalDate": "2026-03-31",
+     "isBalanced": true,
+     "invoiceId": "billableinvoice-1",
+     "postings": [
+      {
+       "accountNumber": "1130",
+       "debitCents": 66550,
+       "creditCents": 0,
+       "description": "Accounts Receivable"
+      },
+      {
+       "accountNumber": "4100",
+       "debitCents": 0,
+       "creditCents": 55000,
+       "description": "Revenue"
+      },
+      {
+       "accountNumber": "1150",
+       "debitCents": 0,
+       "creditCents": 11550,
+       "description": "VAT Payable"
+      }
+     ],
+     "id": "gltransaction-5"
+    }
+   ],
+   "BillableInvoice": [
+    {
+     "administrationId": "adm-attacker",
+     "invoiceNumber": "BIL-2026-0001",
+     "billingModel": "t_and_m",
+     "customerId": "cust-1",
+     "projectId": "p-1",
+     "invoiceDate": "2026-03-31",
+     "dueDate": "2026-04-30",
+     "timeEntryIds": [
+      "ure-attacker-1"
+     ],
+     "expenseIds": [
+      "exp-attacker-1"
+     ],
+     "meterReadingIds": [],
+     "rateCardId": "rc-none",
+     "retainerScheduleId": null,
+     "lineItemsByModel": {
+      "time_entry": {
+       "count": 1,
+       "totalCents": 50000
+      },
+      "expense": {
+       "count": 1,
+       "totalCents": 5000
+      }
+     },
+     "summary": {
+      "netAmount": 550,
+      "vatAmount": 115.5,
+      "grossAmount": 665.5,
+      "currency": "EUR",
+      "breakdown": [
+       {
+        "rate": 21,
+        "net": 550,
+        "vat": 115.5,
+        "gross": 665.5
+       }
+      ]
+     },
+     "netAmount": 550,
+     "vatAmount": 115.5,
+     "grossAmount": 665.5,
+     "currency": "EUR",
+     "paymentTerms": "net 30",
+     "status": "posted",
+     "posted": true,
+     "obligationId": "obligation-4",
+     "notes": null,
+     "id": "billableinvoice-1"
+    }
+   ]
+  }
+ }
+}

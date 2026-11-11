@@ -109,64 +109,57 @@ class LedgerPivotService {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function pivot(string $administrationId, string $rowAxis, string $columnAxis, string $from, string $to): array {
-		$this->assertRequest(rowAxis: $rowAxis, columnAxis: $columnAxis, from: $from, to: $to);
+		$run       = new LedgerPivotRun(rowAxis: $rowAxis, columnAxis: $columnAxis);
+		$run->from = $from;
+		$run->to   = $to;
+
+		$this->assertRequest(run: $run);
 		$this->truncated = false;
 
-		$transactions = $this->postedTransactions(administrationId: $administrationId, from: $from, to: $to);
-		$labels       = $this->labels(administrationId: $administrationId, axes: [$rowAxis, $columnAxis]);
-		$customers    = [];
-		if (in_array('customer', [$rowAxis, $columnAxis], true) === true) {
-			$customers = $this->customerPerTransaction(administrationId: $administrationId);
-		}
+		$this->loadLookups(administrationId: $administrationId, run: $run);
+		$this->sumCells(administrationId: $administrationId, run: $run);
 
-		$cells = [];
-		foreach ($this->resultLines(administrationId: $administrationId) as $line) {
-			$transactionId = (string)($line['transactionId'] ?? '');
-			if (isset($transactions[$transactionId]) === false) {
-				continue;
-			}
-
-			$context = [
-				'line'        => $line,
-				'postingDate' => $transactions[$transactionId],
-				'customer'    => ($customers[$transactionId] ?? ''),
-				'labels'      => $labels,
-			];
-			$rowKey  = $this->key(axis: $rowAxis, context: $context);
-			$colKey  = $this->key(axis: $columnAxis, context: $context);
-			$cells[$rowKey][$colKey] = (($cells[$rowKey][$colKey] ?? 0.0) + (float)($line['signedAmount'] ?? 0));
-		}
-
-		return $this->shape(cells: $cells, rowAxis: $rowAxis, columnAxis: $columnAxis, labels: $labels);
+		return $this->shape(run: $run);
 
 	}//end pivot()
 
 	/**
 	 * Refuse an axis outside the vocabulary, a malformed date or a range too long.
 	 *
-	 * @param string $rowAxis    The row axis.
-	 * @param string $columnAxis The column axis.
-	 * @param string $from       First date.
-	 * @param string $to         Last date.
+	 * @param LedgerPivotRun $run The request.
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the request is not accepted.
 	 */
-	private function assertRequest(string $rowAxis, string $columnAxis, string $from, string $to): void {
-		foreach ([$rowAxis, $columnAxis] as $axis) {
+	private function assertRequest(LedgerPivotRun $run): void {
+		foreach ([$run->rowAxis, $run->columnAxis] as $axis) {
 			if (in_array($axis, self::AXES, true) === false) {
 				throw new InvalidArgumentException('Unknown pivot axis: ' . $axis);
 			}
 		}
 
-		if ($rowAxis === $columnAxis) {
+		if ($run->rowAxis === $run->columnAxis) {
 			throw new InvalidArgumentException('Rows and columns need two different axes');
 		}
 
-		$start = DateTimeImmutable::createFromFormat('!Y-m-d', $from);
-		$end   = DateTimeImmutable::createFromFormat('!Y-m-d', $to);
-		if ($start === false || $end === false || $start->format('Y-m-d') !== $from || $end->format('Y-m-d') !== $to) {
+		$this->assertRange(run: $run);
+
+	}//end assertRequest()
+
+	/**
+	 * Refuse a malformed date, a range that ends before it starts, or one too long.
+	 *
+	 * @param LedgerPivotRun $run The request.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the range is not accepted.
+	 */
+	private function assertRange(LedgerPivotRun $run): void {
+		$start = DateTimeImmutable::createFromFormat('!Y-m-d', $run->from);
+		$end   = DateTimeImmutable::createFromFormat('!Y-m-d', $run->to);
+		if ($this->readsAs(date: $start, text: $run->from) === false || $this->readsAs(date: $end, text: $run->to) === false) {
 			throw new InvalidArgumentException('Dates must read YYYY-MM-DD');
 		}
 
@@ -174,27 +167,112 @@ class LedgerPivotService {
 			throw new InvalidArgumentException('The range ends before it starts');
 		}
 
-		$months = ((((int)$end->format('Y') - (int)$start->format('Y')) * 12) + ((int)$end->format('n') - (int)$start->format('n')) + 1);
-		if ($months > self::MAX_MONTHS) {
+		if ($this->monthsSpanned(start: $start, end: $end) > self::MAX_MONTHS) {
 			throw new InvalidArgumentException('The range may span at most ' . self::MAX_MONTHS . ' months');
 		}
 
-	}//end assertRequest()
+	}//end assertRange()
+
+	/**
+	 * Whether a parsed date reads back exactly as the text it came from.
+	 *
+	 * @param DateTimeImmutable|false $date The parsed date, false when it did not parse.
+	 * @param string                  $text The requested date.
+	 *
+	 * @return bool
+	 */
+	private function readsAs(DateTimeImmutable|false $date, string $text): bool {
+		return $date !== false && $date->format('Y-m-d') === $text;
+
+	}//end readsAs()
+
+	/**
+	 * The calendar months a range touches, both ends included.
+	 *
+	 * @param DateTimeImmutable $start First date.
+	 * @param DateTimeImmutable $end   Last date.
+	 *
+	 * @return int
+	 */
+	private function monthsSpanned(DateTimeImmutable $start, DateTimeImmutable $end): int {
+		return ((((int)$end->format('Y') - (int)$start->format('Y')) * 12) + ((int)$end->format('n') - (int)$start->format('n')) + 1);
+
+	}//end monthsSpanned()
+
+	/**
+	 * Load the posted transactions in range, the labels and, for a customer axis, the customers.
+	 *
+	 * @param string         $administrationId The administration.
+	 * @param LedgerPivotRun $run              The pivot in progress.
+	 *
+	 * @return void
+	 */
+	private function loadLookups(string $administrationId, LedgerPivotRun $run): void {
+		$run->transactions = $this->postedTransactions(administrationId: $administrationId, run: $run);
+		$run->labels       = $this->labels(administrationId: $administrationId, axes: [$run->rowAxis, $run->columnAxis]);
+		if (in_array('customer', [$run->rowAxis, $run->columnAxis], true) === true) {
+			$run->customers = $this->customerPerTransaction(administrationId: $administrationId);
+		}
+
+	}//end loadLookups()
+
+	/**
+	 * Sum the signed amount of each result line of a transaction in range into its cell.
+	 *
+	 * @param string         $administrationId The administration.
+	 * @param LedgerPivotRun $run              The pivot in progress.
+	 *
+	 * @return void
+	 */
+	private function sumCells(string $administrationId, LedgerPivotRun $run): void {
+		foreach ($this->resultLines(administrationId: $administrationId) as $line) {
+			$transactionId = (string)($line['transactionId'] ?? '');
+			if (isset($run->transactions[$transactionId]) === false) {
+				continue;
+			}
+
+			$context = $this->lineContext(run: $run, line: $line);
+			$rowKey  = $this->key(axis: $run->rowAxis, context: $context);
+			$colKey  = $this->key(axis: $run->columnAxis, context: $context);
+			$run->cells[$rowKey][$colKey] = (($run->cells[$rowKey][$colKey] ?? 0.0) + (float)($line['signedAmount'] ?? 0));
+		}
+
+	}//end sumCells()
+
+	/**
+	 * What the axis keys of a line are read from: the line, its posting date,
+	 * its transaction's customer and the lookups.
+	 *
+	 * @param LedgerPivotRun       $run  The pivot in progress.
+	 * @param array<string, mixed> $line A result line of a transaction in range.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function lineContext(LedgerPivotRun $run, array $line): array {
+		$transactionId = (string)($line['transactionId'] ?? '');
+
+		return [
+			'line'        => $line,
+			'postingDate' => $run->transactions[$transactionId],
+			'customer'    => ($run->customers[$transactionId] ?? ''),
+			'labels'      => $run->labels,
+		];
+
+	}//end lineContext()
 
 	/**
 	 * Posting date per posted transaction inside the range.
 	 *
-	 * @param string $administrationId The administration.
-	 * @param string $from             First date.
-	 * @param string $to               Last date.
+	 * @param string         $administrationId The administration.
+	 * @param LedgerPivotRun $run              The pivot, for its range.
 	 *
 	 * @return array<string, string> Transaction id => YYYY-MM-DD.
 	 */
-	private function postedTransactions(string $administrationId, string $from, string $to): array {
+	private function postedTransactions(string $administrationId, LedgerPivotRun $run): array {
 		$dates = [];
 		foreach ($this->rows(schema: 'GLTransaction', filters: ['administrationId' => $administrationId, 'state' => 'posted']) as $transaction) {
 			$date = substr((string)($transaction['postingDate'] ?? ''), 0, 10);
-			if ($date < $from || $date > $to) {
+			if ($date < $run->from || $date > $run->to) {
 				continue;
 			}
 
@@ -257,32 +335,75 @@ class LedgerPivotService {
 	private function labels(string $administrationId, array $axes): array {
 		$labels = ['accounts' => [], 'parents' => [], 'types' => [], 'customers' => []];
 		if (array_intersect($axes, ['account', 'accountGroup']) !== []) {
-			foreach ($this->rows(schema: 'Account', filters: ['administrationId' => $administrationId]) as $account) {
-				$number = (string)($account['accountNumber'] ?? '');
-				$labels['accounts'][$number] = (string)($account['name'] ?? '');
-				$labels['parents'][$number]  = (string)($account['parentAccountNumber'] ?? '');
-				$labels['types'][$number]    = (string)($account['accountType'] ?? '');
-			}
+			$labels = array_merge($labels, $this->accountLabels(administrationId: $administrationId));
 		}
 
 		if (in_array('customer', $axes, true) === true) {
-			foreach ($this->rows(schema: 'CustomerMaster', filters: ['administrationId' => $administrationId]) as $customer) {
-				$name = (string)($customer['legalName'] ?? '');
-				if ($name === '') {
-					$name = (string)($customer['tradeName'] ?? '');
-				}
-
-				foreach ([($customer['@self']['id'] ?? null), ($customer['id'] ?? null), ($customer['customerId'] ?? null)] as $id) {
-					if (is_string($id) === true && $id !== '') {
-						$labels['customers'][$id] = $name;
-					}
-				}
-			}
+			$labels['customers'] = $this->customerLabels(administrationId: $administrationId);
 		}
 
 		return $labels;
 
 	}//end labels()
+
+	/**
+	 * Name, parent account and account type per account number.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array{accounts: array<string, string>, parents: array<string, string>, types: array<string, string>}
+	 */
+	private function accountLabels(string $administrationId): array {
+		$labels = ['accounts' => [], 'parents' => [], 'types' => []];
+		foreach ($this->rows(schema: 'Account', filters: ['administrationId' => $administrationId]) as $account) {
+			$number = (string)($account['accountNumber'] ?? '');
+			$labels['accounts'][$number] = (string)($account['name'] ?? '');
+			$labels['parents'][$number]  = (string)($account['parentAccountNumber'] ?? '');
+			$labels['types'][$number]    = (string)($account['accountType'] ?? '');
+		}
+
+		return $labels;
+
+	}//end accountLabels()
+
+	/**
+	 * The customer name under each of its ids (object id, id, customerId).
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<string, string>
+	 */
+	private function customerLabels(string $administrationId): array {
+		$names = [];
+		foreach ($this->rows(schema: 'CustomerMaster', filters: ['administrationId' => $administrationId]) as $customer) {
+			$name = $this->customerName(customer: $customer);
+			foreach ([($customer['@self']['id'] ?? null), ($customer['id'] ?? null), ($customer['customerId'] ?? null)] as $id) {
+				if (is_string($id) === true && $id !== '') {
+					$names[$id] = $name;
+				}
+			}
+		}
+
+		return $names;
+
+	}//end customerLabels()
+
+	/**
+	 * A customer's legal name, else its trade name.
+	 *
+	 * @param array<string, mixed> $customer The CustomerMaster record.
+	 *
+	 * @return string
+	 */
+	private function customerName(array $customer): string {
+		$name = (string)($customer['legalName'] ?? '');
+		if ($name === '') {
+			$name = (string)($customer['tradeName'] ?? '');
+		}
+
+		return $name;
+
+	}//end customerName()
 
 	/**
 	 * The group key of one line on one axis; an empty string when the line has no value.
@@ -334,52 +455,85 @@ class LedgerPivotService {
 	/**
 	 * Turn the cell sums into the response: capped, ordered and labelled axes with totals.
 	 *
-	 * @param array<string, array<string, float>>  $cells      Row key => column key => sum.
-	 * @param string                               $rowAxis    The row axis.
-	 * @param string                               $columnAxis The column axis.
-	 * @param array<string, array<string, string>> $labels     The lookups.
+	 * @param LedgerPivotRun $run The pivot, with its cell sums.
 	 *
 	 * @return array<string, mixed> The pivot.
 	 */
-	private function shape(array $cells, string $rowAxis, string $columnAxis, array $labels): array {
-		$rowTotals    = [];
-		$columnTotals = [];
-		foreach ($cells as $rowKey => $row) {
-			foreach ($row as $colKey => $amount) {
-				$rowTotals[$rowKey]    = (($rowTotals[$rowKey] ?? 0.0) + $amount);
-				$columnTotals[$colKey] = (($columnTotals[$colKey] ?? 0.0) + $amount);
-			}
-		}
+	private function shape(LedgerPivotRun $run): array {
+		$this->sumTotals(run: $run);
+		$run->rowKeys    = $this->keep(totals: $run->rowTotals, axis: $run->rowAxis);
+		$run->columnKeys = $this->keep(totals: $run->columnTotals, axis: $run->columnAxis);
 
-		$rowKeys    = $this->keep(totals: $rowTotals, axis: $rowAxis);
-		$columnKeys = $this->keep(totals: $columnTotals, axis: $columnAxis);
-
-		$shownCells = [];
-		foreach ($rowKeys as $rowKey) {
-			foreach ($columnKeys as $colKey) {
-				if (isset($cells[$rowKey][$colKey]) === true) {
-					$shownCells[$rowKey][$colKey] = round($cells[$rowKey][$colKey], 2);
-				}
-			}
-		}
+		$labels = new PivotLabels(labels: $run->labels);
 
 		return [
-			'rowAxis'      => $rowAxis,
-			'columnAxis'   => $columnAxis,
-			'rows'         => $this->describe(keys: $rowKeys, axis: $rowAxis, labels: $labels),
-			'columns'      => $this->describe(keys: $columnKeys, axis: $columnAxis, labels: $labels),
-			'cells'        => $shownCells,
-			'rowTotals'    => array_map(static fn (float $sum): float => round($sum, 2), array_intersect_key($rowTotals, array_flip($rowKeys))),
-			'columnTotals' => array_map(static fn (float $sum): float => round($sum, 2), array_intersect_key($columnTotals, array_flip($columnKeys))),
-			'total'        => round(array_sum($rowTotals), 2),
+			'rowAxis'      => $run->rowAxis,
+			'columnAxis'   => $run->columnAxis,
+			'rows'         => $labels->describe(keys: $run->rowKeys, axis: $run->rowAxis),
+			'columns'      => $labels->describe(keys: $run->columnKeys, axis: $run->columnAxis),
+			'cells'        => $this->shownCells(run: $run),
+			'rowTotals'    => $this->shownTotals(totals: $run->rowTotals, keys: $run->rowKeys),
+			'columnTotals' => $this->shownTotals(totals: $run->columnTotals, keys: $run->columnKeys),
+			'total'        => round(array_sum($run->rowTotals), 2),
 			'capped'       => [
-				'rows'    => count($rowTotals) > count($rowKeys),
-				'columns' => count($columnTotals) > count($columnKeys),
+				'rows'    => count($run->rowTotals) > count($run->rowKeys),
+				'columns' => count($run->columnTotals) > count($run->columnKeys),
 			],
 			'truncated'    => $this->truncated,
 		];
 
 	}//end shape()
+
+	/**
+	 * Sum each row and each column of the cells.
+	 *
+	 * @param LedgerPivotRun $run The pivot, with its cell sums.
+	 *
+	 * @return void
+	 */
+	private function sumTotals(LedgerPivotRun $run): void {
+		foreach ($run->cells as $rowKey => $row) {
+			foreach ($row as $colKey => $amount) {
+				$run->rowTotals[$rowKey]    = (($run->rowTotals[$rowKey] ?? 0.0) + $amount);
+				$run->columnTotals[$colKey] = (($run->columnTotals[$colKey] ?? 0.0) + $amount);
+			}
+		}
+
+	}//end sumTotals()
+
+	/**
+	 * The cells of the kept rows and columns, rounded to cents.
+	 *
+	 * @param LedgerPivotRun $run The pivot, with its kept keys.
+	 *
+	 * @return array<string, array<string, float>>
+	 */
+	private function shownCells(LedgerPivotRun $run): array {
+		$shownCells = [];
+		foreach ($run->rowKeys as $rowKey) {
+			foreach ($run->columnKeys as $colKey) {
+				if (isset($run->cells[$rowKey][$colKey]) === true) {
+					$shownCells[$rowKey][$colKey] = round($run->cells[$rowKey][$colKey], 2);
+				}
+			}
+		}
+
+		return $shownCells;
+
+	}//end shownCells()
+
+	/**
+	 * The totals of the kept keys, rounded to cents.
+	 *
+	 * @param array<string, float> $totals Key => total.
+	 * @param array<int, string>   $keys   The kept keys.
+	 *
+	 * @return array<string, float>
+	 */
+	private function shownTotals(array $totals, array $keys): array {
+		return array_map(static fn (float $sum): float => round($sum, 2), array_intersect_key($totals, array_flip($keys)));
+
+	}//end shownTotals()
 
 	/**
 	 * The keys an axis shows: the largest MAX_GROUPS by size, in the axis's natural order.
@@ -406,60 +560,6 @@ class LedgerPivotService {
 		return $keys;
 
 	}//end keep()
-
-	/**
-	 * Key and label for each kept key; the label is null for "not set".
-	 *
-	 * @param array<int, string>                   $keys   The keys.
-	 * @param string                               $axis   The axis.
-	 * @param array<string, array<string, string>> $labels The lookups.
-	 *
-	 * @return array<int, array{key: string, label: ?string}> The descriptions.
-	 */
-	private function describe(array $keys, string $axis, array $labels): array {
-		$described = [];
-		foreach ($keys as $key) {
-			$described[] = ['key' => $key, 'label' => $this->label(key: $key, axis: $axis, labels: $labels)];
-		}
-
-		return $described;
-
-	}//end describe()
-
-	/**
-	 * The label of one key.
-	 *
-	 * @param string                               $key    The key.
-	 * @param string                               $axis   The axis.
-	 * @param array<string, array<string, string>> $labels The lookups.
-	 *
-	 * @return string|null The label, null when the key is empty.
-	 */
-	private function label(string $key, string $axis, array $labels): ?string {
-		if ($key === '') {
-			return null;
-		}
-
-		if ($axis === 'account' || ($axis === 'accountGroup' && str_starts_with($key, 'type:') === false)) {
-			$name = ($labels['accounts'][$key] ?? '');
-			if ($axis === 'accountGroup' && $name !== '') {
-				return $name;
-			}
-
-			return trim($key . ' ' . $name);
-		}
-
-		if ($axis === 'accountGroup') {
-			return substr($key, 5);
-		}
-
-		if ($axis === 'customer') {
-			return ($labels['customers'][$key] ?? $key);
-		}
-
-		return $key;
-
-	}//end label()
 
 	/**
 	 * Rows of a schema in pages, up to MAX_LINES; sets the truncated flag when it stops early.

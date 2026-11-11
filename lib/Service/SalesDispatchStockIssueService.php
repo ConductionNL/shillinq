@@ -119,149 +119,180 @@ class SalesDispatchStockIssueService {
 	 * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
 	 */
 	public function issueForDelivery(array $delivery): array {
-		$deliveryId = (string)($delivery['id'] ?? ($delivery['@self']['id'] ?? ''));
-		$administrationId = trim((string)($delivery['administrationId'] ?? ''));
+		$run = new DeliveryIssueRun(delivery: $delivery);
 		$lines = ($delivery['lines'] ?? []);
 
-		if ($deliveryId === '' || $administrationId === '' || is_array($lines) === false) {
+		if ($run->deliveryId === '' || $run->administrationId === '' || is_array($lines) === false) {
 			$this->logger->warning(
 				'SalesDispatchStockIssueService: issueForDelivery denied — missing id/administrationId/lines',
-				['deliveryId' => $deliveryId]
+				['deliveryId' => $run->deliveryId]
 			);
-			return [
-				'issued' => 0,
-				'skipped' => 0,
-				'blocked' => 0,
-				'moves' => [],
-				'blockedLines' => [],
-			];
+			return $run->result();
 		}
 
-		$issued = 0;
-		$skipped = 0;
-		$blocked = 0;
-		$moves = [];
-		$blockedLines = [];
-
 		foreach (array_values($lines) as $index => $line) {
-			if (is_array($line) === false) {
-				$skipped++;
-				continue;
-			}
+			$this->issueLine(run: $run, line: new DeliveryIssueLine(index: $index, line: $line));
+		}
 
-			$sku = trim((string)($line['productReference'] ?? ''));
-			$quantity = (float)($line['quantityShipped'] ?? 0);
-			if ($sku === '' || $quantity <= 0) {
-				$skipped++;
-				continue;
-			}
-
-			$referenceUri = $this->referenceUri(deliveryId: $deliveryId, lineIndex: $index);
-
-			if ($this->alreadyIssued(referenceUri: $referenceUri, administrationId: $administrationId) === true) {
-				// REQ-004 idempotency — already issued for this line.
-				$skipped++;
-				continue;
-			}
-
-			$stockRows = $this->inventoryStockRows(administrationId: $administrationId, sku: $sku);
-			if (count($stockRows) === 0) {
-				// Not stock-tracked — service line. Not an error.
-				$skipped++;
-				continue;
-			}
-
-			// REQ-BLK-001/002: for a lot-controlled product (≥1 InventoryLot
-			// exists for the sku in this administration), refuse to issue when
-			// no SELLABLE lot can satisfy the line — quarantined / expired
-			// (by status or by date) / exhausted stock MUST NOT be dispatched.
-			// Fail CLOSED: the StockMove is never created, so no COGS is
-			// posted for unsellable stock. When sellable lots CAN cover the
-			// line, quarantined/expired siblings do not block it.
-			$productId = $this->productIdFromStock(stockRows: $stockRows);
-			$lots = $this->inventoryLotRows(
-				administrationId: $administrationId,
-				sku: $sku,
-				productId: $productId
-			);
-			if (count($lots) > 0) {
-				$verdict = $this->lotGuard->evaluate(
-					lots: $lots,
-					requiredQuantity: $quantity,
-					today: gmdate('Y-m-d')
-				);
-				if ($verdict['sellable'] === false) {
-					$blocked++;
-					$offending = $verdict['offendingLots'];
-					$named = array_map(
-						static fn (array $lot): string => ($lot['lotNumber'] . ' (' . $lot['reason'] . ')'),
-						$offending
-					);
-					$this->logger->error(
-						'SalesDispatchStockIssueService: dispatch BLOCKED — no sellable lot can '
-						. 'satisfy delivery line; unsellable stock MUST NOT be dispatched.',
-						[
-							'deliveryId' => $deliveryId,
-							'lineIndex' => $index,
-							'sku' => $sku,
-							'quantityRequired' => $quantity,
-							'sellableAvailable' => $verdict['availableSellable'],
-							'offendingLots' => $named,
-						]
-					);
-					$blockedLines[] = [
-						'lineIndex' => $index,
-						'sku' => $sku,
-						'quantityRequired' => $quantity,
-						'sellableAvailable' => $verdict['availableSellable'],
-						'offendingLots' => $offending,
-					];
-					continue;
-				}//end if
-			}//end if
-
-			$locationId = $this->resolveLocation(
-				line: $line,
-				delivery: $delivery,
-				stockRows: $stockRows
-			);
-			if ($locationId === '') {
-				$this->logger->warning(
-					'SalesDispatchStockIssueService: issue skipped — no resolvable warehouse',
-					['deliveryId' => $deliveryId, 'lineIndex' => $index, 'sku' => $sku]
-				);
-				$skipped++;
-				continue;
-			}
-
-			$move = $this->saveIssueMove(
-				administrationId: $administrationId,
-				deliveryId: $deliveryId,
-				lineIndex: $index,
-				sku: $sku,
-				quantity: $quantity,
-				locationId: $locationId,
-				referenceUri: $referenceUri
-			);
-
-			if ($move === null) {
-				$skipped++;
-				continue;
-			}
-
-			$issued++;
-			$moves[] = $move;
-		}//end foreach
-
-		return [
-			'issued' => $issued,
-			'skipped' => $skipped,
-			'blocked' => $blocked,
-			'moves' => $moves,
-			'blockedLines' => $blockedLines,
-		];
+		return $run->result();
 
 	}//end issueForDelivery()
+
+	/**
+	 * Issue one Delivery line, counting it as issued, skipped or blocked.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The line.
+	 *
+	 * @return void
+	 */
+	private function issueLine(DeliveryIssueRun $run, DeliveryIssueLine $line): void {
+		if ($this->isPendingStockLine(run: $run, line: $line) === false) {
+			$run->skipped++;
+			return;
+		}
+
+		if ($this->isBlockedByLots(run: $run, line: $line) === true) {
+			$run->blocked++;
+			$this->recordBlockedLine(run: $run, line: $line);
+			return;
+		}
+
+		$run->countIssue(move: $this->issueLocatedLine(run: $run, line: $line));
+	}//end issueLine()
+
+	/**
+	 * True when the line ships a stock-tracked sku that has not been issued
+	 * yet; keeps the line's reference URI and stock rows.
+	 *
+	 * A line already issued (REQ-004 idempotency) or without InventoryStock
+	 * rows (not stock-tracked — a service line, not an error) is skipped.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The line.
+	 *
+	 * @return bool Whether the line is to be issued.
+	 */
+	private function isPendingStockLine(DeliveryIssueRun $run, DeliveryIssueLine $line): bool {
+		if ($line->isShippable() === false) {
+			return false;
+		}
+
+		$line->referenceUri = $this->referenceUri(deliveryId: $run->deliveryId, lineIndex: $line->index);
+		if ($this->alreadyIssued(referenceUri: $line->referenceUri, administrationId: $run->administrationId) === true) {
+			return false;
+		}
+
+		$line->stockRows = $this->inventoryStockRows(administrationId: $run->administrationId, sku: $line->sku);
+		return count($line->stockRows) > 0;
+	}//end isPendingStockLine()
+
+	/**
+	 * REQ-BLK-001/002: for a lot-controlled product (≥1 InventoryLot exists
+	 * for the sku in this administration), refuse to issue when no SELLABLE
+	 * lot can satisfy the line — quarantined / expired (by status or by
+	 * date) / exhausted stock MUST NOT be dispatched. Fail CLOSED: the
+	 * StockMove is never created, so no COGS is posted for unsellable stock.
+	 * When sellable lots CAN cover the line, quarantined/expired siblings do
+	 * not block it. Keeps the verdict on the line.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The line.
+	 *
+	 * @return bool True when the line must not be dispatched.
+	 */
+	private function isBlockedByLots(DeliveryIssueRun $run, DeliveryIssueLine $line): bool {
+		$lots = $this->inventoryLotRows(
+			administrationId: $run->administrationId,
+			sku: $line->sku,
+			productId: $this->productIdFromStock(stockRows: $line->stockRows)
+		);
+		if (count($lots) === 0) {
+			return false;
+		}
+
+		$line->verdict = $this->lotGuard->evaluate(
+			lots: $lots,
+			requiredQuantity: $line->quantity,
+			today: gmdate('Y-m-d')
+		);
+		return $line->verdict['sellable'] === false;
+	}//end isBlockedByLots()
+
+	/**
+	 * Log a blocked line with its offending lots by name and report it in
+	 * the run's blocked lines.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The blocked line.
+	 *
+	 * @return void
+	 */
+	private function recordBlockedLine(DeliveryIssueRun $run, DeliveryIssueLine $line): void {
+		$this->logger->error(
+			'SalesDispatchStockIssueService: dispatch BLOCKED — no sellable lot can '
+			. 'satisfy delivery line; unsellable stock MUST NOT be dispatched.',
+			$this->blockedLineLogContext(run: $run, line: $line)
+		);
+		$run->blockedLines[] = [
+			'lineIndex' => $line->index,
+			'sku' => $line->sku,
+			'quantityRequired' => $line->quantity,
+			'sellableAvailable' => $line->verdict['availableSellable'],
+			'offendingLots' => $line->verdict['offendingLots'],
+		];
+	}//end recordBlockedLine()
+
+	/**
+	 * The log context of a blocked line, naming each offending lot with its
+	 * reason.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The blocked line.
+	 *
+	 * @return array<string,mixed> The log context.
+	 */
+	private function blockedLineLogContext(DeliveryIssueRun $run, DeliveryIssueLine $line): array {
+		$named = array_map(
+			static fn (array $lot): string => ($lot['lotNumber'] . ' (' . $lot['reason'] . ')'),
+			$line->verdict['offendingLots']
+		);
+
+		return [
+			'deliveryId' => $run->deliveryId,
+			'lineIndex' => $line->index,
+			'sku' => $line->sku,
+			'quantityRequired' => $line->quantity,
+			'sellableAvailable' => $line->verdict['availableSellable'],
+			'offendingLots' => $named,
+		];
+	}//end blockedLineLogContext()
+
+	/**
+	 * Resolve the line's source warehouse and issue its StockMove; a line
+	 * without a resolvable warehouse is skipped with a warning.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The line.
+	 *
+	 * @return array<string,mixed>|null The posted StockMove, or null when skipped.
+	 */
+	private function issueLocatedLine(DeliveryIssueRun $run, DeliveryIssueLine $line): ?array {
+		$line->locationId = $this->resolveLocation(
+			line: (array)$line->row,
+			delivery: $run->delivery,
+			stockRows: $line->stockRows
+		);
+		if ($line->locationId === '') {
+			$this->logger->warning(
+				'SalesDispatchStockIssueService: issue skipped — no resolvable warehouse',
+				['deliveryId' => $run->deliveryId, 'lineIndex' => $line->index, 'sku' => $line->sku]
+			);
+			return null;
+		}
+
+		return $this->saveIssueMove(run: $run, line: $line);
+	}//end issueLocatedLine()
 
 	/**
 	 * Extract the first non-empty productId from the InventoryStock rows for a
@@ -489,93 +520,21 @@ class SalesDispatchStockIssueService {
 	 * back to that same direct-posted-create convention so behaviour never
 	 * regresses below the pre-existing baseline.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $deliveryId The Delivery id.
-	 * @param int $lineIndex The line's ordinal index in Delivery.lines.
-	 * @param string $sku The product SKU (StockMove.itemId).
-	 * @param float $quantity Quantity shipped.
-	 * @param string $locationId Resolved source warehouse.
-	 * @param string $referenceUri The idempotency-carrying reference URI.
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The located line.
 	 *
 	 * @return array<string,mixed>|null The persisted StockMove, or null on failure.
 	 */
-	private function saveIssueMove(
-		string $administrationId,
-		string $deliveryId,
-		int $lineIndex,
-		string $sku,
-		float $quantity,
-		string $locationId,
-		string $referenceUri,
-	): ?array {
+	private function saveIssueMove(DeliveryIssueRun $run, DeliveryIssueLine $line): ?array {
 		try {
-			$now = gmdate('Y-m-d\TH:i:s\Z');
-			$movementNumber = sprintf('SM-DLV-%s-%03d', substr(md5($deliveryId), 0, 8), $lineIndex);
-
-			$move = [
-				'movementNumber' => $movementNumber,
-				'itemId' => $sku,
-				'quantity' => $quantity,
-				'unitCost' => 0,
-				'movementType' => 'issue',
-				'sourceLocationId' => $locationId,
-				'destinationLocationId' => null,
-				'referenceDocumentUri' => $referenceUri,
-				'movementReason' => 'normal',
-				'notes' => 'Sale dispatch for delivery ' . $deliveryId . ' / line ' . $lineIndex,
-				'draftedAt' => $now,
-				'postedAt' => null,
-				'cancelledAt' => null,
-				'administrationId' => $administrationId,
-				'locked' => false,
-				'glTransactionId' => null,
-				'offsetOfMoveId' => null,
-				'lifecycleState' => 'draft',
-			];
-
-			$objectService = $this->objectService();
-			$saved = $this->asArray(
-				row: $objectService
-					->setRegister($this->register())
-					->setSchema('StockMove')
-					->saveObject($move)
-			);
-
-			$moveId = (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''));
-			if ($moveId === '') {
-				$this->logger->error(
-					'SalesDispatchStockIssueService: draft StockMove save returned no id',
-					['deliveryId' => $deliveryId, 'lineIndex' => $lineIndex]
-				);
-				return null;
-			}
-
-			if ($this->transitionStockMove(moveId: $moveId, action: 'post') === true) {
-				$refreshed = ObjectIdentifier::findScoped(
-					scoped: $objectService->setRegister($this->register())->setSchema('StockMove'),
-					id: $moveId
-				);
-				return $this->asArray(row: $refreshed);
-			}
-
-			// TransitionEngine unavailable — fall back to the pre-existing
-			// direct-posted-create convention so behaviour never regresses.
-			$move['postedAt'] = $now;
-			$move['locked'] = true;
-			$move['lifecycleState'] = 'posted';
-			$fallback = $objectService
-				->setRegister($this->register())
-				->setSchema('StockMove')
-				->updateObject(id: $moveId, object: $move, register: $this->register(), schema: 'StockMove');
-
-			return $this->asArray(row: $fallback);
+			return $this->draftAndPostIssueMove(run: $run, line: $line);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SalesDispatchStockIssueService: saveIssueMove failed',
 				[
-					'deliveryId' => $deliveryId,
-					'lineIndex' => $lineIndex,
-					'sku' => $sku,
+					'deliveryId' => $run->deliveryId,
+					'lineIndex' => $line->index,
+					'sku' => $line->sku,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -583,6 +542,109 @@ class SalesDispatchStockIssueService {
 		}//end try
 
 	}//end saveIssueMove()
+
+	/**
+	 * Save the draft issue StockMove and drive it to posted.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The located line.
+	 *
+	 * @return array<string,mixed>|null The persisted StockMove, or null when the draft has no id.
+	 */
+	private function draftAndPostIssueMove(DeliveryIssueRun $run, DeliveryIssueLine $line): ?array {
+		$line->draftedAt = gmdate('Y-m-d\TH:i:s\Z');
+		$move = $this->draftIssueMove(run: $run, line: $line);
+
+		$saved = $this->saveDraftMove(move: $move);
+		$moveId = (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''));
+		if ($moveId === '') {
+			$this->logger->error(
+				'SalesDispatchStockIssueService: draft StockMove save returned no id',
+				['deliveryId' => $run->deliveryId, 'lineIndex' => $line->index]
+			);
+			return null;
+		}
+
+		return $this->postIssueMove(move: $move, moveId: $moveId);
+	}//end draftAndPostIssueMove()
+
+	/**
+	 * Save a draft StockMove and read it back as an array.
+	 *
+	 * @param array<string,mixed> $move The draft StockMove payload.
+	 *
+	 * @return array<string,mixed> The saved StockMove.
+	 */
+	private function saveDraftMove(array $move): array {
+		return $this->asArray(
+			row: $this->objectService()
+				->setRegister($this->register())
+				->setSchema('StockMove')
+				->saveObject($move)
+		);
+	}//end saveDraftMove()
+
+	/**
+	 * Drive a saved draft to posted through the TransitionEngine and read it
+	 * back, or — TransitionEngine unavailable — fall back to the pre-existing
+	 * direct-posted-create convention so behaviour never regresses.
+	 *
+	 * @param array<string,mixed> $move   The draft StockMove payload.
+	 * @param string              $moveId The saved draft's id.
+	 *
+	 * @return array<string,mixed> The posted StockMove.
+	 */
+	private function postIssueMove(array $move, string $moveId): array {
+		$objectService = $this->objectService();
+		if ($this->transitionStockMove(moveId: $moveId, action: 'post') === true) {
+			$refreshed = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($this->register())->setSchema('StockMove'),
+				id: $moveId
+			);
+			return $this->asArray(row: $refreshed);
+		}
+
+		$move['postedAt'] = $move['draftedAt'];
+		$move['locked'] = true;
+		$move['lifecycleState'] = 'posted';
+		$fallback = $objectService
+			->setRegister($this->register())
+			->setSchema('StockMove')
+			->updateObject(id: $moveId, object: $move, register: $this->register(), schema: 'StockMove');
+
+		return $this->asArray(row: $fallback);
+	}//end postIssueMove()
+
+	/**
+	 * The draft `issue` StockMove payload for a located line.
+	 *
+	 * @param DeliveryIssueRun  $run  The delivery issue run.
+	 * @param DeliveryIssueLine $line The located line.
+	 *
+	 * @return array<string,mixed> The draft StockMove.
+	 */
+	private function draftIssueMove(DeliveryIssueRun $run, DeliveryIssueLine $line): array {
+		return [
+			'movementNumber' => sprintf('SM-DLV-%s-%03d', substr(md5($run->deliveryId), 0, 8), $line->index),
+			'itemId' => $line->sku,
+			'quantity' => $line->quantity,
+			'unitCost' => 0,
+			'movementType' => 'issue',
+			'sourceLocationId' => $line->locationId,
+			'destinationLocationId' => null,
+			'referenceDocumentUri' => $line->referenceUri,
+			'movementReason' => 'normal',
+			'notes' => 'Sale dispatch for delivery ' . $run->deliveryId . ' / line ' . $line->index,
+			'draftedAt' => $line->draftedAt,
+			'postedAt' => null,
+			'cancelledAt' => null,
+			'administrationId' => $run->administrationId,
+			'locked' => false,
+			'glTransactionId' => null,
+			'offsetOfMoveId' => null,
+			'lifecycleState' => 'draft',
+		];
+	}//end draftIssueMove()
 
 	/**
 	 * Build the idempotency-carrying reference URI for a delivery line.

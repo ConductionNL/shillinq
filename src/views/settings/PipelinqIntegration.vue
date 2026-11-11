@@ -77,6 +77,12 @@
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
+import {
+	errorFeedback,
+	postPipelinq,
+	settingsBody,
+	testVerdict,
+} from './pipelinqSettings.js'
 
 /**
  * Admin settings panel for the pipelinq integration connection
@@ -137,92 +143,79 @@ export default {
 		async save() {
 			this.saving = true
 			this.feedback = null
-			const body = { endpoint: this.form.endpoint }
-			// Absent token => preserve; explicit value (even '') => write through.
-			if (this.form.token !== '') {
-				body.token = this.form.token
-			}
 			try {
-				const response = await fetch(
-					generateUrl('/apps/shillinq/api/pipelinq/settings'),
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							requesttoken: OC.requestToken,
-						},
-						body: JSON.stringify(body),
-					},
+				const response = await postPipelinq(
+					'/apps/shillinq/api/pipelinq/settings',
+					settingsBody(this.form),
 				)
-				if (response.ok) {
-					const data = await response.json()
-					this.hasToken = !!data.hasToken
-					this.form.token = ''
-					this.feedback = {
-						kind: 'success',
-						message: t('shillinq', 'Pipelinq settings saved.'),
-					}
-				} else {
-					this.feedback = {
-						kind: 'error',
-						message: t(
-							'shillinq',
-							'Failed to save pipelinq settings (HTTP {status}).',
-							{ status: response.status },
-						),
-					}
-				}
+				this.feedback = await this.savedFeedback(response)
 			} catch (error) {
-				this.feedback = {
-					kind: 'error',
-					message: t(
-						'shillinq',
-						'Failed to save pipelinq settings: {message}.',
-						{ message: error.message },
-					),
-				}
+				this.feedback = errorFeedback(
+					t('shillinq', 'Failed to save pipelinq settings: {message}.', {
+						message: error.message,
+					}),
+				)
 			} finally {
 				this.saving = false
 			}
+		},
+
+		/**
+		 * Take a save response: on success the stored-token flag is refreshed
+		 * and the typed token cleared.
+		 *
+		 * @param {Response} response The save response.
+		 * @return {Promise<{kind: string, message: string}>} The feedback.
+		 */
+		async savedFeedback(response) {
+			if (!response.ok) {
+				return errorFeedback(
+					t('shillinq', 'Failed to save pipelinq settings (HTTP {status}).', {
+						status: response.status,
+					}),
+				)
+			}
+			const data = await response.json()
+			this.hasToken = !!data.hasToken
+			this.form.token = ''
+			return {
+				kind: 'success',
+				message: t('shillinq', 'Pipelinq settings saved.'),
+			}
+		},
+
+		/**
+		 * Take a test-connection response: the backend's verdict, or the HTTP
+		 * status when the request itself failed.
+		 *
+		 * @param {Response} response The test-connection response.
+		 * @return {Promise<{kind: string, message: string}>} The feedback.
+		 */
+		async testedFeedback(response) {
+			if (!response.ok) {
+				return errorFeedback(
+					t('shillinq', 'Test connection failed (HTTP {status}).', {
+						status: response.status,
+					}),
+				)
+			}
+			return testVerdict(await response.json())
 		},
 
 		async test() {
 			this.testing = true
 			this.feedback = null
 			try {
-				const response = await fetch(
-					generateUrl('/apps/shillinq/api/pipelinq/settings/test'),
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							requesttoken: OC.requestToken,
-						},
-					},
+				const response = await postPipelinq(
+					'/apps/shillinq/api/pipelinq/settings/test',
 				)
-				if (response.ok) {
-					const data = await response.json()
-					this.feedback = {
-						kind: data.success ? 'success' : 'error',
-						message: data.message,
-					}
-				} else {
-					this.feedback = {
-						kind: 'error',
-						message: t(
-							'shillinq',
-							'Test connection failed (HTTP {status}).',
-							{ status: response.status },
-						),
-					}
-				}
+				this.feedback = await this.testedFeedback(response)
 			} catch (error) {
-				this.feedback = {
-					kind: 'error',
-					message: t('shillinq', 'Test connection failed: {message}.', {
+				this.feedback = errorFeedback(
+					t('shillinq', 'Test connection failed: {message}.', {
 						message: error.message,
 					}),
-				}
+				)
 			} finally {
 				this.testing = false
 			}

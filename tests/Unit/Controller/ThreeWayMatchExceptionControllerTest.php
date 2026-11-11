@@ -571,4 +571,83 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 	}//end testRejectRejectsAnonymousCaller()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * Each action's failure body and log line, its reason body, and the trimmed
+	 * scope and capped notes passed to the service.
+	 *
+	 * @return void
+	 */
+	public function testEveryActionsBodiesLogAndArguments(): void {
+		$long = ' ' . str_repeat('é', 2005) . ' ';
+		$this->withParams(
+			[
+				'administrationId' => ' adm-1 ',
+				'matchId' => ' match-3 ',
+				'resolutionNotes' => $long,
+				'disputeReason' => $long,
+				'rejectionReason' => $long,
+			]
+		);
+		$this->administrationContext->method('canAccess')->with('adm-1')->willReturn(true);
+		$capped = str_repeat('é', 2000);
+		$boom = new \LogicException('boom');
+		$this->exceptions->expects($this->once())->method('acceptWithMotivation')->with('adm-1', 'match-3', $capped)->willThrowException($boom);
+		$this->exceptions->expects($this->once())->method('fileDispute')->with('adm-1', 'match-3', $capped)->willThrowException($boom);
+		$this->exceptions->expects($this->once())->method('rejectAndBlockPayment')->with('adm-1', 'match-3', $capped)->willThrowException($boom);
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+
+		self::assertSame(['error' => 'Could not record acceptance'], $this->controller->accept()->getData());
+		self::assertSame(['error' => 'Could not file dispute'], $this->controller->dispute()->getData());
+		self::assertSame(['error' => 'Could not record rejection'], $this->controller->reject()->getData());
+
+		$context = ['administrationId' => 'adm-1', 'matchId' => 'match-3', 'exception' => 'boom'];
+		self::assertSame(
+			[
+				['ThreeWayMatchExceptionController: accept failed', $context],
+				['ThreeWayMatchExceptionController: dispute failed', $context],
+				['ThreeWayMatchExceptionController: reject failed', $context],
+			],
+			$logged
+		);
+
+	}//end testEveryActionsBodiesLogAndArguments()
+
+	/**
+	 * The reason bodies of dispute and reject, and a refused administration
+	 * answered before the match or reason is checked.
+	 *
+	 * @return void
+	 */
+	public function testReasonBodiesAndCheckOrder(): void {
+		$params = ['administrationId' => 'adm-1', 'matchId' => 'match-3'];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$access = true;
+		$this->administrationContext->method('canAccess')->willReturnCallback(
+			static function () use (&$access): bool {
+				return $access;
+			}
+		);
+		$this->exceptions->expects($this->never())->method($this->anything());
+
+		self::assertSame(['error' => 'disputeReason is required'], $this->controller->dispute()->getData());
+		self::assertSame(['error' => 'rejectionReason is required'], $this->controller->reject()->getData());
+
+		$access = false;
+		$params = ['administrationId' => 'adm-1'];
+		$response = $this->controller->reject();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Administration not found']], [$response->getStatus(), $response->getData()]);
+
+		$params = ['administrationId' => 'a b', 'matchId' => 'x'];
+		self::assertSame(['error' => 'administrationId is required'], $this->controller->dispute()->getData());
+
+	}//end testReasonBodiesAndCheckOrder()
 }//end class

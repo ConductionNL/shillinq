@@ -76,6 +76,16 @@ class DeadlineReminderJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	protected function run($argument): void {
+		$this->publishDeadlines();
+		$this->dispatchReminders();
+	}//end run()
+
+	/**
+	 * Publish the deadline VEVENTs; a failure is logged and does not stop the reminders.
+	 *
+	 * @return void
+	 */
+	private function publishDeadlines(): void {
 		try {
 			$users = $this->calendarService->publishAll();
 			$this->logger->debug('DeadlineReminderJob: published deadline VEVENTs for ' . $users . ' user(s)');
@@ -85,7 +95,14 @@ class DeadlineReminderJob extends TimedJob {
 				['exception' => $e->getMessage()]
 			);
 		}
+	}//end publishDeadlines()
 
+	/**
+	 * Raise the reminders that are due; a failure is logged.
+	 *
+	 * @return void
+	 */
+	private function dispatchReminders(): void {
 		try {
 			$count = $this->calendarService->dispatchDueReminders();
 			$this->logger->debug('DeadlineReminderJob: raised ' . $count . ' deadline reminder(s)');
@@ -95,6 +112,5 @@ class DeadlineReminderJob extends TimedJob {
 				['exception' => $e->getMessage()]
 			);
 		}
-
-	}//end run()
+	}//end dispatchReminders()
 }//end class

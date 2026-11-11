@@ -101,25 +101,7 @@ class ProductCatalogController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function products(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$catalog = $this->catalogService->listProducts();
-			if ($catalog === null) {
-				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
-			}
-
-			return new JSONResponse($catalog);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'ProductCatalogController: product catalog lookup failed',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'catalog_unavailable'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
+		return $this->listing(list: fn (): ?array => $this->catalogService->listProducts(), lookup: 'product catalog');
 	}//end products()
 
 	/**
@@ -133,24 +115,46 @@ class ProductCatalogController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function productAttributes(): JSONResponse {
+		return $this->listing(list: fn (): ?array => $this->catalogService->listAttributes(), lookup: 'product attribute');
+	}//end productAttributes()
+
+	/**
+	 * Answer one listing: 401 without a session, 403 without an accessible
+	 * administration, the rows, or a logged 500 without internals.
+	 *
+	 * @param callable(): (array<string, mixed>|null) $list   The service listing.
+	 * @param string                                  $lookup What is looked up, for the log line.
+	 *
+	 * @return JSONResponse
+	 */
+	private function listing(callable $list, string $lookup): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$attributes = $this->catalogService->listAttributes();
-			if ($attributes === null) {
-				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
-			}
-
-			return new JSONResponse($attributes);
+			return self::rowsResponse(rows: $list());
 		} catch (Throwable $e) {
 			$this->logger->error(
-				'ProductCatalogController: product attribute lookup failed',
+				'ProductCatalogController: ' . $lookup . ' lookup failed',
 				['exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'catalog_unavailable'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+	}//end listing()
 
-	}//end productAttributes()
+	/**
+	 * The rows, or the 403 when the caller has no accessible administration.
+	 *
+	 * @param array<string, mixed>|null $rows The listing.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function rowsResponse(array|null $rows): JSONResponse {
+		if ($rows === null) {
+			return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+		}
+
+		return new JSONResponse($rows);
+	}//end rowsResponse()
 }//end class

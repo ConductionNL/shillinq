@@ -78,50 +78,80 @@ class SubsidieRepaymentGuard {
 	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
 	 */
 	public function requireZeroRepaymentBalance(array $subsidy): bool {
+		// No persisted identity to look up installments against.
 		$subsidyId = ($subsidy['id'] ?? null);
 		if ($subsidyId === null) {
-			// No persisted identity to look up installments against.
 			return false;
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$installments = $objectService
-				->setRegister($this->register())
-				->setSchema('RepaymentInstallment')
-				->findAll(['filters' => ['subsidyId' => $subsidyId]]);
-
-			if (is_array($installments) === false) {
-				$installments = [];
-			}
-
-			$outstandingCents = 0;
-			foreach ($installments as $installment) {
-				if ((string)($installment['state'] ?? '') === 'paid') {
-					continue;
-				}
-
-				$outstandingCents += (int)round(((float)($installment['amount'] ?? 0)) * 100);
-			}
-
-			if ($outstandingCents !== 0) {
-				$this->logger->info(
-					'SubsidieRepaymentGuard: outstanding repayment balance — denying close',
-					['subsidyId' => $subsidyId, 'outstandingCents' => $outstandingCents]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->nothingOutstanding(subsidyId: $subsidyId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SubsidieRepaymentGuard: requireZeroRepaymentBalance check failed — denying (fail-closed)',
 				['exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end requireZeroRepaymentBalance()
+
+	/**
+	 * Whether the subsidy's unpaid installments sum to zero; an outstanding balance is logged.
+	 *
+	 * @param mixed $subsidyId The Subsidie id.
+	 *
+	 * @return bool
+	 */
+	private function nothingOutstanding(mixed $subsidyId): bool {
+		$outstandingCents = self::outstandingCents(installments: $this->installments(subsidyId: $subsidyId));
+		if ($outstandingCents !== 0) {
+			$this->logger->info(
+				'SubsidieRepaymentGuard: outstanding repayment balance — denying close',
+				['subsidyId' => $subsidyId, 'outstandingCents' => $outstandingCents]
+			);
+			return false;
+		}
+
+		return true;
+	}//end nothingOutstanding()
+
+	/**
+	 * The subsidy's RepaymentInstallment rows ([] for a non-array answer).
+	 *
+	 * @param mixed $subsidyId The Subsidie id.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function installments(mixed $subsidyId): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$installments = $objectService
+			->setRegister($this->register())
+			->setSchema('RepaymentInstallment')
+			->findAll(['filters' => ['subsidyId' => $subsidyId]]);
+		if (is_array($installments) === false) {
+			return [];
+		}
+
+		return $installments;
+	}//end installments()
+
+	/**
+	 * The sum of the installments that are not `paid`, in integer cents.
+	 *
+	 * @param array<int, mixed> $installments The installments.
+	 *
+	 * @return int
+	 */
+	private static function outstandingCents(array $installments): int {
+		$outstandingCents = 0;
+		foreach ($installments as $installment) {
+			if ((string)($installment['state'] ?? '') !== 'paid') {
+				$outstandingCents += (int)round(((float)($installment['amount'] ?? 0)) * 100);
+			}
+		}
+
+		return $outstandingCents;
+	}//end outstandingCents()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

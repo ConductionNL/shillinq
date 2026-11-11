@@ -48,10 +48,11 @@ use Throwable;
  * boolean plus diagnostic metadata so a finding investigator knows why a rule
  * fired. No dynamic code execution — only a fixed operator dispatch table.
  *
- * The DSL operator dispatch is an inherently large switch; the per-operator
- * cyclomatic complexity is bounded and each case is trivial, so the aggregate
- * class complexity is suppressed here (the alternative — one class per operator —
- * would be far harder to audit against the spec's single operator table).
+ * The DSL operator dispatch maps each leaf operator to its family
+ * (LEAF_FAMILIES) and each family evaluates its own few operators; the
+ * aggregate class complexity is suppressed here (the alternative — one class
+ * per operator — would be far harder to audit against the spec's single
+ * operator table).
  *
  * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
  *
@@ -94,6 +95,48 @@ class CcmRuleEngine {
 	private const COMPOUND_OPERATORS = ['all-of', 'any-of', 'none-of', 'not'];
 
 	/**
+	 * The family each leaf operator is evaluated by (one entry per
+	 * LEAF_OPERATORS member).
+	 *
+	 * @var array<string,string>
+	 */
+	private const LEAF_FAMILIES = [
+		'event-matches'                      => 'signal',
+		'field-equals'                       => 'field',
+		'field-in-set'                       => 'field',
+		'field-greater-than'                 => 'field',
+		'field-between'                      => 'field',
+		'field-matches-regex'                => 'field',
+		'time-is-within'                     => 'time',
+		'time-is-weekend'                    => 'time',
+		'time-is-outside-business-hours'     => 'time',
+		'user-has-function'                  => 'user',
+		'user-also-has-function'             => 'user',
+		'user-is-in-role'                    => 'user',
+		'value-deviates-from-baseline'       => 'signal',
+		'value-violates-benford'             => 'flag',
+		'count-of-similar-in-period-exceeds' => 'signal',
+		'duplicate-of-existing'              => 'flag',
+		'master-data-changed-within'         => 'flag',
+		'approval-chain-bypassed'            => 'flag',
+		'posted-while-period-closing'        => 'flag',
+		'same-user-as'                       => 'user',
+	];
+
+	/**
+	 * The upstream-resolved boolean context field each flag operator reads.
+	 *
+	 * @var array<string,string>
+	 */
+	private const FLAG_FIELDS = [
+		'value-violates-benford'      => 'benford_violation',
+		'duplicate-of-existing'       => 'duplicate_match',
+		'master-data-changed-within'  => 'master_data_changed',
+		'approval-chain-bypassed'     => 'approval_chain_bypassed',
+		'posted-while-period-closing' => 'period_closing',
+	];
+
+	/**
 	 * In-memory AST cache, keyed by cache key (rule identity + revision).
 	 *
 	 * @var array<string,array<string,mixed>>
@@ -132,7 +175,6 @@ class CcmRuleEngine {
 	 *
 	 * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	public function validateDsl(array $dsl): bool {
 		if ($dsl === []) {
@@ -146,32 +188,10 @@ class CcmRuleEngine {
 		}
 
 		$operator = (string)array_key_first($dsl);
-		$operand = $dsl[$operator];
-
 		if (in_array($operator, self::COMPOUND_OPERATORS, true) === true) {
-			if ($operator === 'not') {
-				if (is_array($operand) === false) {
-					throw new InvalidArgumentException('Operator "not" requires a single sub-expression.');
-				}
-
-				$this->validateDsl(dsl: $operand);
-				return true;
-			}
-
-			if (is_array($operand) === false) {
-				throw new InvalidArgumentException('Compound operator "' . $operator . '" requires an array of sub-expressions.');
-			}
-
-			foreach ($operand as $sub) {
-				if (is_array($sub) === false) {
-					throw new InvalidArgumentException('Compound operator "' . $operator . '" sub-expressions must be objects.');
-				}
-
-				$this->validateDsl(dsl: $sub);
-			}
-
+			$this->validateCompound(operator: $operator, operand: $dsl[$operator]);
 			return true;
-		}//end if
+		}
 
 		if (in_array($operator, self::LEAF_OPERATORS, true) === false) {
 			throw new InvalidArgumentException('Unknown DSL operator: ' . $operator);
@@ -179,6 +199,54 @@ class CcmRuleEngine {
 
 		return true;
 	}//end validateDsl()
+
+	/**
+	 * Validate the operand of a compound operator: "not" takes one
+	 * sub-expression, the others an array of sub-expressions.
+	 *
+	 * @param string $operator The compound operator.
+	 * @param mixed  $operand  Its operand.
+	 *
+	 * @return void
+	 *
+	 * @throws \InvalidArgumentException When the operand has the wrong shape.
+	 */
+	private function validateCompound(string $operator, mixed $operand): void {
+		if ($operator === 'not') {
+			if (is_array($operand) === false) {
+				throw new InvalidArgumentException('Operator "not" requires a single sub-expression.');
+			}
+
+			$this->validateDsl(dsl: $operand);
+			return;
+		}
+
+		if (is_array($operand) === false) {
+			throw new InvalidArgumentException('Compound operator "' . $operator . '" requires an array of sub-expressions.');
+		}
+
+		$this->validateSubExpressions(operator: $operator, operands: $operand);
+	}//end validateCompound()
+
+	/**
+	 * Validate each sub-expression of a compound operator.
+	 *
+	 * @param string                  $operator The compound operator.
+	 * @param array<int|string,mixed> $operands Its sub-expressions.
+	 *
+	 * @return void
+	 *
+	 * @throws \InvalidArgumentException When a sub-expression is not an object or is invalid.
+	 */
+	private function validateSubExpressions(string $operator, array $operands): void {
+		foreach ($operands as $sub) {
+			if (is_array($sub) === false) {
+				throw new InvalidArgumentException('Compound operator "' . $operator . '" sub-expressions must be objects.');
+			}
+
+			$this->validateDsl(dsl: $sub);
+		}
+	}//end validateSubExpressions()
 
 	/**
 	 * Compile a CcmRule's ruleLogic into a cached AST.
@@ -306,152 +374,232 @@ class CcmRuleEngine {
 	/**
 	 * Evaluate a single AST node (recursive, deterministic, no dynamic code).
 	 *
-	 * @param array<string,mixed> $node The DSL node.
+	 * @param array<string,mixed> $node    The DSL node.
 	 * @param array<string,mixed> $context The transaction context.
 	 *
 	 * @return bool The boolean truth of the node.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function evaluateNode(array $node, array $context): bool {
 		$operator = (string)array_key_first($node);
 		$operand = $node[$operator];
 
-		switch ($operator) {
-			case 'all-of':
-				// An empty conjunction never fires: an unconfigured rule (e.g. a
-				// custom-rule slot) must not flag every transaction (fail-closed).
-				if ((array)$operand === []) {
-					return false;
-				}
-
-				foreach ((array)$operand as $sub) {
-					if ($this->evaluateNode(node: (array)$sub, context: $context) === false) {
-						return false;
-					}
-				}
-				return true;
-			case 'any-of':
-				foreach ((array)$operand as $sub) {
-					if ($this->evaluateNode(node: (array)$sub, context: $context) === true) {
-						return true;
-					}
-				}
-				return false;
-			case 'none-of':
-				// An empty negation never fires (consistent with all-of above).
-				if ((array)$operand === []) {
-					return false;
-				}
-
-				foreach ((array)$operand as $sub) {
-					if ($this->evaluateNode(node: (array)$sub, context: $context) === true) {
-						return false;
-					}
-				}
-				return true;
-			case 'not':
-				return $this->evaluateNode(node: (array)$operand, context: $context) === false;
-			default:
-				return $this->evaluateLeaf(operator: $operator, operand: $operand, context: $context);
-		}//end switch
+		return match ($operator) {
+			'all-of' => $this->allOf(operands: (array)$operand, context: $context),
+			'any-of' => $this->anyOf(operands: (array)$operand, context: $context),
+			'none-of' => $this->noneOf(operands: (array)$operand, context: $context),
+			'not' => $this->evaluateNode(node: (array)$operand, context: $context) === false,
+			default => $this->evaluateLeaf(call: new CcmLeafCall(node: $node, context: $context)),
+		};
 	}//end evaluateNode()
 
 	/**
-	 * Evaluate a leaf operator against the context.
+	 * True when every sub-node holds. An empty conjunction never fires: an
+	 * unconfigured rule (e.g. a custom-rule slot) must not flag every
+	 * transaction (fail-closed).
 	 *
-	 * @param string $operator The leaf operator name.
-	 * @param mixed $operand The operator operand(s).
-	 * @param array<string,mixed> $context The transaction context.
+	 * @param array<int|string,mixed> $operands The sub-nodes.
+	 * @param array<string,mixed>     $context  The transaction context.
+	 *
+	 * @return bool The truth of the conjunction.
+	 */
+	private function allOf(array $operands, array $context): bool {
+		if ($operands === []) {
+			return false;
+		}
+
+		foreach ($operands as $sub) {
+			if ($this->evaluateNode(node: (array)$sub, context: $context) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allOf()
+
+	/**
+	 * True when at least one sub-node holds.
+	 *
+	 * @param array<int|string,mixed> $operands The sub-nodes.
+	 * @param array<string,mixed>     $context  The transaction context.
+	 *
+	 * @return bool The truth of the disjunction.
+	 */
+	private function anyOf(array $operands, array $context): bool {
+		foreach ($operands as $sub) {
+			if ($this->evaluateNode(node: (array)$sub, context: $context) === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end anyOf()
+
+	/**
+	 * True when no sub-node holds. An empty negation never fires (consistent
+	 * with all-of).
+	 *
+	 * @param array<int|string,mixed> $operands The sub-nodes.
+	 * @param array<string,mixed>     $context  The transaction context.
+	 *
+	 * @return bool The truth of the negated disjunction.
+	 */
+	private function noneOf(array $operands, array $context): bool {
+		if ($operands === []) {
+			return false;
+		}
+
+		return $this->anyOf(operands: $operands, context: $context) === false;
+	}//end noneOf()
+
+	/**
+	 * Evaluate a leaf operator against the context, dispatching on the
+	 * operator's family.
+	 *
+	 * @param CcmLeafCall $call The leaf node bound to its context.
 	 *
 	 * @return bool The boolean truth of the leaf.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
-	private function evaluateLeaf(string $operator, mixed $operand, array $context): bool {
-		$args = (array)$operand;
-		$fields = (array)($context['fields'] ?? []);
-
-		switch ($operator) {
-			case 'event-matches':
-				return (string)($context['event'] ?? '') === (string)$operand;
-			case 'field-equals':
-				return (string)$this->field(fields: $fields, key: ($args[0] ?? '')) === (string)($args[1] ?? '');
-			case 'field-in-set':
-				return in_array((string)$this->field(fields: $fields, key: ($args[0] ?? '')), array_map('strval', (array)($args[1] ?? [])), true);
-			case 'field-greater-than':
-				return is_numeric($this->field(fields: $fields, key: ($args[0] ?? ''))) === true
-					&& (float)$this->field(fields: $fields, key: ($args[0] ?? '')) > (float)($args[1] ?? 0);
-
-			case 'field-between':
-				$val = $this->field(fields: $fields, key: ($args[0] ?? ''));
-				return is_numeric($val) === true
-					&& (float)$val >= (float)($args[1] ?? 0)
-					&& (float)$val <= (float)($args[2] ?? 0);
-
-			case 'field-matches-regex':
-				return $this->regexMatch(pattern: (string)($args[1] ?? ''), subject: (string)$this->field(fields: $fields, key: ($args[0] ?? '')));
-			case 'time-is-weekend':
-				return $this->isWeekend(timestamp: (string)$this->field(fields: $fields, key: (string)$operand));
-			case 'time-is-outside-business-hours':
-				return $this->isOutsideHours(
-					timestamp: (string)$this->field(fields: $fields, key: ($args[0] ?? '')),
-					open: (string)($args[1] ?? '08:00'),
-					close: (string)($args[2] ?? '18:00')
-				);
-
-			case 'time-is-within':
-				// Window membership (e.g. last-day-of-period) is resolved upstream
-				// into a boolean context flag keyed by the field name.
-				return (bool)$this->field(fields: $fields, key: ($args[0] ?? '') . '_within_window');
-			case 'user-has-function':
-				return in_array((string)($args[1] ?? ''), $this->userFunctions(context: $context, userField: (string)($args[0] ?? '')), true);
-			case 'user-also-has-function':
-				$funcs = $this->userFunctions(context: $context, userField: (string)($args[0] ?? ''));
-				return in_array((string)($args[1] ?? ''), $funcs, true)
-					&& in_array((string)($args[2] ?? ''), $funcs, true);
-
-			case 'user-is-in-role':
-				return in_array((string)($args[1] ?? ''), $this->userRoles(context: $context, userField: (string)($args[0] ?? '')), true);
-			case 'value-deviates-from-baseline':
-				return $this->deviatesFromBaseline(args: $args, context: $context, fields: $fields);
-			case 'value-violates-benford':
-				return (bool)$this->field(fields: $fields, key: 'benford_violation');
-			case 'count-of-similar-in-period-exceeds':
-				$count = (int)$this->field(fields: $fields, key: 'similar_count');
-				return $count > (int)($args[2] ?? 0);
-			case 'duplicate-of-existing':
-				return (bool)$this->field(fields: $fields, key: 'duplicate_match');
-			case 'master-data-changed-within':
-				return (bool)$this->field(fields: $fields, key: 'master_data_changed');
-			case 'approval-chain-bypassed':
-				return (bool)$this->field(fields: $fields, key: 'approval_chain_bypassed');
-			case 'posted-while-period-closing':
-				return (bool)$this->field(fields: $fields, key: 'period_closing');
-			case 'same-user-as':
-				$a = (string)$this->field(fields: $fields, key: ($args[0] ?? ''));
-				$b = (string)$this->field(fields: $fields, key: ($args[1] ?? ''));
-				return $a !== '' && $a === $b;
-			default:
-				// Unknown operator at evaluation time fails closed (validation
-				// should already have rejected it on registration).
-				$this->logger->warning('CcmRuleEngine: unknown operator at evaluation: ' . $operator);
-				return false;
-		}//end switch
+	private function evaluateLeaf(CcmLeafCall $call): bool {
+		return match (self::LEAF_FAMILIES[$call->operator] ?? '') {
+			'flag' => (bool)$call->field(key: self::FLAG_FIELDS[$call->operator]),
+			'field' => $this->evaluateFieldLeaf(call: $call),
+			'time' => $this->evaluateTimeLeaf(call: $call),
+			'user' => $this->evaluateUserLeaf(call: $call),
+			'signal' => $this->evaluateSignalLeaf(call: $call),
+			default => $this->rejectUnknownOperator(operator: $call->operator),
+		};
 	}//end evaluateLeaf()
 
 	/**
-	 * Resolve a field value from the context fields by dotted/plain key.
+	 * Evaluate a field comparison operator (equals, in-set, greater-than,
+	 * between, matches-regex).
 	 *
-	 * @param array<string,mixed> $fields The context fields.
-	 * @param mixed $key The field key.
+	 * @param CcmLeafCall $call The leaf node bound to its context.
 	 *
-	 * @return mixed The resolved value, or null.
+	 * @return bool The boolean truth of the leaf.
 	 */
-	private function field(array $fields, mixed $key): mixed {
-		return $fields[(string)$key] ?? null;
-	}//end field()
+	private function evaluateFieldLeaf(CcmLeafCall $call): bool {
+		$value = $call->argField(index: 0);
+
+		return match ($call->operator) {
+			'field-equals' => (string)$value === (string)$call->arg(index: 1, default: ''),
+			'field-in-set' => in_array((string)$value, array_map('strval', (array)$call->arg(index: 1, default: [])), true),
+			'field-greater-than' => is_numeric($value) === true && (float)$value > (float)$call->arg(index: 1, default: 0),
+			'field-between' => $this->isNumericBetween(call: $call, value: $value),
+			default => $this->regexMatch(pattern: (string)$call->arg(index: 1, default: ''), subject: (string)$value),
+		};
+	}//end evaluateFieldLeaf()
+
+	/**
+	 * True when a value is numeric and inside the operator's inclusive bounds.
+	 *
+	 * @param CcmLeafCall $call  The leaf node bound to its context.
+	 * @param mixed       $value The field value under test.
+	 *
+	 * @return bool True when the value lies within [args[1], args[2]].
+	 */
+	private function isNumericBetween(CcmLeafCall $call, mixed $value): bool {
+		return is_numeric($value) === true
+			&& (float)$value >= (float)$call->arg(index: 1, default: 0)
+			&& (float)$value <= (float)$call->arg(index: 2, default: 0);
+	}//end isNumericBetween()
+
+	/**
+	 * Evaluate a time operator (weekend, outside business hours, within a
+	 * window). Window membership (e.g. last-day-of-period) is resolved
+	 * upstream into a boolean context flag keyed by the field name.
+	 *
+	 * @param CcmLeafCall $call The leaf node bound to its context.
+	 *
+	 * @return bool The boolean truth of the leaf.
+	 */
+	private function evaluateTimeLeaf(CcmLeafCall $call): bool {
+		return match ($call->operator) {
+			'time-is-weekend' => $this->isWeekend(timestamp: (string)$call->field(key: (string)$call->operand)),
+			'time-is-outside-business-hours' => $this->isOutsideHours(
+				timestamp: (string)$call->argField(index: 0),
+				open: (string)$call->arg(index: 1, default: '08:00'),
+				close: (string)$call->arg(index: 2, default: '18:00')
+			),
+			default => (bool)$call->field(key: $call->arg(index: 0, default: '') . '_within_window'),
+		};
+	}//end evaluateTimeLeaf()
+
+	/**
+	 * Evaluate a user operator (has function, also has function, is in role,
+	 * same user as).
+	 *
+	 * @param CcmLeafCall $call The leaf node bound to its context.
+	 *
+	 * @return bool The boolean truth of the leaf.
+	 */
+	private function evaluateUserLeaf(CcmLeafCall $call): bool {
+		$userField = (string)$call->arg(index: 0, default: '');
+		$code = (string)$call->arg(index: 1, default: '');
+
+		return match ($call->operator) {
+			'user-has-function' => in_array($code, $this->userFunctions(context: $call->context, userField: $userField), true),
+			'user-also-has-function' => $this->holdsBothFunctions(call: $call),
+			'user-is-in-role' => in_array($code, $this->userRoles(context: $call->context, userField: $userField), true),
+			default => $this->isSameUser(call: $call),
+		};
+	}//end evaluateUserLeaf()
+
+	/**
+	 * True when the user holds both function codes named by args[1] and args[2].
+	 *
+	 * @param CcmLeafCall $call The leaf node bound to its context.
+	 *
+	 * @return bool True when both functions are held.
+	 */
+	private function holdsBothFunctions(CcmLeafCall $call): bool {
+		$funcs = $this->userFunctions(context: $call->context, userField: (string)$call->arg(index: 0, default: ''));
+		return in_array((string)$call->arg(index: 1, default: ''), $funcs, true)
+			&& in_array((string)$call->arg(index: 2, default: ''), $funcs, true);
+	}//end holdsBothFunctions()
+
+	/**
+	 * True when the two fields named by args[0] and args[1] hold the same
+	 * non-empty user.
+	 *
+	 * @param CcmLeafCall $call The leaf node bound to its context.
+	 *
+	 * @return bool True when both fields name the same user.
+	 */
+	private function isSameUser(CcmLeafCall $call): bool {
+		$a = (string)$call->argField(index: 0);
+		$b = (string)$call->argField(index: 1);
+		return $a !== '' && $a === $b;
+	}//end isSameUser()
+
+	/**
+	 * Evaluate a signal operator (event matches, deviates from baseline,
+	 * count of similar in period exceeds).
+	 *
+	 * @param CcmLeafCall $call The leaf node bound to its context.
+	 *
+	 * @return bool The boolean truth of the leaf.
+	 */
+	private function evaluateSignalLeaf(CcmLeafCall $call): bool {
+		return match ($call->operator) {
+			'event-matches' => (string)($call->context['event'] ?? '') === (string)$call->operand,
+			'value-deviates-from-baseline' => $this->deviatesFromBaseline(call: $call),
+			default => (int)$call->field(key: 'similar_count') > (int)$call->arg(index: 2, default: 0),
+		};
+	}//end evaluateSignalLeaf()
+
+	/**
+	 * Unknown operator at evaluation time fails closed (validation should
+	 * already have rejected it on registration).
+	 *
+	 * @param string $operator The unknown operator name.
+	 *
+	 * @return bool Always false.
+	 */
+	private function rejectUnknownOperator(string $operator): bool {
+		$this->logger->warning('CcmRuleEngine: unknown operator at evaluation: ' . $operator);
+		return false;
+	}//end rejectUnknownOperator()
 
 	/**
 	 * Resolve the SoD function codes held by the user named in a context field.
@@ -487,18 +635,17 @@ class CcmRuleEngine {
 	 * True when a value deviates from its materialised baseline beyond the
 	 * configured z-score; records diagnostics (z_score, baseline_mean, stddev).
 	 *
-	 * @param array<int,mixed> $args The operator args [field, scope, zThreshold, window].
-	 * @param array<string,mixed> $context The transaction context (carries baselines).
-	 * @param array<string,mixed> $fields The transaction fields.
+	 * @param CcmLeafCall $call The leaf node; args are [field, scope, zThreshold, window].
 	 *
 	 * @return bool True when the value deviates beyond the threshold.
 	 */
-	private function deviatesFromBaseline(array $args, array $context, array $fields): bool {
-		$value = (float)($fields[(string)($args[0] ?? '')] ?? 0);
+	private function deviatesFromBaseline(CcmLeafCall $call): bool {
+		$args = $call->args;
+		$value = (float)($call->fields[(string)($args[0] ?? '')] ?? 0);
 		$scope = (string)($args[1] ?? '');
 		$threshold = (float)($args[2] ?? 3.0);
 
-		$baselines = (array)($context['baselines'] ?? []);
+		$baselines = (array)($call->context['baselines'] ?? []);
 		$baseline = (array)($baselines[$scope] ?? []);
 		$mean = (float)($baseline['mean'] ?? 0.0);
 		$stddev = (float)($baseline['stddev'] ?? 0.0);

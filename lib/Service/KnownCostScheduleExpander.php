@@ -115,6 +115,13 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	private const MONTH_KEYS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
 
 	/**
+	 * Step in days between occurrences for the date-enumerated frequencies.
+	 *
+	 * @var array<string,int>
+	 */
+	private const OCCURRENCE_STEP_DAYS = ['WEEKLY' => 7, 'FORTNIGHTLY' => 14];
+
+	/**
 	 * Expand one `CashflowRecurring`-shaped row into its 12 monthly cent
 	 * contributions for `$fiscalYear`.
 	 *
@@ -153,134 +160,151 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 *     Psalm reports the divergence as ParamNameMismatch.
 	 */
 	public function expand(array $recurring, int $fiscalYear, ?array $contract = null): array {
-		$indexationRule = (string)($recurring['indexationRule'] ?? 'FIXED');
-		$cpiRatePercent = ($recurring['cpiRatePercent'] ?? null);
-		if ($indexationRule === 'CPI_PAST_YEAR' && $cpiRatePercent === null) {
+		if ($this->needsOperatorInput(recurring: $recurring) === true) {
 			return ['kind' => 'needsOperatorInput'];
 		}
 
-		$validFrom = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
-		if ($validFrom === null) {
+		$schedule = $this->schedule(recurring: $recurring, fiscalYear: $fiscalYear);
+		if ($schedule === null) {
 			// Malformed input the guard should already have rejected on
 			// save — fail closed to an all-zero schedule rather than throw,
 			// consistent with this class's pure/no-exceptions contract.
 			return ['kind' => 'amounts', 'monthlyCents' => $this->zeroMonths()];
 		}
 
-		$validTo = null;
-		$validToRaw = ($recurring['validTo'] ?? null);
-		if ($validToRaw !== null && $validToRaw !== '') {
-			$validTo = $this->parseDate(value: (string)$validToRaw);
-		}
-
-		$factor = $this->indexationFactor(
-			indexationRule: $indexationRule,
-			cpiRatePercent: $cpiRatePercent,
-			validFromYear: (int)$validFrom->format('Y'),
-			fiscalYear: $fiscalYear
-		);
-
-		$standardAmount = (float)($recurring['standardAmount'] ?? 0.0);
-		$frequency = (string)($recurring['frequency'] ?? '');
-
-		$monthlyCents = match ($frequency) {
-			'MONTHLY' => $this->expandMonthly(
-				standardAmount: $standardAmount,
-				factor: $factor,
-				validFrom: $validFrom,
-				validTo: $validTo,
-				fiscalYear: $fiscalYear
-			),
-			'QUARTERLY' => $this->expandQuarterly(
-				standardAmount: $standardAmount,
-				factor: $factor,
-				validFrom: $validFrom,
-				validTo: $validTo,
-				fiscalYear: $fiscalYear
-			),
-			'ANNUALLY' => $this->expandAnnually(
-				standardAmount: $standardAmount,
-				factor: $factor,
-				validFrom: $validFrom,
-				validTo: $validTo,
-				fiscalYear: $fiscalYear,
-				monthOfYear: (int)($recurring['monthOfYear'] ?? 0)
-			),
-			'WEEKLY' => $this->expandByOccurrence(
-				standardAmount: $standardAmount,
-				factor: $factor,
-				validFrom: $validFrom,
-				validTo: $validTo,
-				fiscalYear: $fiscalYear,
-				stepDays: 7
-			),
-			'FORTNIGHTLY' => $this->expandByOccurrence(
-				standardAmount: $standardAmount,
-				factor: $factor,
-				validFrom: $validFrom,
-				validTo: $validTo,
-				fiscalYear: $fiscalYear,
-				stepDays: 14
-			),
-			default => $this->zeroMonths(),
-		};
-
-		return ['kind' => 'amounts', 'monthlyCents' => $monthlyCents];
+		return ['kind' => 'amounts', 'monthlyCents' => $this->monthlyCents(schedule: $schedule, recurring: $recurring)];
 
 	}//end expand()
 
 	/**
-	 * The indexation multiplier for `$fiscalYear`.
+	 * Whether the row is CPI-indexed without an operator-supplied rate
+	 * (REQ-BKC-003).
+	 *
+	 * @param array<string,mixed> $recurring `CashflowRecurring`-shaped array.
+	 *
+	 * @return boolean
+	 */
+	private function needsOperatorInput(array $recurring): bool {
+		return (string)($recurring['indexationRule'] ?? 'FIXED') === 'CPI_PAST_YEAR'
+			&& ($recurring['cpiRatePercent'] ?? null) === null;
+
+	}//end needsOperatorInput()
+
+	/**
+	 * Resolve the row's window and per-occurrence amount for `$fiscalYear`, or
+	 * null when `validFrom` is missing or unparseable.
+	 *
+	 * @param array<string,mixed> $recurring  `CashflowRecurring`-shaped array.
+	 * @param integer             $fiscalYear The fiscal year being computed.
+	 *
+	 * @return KnownCostSchedule|null
+	 */
+	private function schedule(array $recurring, int $fiscalYear): ?KnownCostSchedule {
+		$validFrom = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
+		if ($validFrom === null) {
+			return null;
+		}
+
+		$schedule = new KnownCostSchedule();
+		$schedule->validFrom = $validFrom;
+		$schedule->validTo = $this->validTo(recurring: $recurring);
+		$schedule->fiscalYear = $fiscalYear;
+		$factor = $this->indexationFactor(recurring: $recurring, schedule: $schedule);
+		$schedule->perOccurrence = ((float)($recurring['standardAmount'] ?? 0.0) * $factor);
+
+		return $schedule;
+
+	}//end schedule()
+
+	/**
+	 * The row's validTo, or null when absent, empty or unparseable.
+	 *
+	 * @param array<string,mixed> $recurring `CashflowRecurring`-shaped array.
+	 *
+	 * @return DateTimeImmutable|null
+	 */
+	private function validTo(array $recurring): ?DateTimeImmutable {
+		$validToRaw = ($recurring['validTo'] ?? null);
+		if ($validToRaw === null || $validToRaw === '') {
+			return null;
+		}
+
+		return $this->parseDate(value: (string)$validToRaw);
+
+	}//end validTo()
+
+	/**
+	 * Dispatch the row's `frequency` to its expansion.
+	 *
+	 * @param KnownCostSchedule   $schedule  The resolved schedule.
+	 * @param array<string,mixed> $recurring `CashflowRecurring`-shaped array.
+	 *
+	 * @return array<int|string,int> `"01".."12" => cents`.
+	 */
+	private function monthlyCents(KnownCostSchedule $schedule, array $recurring): array {
+		$frequency = (string)($recurring['frequency'] ?? '');
+		if (isset(self::OCCURRENCE_STEP_DAYS[$frequency]) === true) {
+			return $this->expandByOccurrence(schedule: $schedule, stepDays: self::OCCURRENCE_STEP_DAYS[$frequency]);
+		}
+
+		return match ($frequency) {
+			'MONTHLY' => $this->expandMonthly(schedule: $schedule),
+			'QUARTERLY' => $this->expandQuarterly(schedule: $schedule),
+			'ANNUALLY' => $this->expandAnnually(schedule: $schedule, monthOfYear: (int)($recurring['monthOfYear'] ?? 0)),
+			default => $this->zeroMonths(),
+		};
+
+	}//end monthlyCents()
+
+	/**
+	 * The indexation multiplier for the schedule's fiscal year.
 	 *
 	 * `FIXED`: always `1.0`. `CPI_PAST_YEAR` (rate present, the only case
 	 * reaching this method — the null-rate case short-circuits in
 	 * {@see expand()}): compounds once per calendar year relative to
 	 * `validFrom`'s own year (`design.md` §6e).
 	 *
-	 * @param string $indexationRule `FIXED` or `CPI_PAST_YEAR`.
-	 * @param float|int|null $cpiRatePercent The operator-supplied annual rate, when set.
-	 * @param integer $validFromYear The calendar year `validFrom` falls in.
-	 * @param integer $fiscalYear The fiscal year being computed.
+	 * @param array<string,mixed> $recurring `CashflowRecurring`-shaped array.
+	 * @param KnownCostSchedule   $schedule  The schedule (window and fiscal year).
 	 *
 	 * @return float The multiplier to apply to `standardAmount`.
 	 */
-	private function indexationFactor(
-		string $indexationRule,
-		float|int|null $cpiRatePercent,
-		int $validFromYear,
-		int $fiscalYear
-	): float {
-		if ($indexationRule !== 'CPI_PAST_YEAR' || $cpiRatePercent === null) {
+	private function indexationFactor(array $recurring, KnownCostSchedule $schedule): float {
+		$cpiRatePercent = ($recurring['cpiRatePercent'] ?? null);
+		if ((string)($recurring['indexationRule'] ?? 'FIXED') !== 'CPI_PAST_YEAR' || $cpiRatePercent === null) {
 			return 1.0;
 		}
 
-		$yearsElapsed = max(0, ($fiscalYear - $validFromYear));
+		$yearsElapsed = max(0, ($schedule->fiscalYear - (int)$schedule->validFrom->format('Y')));
 
-		return ((1.0 + ((float)$cpiRatePercent / 100.0)) ** $yearsElapsed);
+		return $this->compounded(cpiRatePercent: $cpiRatePercent, yearsElapsed: $yearsElapsed);
 
 	}//end indexationFactor()
 
 	/**
+	 * Compound an annual rate over whole years.
+	 *
+	 * @param float|integer $cpiRatePercent The operator-supplied annual rate.
+	 * @param integer       $yearsElapsed   Whole calendar years since validFrom.
+	 *
+	 * @return float
+	 */
+	private function compounded(float|int $cpiRatePercent, int $yearsElapsed): float {
+		return ((1.0 + ((float)$cpiRatePercent / 100.0)) ** $yearsElapsed);
+
+	}//end compounded()
+
+	/**
 	 * `MONTHLY`: `standardAmount` books once per in-scope month, unchanged.
 	 *
-	 * @param float $standardAmount Base amount in EUR for one occurrence.
-	 * @param float $factor The indexation multiplier for the fiscal year.
-	 * @param DateTimeImmutable $validFrom The row's validFrom.
-	 * @param DateTimeImmutable|null $validTo The row's validTo, or null when indefinite.
-	 * @param integer $fiscalYear The fiscal year being computed.
+	 * @param KnownCostSchedule $schedule The resolved schedule.
 	 *
-	 * @return array<string,int> `"01".."12" => cents`.
+	 * @return array<int|string,int> `"01".."12" => cents`.
 	 */
-	private function expandMonthly(
-		float $standardAmount,
-		float $factor,
-		DateTimeImmutable $validFrom,
-		?DateTimeImmutable $validTo,
-		int $fiscalYear
-	): array {
+	private function expandMonthly(KnownCostSchedule $schedule): array {
 		$months = $this->zeroMonths();
-		foreach ($this->inScopeMonths(validFrom: $validFrom, validTo: $validTo, fiscalYear: $fiscalYear) as $monthNumber) {
-			$months[$this->monthKey(monthNumber: $monthNumber)] = $this->toCents(euros: ($standardAmount * $factor));
+		foreach ($this->inScopeMonths(schedule: $schedule) as $monthNumber) {
+			$months[$this->monthKey(monthNumber: $monthNumber)] = $this->toCents(euros: $schedule->perOccurrence);
 		}
 
 		return $months;
@@ -292,24 +316,14 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 * each quarter that are in scope — `standardAmount ÷ 3` per in-scope
 	 * month (`design.md` §6b/§6d).
 	 *
-	 * @param float $standardAmount Base amount in EUR for one occurrence.
-	 * @param float $factor The indexation multiplier for the fiscal year.
-	 * @param DateTimeImmutable $validFrom The row's validFrom.
-	 * @param DateTimeImmutable|null $validTo The row's validTo, or null when indefinite.
-	 * @param integer $fiscalYear The fiscal year being computed.
+	 * @param KnownCostSchedule $schedule The resolved schedule.
 	 *
-	 * @return array<string,int> `"01".."12" => cents`.
+	 * @return array<int|string,int> `"01".."12" => cents`.
 	 */
-	private function expandQuarterly(
-		float $standardAmount,
-		float $factor,
-		DateTimeImmutable $validFrom,
-		?DateTimeImmutable $validTo,
-		int $fiscalYear
-	): array {
+	private function expandQuarterly(KnownCostSchedule $schedule): array {
 		$months = $this->zeroMonths();
-		$perMonth = (($standardAmount * $factor) / 3.0);
-		foreach ($this->inScopeMonths(validFrom: $validFrom, validTo: $validTo, fiscalYear: $fiscalYear) as $monthNumber) {
+		$perMonth = ($schedule->perOccurrence / 3.0);
+		foreach ($this->inScopeMonths(schedule: $schedule) as $monthNumber) {
 			$months[$this->monthKey(monthNumber: $monthNumber)] = $this->toCents(euros: $perMonth);
 		}
 
@@ -321,34 +335,18 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 * `ANNUALLY`: `standardAmount` books whole in `monthOfYear`, when that
 	 * month is in scope.
 	 *
-	 * @param float $standardAmount Base amount in EUR for one occurrence.
-	 * @param float $factor The indexation multiplier for the fiscal year.
-	 * @param DateTimeImmutable $validFrom The row's validFrom.
-	 * @param DateTimeImmutable|null $validTo The row's validTo, or null when indefinite.
-	 * @param integer $fiscalYear The fiscal year being computed.
-	 * @param integer $monthOfYear The anchor month, 1-12.
+	 * @param KnownCostSchedule $schedule    The resolved schedule.
+	 * @param integer           $monthOfYear The anchor month, 1-12.
 	 *
-	 * @return array<string,int> `"01".."12" => cents`.
+	 * @return array<int|string,int> `"01".."12" => cents`.
 	 */
-	private function expandAnnually(
-		float $standardAmount,
-		float $factor,
-		DateTimeImmutable $validFrom,
-		?DateTimeImmutable $validTo,
-		int $fiscalYear,
-		int $monthOfYear
-	): array {
+	private function expandAnnually(KnownCostSchedule $schedule, int $monthOfYear): array {
 		$months = $this->zeroMonths();
-		if ($monthOfYear < 1 || $monthOfYear > 12) {
+		if (in_array($monthOfYear, $this->inScopeMonths(schedule: $schedule), true) === false) {
 			return $months;
 		}
 
-		$inScope = $this->inScopeMonths(validFrom: $validFrom, validTo: $validTo, fiscalYear: $fiscalYear);
-		if (in_array($monthOfYear, $inScope, true) === false) {
-			return $months;
-		}
-
-		$months[$this->monthKey(monthNumber: $monthOfYear)] = $this->toCents(euros: ($standardAmount * $factor));
+		$months[$this->monthKey(monthNumber: $monthOfYear)] = $this->toCents(euros: $schedule->perOccurrence);
 
 		return $months;
 
@@ -359,41 +357,22 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 * occurrence dates — first occurrence `validFrom`, stepping by
 	 * `$stepDays`, bounded by `validTo` when set — and book
 	 * `standardAmount × <occurrences in that month>` per in-scope month.
-	 * NEVER an averaged 52/12 or 26/12 factor.
+	 * NEVER an averaged 52/12 or 26/12 factor. The indexation factor is
+	 * applied per occurrence, before the monthly sum (`design.md` §6d point 3).
 	 *
-	 * @param float $standardAmount Base amount in EUR for one occurrence.
-	 * @param float $factor The indexation multiplier for the fiscal year (applied
-	 *                      per-occurrence, before the monthly sum — `design.md` §6d point 3).
-	 * @param DateTimeImmutable $validFrom The row's validFrom (the first occurrence).
-	 * @param DateTimeImmutable|null $validTo The row's validTo, or null when indefinite.
-	 * @param integer $fiscalYear The fiscal year being computed.
-	 * @param integer $stepDays 7 for WEEKLY, 14 for FORTNIGHTLY.
+	 * @param KnownCostSchedule $schedule The resolved schedule.
+	 * @param integer           $stepDays 7 for WEEKLY, 14 for FORTNIGHTLY.
 	 *
-	 * @return array<string,int> `"01".."12" => cents`.
+	 * @return array<int|string,int> `"01".."12" => cents`.
 	 */
-	private function expandByOccurrence(
-		float $standardAmount,
-		float $factor,
-		DateTimeImmutable $validFrom,
-		?DateTimeImmutable $validTo,
-		int $fiscalYear,
-		int $stepDays
-	): array {
+	private function expandByOccurrence(KnownCostSchedule $schedule, int $stepDays): array {
 		$months = $this->zeroMonths();
-		$occurrenceCounts = $this->occurrenceCountsByMonth(
-			validFrom: $validFrom,
-			validTo: $validTo,
-			fiscalYear: $fiscalYear,
-			stepDays: $stepDays
-		);
-
-		$perOccurrence = ($standardAmount * $factor);
-		foreach ($occurrenceCounts as $monthNumber => $count) {
+		foreach ($this->occurrenceCountsByMonth(schedule: $schedule, stepDays: $stepDays) as $monthNumber => $count) {
 			if ($count <= 0) {
 				continue;
 			}
 
-			$months[$this->monthKey(monthNumber: $monthNumber)] = $this->toCents(euros: ($perOccurrence * $count));
+			$months[$this->monthKey(monthNumber: $monthNumber)] = $this->toCents(euros: ($schedule->perOccurrence * $count));
 		}
 
 		return $months;
@@ -401,34 +380,21 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	}//end expandByOccurrence()
 
 	/**
-	 * Count how many exact occurrence dates (starting at `$validFrom`,
-	 * stepped by `$stepDays`, bounded by `$validTo` when set) fall inside
-	 * each calendar month of `$fiscalYear`.
+	 * Count how many exact occurrence dates (starting at `validFrom`,
+	 * stepped by `$stepDays`, bounded by `validTo` when set) fall inside
+	 * each calendar month of the fiscal year.
 	 *
-	 * @param DateTimeImmutable $validFrom The first occurrence.
-	 * @param DateTimeImmutable|null $validTo The last permitted occurrence date, or null.
-	 * @param integer $fiscalYear The fiscal year to bucket occurrences into.
-	 * @param integer $stepDays The step, in days, between occurrences.
+	 * @param KnownCostSchedule $schedule The resolved schedule.
+	 * @param integer           $stepDays The step, in days, between occurrences.
 	 *
 	 * @return array<int,int> Calendar month (1-12) => occurrence count.
 	 */
-	private function occurrenceCountsByMonth(
-		DateTimeImmutable $validFrom,
-		?DateTimeImmutable $validTo,
-		int $fiscalYear,
-		int $stepDays
-	): array {
+	private function occurrenceCountsByMonth(KnownCostSchedule $schedule, int $stepDays): array {
 		$counts = array_fill_keys(range(1, 12), 0);
-
-		$yearStart = new DateTimeImmutable($fiscalYear . '-01-01');
-		$yearEnd = new DateTimeImmutable($fiscalYear . '-12-31');
-
-		$current = $validFrom;
-		while ($current <= $yearEnd) {
-			if ($validTo !== null && $current > $validTo) {
-				break;
-			}
-
+		$yearStart = new DateTimeImmutable($schedule->fiscalYear . '-01-01');
+		$yearEnd = new DateTimeImmutable($schedule->fiscalYear . '-12-31');
+		$current = $schedule->validFrom;
+		while ($current <= $yearEnd && ($schedule->validTo === null || $current <= $schedule->validTo)) {
 			if ($current >= $yearStart) {
 				$counts[(int)$current->format('n')]++;
 			}
@@ -441,40 +407,44 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	}//end occurrenceCountsByMonth()
 
 	/**
-	 * The calendar months (1-12) of `$fiscalYear` that fall inside
+	 * The calendar months (1-12) of the fiscal year that fall inside
 	 * `[validFrom, validTo]` (REQ-BKC-006). Compared by `(year, month)`
 	 * pairs, not by day, since this class only needs month granularity.
 	 *
-	 * @param DateTimeImmutable $validFrom The row's validFrom.
-	 * @param DateTimeImmutable|null $validTo The row's validTo, or null when indefinite.
-	 * @param integer $fiscalYear The fiscal year being computed.
+	 * @param KnownCostSchedule $schedule The resolved schedule.
 	 *
 	 * @return list<int> The in-scope calendar months, ascending.
 	 */
-	private function inScopeMonths(DateTimeImmutable $validFrom, ?DateTimeImmutable $validTo, int $fiscalYear): array {
-		$validFromKey = (((int)$validFrom->format('Y') * 12) + (int)$validFrom->format('n'));
-		$validToKey = null;
-		if ($validTo !== null) {
-			$validToKey = (((int)$validTo->format('Y') * 12) + (int)$validTo->format('n'));
+	private function inScopeMonths(KnownCostSchedule $schedule): array {
+		$validFromKey = $this->monthIndex(date: $schedule->validFrom);
+		$validToKey = PHP_INT_MAX;
+		if ($schedule->validTo !== null) {
+			$validToKey = $this->monthIndex(date: $schedule->validTo);
 		}
 
 		$months = [];
-		for ($month = 1; $month <= 12; $month++) {
-			$monthKey = (($fiscalYear * 12) + $month);
-			if ($monthKey < $validFromKey) {
-				continue;
+		foreach (range(1, 12) as $month) {
+			$monthKey = (($schedule->fiscalYear * 12) + $month);
+			if ($monthKey >= $validFromKey && $monthKey <= $validToKey) {
+				$months[] = $month;
 			}
-
-			if ($validToKey !== null && $monthKey > $validToKey) {
-				continue;
-			}
-
-			$months[] = $month;
 		}
 
 		return $months;
 
 	}//end inScopeMonths()
+
+	/**
+	 * A date's `(year × 12) + month` index, for month-granular comparison.
+	 *
+	 * @param DateTimeImmutable $date The date.
+	 *
+	 * @return integer
+	 */
+	private function monthIndex(DateTimeImmutable $date): int {
+		return (((int)$date->format('Y') * 12) + (int)$date->format('n'));
+
+	}//end monthIndex()
 
 	/**
 	 * Convert a EUR amount to integer cents, rounded once.

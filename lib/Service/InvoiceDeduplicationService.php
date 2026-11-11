@@ -61,59 +61,74 @@ class InvoiceDeduplicationService {
 	 *
 	 * @return array{hasConflicts:bool,conflicts:array<int,array{invoiceId:string,invoiceNumber:string,status:string,timeEntryIds:array<int,string>,expenseIds:array<int,string>}>}
 	 */
-	public function deduplicateSourceIds(
-		string $administrationId,
-		array $timeEntryIds,
-		array $expenseIds,
-		?string $excludeInvoiceId = null,
-	): array {
+	public function deduplicateSourceIds(string $administrationId, array $timeEntryIds, array $expenseIds, ?string $excludeInvoiceId = null): array {
 		if (count($timeEntryIds) === 0 && count($expenseIds) === 0) {
 			return ['hasConflicts' => false, 'conflicts' => []];
 		}
 
-		$existing = $this->findAll(
-			schema: 'BillableInvoice',
-			filters: ['administrationId' => $administrationId]
+		$claim = new SourceIdClaim();
+		$claim->timeEntryIds = $timeEntryIds;
+		$claim->expenseIds = $expenseIds;
+		$claim->excludeInvoiceId = $excludeInvoiceId;
+		$existing = $this->findAll(schema: 'BillableInvoice', filters: ['administrationId' => $administrationId]);
+		$conflicts = array_values(
+			array_filter(array_map(fn (array $invoice): ?array => $this->conflictWith(invoice: $invoice, claim: $claim), $existing))
 		);
 
-		$conflicts = [];
-
-		foreach ($existing as $invoice) {
-			$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-			if ($invoiceId === '' || $invoiceId === $excludeInvoiceId) {
-				continue;
-			}
-
-			$status = (string)($invoice['status'] ?? 'draft');
-			if (in_array($status, ['draft', 'posted'], true) === false) {
-				continue;
-			}
-
-			$existingTimeIds = array_map('strval', (array)($invoice['timeEntryIds'] ?? []));
-			$existingExpIds = array_map('strval', (array)($invoice['expenseIds'] ?? []));
-
-			$timeOverlap = array_values(array_intersect($timeEntryIds, $existingTimeIds));
-			$expOverlap = array_values(array_intersect($expenseIds, $existingExpIds));
-
-			if (count($timeOverlap) === 0 && count($expOverlap) === 0) {
-				continue;
-			}
-
-			$conflicts[] = [
-				'invoiceId' => $invoiceId,
-				'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
-				'status' => $status,
-				'timeEntryIds' => $timeOverlap,
-				'expenseIds' => $expOverlap,
-			];
-		}//end foreach
-
-		return [
-			'hasConflicts' => (count($conflicts) > 0),
-			'conflicts' => $conflicts,
-		];
+		return ['hasConflicts' => (count($conflicts) > 0), 'conflicts' => $conflicts];
 
 	}//end deduplicateSourceIds()
+
+	/**
+	 * The conflict one existing invoice raises against the claim, or null
+	 * when it is skipped or shares no source id.
+	 *
+	 * @param array<string,mixed> $invoice Existing BillableInvoice.
+	 * @param SourceIdClaim       $claim   Requested source ids.
+	 *
+	 * @return array{invoiceId:string,invoiceNumber:string,status:string,timeEntryIds:array<int,string>,expenseIds:array<int,string>}|null
+	 */
+	private function conflictWith(array $invoice, SourceIdClaim $claim): ?array {
+		$invoiceId = $this->candidateId(invoice: $invoice, claim: $claim);
+		if ($invoiceId === '') {
+			return null;
+		}
+
+		$timeOverlap = array_values(array_intersect($claim->timeEntryIds, array_map('strval', (array)($invoice['timeEntryIds'] ?? []))));
+		$expOverlap = array_values(array_intersect($claim->expenseIds, array_map('strval', (array)($invoice['expenseIds'] ?? []))));
+		if (count($timeOverlap) === 0 && count($expOverlap) === 0) {
+			return null;
+		}
+
+		return [
+			'invoiceId' => $invoiceId,
+			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
+			'status' => (string)($invoice['status'] ?? 'draft'),
+			'timeEntryIds' => $timeOverlap,
+			'expenseIds' => $expOverlap,
+		];
+
+	}//end conflictWith()
+
+	/**
+	 * The invoice's id when it can conflict — a draft or posted invoice other
+	 * than the excluded one — or '' when it is skipped.
+	 *
+	 * @param array<string,mixed> $invoice Existing BillableInvoice.
+	 * @param SourceIdClaim       $claim   Requested source ids.
+	 *
+	 * @return string
+	 */
+	private function candidateId(array $invoice, SourceIdClaim $claim): string {
+		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		$status = (string)($invoice['status'] ?? 'draft');
+		if ($invoiceId === $claim->excludeInvoiceId || in_array($status, ['draft', 'posted'], true) === false) {
+			return '';
+		}
+
+		return $invoiceId;
+
+	}//end candidateId()
 
 	/**
 	 * Find all matching records via the real OR ObjectService API.

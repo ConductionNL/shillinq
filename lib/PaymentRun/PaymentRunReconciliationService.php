@@ -67,13 +67,6 @@ class PaymentRunReconciliationService {
 	private const SCHEMA = 'PaymentRun';
 
 	/**
-	 * Cent tolerance for amount-fallback equality (rounding slack).
-	 *
-	 * @var float
-	 */
-	private const AMOUNT_EPSILON = 0.005;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container App container — lazily
@@ -110,53 +103,114 @@ class PaymentRunReconciliationService {
 			return ['error' => 'not-exported', 'state' => $state];
 		}
 
-		$entries = $this->parser->parse(contents: $contents);
+		$matched = $this->matchLines(paymentRun: $paymentRun, entries: $this->parser->parse(contents: $contents));
 
-		$runNumber = (string)($paymentRun['runNumber'] ?? '');
-		$lines = $this->lines(paymentRun: $paymentRun);
-		$matched = $this->match(runNumber: $runNumber, lines: $lines, entries: $entries);
+		// PARTIAL / unmatched — stay exported, record a mismatch note.
+		if (count(array_filter($matched)) < count($matched) || $matched === []) {
+			return $this->recordPartial(paymentRun: $paymentRun, matched: $matched);
+		}
 
-		$totalLines = count($lines);
-		$matchedCount = count(array_filter($matched));
+		// FULL match — set reconciledAt + request exported → reconciled.
+		return $this->recordFull(paymentRun: $paymentRun, matched: $matched);
+
+	}//end reconcile()
+
+	/**
+	 * Keep the run exported and record which lines did not match.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 * @param array<int, bool>     $matched    Per-line matched flag.
+	 *
+	 * @return array<string, mixed> The partial envelope.
+	 */
+	private function recordPartial(array $paymentRun, array $matched): array {
+		$note = $this->mismatchNote(matched: $matched);
+		$saved = $this->saveRun(run: array_merge($paymentRun, ['reconciliationNote' => $note]));
+
+		return [
+			'result' => 'partial',
+			'matchedCount' => count(array_filter($matched)),
+			'totalLines' => count($matched),
+			'unmatchedLines' => $this->unmatchedLineNumbers(matched: $matched),
+			'mismatchNote' => $note,
+			'lifecycleState' => (string)($saved['lifecycleState'] ?? 'exported'),
+			'paymentRun' => $saved,
+		];
+	}//end recordPartial()
+
+	/**
+	 * The mismatch note: how many lines matched and which did not.
+	 *
+	 * @param array<int, bool> $matched Per-line matched flag.
+	 *
+	 * @return string The note.
+	 */
+	private function mismatchNote(array $matched): string {
+		$unmatched = $this->unmatchedLineNumbers(matched: $matched);
+		$unmatchedLabel = 'none';
+		if ($unmatched !== []) {
+			$unmatchedLabel = implode(', ', $unmatched);
+		}
+
+		return sprintf(
+			'Reconciliation partial: %d of %d lines matched. Unmatched line(s): %s.',
+			count(array_filter($matched)),
+			count($matched),
+			$unmatchedLabel
+		);
+	}//end mismatchNote()
+
+	/**
+	 * The 1-based numbers of the lines that did not match.
+	 *
+	 * @param array<int, bool> $matched Per-line matched flag.
+	 *
+	 * @return list<int> The unmatched line numbers.
+	 */
+	private function unmatchedLineNumbers(array $matched): array {
 		$unmatched = [];
 		foreach ($matched as $index => $isMatched) {
 			if ($isMatched === false) {
-				// Report the 1-based line index.
 				$unmatched[] = ($index + 1);
 			}
 		}
 
-		// PARTIAL / unmatched — stay exported, record a mismatch note.
-		if ($matchedCount < $totalLines || $totalLines === 0) {
-			$unmatchedLabel = 'none';
-			if ($unmatched !== []) {
-				$unmatchedLabel = implode(', ', $unmatched);
-			}
+		return $unmatched;
+	}//end unmatchedLineNumbers()
 
-			$note = sprintf(
-				'Reconciliation partial: %d of %d lines matched. Unmatched line(s): %s.',
-				$matchedCount,
-				$totalLines,
-				$unmatchedLabel
-			);
-
-			$update = array_merge($paymentRun, ['reconciliationNote' => $note]);
-			$saved = $this->saveRun(run: $update);
-
-			return [
-				'result' => 'partial',
-				'matchedCount' => $matchedCount,
-				'totalLines' => $totalLines,
-				'unmatchedLines' => $unmatched,
-				'mismatchNote' => $note,
-				'lifecycleState' => (string)($saved['lifecycleState'] ?? 'exported'),
-				'paymentRun' => $saved,
-			];
-		}//end if
-
-		// FULL match — set reconciledAt + request exported → reconciled.
+	/**
+	 * Save the run as reconciled and answer the full envelope.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 * @param array<int, bool>     $matched    Per-line matched flag (all true).
+	 *
+	 * @return array<string, mixed> The full envelope.
+	 */
+	private function recordFull(array $paymentRun, array $matched): array {
 		$reconciledAt = gmdate('Y-m-d\TH:i:s\Z');
+		$saved = $this->saveReconciled(paymentRun: $paymentRun, reconciledAt: $reconciledAt);
 
+		return [
+			'result' => 'full',
+			'matchedCount' => count(array_filter($matched)),
+			'totalLines' => count($matched),
+			'unmatchedLines' => [],
+			'reconciledAt' => $reconciledAt,
+			'lifecycleState' => (string)($saved['lifecycleState'] ?? 'reconciled'),
+			'paymentRun' => $saved,
+		];
+	}//end recordFull()
+
+	/**
+	 * Request exported → reconciled: save reconciledAt and the reconciled
+	 * state while holding the reconcile write authority for this run.
+	 *
+	 * @param array<string, mixed> $paymentRun   The PaymentRun object array.
+	 * @param string               $reconciledAt The reconciliation timestamp.
+	 *
+	 * @return array<string, mixed> The saved run.
+	 */
+	private function saveReconciled(array $paymentRun, string $reconciledAt): array {
 		$update = array_merge(
 			$paymentRun,
 			[
@@ -166,84 +220,41 @@ class PaymentRunReconciliationService {
 			]
 		);
 
-		$saved = (new ServerWriteAuthority())->during(
+		return (new ServerWriteAuthority())->during(
 			purpose: PaymentRunReconcileGuard::PURPOSE,
 			objectId: (string)($paymentRun['id'] ?? ($paymentRun['@self']['id'] ?? '')),
 			work: fn (): array => $this->saveRun(run: $update)
 		);
-
-		return [
-			'result' => 'full',
-			'matchedCount' => $matchedCount,
-			'totalLines' => $totalLines,
-			'unmatchedLines' => [],
-			'reconciledAt' => $reconciledAt,
-			'lifecycleState' => (string)($saved['lifecycleState'] ?? 'reconciled'),
-			'paymentRun' => $saved,
-		];
-
-	}//end reconcile()
+	}//end saveReconciled()
 
 	/**
-	 * Match parsed statement entries to the run's lines.
+	 * Match parsed statement entries to the run's lines: pass 1 by the
+	 * primary EndToEndId, pass 2 by (amount, creditorIban) for the lines
+	 * still unmatched. Each entry matches at most one line.
 	 *
-	 * @param string $runNumber The PaymentRun runNumber (EndToEndId stem).
-	 * @param array<int, array<string, mixed>> $lines The run payment lines (0-indexed).
-	 * @param array<int, array<string, mixed>> $entries The parsed statement entries.
+	 * @param array<string, mixed>             $paymentRun The PaymentRun object array.
+	 * @param array<int, array<string, mixed>> $entries    The parsed statement entries.
 	 *
 	 * @return array<int, bool> A per-line matched flag keyed by 0-based line index.
 	 */
-	private function match(string $runNumber, array $lines, array $entries): array {
+	private function matchLines(array $paymentRun, array $entries): array {
+		$runNumber = (string)($paymentRun['runNumber'] ?? '');
+		$lines = $this->lines(paymentRun: $paymentRun);
+		$matcher = new StatementEntryMatcher(entries: $entries);
+
 		$matched = [];
 		foreach (array_keys($lines) as $index) {
-			$matched[$index] = false;
+			$matched[$index] = $matcher->claimByEndToEnd(endToEnd: $this->endToEndId(runNumber: $runNumber, index: $index));
 		}
 
-		$usedEntries = [];
-
-		// Pass 1: primary EndToEndId match.
 		foreach ($lines as $index => $line) {
-			$endToEnd = $this->endToEndId(runNumber: $runNumber, index: $index);
-			foreach ($entries as $entryIndex => $entry) {
-				if (isset($usedEntries[$entryIndex]) === true) {
-					continue;
-				}
-
-				if ($entry['endToEndId'] !== '' && $entry['endToEndId'] === $endToEnd) {
-					$matched[$index] = true;
-					$usedEntries[$entryIndex] = true;
-					break;
-				}
+			if ($matched[$index] === false) {
+				$matched[$index] = $matcher->claimByCreditorAmount(line: $line);
 			}
 		}
-
-		// Pass 2: (amount, creditorIban) fallback against unmatched lines.
-		foreach ($lines as $index => $line) {
-			if ($matched[$index] === true) {
-				continue;
-			}
-
-			$lineAmount = round((float)($line['amount'] ?? 0), 2);
-			$lineIban = strtoupper(trim((string)($line['creditorIban'] ?? '')));
-
-			foreach ($entries as $entryIndex => $entry) {
-				if (isset($usedEntries[$entryIndex]) === true) {
-					continue;
-				}
-
-				$entryIban = strtoupper(trim($entry['creditorIban']));
-				if ($lineIban !== '' && $entryIban === $lineIban
-					&& abs($entry['amount'] - $lineAmount) <= self::AMOUNT_EPSILON
-				) {
-					$matched[$index] = true;
-					$usedEntries[$entryIndex] = true;
-					break;
-				}
-			}
-		}//end foreach
 
 		return $matched;
-	}//end match()
+	}//end matchLines()
 
 	/**
 	 * The deterministic EndToEndId for a 0-based line index.
@@ -297,21 +308,34 @@ class PaymentRunReconciliationService {
 				->setSchema(self::SCHEMA)
 				->saveObject($run);
 
-			if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-				return (array)$saved->jsonSerialize();
-			}
-
-			if (is_array($saved) === true) {
-				return $saved;
-			}
-
-			return $run;
+			return $this->savedRun(saved: $saved, run: $run);
 		} catch (\Throwable $e) {
 			$this->logger->warning('PaymentRunReconciliationService: failed to save PaymentRun', ['exception' => $e->getMessage()]);
 			return $run;
 		}//end try
 
 	}//end saveRun()
+
+	/**
+	 * The saved run as an array: a serialised entity, a returned array, or —
+	 * for anything else — the run as submitted.
+	 *
+	 * @param mixed                $saved What saveObject() returned.
+	 * @param array<string, mixed> $run   The submitted run.
+	 *
+	 * @return array<string, mixed> The saved run.
+	 */
+	private function savedRun(mixed $saved, array $run): array {
+		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
+			return (array)$saved->jsonSerialize();
+		}
+
+		if (is_array($saved) === true) {
+			return $saved;
+		}
+
+		return $run;
+	}//end savedRun()
 
 	/**
 	 * Lazily resolve OpenRegister's ObjectService from the container (null on miss).

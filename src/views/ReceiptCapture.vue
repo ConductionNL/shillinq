@@ -75,17 +75,7 @@
 				v-if="isDraftReview"
 				class="receipt-capture__hint"
 				data-testid="receipt-capture-review-hint">
-				{{
-					requiresReview
-						? t(
-								'shillinq',
-								'Some fields have low confidence — please review before confirming.',
-							)
-						: t(
-								'shillinq',
-								'Extraction confidence is high. Review and confirm.',
-							)
-				}}
+				{{ reviewHint }}
 			</p>
 
 			<div class="receipt-capture__row">
@@ -359,12 +349,16 @@ import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
 	confidenceForField,
-	glAccountSuggestionSummary,
 	hasKnownExtractionId,
 	isExtractionDraft,
 	isFieldCorrected,
 	requiresExplicitReview,
 } from '../utils/extractionConfidence.js'
+import {
+	draftReviewHint,
+	requestExtraction,
+	suggestGlAccount,
+} from '../utils/extractionDraftApi.js'
 import {
 	buildReceiptConfirmPayload,
 	canSaveReceipt,
@@ -413,6 +407,11 @@ export default {
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.record)
+		},
+
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
+		reviewHint() {
+			return draftReviewHint(this.requiresReview)
 		},
 
 		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
@@ -494,16 +493,7 @@ export default {
 				return
 			}
 
-			try {
-				const response = await axios.post(
-					generateUrl(
-						`/apps/shillinq/api/v1/extraction/drafts/${this.id}/suggest-account?schema=${RECEIPT_SCHEMA}`,
-					),
-				)
-				this.glSuggestion = glAccountSuggestionSummary(response.data)
-			} catch (e) {
-				this.glSuggestion = null
-			}
+			this.glSuggestion = await suggestGlAccount(this.id, RECEIPT_SCHEMA)
 		},
 
 		/**
@@ -569,20 +559,11 @@ export default {
 			this.busy = true
 			this.saveError = ''
 			try {
-				await axios.post(
-					generateUrl('/apps/shillinq/api/v1/extraction/request'),
-					{
-						documentUri: this.record.sourceDocumentUri,
-						docType: 'receipt',
-						id: this.id,
-					},
-				)
-				showSuccess(
-					t(
-						'shillinq',
-						'Extraction requested. The draft will update once docudesk responds.',
-					),
-				)
+				await requestExtraction({
+					documentUri: this.record.sourceDocumentUri,
+					docType: 'receipt',
+					id: this.id,
+				})
 			} catch (e) {
 				this.saveError = receiptErrorMessage(e)
 				showError(this.saveError)

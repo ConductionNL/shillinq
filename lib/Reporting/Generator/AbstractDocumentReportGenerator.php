@@ -199,14 +199,47 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 		$section = new ReportSection();
 		$this->build($section, $context);
 
-		$reportBody = [
+		$options = ['format' => self::DOCUDESK_FORMATS[$useFormat]] + $this->renderOptions(
+			context: $context,
+			reportBody: $this->reportBody(section: $section)
+		);
+		$content = $this->render(templateId: $selected['templateId'], options: $options);
+
+		return new GeneratedFile(
+			fileName: $this->fileName($context, $useFormat),
+			mimeType: self::MIME_TYPES[$useFormat],
+			format: $useFormat,
+			content: $content,
+		);
+
+	}//end generate()
+
+	/**
+	 * The report body docudesk receives: title, subtitle and the built blocks.
+	 *
+	 * @param ReportSection $section The built section.
+	 *
+	 * @return array<string,mixed> The report body.
+	 */
+	private function reportBody(ReportSection $section): array {
+		return [
 			'title' => $this->documentTitle(),
 			'subtitle' => $this->catalogueLabel(),
 			'blocks' => $section->toArray(),
 		];
 
-		$options = [
-			'format' => self::DOCUDESK_FORMATS[$useFormat],
+	}//end reportBody()
+
+	/**
+	 * The docudesk options after `format`: the acting user and the ad-hoc data.
+	 *
+	 * @param array<string,mixed> $context The report context.
+	 * @param array<string,mixed> $reportBody The report body.
+	 *
+	 * @return array<string,mixed> The options.
+	 */
+	private function renderOptions(array $context, array $reportBody): array {
+		return [
 			'userId' => $this->str($context, 'userId') !== '' ? $this->str($context, 'userId') : 'system',
 			'adHocData' => [
 				'report' => $reportBody,
@@ -219,8 +252,21 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 			],
 		];
 
+	}//end renderOptions()
+
+	/**
+	 * Render through docudesk and return the document bytes.
+	 *
+	 * @param string $templateId The selected template id.
+	 * @param array<string,mixed> $options The docudesk options.
+	 *
+	 * @return string The document content.
+	 *
+	 * @throws RuntimeException When rendering fails or returns no content.
+	 */
+	private function render(string $templateId, array $options): string {
 		try {
-			$rendered = $this->documentService()->generateDocument($selected['templateId'], [], $options);
+			$rendered = $this->documentService()->generateDocument($templateId, [], $options);
 		} catch (Throwable $e) {
 			throw new RuntimeException('Docudesk rendering failed: ' . $e->getMessage(), 0, $e);
 		}
@@ -230,14 +276,9 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 			throw new RuntimeException('Docudesk returned no document content for "' . static::reportType() . '".');
 		}
 
-		return new GeneratedFile(
-			fileName: $this->fileName($context, $useFormat),
-			mimeType: self::MIME_TYPES[$useFormat],
-			format: $useFormat,
-			content: $content,
-		);
+		return $content;
 
-	}//end generate()
+	}//end render()
 
 	/**
 	 * Build the report body into the prepared ReportSection. The subclass
@@ -478,49 +519,8 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 			return ['templateId' => null, 'error' => 'Could not look up docudesk templates: ' . $e->getMessage()];
 		}
 
-		$matches = [];
-		foreach ($this->normaliseRows($templates) as $template) {
-			if ((string)($template['category'] ?? '') === $category) {
-				$matches[] = $template;
-			}
-		}
-
-		if (count($matches) === 0) {
-			return [
-				'templateId' => null,
-				'error' => sprintf(
-					'No docudesk template found for "%s" in namespace "%s" (category "%s"); generation is refused.',
-					$reportType,
-					self::TEMPLATE_NAMESPACE,
-					$category
-				),
-			];
-		}
-
-		if (count($matches) > 1) {
-			$ids = array_map(
-				static fn (array $t): string => (string)($t['id'] ?? ($t['@self']['id'] ?? '?')),
-				$matches
-			);
-
-			return [
-				'templateId' => null,
-				'error' => sprintf(
-					'Multiple docudesk templates (%s) for "%s" in namespace "%s"; generation is refused '
-					. '(never guess between templates that produce official documents).',
-					implode(', ', $ids),
-					$reportType,
-					self::TEMPLATE_NAMESPACE
-				),
-			];
-		}
-
-		$id = (string)($matches[0]['id'] ?? $matches[0]['@self']['id'] ?? '');
-		if ($id === '') {
-			return ['templateId' => null, 'error' => 'The matched docudesk template has no id.'];
-		}
-
-		return ['templateId' => $id, 'error' => null];
+		$selection = new DocudeskTemplateSelection(reportType: $reportType, namespace: self::TEMPLATE_NAMESPACE);
+		return $selection->single(rows: $this->normaliseRows($templates), category: $category);
 	}//end selectTemplate()
 
 	/**

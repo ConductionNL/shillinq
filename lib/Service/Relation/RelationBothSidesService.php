@@ -76,6 +76,13 @@ class RelationBothSidesService {
 	public const MAX_ROWS = 50;
 
 	/**
+	 * A side the caller may not read: restricted, no rows, no amounts.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const RESTRICTED_SIDE = ['restricted' => true, 'rows' => [], 'invoiced' => null, 'open' => null];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param RelationRecords $records The administration-scoped reads.
@@ -107,7 +114,11 @@ class RelationBothSidesService {
 			throw new DomainException('Not found');
 		}
 
-		return $this->relation(administrationId: $administrationId, customer: $customer, range: [$from, $to], sides: $sides, withRows: true);
+		$query       = new RelationReportQuery(administrationId: $administrationId, sides: $sides);
+		$query->from = $from;
+		$query->to   = $to;
+
+		return $this->relation(customer: $customer, query: $query);
 
 	}//end forCustomer()
 
@@ -145,22 +156,16 @@ class RelationBothSidesService {
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function forAdministration(string $administrationId, string $from, string $to, array $sides): array {
+		$query           = new RelationReportQuery(administrationId: $administrationId, sides: $sides);
+		$query->from     = $from;
+		$query->to       = $to;
+		$query->withRows = false;
+
 		$relations = [];
 		foreach ($this->records->rows(schema: 'CustomerMaster', administrationId: $administrationId) as $customer) {
-			if ((string)($customer['payeeId'] ?? '') === '') {
-				continue;
+			if ((string)($customer['payeeId'] ?? '') !== '') {
+				$relations[] = $this->reportRow(relation: $this->relation(customer: $customer, query: $query));
 			}
-
-			$relation    = $this->relation(administrationId: $administrationId, customer: $customer, range: [$from, $to], sides: $sides, withRows: false);
-			$relations[] = array_merge(
-				[
-					'id'         => $relation['customer']['id'],
-					'customerId' => $relation['customer']['id'],
-					'name'       => $relation['customer']['name'],
-					'payeeId'    => $relation['payee']['id'],
-				],
-				$relation['totals']
-			);
 		}
 
 		usort($relations, static fn (array $a, array $b): int => strcmp((string)$a['name'], (string)$b['name']));
@@ -171,6 +176,26 @@ class RelationBothSidesService {
 		];
 
 	}//end forAdministration()
+
+	/**
+	 * One report row: the relation's ids and name with its five totals.
+	 *
+	 * @param array<string, mixed> $relation A relation without rows.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function reportRow(array $relation): array {
+		return array_merge(
+			[
+				'id'         => $relation['customer']['id'],
+				'customerId' => $relation['customer']['id'],
+				'name'       => $relation['customer']['name'],
+				'payeeId'    => $relation['payee']['id'],
+			],
+			$relation['totals']
+		);
+
+	}//end reportRow()
 
 	/**
 	 * The report as CSV: one row per relation with the five amounts.
@@ -226,37 +251,17 @@ class RelationBothSidesService {
 	/**
 	 * Both sides of one relation.
 	 *
-	 * @param string                            $administrationId The administration.
-	 * @param array<string, mixed>              $customer         The customer record.
-	 * @param array{0: string, 1: string}       $range            First and last invoice date.
-	 * @param array{sent: bool, received: bool} $sides            The sides the caller may read.
-	 * @param bool                              $withRows         Whether to list the invoices.
+	 * @param array<string, mixed> $customer The customer record.
+	 * @param RelationReportQuery  $query    The administration, readable sides, range and listing.
 	 *
 	 * @return array<string, mixed> The relation.
 	 */
-	private function relation(string $administrationId, array $customer, array $range, array $sides, bool $withRows): array {
+	private function relation(array $customer, RelationReportQuery $query): array {
 		$payeeId = (string)($customer['payeeId'] ?? '');
-		$payee   = $this->records->one(schema: 'Payee', administrationId: $administrationId, id: $payeeId);
+		$payee   = $this->records->one(schema: 'Payee', administrationId: $query->administrationId, id: $payeeId);
 
-		$sent = ['restricted' => true, 'rows' => [], 'invoiced' => null, 'open' => null];
-		if ($sides['sent'] === true) {
-			$sent = $this->side(rows: $this->sentRows(administrationId: $administrationId, customer: $customer, range: $range));
-		}
-
-		$received = ['restricted' => true, 'rows' => [], 'invoiced' => null, 'open' => null];
-		if ($sides['received'] === true) {
-			$received = $this->side(rows: $this->receivedRows(administrationId: $administrationId, payee: $payee, range: $range));
-		}
-
-		$net = null;
-		if ($sent['open'] !== null && $received['open'] !== null) {
-			$net = round($sent['open'] - $received['open'], 2);
-		}
-
-		if ($withRows === false) {
-			$sent['rows']     = [];
-			$received['rows'] = [];
-		}
+		$sent     = $this->sentSide(customer: $customer, query: $query);
+		$received = $this->receivedSide(payee: $payee, query: $query);
 
 		return [
 			'customer' => ['id' => (string)$customer['id'], 'name' => (string)($customer['legalName'] ?? $customer['tradeName'] ?? '')],
@@ -264,16 +269,85 @@ class RelationBothSidesService {
 			'link'     => ($customer['payeeLink'] ?? null),
 			'sent'     => $sent,
 			'received' => $received,
-			'totals'   => [
-				'sales'          => $sent['invoiced'],
-				'purchases'      => $received['invoiced'],
-				'openReceivable' => $sent['open'],
-				'openPayable'    => $received['open'],
-				'net'            => $net,
-			],
+			'totals'   => $this->totals(sent: $sent, received: $received),
 		];
 
 	}//end relation()
+
+	/**
+	 * The sales side, restricted when the caller may not read it.
+	 *
+	 * @param array<string, mixed> $customer The customer record.
+	 * @param RelationReportQuery  $query    The readable sides, range and listing.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function sentSide(array $customer, RelationReportQuery $query): array {
+		if ($query->sides['sent'] !== true) {
+			return self::RESTRICTED_SIDE;
+		}
+
+		return $this->listed(side: $this->side(rows: $this->sentRows(customer: $customer, query: $query)), query: $query);
+
+	}//end sentSide()
+
+	/**
+	 * The purchase side, restricted when the caller may not read it.
+	 *
+	 * @param array<string, mixed>|null $payee The supplier, null when it is gone.
+	 * @param RelationReportQuery       $query The readable sides, range and listing.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function receivedSide(?array $payee, RelationReportQuery $query): array {
+		if ($query->sides['received'] !== true) {
+			return self::RESTRICTED_SIDE;
+		}
+
+		return $this->listed(side: $this->side(rows: $this->receivedRows(payee: $payee, query: $query)), query: $query);
+
+	}//end receivedSide()
+
+	/**
+	 * The side with its rows dropped when the read only totals.
+	 *
+	 * @param array<string, mixed> $side  A side.
+	 * @param RelationReportQuery  $query The listing choice.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function listed(array $side, RelationReportQuery $query): array {
+		if ($query->withRows === false) {
+			$side['rows'] = [];
+		}
+
+		return $side;
+
+	}//end listed()
+
+	/**
+	 * The five totals of a relation; net only when both open amounts are known.
+	 *
+	 * @param array<string, mixed> $sent     The sales side.
+	 * @param array<string, mixed> $received The purchase side.
+	 *
+	 * @return array<string, float|null> sales, purchases, openReceivable, openPayable, net.
+	 */
+	private function totals(array $sent, array $received): array {
+		$net = null;
+		if ($sent['open'] !== null && $received['open'] !== null) {
+			$net = round($sent['open'] - $received['open'], 2);
+		}
+
+		return [
+			'sales'          => $sent['invoiced'],
+			'purchases'      => $received['invoiced'],
+			'openReceivable' => $sent['open'],
+			'openPayable'    => $received['open'],
+			'net'            => $net,
+		];
+
+	}//end totals()
 
 	/**
 	 * One side's totals and its first MAX_ROWS rows, newest first.
@@ -298,32 +372,20 @@ class RelationBothSidesService {
 	/**
 	 * The customer's sales invoices in the range.
 	 *
-	 * @param string                      $administrationId The administration.
-	 * @param array<string, mixed>        $customer         The customer.
-	 * @param array{0: string, 1: string} $range            The dates.
+	 * @param array<string, mixed> $customer The customer.
+	 * @param RelationReportQuery  $query    The administration and range.
 	 *
 	 * @return array<int, array<string, mixed>> The rows.
 	 */
-	private function sentRows(string $administrationId, array $customer, array $range): array {
+	private function sentRows(array $customer, RelationReportQuery $query): array {
 		$keys = array_unique(array_filter([(string)$customer['id'], (string)($customer['customerId'] ?? '')]));
 		$rows = [];
 		foreach ($keys as $key) {
-			foreach ($this->records->rows(schema: 'ARInvoice', administrationId: $administrationId, filters: ['customerId' => $key]) as $invoice) {
+			foreach ($this->records->rows(schema: 'ARInvoice', administrationId: $query->administrationId, filters: ['customerId' => $key]) as $invoice) {
 				$state = (string)($invoice['lifecycleState'] ?? '');
-				if (in_array($state, self::SENT_STATES, true) === false || $this->inRange(date: $invoice['invoiceDate'] ?? null, range: $range) === false) {
-					continue;
+				if (in_array($state, self::SENT_STATES, true) === true && $query->inRange(date: $invoice['invoiceDate'] ?? null) === true) {
+					$rows[$invoice['id']] = $this->sentRow(invoice: $invoice, state: $state);
 				}
-
-				$amount = $this->signed(amount: (float)($invoice['grossAmount'] ?? 0), credit: ($invoice['invoiceType'] ?? '') === 'credit-note');
-				$open   = 0.0;
-				if (in_array($state, self::SENT_OPEN, true) === true) {
-					$open = $amount;
-					if (isset($invoice['amountDue']) === true && is_numeric($invoice['amountDue']) === true) {
-						$open = $this->signed(amount: (float)$invoice['amountDue'], credit: ($invoice['invoiceType'] ?? '') === 'credit-note');
-					}
-				}
-
-				$rows[$invoice['id']] = $this->row(schema: 'ARInvoice', record: $invoice, state: $state, amounts: [$amount, $open]);
 			}
 		}
 
@@ -332,57 +394,130 @@ class RelationBothSidesService {
 	}//end sentRows()
 
 	/**
-	 * The supplier's purchase invoices in the range.
+	 * One listed sales invoice: a credit note counts negative, and an open
+	 * invoice is open for its amount due when that is known.
 	 *
-	 * @param string                      $administrationId The administration.
-	 * @param array<string, mixed>|null   $payee            The supplier, null when it is gone.
-	 * @param array{0: string, 1: string} $range            The dates.
+	 * @param array<string, mixed> $invoice The ARInvoice.
+	 * @param string               $state   Its lifecycle state.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function sentRow(array $invoice, string $state): array {
+		$credit = ($invoice['invoiceType'] ?? '') === 'credit-note';
+		$amount = $this->signed(amount: (float)($invoice['grossAmount'] ?? 0), credit: $credit);
+		$open   = 0.0;
+		if (in_array($state, self::SENT_OPEN, true) === true) {
+			$open = $amount;
+			if (isset($invoice['amountDue']) === true && is_numeric($invoice['amountDue']) === true) {
+				$open = $this->signed(amount: (float)$invoice['amountDue'], credit: $credit);
+			}
+		}
+
+		return $this->row(schema: 'ARInvoice', record: $invoice, state: $state, amounts: [$amount, $open]);
+
+	}//end sentRow()
+
+	/**
+	 * The supplier's purchase invoices in the range: its payables, then the
+	 * intake not yet handed to payables.
+	 *
+	 * @param array<string, mixed>|null $payee The supplier, null when it is gone.
+	 * @param RelationReportQuery       $query The administration and range.
 	 *
 	 * @return array<int, array<string, mixed>> The rows.
 	 */
-	private function receivedRows(string $administrationId, ?array $payee, array $range): array {
+	private function receivedRows(?array $payee, RelationReportQuery $query): array {
 		if ($payee === null) {
 			return [];
 		}
 
+		return array_merge(
+			$this->payableRows(payee: $payee, query: $query),
+			$this->intakeRows(payee: $payee, query: $query)
+		);
+
+	}//end receivedRows()
+
+	/**
+	 * The supplier's counted APTransactions in the range.
+	 *
+	 * @param array<string, mixed> $payee The supplier.
+	 * @param RelationReportQuery  $query The administration and range.
+	 *
+	 * @return array<int, array<string, mixed>> The rows.
+	 */
+	private function payableRows(array $payee, RelationReportQuery $query): array {
 		$rows         = [];
-		$transactions = $this->records->rows(schema: 'APTransaction', administrationId: $administrationId, filters: ['vendorId' => $payee['id']]);
+		$transactions = $this->records->rows(schema: 'APTransaction', administrationId: $query->administrationId, filters: ['vendorId' => $payee['id']]);
 		foreach ($transactions as $transaction) {
 			$state   = (string)($transaction['state'] ?? '');
 			$counted = in_array($state, self::RECEIVED_STATES, true);
-			if ($counted === false || $this->inRange(date: $transaction['invoiceDate'] ?? null, range: $range) === false) {
-				continue;
+			if ($counted === true && $query->inRange(date: $transaction['invoiceDate'] ?? null) === true) {
+				$rows[] = $this->payableRow(transaction: $transaction, state: $state);
 			}
-
-			$amount = (float)($transaction['totalAmount'] ?? 0);
-			$open   = 0.0;
-			if (in_array($state, self::RECEIVED_OPEN, true) === true) {
-				$open = $amount;
-			}
-
-			$rows[] = $this->row(schema: 'APTransaction', record: $transaction, state: $state, amounts: [$amount, $open]);
-		}
-
-		$intake = $this->records->rows(schema: 'SupplierInvoice', administrationId: $administrationId, filters: ['supplierId' => $payee['id']]);
-		foreach ($intake as $invoice) {
-			// Handed to payables already: counted as its APTransaction above.
-			$booked = ((string)($invoice['apTransactionId'] ?? '') !== '');
-			$state  = (string)($invoice['statusCode'] ?? '');
-			if ($booked === true || in_array($state, self::INTAKE_OPEN, true) === false) {
-				continue;
-			}
-
-			if ($this->inRange(date: $invoice['invoiceDate'] ?? null, range: $range) === false) {
-				continue;
-			}
-
-			$amount = (float)($invoice['totalInclVat'] ?? 0);
-			$rows[] = $this->row(schema: 'SupplierInvoice', record: $invoice, state: $state, amounts: [$amount, $amount]);
 		}
 
 		return $rows;
 
-	}//end receivedRows()
+	}//end payableRows()
+
+	/**
+	 * One listed APTransaction, open for its whole amount in an open state.
+	 *
+	 * @param array<string, mixed> $transaction The APTransaction.
+	 * @param string               $state       Its state.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function payableRow(array $transaction, string $state): array {
+		$amount = (float)($transaction['totalAmount'] ?? 0);
+		$open   = 0.0;
+		if (in_array($state, self::RECEIVED_OPEN, true) === true) {
+			$open = $amount;
+		}
+
+		return $this->row(schema: 'APTransaction', record: $transaction, state: $state, amounts: [$amount, $open]);
+
+	}//end payableRow()
+
+	/**
+	 * The supplier's open intake invoices in the range that are not booked in payables.
+	 *
+	 * @param array<string, mixed> $payee The supplier.
+	 * @param RelationReportQuery  $query The administration and range.
+	 *
+	 * @return array<int, array<string, mixed>> The rows.
+	 */
+	private function intakeRows(array $payee, RelationReportQuery $query): array {
+		$rows   = [];
+		$intake = $this->records->rows(schema: 'SupplierInvoice', administrationId: $query->administrationId, filters: ['supplierId' => $payee['id']]);
+		foreach ($intake as $invoice) {
+			$state = (string)($invoice['statusCode'] ?? '');
+			if ($this->isOpenIntake(invoice: $invoice, state: $state) === true && $query->inRange(date: $invoice['invoiceDate'] ?? null) === true) {
+				$amount = (float)($invoice['totalInclVat'] ?? 0);
+				$rows[] = $this->row(schema: 'SupplierInvoice', record: $invoice, state: $state, amounts: [$amount, $amount]);
+			}
+		}
+
+		return $rows;
+
+	}//end intakeRows()
+
+	/**
+	 * Whether an intake invoice is open and not yet handed to payables (where
+	 * it is already counted as its APTransaction).
+	 *
+	 * @param array<string, mixed> $invoice The SupplierInvoice.
+	 * @param string               $state   Its status code.
+	 *
+	 * @return bool
+	 */
+	private function isOpenIntake(array $invoice, string $state): bool {
+		$booked = ((string)($invoice['apTransactionId'] ?? '') !== '');
+
+		return $booked === false && in_array($state, self::INTAKE_OPEN, true) === true;
+
+	}//end isOpenIntake()
 
 	/**
 	 * One listed invoice.
@@ -424,18 +559,4 @@ class RelationBothSidesService {
 
 	}//end signed()
 
-	/**
-	 * Whether a date lies inside the range.
-	 *
-	 * @param mixed                       $date  The date.
-	 * @param array{0: string, 1: string} $range First and last date.
-	 *
-	 * @return bool True when inside.
-	 */
-	private function inRange(mixed $date, array $range): bool {
-		$day = substr((string)$date, 0, 10);
-
-		return $day !== '' && $day >= $range[0] && $day <= $range[1];
-
-	}//end inRange()
 }//end class

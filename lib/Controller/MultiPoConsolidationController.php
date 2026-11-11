@@ -63,13 +63,6 @@ use RuntimeException;
  */
 class MultiPoConsolidationController extends Controller {
 	/**
-	 * Short-slug identifier pattern shared by every scope/path parameter.
-	 *
-	 * @var string
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
-
-	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -120,45 +113,38 @@ class MultiPoConsolidationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function consolidate(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$scope = $this->invoiceScope();
+		if ($scope instanceof JSONResponse) {
+			return $scope;
 		}
 
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
+		return $this->consolidated(scope: $scope);
+	}//end consolidate()
 
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$invoiceId = $this->scopeParam(name: 'invoiceId');
-		if ($invoiceId === '') {
-			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
+	/**
+	 * Fan the invoice out over its POs.
+	 *
+	 * @param InvoiceLineScope $scope The authorised scope.
+	 *
+	 * @return JSONResponse 200 with the per-line results, the mapped service refusal, or a logged 500.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
+	 */
+	private function consolidated(InvoiceLineScope $scope): JSONResponse {
 		try {
 			$results = $this->consolidation->consolidateInvoice(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId
+				administrationId: $scope->administrationId,
+				invoiceId: $scope->invoiceId
 			);
 		} catch (RuntimeException $e) {
 			return $this->mapRuntimeException(exception: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MultiPoConsolidationController: consolidate failed',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('MultiPoConsolidationController: consolidate failed', $scope->invoiceLogContext(e: $e));
 			return new JSONResponse(['error' => 'Could not consolidate invoice'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		return new JSONResponse(['lines' => $results], Http::STATUS_OK);
-	}//end consolidate()
+	}//end consolidated()
 
 	/**
 	 * List candidate (PO line, GRN line) tuples for one invoice line so
@@ -180,76 +166,86 @@ class MultiPoConsolidationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function candidates(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$invoiceId = $this->scopeParam(name: 'invoiceId');
-		if ($invoiceId === '') {
-			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$invoiceLineNumber = (int)$this->request->getParam('invoiceLineNumber', 0);
-		if ($invoiceLineNumber < 1) {
-			return new JSONResponse(['error' => 'invoiceLineNumber is required'], Http::STATUS_BAD_REQUEST);
+		$scope = $this->lineScope();
+		if ($scope instanceof JSONResponse) {
+			return $scope;
 		}
 
 		try {
-			$invoice = $this->loadInvoice(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId
-			);
-			if ($invoice === null) {
-				return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$invoiceLine = $this->locateLine(
-				invoice: $invoice,
-				lineNumber: $invoiceLineNumber
-			);
-			if ($invoiceLine === null) {
-				return new JSONResponse(['error' => 'Invoice line not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$candidates = $this->consolidation->enumerateCandidateTuples(
-				administrationId: $administrationId,
-				invoice: $invoice,
-				invoiceLine: $invoiceLine
-			);
+			return $this->invoiceCandidates(scope: $scope);
 		} catch (RuntimeException $e) {
 			return $this->mapRuntimeException(exception: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MultiPoConsolidationController: candidates failed',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'invoiceLineNumber' => $invoiceLineNumber,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('MultiPoConsolidationController: candidates failed', $scope->lineLogContext(e: $e));
 			return new JSONResponse(['error' => 'Could not enumerate candidates'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 
+	}//end candidates()
+
+	/**
+	 * Load the invoice of the scope and list the candidates of its line.
+	 *
+	 * @param InvoiceLineScope $scope The authorised scope.
+	 *
+	 * @return JSONResponse 200 with the candidates, or 404 when the invoice is missing.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
+	 */
+	private function invoiceCandidates(InvoiceLineScope $scope): JSONResponse {
+		$invoice = $this->loadInvoice(scope: $scope);
+		if ($invoice === null) {
+			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->lineCandidates(scope: $scope, invoice: $invoice);
+	}//end invoiceCandidates()
+
+	/**
+	 * List the candidate tuples of the scope's invoice line.
+	 *
+	 * @param InvoiceLineScope    $scope   The authorised scope.
+	 * @param array<string,mixed> $invoice The supplier invoice.
+	 *
+	 * @return JSONResponse 200 with the ordered candidates, or 404 when the line is missing.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
+	 */
+	private function lineCandidates(InvoiceLineScope $scope, array $invoice): JSONResponse {
+		$invoiceLine = $this->locateLine(
+			invoice: $invoice,
+			lineNumber: $scope->invoiceLineNumber
+		);
+		if ($invoiceLine === null) {
+			return new JSONResponse(['error' => 'Invoice line not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$candidates = $this->consolidation->enumerateCandidateTuples(
+			administrationId: $scope->administrationId,
+			invoice: $invoice,
+			invoiceLine: $invoiceLine
+		);
+
+		return $this->candidateList(scope: $scope, candidates: $candidates);
+	}//end lineCandidates()
+
+	/**
+	 * The 200 answer listing an invoice line's candidates.
+	 *
+	 * @param InvoiceLineScope         $scope      The scope.
+	 * @param array<int|string, mixed> $candidates The ordered candidate tuples.
+	 *
+	 * @return JSONResponse
+	 */
+	private function candidateList(InvoiceLineScope $scope, array $candidates): JSONResponse {
 		return new JSONResponse(
 			[
-				'invoiceId' => $invoiceId,
-				'invoiceLineNumber' => $invoiceLineNumber,
+				'invoiceId' => $scope->invoiceId,
+				'invoiceLineNumber' => $scope->invoiceLineNumber,
 				'candidates' => $candidates,
 			],
 			Http::STATUS_OK
 		);
-
-	}//end candidates()
+	}//end candidateList()
 
 	/**
 	 * Persist the operator's chosen candidate tuple.
@@ -277,100 +273,164 @@ class MultiPoConsolidationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function disambiguate(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$scope = $this->lineScope();
+		if ($scope instanceof JSONResponse) {
+			return $scope;
 		}
 
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		$choice = new ChosenCandidate(request: $this->request);
+		$refusal = $this->choiceRefusal(choice: $choice);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
+		return $this->persistChoice(scope: $scope, choice: $choice);
+	}//end disambiguate()
 
-		$invoiceId = $this->scopeParam(name: 'invoiceId');
-		if ($invoiceId === '') {
-			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$invoiceLineNumber = (int)$this->request->getParam('invoiceLineNumber', 0);
-		if ($invoiceLineNumber < 1) {
-			return new JSONResponse(['error' => 'invoiceLineNumber is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$chosenPoLineId = trim((string)$this->request->getParam('chosenPoLineId', ''));
-		$chosenGrnLineId = trim((string)$this->request->getParam('chosenGrnLineId', ''));
-
-		if ($chosenPoLineId === '' || preg_match(self::ID_PATTERN, $chosenPoLineId) !== 1) {
+	/**
+	 * The 400 for a missing or malformed PO line id, or a malformed GRN line id.
+	 *
+	 * @param ChosenCandidate $choice The chosen tuple.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the choice is well-formed.
+	 */
+	private function choiceRefusal(ChosenCandidate $choice): ?JSONResponse {
+		if ($choice->hasPoLine() === false) {
 			return new JSONResponse(['error' => 'chosenPoLineId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($chosenGrnLineId !== '' && preg_match(self::ID_PATTERN, $chosenGrnLineId) !== 1) {
+		if ($choice->grnLineWellFormed() === false) {
 			return new JSONResponse(['error' => 'chosenGrnLineId is malformed'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return null;
+	}//end choiceRefusal()
+
+	/**
+	 * Persist the chosen tuple.
+	 *
+	 * @param InvoiceLineScope $scope  The authorised scope.
+	 * @param ChosenCandidate  $choice The well-formed choice.
+	 *
+	 * @return JSONResponse 201 with the persisted match, the mapped service refusal, or a logged 500.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
+	 */
+	private function persistChoice(InvoiceLineScope $scope, ChosenCandidate $choice): JSONResponse {
 		try {
-			$match = $this->consolidation->disambiguateAmbiguousMatches(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				invoiceLineNumber: $invoiceLineNumber,
-				chosenPoLineId: $chosenPoLineId,
-				chosenGrnLineId: $chosenGrnLineId
-			);
+			$match = $this->persistedMatch(scope: $scope, choice: $choice);
 		} catch (RuntimeException $e) {
 			return $this->mapRuntimeException(exception: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MultiPoConsolidationController: disambiguate failed',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'invoiceLineNumber' => $invoiceLineNumber,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('MultiPoConsolidationController: disambiguate failed', $scope->lineLogContext(e: $e));
 			return new JSONResponse(['error' => 'Could not persist disambiguation choice'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 
 		return new JSONResponse($match, Http::STATUS_CREATED);
-	}//end disambiguate()
+	}//end persistChoice()
+
+	/**
+	 * Hand the chosen tuple to the service, which re-enumerates the candidate
+	 * set server-side before persisting.
+	 *
+	 * @param InvoiceLineScope $scope  The authorised scope.
+	 * @param ChosenCandidate  $choice The well-formed choice.
+	 *
+	 * @return array<string, mixed> The persisted ThreeWayMatch.
+	 */
+	private function persistedMatch(InvoiceLineScope $scope, ChosenCandidate $choice): array {
+		return $this->consolidation->disambiguateAmbiguousMatches(
+			administrationId: $scope->administrationId,
+			invoiceId: $scope->invoiceId,
+			invoiceLineNumber: $scope->invoiceLineNumber,
+			chosenPoLineId: $choice->poLineId,
+			chosenGrnLineId: $choice->grnLineId
+		);
+	}//end persistedMatch()
+
+	/**
+	 * The authorised invoice scope, or the refusal: 401 anonymous, 400 without
+	 * a well-formed administration, a masked 404 outside it, 400 without an invoice.
+	 *
+	 * @return InvoiceLineScope|JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function invoiceScope(): InvoiceLineScope|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$scope = new InvoiceLineScope(request: $this->request);
+		return $this->administrationRefusal(scope: $scope) ?? $this->invoiceRefusal(scope: $scope) ?? $scope;
+	}//end invoiceScope()
+
+	/**
+	 * The authorised invoice scope with a line number, or the refusal.
+	 *
+	 * @return InvoiceLineScope|JSONResponse
+	 */
+	private function lineScope(): InvoiceLineScope|JSONResponse {
+		$scope = $this->invoiceScope();
+		if ($scope instanceof InvoiceLineScope && $scope->invoiceLineNumber < 1) {
+			return new JSONResponse(['error' => 'invoiceLineNumber is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $scope;
+	}//end lineScope()
+
+	/**
+	 * The 400 without a well-formed administration, or the masked 404 when the
+	 * caller may not access it.
+	 *
+	 * @param InvoiceLineScope $scope The scope.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may proceed.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function administrationRefusal(InvoiceLineScope $scope): ?JSONResponse {
+		if ($scope->administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $scope->administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The 400 without a well-formed invoice id.
+	 *
+	 * @param InvoiceLineScope $scope The scope.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function invoiceRefusal(InvoiceLineScope $scope): ?JSONResponse {
+		if ($scope->invoiceId === '') {
+			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
+	}//end invoiceRefusal()
 
 	/**
 	 * Load a SupplierInvoice (administration-scoped) via OR's
-	 * ObjectService API.
+	 * ObjectService API; a failing lookup is logged and reads as missing.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $invoiceId Invoice id.
+	 * @param InvoiceLineScope $scope The authorised scope.
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function loadInvoice(string $administrationId, string $invoiceId): ?array {
+	private function loadInvoice(InvoiceLineScope $scope): ?array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister($this->register())
-				->setSchema('SupplierInvoice')
-				->findAll(
-					[
-						'filters' => [
-							'id' => $invoiceId,
-							'administrationId' => $administrationId,
-						],
-					]
-				);
+			$rows = $this->invoiceRows(scope: $scope);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MultiPoConsolidationController: invoice lookup failed',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('MultiPoConsolidationController: invoice lookup failed', $scope->invoiceLogContext(e: $e));
 			return null;
-		}//end try
+		}
 
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
@@ -382,6 +442,28 @@ class MultiPoConsolidationController extends Controller {
 	}//end loadInvoice()
 
 	/**
+	 * The SupplierInvoice rows matching the scope's invoice and administration.
+	 *
+	 * @param InvoiceLineScope $scope The authorised scope.
+	 *
+	 * @return iterable<mixed>
+	 */
+	private function invoiceRows(InvoiceLineScope $scope): iterable {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $objectService
+			->setRegister($this->register())
+			->setSchema('SupplierInvoice')
+			->findAll(
+				[
+					'filters' => [
+						'id' => $scope->invoiceId,
+						'administrationId' => $scope->administrationId,
+					],
+				]
+			);
+	}//end invoiceRows()
+
+	/**
 	 * Find an invoice line by 1-based lineNumber.
 	 *
 	 * @param array<string,mixed> $invoice Invoice header.
@@ -390,24 +472,42 @@ class MultiPoConsolidationController extends Controller {
 	 * @return array<string,mixed>|null
 	 */
 	private function locateLine(array $invoice, int $lineNumber): ?array {
-		$lines = ($invoice['lines'] ?? $invoice['invoiceLines'] ?? []);
-		if (is_array($lines) === false) {
-			return null;
-		}
-
-		foreach ($lines as $index => $line) {
-			if (is_array($line) === false) {
-				continue;
-			}
-
-			$candidateLineNumber = (int)($line['lineNumber'] ?? ((int)$index + 1));
-			if ($candidateLineNumber === $lineNumber) {
+		foreach ($this->invoiceLines(invoice: $invoice) as $index => $line) {
+			if (is_array($line) === true && $this->lineNumberOf(line: $line, index: $index) === $lineNumber) {
 				return $line;
 			}
 		}
 
 		return null;
 	}//end locateLine()
+
+	/**
+	 * The invoice's lines (under lines or invoiceLines), [] when it has none.
+	 *
+	 * @param array<string,mixed> $invoice Invoice header.
+	 *
+	 * @return array<int|string,mixed>
+	 */
+	private function invoiceLines(array $invoice): array {
+		$lines = ($invoice['lines'] ?? $invoice['invoiceLines'] ?? []);
+		if (is_array($lines) === false) {
+			return [];
+		}
+
+		return $lines;
+	}//end invoiceLines()
+
+	/**
+	 * An invoice line's 1-based number: its lineNumber, else its position.
+	 *
+	 * @param array<string,mixed> $line  The invoice line.
+	 * @param int|string          $index The line's key in the lines list.
+	 *
+	 * @return int
+	 */
+	private function lineNumberOf(array $line, int|string $index): int {
+		return (int)($line['lineNumber'] ?? ((int)$index + 1));
+	}//end lineNumberOf()
 
 	/**
 	 * Resolve the OR register slug from app config (defaults to
@@ -424,23 +524,6 @@ class MultiPoConsolidationController extends Controller {
 
 		return $slug;
 	}//end register()
-
-	/**
-	 * Read and validate a scope parameter, returning '' when blank or
-	 * malformed.
-	 *
-	 * @param string $name Parameter name (body for POST / query for GET).
-	 *
-	 * @return string The validated value or '' (blank/malformed).
-	 */
-	private function scopeParam(string $name): string {
-		$value = trim((string)$this->request->getParam($name, ''));
-		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-			return '';
-		}
-
-		return $value;
-	}//end scopeParam()
 
 	/**
 	 * Map a service-level RuntimeException to a JSONResponse.

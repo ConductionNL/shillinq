@@ -66,6 +66,18 @@ use Throwable;
  */
 class GRIRClearingListener implements IEventListener {
 	/**
+	 * The state at which each schema's GR/IR posting is triggered, in the
+	 * order they are tried.
+	 *
+	 * @var array<string,string>
+	 */
+	private const TRIGGERS = [
+		'goodsreceiptnote' => 'accepted',
+		'svcreceipt' => 'accepted',
+		'supplierinvoice' => 'matched',
+	];
+
+	/**
 	 * Construct the listener with DI dependencies.
 	 *
 	 * @param GRIRClearingService $grirClearingService The GR/IR posting orchestration service.
@@ -93,47 +105,7 @@ class GRIRClearingListener implements IEventListener {
 		}
 
 		try {
-			$schema = strtolower(trim((string)$event->getSchema()));
-			$to = (string)$event->getTo();
-
-			$entity = $event->getObject();
-			$object = $entity->getObject();
-			if (is_array($object) === false) {
-				return;
-			}
-
-			$administrationId = trim((string)($object['administrationId'] ?? ''));
-			if ($administrationId === '') {
-				return;
-			}
-
-			if ($this->isSchema(normalisedSchema: $schema, target: 'goodsreceiptnote') === true && $to === 'accepted') {
-				$this->grirClearingService->postGRIRForGoodsReceiptAccept(
-					administrationId: $administrationId,
-					grn: $object
-				);
-				return;
-			}
-
-			if ($this->isSchema(normalisedSchema: $schema, target: 'svcreceipt') === true && $to === 'accepted') {
-				$this->grirClearingService->postGRIRForServiceReceiptAccept(
-					administrationId: $administrationId,
-					receipt: $object
-				);
-				return;
-			}
-
-			if ($this->isSchema(normalisedSchema: $schema, target: 'supplierinvoice') === true && $to === 'matched') {
-				$invoiceId = (string)($object['id'] ?? ($object['@self']['id'] ?? ''));
-				if ($invoiceId === '') {
-					return;
-				}
-
-				$this->grirClearingService->settleGRIRForMatchedInvoice(
-					administrationId: $administrationId,
-					invoiceId: $invoiceId
-				);
-			}
+			$this->dispatch(event: $event);
 		} catch (Throwable $e) {
 			// Fail-soft: the triggering transition itself already
 			// committed; never bubble up and block it. Mirrors
@@ -146,6 +118,70 @@ class GRIRClearingListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Forward an accepted receipt or a matched supplier invoice of an
+	 * administration to its GR/IR posting.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return void
+	 */
+	private function dispatch(ObjectTransitionedEvent $event): void {
+		$target = $this->postingTarget(schema: strtolower(trim((string)$event->getSchema())), to: (string)$event->getTo());
+		$object = $event->getObject()->getObject();
+		$administrationId = trim((string)($object['administrationId'] ?? ''));
+		if ($target === null || $administrationId === '') {
+			return;
+		}
+
+		match ($target) {
+			'goodsreceiptnote' => $this->grirClearingService->postGRIRForGoodsReceiptAccept(administrationId: $administrationId, grn: $object),
+			'svcreceipt' => $this->grirClearingService->postGRIRForServiceReceiptAccept(administrationId: $administrationId, receipt: $object),
+			'supplierinvoice' => $this->settleMatchedInvoice(administrationId: $administrationId, invoice: $object),
+		};
+
+	}//end dispatch()
+
+	/**
+	 * The schema whose GR/IR posting this transition triggers, or null.
+	 *
+	 * @param string $schema The lower-cased, trimmed schema identifier.
+	 * @param string $to     The state reached.
+	 *
+	 * @return key-of<self::TRIGGERS>|null
+	 */
+	private function postingTarget(string $schema, string $to): string|null {
+		foreach (self::TRIGGERS as $target => $state) {
+			if ($to === $state && $this->isSchema(normalisedSchema: $schema, target: $target) === true) {
+				return $target;
+			}
+		}
+
+		return null;
+
+	}//end postingTarget()
+
+	/**
+	 * Settle the GR/IR accrual of a matched supplier invoice that has an id.
+	 *
+	 * @param string               $administrationId The administration.
+	 * @param array<string, mixed> $invoice          The SupplierInvoice.
+	 *
+	 * @return void
+	 */
+	private function settleMatchedInvoice(string $administrationId, array $invoice): void {
+		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		if ($invoiceId === '') {
+			return;
+		}
+
+		$this->grirClearingService->settleGRIRForMatchedInvoice(
+			administrationId: $administrationId,
+			invoiceId: $invoiceId
+		);
+
+	}//end settleMatchedInvoice()
 
 	/**
 	 * Schema-name match (plain slug or namespaced).

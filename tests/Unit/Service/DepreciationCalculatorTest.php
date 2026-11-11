@@ -241,4 +241,57 @@ final class DepreciationCalculatorTest extends TestCase {
 		];
 
 	}//end linearAsset()
+
+	/**
+	 * The characterisation grid: every method against assets with and without
+	 * each alias, at fixed reference dates (never today).
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function depreciationGrid(): array {
+		$assets = [
+			'full' => ['acquisitionCost' => 25000, 'residualValue' => 1000, 'usefulLifeMonths' => 60, 'acquisitionDate' => '2024-03-15', 'degressiveRate' => 0.25, 'declineRate' => 0.4],
+			'years' => ['acquisitionCost' => '200000.00', 'residualValue' => '20000', 'usefulLifeYears' => 20, 'acquisitionDate' => '2020-01-31'],
+			'purchase' => ['purchaseCost' => 999.99, 'usefulLifeMonths' => 36, 'acquisitionDate' => '2025-12-01', 'degressiveRate' => 0.5],
+			'noLife' => ['acquisitionCost' => 500, 'acquisitionDate' => '2025-01-01', 'declineRate' => 0],
+			'underwater' => ['acquisitionCost' => 100, 'residualValue' => 300, 'usefulLifeMonths' => 12, 'acquisitionDate' => '2023-06-30', 'degressiveRate' => 2.0],
+			'noDate' => ['acquisitionCost' => 1200, 'usefulLifeMonths' => 12, 'degressiveRate' => 0.1, 'salvageProceeds' => 50],
+		];
+		$methods = ['none', 'linear', 'degressive', 'declining-balance', 'units', null];
+		$dates = ['2024-03-14', '2024-04-14', '2025-03-15', '2031-01-01', 'garbage'];
+		$out = [];
+		foreach ($assets as $ak => $asset) {
+			foreach ($methods as $method) {
+				$row = $asset;
+				if ($method !== null) {
+					$row['depreciationMethod'] = $method;
+				}
+				foreach ($dates as $date) {
+					$out[$ak . '|' . ($method ?? '-') . '|' . $date] = [
+						$this->calc->yearlyDepreciation($row, $date),
+						$this->calc->yearlyDepreciation($row, $date, 0),
+						$this->calc->yearlyDepreciation($row, $date, -1),
+						$this->calc->monthlyDepreciation($row, $date),
+						$this->calc->currentBookValue($row, $date),
+						$this->calc->gainOrLossOnDisposal($row, $date, 3),
+					];
+				}
+			}
+		}
+
+		return $out;
+
+	}//end depreciationGrid()
+
+	/**
+	 * Pin yearly, monthly, book value and disposal figures over the grid
+	 * against a golden fixture written from the pre-refactor code.
+	 *
+	 * @return void
+	 */
+	public function testDepreciationFiguresMatchTheGoldenGrid(): void {
+		$golden = (string)file_get_contents(__DIR__ . '/fixtures/depreciation-calculator-golden.json');
+		self::assertSame($golden, json_encode($this->depreciationGrid(), JSON_PRESERVE_ZERO_FRACTION) . "\n");
+
+	}//end testDepreciationFiguresMatchTheGoldenGrid()
 }//end class

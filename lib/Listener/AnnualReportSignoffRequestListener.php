@@ -123,55 +123,7 @@ final class AnnualReportSignoffRequestListener implements IEventListener {
 		}
 
 		try {
-			if ($event->getTo() !== self::TARGET_STATE) {
-				return;
-			}
-
-			if ($this->isAnnualReportSchema(schema: $event->getSchema()) === false) {
-				return;
-			}
-
-			$entity = $event->getObject();
-			$object = $entity->getObject();
-			if (is_array($object) === false) {
-				return;
-			}
-
-			$id = (string)($object['id'] ?? $entity->getUuid() ?? $entity->getId() ?? '');
-			if ($id === '') {
-				$this->logger->info('AnnualReportSignoffRequestListener: no object id on opgemaakt transition (skipping)');
-				return;
-			}
-
-			// Idempotent: only request once per adoption cycle.
-			$currentOutcome = (string)($object['decisionOutcome'] ?? '');
-			if ($currentOutcome !== '') {
-				return;
-			}
-
-			$object['id'] = $id;
-
-			$updated = $this->signoffService->requestSignoff(
-				financeObject: $object,
-				subjectSchema: self::TARGET_SCHEMA,
-				decisionType: 'adoption',
-			);
-
-			$this->persist(
-				id: $id,
-				updates: [
-					'decisionRef' => $updated['decisionRef'] ?? null,
-					'decisionOutcome' => $updated['decisionOutcome'] ?? 'pending',
-				]
-			);
-
-			$this->logger->info(
-				'AnnualReportSignoffRequestListener: adoption decision requested',
-				[
-					'id' => $id,
-					'decisionRef' => $updated['decisionRef'] ?? null,
-				]
-			);
+			$this->requestOnOpgemaakt(event: $event);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'AnnualReportSignoffRequestListener: adoption request failed (fail-soft; never auto-approves)',
@@ -180,6 +132,92 @@ final class AnnualReportSignoffRequestListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Request the adoption decision for an annual report that reached
+	 * `opgemaakt`, has an id and has no decision yet.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return void
+	 */
+	private function requestOnOpgemaakt(ObjectTransitionedEvent $event): void {
+		$object = $this->opgemaaktReport(event: $event);
+		if ($object === null) {
+			return;
+		}
+
+		if ($object['id'] === '') {
+			$this->logger->info('AnnualReportSignoffRequestListener: no object id on opgemaakt transition (skipping)');
+			return;
+		}
+
+		// Idempotent: only request once per adoption cycle.
+		if ((string)($object['decisionOutcome'] ?? '') !== '') {
+			return;
+		}
+
+		$this->raiseRequest(object: $object);
+
+	}//end requestOnOpgemaakt()
+
+	/**
+	 * The annual report an `opgemaakt` transition is about, with its id (the
+	 * payload id, else the entity uuid, else the entity id, '' when none)
+	 * stamped as `id`; null for other states, schemas or payloads.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function opgemaaktReport(ObjectTransitionedEvent $event): array|null {
+		if ($event->getTo() !== self::TARGET_STATE || $this->isAnnualReportSchema(schema: $event->getSchema()) === false) {
+			return null;
+		}
+
+		$entity = $event->getObject();
+		$object = $entity->getObject();
+		if (is_array($object) === false) {
+			return null;
+		}
+
+		$object['id'] = (string)($object['id'] ?? $entity->getUuid() ?? $entity->getId() ?? '');
+		return $object;
+
+	}//end opgemaaktReport()
+
+	/**
+	 * Request the sign-off, mirror its reference and outcome (default
+	 * `pending`, never an approval) onto the report, and log it.
+	 *
+	 * @param array<string,mixed> $object The report, with its id.
+	 *
+	 * @return void
+	 */
+	private function raiseRequest(array $object): void {
+		$updated = $this->signoffService->requestSignoff(
+			financeObject: $object,
+			subjectSchema: self::TARGET_SCHEMA,
+			decisionType: 'adoption',
+		);
+
+		$this->persist(
+			id: $object['id'],
+			updates: [
+				'decisionRef' => $updated['decisionRef'] ?? null,
+				'decisionOutcome' => $updated['decisionOutcome'] ?? 'pending',
+			]
+		);
+
+		$this->logger->info(
+			'AnnualReportSignoffRequestListener: adoption decision requested',
+			[
+				'id' => $object['id'],
+				'decisionRef' => $updated['decisionRef'] ?? null,
+			]
+		);
+
+	}//end raiseRequest()
 
 	/**
 	 * Check whether the schema slug is AnnualReport.

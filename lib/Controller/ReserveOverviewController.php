@@ -83,28 +83,58 @@ class ReserveOverviewController extends Controller {
 			return $this->message(text: 'Not logged in', status: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '') {
-			$administrationId = (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
-		}
-
+		$administrationId = $this->administrationId();
 		if ($administrationId === '' || $this->context->canAccess(administrationId: $administrationId) === false) {
 			return $this->message(text: 'Administration not found', status: Http::STATUS_NOT_FOUND);
 		}
 
-		$year = (int)$this->request->getParam('year', 0);
-		if ($year < 1900 || $year > 2999) {
-			$year = (int)gmdate('Y');
+		return $this->loaded(administrationId: $administrationId, year: $this->fromYear());
+	}//end overview()
+
+	/**
+	 * The requested administration, trimmed, else the active one as is; '' when neither is set.
+	 *
+	 * @return string
+	 */
+	private function administrationId(): string {
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId !== '') {
+			return $administrationId;
 		}
 
+		return (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
+	}//end administrationId()
+
+	/**
+	 * The requested year when it lies in 1900 to 2999, else the current year.
+	 *
+	 * @return int
+	 */
+	private function fromYear(): int {
+		$year = (int)$this->request->getParam('year', 0);
+		if ($year < 1900 || $year > 2999) {
+			return (int)gmdate('Y');
+		}
+
+		return $year;
+	}//end fromYear()
+
+	/**
+	 * The overview, or the logged 500.
+	 *
+	 * @param string $administrationId The administration, already checked.
+	 * @param int    $year             The first year.
+	 *
+	 * @return JSONResponse
+	 */
+	private function loaded(string $administrationId, int $year): JSONResponse {
 		try {
 			return new JSONResponse(data: $this->balances->overview(administrationId: $administrationId, fromYear: $year));
 		} catch (Throwable $e) {
 			$this->logger->error('ReserveOverviewController: overview failed', ['exception' => $e->getMessage()]);
 			return $this->message(text: 'The reserve overview could not be loaded.', status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
-
-	}//end overview()
+	}//end loaded()
 
 	/**
 	 * A translated message response.

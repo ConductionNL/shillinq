@@ -49,6 +49,13 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  */
 class BankReconciliationGuard {
 	/**
+	 * Page size for the match lookup (stays under findAll()'s default limit).
+	 *
+	 * @var int
+	 */
+	private const MATCH_PAGE_SIZE = 500;
+
+	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for dynamic register slug resolution.
@@ -109,7 +116,34 @@ class BankReconciliationGuard {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-001, REQ-BBR-006)
 	 */
 	public function requireUnlockedAndValidDates(array $object): bool {
-		// REQ-BBR-001: validate the statement period.
+		if ($this->hasValidPeriod(object: $object) === false) {
+			return false;
+		}
+
+		// REQ-BBR-006: a new object (no id) is always permitted; the lock applies
+		// only to the PERSISTED state.
+		$id = ($object['id'] ?? null);
+		if ($id === null) {
+			return true;
+		}
+
+		// First persistence of this id, or store unavailable — permit.
+		$stored = $this->fetchObject(schema: 'BankReconciliation', id: (string)$id);
+		if ($stored === null) {
+			return true;
+		}
+
+		return $this->editAllowed(object: $object, stored: $stored);
+	}//end requireUnlockedAndValidDates()
+
+	/**
+	 * REQ-BBR-001: statementStartDate must be on or before statementEndDate; a refusal is logged.
+	 *
+	 * @param array<string, mixed> $object The BankReconciliation object array.
+	 *
+	 * @return bool True when the period is valid or incomplete.
+	 */
+	private function hasValidPeriod(array $object): bool {
 		$start = (string)($object['statementStartDate'] ?? '');
 		$end = (string)($object['statementEndDate'] ?? '');
 		if ($start !== '' && $end !== '' && $start > $end) {
@@ -120,26 +154,24 @@ class BankReconciliationGuard {
 			return false;
 		}
 
-		// REQ-BBR-006: block mutation of an already-locked session. A new object
-		// (no id) is always permitted; the lock applies only to the PERSISTED state.
-		$id = ($object['id'] ?? null);
-		if ($id === null) {
-			return true;
-		}
+		return true;
+	}//end hasValidPeriod()
 
-		$stored = $this->fetchObject(schema: 'BankReconciliation', id: (string)$id);
-		if ($stored === null) {
-			// First persistence of this id, or store unavailable — permit.
-			return true;
-		}
-
+	/**
+	 * Whether an edit of a persisted session is allowed: always while unlocked;
+	 * once locked only the archive transition (reconciled → archived). A refusal is logged.
+	 *
+	 * @param array<string, mixed> $object The incoming object array.
+	 * @param array<string, mixed> $stored The persisted object array.
+	 *
+	 * @return bool
+	 */
+	private function editAllowed(array $object, array $stored): bool {
 		$storedStatus = (string)($stored['status'] ?? 'draft');
 		if ($this->isLockedStatus(status: $storedStatus) === false) {
 			return true;
 		}
 
-		// Stored status is locked. The only permitted change is the
-		// archive transition (reconciled → archived); every other edit is denied.
 		$incomingStatus = (string)($object['status'] ?? $storedStatus);
 		if ($storedStatus === 'reconciled' && $incomingStatus === 'archived') {
 			return true;
@@ -147,10 +179,10 @@ class BankReconciliationGuard {
 
 		$this->logger->info(
 			'BankReconciliationGuard: rejecting save — reconciliation is locked',
-			['id' => $id, 'storedStatus' => $storedStatus, 'incomingStatus' => $incomingStatus]
+			['id' => $object['id'], 'storedStatus' => $storedStatus, 'incomingStatus' => $incomingStatus]
 		);
 		return false;
-	}//end requireUnlockedAndValidDates()
+	}//end editAllowed()
 
 	/**
 	 * Save precondition for BankReconciliationMatch: block any match write while
@@ -166,19 +198,31 @@ class BankReconciliationGuard {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-008)
 	 */
 	public function requireParentUnlocked(array $object): bool {
+		// No parent reference — let schema-required validation handle it.
 		$reconciliationId = (string)($object['reconciliationId'] ?? '');
 		if ($reconciliationId === '') {
-			// No parent reference — let schema-required validation handle it.
 			return true;
 		}
 
+		// Parent not found / store unavailable — permit; FK validity is the
+		// schema's concern, not this lock guard's.
 		$parent = $this->fetchObject(schema: 'BankReconciliation', id: $reconciliationId);
 		if ($parent === null) {
-			// Parent not found / store unavailable — permit; FK validity is the
-			// schema's concern, not this lock guard's.
 			return true;
 		}
 
+		return $this->parentUnlocked(reconciliationId: $reconciliationId, parent: $parent);
+	}//end requireParentUnlocked()
+
+	/**
+	 * Whether the parent session is unlocked; a refusal is logged.
+	 *
+	 * @param string               $reconciliationId The parent id.
+	 * @param array<string, mixed> $parent           The parent object array.
+	 *
+	 * @return bool
+	 */
+	private function parentUnlocked(string $reconciliationId, array $parent): bool {
 		$parentStatus = (string)($parent['status'] ?? 'draft');
 		if ($this->isLockedStatus(status: $parentStatus) === true) {
 			$this->logger->info(
@@ -189,7 +233,7 @@ class BankReconciliationGuard {
 		}
 
 		return true;
-	}//end requireParentUnlocked()
+	}//end parentUnlocked()
 
 	/**
 	 * Approve precondition for BankReconciliation: every match must be resolved
@@ -208,32 +252,16 @@ class BankReconciliationGuard {
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-005, REQ-BBR-006)
 	 */
 	public function requireResolvedMatches(array $object): bool {
+		// Cannot evaluate matches without a persisted id; deny fail-closed.
 		$id = (string)($object['id'] ?? '');
 		if ($id === '') {
-			// Cannot evaluate matches without a persisted id; deny fail-closed.
 			$this->logger->info('BankReconciliationGuard: approve denied — reconciliation has no id');
 			return false;
 		}
 
-		try {
-			$matches = $this->findMatches(reconciliationId: $id);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'BankReconciliationGuard: approve denied — match lookup failed (fail-closed)',
-				['exception' => $e->getMessage()]
-			);
+		$matches = $this->lookedUpMatches(reconciliationId: $id);
+		if ($matches === null || $this->allResolved(reconciliationId: $id, matches: $matches) === false) {
 			return false;
-		}
-
-		foreach ($matches as $match) {
-			$type = (string)($match['matchType'] ?? 'pending-review');
-			if ($type === 'auto-matched' || $type === 'pending-review') {
-				$this->logger->info(
-					'BankReconciliationGuard: approve denied — unresolved matches remain',
-					['reconciliationId' => $id, 'unresolvedType' => $type]
-				);
-				return false;
-			}
 		}
 
 		// All matches resolved — recompute and persist the server-authoritative
@@ -242,6 +270,48 @@ class BankReconciliationGuard {
 
 		return true;
 	}//end requireResolvedMatches()
+
+	/**
+	 * The session's matches; a failed lookup is logged.
+	 *
+	 * @param string $reconciliationId The reconciliation id.
+	 *
+	 * @return array<int, array<string, mixed>>|null The matches, or null when the lookup failed.
+	 */
+	private function lookedUpMatches(string $reconciliationId): ?array {
+		try {
+			return $this->findMatches(reconciliationId: $reconciliationId);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BankReconciliationGuard: approve denied — match lookup failed (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end lookedUpMatches()
+
+	/**
+	 * Whether no match is still auto-matched or pending review; the first one left is logged.
+	 *
+	 * @param string                           $reconciliationId The reconciliation id (log context).
+	 * @param array<int, array<string, mixed>> $matches          The matches.
+	 *
+	 * @return bool
+	 */
+	private function allResolved(string $reconciliationId, array $matches): bool {
+		foreach ($matches as $match) {
+			$type = (string)($match['matchType'] ?? 'pending-review');
+			if ($type === 'auto-matched' || $type === 'pending-review') {
+				$this->logger->info(
+					'BankReconciliationGuard: approve denied — unresolved matches remain',
+					['reconciliationId' => $reconciliationId, 'unresolvedType' => $type]
+				);
+				return false;
+			}
+		}
+
+		return true;
+	}//end allResolved()
 
 	/**
 	 * Recompute reconciledBalance, variance, and match counts in integer cents
@@ -265,50 +335,8 @@ class BankReconciliationGuard {
 		}
 
 		try {
-			if ($matches === null) {
-				$matches = $this->findMatches(reconciliationId: $id);
-			}
-
-			$openingCents = (int)round(((float)($reconciliation['openingBalance'] ?? 0)) * 100);
-			$closingCents = (int)round(((float)($reconciliation['closingBalance'] ?? 0)) * 100);
-
-			$approvedCents = 0;
-			$matchedCount = 0;
-			$unmatchedBankCount = 0;
-			$unmatchedJournal = 0;
-			foreach ($matches as $match) {
-				$type = (string)($match['matchType'] ?? 'pending-review');
-				if ($type !== 'approved') {
-					// Not approved → the bank transaction is still unmatched.
-					$unmatchedBankCount++;
-					continue;
-				}
-
-				$approvedCents += (int)round(((float)($match['bankTransactionAmount'] ?? 0)) * 100);
-				$matchedCount++;
-				$journalEntryId = (string)($match['journalEntryId'] ?? '');
-				if ($journalEntryId === '') {
-					// Approved bank line with no journal counterpart.
-					$unmatchedJournal++;
-				}
-			}
-
-			$reconciledCents = $openingCents + $approvedCents;
-			$varianceCents = $closingCents - $reconciledCents;
-
-			$this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BankReconciliation')
-				->updateObject(
-					$id,
-					[
-						'reconciledBalance' => ($reconciledCents / 100),
-						'variance' => ($varianceCents / 100),
-						'matchedCount' => $matchedCount,
-						'unmatchedBankCount' => $unmatchedBankCount,
-						'unmatchedJournalCount' => $unmatchedJournal,
-					]
-				);
+			$fields = self::balanceFields(reconciliation: $reconciliation, matches: ($matches ?? $this->findMatches(reconciliationId: $id)));
+			$this->writeBalance(id: $id, fields: $fields);
 		} catch (\Throwable $e) {
 			// Non-fatal: the lifecycle precondition that calls this has already
 			// validated resolution; log and continue so the transition can proceed.
@@ -316,9 +344,82 @@ class BankReconciliationGuard {
 				'BankReconciliationGuard: balance recomputation failed',
 				['reconciliationId' => $id, 'exception' => $e->getMessage()]
 			);
-		}//end try
-
+		}
 	}//end recalculateBalance()
+
+	/**
+	 * Persist the derived fields onto the BankReconciliation.
+	 *
+	 * @param string                   $id     The reconciliation id.
+	 * @param array<string, int|float> $fields The derived fields.
+	 *
+	 * @return void
+	 */
+	private function writeBalance(string $id, array $fields): void {
+		$this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('BankReconciliation')
+			->updateObject($id, $fields);
+	}//end writeBalance()
+
+	/**
+	 * The derived fields: reconciledBalance = opening + approved, variance = closing - reconciled, and the counts.
+	 *
+	 * @param array<string, mixed>             $reconciliation The reconciliation object array.
+	 * @param array<int, array<string, mixed>> $matches        The matches.
+	 *
+	 * @return array<string, int|float>
+	 */
+	private static function balanceFields(array $reconciliation, array $matches): array {
+		$tally = self::tallyMatches(matches: $matches);
+		$reconciledCents = self::cents(amount: ($reconciliation['openingBalance'] ?? 0)) + $tally['approvedCents'];
+		$varianceCents = self::cents(amount: ($reconciliation['closingBalance'] ?? 0)) - $reconciledCents;
+
+		return [
+			'reconciledBalance' => ($reconciledCents / 100),
+			'variance' => ($varianceCents / 100),
+			'matchedCount' => $tally['matchedCount'],
+			'unmatchedBankCount' => $tally['unmatchedBankCount'],
+			'unmatchedJournalCount' => $tally['unmatchedJournal'],
+		];
+	}//end balanceFields()
+
+	/**
+	 * Count the matches: a non-approved match leaves its bank transaction unmatched;
+	 * an approved one adds its amount, and counts as journal-unmatched without a journal entry.
+	 *
+	 * @param array<int, array<string, mixed>> $matches The matches.
+	 *
+	 * @return array{approvedCents: int, matchedCount: int, unmatchedBankCount: int, unmatchedJournal: int}
+	 */
+	private static function tallyMatches(array $matches): array {
+		$tally = ['approvedCents' => 0, 'matchedCount' => 0, 'unmatchedBankCount' => 0, 'unmatchedJournal' => 0];
+		foreach ($matches as $match) {
+			if ((string)($match['matchType'] ?? 'pending-review') !== 'approved') {
+				$tally['unmatchedBankCount']++;
+				continue;
+			}
+
+			$tally['approvedCents'] += self::cents(amount: ($match['bankTransactionAmount'] ?? 0));
+			$tally['matchedCount']++;
+			if ((string)($match['journalEntryId'] ?? '') === '') {
+				$tally['unmatchedJournal']++;
+			}
+		}
+
+		return $tally;
+	}//end tallyMatches()
+
+	/**
+	 * An amount in integer cents.
+	 *
+	 * @param mixed $amount A EUR amount.
+	 *
+	 * @return int
+	 */
+	private static function cents(mixed $amount): int {
+		return (int)round(((float)$amount) * 100);
+	}//end cents()
 
 	/**
 	 * Fetch all BankReconciliationMatch records for a reconciliation, paging to
@@ -329,28 +430,37 @@ class BankReconciliationGuard {
 	 * @return array<int, array<string, mixed>> The match object arrays.
 	 */
 	private function findMatches(string $reconciliationId): array {
-		$pageSize = 500;
 		$page = 1;
 		$matches = [];
-		$batchSize = 0;
 		do {
-			$batch = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BankReconciliationMatch')
-				->findAll(
-					[
-						'filters' => ['reconciliationId' => $reconciliationId],
-						'limit' => $pageSize,
-						'offset' => (($page - 1) * $pageSize),
-					]
-				);
+			$batch = $this->matchPage(reconciliationId: $reconciliationId, page: $page);
 			$matches = array_merge($matches, $batch);
-			$batchSize = count($batch);
 			$page++;
-		} while ($batchSize === $pageSize);
+		} while (count($batch) === self::MATCH_PAGE_SIZE);
 
 		return $matches;
 	}//end findMatches()
+
+	/**
+	 * One page of the session's BankReconciliationMatch records.
+	 *
+	 * @param string $reconciliationId The parent reconciliation id.
+	 * @param int    $page             The 1-based page.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function matchPage(string $reconciliationId, int $page): array {
+		return $this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('BankReconciliationMatch')
+			->findAll(
+				[
+					'filters' => ['reconciliationId' => $reconciliationId],
+					'limit' => self::MATCH_PAGE_SIZE,
+					'offset' => (($page - 1) * self::MATCH_PAGE_SIZE),
+				]
+			);
+	}//end matchPage()
 
 	/**
 	 * Fetch a single object by id from the configured register, returning null
@@ -363,28 +473,36 @@ class BankReconciliationGuard {
 	 */
 	private function fetchObject(string $schema, string $id): ?array {
 		try {
-			$result = ObjectIdentifier::findScoped(
-				scoped: $this->objectService
-					->setRegister($this->getRegisterSlug())
-					->setSchema($schema),
-				id: $id
+			return self::payload(
+				result: ObjectIdentifier::findScoped(
+					scoped: $this->objectService
+						->setRegister($this->getRegisterSlug())
+						->setSchema($schema),
+					id: $id
+				)
 			);
-
-			// ADR-084: find() is declared `: ?ObjectEntityInterface`, which extends
-			// JsonSerializable — the is_array() arm above was unreachable by type.
-			if ($result === null) {
-				return null;
-			}
-
-			$serialized = $result->jsonSerialize();
-			if (is_array($serialized) === true) {
-				return $serialized;
-			}
-
-			return null;
 		} catch (\Throwable) {
 			return null;
-		}//end try
-
+		}
 	}//end fetchObject()
+
+	/**
+	 * A found entity's payload (find() answers an ObjectEntityInterface, a JsonSerializable — ADR-084).
+	 *
+	 * @param mixed $result find()'s answer, or null.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private static function payload(mixed $result): ?array {
+		if ($result === null) {
+			return null;
+		}
+
+		$serialized = $result->jsonSerialize();
+		if (is_array($serialized) === true) {
+			return $serialized;
+		}
+
+		return null;
+	}//end payload()
 }//end class

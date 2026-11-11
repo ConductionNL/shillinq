@@ -91,6 +91,14 @@ class BudgetScenarioModifierGuard {
 	private const RECURRING_TYPES = ['RECURRING_END', 'RECURRING_AMOUNT_CHANGE'];
 
 	/**
+	 * Logged when another RECURRING_* modifier in the scenario targets the same recurId.
+	 *
+	 * @var string
+	 */
+	private const CONFLICT_MESSAGE = 'BudgetScenarioModifierGuard: another RECURRING_* modifier already targets this '
+		. 'recurId in this scenario — denying save';
+
+	/**
 	 * Construct the guard with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for register slug resolution.
@@ -128,14 +136,10 @@ class BudgetScenarioModifierGuard {
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'BudgetScenarioModifierGuard: validateOnSave failed — denying save (fail-closed)',
-				[
-					'scenarioId' => ($modifier['scenarioId'] ?? 'unknown'),
-					'exception' => $e->getMessage(),
-				]
+				['scenarioId' => ($modifier['scenarioId'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end validateOnSave()
 
 	/**
@@ -146,47 +150,73 @@ class BudgetScenarioModifierGuard {
 	 * @return bool True when every field required for this modifier's type is present.
 	 */
 	private function hasConsistentRequiredFields(array $modifier): bool {
-		$type = (string)($modifier['modifierType'] ?? '');
-
-		if (in_array($type, self::RECURRING_TYPES, true) === true) {
-			if ($this->isNonEmptyString(value: ($modifier['targetRecurId'] ?? null)) === false) {
-				$this->logger->info(
-					'BudgetScenarioModifierGuard: RECURRING_* modifier missing targetRecurId — denying save',
-					['scenarioId' => ($modifier['scenarioId'] ?? 'unknown')]
-				);
-				return false;
-			}
+		$missing = self::missingFieldMessage(modifier: $modifier);
+		if ($missing === null) {
+			return true;
 		}
 
-		if ($type === 'RECURRING_AMOUNT_CHANGE' && is_numeric($modifier['newStandardAmount'] ?? null) === false) {
-			$this->logger->info(
-				'BudgetScenarioModifierGuard: RECURRING_AMOUNT_CHANGE missing newStandardAmount — denying save',
-				['scenarioId' => ($modifier['scenarioId'] ?? 'unknown')]
-			);
-			return false;
+		$this->logger->info($missing, ['scenarioId' => ($modifier['scenarioId'] ?? 'unknown')]);
+		return false;
+	}//end hasConsistentRequiredFields()
+
+	/**
+	 * The refusal message for the first field this modifier's type requires but lacks.
+	 *
+	 * @param array<string, mixed> $modifier The modifier object array.
+	 *
+	 * @return string|null The message, or null when every required field is present.
+	 */
+	private static function missingFieldMessage(array $modifier): ?string {
+		$type = (string)($modifier['modifierType'] ?? '');
+		if (in_array($type, self::RECURRING_TYPES, true) === true) {
+			return self::missingRecurringField(modifier: $modifier, type: $type);
 		}
 
 		if ($type === 'LEDGER_AMOUNT_DELTA') {
-			if ($this->isNonEmptyString(value: ($modifier['targetLedgerGroupId'] ?? null)) === false) {
-				$this->logger->info(
-					'BudgetScenarioModifierGuard: LEDGER_AMOUNT_DELTA missing targetLedgerGroupId — denying save',
-					['scenarioId' => ($modifier['scenarioId'] ?? 'unknown')]
-				);
-				return false;
-			}
-
-			if (is_numeric($modifier['amountDeltaCents'] ?? null) === false) {
-				$this->logger->info(
-					'BudgetScenarioModifierGuard: LEDGER_AMOUNT_DELTA missing amountDeltaCents — denying save',
-					['scenarioId' => ($modifier['scenarioId'] ?? 'unknown')]
-				);
-				return false;
-			}
+			return self::missingLedgerField(modifier: $modifier);
 		}
 
-		return true;
+		return null;
+	}//end missingFieldMessage()
 
-	}//end hasConsistentRequiredFields()
+	/**
+	 * RECURRING_* needs a targetRecurId; RECURRING_AMOUNT_CHANGE also a numeric newStandardAmount.
+	 *
+	 * @param array<string, mixed> $modifier The modifier object array.
+	 * @param string               $type     Its modifierType.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private static function missingRecurringField(array $modifier, string $type): ?string {
+		if (self::isNonEmptyString(value: ($modifier['targetRecurId'] ?? null)) === false) {
+			return 'BudgetScenarioModifierGuard: RECURRING_* modifier missing targetRecurId — denying save';
+		}
+
+		if ($type === 'RECURRING_AMOUNT_CHANGE' && is_numeric($modifier['newStandardAmount'] ?? null) === false) {
+			return 'BudgetScenarioModifierGuard: RECURRING_AMOUNT_CHANGE missing newStandardAmount — denying save';
+		}
+
+		return null;
+	}//end missingRecurringField()
+
+	/**
+	 * LEDGER_AMOUNT_DELTA needs a targetLedgerGroupId and a numeric amountDeltaCents.
+	 *
+	 * @param array<string, mixed> $modifier The modifier object array.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private static function missingLedgerField(array $modifier): ?string {
+		if (self::isNonEmptyString(value: ($modifier['targetLedgerGroupId'] ?? null)) === false) {
+			return 'BudgetScenarioModifierGuard: LEDGER_AMOUNT_DELTA missing targetLedgerGroupId — denying save';
+		}
+
+		if (is_numeric($modifier['amountDeltaCents'] ?? null) === false) {
+			return 'BudgetScenarioModifierGuard: LEDGER_AMOUNT_DELTA missing amountDeltaCents — denying save';
+		}
+
+		return null;
+	}//end missingLedgerField()
 
 	/**
 	 * No sibling `BudgetScenarioModifier` in the same scenario may already
@@ -199,63 +229,88 @@ class BudgetScenarioModifierGuard {
 	 * @return bool True when no conflicting sibling exists.
 	 */
 	private function hasNoSameRecurIdConflict(array $modifier): bool {
+		$filter = self::siblingFilter(modifier: $modifier);
+		if ($filter === null) {
+			return true;
+		}
+
+		$currentId = self::objectId(record: $modifier);
+		$conflict = self::firstConflict(siblings: $this->siblingsMatching(filter: $filter), currentId: $currentId);
+		if ($conflict === null) {
+			return true;
+		}
+
+		$this->logger->info(self::CONFLICT_MESSAGE, $filter + ['conflictingId' => self::objectId(record: $conflict)]);
+		return false;
+	}//end hasNoSameRecurIdConflict()
+
+	/**
+	 * The sibling filter for a RECURRING_* modifier with a targetRecurId and a scenario, else null
+	 * (a missing targetRecurId is already denied by hasConsistentRequiredFields()).
+	 *
+	 * @param array<string, mixed> $modifier The modifier object being saved.
+	 *
+	 * @return array{scenarioId: string, targetRecurId: string}|null
+	 */
+	private static function siblingFilter(array $modifier): ?array {
 		$type = (string)($modifier['modifierType'] ?? '');
-		if (in_array($type, self::RECURRING_TYPES, true) === false) {
-			return true;
-		}
-
 		$targetRecurId = (string)($modifier['targetRecurId'] ?? '');
-		if ($targetRecurId === '') {
-			// Already denied by hasConsistentRequiredFields(); nothing further to check.
-			return true;
-		}
-
 		$scenarioId = (string)($modifier['scenarioId'] ?? '');
-		if ($scenarioId === '') {
-			return true;
+		if (in_array($type, self::RECURRING_TYPES, true) === false || $targetRecurId === '' || $scenarioId === '') {
+			return null;
 		}
 
-		$currentId = ($modifier['id'] ?? $modifier['@self']['id'] ?? null);
+		return ['scenarioId' => $scenarioId, 'targetRecurId' => $targetRecurId];
+	}//end siblingFilter()
 
-		$siblings = $this->objectService
+	/**
+	 * The modifiers in the scenario that target the recurId.
+	 *
+	 * @param array{scenarioId: string, targetRecurId: string} $filter The sibling filter.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function siblingsMatching(array $filter): array {
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema(self::SCHEMA_MODIFIER)
-			->findAll(
-				[
-					'filters' => [
-						'scenarioId' => $scenarioId,
-						'targetRecurId' => $targetRecurId,
-					],
-				]
-			);
+			->findAll(['filters' => $filter]);
+	}//end siblingsMatching()
 
+	/**
+	 * The first RECURRING_* sibling that is not the record being saved itself.
+	 *
+	 * @param array<int, mixed> $siblings  The siblings.
+	 * @param mixed             $currentId The saved record's id, or null for a new one.
+	 *
+	 * @return mixed The conflicting sibling, or null.
+	 */
+	private static function firstConflict(array $siblings, mixed $currentId): mixed {
 		foreach ($siblings as $sibling) {
-			$siblingType = (string)($sibling['modifierType'] ?? '');
-			if (in_array($siblingType, self::RECURRING_TYPES, true) === false) {
+			if (in_array((string)($sibling['modifierType'] ?? ''), self::RECURRING_TYPES, true) === false) {
 				continue;
 			}
 
-			$siblingId = ($sibling['id'] ?? $sibling['@self']['id'] ?? null);
-			if ($currentId !== null && $siblingId === $currentId) {
-				// The record being saved itself — not a conflict.
+			if ($currentId !== null && self::objectId(record: $sibling) === $currentId) {
 				continue;
 			}
 
-			$this->logger->info(
-				'BudgetScenarioModifierGuard: another RECURRING_* modifier already targets this '
-				. 'recurId in this scenario — denying save',
-				[
-					'scenarioId' => $scenarioId,
-					'targetRecurId' => $targetRecurId,
-					'conflictingId' => $siblingId,
-				]
-			);
-			return false;
+			return $sibling;
 		}
 
-		return true;
+		return null;
+	}//end firstConflict()
 
-	}//end hasNoSameRecurIdConflict()
+	/**
+	 * A record's id, or its @self id.
+	 *
+	 * @param mixed $record The record.
+	 *
+	 * @return mixed
+	 */
+	private static function objectId(mixed $record): mixed {
+		return ($record['id'] ?? $record['@self']['id'] ?? null);
+	}//end objectId()
 
 	/**
 	 * Whether a value is a non-empty string.
@@ -264,7 +319,7 @@ class BudgetScenarioModifierGuard {
 	 *
 	 * @return bool True when $value is a non-empty string.
 	 */
-	private function isNonEmptyString(mixed $value): bool {
+	private static function isNonEmptyString(mixed $value): bool {
 		return (is_string($value) === true && $value !== '');
 	}//end isNonEmptyString()
 

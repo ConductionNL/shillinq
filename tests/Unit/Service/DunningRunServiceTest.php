@@ -650,6 +650,36 @@ final class DunningRunServiceTest extends TestCase {
 	}//end testTickInvoiceEmitsRunForApplicableStage()
 
 	/**
+	 * Characterisation: previewInvoice() returns the chosen stage with the
+	 * stage's channel and template, and nothing when no ladder resolves or
+	 * the invoice has no id.
+	 *
+	 * @return void
+	 */
+	public function testPreviewChoosesTheStageOrNothing(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [
+			[
+				'id' => 'ladder-1',
+				'stages' => [
+					['nr' => 1, 'daysAfterExpiryDate' => 0, 'channel' => 'LETTER', 'templateId' => 'tpl-1'],
+				],
+			],
+		]);
+		$service = $this->makeService(os: $os);
+		$now = new \DateTimeImmutable('2026-06-09T12:00:00Z');
+		$invoice = ['id' => 'inv-9', 'dueDate' => '2026-05-20', 'grossAmount' => 10.0, 'customerReference' => 'klant-9'];
+
+		self::assertSame(
+			['dryRun' => true, 'invoiceId' => 'inv-9', 'ladderId' => 'ladder-1', 'stageNr' => 1, 'channel' => 'LETTER', 'templateId' => 'tpl-1'],
+			$service->previewInvoice(administrationId: 'adm-1', invoice: $invoice, baseLadderId: 'ladder-1', now: $now)
+		);
+		self::assertNull($service->previewInvoice(administrationId: 'adm-1', invoice: $invoice, baseLadderId: '', now: $now));
+		self::assertNull($service->previewInvoice(administrationId: 'adm-1', invoice: ['dueDate' => '2026-05-20'], baseLadderId: 'ladder-1', now: $now));
+
+	}//end testPreviewChoosesTheStageOrNothing()
+
+	/**
 	 * Task-12: tickInvoice is a no-op while an active DunningPauseDispute exists.
 	 *
 	 * @return void

@@ -117,35 +117,39 @@ class AppointmentGuard {
 				return true;
 			}
 
-			if ($this->hasValidTimeWindow(appointment: $appointment) === false) {
-				return false;
-			}
-
-			if ($this->matchesServiceDuration(appointment: $appointment) === false) {
-				return false;
-			}
-
-			if ($this->isWithinOperationalHours(appointment: $appointment) === false) {
-				return false;
-			}
-
-			if ($this->isSlotAvailable(appointment: $appointment) === false) {
-				return false;
-			}
-
-			return $this->isCustomerEligible(appointment: $appointment);
+			return $this->passesTimeChecks(appointment: $appointment) && $this->passesBookingChecks(appointment: $appointment);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AppointmentGuard: validateOnSave failed — denying save (fail-closed)',
-				[
-					'appointmentId' => ($appointment['appointmentId'] ?? 'unknown'),
-					'exception' => $e->getMessage(),
-				]
+				['appointmentId' => ($appointment['appointmentId'] ?? 'unknown'), 'exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end validateOnSave()
+
+	/**
+	 * The time checks, in order: a valid window, the service duration, the operational hours.
+	 *
+	 * @param array<string, mixed> $appointment Appointment object array.
+	 *
+	 * @return bool True when all pass; stops at the first that fails.
+	 */
+	private function passesTimeChecks(array $appointment): bool {
+		return $this->hasValidTimeWindow(appointment: $appointment)
+			&& $this->matchesServiceDuration(appointment: $appointment)
+			&& $this->isWithinOperationalHours(appointment: $appointment);
+	}//end passesTimeChecks()
+
+	/**
+	 * The booking checks, in order: a free slot, an eligible customer.
+	 *
+	 * @param array<string, mixed> $appointment Appointment object array.
+	 *
+	 * @return bool True when both pass; stops at the first that fails.
+	 */
+	private function passesBookingChecks(array $appointment): bool {
+		return $this->isSlotAvailable(appointment: $appointment) && $this->isCustomerEligible(appointment: $appointment);
+	}//end passesBookingChecks()
 
 	/**
 	 * Verify the appointment has a well-formed start/end window with end after start.
@@ -155,27 +159,65 @@ class AppointmentGuard {
 	 * @return bool True when both timestamps parse and endTime is after startTime.
 	 */
 	private function hasValidTimeWindow(array $appointment): bool {
-		$start = $this->parseTimestamp(value: (string)($appointment['startTime'] ?? ''));
-		$end = $this->parseTimestamp(value: (string)($appointment['endTime'] ?? ''));
-
-		if ($start === null || $end === null) {
-			$this->logger->info(
-				'AppointmentGuard: missing or unparseable startTime/endTime — denying save',
-				['appointmentId' => ($appointment['appointmentId'] ?? 'unknown')]
-			);
-			return false;
+		$problem = self::windowProblem(window: $this->window(record: $appointment));
+		if ($problem === null) {
+			return true;
 		}
 
-		if ($end <= $start) {
-			$this->logger->info(
-				'AppointmentGuard: endTime not after startTime — denying save',
-				['appointmentId' => ($appointment['appointmentId'] ?? 'unknown')]
-			);
-			return false;
-		}
-
-		return true;
+		$this->logger->info($problem, ['appointmentId' => ($appointment['appointmentId'] ?? 'unknown')]);
+		return false;
 	}//end hasValidTimeWindow()
+
+	/**
+	 * The refusal for a window that is missing, unparseable or not increasing.
+	 *
+	 * @param array{0: int, 1: int}|null $window Start and end epochs, or null.
+	 *
+	 * @return string|null The refusal message, or null for a valid window.
+	 */
+	private static function windowProblem(?array $window): ?string {
+		if ($window === null) {
+			return 'AppointmentGuard: missing or unparseable startTime/endTime — denying save';
+		}
+
+		if ($window[1] <= $window[0]) {
+			return 'AppointmentGuard: endTime not after startTime — denying save';
+		}
+
+		return null;
+	}//end windowProblem()
+
+	/**
+	 * A record's startTime and endTime as epochs.
+	 *
+	 * @param mixed $record An appointment record.
+	 *
+	 * @return array{0: int, 1: int}|null Start and end, or null when either is missing or unparseable.
+	 */
+	private function window(mixed $record): ?array {
+		$start = $this->parseTimestamp(value: (string)($record['startTime'] ?? ''));
+		$end = $this->parseTimestamp(value: (string)($record['endTime'] ?? ''));
+		if ($start === null || $end === null) {
+			return null;
+		}
+
+		return [$start, $end];
+	}//end window()
+
+	/**
+	 * The lookup filter for a related record: its id key, then the administration.
+	 *
+	 * @param array<string, mixed> $appointment Appointment object array.
+	 * @param string               $key         The related id key (serviceId, resourceId, customerId).
+	 *
+	 * @return array<string, string>
+	 */
+	private static function relatedFilter(array $appointment, string $key): array {
+		return [
+			$key => (string)($appointment[$key] ?? ''),
+			'administrationId' => (string)($appointment['administrationId'] ?? ''),
+		];
+	}//end relatedFilter()
 
 	/**
 	 * Validate that the appointment duration matches the related Service.duration
@@ -190,14 +232,7 @@ class AppointmentGuard {
 	 * @return bool True when duration matches (or service is unavailable).
 	 */
 	private function matchesServiceDuration(array $appointment): bool {
-		$service = $this->findOne(
-			schema: 'Service',
-			filters: [
-				'serviceId' => (string)($appointment['serviceId'] ?? ''),
-				'administrationId' => (string)($appointment['administrationId'] ?? ''),
-			]
-		);
-
+		$service = $this->findOne(schema: 'Service', filters: self::relatedFilter(appointment: $appointment, key: 'serviceId'));
 		if ($service === null || isset($service['duration']) === false) {
 			$this->logger->warning(
 				'AppointmentGuard: related Service not found or has no duration — skipping duration check',
@@ -209,9 +244,19 @@ class AppointmentGuard {
 			return true;
 		}
 
-		$requestedMinutes = $this->durationMinutes(appointment: $appointment);
-		$serviceMinutes = (int)$service['duration'];
+		return $this->durationWithinTolerance(appointment: $appointment, serviceMinutes: (int)$service['duration']);
+	}//end matchesServiceDuration()
 
+	/**
+	 * Whether the requested duration is within DURATION_TOLERANCE_MINUTES of the service's; a mismatch is logged.
+	 *
+	 * @param array<string, mixed> $appointment    Appointment object array.
+	 * @param int                  $serviceMinutes Service.duration.
+	 *
+	 * @return bool
+	 */
+	private function durationWithinTolerance(array $appointment, int $serviceMinutes): bool {
+		$requestedMinutes = $this->durationMinutes(appointment: $appointment);
 		if (abs($requestedMinutes - $serviceMinutes) > self::DURATION_TOLERANCE_MINUTES) {
 			$this->logger->info(
 				'AppointmentGuard: duration mismatch — denying save',
@@ -225,7 +270,7 @@ class AppointmentGuard {
 		}
 
 		return true;
-	}//end matchesServiceDuration()
+	}//end durationWithinTolerance()
 
 	/**
 	 * Validate that the appointment falls within the related Resource operational
@@ -239,14 +284,7 @@ class AppointmentGuard {
 	 * @return bool True when within operational hours (or unrestricted).
 	 */
 	private function isWithinOperationalHours(array $appointment): bool {
-		$resource = $this->findOne(
-			schema: 'Resource',
-			filters: [
-				'resourceId' => (string)($appointment['resourceId'] ?? ''),
-				'administrationId' => (string)($appointment['administrationId'] ?? ''),
-			]
-		);
-
+		$resource = $this->findOne(schema: 'Resource', filters: self::relatedFilter(appointment: $appointment, key: 'resourceId'));
 		if ($resource === null) {
 			$this->logger->warning(
 				'AppointmentGuard: related Resource not found — skipping operational-hours check',
@@ -258,38 +296,52 @@ class AppointmentGuard {
 			return true;
 		}
 
+		// No (or malformed) operational hours declared — unrestricted.
+		$hours = $this->operationalHours(resource: $resource);
+
+		return $hours === null || $this->insideHours(appointment: $appointment, hours: $hours);
+	}//end isWithinOperationalHours()
+
+	/**
+	 * The resource's opening and closing time in minutes since midnight.
+	 *
+	 * @param array<string, mixed> $resource Resource object array.
+	 *
+	 * @return array{opening: int, closing: int}|null Null when either is missing or malformed.
+	 */
+	private function operationalHours(array $resource): ?array {
 		$openingMinutes = $this->clockToMinutes(clock: (string)($resource['openingTime'] ?? ''));
 		$closingMinutes = $this->clockToMinutes(clock: (string)($resource['closingTime'] ?? ''));
 		if ($openingMinutes === null || $closingMinutes === null) {
-			// No (or malformed) operational hours declared — unrestricted.
-			return true;
+			return null;
 		}
 
-		$start = $this->parseTimestamp(value: (string)($appointment['startTime'] ?? ''));
-		$end = $this->parseTimestamp(value: (string)($appointment['endTime'] ?? ''));
-		if ($start === null || $end === null) {
+		return ['opening' => $openingMinutes, 'closing' => $closingMinutes];
+	}//end operationalHours()
+
+	/**
+	 * Whether the appointment starts and ends within the hours; outside is logged.
+	 *
+	 * @param array<string, mixed>              $appointment Appointment object array.
+	 * @param array{opening: int, closing: int} $hours       The operational hours.
+	 *
+	 * @return bool
+	 */
+	private function insideHours(array $appointment, array $hours): bool {
+		$window = $this->window(record: $appointment);
+		if ($window === null) {
 			return false;
 		}
 
-		$startMinutes = $this->minutesIntoDay(epoch: $start);
-		$endMinutes = $this->minutesIntoDay(epoch: $end);
-
-		if ($startMinutes < $openingMinutes || $endMinutes > $closingMinutes) {
-			$this->logger->info(
-				'AppointmentGuard: outside operational hours — denying save',
-				[
-					'appointmentId' => ($appointment['appointmentId'] ?? 'unknown'),
-					'start' => $startMinutes,
-					'end' => $endMinutes,
-					'opening' => $openingMinutes,
-					'closing' => $closingMinutes,
-				]
-			);
+		$minutes = ['start' => $this->minutesIntoDay(epoch: $window[0]), 'end' => $this->minutesIntoDay(epoch: $window[1])];
+		if ($minutes['start'] < $hours['opening'] || $minutes['end'] > $hours['closing']) {
+			$context = ['appointmentId' => ($appointment['appointmentId'] ?? 'unknown')] + $minutes + $hours;
+			$this->logger->info('AppointmentGuard: outside operational hours — denying save', $context);
 			return false;
 		}
 
 		return true;
-	}//end isWithinOperationalHours()
+	}//end insideHours()
 
 	/**
 	 * Verify that no other non-cancelled appointment overlaps the same resource
@@ -304,53 +356,41 @@ class AppointmentGuard {
 	 * @return bool True when the slot is free (or overlap is allowed).
 	 */
 	private function isSlotAvailable(array $appointment): bool {
-		$resource = $this->findOne(
-			schema: 'Resource',
-			filters: [
-				'resourceId' => (string)($appointment['resourceId'] ?? ''),
-				'administrationId' => (string)($appointment['administrationId'] ?? ''),
-			]
-		);
-
+		$filter = self::relatedFilter(appointment: $appointment, key: 'resourceId');
+		$resource = $this->findOne(schema: 'Resource', filters: $filter);
 		if ($resource !== null && ((bool)($resource['allowOverlap'] ?? false)) === true) {
 			return true;
 		}
 
-		$start = $this->parseTimestamp(value: (string)($appointment['startTime'] ?? ''));
-		$end = $this->parseTimestamp(value: (string)($appointment['endTime'] ?? ''));
-		if ($start === null || $end === null) {
+		if ($this->window(record: $appointment) === null) {
 			return false;
 		}
 
-		$existing = $this->findMany(
-			schema: 'Appointment',
-			filters: [
-				'resourceId' => (string)($appointment['resourceId'] ?? ''),
-				'administrationId' => (string)($appointment['administrationId'] ?? ''),
+		$conflict = $this->findConflict(appointment: $appointment, existing: $this->findMany(schema: 'Appointment', params: ['filters' => $filter]));
+
+		return $conflict === null || $this->slotTaken(appointment: $appointment, conflict: $conflict);
+	}//end isSlotAvailable()
+
+	/**
+	 * Log the double booking and refuse.
+	 *
+	 * @param array<string, mixed> $appointment The appointment being saved.
+	 * @param mixed                $conflict    The overlapping record.
+	 *
+	 * @return bool Always false.
+	 */
+	private function slotTaken(array $appointment, mixed $conflict): bool {
+		$this->logger->info(
+			'AppointmentGuard: resource slot already booked — denying save',
+			[
+				'appointmentId' => ($appointment['appointmentId'] ?? 'unknown'),
+				'resourceId' => ($appointment['resourceId'] ?? 'unknown'),
+				'conflictsWith' => ($conflict['appointmentId'] ?? 'unknown'),
 			]
 		);
 
-		$conflict = $this->findConflict(
-			appointment: $appointment,
-			existing: $existing,
-			start: $start,
-			end: $end,
-		);
-
-		if ($conflict !== null) {
-			$this->logger->info(
-				'AppointmentGuard: resource slot already booked — denying save',
-				[
-					'appointmentId' => ($appointment['appointmentId'] ?? 'unknown'),
-					'resourceId' => ($appointment['resourceId'] ?? 'unknown'),
-					'conflictsWith' => ($conflict['appointmentId'] ?? 'unknown'),
-				]
-			);
-			return false;
-		}
-
-		return true;
-	}//end isSlotAvailable()
+		return false;
+	}//end slotTaken()
 
 	/**
 	 * Find the first existing appointment that overlaps the requested window.
@@ -358,39 +398,56 @@ class AppointmentGuard {
 	 * The appointment's own record (matched by appointmentId) and any cancelled
 	 * record are excluded. Records with unparseable times are ignored.
 	 *
-	 * @param array<string, mixed> $appointment The appointment being saved.
-	 * @param array<int, array<string, mixed>> $existing Existing appointments on the resource.
-	 * @param int $start Requested start epoch.
-	 * @param int $end Requested end epoch.
+	 * @param array<string, mixed> $appointment The appointment being saved (with a valid window).
+	 * @param array<int, mixed>    $existing    Existing appointments on the resource.
 	 *
-	 * @return array<string, mixed>|null The conflicting record, or null when the slot is free.
+	 * @return mixed The conflicting record, or null when the slot is free.
 	 */
-	private function findConflict(array $appointment, array $existing, int $start, int $end): ?array {
+	private function findConflict(array $appointment, array $existing): mixed {
 		$selfId = (string)($appointment['appointmentId'] ?? '');
-
+		$window = $this->window(record: $appointment);
 		foreach ($existing as $other) {
-			if ($selfId !== '' && (string)($other['appointmentId'] ?? '') === $selfId) {
-				continue;
-			}
-
-			if (($other['status'] ?? '') === 'cancelled') {
-				continue;
-			}
-
-			$otherStart = $this->parseTimestamp(value: (string)($other['startTime'] ?? ''));
-			$otherEnd = $this->parseTimestamp(value: (string)($other['endTime'] ?? ''));
-			if ($otherStart === null || $otherEnd === null) {
-				continue;
-			}
-
-			// Two half-open intervals [start, end) overlap iff start < otherEnd AND otherStart < end.
-			if ($start < $otherEnd && $otherStart < $end) {
+			if (self::isOtherLiveRecord(other: $other, selfId: $selfId) === true && $this->overlaps(window: $window, other: $other) === true) {
 				return $other;
 			}
-		}//end foreach
+		}
 
 		return null;
 	}//end findConflict()
+
+	/**
+	 * Whether a record is neither the appointment itself nor cancelled.
+	 *
+	 * @param mixed  $other  An existing appointment.
+	 * @param string $selfId The saved appointment's appointmentId, or ''.
+	 *
+	 * @return bool
+	 */
+	private static function isOtherLiveRecord(mixed $other, string $selfId): bool {
+		if ($selfId !== '' && (string)($other['appointmentId'] ?? '') === $selfId) {
+			return false;
+		}
+
+		return ($other['status'] ?? '') !== 'cancelled';
+	}//end isOtherLiveRecord()
+
+	/**
+	 * Whether a record's window overlaps; one with unparseable times never does.
+	 * Two half-open intervals [start, end) overlap iff start < otherEnd AND otherStart < end.
+	 *
+	 * @param array{0: int, 1: int} $window The requested window.
+	 * @param mixed                 $other  An existing appointment.
+	 *
+	 * @return bool
+	 */
+	private function overlaps(array $window, mixed $other): bool {
+		$otherWindow = $this->window(record: $other);
+		if ($otherWindow === null) {
+			return false;
+		}
+
+		return $window[0] < $otherWindow[1] && $otherWindow[0] < $window[1];
+	}//end overlaps()
 
 	/**
 	 * Verify the customer contact is eligible to book per REQ-BCA-006.
@@ -405,19 +462,24 @@ class AppointmentGuard {
 	 * @return bool True when the customer is eligible.
 	 */
 	private function isCustomerEligible(array $appointment): bool {
-		$contact = $this->findOne(
-			schema: 'Contact',
-			filters: [
-				'customerId' => (string)($appointment['customerId'] ?? ''),
-				'administrationId' => (string)($appointment['administrationId'] ?? ''),
-			]
-		);
-
+		// No app-managed contact record (customer is an external NC contact) — eligible.
+		$contact = $this->findOne(schema: 'Contact', filters: self::relatedFilter(appointment: $appointment, key: 'customerId'));
 		if ($contact === null) {
-			// No app-managed contact record (customer is an external NC contact) — eligible.
 			return true;
 		}
 
+		return $this->contactActive(appointment: $appointment, contact: $contact);
+	}//end isCustomerEligible()
+
+	/**
+	 * Whether the contact is neither suspended nor banned; a refusal is logged.
+	 *
+	 * @param array<string, mixed> $appointment Appointment object array.
+	 * @param array<string, mixed> $contact     The app-managed contact record.
+	 *
+	 * @return bool
+	 */
+	private function contactActive(array $appointment, array $contact): bool {
 		$status = (string)($contact['status'] ?? '');
 		if ($status === 'suspended' || $status === 'banned') {
 			$this->logger->info(
@@ -432,7 +494,7 @@ class AppointmentGuard {
 		}
 
 		return true;
-	}//end isCustomerEligible()
+	}//end contactActive()
 
 	/**
 	 * Compute the appointment duration in whole minutes.
@@ -442,13 +504,12 @@ class AppointmentGuard {
 	 * @return int Duration in minutes (0 when either timestamp is unparseable).
 	 */
 	private function durationMinutes(array $appointment): int {
-		$start = $this->parseTimestamp(value: (string)($appointment['startTime'] ?? ''));
-		$end = $this->parseTimestamp(value: (string)($appointment['endTime'] ?? ''));
-		if ($start === null || $end === null) {
+		$window = $this->window(record: $appointment);
+		if ($window === null) {
 			return 0;
 		}
 
-		return (int)round((($end - $start) / 60));
+		return (int)round((($window[1] - $window[0]) / 60));
 	}//end durationMinutes()
 
 	/**
@@ -512,7 +573,7 @@ class AppointmentGuard {
 	 * @return array<string, mixed>|null First matching record, or null.
 	 */
 	private function findOne(string $schema, array $filters): ?array {
-		$records = $this->findMany(schema: $schema, filters: $filters, limit: 1);
+		$records = $this->findMany(schema: $schema, params: ['filters' => $filters, 'limit' => 1]);
 		if (count($records) === 0) {
 			return null;
 		}
@@ -527,37 +588,41 @@ class AppointmentGuard {
 	 * Returns an empty array when the schema is not yet available (T1 state),
 	 * keeping the guard usable before dependency registers are seeded.
 	 *
-	 * @param string $schema Schema name.
-	 * @param array<string, mixed> $filters Exact-match filters.
-	 * @param int|null $limit Optional result limit.
+	 * @param string               $schema Schema name.
+	 * @param array<string, mixed> $params The findAll query: exact-match filters, optionally a limit.
 	 *
 	 * @return array<int, array<string, mixed>> Matching records.
 	 */
-	private function findMany(string $schema, array $filters, ?int $limit = null): array {
+	private function findMany(string $schema, array $params): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$params = ['filters' => $filters];
-			if ($limit !== null) {
-				$params['limit'] = $limit;
-			}
-
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: $schema)
-				->findAll($params);
-
-			if (is_array($result) === false) {
-				return [];
-			}
-
-			return $result;
+			$result = $this->lookup(schema: $schema, params: $params);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'AppointmentGuard: schema lookup unavailable (T1 state) — treating as empty',
 				['schema' => $schema, 'exception' => $e->getMessage()]
 			);
 			return [];
-		}//end try
+		}
 
+		if (is_array($result) === false) {
+			return [];
+		}
+
+		return $result;
 	}//end findMany()
+
+	/**
+	 * Run one findAll on the configured register.
+	 *
+	 * @param string               $schema Schema name.
+	 * @param array<string, mixed> $params The findAll query.
+	 *
+	 * @return mixed What findAll answers.
+	 */
+	private function lookup(string $schema, array $params): mixed {
+		return $this->container->get('OCA\OpenRegister\Service\ObjectService')
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: $schema)
+			->findAll($params);
+	}//end lookup()
 }//end class

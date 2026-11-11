@@ -45,6 +45,13 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class SepaAuditService {
+
+	/**
+	 * The collections CSV columns, in order.
+	 *
+	 * @var list<string>
+	 */
+	private const CSV_COLUMNS = ['endToEndId', 'amount', 'currency', 'sequenceType', 'requestedCollectionDate', 'status', 'pain002ReasonCode'];
 	/**
 	 * Construct the service.
 	 *
@@ -86,15 +93,46 @@ class SepaAuditService {
 			return null;
 		}
 
-		$register = $this->resolveRegister();
+		$dossier = $this->accessibleDossier(mandateId: $mandateId);
+		if ($dossier === null) {
+			return null;
+		}
 
-		$mandate = $this->findOne(
-			objectService: $this->objectService,
-			register: $register,
-			schema: 'SepaMandate',
-			filters: ['id' => $mandateId]
-		);
+		$this->gatherRelated(dossier: $dossier);
+		$zip = $this->zipOf(dossier: $dossier);
+		if ($zip === null) {
+			return null;
+		}
 
+		return ['data' => $zip, 'filename' => $this->dossierFilename(dossier: $dossier)];
+	}//end buildMandateDossier()
+
+	/**
+	 * The dossier ZIP, logging when it cannot be assembled.
+	 *
+	 * @param MandateDossier $dossier The gathered records.
+	 *
+	 * @return string|null Raw ZIP bytes, or null on failure.
+	 */
+	private function zipOf(MandateDossier $dossier): ?string {
+		$zip = $this->assembleZip(dossier: $dossier);
+		if ($zip === null) {
+			$this->logger->error('SepaAuditService: failed to assemble audit dossier ZIP', ['mandateId' => $dossier->mandateId]);
+		}
+
+		return $zip;
+	}//end zipOf()
+
+	/**
+	 * Load the mandate, or null when it does not exist or sits outside the
+	 * caller's administrations.
+	 *
+	 * @param string $mandateId The SepaMandate UUID/slug.
+	 *
+	 * @return MandateDossier|null
+	 */
+	private function accessibleDossier(string $mandateId): ?MandateDossier {
+		$mandate = $this->findOne(schema: 'SepaMandate', filters: ['id' => $mandateId]);
 		if ($mandate === null) {
 			return null;
 		}
@@ -106,13 +144,36 @@ class SepaAuditService {
 			return null;
 		}
 
-		$collections = $this->findMany(
-			objectService: $this->objectService,
-			register: $register,
-			schema: 'DirectDebitCollection',
-			filters: ['mandateId' => $mandateId]
-		);
+		$dossier = new MandateDossier();
+		$dossier->mandateId = $mandateId;
+		$dossier->mandate = $mandate;
 
+		return $dossier;
+	}//end accessibleDossier()
+
+	/**
+	 * Load the mandate's collections and the R-transactions and
+	 * pre-notifications of those collections.
+	 *
+	 * @param MandateDossier $dossier The dossier being built.
+	 *
+	 * @return void
+	 */
+	private function gatherRelated(MandateDossier $dossier): void {
+		$dossier->collections = $this->findMany(schema: 'DirectDebitCollection', filters: ['mandateId' => $dossier->mandateId]);
+		$collectionIds = $this->collectionIds(collections: $dossier->collections);
+		$dossier->rTransactions = $this->findRelated(schema: 'RTransaction', ids: $collectionIds);
+		$dossier->preNotifications = $this->findRelated(schema: 'PreNotification', ids: $collectionIds);
+	}//end gatherRelated()
+
+	/**
+	 * The ids of the collections that carry one.
+	 *
+	 * @param array<int,mixed> $collections The collections (may contain non-array store rows).
+	 *
+	 * @return array<int,string>
+	 */
+	private function collectionIds(array $collections): array {
 		$collectionIds = [];
 		foreach ($collections as $collection) {
 			if (is_array($collection) === true && isset($collection['id']) === true) {
@@ -120,106 +181,107 @@ class SepaAuditService {
 			}
 		}
 
-		$rTransactions = $this->findRelated(
-			objectService: $this->objectService,
-			register: $register,
-			schema: 'RTransaction',
-			field: 'collectionId',
-			ids: $collectionIds
-		);
+		return $collectionIds;
+	}//end collectionIds()
 
-		$preNotifications = $this->findRelated(
-			objectService: $this->objectService,
-			register: $register,
-			schema: 'PreNotification',
-			field: 'collectionId',
-			ids: $collectionIds
-		);
-
-		$zip = $this->assembleZip(
-			mandate: $mandate,
-			collections: $collections,
-			rTransactions: $rTransactions,
-			preNotifications: $preNotifications
-		);
-
-		if ($zip === null) {
-			$this->logger->error(
-				'SepaAuditService: failed to assemble audit dossier ZIP',
-				['mandateId' => $mandateId]
-			);
-			return null;
-		}
-
-		$reference = (string)($mandate['mandateReference'] ?? $mandateId);
+	/**
+	 * The download filename, from the mandate reference made filesystem-safe.
+	 *
+	 * @param MandateDossier $dossier The dossier.
+	 *
+	 * @return string
+	 */
+	private function dossierFilename(MandateDossier $dossier): string {
+		$reference = (string)($dossier->mandate['mandateReference'] ?? $dossier->mandateId);
 		$safe = preg_replace('/[^A-Za-z0-9_-]/', '_', $reference) ?? 'mandate';
 
-		return [
-			'data' => $zip,
-			'filename' => 'sepa-dossier-' . $safe . '.zip',
-		];
-	}//end buildMandateDossier()
+		return 'sepa-dossier-' . $safe . '.zip';
+	}//end dossierFilename()
 
 	/**
 	 * Assemble the dossier ZIP from the gathered records.
 	 *
-	 * @param array<string,mixed> $mandate The mandate.
-	 * @param array<int,mixed> $collections Its collections (may contain non-array store rows).
-	 * @param array<int,mixed> $rTransactions Related R-transactions.
-	 * @param array<int,mixed> $preNotifications Related pre-notifications.
+	 * @param MandateDossier $dossier The gathered records.
 	 *
 	 * @return string|null Raw ZIP bytes, or null on failure.
 	 */
-	private function assembleZip(
-		array $mandate,
-		array $collections,
-		array $rTransactions,
-		array $preNotifications,
-	): ?string {
+	private function assembleZip(MandateDossier $dossier): ?string {
 		$tmp = tempnam(sys_get_temp_dir(), 'sepa-dossier-');
 		if ($tmp === false) {
 			return null;
 		}
 
 		try {
-			$zip = new ZipArchive();
-			if ($zip->open($tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-				return null;
-			}
-
-			$zip->addFromString('mandate.json', $this->encode(value: $mandate));
-			$zip->addFromString('collections.csv', $this->collectionsCsv(collections: $collections));
-			$zip->addFromString('collections.json', $this->encode(value: $collections));
-			$zip->addFromString('r-transactions.json', $this->encode(value: $rTransactions));
-			$zip->addFromString('pre-notifications.json', $this->encode(value: $preNotifications));
-
-			// Archived pain fragments per batch referenced by the collections.
-			foreach ($collections as $collection) {
-				if (is_array($collection) === false) {
-					continue;
-				}
-
-				$pain008 = (string)($collection['_pain008Xml'] ?? '');
-				if ($pain008 !== '') {
-					$end = (string)($collection['endToEndId'] ?? 'collection');
-					$zip->addFromString('pain/' . $this->slug(value: $end) . '.pain008.xml', $pain008);
-				}
-			}
-
-			$zip->close();
-
-			$bytes = file_get_contents($tmp);
-			if ($bytes === false) {
-				return null;
-			}
-
-			return $bytes;
+			return $this->writeZip(path: $tmp, dossier: $dossier);
 		} finally {
 			if (file_exists($tmp) === true) {
 				unlink($tmp);
 			}
-		}//end try
+		}
 	}//end assembleZip()
+
+	/**
+	 * Write the dossier ZIP to a temporary path and read its bytes back.
+	 *
+	 * @param string         $path    The temporary file.
+	 * @param MandateDossier $dossier The gathered records.
+	 *
+	 * @return string|null Raw ZIP bytes, or null on failure.
+	 */
+	private function writeZip(string $path, MandateDossier $dossier): ?string {
+		$zip = new ZipArchive();
+		if ($zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+			return null;
+		}
+
+		$this->addEntries(zip: $zip, dossier: $dossier);
+		$zip->close();
+		$bytes = file_get_contents($path);
+		if ($bytes === false) {
+			return null;
+		}
+
+		return $bytes;
+	}//end writeZip()
+
+	/**
+	 * Add the mandate, collections, R-transactions, pre-notifications and the
+	 * archived pain fragments per batch referenced by the collections.
+	 *
+	 * @param ZipArchive     $zip     The open archive.
+	 * @param MandateDossier $dossier The gathered records.
+	 *
+	 * @return void
+	 */
+	private function addEntries(ZipArchive $zip, MandateDossier $dossier): void {
+		$zip->addFromString('mandate.json', $this->encode(value: $dossier->mandate));
+		$zip->addFromString('collections.csv', $this->collectionsCsv(collections: $dossier->collections));
+		$zip->addFromString('collections.json', $this->encode(value: $dossier->collections));
+		$zip->addFromString('r-transactions.json', $this->encode(value: $dossier->rTransactions));
+		$zip->addFromString('pre-notifications.json', $this->encode(value: $dossier->preNotifications));
+		$this->addPainFragments(zip: $zip, collections: $dossier->collections);
+	}//end addEntries()
+
+	/**
+	 * Add the archived pain.008 fragment of every collection that carries one.
+	 *
+	 * @param ZipArchive       $zip         The open archive.
+	 * @param array<int,mixed> $collections The collections (may contain non-array store rows).
+	 *
+	 * @return void
+	 */
+	private function addPainFragments(ZipArchive $zip, array $collections): void {
+		foreach ($collections as $collection) {
+			$pain008 = '';
+			if (is_array($collection) === true) {
+				$pain008 = (string)($collection['_pain008Xml'] ?? '');
+			}
+
+			if ($pain008 !== '') {
+				$zip->addFromString('pain/' . $this->slug(value: (string)($collection['endToEndId'] ?? 'collection')) . '.pain008.xml', $pain008);
+			}
+		}
+	}//end addPainFragments()
 
 	/**
 	 * Render the collections as a CSV with status, amount, dates and reason codes.
@@ -229,25 +291,11 @@ class SepaAuditService {
 	 * @return string The CSV text.
 	 */
 	private function collectionsCsv(array $collections): string {
-		$rows = [];
-		$rows[] = 'endToEndId,amount,currency,sequenceType,requestedCollectionDate,status,pain002ReasonCode';
+		$rows = [implode(',', self::CSV_COLUMNS)];
 		foreach ($collections as $collection) {
-			if (is_array($collection) === false) {
-				continue;
+			if (is_array($collection) === true) {
+				$rows[] = implode(',', array_map(fn (string $column): string => $this->csvCell(value: (string)($collection[$column] ?? '')), self::CSV_COLUMNS));
 			}
-
-			$rows[] = implode(
-				',',
-				[
-					$this->csvCell(value: (string)($collection['endToEndId'] ?? '')),
-					$this->csvCell(value: (string)($collection['amount'] ?? '')),
-					$this->csvCell(value: (string)($collection['currency'] ?? '')),
-					$this->csvCell(value: (string)($collection['sequenceType'] ?? '')),
-					$this->csvCell(value: (string)($collection['requestedCollectionDate'] ?? '')),
-					$this->csvCell(value: (string)($collection['status'] ?? '')),
-					$this->csvCell(value: (string)($collection['pain002ReasonCode'] ?? '')),
-				]
-			);
 		}
 
 		return implode("\n", $rows) . "\n";
@@ -298,22 +346,13 @@ class SepaAuditService {
 	/**
 	 * Find a single record matching filters, or null.
 	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $register The register slug.
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters The query filters.
 	 *
 	 * @return array<string,mixed>|null The first matching record, or null.
 	 */
-	private function findOne(object $objectService, string $register, string $schema, array $filters): ?array {
-		$records = $this->findMany(
-			objectService: $objectService,
-			register: $register,
-			schema: $schema,
-			filters: $filters
-		);
-
-		foreach ($records as $record) {
+	private function findOne(string $schema, array $filters): ?array {
+		foreach ($this->findMany(schema: $schema, filters: $filters) as $record) {
 			if (is_array($record) === true) {
 				return $record;
 			}
@@ -325,45 +364,29 @@ class SepaAuditService {
 	/**
 	 * Find all records matching filters.
 	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $register The register slug.
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters The query filters.
 	 *
 	 * @return array<int,mixed> The matching records.
 	 */
-	private function findMany(object $objectService, string $register, string $schema, array $filters): array {
-		$result = $objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => $filters]);
-
-		if (is_array($result) === true) {
-			return array_values($result);
-		}
-
-		return [];
+	private function findMany(string $schema, array $filters): array {
+		return array_values(
+			$this->objectService->setRegister($this->resolveRegister())->setSchema($schema)->findAll(['filters' => $filters])
+		);
 	}//end findMany()
 
 	/**
-	 * Find records of a schema whose `field` is in the given id set.
+	 * Find records of a schema whose `collectionId` is in the given id set.
 	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $register The register slug.
 	 * @param string $schema The schema slug.
-	 * @param string $field The FK field name.
-	 * @param array<int,string> $ids The id set.
+	 * @param array<int,string> $ids The collection id set.
 	 *
 	 * @return array<int,array<string,mixed>> The matching records.
 	 */
-	private function findRelated(object $objectService, string $register, string $schema, string $field, array $ids): array {
-		if ($ids === []) {
-			return [];
-		}
-
+	private function findRelated(string $schema, array $ids): array {
 		$out = [];
 		foreach ($ids as $id) {
-			foreach ($this->findMany(objectService: $objectService, register: $register, schema: $schema, filters: [$field => $id]) as $record) {
+			foreach ($this->findMany(schema: $schema, filters: ['collectionId' => $id]) as $record) {
 				if (is_array($record) === true) {
 					$out[] = $record;
 				}

@@ -1,0 +1,14 @@
+{
+    "general-ledger": {
+        "fileName": "general-ledger-2026-Q1.csv",
+        "mimeType": "text/csv",
+        "format": "csv",
+        "content": "accountNumber,accountName,lineNumber,transactionId,date,description,debit,credit,runningBalance\n(unassigned),,1,t-4,,,7.00,0.00,7.00\n1000,Kas,1,t-3,,,0.00,0.00,0.00\n4000,\"Huur \"\"kantoor\"\"\",1,t-1,2026-01-02,,25.56,0.00,25.56\n4000,\"Huur \"\"kantoor\"\"\",1,t-9,2026-01-01,,0.00,50.00,-24.45\n4000,\"Huur \"\"kantoor\"\"\",2,t-2,2026-01-05,\"Huur, jan\",100.10,0.00,75.66\n8000,,1,t-5,,,0.00,300.00,-300.00\n8000,,2,t-6,,,0.00,40.00,-340.00\n9000,,1,t-7,,,0.00,12.00,-12.00\n"
+    },
+    "trial-balance": {
+        "fileName": "trial-balance-2026-Q1.csv",
+        "mimeType": "text/csv",
+        "format": "csv",
+        "content": "accountNumber,accountName,debit,credit,balance\n1000,Kas,0.00,0.00,0.00\n4000,\"Huur \"\"kantoor\"\"\",125.66,50.00,75.66\n8000,\"Omzet (regel)\",0.00,300.00,-300.00\n9000,,0.00,12.00,-12.00\nTOTAL,,125.66,362.00,-236.35\n"
+    }
+}

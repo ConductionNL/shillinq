@@ -100,35 +100,12 @@ class RetainerGuard {
 				return false;
 			}
 
-			$start = trim((string)($pool['periodStart'] ?? ''));
-			$end = trim((string)($pool['periodEnd'] ?? ''));
-			if ($start === '' || $end === '' || $start > $end) {
+			$window = $this->activationWindow(pool: $pool, poolId: $poolId);
+			if ($window === null) {
 				return false;
 			}
 
-			$clientId = (string)($pool['clientId'] ?? '');
-			if ($clientId === '') {
-				return false;
-			}
-
-			$projectId = (string)($pool['projectId'] ?? '');
-			$selfId = (string)($pool['poolId'] ?? $poolId);
-
-			$candidates = $this->findPoolsForClient(clientId: $clientId);
-			foreach ($candidates as $candidate) {
-				if ($this->poolConflicts(
-					candidate: $candidate,
-					selfId: $selfId,
-					projectId: $projectId,
-					start: $start,
-					end: $end
-				) === true
-				) {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->noOverlappingPool(window: $window);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RetainerGuard: pool activation check failed — denying transition (fail-closed)',
@@ -137,6 +114,54 @@ class RetainerGuard {
 			return false;
 		}//end try
 	}//end canActivatePool()
+
+	/**
+	 * The pool's activation window; null when its period or client is invalid.
+	 *
+	 * @param array<string,mixed> $pool The pool being activated.
+	 * @param string $poolId The pool id argument (fallback identity).
+	 *
+	 * @return PoolActivationWindow|null The window.
+	 */
+	private function activationWindow(array $pool, string $poolId): PoolActivationWindow|null {
+		$start = trim((string)($pool['periodStart'] ?? ''));
+		$end = trim((string)($pool['periodEnd'] ?? ''));
+		if ($start === '' || $end === '' || $start > $end) {
+			return null;
+		}
+
+		$clientId = (string)($pool['clientId'] ?? '');
+		if ($clientId === '') {
+			return null;
+		}
+
+		return new PoolActivationWindow(
+			selfId: (string)($pool['poolId'] ?? $poolId),
+			clientId: $clientId,
+			projectId: (string)($pool['projectId'] ?? ''),
+			start: $start,
+			end: $end
+		);
+
+	}//end activationWindow()
+
+	/**
+	 * Whether none of the client's pools conflicts with the window.
+	 *
+	 * @param PoolActivationWindow $window The activating pool's window.
+	 *
+	 * @return bool True when the pool may be activated.
+	 */
+	private function noOverlappingPool(PoolActivationWindow $window): bool {
+		foreach ($this->findPoolsForClient(clientId: $window->clientId) as $candidate) {
+			if ($this->poolConflicts(candidate: $candidate, window: $window) === true) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end noOverlappingPool()
 
 	/**
 	 * Returns true iff the RetainerDrawdown may be materialized.
@@ -246,15 +271,12 @@ class RetainerGuard {
 	 * status, a different identity, and an overlapping period.
 	 *
 	 * @param mixed $candidate The candidate pool row.
-	 * @param string $selfId The activating pool's poolId.
-	 * @param string $projectId The activating pool's projectId.
-	 * @param string $start The activating pool's periodStart.
-	 * @param string $end The activating pool's periodEnd.
+	 * @param PoolActivationWindow $window The activating pool's window.
 	 *
 	 * @return bool True when the candidate conflicts.
 	 */
-	private function poolConflicts(mixed $candidate, string $selfId, string $projectId, string $start, string $end): bool {
-		if ($this->isEligibleSibling(candidate: $candidate, selfId: $selfId, projectId: $projectId) === false) {
+	private function poolConflicts(mixed $candidate, PoolActivationWindow $window): bool {
+		if ($this->isEligibleSibling(candidate: $candidate, window: $window) === false) {
 			return false;
 		}
 
@@ -265,7 +287,7 @@ class RetainerGuard {
 		}
 
 		// Inclusive-period overlap: start <= candidateEnd AND candidateStart <= end.
-		return $start <= $candidateEnd && $candidateStart <= $end;
+		return $window->start <= $candidateEnd && $candidateStart <= $window->end;
 	}//end poolConflicts()
 
 	/**
@@ -274,18 +296,17 @@ class RetainerGuard {
 	 * same projectId scope (REQ-RETN-001).
 	 *
 	 * @param mixed $candidate The candidate pool row.
-	 * @param string $selfId The activating pool's poolId.
-	 * @param string $projectId The activating pool's projectId.
+	 * @param PoolActivationWindow $window The activating pool's window.
 	 *
 	 * @return bool True when the candidate is an eligible sibling.
 	 */
-	private function isEligibleSibling(mixed $candidate, string $selfId, string $projectId): bool {
+	private function isEligibleSibling(mixed $candidate, PoolActivationWindow $window): bool {
 		if (is_array($candidate) === false) {
 			return false;
 		}
 
 		$candidateId = (string)($candidate['poolId'] ?? '');
-		if ($candidateId === '' || $candidateId === $selfId) {
+		if ($candidateId === '' || $candidateId === $window->selfId) {
 			return false;
 		}
 
@@ -294,7 +315,7 @@ class RetainerGuard {
 			return false;
 		}
 
-		return (string)($candidate['projectId'] ?? '') === $projectId;
+		return (string)($candidate['projectId'] ?? '') === $window->projectId;
 	}//end isEligibleSibling()
 
 	/**

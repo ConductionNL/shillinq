@@ -113,43 +113,54 @@ class SoftCloseController extends Controller {
 		}
 
 		$administrationId = trim($administrationId);
-		if ($this->validId(value: $administrationId) === false) {
-			return $this->error(message: 'administration_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		$refusal = $this->administrationRefusal(administrationId: $administrationId, invalidMessage: 'administration_id must be a valid identifier');
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
+		$periodId = $this->requestedPeriod();
+		if (self::isPeriod(periodId: $periodId) === false) {
+			return $this->periodRefusal();
+		}
+
+		return $this->softCloseRun(administrationId: $administrationId, periodId: $periodId);
+	}//end executeNow()
+
+	/**
+	 * The requested periodId, trimmed; the current month when absent.
+	 *
+	 * @return string
+	 */
+	private function requestedPeriod(): string {
 		$periodId = trim((string)$this->request->getParam('periodId', ''));
 		if ($periodId === '') {
-			$periodId = (new DateTimeImmutable())->format('Y-m');
+			return (new DateTimeImmutable())->format('Y-m');
 		}
 
-		if (preg_match('/^\d{4}-\d{2}$/', $periodId) !== 1) {
-			return $this->error(message: 'period_id must match yyyy-mm', status: Http::STATUS_BAD_REQUEST);
-		}
+		return $periodId;
+	}//end requestedPeriod()
 
+	/**
+	 * Run the soft close; a failed run answers 500 with its report.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param string $periodId         The yyyy-mm period.
+	 *
+	 * @return JSONResponse
+	 */
+	private function softCloseRun(string $administrationId, string $periodId): JSONResponse {
 		try {
-			$report = $this->softCloseExecutor->execute(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				asOf: new DateTimeImmutable()
-			);
-
+			$report = $this->softCloseExecutor->execute(administrationId: $administrationId, periodId: $periodId, asOf: new DateTimeImmutable());
+			$status = Http::STATUS_OK;
 			if ($report['status'] === 'failed') {
 				$status = Http::STATUS_INTERNAL_SERVER_ERROR;
-			} else {
-				$status = Http::STATUS_OK;
 			}
 
 			return new JSONResponse(['data' => $report], $status);
 		} catch (\Throwable $e) {
 			return $this->serverError(action: 'executeNow', e: $e);
 		}
-
-	}//end executeNow()
+	}//end softCloseRun()
 
 	/**
 	 * POST /api/v2/flux-runs/execute (REQ-CLS-005).
@@ -169,44 +180,59 @@ class SoftCloseController extends Controller {
 		}
 
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($this->validId(value: $administrationId) === false) {
-			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		$refusal = $this->administrationRefusal(administrationId: $administrationId, invalidMessage: 'administration_id is required');
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
 		$periodId = trim((string)$this->request->getParam('periodId', ''));
-		if (preg_match('/^\d{4}-\d{2}$/', $periodId) !== 1) {
-			return $this->error(message: 'period_id must match yyyy-mm', status: Http::STATUS_BAD_REQUEST);
+		if (self::isPeriod(periodId: $periodId) === false) {
+			return $this->periodRefusal();
 		}
 
+		return $this->fluxRun(inputs: $this->fluxInputs(administrationId: $administrationId, periodId: $periodId));
+	}//end executeFlux()
+
+	/**
+	 * The flux run inputs from the request, in the order FluxService::run() reads them.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param string $periodId         The yyyy-mm period.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function fluxInputs(string $administrationId, string $periodId): array {
 		$accounts = (array)$this->request->getParam('accounts', []);
 		$policy = (array)$this->request->getParam('materialityPolicy', []);
 		$scope = (string)$this->request->getParam('scope', 'administration');
 		$basis = (string)$this->request->getParam('comparisonBasis', 'budget');
 
+		return [
+			'administrationId' => $administrationId,
+			'periodId' => $periodId,
+			'scope' => $scope,
+			'comparisonBasis' => $basis,
+			'accounts' => $accounts,
+			'materialityPolicy' => $policy,
+		];
+	}//end fluxInputs()
+
+	/**
+	 * Run the flux analysis, stamped now.
+	 *
+	 * @param array<string,mixed> $inputs The run inputs.
+	 *
+	 * @return JSONResponse
+	 */
+	private function fluxRun(array $inputs): JSONResponse {
 		try {
-			$summary = $this->fluxService->run(
-				[
-					'administrationId' => $administrationId,
-					'periodId' => $periodId,
-					'scope' => $scope,
-					'comparisonBasis' => $basis,
-					'accounts' => $accounts,
-					'materialityPolicy' => $policy,
-					'runTimestamp' => new DateTimeImmutable(),
-				]
-			);
+			$summary = $this->fluxService->run($inputs + ['runTimestamp' => new DateTimeImmutable()]);
 
 			return new JSONResponse(['data' => $summary], Http::STATUS_OK);
 		} catch (\Throwable $e) {
 			return $this->serverError(action: 'executeFlux', e: $e);
 		}
-
-	}//end executeFlux()
+	}//end fluxRun()
 
 	/**
 	 * GET /api/v2/flux-runs/{fluxRunId}/narrative?format=pdf|markdown|json (REQ-CLS-007).
@@ -251,31 +277,54 @@ class SoftCloseController extends Controller {
 		}
 
 		$format = strtolower((string)$this->request->getParam('format', 'json'));
-		$items = (array)$this->request->getParam('items', []);
-		$periodId = trim((string)$this->request->getParam('periodId', ''));
 
 		try {
-			$narrative = $this->fluxService->buildNarrative(items: $items, periodId: $periodId);
-
-			return match ($format) {
-				'json' => new JSONResponse(['data' => $narrative], Http::STATUS_OK),
-				'markdown' => new DataResponse(
-					$this->fluxService->renderNarrativeMarkdown(narrative: $narrative),
-					Http::STATUS_OK,
-					['Content-Type' => 'text/markdown; charset=utf-8']
-				),
-				'pdf' => new DataResponse(
-					$this->fluxService->renderNarrativePdfBody(narrative: $narrative),
-					Http::STATUS_OK,
-					['Content-Type' => 'application/pdf']
-				),
-				default => $this->error(message: 'format must be json, markdown or pdf', status: Http::STATUS_BAD_REQUEST),
-			};
+			return $this->renderedNarrative(format: $format, narrative: $this->builtNarrative());
 		} catch (\Throwable $e) {
 			return $this->serverError(action: 'narrative', e: $e);
 		}
-
 	}//end narrative()
+
+	/**
+	 * The narrative built from the posted items and periodId (the request is the only input).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function builtNarrative(): array {
+		$items = (array)$this->request->getParam('items', []);
+		$periodId = trim((string)$this->request->getParam('periodId', ''));
+
+		return $this->fluxService->buildNarrative(items: $items, periodId: $periodId);
+	}//end builtNarrative()
+
+	/**
+	 * The narrative in the requested format: json, markdown or pdf; any other format is a 400.
+	 *
+	 * @param string              $format    The lower-cased format.
+	 * @param array<string,mixed> $narrative The built narrative.
+	 *
+	 * @return DataResponse|JSONResponse
+	 */
+	private function renderedNarrative(string $format, array $narrative): DataResponse|JSONResponse {
+		return match ($format) {
+			'json' => new JSONResponse(['data' => $narrative], Http::STATUS_OK),
+			'markdown' => self::document(body: $this->fluxService->renderNarrativeMarkdown(narrative: $narrative), contentType: 'text/markdown; charset=utf-8'),
+			'pdf' => self::document(body: $this->fluxService->renderNarrativePdfBody(narrative: $narrative), contentType: 'application/pdf'),
+			default => $this->error(message: 'format must be json, markdown or pdf', status: Http::STATUS_BAD_REQUEST),
+		};
+	}//end renderedNarrative()
+
+	/**
+	 * A 200 document response of the given content type.
+	 *
+	 * @param string $body        The rendered document.
+	 * @param string $contentType Its Content-Type.
+	 *
+	 * @return DataResponse
+	 */
+	private static function document(string $body, string $contentType): DataResponse {
+		return new DataResponse($body, Http::STATUS_OK, ['Content-Type' => $contentType]);
+	}//end document()
 
 	/**
 	 * Authorization body-guard: the in-body counterpart to #[NoAdminRequired].
@@ -296,6 +345,42 @@ class SoftCloseController extends Controller {
 	private function validId(string $value): bool {
 		return $value !== '' && preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $value) === 1;
 	}//end validId()
+
+	/**
+	 * Whether a period is yyyy-mm.
+	 *
+	 * @param string $periodId The period.
+	 *
+	 * @return bool
+	 */
+	private static function isPeriod(string $periodId): bool {
+		return preg_match('/^\d{4}-\d{2}$/', $periodId) === 1;
+	}//end isPeriod()
+
+	/**
+	 * The 400 for a period that is not yyyy-mm.
+	 *
+	 * @return JSONResponse
+	 */
+	private function periodRefusal(): JSONResponse {
+		return $this->error(message: 'period_id must match yyyy-mm', status: Http::STATUS_BAD_REQUEST);
+	}//end periodRefusal()
+
+	/**
+	 * The 400 for a malformed administration id, then the membership answer.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 * @param string $invalidMessage   The 400 message for this action.
+	 *
+	 * @return JSONResponse|null The refusal, or null for a member.
+	 */
+	private function administrationRefusal(string $administrationId, string $invalidMessage): ?JSONResponse {
+		if ($this->validId(value: $administrationId) === false) {
+			return $this->error(message: $invalidMessage, status: Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->requireAccessibleAdministration(administrationId: $administrationId);
+	}//end administrationRefusal()
 
 	/**
 	 * Refuse the request unless the caller holds a membership for the

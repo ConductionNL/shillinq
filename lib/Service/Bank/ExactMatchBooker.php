@@ -86,53 +86,161 @@ class ExactMatchBooker {
 
 		// Payment plans (REQ-RPPL-003): a line naming one active plan's
 		// payment reference pays that plan's instalments, not one invoice.
-		$planMatch = null;
-		if ($amount > 0 && $this->plans !== null) {
-			$planMatch = $this->plans->book(line: $line);
-		}
-
+		$planMatch = $this->planMatch(line: $line, amount: $amount);
 		if ($planMatch !== null) {
 			return $planMatch;
 		}
 
+		$candidate = $this->soleCandidate(line: $line, amount: $amount);
+		if ($candidate === null) {
+			return null;
+		}
+
+		return $this->confirm(line: $line, candidate: $candidate);
+
+	}//end book()
+
+	/**
+	 * The payment plan's match for an incoming line, or null.
+	 *
+	 * @param array<string,mixed> $line   The BankStatementLine.
+	 * @param float               $amount Its rounded, signed amount.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function planMatch(array $line, float $amount): array|null {
+		if ($amount > 0 && $this->plans !== null) {
+			return $this->plans->book(line: $line);
+		}
+
+		return null;
+
+	}//end planMatch()
+
+	/**
+	 * The one open invoice with the line's exact amount whose number or
+	 * payment reference the line names, with that reference and the booking
+	 * reason; null when there is none or more than one.
+	 *
+	 * @param array<string,mixed> $line   The BankStatementLine.
+	 * @param float               $amount Its rounded, signed amount.
+	 *
+	 * @return array{invoice:array<string,mixed>,reference:string,reason:string}|null
+	 */
+	private function soleCandidate(array $line, float $amount): array|null {
+		$candidates = $this->referencedCandidates(
+			invoices: $this->invoicesOfAmount(line: $line, amount: $amount),
+			text: $this->searchText(line: $line)
+		);
+		if (count($candidates) !== 1) {
+			return null;
+		}
+
+		$candidates[0]['reason'] = $this->bookingReason(amount: $amount, reference: $candidates[0]['reference']);
+		return $candidates[0];
+
+	}//end soleCandidate()
+
+	/**
+	 * The reason recorded on an automatic exact match.
+	 *
+	 * @param float  $amount    The line's rounded, signed amount.
+	 * @param string $reference The invoice number or payment reference found.
+	 *
+	 * @return string
+	 */
+	private function bookingReason(float $amount, string $reference): string {
+		return sprintf(
+			'Booked on arrival by %s: exact amount EUR %s and reference %s',
+			self::ACTOR,
+			number_format(abs($amount), 2, '.', ','),
+			$reference
+		);
+
+	}//end bookingReason()
+
+	/**
+	 * The open invoices (incoming line) or purchase transactions (outgoing
+	 * line) of the line's administration asking exactly the line's amount.
+	 *
+	 * @param array<string,mixed> $line   The BankStatementLine.
+	 * @param float               $amount Its rounded, signed amount.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function invoicesOfAmount(array $line, float $amount): array {
 		$schema = 'APTransaction';
 		if ($amount > 0) {
 			$schema = 'ARInvoice';
 		}
 
-		$parts = [(string)($line['remittanceInfo'] ?? ''), (string)($line['endToEndRef'] ?? ''), (string)($line['reference'] ?? '')];
-		$text = strtolower(trim(implode(' ', $parts)));
-		$candidates = [];
-		foreach ($this->openInvoices(schema: $schema, administrationId: (string)($line['administrationId'] ?? '')) as $invoice) {
-			if (abs($this->invoiceAmount(schema: $schema, invoice: $invoice) - abs($amount)) >= 0.005) {
-				continue;
-			}
+		$open = $this->openInvoices(schema: $schema, administrationId: (string)($line['administrationId'] ?? ''));
+		return array_values(
+			array_filter(
+				$open,
+				fn (array $invoice): bool => abs($this->invoiceAmount(schema: $schema, invoice: $invoice) - abs($amount)) < 0.005
+			)
+		);
 
+	}//end invoicesOfAmount()
+
+	/**
+	 * The line's remittance and references, lower-cased, to search in.
+	 *
+	 * @param array<string,mixed> $line The BankStatementLine.
+	 *
+	 * @return string
+	 */
+	private function searchText(array $line): string {
+		$parts = [(string)($line['remittanceInfo'] ?? ''), (string)($line['endToEndRef'] ?? ''), (string)($line['reference'] ?? '')];
+		return strtolower(trim(implode(' ', $parts)));
+
+	}//end searchText()
+
+	/**
+	 * The invoices the text names, each with the reference found.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices The invoices of the right amount.
+	 * @param string                         $text     The lower-cased search text.
+	 *
+	 * @return list<array{invoice:array<string,mixed>,reference:string}>
+	 */
+	private function referencedCandidates(array $invoices, string $text): array {
+		$candidates = [];
+		foreach ($invoices as $invoice) {
 			$reference = self::referenceFound(text: $text, invoice: $invoice);
 			if ($reference !== '') {
 				$candidates[] = ['invoice' => $invoice, 'reference' => $reference];
 			}
 		}
 
-		if (count($candidates) !== 1) {
-			return null;
-		}
+		return $candidates;
 
-		$invoice = $candidates[0]['invoice'];
-		$reason = sprintf(
-			'Booked on arrival by %s: exact amount EUR %s and reference %s',
-			self::ACTOR,
-			number_format(abs($amount), 2, '.', ','),
-			$candidates[0]['reference']
-		);
+	}//end referencedCandidates()
+
+	/**
+	 * Confirm the match to the candidate invoice; a failure is logged and the
+	 * line waits for a person.
+	 *
+	 * @param array<string,mixed>                                                 $line      The BankStatementLine.
+	 * @param array{invoice:array<string,mixed>,reference:string,reason:string} $candidate The sole candidate.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function confirm(array $line, array $candidate): array|null {
 		try {
-			return $this->matches->matchInvoices(line: $line, targetIds: [(string)$invoice['id']], actor: self::ACTOR, reason: $reason);
+			return $this->matches->matchInvoices(
+				line: $line,
+				targetIds: [(string)$candidate['invoice']['id']],
+				actor: self::ACTOR,
+				reason: $candidate['reason']
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning('ExactMatchBooker: exact match could not be booked, line waits', ['exception' => $e->getMessage()]);
 			return null;
 		}
 
-	}//end book()
+	}//end confirm()
 
 	/**
 	 * The invoice number or payment reference the text names as a whole word, or ''.

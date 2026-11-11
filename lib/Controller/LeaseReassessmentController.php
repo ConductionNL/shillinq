@@ -116,26 +116,12 @@ class LeaseReassessmentController extends Controller {
 			return $scope;
 		}
 
-		[$leaseId, $administrationId] = $scope;
-
 		$newPaymentAmount = (float)$this->request->getParam('new_payment_amount', 0);
 		if ($newPaymentAmount <= 0.0) {
-			return new JSONResponse(
-				['error' => 'new_payment_amount must be a positive amount'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'new_payment_amount must be a positive amount');
 		}
 
-		return $this->run(
-			record: fn (): ?array => $this->reassessmentService->recordIndexationEvent(
-				leaseContractId: $leaseId,
-				administrationId: $administrationId,
-				newPaymentAmount: $newPaymentAmount,
-				triggerDescription: $this->stringParam(name: 'trigger_description'),
-				approver: $this->stringParam(name: 'approver'),
-			)
-		);
-
+		return $this->run(record: fn (): ?array => $this->recordIndexation(scope: $scope, newPaymentAmount: $newPaymentAmount));
 	}//end indexation()
 
 	/**
@@ -163,26 +149,12 @@ class LeaseReassessmentController extends Controller {
 			return $scope;
 		}
 
-		[$leaseId, $administrationId] = $scope;
-
 		$options = $this->request->getParam('extension_options', []);
 		if (is_array($options) === false) {
-			return new JSONResponse(
-				['error' => 'extension_options must be an array'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'extension_options must be an array');
 		}
 
-		return $this->run(
-			record: fn (): ?array => $this->reassessmentService->recordExtensionOptionReassessment(
-				leaseContractId: $leaseId,
-				administrationId: $administrationId,
-				updatedExtensionOptions: $options,
-				triggerDescription: $this->stringParam(name: 'trigger_description'),
-				approver: $this->stringParam(name: 'approver'),
-			)
-		);
-
+		return $this->run(record: fn (): ?array => $this->recordExtensionOptions(scope: $scope, options: $options));
 	}//end extensionOption()
 
 	/**
@@ -210,32 +182,12 @@ class LeaseReassessmentController extends Controller {
 			return $scope;
 		}
 
-		[$leaseId, $administrationId] = $scope;
-
 		$newTerms = $this->request->getParam('new_terms', []);
 		if (is_array($newTerms) === false || $newTerms === []) {
-			return new JSONResponse(
-				['error' => 'new_terms must be a non-empty object'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'new_terms must be a non-empty object');
 		}
 
-		$approach = $this->stringParam(name: 'approach');
-		if ($approach === '') {
-			$approach = 'catch-up-adjustment';
-		}
-
-		return $this->run(
-			record: fn (): ?array => $this->reassessmentService->recordModification(
-				leaseContractId: $leaseId,
-				administrationId: $administrationId,
-				newTerms: $newTerms,
-				approach: $approach,
-				triggerDescription: $this->stringParam(name: 'trigger_description'),
-				approver: $this->stringParam(name: 'approver'),
-			)
-		);
-
+		return $this->run(record: fn (): ?array => $this->recordModification(scope: $scope, newTerms: $newTerms));
 	}//end modification()
 
 	/**
@@ -263,27 +215,111 @@ class LeaseReassessmentController extends Controller {
 			return $scope;
 		}
 
-		[$leaseId, $administrationId] = $scope;
-
 		$recoverableValueRaw = $this->request->getParam('recoverable_value', null);
 		if ($recoverableValueRaw === null || is_numeric($recoverableValueRaw) === false) {
-			return new JSONResponse(
-				['error' => 'recoverable_value must be a number'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'recoverable_value must be a number');
 		}
 
-		return $this->run(
-			record: fn (): ?array => $this->reassessmentService->recordImpairment(
-				leaseContractId: $leaseId,
-				administrationId: $administrationId,
-				recoverableValue: (float)$recoverableValueRaw,
-				triggerDescription: $this->stringParam(name: 'trigger_description'),
-				approver: $this->stringParam(name: 'approver'),
-			)
-		);
-
+		return $this->run(record: fn (): ?array => $this->recordImpairment(scope: $scope, recoverableValue: (float)$recoverableValueRaw));
 	}//end impairment()
+
+	/**
+	 * Record the indexation, reading the free-text parameters as the call is made.
+	 *
+	 * @param array{0:string,1:string} $scope            The lease and administration.
+	 * @param float                    $newPaymentAmount The new payment amount.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function recordIndexation(array $scope, float $newPaymentAmount): array|null {
+		return $this->reassessmentService->recordIndexationEvent(
+			leaseContractId: $scope[0],
+			administrationId: $scope[1],
+			newPaymentAmount: $newPaymentAmount,
+			triggerDescription: $this->stringParam(name: 'trigger_description'),
+			approver: $this->stringParam(name: 'approver'),
+		);
+	}//end recordIndexation()
+
+	/**
+	 * Record the extension-option reassessment, reading the free-text parameters as the call is made.
+	 *
+	 * @param array{0:string,1:string} $scope   The lease and administration.
+	 * @param array<mixed>             $options The updated extension options.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function recordExtensionOptions(array $scope, array $options): array|null {
+		return $this->reassessmentService->recordExtensionOptionReassessment(
+			leaseContractId: $scope[0],
+			administrationId: $scope[1],
+			updatedExtensionOptions: $options,
+			triggerDescription: $this->stringParam(name: 'trigger_description'),
+			approver: $this->stringParam(name: 'approver'),
+		);
+	}//end recordExtensionOptions()
+
+	/**
+	 * Record the modification; the approach and the free-text parameters are read as the call is made, in that order.
+	 *
+	 * @param array{0:string,1:string} $scope    The lease and administration.
+	 * @param array<mixed>             $newTerms The new terms.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function recordModification(array $scope, array $newTerms): array|null {
+		return $this->reassessmentService->recordModification(
+			leaseContractId: $scope[0],
+			administrationId: $scope[1],
+			newTerms: $newTerms,
+			approach: $this->approach(),
+			triggerDescription: $this->stringParam(name: 'trigger_description'),
+			approver: $this->stringParam(name: 'approver'),
+		);
+	}//end recordModification()
+
+	/**
+	 * Record the impairment, reading the free-text parameters as the call is made.
+	 *
+	 * @param array{0:string,1:string} $scope            The lease and administration.
+	 * @param float                    $recoverableValue The recoverable value.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function recordImpairment(array $scope, float $recoverableValue): array|null {
+		return $this->reassessmentService->recordImpairment(
+			leaseContractId: $scope[0],
+			administrationId: $scope[1],
+			recoverableValue: $recoverableValue,
+			triggerDescription: $this->stringParam(name: 'trigger_description'),
+			approver: $this->stringParam(name: 'approver'),
+		);
+	}//end recordImpairment()
+
+	/**
+	 * The modification approach, catch-up-adjustment when blank.
+	 *
+	 * @return string
+	 */
+	private function approach(): string {
+		$approach = $this->stringParam(name: 'approach');
+		if ($approach === '') {
+			return 'catch-up-adjustment';
+		}
+
+		return $approach;
+	}//end approach()
+
+	/**
+	 * A 400 with the given error.
+	 *
+	 * @param string $error The error.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $error): JSONResponse {
+		return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
+	}//end badRequest()
 
 	/**
 	 * Resolve + IDOR-guard the (lease_id, administration_id) scope shared by
@@ -298,12 +334,9 @@ class LeaseReassessmentController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administration_id');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$refusal          = $this->administrationRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$leaseId = $this->scopeParam(name: 'lease_id');
@@ -313,6 +346,25 @@ class LeaseReassessmentController extends Controller {
 
 		return [$leaseId, $administrationId];
 	}//end resolveScope()
+
+	/**
+	 * The 400 for a blank or malformed administration, the masked 404 for a non-member, or null.
+	 *
+	 * @param string $administrationId The validated administration_id parameter, '' when blank or malformed.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function administrationRefusal(string $administrationId): JSONResponse|null {
+		if ($administrationId === '') {
+			return $this->badRequest(error: 'administration_id is required');
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end administrationRefusal()
 
 	/**
 	 * Invoke a remeasurement, mapping its result to the HTTP envelope.
@@ -329,14 +381,7 @@ class LeaseReassessmentController extends Controller {
 		try {
 			$event = $record();
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'LeaseReassessmentController: failed to record the lease remeasurement',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['error' => 'Could not record the lease remeasurement'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->recordFailed(exception: $e);
 		}
 
 		if ($event === null) {
@@ -345,6 +390,24 @@ class LeaseReassessmentController extends Controller {
 
 		return new JSONResponse($event, Http::STATUS_CREATED);
 	}//end run()
+
+	/**
+	 * Log a failed remeasurement without its stack trace and answer the 500.
+	 *
+	 * @param \Throwable $exception The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function recordFailed(\Throwable $exception): JSONResponse {
+		$this->logger->error(
+			'LeaseReassessmentController: failed to record the lease remeasurement',
+			['exception' => $exception->getMessage()]
+		);
+		return new JSONResponse(
+			['error' => 'Could not record the lease remeasurement'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end recordFailed()
 
 	/**
 	 * Read + validate a short-slug scope parameter; '' when blank/malformed.

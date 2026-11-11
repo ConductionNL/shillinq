@@ -179,6 +179,20 @@ class CommitmentYearEndController extends Controller {
 			return $refused;
 		}
 
+		if (in_array($this->callerRole(), self::CARRY_OVER_ROLES, true) === false) {
+			return $this->message(text: 'Only a controller can carry commitments over.', status: Http::STATUS_FORBIDDEN);
+		}
+
+		return null;
+
+	}//end refuseCarryOver()
+
+	/**
+	 * The caller's role in the requested administration ('' without one); the last matching entry wins.
+	 *
+	 * @return string
+	 */
+	private function callerRole(): string {
 		$role = '';
 		foreach ((array)($this->context->buildContext()['administrations'] ?? []) as $administration) {
 			if ((string)($administration['administrationId'] ?? '') === $this->administrationId()) {
@@ -186,13 +200,8 @@ class CommitmentYearEndController extends Controller {
 			}
 		}
 
-		if (in_array($role, self::CARRY_OVER_ROLES, true) === false) {
-			return $this->message(text: 'Only a controller can carry commitments over.', status: Http::STATUS_FORBIDDEN);
-		}
-
-		return null;
-
-	}//end refuseCarryOver()
+		return $role;
+	}//end callerRole()
 
 	/**
 	 * Refuse anyone who may not post in the administration.

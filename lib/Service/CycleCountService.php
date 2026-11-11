@@ -248,131 +248,7 @@ class CycleCountService {
 	 */
 	public function emitAdjustments(array $count): bool {
 		try {
-			$countId = (string)($count['countId'] ?? '');
-			$administrationId = (string)($count['administrationId'] ?? '');
-			if ($countId === '' || $administrationId === '') {
-				$this->logger->info(
-					'CycleCountService: emit-adjustments denied — required fields missing',
-					['countId' => ($count['countId'] ?? null)]
-				);
-				return false;
-			}
-
-			$lines = $this->findLinesForCount(administrationId: $administrationId, countId: $countId);
-			if ($lines === []) {
-				$this->logger->info(
-					'CycleCountService: emit-adjustments skipped — no lines',
-					['countId' => $countId]
-				);
-				return true;
-			}
-
-			$sequence = 0;
-			foreach ($lines as $line) {
-				if (is_array($line) === false) {
-					continue;
-				}
-
-				if (isset($line['adjustmentStockMoveId']) === true
-					&& trim((string)$line['adjustmentStockMoveId']) !== ''
-				) {
-					// Already posted — partial-retry idempotency.
-					continue;
-				}
-
-				$countedQ = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
-				$expectedQ = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
-				if ($countedQ === null || $expectedQ === null) {
-					// Un-entered line: skip silently. The post-time VarianceGate already
-					// refused any flagged line without reason; missing counted values are
-					// treated as zero-variance for reconciliation purposes.
-					continue;
-				}
-
-				$varianceCents = ($this->cents(value: $countedQ) - $this->cents(value: $expectedQ));
-				if ($varianceCents === 0) {
-					continue;
-				}
-
-				$sequence++;
-				$movementNumber = sprintf('SM-CC-%s-%03d', $countId, $sequence);
-				$unitCost = $this->numericOrZero(value: $line['unitCost'] ?? null);
-				$locationId = (string)($line['locationId'] ?? '');
-				$sku = (string)($line['sku'] ?? '');
-				if ($locationId === '' || $sku === '') {
-					$this->logger->error(
-						'CycleCountService: emit-adjustments denied — line missing sku or locationId',
-						['countId' => $countId, 'lineId' => ($line['lineId'] ?? null)]
-					);
-					return false;
-				}
-
-				if ($varianceCents > 0) {
-					// Positive: found stock → receipt to the location.
-					$sourceLocation = null;
-					$destinationLocation = $locationId;
-				} else {
-					// Negative: shrinkage → issue from the location.
-					$sourceLocation = $locationId;
-					$destinationLocation = null;
-				}
-
-				$absQty = abs($this->fromCents(cents: $varianceCents));
-				$movementType = 'issue';
-				if ($varianceCents > 0) {
-					$movementType = 'receipt';
-				}
-
-				$reasonNote = 'n/a';
-				if (isset($line['reasonCode']) === true) {
-					$reasonNote = (string)$line['reasonCode'];
-				}
-
-				$move = [
-					'movementNumber' => $movementNumber,
-					'itemId' => $sku,
-					'quantity' => $absQty,
-					'unitCost' => $unitCost,
-					'movementType' => $movementType,
-					'sourceLocationId' => $sourceLocation,
-					'destinationLocationId' => $destinationLocation,
-					'referenceDocumentUri' => sprintf('shillinq://cycle-count/%s', $countId),
-					'movementReason' => self::VARIANCE_REASON,
-					'notes' => sprintf(
-						'Variance adjustment for line %s (reasonCode=%s)',
-						(string)($line['lineId'] ?? ''),
-						$reasonNote
-					),
-					'draftedAt' => $this->now(),
-					'administrationId' => $administrationId,
-					'lifecycleState' => 'draft',
-					'locked' => false,
-				];
-
-				$saved = $this->objectService
-					->setRegister($this->register())
-					->setSchema('StockMove')
-					->saveObject($move);
-
-				$stockMoveId = $this->extractId(saved: $saved);
-				if ($stockMoveId === '') {
-					$this->logger->error(
-						'CycleCountService: emit-adjustments — saveObject returned no id',
-						['countId' => $countId, 'lineId' => ($line['lineId'] ?? null)]
-					);
-					return false;
-				}
-
-				// Stamp the back-reference on the line so a future retry skips it.
-				$lineUpdate = $line;
-				$lineUpdate['adjustmentStockMoveId'] = $stockMoveId;
-				$this->objectService
-					->setRegister($this->register())
-					->setSchema('InventoryCycleCountLine')
-					->saveObject($lineUpdate);
-			}//end foreach
-
-			return true;
+			return $this->postAdjustments(count: $count);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: emit-adjustments failed — denying reconcile (fail-closed)',
@@ -385,6 +261,272 @@ class CycleCountService {
 		}//end try
 
 	}//end emitAdjustments()
+
+	/**
+	 * Post the variance adjustments of a count: validate it, read its lines
+	 * and post each line in turn, stopping at the first denied line.
+	 *
+	 * @param array<string,mixed> $count The InventoryCycleCount payload being transitioned.
+	 *
+	 * @return bool True when every pending line was posted; false on a denial.
+	 */
+	private function postAdjustments(array $count): bool {
+		$run = $this->openAdjustmentRun(count: $count);
+		if ($run === null) {
+			return false;
+		}
+
+		$lines = $this->findLinesForCount(administrationId: $run->administrationId, countId: $run->countId);
+		if ($lines === []) {
+			$this->logger->info(
+				'CycleCountService: emit-adjustments skipped — no lines',
+				['countId' => $run->countId]
+			);
+			return true;
+		}
+
+		return $this->postLineAdjustments(run: $run, lines: $lines);
+	}//end postAdjustments()
+
+	/**
+	 * Start an adjustment run for a count, or deny when its countId or
+	 * administrationId is missing.
+	 *
+	 * @param array<string,mixed> $count The InventoryCycleCount payload.
+	 *
+	 * @return CycleCountAdjustmentRun|null The run, or null when denied.
+	 */
+	private function openAdjustmentRun(array $count): ?CycleCountAdjustmentRun {
+		$run = new CycleCountAdjustmentRun(
+			countId: (string)($count['countId'] ?? ''),
+			administrationId: (string)($count['administrationId'] ?? '')
+		);
+		if ($run->countId === '' || $run->administrationId === '') {
+			$this->logger->info(
+				'CycleCountService: emit-adjustments denied — required fields missing',
+				['countId' => ($count['countId'] ?? null)]
+			);
+			return null;
+		}
+
+		return $run;
+	}//end openAdjustmentRun()
+
+	/**
+	 * Post every line of the run in order, stopping at the first denial.
+	 *
+	 * @param CycleCountAdjustmentRun $run   The adjustment run.
+	 * @param array<int,mixed>        $lines The count's lines.
+	 *
+	 * @return bool True when no line was denied.
+	 */
+	private function postLineAdjustments(CycleCountAdjustmentRun $run, array $lines): bool {
+		foreach ($lines as $line) {
+			if (is_array($line) === true && $this->postLineAdjustment(run: $run, line: $line) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end postLineAdjustments()
+
+	/**
+	 * Post the variance StockMove of one line. Lines already posted, not yet
+	 * counted or without variance are skipped and take no sequence number.
+	 *
+	 * @param CycleCountAdjustmentRun $run  The adjustment run.
+	 * @param array<string,mixed>     $line The count line.
+	 *
+	 * @return bool False when the line denies the run; true otherwise.
+	 */
+	private function postLineAdjustment(CycleCountAdjustmentRun $run, array $line): bool {
+		$varianceCents = $this->pendingVarianceCents(line: $line);
+		if ($varianceCents === null) {
+			return true;
+		}
+
+		$run->sequence++;
+		$run->varianceCents = $varianceCents;
+		if ((string)($line['locationId'] ?? '') === '' || (string)($line['sku'] ?? '') === '') {
+			$this->logger->error(
+				'CycleCountService: emit-adjustments denied — line missing sku or locationId',
+				['countId' => $run->countId, 'lineId' => ($line['lineId'] ?? null)]
+			);
+			return false;
+		}
+
+		return $this->saveVarianceMove(run: $run, line: $line);
+	}//end postLineAdjustment()
+
+	/**
+	 * The variance in cents a line still has to post, or null when the line
+	 * is already posted (partial-retry idempotency), un-entered or zero.
+	 *
+	 * @param array<string,mixed> $line The count line.
+	 *
+	 * @return int|null The non-zero variance in cents, or null to skip.
+	 */
+	private function pendingVarianceCents(array $line): ?int {
+		if (trim((string)($line['adjustmentStockMoveId'] ?? '')) !== '') {
+			return null;
+		}
+
+		$varianceCents = $this->lineVarianceCents(line: $line);
+		if ($varianceCents === 0) {
+			return null;
+		}
+
+		return $varianceCents;
+	}//end pendingVarianceCents()
+
+	/**
+	 * The counted minus expected quantity of a line in cents, or null when
+	 * the line is un-entered.
+	 *
+	 * Un-entered lines are skipped silently: the post-time VarianceGate
+	 * already refused any flagged line without reason; missing counted
+	 * values are treated as zero-variance for reconciliation purposes.
+	 *
+	 * @param array<string,mixed> $line The count line.
+	 *
+	 * @return int|null The variance in cents, or null when un-entered.
+	 */
+	private function lineVarianceCents(array $line): ?int {
+		$countedQ = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
+		$expectedQ = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
+		if ($countedQ === null || $expectedQ === null) {
+			return null;
+		}
+
+		return ($this->cents(value: $countedQ) - $this->cents(value: $expectedQ));
+	}//end lineVarianceCents()
+
+	/**
+	 * Save the line's variance StockMove and stamp its id back on the line.
+	 *
+	 * @param CycleCountAdjustmentRun $run  The adjustment run.
+	 * @param array<string,mixed>     $line The count line.
+	 *
+	 * @return bool False when the save returned no id; true otherwise.
+	 */
+	private function saveVarianceMove(CycleCountAdjustmentRun $run, array $line): bool {
+		$move = $this->varianceMove(run: $run, line: $line);
+		$saved = $this->objectService
+			->setRegister($this->register())
+			->setSchema('StockMove')
+			->saveObject($move);
+
+		$stockMoveId = $this->extractId(saved: $saved);
+		if ($stockMoveId === '') {
+			$this->logger->error(
+				'CycleCountService: emit-adjustments — saveObject returned no id',
+				['countId' => $run->countId, 'lineId' => ($line['lineId'] ?? null)]
+			);
+			return false;
+		}
+
+		$this->stampAdjustmentMove(line: $line, stockMoveId: $stockMoveId);
+		return true;
+	}//end saveVarianceMove()
+
+	/**
+	 * Stamp the back-reference on the line so a future retry skips it.
+	 *
+	 * @param array<string,mixed> $line        The count line.
+	 * @param string              $stockMoveId The id of the posted StockMove.
+	 *
+	 * @return void
+	 */
+	private function stampAdjustmentMove(array $line, string $stockMoveId): void {
+		$lineUpdate = $line;
+		$lineUpdate['adjustmentStockMoveId'] = $stockMoveId;
+		$this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryCycleCountLine')
+			->saveObject($lineUpdate);
+	}//end stampAdjustmentMove()
+
+	/**
+	 * The draft StockMove payload for the line being posted.
+	 *
+	 * @param CycleCountAdjustmentRun $run  The adjustment run.
+	 * @param array<string,mixed>     $line The count line.
+	 *
+	 * @return array<string,mixed> The StockMove payload.
+	 */
+	private function varianceMove(CycleCountAdjustmentRun $run, array $line): array {
+		$quantities = [
+			'movementNumber' => sprintf('SM-CC-%s-%03d', $run->countId, $run->sequence),
+			'itemId' => (string)($line['sku'] ?? ''),
+			'quantity' => abs($this->fromCents(cents: $run->varianceCents)),
+			'unitCost' => $this->numericOrZero(value: $line['unitCost'] ?? null),
+		];
+
+		return $quantities
+			+ $this->varianceDirection(run: $run, locationId: (string)($line['locationId'] ?? ''))
+			+ $this->varianceProvenance(run: $run, line: $line);
+	}//end varianceMove()
+
+	/**
+	 * The movement type and locations of a variance: positive (found stock) is
+	 * a receipt to the location, negative (shrinkage) an issue from it.
+	 *
+	 * @param CycleCountAdjustmentRun $run        The adjustment run.
+	 * @param string                  $locationId The counted location.
+	 *
+	 * @return array<string,string|null> movementType, sourceLocationId, destinationLocationId.
+	 */
+	private function varianceDirection(CycleCountAdjustmentRun $run, string $locationId): array {
+		if ($run->varianceCents > 0) {
+			return [
+				'movementType' => 'receipt',
+				'sourceLocationId' => null,
+				'destinationLocationId' => $locationId,
+			];
+		}
+
+		return [
+			'movementType' => 'issue',
+			'sourceLocationId' => $locationId,
+			'destinationLocationId' => null,
+		];
+	}//end varianceDirection()
+
+	/**
+	 * The provenance fields of a variance StockMove (reference, reason, notes,
+	 * draft state).
+	 *
+	 * @param CycleCountAdjustmentRun $run  The adjustment run.
+	 * @param array<string,mixed>     $line The count line.
+	 *
+	 * @return array<string,mixed> The provenance fields.
+	 */
+	private function varianceProvenance(CycleCountAdjustmentRun $run, array $line): array {
+		return [
+			'referenceDocumentUri' => sprintf('shillinq://cycle-count/%s', $run->countId),
+			'movementReason' => self::VARIANCE_REASON,
+			'notes' => $this->varianceNote(line: $line),
+			'draftedAt' => $this->now(),
+			'administrationId' => $run->administrationId,
+			'lifecycleState' => 'draft',
+			'locked' => false,
+		];
+	}//end varianceProvenance()
+
+	/**
+	 * The note on a variance StockMove naming the line and its reason code.
+	 *
+	 * @param array<string,mixed> $line The count line.
+	 *
+	 * @return string The note.
+	 */
+	private function varianceNote(array $line): string {
+		return sprintf(
+			'Variance adjustment for line %s (reasonCode=%s)',
+			(string)($line['lineId'] ?? ''),
+			(string)($line['reasonCode'] ?? 'n/a')
+		);
+	}//end varianceNote()
 
 	/**
 	 * Recompute the derived fields on a single line and persist them. Useful
@@ -740,19 +882,12 @@ class CycleCountService {
 	 * @return float|null
 	 */
 	private function numericOrNull(mixed $value): ?float {
-		if ($value === null) {
+		// Ints, floats and numeric strings are exactly what is_numeric() accepts.
+		if (is_numeric($value) === false) {
 			return null;
 		}
 
-		if (is_int($value) === true || is_float($value) === true) {
-			return (float)$value;
-		}
-
-		if (is_string($value) === true && is_numeric($value) === true) {
-			return (float)$value;
-		}
-
-		return null;
+		return (float)$value;
 	}//end numericOrNull()
 
 	/**

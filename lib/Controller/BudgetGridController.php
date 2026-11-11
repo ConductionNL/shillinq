@@ -190,86 +190,150 @@ class BudgetGridController extends Controller {
 	}//end index()
 
 	/**
-	 * Assemble the full JSON envelope: columns (+ a synthetic TOTAAL column),
-	 * the recursive row tree with every column's value pre-computed, and the
-	 * computed-rows waterfall — the single payload the Vue component fetches
-	 * once and toggles expand/collapse over with zero further requests.
+	 * Build the response envelope: column descriptors, the ledger-group rows
+	 * and the computed (waterfall) rows.
 	 *
-	 * @param array<string,mixed> $grid The {@see BudgetGridReader::loadGrid()} bundle.
+	 * @param array<string,mixed> $grid The grid BudgetGridReader::loadGrid() returns.
 	 *
-	 * @return array<string,mixed>
+	 * @return array{columns: array<int,array<string,mixed>>, rows: array<int,array<string,mixed>>, computedRows: array<int,array<string,mixed>>}
 	 */
 	private function buildEnvelope(array $grid): array {
-		$columns = $grid['columns'];
-		$rowTree = $grid['rowTree'];
-		$bvaContext = $grid['bvaContext'];
-		$budgetLinesByFiscalYear = $grid['budgetLinesByFiscalYear'];
-		$accountTypeByNumber = $grid['accountTypeByNumber'];
-		$accountByNumber = $grid['accountByNumber'];
+		$run = new BudgetGridRun(grid: $grid);
 
 		$rows = [];
-		$rootValuesByColumn = [];
-		foreach ($rowTree['rootIndexes'] as $rootIndex) {
-			$row = $this->buildLedgerGroupRow(
-				index: $rootIndex,
-				rowTree: $rowTree,
-				columns: $columns,
-				bvaContext: $bvaContext,
-				budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
-				accountTypeByNumber: $accountTypeByNumber,
-				accountByNumber: $accountByNumber
-			);
-			$rows[] = $row;
+		foreach ($run->rowTree['rootIndexes'] as $rootIndex) {
+			$rows[] = $this->buildLedgerGroupRow(run: $run, index: $rootIndex);
+		}
 
+		$computedRows = $this->computedRows(columns: $run->columns, rootValuesByColumn: self::rootValuesByColumn(rows: $rows));
+
+		return ['columns' => self::columnDescriptors(columns: $run->columns), 'rows' => $rows, 'computedRows' => $computedRows];
+
+	}//end buildEnvelope()
+
+	/**
+	 * Per column, the budget and actual of every root row with a code.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The root ledger-group rows.
+	 *
+	 * @return array<string,array{budget: array<string,mixed>, actual: array<string,mixed>}>
+	 */
+	private static function rootValuesByColumn(array $rows): array {
+		$rootValuesByColumn = [];
+		foreach ($rows as $row) {
 			$code = $row['code'];
-			if ($code !== '') {
-				foreach ($row['cells'] as $columnKey => $cell) {
-					$rootValuesByColumn[$columnKey]['budget'][$code] = $cell['budget'];
-					$rootValuesByColumn[$columnKey]['actual'][$code] = $cell['actual'];
-				}
+			if ($code === '') {
+				continue;
+			}
+
+			foreach ($row['cells'] as $columnKey => $cell) {
+				$rootValuesByColumn[$columnKey]['budget'][$code] = $cell['budget'];
+				$rootValuesByColumn[$columnKey]['actual'][$code] = $cell['actual'];
 			}
 		}
 
+		return $rootValuesByColumn;
+
+	}//end rootValuesByColumn()
+
+	/**
+	 * The computed rows, with a cell per column and for TOTAAL.
+	 *
+	 * @param array<int,array<string,mixed>> $columns The period columns.
+	 * @param array<string,array<string,array<string,mixed>>> $rootValuesByColumn Root values per column.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function computedRows(array $columns, array $rootValuesByColumn): array {
 		$computedRows = [];
 		foreach (self::COMPUTED_ROWS as $definition) {
 			$computedRows[] = ['code' => $definition['code'], 'label' => $definition['label'], 'cells' => []];
 		}
 
-		$columnKeys = array_map(static fn (array $c): string => $c['key'], $columns);
-		$columnKeys[] = 'TOTAAL';
-
-		foreach ($columnKeys as $columnKey) {
-			$budgetByCode = ($rootValuesByColumn[$columnKey]['budget'] ?? []);
-			$actualByCode = ($rootValuesByColumn[$columnKey]['actual'] ?? []);
-
-			$budgetResults = $this->calculator->evaluateComputedRows(computedRows: self::COMPUTED_ROWS, rowValuesByCode: $budgetByCode);
-			$actualResults = $this->calculator->evaluateComputedRows(computedRows: self::COMPUTED_ROWS, rowValuesByCode: $actualByCode);
-
-			foreach (self::COMPUTED_ROWS as $rowIndex => $definition) {
-				$code = $definition['code'];
-				$budget = ($budgetResults[$code] ?? null);
-				$actual = ($actualResults[$code] ?? null);
-				$deviation = null;
-				$favorable = null;
-				if ($budget !== null && $actual !== null) {
-					$direction = ($definition['favorableDirection'] ?? 'higher');
-					$deviation = ($actual - $budget);
-					if ($direction === 'lower') {
-						$deviation = ($budget - $actual);
-					}
-
-					$favorable = ($deviation >= 0);
-				}
-
-				$computedRows[$rowIndex]['cells'][$columnKey] = [
-					'budget' => $budget,
-					'actual' => $actual,
-					'deviation' => $deviation,
-					'favorable' => $favorable,
-				];
+		foreach (self::columnKeys(columns: $columns) as $columnKey) {
+			$cells = $this->computedCells(values: ($rootValuesByColumn[$columnKey] ?? []));
+			foreach ($cells as $rowIndex => $cell) {
+				$computedRows[$rowIndex]['cells'][$columnKey] = $cell;
 			}
 		}
 
+		return $computedRows;
+
+	}//end computedRows()
+
+	/**
+	 * The column keys and TOTAAL.
+	 *
+	 * @param array<int,array<string,mixed>> $columns The period columns.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function columnKeys(array $columns): array {
+		$columnKeys = array_map(static fn (array $c): string => $c['key'], $columns);
+		$columnKeys[] = 'TOTAAL';
+		return $columnKeys;
+
+	}//end columnKeys()
+
+	/**
+	 * The computed-row cells of one column, by computed-row index.
+	 *
+	 * @param array<string,array<string,mixed>> $values The column's root budget and actual values by code.
+	 *
+	 * @return array<int,array{budget: mixed, actual: mixed, deviation: mixed, favorable: ?bool}>
+	 */
+	private function computedCells(array $values): array {
+		$budgetResults = $this->calculator->evaluateComputedRows(computedRows: self::COMPUTED_ROWS, rowValuesByCode: ($values['budget'] ?? []));
+		$actualResults = $this->calculator->evaluateComputedRows(computedRows: self::COMPUTED_ROWS, rowValuesByCode: ($values['actual'] ?? []));
+
+		$cells = [];
+		foreach (self::COMPUTED_ROWS as $rowIndex => $definition) {
+			$code = $definition['code'];
+			$cells[$rowIndex] = self::deviationCell(
+				definition: $definition,
+				cell: ['budget' => ($budgetResults[$code] ?? null), 'actual' => ($actualResults[$code] ?? null)]
+			);
+		}
+
+		return $cells;
+
+	}//end computedCells()
+
+	/**
+	 * A computed cell with its deviation and whether it is favorable; both
+	 * null unless budget and actual are known.
+	 *
+	 * @param array<string,mixed> $definition The computed-row definition.
+	 * @param array{budget: mixed, actual: mixed} $cell The budget and actual.
+	 *
+	 * @return array{budget: mixed, actual: mixed, deviation: mixed, favorable: ?bool}
+	 */
+	private static function deviationCell(array $definition, array $cell): array {
+		$budget = $cell['budget'];
+		$actual = $cell['actual'];
+		$deviation = null;
+		$favorable = null;
+		if ($budget !== null && $actual !== null) {
+			$deviation = ($actual - $budget);
+			if (($definition['favorableDirection'] ?? 'higher') === 'lower') {
+				$deviation = ($budget - $actual);
+			}
+
+			$favorable = ($deviation >= 0);
+		}
+
+		return ['budget' => $budget, 'actual' => $actual, 'deviation' => $deviation, 'favorable' => $favorable];
+
+	}//end deviationCell()
+
+	/**
+	 * The column descriptors and the synthetic TOTAAL column.
+	 *
+	 * @param array<int,array<string,mixed>> $columns The period columns.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function columnDescriptors(array $columns): array {
 		$columnDescriptors = [];
 		foreach ($columns as $column) {
 			$columnDescriptors[] = [
@@ -283,82 +347,24 @@ class BudgetGridController extends Controller {
 
 		$columnDescriptors[] = ['key' => 'TOTAAL', 'label' => 'TOTAAL', 'granularity' => 'total', 'isPast' => false, 'isTotal' => true];
 
-		return ['columns' => $columnDescriptors, 'rows' => $rows, 'computedRows' => $computedRows];
+		return $columnDescriptors;
 
-	}//end buildEnvelope()
+	}//end columnDescriptors()
 
 	/**
-	 * Recursively build one `LedgerGroup` row: its own per-column cells, plus
-	 * either its child `LedgerGroup` rows or (leaf case) its resolved member
-	 * `Account` rows (design.md §1b).
+	 * A ledger-group row: its cells and its children, which are its child
+	 * groups or, for a leaf group, its member accounts.
 	 *
-	 * @param integer $index The row's index in `$rowTree['entries']`.
-	 * @param array<string,mixed> $rowTree The {@see BudgetGridReader::rowsFor()} bundle.
-	 * @param list<array<string,mixed>> $columns The generated columns.
-	 * @param array<string,mixed> $bvaContext The BudgetVsActualsReader context bundle.
-	 * @param array<int,list<array<string,mixed>>|null> $budgetLinesByFiscalYear Per-fiscal-year BudgetLine slices.
-	 * @param array<string,string> $accountTypeByNumber Account number => accountType.
-	 * @param array<string,array<string,mixed>> $accountByNumber Account number => raw Account row.
+	 * @param BudgetGridRun $run The grid.
+	 * @param int $index The group's index in the row tree.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function buildLedgerGroupRow(
-		int $index,
-		array $rowTree,
-		array $columns,
-		array $bvaContext,
-		array $budgetLinesByFiscalYear,
-		array $accountTypeByNumber,
-		array $accountByNumber
-	): array {
-		$entry = $rowTree['entries'][$index];
-		$key = $entry['slug'];
-		if ($entry['id'] !== '') {
-			$key = $entry['id'];
-		}
-
-		$cells = [];
-		foreach ($columns as $column) {
-			$cells[$column['key']] = $this->calculator->evaluateColumn(
-				ledgerGroupKey: $key,
-				column: $column,
-				isPast: $column['isPast'],
-				bvaContext: $bvaContext,
-				budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
-				accountTypeByNumber: $accountTypeByNumber
-			);
-		}
-
-		$cells['TOTAAL'] = $this->calculator->cumulative(
-			ledgerGroupKey: $key,
-			columns: $columns,
-			bvaContext: $bvaContext,
-			budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
-			accountTypeByNumber: $accountTypeByNumber
-		);
-
-		$childIndexes = ($rowTree['childrenByIndex'][$index] ?? []);
-		$children = [];
-		if ($childIndexes === []) {
-			$children = $this->buildAccountLeafRows(
-				ledgerGroupKey: $key,
-				bvaContext: $bvaContext,
-				columns: $columns,
-				accountByNumber: $accountByNumber
-			);
-		}
-
-		foreach ($childIndexes as $childIndex) {
-			$children[] = $this->buildLedgerGroupRow(
-				index: $childIndex,
-				rowTree: $rowTree,
-				columns: $columns,
-				bvaContext: $bvaContext,
-				budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
-				accountTypeByNumber: $accountTypeByNumber,
-				accountByNumber: $accountByNumber
-			);
-		}
+	private function buildLedgerGroupRow(BudgetGridRun $run, int $index): array {
+		$entry = $run->rowTree['entries'][$index];
+		$key = self::ledgerGroupKey(entry: $entry);
+		$cells = $this->groupCells(run: $run, ledgerGroupKey: $key);
+		$children = $this->groupChildren(run: $run, index: $index);
 
 		return [
 			'id' => $key,
@@ -373,73 +379,183 @@ class BudgetGridController extends Controller {
 	}//end buildLedgerGroupRow()
 
 	/**
-	 * Build the leaf `Account` rows for a `LedgerGroup` with no children —
-	 * each carries only an `actual` per past column (budget is not resolved
-	 * at Account granularity, `BudgetLine` is `LedgerGroup`-scoped) and a
-	 * route to `ChartOfAccountsDetail` (REQ-BGV-007).
+	 * A ledger group's key: its id, else its slug.
 	 *
-	 * @param string $ledgerGroupKey The leaf row's id or slug.
-	 * @param array<string,mixed> $bvaContext The BudgetVsActualsReader context bundle.
-	 * @param list<array<string,mixed>> $columns The generated columns.
-	 * @param array<string,array<string,mixed>> $accountByNumber Account number => raw Account row.
+	 * @param array<string,mixed> $entry The row-tree entry.
 	 *
-	 * @return list<array<string,mixed>>
+	 * @return string
 	 */
-	private function buildAccountLeafRows(string $ledgerGroupKey, array $bvaContext, array $columns, array $accountByNumber): array {
-		$index = ($bvaContext['ledgerGroupKeyToIndex'][$ledgerGroupKey] ?? null);
+	private static function ledgerGroupKey(array $entry): string {
+		if ($entry['id'] !== '') {
+			return $entry['id'];
+		}
+
+		return $entry['slug'];
+
+	}//end ledgerGroupKey()
+
+	/**
+	 * A ledger group's cell per column and its cumulative TOTAAL cell.
+	 *
+	 * @param BudgetGridRun $run The grid.
+	 * @param string $ledgerGroupKey The group's key.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function groupCells(BudgetGridRun $run, string $ledgerGroupKey): array {
+		$cells = [];
+		foreach ($run->columns as $column) {
+			$cells[$column['key']] = $this->calculator->evaluateColumn(
+				ledgerGroupKey: $ledgerGroupKey,
+				column: $column,
+				isPast: $column['isPast'],
+				bvaContext: $run->bvaContext,
+				budgetLinesByFiscalYear: $run->budgetLinesByFiscalYear,
+				accountTypeByNumber: $run->accountTypeByNumber
+			);
+		}
+
+		$cells['TOTAAL'] = $this->totalCell(run: $run, ledgerGroupKey: $ledgerGroupKey);
+		return $cells;
+
+	}//end groupCells()
+
+	/**
+	 * A ledger group's cumulative cell over all columns.
+	 *
+	 * @param BudgetGridRun $run The grid.
+	 * @param string $ledgerGroupKey The group's key.
+	 *
+	 * @return mixed
+	 */
+	private function totalCell(BudgetGridRun $run, string $ledgerGroupKey): mixed {
+		return $this->calculator->cumulative(
+			ledgerGroupKey: $ledgerGroupKey,
+			columns: $run->columns,
+			bvaContext: $run->bvaContext,
+			budgetLinesByFiscalYear: $run->budgetLinesByFiscalYear,
+			accountTypeByNumber: $run->accountTypeByNumber
+		);
+
+	}//end totalCell()
+
+	/**
+	 * The child group rows, or for a group without child groups its account rows.
+	 *
+	 * @param BudgetGridRun $run The grid.
+	 * @param int $index The group's index in the row tree.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function groupChildren(BudgetGridRun $run, int $index): array {
+		$childIndexes = ($run->rowTree['childrenByIndex'][$index] ?? []);
+		if ($childIndexes === []) {
+			return $this->buildAccountLeafRows(run: $run, ledgerGroupKey: self::ledgerGroupKey(entry: $run->rowTree['entries'][$index]));
+		}
+
+		$children = [];
+		foreach ($childIndexes as $childIndex) {
+			$children[] = $this->buildLedgerGroupRow(run: $run, index: $childIndex);
+		}
+
+		return $children;
+
+	}//end groupChildren()
+
+	/**
+	 * The account rows of a leaf ledger group, by account number; members
+	 * without an account are skipped.
+	 *
+	 * @param BudgetGridRun $run The grid.
+	 * @param string $ledgerGroupKey The group's key.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function buildAccountLeafRows(BudgetGridRun $run, string $ledgerGroupKey): array {
+		$index = ($run->bvaContext['ledgerGroupKeyToIndex'][$ledgerGroupKey] ?? null);
 		if ($index === null) {
 			return [];
 		}
 
-		$memberNumbers = ($bvaContext['ledgerGroupEntries'][$index]['memberAccountNumbers'] ?? []);
+		$memberNumbers = ($run->bvaContext['ledgerGroupEntries'][$index]['memberAccountNumbers'] ?? []);
 		sort($memberNumbers);
 
 		$rows = [];
 		foreach ($memberNumbers as $accountNumber) {
-			$account = ($accountByNumber[$accountNumber] ?? null);
-			if ($account === null) {
-				continue;
+			if (isset($run->accountByNumber[$accountNumber]) === true) {
+				$rows[] = self::accountRow(run: $run, accountNumber: $accountNumber);
 			}
-
-			$accountId = (string)($account['@self']['id'] ?? $account['id'] ?? '');
-
-			$cells = [];
-			foreach ($columns as $column) {
-				$actual = null;
-				if ($column['isPast'] === true) {
-					$actual = 0;
-					foreach ($column['monthKeys'] as $monthKey) {
-						$actual += (int)($bvaContext['actualsByAccountMonth'][$accountNumber][$monthKey] ?? 0);
-					}
-				}
-
-				$cells[$column['key']] = ['actual' => $actual];
-			}
-
-			$totaalActual = 0;
-			foreach ($columns as $column) {
-				if ($column['isPast'] !== true) {
-					continue;
-				}
-
-				foreach ($column['monthKeys'] as $monthKey) {
-					$totaalActual += (int)($bvaContext['actualsByAccountMonth'][$accountNumber][$monthKey] ?? 0);
-				}
-			}
-
-			$cells['TOTAAL'] = ['actual' => $totaalActual];
-
-			$rows[] = [
-				'id' => $accountId,
-				'accountNumber' => $accountNumber,
-				'label' => (string)($account['name'] ?? $accountNumber),
-				'kind' => 'account',
-				'route' => ('/chart-of-accounts/' . $accountId),
-				'cells' => $cells,
-			];
 		}
 
 		return $rows;
 
 	}//end buildAccountLeafRows()
+
+	/**
+	 * An account row with its actual per past column and in total.
+	 *
+	 * @param BudgetGridRun $run The grid.
+	 * @param int|string $accountNumber The account number.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function accountRow(BudgetGridRun $run, int|string $accountNumber): array {
+		$account = $run->accountByNumber[$accountNumber];
+		$accountId = (string)($account['@self']['id'] ?? $account['id'] ?? '');
+
+		return [
+			'id' => $accountId,
+			'accountNumber' => $accountNumber,
+			'label' => (string)($account['name'] ?? $accountNumber),
+			'kind' => 'account',
+			'route' => ('/chart-of-accounts/' . $accountId),
+			'cells' => self::accountCells(columns: $run->columns, actuals: ($run->bvaContext['actualsByAccountMonth'][$accountNumber] ?? [])),
+		];
+
+	}//end accountRow()
+
+	/**
+	 * An account's actual per column (null for a future column) and TOTAAL,
+	 * the sum over the past columns.
+	 *
+	 * @param array<int,array<string,mixed>> $columns The period columns.
+	 * @param mixed $actuals The account's actuals by month.
+	 *
+	 * @return array<string,array{actual: ?int}>
+	 */
+	private static function accountCells(array $columns, mixed $actuals): array {
+		$cells = [];
+		$total = 0;
+		foreach ($columns as $column) {
+			$actual = null;
+			if ($column['isPast'] === true) {
+				$actual = self::actualOver(actuals: $actuals, monthKeys: $column['monthKeys']);
+				$total += $actual;
+			}
+
+			$cells[$column['key']] = ['actual' => $actual];
+		}
+
+		$cells['TOTAAL'] = ['actual' => $total];
+		return $cells;
+
+	}//end accountCells()
+
+	/**
+	 * The sum of an account's actuals over the months.
+	 *
+	 * @param mixed $actuals The account's actuals by month.
+	 * @param array<int,string> $monthKeys The months.
+	 *
+	 * @return int
+	 */
+	private static function actualOver(mixed $actuals, array $monthKeys): int {
+		$sum = 0;
+		foreach ($monthKeys as $monthKey) {
+			$sum += (int)($actuals[$monthKey] ?? 0);
+		}
+
+		return $sum;
+
+	}//end actualOver()
 }//end class

@@ -72,6 +72,17 @@ final class EInvoiceService {
 	public const DOCUMENT_TYPE = 'ubl-invoice-2.1';
 
 	/**
+	 * The warning added when the Peppol submit fails.
+	 *
+	 * @var array{field:string,code:string,message:string}
+	 */
+	private const SUBMIT_FAILED_WARNING = [
+		'field' => 'transmission',
+		'code' => 'peppol_send_failed',
+		'message' => 'Peppol transmission failed — falling back to PDF + email',
+	];
+
+	/**
 	 * Peppol transmission port (generalised, REQ-EINV-004). Defaults to the
 	 * Log adapter so dev/CI works without openconnector.
 	 *
@@ -131,6 +142,37 @@ final class EInvoiceService {
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 	 */
 	public function sendEInvoice(string $administrationId, string $invoiceNumber): array {
+		$invoice    = $this->sendableInvoice(administrationId: $administrationId, invoiceNumber: $invoiceNumber);
+		$validation = $this->validateForSend(administrationId: $administrationId, invoice: $invoice);
+		if ($validation['peppolParticipantId'] === null) {
+			// Graceful fallback (REQ-EINV-003 D2, mirrors the PO null-participant
+			// contract): no event is emitted, deliveryStatus stays not-sent.
+			return $this->fallbackResult(warnings: $validation['warnings']);
+		}
+
+		$send = new EInvoiceSend();
+		$send->administrationId = $administrationId;
+		$send->invoiceNumber    = $invoiceNumber;
+		$send->invoice          = $invoice;
+		$send->participantId    = $validation['peppolParticipantId'];
+		$send->warnings         = $validation['warnings'];
+
+		return $this->transmit(send: $send);
+
+	}//end sendEInvoice()
+
+	/**
+	 * The issued ARInvoice to send, once the tenant may be served.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $invoiceNumber    ARInvoice.invoiceNumber to send.
+	 *
+	 * @return array<string,mixed> The ARInvoice record.
+	 *
+	 * @throws RuntimeException When the administration is missing or inaccessible (masked as
+	 *                          not found), the invoice is missing, or it is not issued.
+	 */
+	private function sendableInvoice(string $administrationId, string $invoiceNumber): array {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -151,6 +193,20 @@ final class EInvoiceService {
 			);
 		}
 
+		return $invoice;
+	}//end sendableInvoice()
+
+	/**
+	 * The pre-send validation, refusing an invoice that fails it.
+	 *
+	 * @param string              $administrationId Administration scope.
+	 * @param array<string,mixed> $invoice          The ARInvoice record.
+	 *
+	 * @return array<string,mixed> The validation outcome.
+	 *
+	 * @throws RuntimeException When validation fails (no event is ever emitted).
+	 */
+	private function validateForSend(string $administrationId, array $invoice): array {
 		$validation = $this->validationService->validate(administrationId: $administrationId, arInvoice: $invoice);
 		if ($validation['valid'] === false) {
 			$messages = array_map(
@@ -160,80 +216,86 @@ final class EInvoiceService {
 			throw new RuntimeException('E-invoice validation failed: ' . implode('; ', $messages));
 		}
 
-		$participantId = $validation['peppolParticipantId'];
-		if ($participantId === null) {
-			// Graceful fallback (REQ-EINV-003 D2, mirrors the PO null-participant
-			// contract): no event is emitted, deliveryStatus stays not-sent.
-			return [
-				'deliveryStatus' => 'not-sent',
-				'transmissionId' => null,
-				'payloadFileUri' => null,
-				'fallback' => true,
-				'warnings' => $validation['warnings'],
-			];
-		}
+		return $validation;
+	}//end validateForSend()
 
-		$ublXml = $this->ublMapper->toNlciusXml(arInvoice: $invoice);
+	/**
+	 * Store the hybrid PDF and submit it over Peppol; a failed submit falls
+	 * back to PDF + email and leaves the invoice not-sent.
+	 *
+	 * @param EInvoiceSend $send The validated send.
+	 *
+	 * @return array{deliveryStatus:string,transmissionId:?string,payloadFileUri:?string,fallback:bool,warnings:array<int,array<string,string>>}
+	 */
+	private function transmit(EInvoiceSend $send): array {
+		$ublXml = $this->ublMapper->toNlciusXml(arInvoice: $send->invoice);
 		$hybrid = $this->pdfGenerator->generateHybridPdf(
-			invoice: $invoice,
-			lines: (array)($invoice['invoiceLines'] ?? []),
+			invoice: $send->invoice,
+			lines: (array)($send->invoice['invoiceLines'] ?? []),
 			ublXml: $ublXml
 		);
-
-		$payloadFileUri = $this->storeArtefact(invoice: $invoice, hybrid: $hybrid);
+		$send->payloadFileUri = $this->storeArtefact(invoice: $send->invoice, hybrid: $hybrid);
 
 		try {
-			$transmissionId = $this->peppolPort->submit(
-				participantId: $participantId,
+			$send->transmissionId = $this->peppolPort->submit(
+				participantId: $send->participantId,
 				documentType: self::DOCUMENT_TYPE,
-				payloadFileUri: $payloadFileUri
+				payloadFileUri: $send->payloadFileUri
 			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'EInvoiceService: Peppol submit failed — invoice stays not-sent',
-				['invoiceNumber' => $invoiceNumber, 'exception' => $e->getMessage()]
+				['invoiceNumber' => $send->invoiceNumber, 'exception' => $e->getMessage()]
 			);
-			return [
-				'deliveryStatus' => 'not-sent',
-				'transmissionId' => null,
-				'payloadFileUri' => null,
-				'fallback' => true,
-				'warnings' => array_merge(
-					$validation['warnings'],
-					[
-						[
-							'field' => 'transmission',
-							'code' => 'peppol_send_failed',
-							'message' => 'Peppol transmission failed — falling back to PDF + email',
-						],
-					]
-				),
-			];
-		}//end try
+			return $this->fallbackResult(warnings: array_merge($send->warnings, [self::SUBMIT_FAILED_WARNING]));
+		}
 
-		$invoice['deliveryStatus'] = 'queued';
-		$invoice['transmissionId'] = $transmissionId;
-		$invoice['payloadFileUri'] = $payloadFileUri;
-		$invoice['buyerPeppolParticipantId'] = $participantId;
+		return $this->queue(send: $send);
+	}//end transmit()
+
+	/**
+	 * Save the invoice as queued with its provenance and emit the
+	 * outbound-requested event.
+	 *
+	 * @param EInvoiceSend $send The submitted send.
+	 *
+	 * @return array{deliveryStatus:string,transmissionId:?string,payloadFileUri:?string,fallback:bool,warnings:array<int,array<string,string>>}
+	 */
+	private function queue(EInvoiceSend $send): array {
+		$invoice = $send->invoice;
+		$invoice['deliveryStatus']           = 'queued';
+		$invoice['transmissionId']           = $send->transmissionId;
+		$invoice['payloadFileUri']           = $send->payloadFileUri;
+		$invoice['buyerPeppolParticipantId'] = $send->participantId;
 
 		$persisted = $this->saveObject(schema: 'ARInvoice', object: $invoice);
-
-		$this->emitOutboundRequested(
-			administrationId: $administrationId,
-			invoice: $persisted,
-			recipientPeppolId: $participantId,
-			payloadFileUri: $payloadFileUri
-		);
+		$this->emitOutboundRequested(send: $send, invoice: $persisted);
 
 		return [
 			'deliveryStatus' => 'queued',
-			'transmissionId' => $transmissionId,
-			'payloadFileUri' => $payloadFileUri,
+			'transmissionId' => $send->transmissionId,
+			'payloadFileUri' => $send->payloadFileUri,
 			'fallback' => false,
-			'warnings' => $validation['warnings'],
+			'warnings' => $send->warnings,
 		];
+	}//end queue()
 
-	}//end sendEInvoice()
+	/**
+	 * The not-sent answer that falls back to PDF + email.
+	 *
+	 * @param array<int,array<string,string>> $warnings The warnings to report.
+	 *
+	 * @return array{deliveryStatus:string,transmissionId:null,payloadFileUri:null,fallback:bool,warnings:array<int,array<string,string>>}
+	 */
+	private function fallbackResult(array $warnings): array {
+		return [
+			'deliveryStatus' => 'not-sent',
+			'transmissionId' => null,
+			'payloadFileUri' => null,
+			'fallback' => true,
+			'warnings' => $warnings,
+		];
+	}//end fallbackResult()
 
 	/**
 	 * Emit the `nl.conduction.peppol.outbound.requested` cloud event (REQ-EINV-005).
@@ -242,27 +304,20 @@ final class EInvoiceService {
 	 * caller — the ARInvoice has already been persisted at `queued`, which is
 	 * the source of truth; the event is a derived cross-app notification.
 	 *
-	 * @param string $administrationId Administration scope.
+	 * @param EInvoiceSend        $send    The submitted send.
 	 * @param array<string,mixed> $invoice The persisted ARInvoice record.
-	 * @param string $recipientPeppolId Resolved debtor Peppol participant id.
-	 * @param string $payloadFileUri Stored artefact URI.
 	 *
 	 * @return void
 	 */
-	private function emitOutboundRequested(
-		string $administrationId,
-		array $invoice,
-		string $recipientPeppolId,
-		string $payloadFileUri,
-	): void {
+	private function emitOutboundRequested(EInvoiceSend $send, array $invoice): void {
 		$payload = [
 			'sourceApp' => 'shillinq',
 			'objectType' => 'ar-invoice',
 			'objectUri' => $this->objectUri(invoice: $invoice),
-			'recipientPeppolId' => $recipientPeppolId,
+			'recipientPeppolId' => $send->participantId,
 			'documentType' => self::DOCUMENT_TYPE,
-			'payloadFileUri' => $payloadFileUri,
-			'administrationId' => $administrationId,
+			'payloadFileUri' => $send->payloadFileUri,
+			'administrationId' => $send->administrationId,
 		];
 
 		try {

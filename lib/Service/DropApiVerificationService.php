@@ -84,35 +84,74 @@ class DropApiVerificationService {
 	 */
 	public function parseResponse(?string $rawResponse, ?int $statusCode): array {
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+		$failure = $this->failureOf(rawResponse: $rawResponse, statusCode: $statusCode);
 
+		return ['verifiedAt' => $now, 'success' => ($failure === null), 'message' => ($failure ?? 'Verified')];
+	}//end parseResponse()
+
+	/**
+	 * Why a response does not verify the publication, or null when it does.
+	 *
+	 * @param string|null  $rawResponse Raw HTTP response body, or null on connection failure.
+	 * @param integer|null $statusCode  HTTP status, or null on connection failure.
+	 *
+	 * @return string|null
+	 */
+	private function failureOf(string|null $rawResponse, int|null $statusCode): string|null {
 		if ($rawResponse === null || $statusCode === null) {
-			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API unavailable (no response)'];
+			return 'DROP API unavailable (no response)';
 		}
 
+		$httpFailure = $this->httpFailure(statusCode: $statusCode);
+		if ($httpFailure !== null) {
+			return $httpFailure;
+		}
+
+		return $this->bodyFailure(rawResponse: $rawResponse);
+	}//end failureOf()
+
+	/**
+	 * Why an HTTP status is not a usable answer, or null for 200.
+	 *
+	 * @param integer $statusCode HTTP status.
+	 *
+	 * @return string|null
+	 */
+	private function httpFailure(int $statusCode): string|null {
 		if ($statusCode >= 500) {
-			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API error ' . (string)$statusCode];
+			return 'DROP API error ' . (string)$statusCode;
 		}
 
 		if ($statusCode === 404) {
-			return ['verifiedAt' => $now, 'success' => false, 'message' => 'Gemeenteblad reference not found in DROP'];
+			return 'Gemeenteblad reference not found in DROP';
 		}
 
 		if ($statusCode !== 200) {
-			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API HTTP ' . (string)$statusCode];
+			return 'DROP API HTTP ' . (string)$statusCode;
 		}
 
+		return null;
+	}//end httpFailure()
+
+	/**
+	 * Why a 200 body does not name a matching publication, or null when it does.
+	 *
+	 * @param string $rawResponse Raw HTTP response body (JSON).
+	 *
+	 * @return string|null
+	 */
+	private function bodyFailure(string $rawResponse): string|null {
 		$decoded = json_decode($rawResponse, true);
 		if (is_array($decoded) === false) {
-			return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API returned invalid JSON'];
+			return 'DROP API returned invalid JSON';
 		}
 
-		$bindings = (array)($decoded['results']['bindings'] ?? []);
-		if ($bindings === []) {
-			return ['verifiedAt' => $now, 'success' => false, 'message' => 'No matching publication in DROP'];
+		if ((array)($decoded['results']['bindings'] ?? []) === []) {
+			return 'No matching publication in DROP';
 		}
 
-		return ['verifiedAt' => $now, 'success' => true, 'message' => 'Verified'];
-	}//end parseResponse()
+		return null;
+	}//end bodyFailure()
 
 	/**
 	 * Apply a verification envelope to the ABB (REQ-WMO-005 §verification).

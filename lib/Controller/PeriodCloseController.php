@@ -103,41 +103,12 @@ class PeriodCloseController extends Controller {
 			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$periodId = trim($periodId);
-		if ($this->validId(value: $periodId) === false) {
-			return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		$record = $this->readablePeriod(periodId: $periodId, action: 'show');
+		if ($record instanceof JSONResponse) {
+			return $record;
 		}
 
-		$administrationId = $this->administrationId();
-		if ($administrationId === null) {
-			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($refusal !== null) {
-			return $refusal;
-		}
-
-		try {
-			$record = $this->periodCloseService->getPeriodForClose(
-				periodId: $periodId,
-				administrationId: $administrationId
-			);
-			if ($record === null) {
-				return $this->error(message: 'Period not found', status: Http::STATUS_NOT_FOUND);
-			}
-
-			$flags = $this->assistantService->analyse(
-				administrationId: $administrationId,
-				periodId: (string)($record['periodId'] ?? $periodId),
-				endDate: (string)($record['endDate'] ?? '')
-			);
-			$record['aiFlags'] = $flags;
-
-			return new JSONResponse(['data' => $record], Http::STATUS_OK);
-		} catch (\Throwable $e) {
-			return $this->serverError(action: 'show', e: $e);
-		}//end try
+		return new JSONResponse(['data' => $record], Http::STATUS_OK);
 
 	}//end show()
 
@@ -156,40 +127,12 @@ class PeriodCloseController extends Controller {
 			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$periodId = trim($periodId);
-		if ($this->validId(value: $periodId) === false) {
-			return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		$record = $this->readablePeriod(periodId: $periodId, action: 'aiFlags');
+		if ($record instanceof JSONResponse) {
+			return $record;
 		}
 
-		$administrationId = $this->administrationId();
-		if ($administrationId === null) {
-			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($refusal !== null) {
-			return $refusal;
-		}
-
-		try {
-			$record = $this->periodCloseService->getPeriodForClose(
-				periodId: $periodId,
-				administrationId: $administrationId
-			);
-			if ($record === null) {
-				return $this->error(message: 'Period not found', status: Http::STATUS_NOT_FOUND);
-			}
-
-			$flags = $this->assistantService->analyse(
-				administrationId: $administrationId,
-				periodId: (string)($record['periodId'] ?? $periodId),
-				endDate: (string)($record['endDate'] ?? '')
-			);
-
-			return new JSONResponse(['data' => $flags], Http::STATUS_OK);
-		} catch (\Throwable $e) {
-			return $this->serverError(action: 'aiFlags', e: $e);
-		}//end try
+		return new JSONResponse(['data' => $record['aiFlags']], Http::STATUS_OK);
 
 	}//end aiFlags()
 
@@ -301,33 +244,16 @@ class PeriodCloseController extends Controller {
 			return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		// Identity first, then the membership check: canAccess() fails closed for
-		// an anonymous caller, so without this order an unauthenticated request
-		// would be answered 404 instead of 401.
-		$userId = $this->userId();
-		if ($userId === '') {
-			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = $this->administrationId();
-		if ($administrationId === null) {
-			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
-		}
-
-		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($refusal !== null) {
-			return $refusal;
+		$actor = $this->actor();
+		if ($actor instanceof JSONResponse) {
+			return $actor;
 		}
 
 		try {
-			$record = $action($this->periodCloseService, $periodId, $administrationId, $userId);
-
-			return new JSONResponse(['data' => $record], Http::STATUS_OK);
-		} catch (PeriodCloseException $e) {
-			return $this->error(message: $e->getMessage(), status: $this->mapStatus(status: $e->getStatus()));
+			return new JSONResponse(['data' => $action($this->periodCloseService, $periodId, $actor->administrationId, $actor->userId)], Http::STATUS_OK);
 		} catch (\Throwable $e) {
-			return $this->serverError(action: 'transition', e: $e);
-		}//end try
+			return $this->transitionFailure(failure: $e);
+		}
 
 	}//end transition()
 
@@ -454,4 +380,119 @@ class PeriodCloseController extends Controller {
 
 		return new JSONResponse(['error' => 'An unexpected error occurred'], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}//end serverError()
+
+	/**
+	 * The period with its AI flags, for the period id and the request's
+	 * administration; a refusal for a malformed period, a missing or foreign
+	 * administration or an unknown period, a logged 500 on failure.
+	 *
+	 * @param string $periodId The route period.
+	 * @param string $action The action, as logged.
+	 *
+	 * @return array<string,mixed>|JSONResponse
+	 */
+	private function readablePeriod(string $periodId, string $action): array|JSONResponse {
+		$periodId = trim($periodId);
+		if ($this->validId(value: $periodId) === false) {
+			return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$administrationId = $this->accessibleAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
+		}
+
+		try {
+			return $this->periodWithFlags(periodId: $periodId, administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			return $this->serverError(action: $action, e: $e);
+		}
+
+	}//end readablePeriod()
+
+	/**
+	 * The period record with its AI flags; a 404 for an unknown period.
+	 *
+	 * @param string $periodId The period.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<string,mixed>|JSONResponse
+	 */
+	private function periodWithFlags(string $periodId, string $administrationId): array|JSONResponse {
+		$record = $this->periodCloseService->getPeriodForClose(
+			periodId: $periodId,
+			administrationId: $administrationId
+		);
+		if ($record === null) {
+			return $this->error(message: 'Period not found', status: Http::STATUS_NOT_FOUND);
+		}
+
+		$record['aiFlags'] = $this->assistantService->analyse(
+			administrationId: $administrationId,
+			periodId: (string)($record['periodId'] ?? $periodId),
+			endDate: (string)($record['endDate'] ?? '')
+		);
+
+		return $record;
+
+	}//end periodWithFlags()
+
+	/**
+	 * Identity first, then the membership check: canAccess() fails closed for
+	 * an anonymous caller, so without this order an unauthenticated request
+	 * would be answered 404 instead of 401.
+	 *
+	 * @return PeriodCloseActor|JSONResponse
+	 */
+	private function actor(): PeriodCloseActor|JSONResponse {
+		$userId = $this->userId();
+		if ($userId === '') {
+			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$administrationId = $this->accessibleAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
+		}
+
+		return new PeriodCloseActor(userId: $userId, administrationId: $administrationId);
+
+	}//end actor()
+
+	/**
+	 * The request's administration when the caller may access it; a 400
+	 * without a valid one, a masked 404 for a foreign one.
+	 *
+	 * @return string|JSONResponse
+	 */
+	private function accessibleAdministration(): string|JSONResponse {
+		$administrationId = $this->administrationId();
+		if ($administrationId === null) {
+			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $administrationId;
+
+	}//end accessibleAdministration()
+
+	/**
+	 * A refused transition with its mapped status, or a logged 500.
+	 *
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function transitionFailure(\Throwable $failure): JSONResponse {
+		if ($failure instanceof PeriodCloseException) {
+			return $this->error(message: $failure->getMessage(), status: $this->mapStatus(status: $failure->getStatus()));
+		}
+
+		return $this->serverError(action: 'transition', e: $failure);
+
+	}//end transitionFailure()
 }//end class

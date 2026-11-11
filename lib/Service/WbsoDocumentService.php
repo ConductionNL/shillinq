@@ -234,28 +234,14 @@ class WbsoDocumentService {
 		string $reason,
 		bool $allowEarly = false,
 	): array {
-		$document = $this->getDocument(administrationId: $administrationId, documentId: $documentId);
-		if ($document === null) {
-			throw new InvalidArgumentException('Document not found');
-		}
-
-		if ((string)($document['status'] ?? '') !== 'filed') {
-			throw new RuntimeException('Only filed documents can be archived');
-		}
-
+		$document = $this->filedDocument(administrationId: $administrationId, documentId: $documentId);
 		if ($allowEarly === false) {
-			$filedAt = (string)($document['filedAt'] ?? $document['documentDate'] ?? '');
-			if ($this->isRetentionElapsed(filedAt: $filedAt) === false) {
-				throw new RuntimeException(
-					'Documents must have been filed for at least seven years before archival'
-				);
-			}
+			$this->assertRetentionElapsed(document: $document);
 		}
 
 		$document['status'] = 'archived';
 		$document['archivedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$document['archivalReason'] = $reason;
-
 
 		// ADR-084: see createDocument() — the contract returns an entity.
 		return (array)$this->objectService
@@ -265,6 +251,50 @@ class WbsoDocumentService {
 			->jsonSerialize();
 
 	}//end archiveDocument()
+
+	/**
+	 * The administration's document with this id or number, which must be filed.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $documentId       Document id or documentNumber.
+	 *
+	 * @return array<string,mixed> The document.
+	 *
+	 * @throws InvalidArgumentException When the administration has no such document.
+	 * @throws RuntimeException When the document is not filed.
+	 */
+	private function filedDocument(string $administrationId, string $documentId): array {
+		$document = $this->getDocument(administrationId: $administrationId, documentId: $documentId);
+		if ($document === null) {
+			throw new InvalidArgumentException('Document not found');
+		}
+
+		if ((string)($document['status'] ?? '') !== 'filed') {
+			throw new RuntimeException('Only filed documents can be archived');
+		}
+
+		return $document;
+
+	}//end filedDocument()
+
+	/**
+	 * Refuse a document filed (or, without filedAt, dated) less than seven years ago.
+	 *
+	 * @param array<string,mixed> $document The document.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the retention period has not elapsed.
+	 */
+	private function assertRetentionElapsed(array $document): void {
+		$filedAt = (string)($document['filedAt'] ?? $document['documentDate'] ?? '');
+		if ($this->isRetentionElapsed(filedAt: $filedAt) === false) {
+			throw new RuntimeException(
+				'Documents must have been filed for at least seven years before archival'
+			);
+		}
+
+	}//end assertRetentionElapsed()
 
 	/**
 	 * Pure helper: has the seven-year retention boundary elapsed?

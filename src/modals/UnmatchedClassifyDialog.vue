@@ -128,24 +128,7 @@ export default {
 					this.resolutionStatus,
 					this.reason.trim(),
 				)
-				if (result.failed > 0) {
-					showError(
-						t(
-							'shillinq',
-							'{failed} of {total} items could not be classified.',
-							{
-								failed: result.failed,
-								total: this.selectedIds.length,
-							},
-						),
-					)
-				} else {
-					showSuccess(
-						t('shillinq', '{count} items classified.', {
-							count: result.applied,
-						}),
-					)
-				}
+				this.announceClassification(result)
 				emit('cn:page:refresh', {})
 				this.$emit('close', result)
 			} catch (error) {
@@ -155,6 +138,32 @@ export default {
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * Toast the outcome: how many items failed, else how many were classified.
+		 *
+		 * @param {{applied: number, failed: number}} result The classification totals.
+		 */
+		announceClassification(result) {
+			if (result.failed > 0) {
+				showError(
+					t(
+						'shillinq',
+						'{failed} of {total} items could not be classified.',
+						{
+							failed: result.failed,
+							total: this.selectedIds.length,
+						},
+					),
+				)
+				return
+			}
+			showSuccess(
+				t('shillinq', '{count} items classified.', {
+					count: result.applied,
+				}),
+			)
 		},
 
 		/**

@@ -51,6 +51,22 @@ class BillingModelEngine {
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-billing-model-logic-tm-fixed-fee-milestone-retainer-mixed
 	 */
 	public function calculateTAndM(array $timeEntries, array $expenses, float $markupPercent = 0.0): array {
+		$lines = [];
+		foreach ($this->groupTimeEntries(timeEntries: $timeEntries) as $group) {
+			$lines[] = ['lineNumber' => (count($lines) + 1)] + $this->timeGroupLine(group: $group, markupPercent: $markupPercent);
+		}
+
+		return $this->withExpenses(lines: $lines, expenses: $expenses);
+	}//end calculateTAndM()
+
+	/**
+	 * Group time entries by (resourceType, rate), summing hours and keeping ids.
+	 *
+	 * @param array<int,array<string,mixed>> $timeEntries Resolved time entries.
+	 *
+	 * @return array<string,array<string,mixed>> Groups in first-seen order.
+	 */
+	private function groupTimeEntries(array $timeEntries): array {
 		$grouped = [];
 		foreach ($timeEntries as $entry) {
 			$key = $entry['resourceType'] . '|' . $entry['rateCents'];
@@ -69,41 +85,42 @@ class BillingModelEngine {
 			$grouped[$key]['sourceIds'][] = (string)$entry['timeEntryId'];
 		}//end foreach
 
-		$lines = [];
-		$line = 1;
+		return $grouped;
 
-		foreach ($grouped as $group) {
-			$netCents = $this->applyMarkup(
+	}//end groupTimeEntries()
+
+	/**
+	 * The line draft for one time-entry group, before its line number.
+	 *
+	 * @param array<string,mixed> $group The grouped time entries.
+	 * @param float $markupPercent Markup percentage.
+	 *
+	 * @return array<string,mixed> The line draft without `lineNumber`.
+	 */
+	private function timeGroupLine(array $group, float $markupPercent): array {
+		return [
+			'sourceType' => 'time_entry',
+			// `sourceIds` is a non-empty list of strings here, so offset 0
+			// always exists — the `?? null` this replaces was unreachable.
+			'sourceId' => $group['sourceIds'][0],
+			'description' => sprintf(
+				'%s — %s hours @ €%.2f/hr',
+				ucwords(str_replace('_', ' ', $group['resourceType'])),
+				$this->formatHours(hours: $group['hours']),
+				($group['rateCents'] / 100)
+			),
+			'billableUnits' => $group['hours'],
+			'rateApplied' => $group['rateApplied'],
+			'markup' => $markupPercent,
+			'costAmountCents' => $this->applyMarkup(
 				amountCents: (int)round(($group['hours'] * $group['rateCents'])),
 				markupPercent: $markupPercent
-			);
-			$lines[] = [
-				'lineNumber' => ($line++),
-				'sourceType' => 'time_entry',
-				// `sourceIds` is a non-empty list of strings here, so offset 0
-				// always exists — the `?? null` this replaces was unreachable.
-				'sourceId' => $group['sourceIds'][0],
-				'description' => sprintf(
-					'%s — %s hours @ €%.2f/hr',
-					ucwords(str_replace('_', ' ', $group['resourceType'])),
-					$this->formatHours(hours: $group['hours']),
-					($group['rateCents'] / 100)
-				),
-				'billableUnits' => $group['hours'],
-				'rateApplied' => $group['rateApplied'],
-				'markup' => $markupPercent,
-				'costAmountCents' => $netCents,
-				'vatRate' => $group['vatRate'],
-				'modelSpecificFields' => ['sourceIds' => $group['sourceIds']],
-			];
-		}//end foreach
+			),
+			'vatRate' => $group['vatRate'],
+			'modelSpecificFields' => ['sourceIds' => $group['sourceIds']],
+		];
 
-		foreach ($expenses as $exp) {
-			$lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
-		}
-
-		return $lines;
-	}//end calculateTAndM()
+	}//end timeGroupLine()
 
 	/**
 	 * Fixed-fee: flat amount + expenses, time entries shown in audit only.
@@ -187,57 +204,81 @@ class BillingModelEngine {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function calculateRetainer(array $retainer, string $retainerMonth, float $hoursLogged, array $expenses = []): array {
-		$lines = [
-			[
-				'lineNumber' => 1,
-				'sourceType' => 'retainer_charge',
-				'sourceId' => null,
-				'description' => sprintf('%s — %s', $retainer['label'], $retainerMonth),
-				'billableUnits' => 1.0,
-				'rateApplied' => null,
-				'markup' => 0.0,
-				'costAmountCents' => (int)$retainer['monthlyAmountCents'],
-				'vatRate' => self::DEFAULT_VAT_RATE,
-				'modelSpecificFields' => ['retainerMonth' => $retainerMonth],
-			],
-		];
-
-		$line = 2;
+		$period = new RetainerPeriod(month: $retainerMonth, hoursLogged: $hoursLogged);
+		$lines = [$this->retainerChargeLine(retainer: $retainer, period: $period)];
 
 		// Overage T&M if threshold breached.
-		$threshold = $retainer['overageHoursThreshold'];
-		$overageRate = $retainer['overageHourlyRateCents'];
-		if ($threshold !== null && $overageRate !== null && $hoursLogged > $threshold) {
-			$overageHours = ($hoursLogged - $threshold);
-			$lines[] = [
-				'lineNumber' => ($line++),
-				'sourceType' => 'time_entry',
-				'sourceId' => null,
-				'description' => sprintf(
-					'Overage — %s hours @ €%.2f/hr',
-					$this->formatHours(hours: $overageHours),
-					($overageRate / 100)
-				),
-				'billableUnits' => $overageHours,
-				'rateApplied' => [
-					'rateCents' => (int)$overageRate,
-					'currency' => 'EUR',
-					'rateCardVersion' => 'retainer-overage',
-					'effectiveDate' => $retainer['effectiveDate'],
-				],
-				'markup' => 0.0,
-				'costAmountCents' => (int)round($overageHours * $overageRate),
-				'vatRate' => self::DEFAULT_VAT_RATE,
-				'modelSpecificFields' => ['retainerMonth' => $retainerMonth, 'overage' => true],
-			];
-		}//end if
-
-		foreach ($expenses as $exp) {
-			$lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
+		$overage = $this->overageLine(retainer: $retainer, period: $period);
+		if ($overage !== null) {
+			$lines[] = $overage;
 		}
 
-		return $lines;
+		return $this->withExpenses(lines: $lines, expenses: $expenses);
 	}//end calculateRetainer()
+
+	/**
+	 * The mandatory monthly retainer charge, always line 1.
+	 *
+	 * @param array<string,mixed> $retainer Retainer config.
+	 * @param RetainerPeriod $period The billed month.
+	 *
+	 * @return array<string,mixed> The charge line.
+	 */
+	private function retainerChargeLine(array $retainer, RetainerPeriod $period): array {
+		return [
+			'lineNumber' => 1,
+			'sourceType' => 'retainer_charge',
+			'sourceId' => null,
+			'description' => sprintf('%s — %s', $retainer['label'], $period->month),
+			'billableUnits' => 1.0,
+			'rateApplied' => null,
+			'markup' => 0.0,
+			'costAmountCents' => (int)$retainer['monthlyAmountCents'],
+			'vatRate' => self::DEFAULT_VAT_RATE,
+			'modelSpecificFields' => ['retainerMonth' => $period->month],
+		];
+
+	}//end retainerChargeLine()
+
+	/**
+	 * The overage line (line 2) when hours exceed a configured threshold and rate.
+	 *
+	 * @param array<string,mixed> $retainer Retainer config.
+	 * @param RetainerPeriod $period The billed month and hours.
+	 *
+	 * @return array<string,mixed>|null The overage line, or null when not breached.
+	 */
+	private function overageLine(array $retainer, RetainerPeriod $period): array|null {
+		$threshold = $retainer['overageHoursThreshold'];
+		$overageRate = $retainer['overageHourlyRateCents'];
+		if ($threshold === null || $overageRate === null || $period->hoursLogged <= $threshold) {
+			return null;
+		}
+
+		$overageHours = ($period->hoursLogged - $threshold);
+		return [
+			'lineNumber' => 2,
+			'sourceType' => 'time_entry',
+			'sourceId' => null,
+			'description' => sprintf(
+				'Overage — %s hours @ €%.2f/hr',
+				$this->formatHours(hours: $overageHours),
+				($overageRate / 100)
+			),
+			'billableUnits' => $overageHours,
+			'rateApplied' => [
+				'rateCents' => (int)$overageRate,
+				'currency' => 'EUR',
+				'rateCardVersion' => 'retainer-overage',
+				'effectiveDate' => $retainer['effectiveDate'],
+			],
+			'markup' => 0.0,
+			'costAmountCents' => (int)round($overageHours * $overageRate),
+			'vatRate' => self::DEFAULT_VAT_RATE,
+			'modelSpecificFields' => ['retainerMonth' => $period->month, 'overage' => true],
+		];
+
+	}//end overageLine()
 
 	/**
 	 * Mixed: retainer base + overage + optional setup fee + expenses.
@@ -276,9 +317,7 @@ class BillingModelEngine {
 			];
 		}
 
-		foreach ($expenses as $exp) {
-			$lines[] = $this->expenseLine(expense: $exp, lineNumber: (count($lines) + 1));
-		}
+		$lines = $this->withExpenses(lines: $lines, expenses: $expenses);
 
 		// Renumber sequentially.
 		$n = 1;
@@ -310,45 +349,66 @@ class BillingModelEngine {
 	 */
 	public function calculateUsage(array $ratedReadings, array $expenses = []): array {
 		$lines = [];
-		$line = 1;
-
 		foreach ($ratedReadings as $reading) {
-			if (isset($reading['unitPriceCents']) === true) {
-				$unitPriceCents = (int)$reading['unitPriceCents'];
-			} else {
-				$unitPriceCents = null;
-			}
+			$lines[] = ['lineNumber' => (count($lines) + 1)] + $this->usageLine(reading: $reading);
+		}
 
-			$lines[] = [
-				'lineNumber' => ($line++),
-				'sourceType' => 'usage',
-				'sourceId' => ($reading['readingId'] ?? null),
-				'description' => (string)($reading['description'] ?? 'Metered usage'),
-				'billableUnits' => (float)($reading['billableUnits'] ?? 0.0),
-				'rateApplied' => [
-					'ratePlanId' => (string)($reading['ratePlanId'] ?? ''),
-					'ratingMethod' => (string)($reading['ratingMethod'] ?? ''),
-					'unitPriceCents' => $unitPriceCents,
-				],
-				'markup' => 0.0,
-				'costAmountCents' => (int)($reading['costAmountCents'] ?? 0),
-				'vatRate' => (float)($reading['vatRate'] ?? self::DEFAULT_VAT_RATE),
-				'modelSpecificFields' => [
-					'meterId' => (string)($reading['meterId'] ?? ''),
-					'resourceType' => (string)($reading['resourceType'] ?? ''),
-					'unit' => (string)($reading['unit'] ?? ''),
-					'periodStart' => (string)($reading['periodStart'] ?? ''),
-					'periodEnd' => (string)($reading['periodEnd'] ?? ''),
-				],
-			];
-		}//end foreach
+		return $this->withExpenses(lines: $lines, expenses: $expenses);
+	}//end calculateUsage()
 
+	/**
+	 * The line draft for one rated reading, before its line number.
+	 *
+	 * @param array<string,mixed> $reading The rated MeterReading.
+	 *
+	 * @return array<string,mixed> The line draft without `lineNumber`.
+	 */
+	private function usageLine(array $reading): array {
+		$unitPriceCents = null;
+		if (isset($reading['unitPriceCents']) === true) {
+			$unitPriceCents = (int)$reading['unitPriceCents'];
+		}
+
+		return [
+			'sourceType' => 'usage',
+			'sourceId' => ($reading['readingId'] ?? null),
+			'description' => (string)($reading['description'] ?? 'Metered usage'),
+			'billableUnits' => (float)($reading['billableUnits'] ?? 0.0),
+			'rateApplied' => [
+				'ratePlanId' => (string)($reading['ratePlanId'] ?? ''),
+				'ratingMethod' => (string)($reading['ratingMethod'] ?? ''),
+				'unitPriceCents' => $unitPriceCents,
+			],
+			'markup' => 0.0,
+			'costAmountCents' => (int)($reading['costAmountCents'] ?? 0),
+			'vatRate' => (float)($reading['vatRate'] ?? self::DEFAULT_VAT_RATE),
+			'modelSpecificFields' => [
+				'meterId' => (string)($reading['meterId'] ?? ''),
+				'resourceType' => (string)($reading['resourceType'] ?? ''),
+				'unit' => (string)($reading['unit'] ?? ''),
+				'periodStart' => (string)($reading['periodStart'] ?? ''),
+				'periodEnd' => (string)($reading['periodEnd'] ?? ''),
+			],
+		];
+
+	}//end usageLine()
+
+	/**
+	 * Append one expense line per expense, numbered on from the existing lines.
+	 *
+	 * @param array<int,array<string,mixed>> $lines Sequentially numbered lines.
+	 * @param array<int,array<string,mixed>> $expenses Expense lines.
+	 *
+	 * @return array<int,array<string,mixed>> The lines with the expenses appended.
+	 */
+	private function withExpenses(array $lines, array $expenses): array {
 		foreach ($expenses as $exp) {
-			$lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
+			$lines[] = $this->expenseLine(expense: $exp, lineNumber: (count($lines) + 1));
 		}
 
 		return $lines;
-	}//end calculateUsage()
+
+	}//end withExpenses()
 
 	/**
 	 * Build an expense line.

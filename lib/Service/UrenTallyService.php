@@ -91,32 +91,18 @@ final class UrenTallyService {
 		$overages = [];
 
 		foreach ($entries as $entry) {
-			if (is_array($entry) === false) {
+			$counted = $this->countedEntry(entry: $entry);
+			if ($counted === null) {
 				continue;
 			}
 
-			$category = (string)($entry['category'] ?? '');
-			if ($category === '') {
-				continue;
+			$category = $counted['category'];
+			$total += $counted['geteld'];
+			$perCategory[$category] = (($perCategory[$category] ?? 0.0) + $counted['geteld']);
+			if ($counted['notitie'] !== null) {
+				$overages[] = $counted;
 			}
-
-			$hours = (float)($entry['hours'] ?? 0);
-			$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
-			$geteld = $capInfo['countedHours'];
-			$notitie = $capInfo['capNote'];
-
-			$total += $geteld;
-			$perCategory[$category] = (($perCategory[$category] ?? 0.0) + $geteld);
-
-			if ($notitie !== null) {
-				$overages[] = [
-					'category' => $category,
-					'ingevoerd' => $hours,
-					'geteld' => $geteld,
-					'notitie' => $notitie,
-				];
-			}
-		}//end foreach
+		}
 
 		return [
 			'totalHours' => $total,
@@ -125,6 +111,36 @@ final class UrenTallyService {
 		];
 
 	}//end tallyDag()
+
+	/**
+	 * One entry's category, entered hours, counted hours (travel time capped)
+	 * and cap note; null for an entry without a category.
+	 *
+	 * @param mixed $entry A day entry.
+	 *
+	 * @return array{category:string,ingevoerd:float,geteld:float,notitie:string|null}|null
+	 */
+	private function countedEntry(mixed $entry): ?array {
+		if (is_array($entry) === false) {
+			return null;
+		}
+
+		$category = (string)($entry['category'] ?? '');
+		if ($category === '') {
+			return null;
+		}
+
+		$hours = (float)($entry['hours'] ?? 0);
+		$capInfo = $this->guard->pasReistijdCapToe(category: $category, hours: $hours);
+
+		return [
+			'category' => $category,
+			'ingevoerd' => $hours,
+			'geteld' => $capInfo['countedHours'],
+			'notitie' => $capInfo['capNote'],
+		];
+
+	}//end countedEntry()
 
 	/**
 	 * Aggregate YTD UrenDagregistratie entries into a UrencriteriumYear patch.

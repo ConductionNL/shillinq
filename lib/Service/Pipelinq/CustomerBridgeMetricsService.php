@@ -164,6 +164,24 @@ final class CustomerBridgeMetricsService implements IMetricsProvider {
 	private readonly ICache $cache;
 
 	/**
+	 * Snapshot key => [metric name without the app prefix, prometheus type].
+	 *
+	 * @var array<string, array{0: string, 1: string}>
+	 */
+	private const METRIC_NAMES = [
+		self::COUNTER_CONTACT_SUCCESS => ['pipelinq_contact_success_total', 'counter'],
+		self::COUNTER_CONTACT_FALLBACK => ['pipelinq_contact_fallback_total', 'counter'],
+		self::COUNTER_CONTACT_CACHE_HIT => ['pipelinq_contact_cache_hit_total', 'counter'],
+		self::COUNTER_CONTACT_CACHE_STALE => ['pipelinq_contact_cache_stale_total', 'counter'],
+		self::COUNTER_TIMELINE_PUBLISH_SUCCESS => ['pipelinq_timeline_publish_success_total', 'counter'],
+		self::COUNTER_TIMELINE_PUBLISH_DEFERRED => ['pipelinq_timeline_publish_deferred_total', 'counter'],
+		self::COUNTER_PERMANENT_FAILURE => ['pipelinq_permanent_failure_total', 'counter'],
+		self::COUNTER_RETRY_ATTEMPTS => ['pipelinq_retry_attempts_total', 'counter'],
+		self::GAUGE_RETRY_DEPTH_MAX => ['pipelinq_retry_depth_max', 'gauge'],
+		self::GAUGE_DEAD_LETTER_COUNT => ['pipelinq_dead_letter_count', 'gauge'],
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ICacheFactory $cacheFactory Cache layer factory; we open one cache scoped to {@see self::CACHE_NAMESPACE}.
@@ -374,22 +392,9 @@ final class CustomerBridgeMetricsService implements IMetricsProvider {
 	public function metrics(): array {
 		$snapshot = $this->snapshot();
 
-		// [snapshot-key => [metric-name-without-app-prefix, prometheus-type]].
-		$map = [
-			self::COUNTER_CONTACT_SUCCESS => ['pipelinq_contact_success_total', 'counter'],
-			self::COUNTER_CONTACT_FALLBACK => ['pipelinq_contact_fallback_total', 'counter'],
-			self::COUNTER_CONTACT_CACHE_HIT => ['pipelinq_contact_cache_hit_total', 'counter'],
-			self::COUNTER_CONTACT_CACHE_STALE => ['pipelinq_contact_cache_stale_total', 'counter'],
-			self::COUNTER_TIMELINE_PUBLISH_SUCCESS => ['pipelinq_timeline_publish_success_total', 'counter'],
-			self::COUNTER_TIMELINE_PUBLISH_DEFERRED => ['pipelinq_timeline_publish_deferred_total', 'counter'],
-			self::COUNTER_PERMANENT_FAILURE => ['pipelinq_permanent_failure_total', 'counter'],
-			self::COUNTER_RETRY_ATTEMPTS => ['pipelinq_retry_attempts_total', 'counter'],
-			self::GAUGE_RETRY_DEPTH_MAX => ['pipelinq_retry_depth_max', 'gauge'],
-			self::GAUGE_DEAD_LETTER_COUNT => ['pipelinq_dead_letter_count', 'gauge'],
-		];
 
 		$samples = [];
-		foreach ($map as $key => [$metric, $type]) {
+		foreach (self::METRIC_NAMES as $key => [$metric, $type]) {
 			$samples[] = MetricSample::single(
 				name: $metric,
 				type: $type,
@@ -398,16 +403,29 @@ final class CustomerBridgeMetricsService implements IMetricsProvider {
 			);
 		}
 
+		$samples[] = self::circuitStateSample(snapshot: $snapshot);
+
+		return $samples;
+	}//end metrics()
+
+	/**
+	 * The circuit-breaker state as a labelled gauge (closed when never recorded).
+	 *
+	 * @param array<string, mixed> $snapshot The metrics snapshot.
+	 *
+	 * @return MetricSample
+	 */
+	private static function circuitStateSample(array $snapshot): MetricSample {
 		$state = (string)($snapshot[self::GAUGE_CIRCUIT_STATE] ?? CircuitBreaker::STATE_CLOSED);
-		$samples[] = new MetricSample(
+
+		return new MetricSample(
 			name: 'pipelinq_circuit_state',
 			type: 'gauge',
 			help: 'Pipelinq customer-bridge circuit-breaker state',
 			samples: [['labels' => ['state' => $state], 'value' => 1]]
 		);
 
-		return $samples;
-	}//end metrics()
+	}//end circuitStateSample()
 
 	/**
 	 * Increment a counter by 1 (best-effort).
