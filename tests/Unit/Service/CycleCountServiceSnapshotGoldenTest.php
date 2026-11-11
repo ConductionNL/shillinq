@@ -338,6 +338,28 @@ class CycleCountServiceSnapshotGoldenTest extends TestCase {
 	}//end testSaveFailureDenies()
 
 	/**
+	 * recalculateLine saves the refreshed line and returns it; a failing save
+	 * is logged and the refreshed line is still returned.
+	 *
+	 * @return void
+	 */
+	public function testRecalculateLinePersistsAndSurvivesSaveFailure(): void {
+		$line = ['lineId' => 'C-001', 'expectedQuantity' => 10, 'countedQuantity' => 8, 'unitCost' => 1.5];
+
+		$refreshed = $this->service->recalculateLine($line);
+		self::assertSame([['setRegister', 'reg-x'], ['setSchema', 'InventoryCycleCountLine'], ['saveObject', 'InventoryCycleCountLine', $refreshed]], $this->store->calls);
+		self::assertSame([], $this->logs);
+
+		$this->store->failOn = 'save';
+		self::assertSame($refreshed, $this->service->recalculateLine($line));
+		self::assertSame(
+			[['error', 'CycleCountService: recalculateLine persist failed', ['lineId' => 'C-001', 'exception' => 'save refused']]],
+			$this->logs
+		);
+
+	}//end testRecalculateLinePersistsAndSurvivesSaveFailure()
+
+	/**
 	 * A valid count payload with overrides.
 	 *
 	 * @param array<string, mixed> $extra Field overrides.
