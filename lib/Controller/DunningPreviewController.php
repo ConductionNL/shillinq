@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -61,6 +62,16 @@ use Throwable;
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
  */
 class DunningPreviewController extends Controller {
+	/**
+	 * The property each previewed schema is also looked up by when its id is not a uuid.
+	 *
+	 * @var array<string, string>
+	 */
+	private const FALLBACK_PROPERTY = [
+		'Administration' => 'administrationCode',
+		'DunningLadder' => 'slug',
+	];
+
 	/**
 	 * Constructor.
 	 *
@@ -110,42 +121,91 @@ class DunningPreviewController extends Controller {
 			return new JSONResponse(['error' => 'administrationId must be a valid identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$ids = [$requested];
-		if ($requested === '') {
-			$ids = $this->context->accessibleAdministrationIds();
+		$entries = $this->previewEntries(requested: $requested);
+		if ($entries === null) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
-
-		$now     = $this->time->now();
-		$entries = [];
-		$seen    = [];
-		foreach ($ids as $id) {
-			$administration = $this->administration(id: (string)$id);
-			if ($administration === null || $this->mayRead(administration: $administration) === false) {
-				if ($requested !== '') {
-					return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-				}
-
-				continue;
-			}
-
-			$recordId = (string)($administration['id'] ?? '');
-			if (isset($seen[$recordId]) === true) {
-				continue;
-			}
-
-			$seen[$recordId] = true;
-			$entries[]       = [
-				'administrationId' => (string)($administration['administrationCode'] ?? $recordId),
-				'id' => $recordId,
-				'name' => (string)($administration['name'] ?? ''),
-				'enabled' => (($administration[DunningTickRunner::ENABLED_PROPERTY] ?? false) === true),
-				'lastRun' => $this->runner->lastReportFor(administration: $administration),
-				'rows' => $this->runner->previewAdministration(administration: $administration, now: $now),
-			];
-		}//end foreach
 
 		return new JSONResponse(['administrations' => $entries]);
 	}//end nextRun()
+
+	/**
+	 * One preview entry per readable administration in scope, each administration once.
+	 *
+	 * @param string $requested The asked-for administration, or '' for every membership.
+	 *
+	 * @return array<int, array<string, mixed>>|null Null when the asked-for administration is missing or unreadable.
+	 */
+	private function previewEntries(string $requested): ?array {
+		if ($requested === '') {
+			return $this->membershipEntries();
+		}
+
+		$now = $this->time->now();
+		$administration = $this->readableAdministration(id: $requested);
+		if ($administration === null) {
+			return null;
+		}
+
+		return [$this->previewEntry(administration: $administration, now: $now)];
+	}//end previewEntries()
+
+	/**
+	 * The preview of every readable administration the caller is a member of, each once;
+	 * a missing or unreadable one is skipped.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function membershipEntries(): array {
+		$ids = $this->context->accessibleAdministrationIds();
+		$now = $this->time->now();
+		$entries = [];
+		foreach ($ids as $id) {
+			$administration = $this->readableAdministration(id: (string)$id);
+			if ($administration !== null) {
+				$entries[(string)($administration['id'] ?? '')] ??= $this->previewEntry(administration: $administration, now: $now);
+			}
+		}
+
+		return array_values($entries);
+	}//end membershipEntries()
+
+	/**
+	 * The administration, when it exists and the caller may read it.
+	 *
+	 * @param string $id The administration id or code.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function readableAdministration(string $id): ?array {
+		$administration = $this->administration(id: $id);
+		if ($administration === null || $this->mayRead(administration: $administration) === false) {
+			return null;
+		}
+
+		return $administration;
+	}//end readableAdministration()
+
+	/**
+	 * The preview of one administration: its identity, the switch, the last run and the rows it would send.
+	 *
+	 * @param array<string, mixed> $administration The Administration record.
+	 * @param DateTimeImmutable    $now            The moment previewed.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function previewEntry(array $administration, DateTimeImmutable $now): array {
+		$recordId = (string)($administration['id'] ?? '');
+
+		return [
+			'administrationId' => (string)($administration['administrationCode'] ?? $recordId),
+			'id' => $recordId,
+			'name' => (string)($administration['name'] ?? ''),
+			'enabled' => (($administration[DunningTickRunner::ENABLED_PROPERTY] ?? false) === true),
+			'lastRun' => $this->runner->lastReportFor(administration: $administration),
+			'rows' => $this->runner->previewAdministration(administration: $administration, now: $now),
+		];
+	}//end previewEntry()
 
 	/**
 	 * The stages of a ladder with the subject and body a letter would use.
@@ -163,35 +223,68 @@ class DunningPreviewController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$ladder = $this->find(schema: 'DunningLadder', id: $id, fallbackProperty: 'slug');
+		$ladder = $this->find(schema: 'DunningLadder', id: $id);
 		if ($ladder === null || $this->context->canAccess(administrationId: (string)($ladder['administrationId'] ?? '')) === false) {
 			return new JSONResponse(['error' => 'Ladder not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$language = 'nl';
-		if (str_starts_with(strtolower($this->l10n->getLanguageCode()), 'nl') === false) {
-			$language = 'en';
-		}
+		return new JSONResponse(['rows' => $this->stageRows(ladder: $ladder)]);
+	}//end ladderStages()
 
+	/**
+	 * The ladder's stages by number, each with its channel label and letter text in the caller's language.
+	 *
+	 * @param array<string, mixed> $ladder The DunningLadder record.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function stageRows(array $ladder): array {
+		$language = $this->letterLanguage();
 		$stages = array_values(array_filter((array)($ladder['stages'] ?? []), 'is_array'));
 		usort($stages, static fn (array $a, array $b): int => ((int)($a['nr'] ?? 0) <=> (int)($b['nr'] ?? 0)));
 
 		$rows = [];
 		foreach ($stages as $stage) {
-			$text    = $this->renderer->textFor(stage: $stage, language: $language);
-			$channel = (string)($stage['channel'] ?? 'EMAIL');
-			$rows[]  = [
-				'nr' => (int)($stage['nr'] ?? 0),
-				'days' => (int)($stage['daysAfterExpiryDate'] ?? 0),
-				'channel' => $channel,
-				'channelLabel' => $this->channelLabel(channel: $channel),
-				'subject' => $text['subject'],
-				'body' => $text['body'],
-			];
+			$rows[] = $this->stageRow(stage: $stage, language: $language);
 		}
 
-		return new JSONResponse(['rows' => $rows]);
-	}//end ladderStages()
+		return $rows;
+	}//end stageRows()
+
+	/**
+	 * 'nl' for a Dutch caller, 'en' otherwise.
+	 *
+	 * @return string
+	 */
+	private function letterLanguage(): string {
+		if (str_starts_with(strtolower($this->l10n->getLanguageCode()), 'nl') === false) {
+			return 'en';
+		}
+
+		return 'nl';
+	}//end letterLanguage()
+
+	/**
+	 * One stage row.
+	 *
+	 * @param array<string, mixed> $stage    A ladder stage.
+	 * @param string               $language The letter language.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function stageRow(array $stage, string $language): array {
+		$text = $this->renderer->textFor(stage: $stage, language: $language);
+		$channel = (string)($stage['channel'] ?? 'EMAIL');
+
+		return [
+			'nr' => (int)($stage['nr'] ?? 0),
+			'days' => (int)($stage['daysAfterExpiryDate'] ?? 0),
+			'channel' => $channel,
+			'channelLabel' => $this->channelLabel(channel: $channel),
+			'subject' => $text['subject'],
+			'body' => $text['body'],
+		];
+	}//end stageRow()
 
 	/**
 	 * Whether the caller holds a membership of this administration, under
@@ -220,7 +313,7 @@ class DunningPreviewController extends Controller {
 	 * @return array<string,mixed>|null
 	 */
 	private function administration(string $id): ?array {
-		return $this->find(schema: 'Administration', id: $id, fallbackProperty: 'administrationCode');
+		return $this->find(schema: 'Administration', id: $id);
 	}//end administration()
 
 	/**
@@ -228,11 +321,10 @@ class DunningPreviewController extends Controller {
 	 *
 	 * @param string $schema           The schema slug.
 	 * @param string $id               The id, uuid or slug.
-	 * @param string $fallbackProperty The property to match when the id is not an identifier.
 	 *
 	 * @return array<string,mixed>|null
 	 */
-	private function find(string $schema, string $id, string $fallbackProperty): ?array {
+	private function find(string $schema, string $id): ?array {
 		try {
 			$scoped = $this->objectService->setRegister($this->register())->setSchema($schema);
 		} catch (Throwable $e) {
@@ -240,7 +332,7 @@ class DunningPreviewController extends Controller {
 			return null;
 		}
 
-		return ObjectIdentifier::findOne(scoped: $scoped, id: $id, fallbackProperty: $fallbackProperty);
+		return ObjectIdentifier::findOne(scoped: $scoped, id: $id, fallbackProperty: self::FALLBACK_PROPERTY[$schema]);
 	}//end find()
 
 	/**
