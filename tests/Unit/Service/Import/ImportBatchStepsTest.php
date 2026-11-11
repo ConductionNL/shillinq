@@ -46,7 +46,6 @@ use OCA\Shillinq\Service\Import\ImportPostingPayloads;
 use OCA\Shillinq\Service\Import\ImportSourceReader;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -157,7 +156,7 @@ final class ImportBatchStepsTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		$posting  = new ImportPosting(
@@ -171,7 +170,7 @@ final class ImportBatchStepsTest extends TestCase {
 		$steps    = new ImportBatchSteps(
 			pipeline: $pipeline,
 			reader: new ImportSourceReader(rootFolder: $root, userSession: $this->createMock(IUserSession::class)),
-			period: new ImportPeriod(objectService: $this->store, settings: $settings),
+			period: new ImportPeriod(objectService: $this->store, registerLocation: $settings),
 			objectService: $this->store,
 			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])
 		);
@@ -627,7 +626,7 @@ final class ImportBatchStepsTest extends TestCase {
 		);
 		(new GuardTagServices())->register(context: $context);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$c = $this->createMock(\OCP\AppFramework\IAppContainer::class);
 		$c->method('get')->willReturnCallback(
@@ -636,7 +635,7 @@ final class ImportBatchStepsTest extends TestCase {
 				LoggerInterface::class => $this->createMock(LoggerInterface::class),
 				ImportReverseGuard::class => new ImportReverseGuard(
 					new ImportBatchGuard(),
-					new ImportPeriod(objectService: $this->store, settings: $settings),
+					new ImportPeriod(objectService: $this->store, registerLocation: $settings),
 					$this->createMock(LoggerInterface::class)
 				),
 			}

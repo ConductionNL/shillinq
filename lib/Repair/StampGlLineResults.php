@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Repair;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -49,13 +49,13 @@ class StampGlLineResults implements IRepairStep {
 	 *
 	 * @param GlLineResultStamps     $stamps          Writes the stamps.
 	 * @param ObjectServiceInterface $objectService   OpenRegister object service.
-	 * @param SettingsService        $settingsService Resolves the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger          Logger.
 	 */
 	public function __construct(
 		private readonly GlLineResultStamps $stamps,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -87,7 +87,7 @@ class StampGlLineResults implements IRepairStep {
 			foreach (['posted', 'reversed'] as $state) {
 				$rows = $this->readAllRows(
 					objectService: $this->objectService,
-					registerSlug: $this->settingsService->getRegisterSlug(),
+					registerSlug: $this->registerLocation->getRegisterSlug(),
 					schema: 'GLTransaction',
 					filters: ['state' => $state]
 				);

@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +41,7 @@ class PaymentBlockCheckerTest extends TestCase {
 	 * @return PaymentBlockChecker
 	 */
 	private function checker(array $records): PaymentBlockChecker {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings);

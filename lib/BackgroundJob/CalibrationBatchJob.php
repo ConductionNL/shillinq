@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -59,13 +59,13 @@ class CalibrationBatchJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param SettingsService $settingsService Register-slug resolver.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -104,7 +104,7 @@ class CalibrationBatchJob extends TimedJob {
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
 	private function runAsJob($argument): void {
-		if ($this->settingsService->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('CalibrationBatchJob: OR unavailable, skipping.');
 			return;
 		}
@@ -129,7 +129,7 @@ class CalibrationBatchJob extends TimedJob {
 	private function calibrateLastMonth(): void {
 		$run = new CashflowHorizonRun(
 			objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService'),
-			register: $this->settingsService->getRegisterSlug(),
+			register: $this->registerLocation->getRegisterSlug(),
 		);
 		$period = new CalibrationPeriod();
 		$this->calibrate(run: $run, period: $period);
