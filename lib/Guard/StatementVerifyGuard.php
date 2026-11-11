@@ -70,6 +70,20 @@ use Psr\Log\LoggerInterface;
  */
 class StatementVerifyGuard {
 	/**
+	 * Page size for the paged lookups (stays under OR's default page limit).
+	 *
+	 * @var int
+	 */
+	private const PAGE_SIZE = 500;
+
+	/**
+	 * Resolution statuses that count as resolved (REQ-REC-004).
+	 *
+	 * @var array<int, string>
+	 */
+	private const RESOLVED_STATUSES = ['matched', 'timing', 'pending', 'adjustment'];
+
+	/**
 	 * Construct the guard with OR's ObjectService injected (ADR-083 rule 1).
 	 *
 	 * @param IAppConfig $appConfig App config for dynamic register
@@ -146,52 +160,68 @@ class StatementVerifyGuard {
 		}
 
 		try {
-			$openingCents = $this->cents(amount: (float)($object['openingBalance'] ?? 0.0));
-			$closingCents = $this->cents(amount: (float)($object['closingBalance'] ?? 0.0));
-
-			$netActivityCents = $this->sumGLNetActivityCents(
-				bankAccountId: (string)($object['bankAccountId'] ?? ''),
-				periodStart: (string)($object['statementPeriodStart'] ?? ''),
-				periodEnd: (string)($object['statementPeriodEnd'] ?? ''),
-			);
-
-			$expectedCents = ($openingCents + $netActivityCents);
-			$varianceCents = ($closingCents - $expectedCents);
-
-			$this->persistVarianceFields(
-				id: $id,
-				expectedCents: $expectedCents,
-				varianceCents: $varianceCents,
-			);
-
-			if ($varianceCents !== 0) {
-				// Per REQ-REC-002 scenario "variance surfaces warning but allows proceed":
-				// we log a warning but do NOT block the transition. The operator
-				// sees the variance in the persisted field + the UI surface.
-				$this->logger->info(
-					'StatementVerifyGuard: statement-balance variance detected on initiate '
-					. '(transition allowed; operator must resolve via matching or REQ-REC-004 classification)',
-					[
-						'reconciliationId' => $id,
-						'expectedCents' => $expectedCents,
-						'closingCents' => $closingCents,
-						'varianceCents' => $varianceCents,
-					]
-				);
-			}
+			$this->recordVariance(object: $object, id: $id);
 		} catch (\Throwable $e) {
-			// Fail-closed: any computation failure denies the transition so
-			// the operator can investigate rather than silently proceeding
-			// with a stale or zero variance.
-			$this->logger->error(
-				'StatementVerifyGuard: initiate denied — statement-balance verification failed',
-				['exception' => $e->getMessage(), 'reconciliationId' => $id]
-			);
-			return false;
-		}//end try
+			return $this->verificationFailed(id: $id, e: $e);
+		}
 
 		return true;
 	}//end verifyStatementBalance()
+
+	/**
+	 * Fail-closed: any computation failure denies the transition so the operator
+	 * can investigate rather than silently proceeding with a stale or zero variance.
+	 *
+	 * @param string     $id The reconciliation id.
+	 * @param \Throwable $e  The failure.
+	 *
+	 * @return bool Always false.
+	 */
+	private function verificationFailed(string $id, \Throwable $e): bool {
+		$this->logger->error(
+			'StatementVerifyGuard: initiate denied — statement-balance verification failed',
+			['exception' => $e->getMessage(), 'reconciliationId' => $id]
+		);
+
+		return false;
+	}//end verificationFailed()
+
+	/**
+	 * Compute and persist the expected balance and variance; a non-zero variance
+	 * is logged but does NOT block the transition (REQ-REC-002 scenario "variance
+	 * surfaces warning but allows proceed") — the operator sees the persisted field.
+	 *
+	 * @param array<string, mixed> $object The BankReconciliation object array.
+	 * @param string               $id     Its id.
+	 *
+	 * @return void
+	 */
+	private function recordVariance(array $object, string $id): void {
+		$figures = $this->balanceFigures(object: $object);
+		$this->persistVarianceFields(id: $id, figures: $figures);
+		if ($figures['varianceCents'] !== 0) {
+			$this->logger->info(
+				'StatementVerifyGuard: statement-balance variance detected on initiate '
+				. '(transition allowed; operator must resolve via matching or REQ-REC-004 classification)',
+				['reconciliationId' => $id] + $figures
+			);
+		}
+	}//end recordVariance()
+
+	/**
+	 * expected = opening + net GL activity, variance = closing - expected, all in cents.
+	 *
+	 * @param array<string, mixed> $object The BankReconciliation object array.
+	 *
+	 * @return array{expectedCents: int, closingCents: int, varianceCents: int}
+	 */
+	private function balanceFigures(array $object): array {
+		$openingCents = $this->cents(amount: (float)($object['openingBalance'] ?? 0.0));
+		$closingCents = $this->cents(amount: (float)($object['closingBalance'] ?? 0.0));
+		$expectedCents = ($openingCents + $this->sumGLNetActivityCents(object: $object));
+
+		return ['expectedCents' => $expectedCents, 'closingCents' => $closingCents, 'varianceCents' => ($closingCents - $expectedCents)];
+	}//end balanceFigures()
 
 	/**
 	 * Reject the `in-progress → verified` transition when unresolved
@@ -214,13 +244,7 @@ class StatementVerifyGuard {
 	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004, REQ-REC-006)
 	 */
 	public function requireResolvedAndSignedOff(array $object): bool {
-		// REQ-REC-006: sign-off comment required.
-		$signOff = trim((string)($object['signOffComment'] ?? ''));
-		if ($signOff === '') {
-			$this->logger->info(
-				'StatementVerifyGuard: verify denied — signOffComment is required (REQ-REC-006)',
-				['reconciliationId' => ($object['id'] ?? null)]
-			);
+		if ($this->hasSignOff(object: $object) === false) {
 			return false;
 		}
 
@@ -230,34 +254,71 @@ class StatementVerifyGuard {
 			return false;
 		}
 
+		$matches = $this->lookedUpMatches(reconId: $id);
+
+		return $matches !== null && $this->allResolved(reconId: $id, matches: $matches);
+	}//end requireResolvedAndSignedOff()
+
+	/**
+	 * REQ-REC-006: the sign-off comment is required; a refusal is logged.
+	 *
+	 * @param array<string, mixed> $object The BankReconciliation object array.
+	 *
+	 * @return bool
+	 */
+	private function hasSignOff(array $object): bool {
+		if (trim((string)($object['signOffComment'] ?? '')) !== '') {
+			return true;
+		}
+
+		$this->logger->info(
+			'StatementVerifyGuard: verify denied — signOffComment is required (REQ-REC-006)',
+			['reconciliationId' => ($object['id'] ?? null)]
+		);
+		return false;
+	}//end hasSignOff()
+
+	/**
+	 * The session's matches; a failed lookup is logged.
+	 *
+	 * @param string $reconId The reconciliation id.
+	 *
+	 * @return array<int, mixed>|null The matches, or null when the lookup failed.
+	 */
+	private function lookedUpMatches(string $reconId): ?array {
 		try {
-			$matches = $this->findMatches(reconId: $id);
+			return $this->findMatches(reconId: $reconId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'StatementVerifyGuard: verify denied — match lookup failed (fail-closed)',
-				['reconciliationId' => $id, 'exception' => $e->getMessage()]
+				['reconciliationId' => $reconId, 'exception' => $e->getMessage()]
 			);
-			return false;
+			return null;
 		}
+	}//end lookedUpMatches()
 
-		$allowed = ['matched', 'timing', 'pending', 'adjustment'];
+	/**
+	 * Whether every match carries a resolved status; the first that does not is logged.
+	 *
+	 * @param string            $reconId The reconciliation id (log context).
+	 * @param array<int, mixed> $matches The matches.
+	 *
+	 * @return bool
+	 */
+	private function allResolved(string $reconId, array $matches): bool {
 		foreach ($matches as $match) {
 			$status = (string)($match['resolutionStatus'] ?? '');
-			if (in_array($status, $allowed, true) === false) {
+			if (in_array($status, self::RESOLVED_STATUSES, true) === false) {
 				$this->logger->info(
 					'StatementVerifyGuard: verify denied — unresolved matches remain (REQ-REC-004)',
-					[
-						'reconciliationId' => $id,
-						'matchId' => ($match['matchId'] ?? $match['id'] ?? null),
-						'resolutionStatus' => $status,
-					]
+					['reconciliationId' => $reconId, 'matchId' => ($match['matchId'] ?? $match['id'] ?? null), 'resolutionStatus' => $status]
 				);
 				return false;
 			}
 		}
 
 		return true;
-	}//end requireResolvedAndSignedOff()
+	}//end allResolved()
 
 	/**
 	 * Convert a monetary float into integer cents per ADR-005 server
@@ -279,71 +340,66 @@ class StatementVerifyGuard {
 	 * and the bank account's GL account. Matches T2 `bookkeeping-bank-reconciliation`'s
 	 * own period-bounded aggregation contract.
 	 *
-	 * @param string $bankAccountId The bank account / IBAN identifier
-	 *                              (REQ-REC-001).
-	 * @param string $periodStart ISO-8601 date string (YYYY-MM-DD)
-	 *                            for the start of the period.
-	 * @param string $periodEnd ISO-8601 date string (YYYY-MM-DD)
-	 *                          for the end of the period.
+	 * GLLine entries are filtered by accountNumber + entryDate window. We use
+	 * accountNumber == bankAccountId by convention; T4 expects bank accounts to
+	 * share their IBAN/identifier with the GL account number (or to be aliased
+	 * via a future Account.bankAccountId field — out of scope here).
+	 *
+	 * @param array<string, mixed> $object The BankReconciliation: bankAccountId (REQ-REC-001)
+	 *                                     and statementPeriodStart / statementPeriodEnd (YYYY-MM-DD).
 	 *
 	 * @return int The net GL activity in cents (positive = net debit, i.e.
 	 *             cash inflow on an asset account).
 	 */
-	private function sumGLNetActivityCents(
-		string $bankAccountId,
-		string $periodStart,
-		string $periodEnd,
-	): int {
+	private function sumGLNetActivityCents(array $object): int {
+		$bankAccountId = (string)($object['bankAccountId'] ?? '');
+		$periodStart = (string)($object['statementPeriodStart'] ?? '');
+		$periodEnd = (string)($object['statementPeriodEnd'] ?? '');
 		if ($bankAccountId === '' || $periodStart === '' || $periodEnd === '') {
 			return 0;
 		}
 
-		// Page through GLLine entries filtered by accountNumber + entryDate
-		// window. We use accountNumber == bankAccountId by convention; T4
-		// expects bank accounts to share their IBAN/identifier with the GL
-		// account number (or to be aliased via a future Account.bankAccountId
-		// field — out of scope here).
 		$netCents = 0;
-		$pageSize = 500;
-		$page = 1;
-		$batchSize = 0;
-		do {
-			$batch = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('GLLine')
-				->findAll(
-					[
-						'filters' => [
-							'accountNumber' => $bankAccountId,
-							'entryDate' => [
-								'gte' => $periodStart,
-								'lte' => $periodEnd,
-							],
-						],
-						'limit' => $pageSize,
-						'offset' => (($page - 1) * $pageSize),
-					]
-				);
-
-			$batchSize = count($batch);
-			foreach ($batch as $line) {
-				// Polarity is encoded by the `side` enum on GLLine per
-				// REQ-GL-003 — 'debit' contributes positively to net activity
-				// on an asset account, 'credit' contributes negatively.
-				$amountCents = $this->cents(amount: (float)($line['amount'] ?? 0.0));
-				$side = (string)($line['side'] ?? 'debit');
-				if ($side === 'credit') {
-					$netCents -= $amountCents;
-				} else {
-					$netCents += $amountCents;
-				}
-			}
-
-			$page++;
-		} while ($batchSize === $pageSize);
+		$filters = ['accountNumber' => $bankAccountId, 'entryDate' => ['gte' => $periodStart, 'lte' => $periodEnd]];
+		foreach ($this->pages(schema: 'GLLine', filters: $filters) as $batch) {
+			$netCents += $this->batchNetCents(batch: $batch);
+		}
 
 		return $netCents;
 	}//end sumGLNetActivityCents()
+
+	/**
+	 * The signed cents of one page of GLLines.
+	 *
+	 * @param array<int, mixed> $batch The GLLine rows.
+	 *
+	 * @return int
+	 */
+	private function batchNetCents(array $batch): int {
+		$netCents = 0;
+		foreach ($batch as $line) {
+			$netCents += $this->signedCents(line: $line);
+		}
+
+		return $netCents;
+	}//end batchNetCents()
+
+	/**
+	 * A GLLine's amount in cents, signed by its `side` (REQ-GL-003): 'debit' adds
+	 * to net activity on an asset account, 'credit' subtracts.
+	 *
+	 * @param mixed $line A GLLine row.
+	 *
+	 * @return int
+	 */
+	private function signedCents(mixed $line): int {
+		$amountCents = $this->cents(amount: (float)($line['amount'] ?? 0.0));
+		if ((string)($line['side'] ?? 'debit') === 'credit') {
+			return -$amountCents;
+		}
+
+		return $amountCents;
+	}//end signedCents()
 
 	/**
 	 * Persist the recomputed expectedGLBalance and variance back onto the
@@ -353,36 +409,45 @@ class StatementVerifyGuard {
 	 * trusted from the client. Stored as decimals (cents/100) for OR
 	 * compatibility but compared in cents.
 	 *
-	 * @param string $id The reconciliation id.
-	 * @param int $expectedCents The computed expected GL balance in cents.
-	 * @param int $varianceCents The computed variance in cents
-	 *                           (closing - expected).
+	 * @param string                                                         $id      The reconciliation id.
+	 * @param array{expectedCents: int, closingCents: int, varianceCents: int} $figures The computed figures
+	 *                                                                                  (variance = closing - expected).
 	 *
 	 * @return void
 	 */
-	private function persistVarianceFields(string $id, int $expectedCents, int $varianceCents): void {
+	private function persistVarianceFields(string $id, array $figures): void {
 		try {
-			$this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BankReconciliation')
-				->updateObject(
-					$id,
-					[
-						'expectedGLBalance' => ($expectedCents / 100),
-						'variance' => abs($varianceCents) / 100,
-					]
-				);
+			$this->writeVariance(id: $id, figures: $figures);
 		} catch (\Throwable $e) {
 			// Non-fatal: the precondition already computed the variance for
-			// the warning surface. Log and continue so the transition can
-			// proceed.
+			// the warning surface. Log and continue so the transition can proceed.
 			$this->logger->warning(
 				'StatementVerifyGuard: variance persistence failed (non-fatal — warning surface still works)',
 				['reconciliationId' => $id, 'exception' => $e->getMessage()]
 			);
-		}//end try
-
+		}
 	}//end persistVarianceFields()
+
+	/**
+	 * Write expectedGLBalance and the absolute variance as decimals.
+	 *
+	 * @param string                                                         $id      The reconciliation id.
+	 * @param array{expectedCents: int, closingCents: int, varianceCents: int} $figures The computed figures.
+	 *
+	 * @return void
+	 */
+	private function writeVariance(string $id, array $figures): void {
+		$this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('BankReconciliation')
+			->updateObject(
+				$id,
+				[
+					'expectedGLBalance' => ($figures['expectedCents'] / 100),
+					'variance' => abs($figures['varianceCents']) / 100,
+				]
+			);
+	}//end writeVariance()
 
 	/**
 	 * Fetch all ReconciliationMatch records for a reconciliation session,
@@ -394,25 +459,31 @@ class StatementVerifyGuard {
 	 */
 	private function findMatches(string $reconId): array {
 		$matches = [];
-		$pageSize = 500;
-		$page = 1;
-		$batchSize = 0;
-		do {
-			$batch = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('ReconciliationMatch')
-				->findAll(
-					[
-						'filters' => ['reconId' => $reconId],
-						'limit' => $pageSize,
-						'offset' => (($page - 1) * $pageSize),
-					]
-				);
+		foreach ($this->pages(schema: 'ReconciliationMatch', filters: ['reconId' => $reconId]) as $batch) {
 			$matches = array_merge($matches, $batch);
-			$batchSize = count($batch);
-			$page++;
-		} while ($batchSize === $pageSize);
+		}
 
 		return $matches;
 	}//end findMatches()
+
+	/**
+	 * Page through a schema's rows, one batch at a time, until a short page.
+	 * Lazy, so each page is fetched only once the previous one has been used.
+	 *
+	 * @param string               $schema  The schema slug.
+	 * @param array<string, mixed> $filters The findAll filters.
+	 *
+	 * @return \Generator<int, array<int, mixed>>
+	 */
+	private function pages(string $schema, array $filters): \Generator {
+		$page = 1;
+		do {
+			$batch = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema($schema)
+				->findAll(['filters' => $filters, 'limit' => self::PAGE_SIZE, 'offset' => (($page - 1) * self::PAGE_SIZE)]);
+			yield $batch;
+			$page++;
+		} while (count($batch) === self::PAGE_SIZE);
+	}//end pages()
 }//end class
