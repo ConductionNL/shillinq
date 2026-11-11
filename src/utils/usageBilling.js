@@ -165,18 +165,50 @@ export async function rateReadings(ids) {
  * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
  */
 export function billableReadings(readings, customerId, fromDate, toDate) {
+	const period = {
+		customerId: textOrEmpty(customerId),
+		from: textOrEmpty(fromDate),
+		to: textOrEmpty(toDate),
+	}
 	return (readings || [])
-		.filter(
-			(reading) =>
-				reading?.status === 'rated'
-				&& !reading?.invoiceId
-				&& String(reading?.customerId || '') === String(customerId || '')
-				&& String(reading?.periodEnd || '') >= String(fromDate || '')
-				&& String(reading?.periodEnd || '') <= String(toDate || ''),
-		)
-		.sort((a, b) =>
-			String(a.periodEnd || '').localeCompare(String(b.periodEnd || '')),
-		)
+		.filter((reading) => isBillableReading(reading, period))
+		.sort((a, b) => textOrEmpty(a.periodEnd).localeCompare(textOrEmpty(b.periodEnd)))
+}
+
+/**
+ * A value as text, '' when it is falsy.
+ *
+ * @param {unknown} value The value.
+ * @return {string}
+ */
+function textOrEmpty(value) {
+	return String(value || '')
+}
+
+/**
+ * A reading is billable in the period: rated, not invoiced, the period's
+ * customer, its period ending inside the period.
+ *
+ * @param {object|null} reading The meter reading.
+ * @param {{customerId: string, from: string, to: string}} period The invoice period.
+ * @return {boolean}
+ */
+function isBillableReading(reading, period) {
+	return reading?.status === 'rated'
+		&& !reading?.invoiceId
+		&& textOrEmpty(reading?.customerId) === period.customerId
+		&& endsInPeriod(textOrEmpty(reading?.periodEnd), period)
+}
+
+/**
+ * The period end lies between the period's first and last day.
+ *
+ * @param {string} periodEnd The reading's period end.
+ * @param {{from: string, to: string}} period The invoice period.
+ * @return {boolean}
+ */
+function endsInPeriod(periodEnd, period) {
+	return periodEnd >= period.from && periodEnd <= period.to
 }
 
 /**
