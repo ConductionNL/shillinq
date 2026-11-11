@@ -54,13 +54,6 @@ use Psr\Log\LoggerInterface;
  */
 class GoodsReceiptNoteController extends Controller {
 	/**
-	 * Short-slug identifier pattern shared by every scope/path parameter.
-	 *
-	 * @var string
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
-
-	/**
 	 * Refusal message parts that mean a conflict (409).
 	 *
 	 * @var array<int,string>
@@ -128,7 +121,7 @@ class GoodsReceiptNoteController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
-		$administrationId = $this->newReceiptAdministration();
+		$administrationId = $this->guard()->newReceipt();
 		if ($administrationId instanceof JSONResponse) {
 			return $administrationId;
 		}
@@ -313,6 +306,28 @@ class GoodsReceiptNoteController extends Controller {
 	}//end uploadPhotos()
 
 	/**
+	 * The checks a receipt request passes before it reaches the service.
+	 *
+	 * @return ReceiptRequestGuard
+	 */
+	private function guard(): ReceiptRequestGuard {
+		$scope = new ReceiptRequestScope(request: $this->request, administrationContext: $this->administrationContext);
+		return new ReceiptRequestGuard(userSession: $this->userSession, scope: $scope);
+	}//end guard()
+
+	/**
+	 * The administration of a request about one receipt: 401 without a user,
+	 * 400 for a malformed id or administration, a masked 404 for a foreign one.
+	 *
+	 * @param string $id The receipt id.
+	 *
+	 * @return string|JSONResponse
+	 */
+	private function receiptAdministration(string $id): string|JSONResponse {
+		return $this->guard()->receipt(id: $id, names: new ReceiptNames(invalidId: 'Invalid GRN id', notFound: 'Goods receipt note not found'));
+	}//end receiptAdministration()
+
+	/**
 	 * The create payload from the request.
 	 *
 	 * @return array<string,mixed>
@@ -351,67 +366,6 @@ class GoodsReceiptNoteController extends Controller {
 	}//end addLinePayload()
 
 	/**
-	 * The scope of this request.
-	 *
-	 * @return ReceiptRequestScope
-	 */
-	private function scope(): ReceiptRequestScope {
-		return new ReceiptRequestScope(request: $this->request, administrationContext: $this->administrationContext);
-
-	}//end scope()
-
-	/**
-	 * The administration of a request about one receipt: 401 without a user,
-	 * 400 for a malformed id or administration, a masked 404 for a foreign one.
-	 *
-	 * @param string $id The receipt id.
-	 *
-	 * @return string|JSONResponse
-	 */
-	private function receiptAdministration(string $id): string|JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid GRN id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		return $this->scope()->administration(notFound: 'Goods receipt note not found');
-
-	}//end receiptAdministration()
-
-	/**
-	 * Answer a failed action: a service refusal by its message, anything else
-	 * logged under the action and a 500.
-	 *
-	 * @param string $action The action.
-	 * @param array<string,mixed> $context The log context, with the failure as exception.
-	 *
-	 * @return JSONResponse
-	 */
-	private function failed(string $action, array $context): JSONResponse {
-		$answer = new ReceiptFailureAnswer(logger: $this->logger, conflictMarkers: self::CONFLICT_MARKERS);
-		return $answer->answer(messages: self::FAILURES[$action], context: $context);
-
-	}//end failed()
-
-	/**
-	 * The administration a new receipt is created in: 401 without a user, 400
-	 * without a well-formed administration, a masked 404 for a foreign one.
-	 *
-	 * @return string|JSONResponse
-	 */
-	private function newReceiptAdministration(): string|JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		return $this->scope()->administration(notFound: 'Administration not found');
-
-	}//end newReceiptAdministration()
-
-	/**
 	 * Add the request's line to the goods receipt note.
 	 *
 	 * @param string $administrationId The administration.
@@ -427,6 +381,21 @@ class GoodsReceiptNoteController extends Controller {
 		);
 
 	}//end addGrnLine()
+
+	/**
+	 * Answer a failed action: a service refusal by its message, anything else
+	 * logged under the action and a 500.
+	 *
+	 * @param string $action The action.
+	 * @param array<string,mixed> $context The log context, with the failure as exception.
+	 *
+	 * @return JSONResponse
+	 */
+	private function failed(string $action, array $context): JSONResponse {
+		$answer = new ReceiptFailureAnswer(logger: $this->logger, conflictMarkers: self::CONFLICT_MARKERS);
+		return $answer->answer(messages: self::FAILURES[$action], context: $context);
+
+	}//end failed()
 
 	/**
 	 * Attach the request's photos to the goods receipt note.
