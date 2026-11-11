@@ -93,27 +93,15 @@ class WidgetSettingsController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function create(): JSONResponse {
-		$businessId = trim((string)$this->request->getParam('businessId', ''));
+		$businessId       = trim((string)$this->request->getParam('businessId', ''));
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-
 		if ($businessId === '' || $administrationId === '') {
-			return new JSONResponse(
-				['success' => false, 'message' => 'businessId and administrationId are required.'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return self::badRequest(message: 'businessId and administrationId are required.');
 		}
 
-		$result = $this->authService->createApiKey(
-			administrationId: $administrationId,
-			businessId: $businessId,
-			actor: $this->actor()
+		return self::resultResponse(
+			result: $this->authService->createApiKey(administrationId: $administrationId, businessId: $businessId, actor: $this->actor())
 		);
-		$status = Http::STATUS_BAD_REQUEST;
-		if ($result['success'] === true) {
-			$status = Http::STATUS_OK;
-		}
-
-		return new JSONResponse($result, $status);
 	}//end create()
 
 	/**
@@ -132,21 +120,11 @@ class WidgetSettingsController extends Controller {
 	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function rotate(): JSONResponse {
 		$businessId = trim((string)$this->request->getParam('businessId', ''));
-
 		if ($businessId === '') {
-			return new JSONResponse(['success' => false, 'message' => 'businessId is required.'], Http::STATUS_BAD_REQUEST);
+			return self::badRequest(message: 'businessId is required.');
 		}
 
-		$result = $this->authService->rotateApiKey(
-			businessId: $businessId,
-			actor: $this->actor()
-		);
-		$status = Http::STATUS_BAD_REQUEST;
-		if ($result['success'] === true) {
-			$status = Http::STATUS_OK;
-		}
-
-		return new JSONResponse($result, $status);
+		return self::resultResponse(result: $this->authService->rotateApiKey(businessId: $businessId, actor: $this->actor()));
 	}//end rotate()
 
 	/**
@@ -160,15 +138,36 @@ class WidgetSettingsController extends Controller {
 	public function revoke(): JSONResponse {
 		$businessId = trim((string)$this->request->getParam('businessId', ''));
 		if ($businessId === '') {
-			return new JSONResponse(['success' => false, 'message' => 'businessId is required.'], Http::STATUS_BAD_REQUEST);
+			return self::badRequest(message: 'businessId is required.');
 		}
 
-		$result = $this->authService->revokeApiKey(businessId: $businessId, actor: $this->actor());
+		return self::resultResponse(result: $this->authService->revokeApiKey(businessId: $businessId, actor: $this->actor()));
+	}//end revoke()
+
+	/**
+	 * The service result: 200 when it succeeded, else 400.
+	 *
+	 * @param array<string, mixed> $result The service result.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function resultResponse(array $result): JSONResponse {
 		$status = Http::STATUS_BAD_REQUEST;
 		if ($result['success'] === true) {
 			$status = Http::STATUS_OK;
 		}
 
 		return new JSONResponse($result, $status);
-	}//end revoke()
+	}//end resultResponse()
+
+	/**
+	 * The 400 for a missing parameter.
+	 *
+	 * @param string $message What is missing.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function badRequest(string $message): JSONResponse {
+		return new JSONResponse(['success' => false, 'message' => $message], Http::STATUS_BAD_REQUEST);
+	}//end badRequest()
 }//end class
