@@ -198,9 +198,11 @@ class TrialBalanceCalculator {
 	private function ancestors(string $account, array $parentOf): array {
 		$ancestors = [];
 		$parent    = $parentOf[$account];
-		while ($parent !== null && array_key_exists($parent, $parentOf) === true && count($ancestors) < 64) {
+		$steps     = 0;
+		while ($parent !== null && array_key_exists($parent, $parentOf) === true && $steps < 64) {
 			$ancestors[] = $parent;
 			$parent      = $parentOf[$parent];
+			$steps++;
 		}
 
 		return $ancestors;
