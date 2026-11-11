@@ -145,6 +145,7 @@ final class AansluitingSourcesGoldenTest extends TestCase {
 				['id' => 'inv-2', 'administrationId' => 'adm-1', 'lifecycleState' => 'overdue', 'grossAmount' => 8000.0],
 				['id' => 'inv-3', 'administrationId' => 'adm-1', 'lifecycleState' => 'paid', 'grossAmount' => 5000.0],
 				['administrationId' => 'adm-1', 'lifecycleState' => 'issued', 'grossAmount' => 1.0],
+				['id' => 'inv-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'issued', 'grossAmount' => 250.5],
 			],
 			'APTransaction' => [
 				['id' => 'ap-1', 'administrationId' => 'adm-1', 'state' => 'received', 'totalAmount' => 9350.0],
