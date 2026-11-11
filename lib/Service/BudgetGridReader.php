@@ -171,13 +171,61 @@ class BudgetGridReader {
 	public function loadGrid(string $administrationId, string $startPeriod, string $endPeriod, string $granularity): array {
 		$rowTree = $this->rowsFor(administrationId: $administrationId);
 		$columns = $this->columnsFor(range: ['start' => $startPeriod, 'end' => $endPeriod], granularity: $granularity);
+		$columns = $this->markPastColumns(columns: $columns, administrationId: $administrationId);
 
+		$annualBudgetIdByYear = $this->defaultBudgetsByYear(columns: $columns, administrationId: $administrationId);
+		$budgetLinesByAnnualId = $this->budgetLinesByAnnualId(annualBudgetIdByYear: $annualBudgetIdByYear);
+
+		$bvaContext = $this->budgetVsActualsReader->loadContext(
+			administrationId: $administrationId,
+			annualBudgetIds: [],
+			includeLedgerGroups: true
+		);
+		$accounts = self::accountIndexes(accounts: ($bvaContext['accounts'] ?? []));
+
+		return [
+			'rowTree' => $rowTree,
+			'columns' => $columns,
+			'bvaContext' => $bvaContext,
+			'accountTypeByNumber' => $accounts['typeByNumber'],
+			'accountByNumber' => $accounts['byNumber'],
+			'annualBudgetIdByYear' => $annualBudgetIdByYear,
+			'budgetLinesByFiscalYear' => self::linesByFiscalYear(
+				annualBudgetIdByYear: $annualBudgetIdByYear,
+				linesByAnnualId: $budgetLinesByAnnualId
+			),
+		];
+
+	}//end loadGrid()
+
+	/**
+	 * Flag each column `isPast` against the administration's closed periods.
+	 *
+	 * @param array<int,array<string,mixed>> $columns          The columns.
+	 * @param string                         $administrationId The administration.
+	 *
+	 * @return array<int,array<string,mixed>> The columns, flagged.
+	 */
+	private function markPastColumns(array $columns, string $administrationId): array {
 		$fiscalPeriods = $this->query(schema: self::SCHEMA_FISCAL_PERIOD, filters: ['administrationId' => $administrationId]);
 		$pastKeys = $this->pastColumnKeys(columns: $columns, fiscalPeriods: $fiscalPeriods);
 		foreach ($columns as $index => $column) {
 			$columns[$index]['isPast'] = (($pastKeys[$column['key']] ?? false) === true);
 		}
 
+		return $columns;
+
+	}//end markPastColumns()
+
+	/**
+	 * The default AnnualBudget id (or null) of every fiscal year the columns touch.
+	 *
+	 * @param array<int,array<string,mixed>> $columns          The columns.
+	 * @param string                         $administrationId The administration.
+	 *
+	 * @return array<int|string,string|null> Fiscal year => AnnualBudget id or null.
+	 */
+	private function defaultBudgetsByYear(array $columns, string $administrationId): array {
 		$fiscalYears = [];
 		foreach ($columns as $column) {
 			foreach ($column['fiscalYears'] as $year) {
@@ -186,73 +234,91 @@ class BudgetGridReader {
 		}
 
 		$annualBudgets = $this->query(schema: self::SCHEMA_ANNUAL_BUDGET, filters: ['administrationId' => $administrationId]);
-		$annualBudgetIdByYear = $this->resolveDefaultAnnualBudgets(annualBudgets: $annualBudgets, fiscalYears: array_keys($fiscalYears));
+		return $this->resolveDefaultAnnualBudgets(annualBudgets: $annualBudgets, fiscalYears: array_keys($fiscalYears));
 
+	}//end defaultBudgetsByYear()
+
+	/**
+	 * The BudgetLines of the resolved AnnualBudgets, grouped by AnnualBudget id;
+	 * no query at all when no year has a default budget.
+	 *
+	 * @param array<int|string,string|null> $annualBudgetIdByYear Fiscal year => AnnualBudget id or null.
+	 *
+	 * @return array<string,list<array<string,mixed>>>
+	 */
+	private function budgetLinesByAnnualId(array $annualBudgetIdByYear): array {
 		$relevantAnnualBudgetIds = array_values(array_filter($annualBudgetIdByYear, static fn ($id) => $id !== null));
+		if ($relevantAnnualBudgetIds === []) {
+			return [];
+		}
 
-		$budgetLinesByAnnualId = [];
-		if ($relevantAnnualBudgetIds !== []) {
-			$budgetLines = $this->query(
-				schema: self::SCHEMA_BUDGET_LINE,
-				filters: ['annualBudgetId' => ['in' => $relevantAnnualBudgetIds]]
-			);
-			foreach ($budgetLines as $line) {
-				$ref = (string)($line['annualBudgetId'] ?? '');
-				if ($ref === '') {
-					continue;
-				}
-
-				$budgetLinesByAnnualId[$ref][] = $line;
+		$grouped = [];
+		$budgetLines = $this->query(
+			schema: self::SCHEMA_BUDGET_LINE,
+			filters: ['annualBudgetId' => ['in' => $relevantAnnualBudgetIds]]
+		);
+		foreach ($budgetLines as $line) {
+			$ref = (string)($line['annualBudgetId'] ?? '');
+			if ($ref !== '') {
+				$grouped[$ref][] = $line;
 			}
 		}
 
-		$bvaContext = $this->budgetVsActualsReader->loadContext(
-			administrationId: $administrationId,
-			annualBudgetIds: [],
-			includeLedgerGroups: true
-		);
+		return $grouped;
 
-		$accountByNumber = [];
-		$accountTypeByNumber = [];
-		foreach (($bvaContext['accounts'] ?? []) as $account) {
+	}//end budgetLinesByAnnualId()
+
+	/**
+	 * Accounts by number, and account types by number (non-empty types only);
+	 * accounts without a number are skipped.
+	 *
+	 * @param array<int,array<string,mixed>> $accounts The accounts.
+	 *
+	 * @return array{byNumber: array<string,array<string,mixed>>, typeByNumber: array<string,string>}
+	 */
+	private static function accountIndexes(array $accounts): array {
+		$indexes = ['byNumber' => [], 'typeByNumber' => []];
+		foreach ($accounts as $account) {
 			$number = (string)($account['accountNumber'] ?? '');
 			if ($number === '') {
 				continue;
 			}
 
-			$accountByNumber[$number] = $account;
+			$indexes['byNumber'][$number] = $account;
 			$type = (string)($account['accountType'] ?? '');
 			if ($type !== '') {
-				$accountTypeByNumber[$number] = $type;
+				$indexes['typeByNumber'][$number] = $type;
 			}
 		}
 
-		// BudgetLinesByFiscalYear: for each fiscal year touched by the range,
-		// the slice of budgetLines belonging to THAT year's default
-		// AnnualBudget only. Kept separate per year so a range crossing a
-		// fiscal-year boundary never lets one year's BudgetLine shadow
-		// another's for the same LedgerGroup (design.md §2b).
-		$budgetLinesByFiscalYear = [];
+		return $indexes;
+
+	}//end accountIndexes()
+
+	/**
+	 * For each fiscal year touched by the range, the slice of budgetLines
+	 * belonging to THAT year's default AnnualBudget only (null when the year
+	 * has none). Kept separate per year so a range crossing a fiscal-year
+	 * boundary never lets one year's BudgetLine shadow another's for the same
+	 * LedgerGroup (design.md §2b).
+	 *
+	 * @param array<int|string,string|null>           $annualBudgetIdByYear Fiscal year => AnnualBudget id or null.
+	 * @param array<string,list<array<string,mixed>>> $linesByAnnualId      Lines by AnnualBudget id.
+	 *
+	 * @return array<int|string,list<array<string,mixed>>|null>
+	 */
+	private static function linesByFiscalYear(array $annualBudgetIdByYear, array $linesByAnnualId): array {
+		$byYear = [];
 		foreach ($annualBudgetIdByYear as $year => $annualBudgetId) {
-			if ($annualBudgetId === null) {
-				$budgetLinesByFiscalYear[$year] = null;
-				continue;
+			$byYear[$year] = null;
+			if ($annualBudgetId !== null) {
+				$byYear[$year] = ($linesByAnnualId[$annualBudgetId] ?? []);
 			}
-
-			$budgetLinesByFiscalYear[$year] = ($budgetLinesByAnnualId[$annualBudgetId] ?? []);
 		}
 
-		return [
-			'rowTree' => $rowTree,
-			'columns' => $columns,
-			'bvaContext' => $bvaContext,
-			'accountTypeByNumber' => $accountTypeByNumber,
-			'accountByNumber' => $accountByNumber,
-			'annualBudgetIdByYear' => $annualBudgetIdByYear,
-			'budgetLinesByFiscalYear' => $budgetLinesByFiscalYear,
-		];
+		return $byYear;
 
-	}//end loadGrid()
+	}//end linesByFiscalYear()
 
 	/**
 	 * The current administration's `LedgerGroup` tree, fetched once
@@ -274,73 +340,118 @@ class BudgetGridReader {
 	 */
 	public function rowsFor(string $administrationId): array {
 		$rows = $this->query(schema: self::SCHEMA_LEDGER_GROUP, filters: ['administrationId' => $administrationId]);
+		$index = self::indexEntries(rows: $rows);
+		$entries = $index['entries'];
+		$tree = self::linkTree(entries: $entries, keyToIndex: $index['keyToIndex']);
 
+		$rootIndexes = self::sortByOrder(indexes: $tree['rootIndexes'], entries: $entries);
+		$childrenByIndex = $tree['childrenByIndex'];
+		foreach ($childrenByIndex as $parentIndex => $children) {
+			$childrenByIndex[$parentIndex] = self::sortByOrder(indexes: $children, entries: $entries);
+		}
+
+		return ['entries' => $entries, 'keyToIndex' => $index['keyToIndex'], 'childrenByIndex' => $childrenByIndex, 'rootIndexes' => $rootIndexes];
+
+	}//end rowsFor()
+
+	/**
+	 * The flat entries of the LedgerGroup rows and the id/slug => index map.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The LedgerGroup rows.
+	 *
+	 * @return array{entries: list<array<string,mixed>>, keyToIndex: array<string,int>}
+	 */
+	private static function indexEntries(array $rows): array {
 		$entries = [];
 		$keyToIndex = [];
 		foreach ($rows as $row) {
-			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
-			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
+			$entry = self::ledgerEntry(row: $row);
 			$index = count($entries);
-
-			$parentRef = null;
-			if (($row['parentLedgerGroupId'] ?? null) !== null) {
-				$parentRef = (string)$row['parentLedgerGroupId'];
+			$entries[] = $entry;
+			if ($entry['id'] !== '') {
+				$keyToIndex[$entry['id']] = $index;
 			}
 
-			$entries[] = [
-				'id' => $id,
-				'slug' => $slug,
-				'code' => (string)($row['code'] ?? ''),
-				'name' => (string)($row['name'] ?? ''),
-				'order' => (int)($row['order'] ?? 0),
-				'parentRef' => $parentRef,
-			];
-
-			if ($id !== '') {
-				$keyToIndex[$id] = $index;
-			}
-
-			if ($slug !== '' && $slug !== $id) {
-				$keyToIndex[$slug] = $index;
+			if ($entry['slug'] !== '' && $entry['slug'] !== $entry['id']) {
+				$keyToIndex[$entry['slug']] = $index;
 			}
 		}
 
-		$childrenByIndex = [];
-		$rootIndexes = [];
+		return ['entries' => $entries, 'keyToIndex' => $keyToIndex];
+
+	}//end indexEntries()
+
+	/**
+	 * The entry of one LedgerGroup row.
+	 *
+	 * @param array<string,mixed> $row The row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function ledgerEntry(array $row): array {
+		$parentRef = null;
+		if (($row['parentLedgerGroupId'] ?? null) !== null) {
+			$parentRef = (string)$row['parentLedgerGroupId'];
+		}
+
+		return [
+			'id' => (string)($row['@self']['id'] ?? $row['id'] ?? ''),
+			'slug' => (string)($row['@self']['slug'] ?? $row['slug'] ?? ''),
+			'code' => (string)($row['code'] ?? ''),
+			'name' => (string)($row['name'] ?? ''),
+			'order' => (int)($row['order'] ?? 0),
+			'parentRef' => $parentRef,
+		];
+
+	}//end ledgerEntry()
+
+	/**
+	 * Link entries to their parents. An entry without a parent reference, or
+	 * whose parent does not resolve, is a root rather than silently dropped
+	 * from the tree (same convention as
+	 * BudgetVsActualsReader::buildLedgerGroupIndex()).
+	 *
+	 * @param list<array<string,mixed>> $entries    The entries.
+	 * @param array<string,int>         $keyToIndex Id/slug => entry index.
+	 *
+	 * @return array{childrenByIndex: array<int,list<int>>, rootIndexes: list<int>} Unsorted.
+	 */
+	private static function linkTree(array $entries, array $keyToIndex): array {
+		$tree = ['childrenByIndex' => [], 'rootIndexes' => []];
 		foreach ($entries as $index => $entry) {
-			$parentRef = $entry['parentRef'];
-			if ($parentRef === null || $parentRef === '') {
-				$rootIndexes[] = $index;
-				continue;
+			$parentIndex = null;
+			if ($entry['parentRef'] !== null && $entry['parentRef'] !== '') {
+				$parentIndex = ($keyToIndex[$entry['parentRef']] ?? null);
 			}
 
-			$parentIndex = ($keyToIndex[$parentRef] ?? null);
 			if ($parentIndex === null) {
-				// Unresolved parent reference — treated as a root rather than
-				// silently dropped from the tree (same convention as
-				// BudgetVsActualsReader::buildLedgerGroupIndex()).
-				$rootIndexes[] = $index;
+				$tree['rootIndexes'][] = $index;
 				continue;
 			}
 
-			$childrenByIndex[$parentIndex][] = $index;
+			$tree['childrenByIndex'][$parentIndex][] = $index;
 		}
 
+		return $tree;
+
+	}//end linkTree()
+
+	/**
+	 * Entry indexes sorted by the entries' `order` (stable).
+	 *
+	 * @param list<int>                 $indexes The indexes.
+	 * @param list<array<string,mixed>> $entries The entries.
+	 *
+	 * @return list<int>
+	 */
+	private static function sortByOrder(array $indexes, array $entries): array {
 		usort(
-			$rootIndexes,
+			$indexes,
 			fn (int $a, int $b): int => ($entries[$a]['order'] <=> $entries[$b]['order'])
 		);
-		foreach ($childrenByIndex as $parentIndex => $children) {
-			usort(
-				$children,
-				fn (int $a, int $b): int => ($entries[$a]['order'] <=> $entries[$b]['order'])
-			);
-			$childrenByIndex[$parentIndex] = $children;
-		}
+		return $indexes;
 
-		return ['entries' => $entries, 'keyToIndex' => $keyToIndex, 'childrenByIndex' => $childrenByIndex, 'rootIndexes' => $rootIndexes];
-
-	}//end rowsFor()
+	}//end sortByOrder()
 
 	/**
 	 * Generate the column list for a period range at a granularity
@@ -407,41 +518,67 @@ class BudgetGridReader {
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
 	 */
 	public function pastColumnKeys(array $columns, array $fiscalPeriods): array {
-		$closedPeriods = [];
-		foreach ($fiscalPeriods as $period) {
-			$state = (string)($period['state'] ?? '');
-			if ((self::PAST_STATES[$state] ?? false) !== true) {
-				continue;
-			}
-
-			$closedPeriods[] = [
-				'startDate' => (string)($period['startDate'] ?? ''),
-				'endDate' => (string)($period['endDate'] ?? ''),
-			];
-		}
+		$closedPeriods = self::closedPeriods(fiscalPeriods: $fiscalPeriods);
 
 		$past = [];
 		foreach ($columns as $column) {
-			$columnStart = (string)$column['startDate'];
-			$columnEnd = (string)$column['endDate'];
-
-			foreach ($closedPeriods as $period) {
-				if ($period['startDate'] === '' || $period['endDate'] === '') {
-					continue;
-				}
-
-				$exactMatch = ($period['startDate'] === $columnStart && $period['endDate'] === $columnEnd);
-				$contained = ($period['startDate'] <= $columnStart && $columnEnd <= $period['endDate']);
-				if ($exactMatch === true || $contained === true) {
-					$past[$column['key']] = true;
-					break;
-				}
+			if (self::coveredByAny(column: $column, periods: $closedPeriods) === true) {
+				$past[$column['key']] = true;
 			}
 		}
 
 		return $past;
 
 	}//end pastColumnKeys()
+
+	/**
+	 * The start/end dates of the periods in a past state; a period with a
+	 * missing start or end date covers nothing and is left out.
+	 *
+	 * @param array<int,array<string,mixed>> $fiscalPeriods The FiscalPeriods.
+	 *
+	 * @return list<array{startDate: string, endDate: string}>
+	 */
+	private static function closedPeriods(array $fiscalPeriods): array {
+		$closed = [];
+		foreach ($fiscalPeriods as $period) {
+			$state = (string)($period['state'] ?? '');
+			$dates = [
+				'startDate' => (string)($period['startDate'] ?? ''),
+				'endDate' => (string)($period['endDate'] ?? ''),
+			];
+			if ((self::PAST_STATES[$state] ?? false) === true && $dates['startDate'] !== '' && $dates['endDate'] !== '') {
+				$closed[] = $dates;
+			}
+		}
+
+		return $closed;
+
+	}//end closedPeriods()
+
+	/**
+	 * Whether a column lies within any of the periods.
+	 *
+	 * An exact-span match is a special case of containment, so containment
+	 * alone decides (a closed period equal to or coarser than the column).
+	 *
+	 * @param array<string,mixed>                             $column  The column.
+	 * @param list<array{startDate: string, endDate: string}> $periods The closed periods.
+	 *
+	 * @return bool
+	 */
+	private static function coveredByAny(array $column, array $periods): bool {
+		$columnStart = (string)$column['startDate'];
+		$columnEnd = (string)$column['endDate'];
+		foreach ($periods as $period) {
+			if ($period['startDate'] <= $columnStart && $columnEnd <= $period['endDate']) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end coveredByAny()
 
 	/**
 	 * Build one column descriptor for a `month`/`quarter`/`year` span
