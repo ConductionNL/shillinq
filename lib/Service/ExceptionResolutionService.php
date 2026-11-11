@@ -166,6 +166,7 @@ class ExceptionResolutionService {
 	public const EXCEPTION_STATUSES = [
 		'exception_price',
 		'exception_quantity',
+		'exception_date',
 		'exception_missing_grn',
 		'exception_missing_po',
 		'fraud_alert',
