@@ -125,29 +125,13 @@ class LeaseReassessmentService {
 		string $triggerDescription = '',
 		string $approver = '',
 	): ?array {
-		$lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
-		if ($lease === null) {
-			return null;
-		}
-
-		$newLease = $lease;
-		$newLease['basePaymentAmount'] = $newPaymentAmount;
-
-		if ($triggerDescription !== '') {
-			$resolvedTriggerDescription = $triggerDescription;
-		} else {
-			$resolvedTriggerDescription = 'Indexation clause triggered';
-		}
-
-		return $this->persistEvent(
-			eventType: 'indexation-remeasurement',
-			lease: $lease,
-			newLease: $newLease,
-			remeasurementApproach: 'catch-up-adjustment',
-			triggerDescription: $resolvedTriggerDescription,
-			approver: $approver,
+		$request = new LeaseEventRequest(
+			leaseContractId: $leaseContractId,
 			administrationId: $administrationId,
+			triggerDescription: $triggerDescription,
+			approver: $approver
 		);
+		return $this->remeasureIndexation(request: $request, newPaymentAmount: $newPaymentAmount);
 
 	}//end recordIndexationEvent()
 
@@ -176,29 +160,13 @@ class LeaseReassessmentService {
 		string $triggerDescription = '',
 		string $approver = '',
 	): ?array {
-		$lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
-		if ($lease === null) {
-			return null;
-		}
-
-		$newLease = $lease;
-		$newLease['extensionOptions'] = $updatedExtensionOptions;
-
-		if ($triggerDescription !== '') {
-			$resolvedTriggerDescription = $triggerDescription;
-		} else {
-			$resolvedTriggerDescription = 'Extension-option likelihood revised';
-		}
-
-		return $this->persistEvent(
-			eventType: 'extension-option-reassessment',
-			lease: $lease,
-			newLease: $newLease,
-			remeasurementApproach: 'catch-up-adjustment',
-			triggerDescription: $resolvedTriggerDescription,
-			approver: $approver,
+		$request = new LeaseEventRequest(
+			leaseContractId: $leaseContractId,
 			administrationId: $administrationId,
+			triggerDescription: $triggerDescription,
+			approver: $approver
 		);
+		return $this->remeasureExtensionOptions(request: $request, updatedExtensionOptions: $updatedExtensionOptions);
 
 	}//end recordExtensionOptionReassessment()
 
@@ -230,33 +198,13 @@ class LeaseReassessmentService {
 		string $triggerDescription = '',
 		string $approver = '',
 	): ?array {
-		$lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
-		if ($lease === null) {
-			return null;
-		}
-
-		if (in_array($approach, ['catch-up-adjustment', 'prospective', 'separate-lease'], true) === false) {
-			$approach = 'catch-up-adjustment';
-		}
-
-		$newLease = array_merge($lease, $newTerms);
-		$eventType = $this->resolveModificationEventType(newTerms: $newTerms);
-
-		if ($triggerDescription !== '') {
-			$resolvedTriggerDescription = $triggerDescription;
-		} else {
-			$resolvedTriggerDescription = 'Lease terms modified';
-		}
-
-		return $this->persistEvent(
-			eventType: $eventType,
-			lease: $lease,
-			newLease: $newLease,
-			remeasurementApproach: $approach,
-			triggerDescription: $resolvedTriggerDescription,
-			approver: $approver,
+		$request = new LeaseEventRequest(
+			leaseContractId: $leaseContractId,
 			administrationId: $administrationId,
+			triggerDescription: $triggerDescription,
+			approver: $approver
 		);
+		return $this->remeasureModification(request: $request, change: new LeaseTermsChange(newTerms: $newTerms, approach: $approach));
 
 	}//end recordModification()
 
@@ -284,47 +232,13 @@ class LeaseReassessmentService {
 		string $triggerDescription = '',
 		string $approver = '',
 	): ?array {
-		$lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
-		if ($lease === null) {
-			return null;
-		}
-
-		// Impairment freezes the liability and writes down only the RoU asset.
-		$opening = $this->calculator->openingBalances(lease: $lease);
-
-		$preEventLiabilityCents = $this->calculator->toCents(amount: $opening['liability']);
-		$preEventRouCents = $this->calculator->toCents(amount: $opening['rouAsset']);
-		$postEventRouCents = $this->calculator->toCents(amount: $recoverableValue);
-		$rouDeltaCents = ($postEventRouCents - $preEventRouCents);
-		$plImpactCents = -$rouDeltaCents;
-
-		if ($triggerDescription !== '') {
-			$resolvedTriggerDescription = $triggerDescription;
-		} else {
-			$resolvedTriggerDescription = 'Impairment write-down';
-		}
-
-		$eventPayload = [
-			'eventType' => 'impairment',
-			'remeasurementApproach' => 'catch-up-adjustment',
-			'oldContractSnapshot' => $this->snapshotLease(lease: $lease),
-			'newContractSnapshot' => $this->snapshotLease(lease: $lease),
-			'preEventLeaseLiability' => $opening['liability'],
-			'postEventLeaseLiability' => $opening['liability'],
-			'rouAssetAdjustment' => $this->calculator->fromCents(cents: $rouDeltaCents),
-			'plImpact' => $this->calculator->fromCents(cents: $plImpactCents),
-			'triggerDescription' => $resolvedTriggerDescription,
-			'approver' => $approver,
-			'glLines' => $this->buildImpairmentGlLines(rouDeltaCents: $rouDeltaCents),
-			'rouAdjustmentMagnitudeCents' => abs($rouDeltaCents),
-		];
-
-		return $this->save(
-			lease: $lease,
+		$request = new LeaseEventRequest(
+			leaseContractId: $leaseContractId,
 			administrationId: $administrationId,
-			payload: $eventPayload,
-			preEventLiabilityCents: $preEventLiabilityCents,
+			triggerDescription: $triggerDescription,
+			approver: $approver
 		);
+		return $this->impair(request: $request, recoverableValue: $recoverableValue);
 
 	}//end recordImpairment()
 
@@ -338,8 +252,129 @@ class LeaseReassessmentService {
 	}//end approvalThresholdCents()
 
 	/**
-	 * Build, persist and return an event payload for indexation / extension /
-	 * modification flows (REQ-LR-001..REQ-LR-003).
+	 * Record an indexation for the request's lease: the base payment amount becomes the indexed value.
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param float $newPaymentAmount The indexed payment per period (decimal money).
+	 *
+	 * @return array<string,mixed>|null The persisted event payload, or null when out of scope.
+	 */
+	private function remeasureIndexation(LeaseEventRequest $request, float $newPaymentAmount): ?array {
+		$lease = $this->leaseFor(request: $request);
+		if ($lease === null) {
+			return null;
+		}
+
+		$run = new LeaseRemeasurementRun(
+			eventType: 'indexation-remeasurement',
+			approach: 'catch-up-adjustment',
+			defaultTrigger: 'Indexation clause triggered',
+			lease: $lease,
+			newLease: array_replace($lease, ['basePaymentAmount' => $newPaymentAmount])
+		);
+		return $this->persistEvent(request: $request, run: $run);
+	}//end remeasureIndexation()
+
+	/**
+	 * Record an extension-option reassessment for the request's lease: its extension options are replaced.
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param array<int,array<string,mixed>> $updatedExtensionOptions The new extension-options array.
+	 *
+	 * @return array<string,mixed>|null The persisted event payload, or null when out of scope.
+	 */
+	private function remeasureExtensionOptions(LeaseEventRequest $request, array $updatedExtensionOptions): ?array {
+		$lease = $this->leaseFor(request: $request);
+		if ($lease === null) {
+			return null;
+		}
+
+		$run = new LeaseRemeasurementRun(
+			eventType: 'extension-option-reassessment',
+			approach: 'catch-up-adjustment',
+			defaultTrigger: 'Extension-option likelihood revised',
+			lease: $lease,
+			newLease: array_replace($lease, ['extensionOptions' => $updatedExtensionOptions])
+		);
+		return $this->persistEvent(request: $request, run: $run);
+	}//end remeasureExtensionOptions()
+
+	/**
+	 * Record a modification for the request's lease: the new terms are merged over it.
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param LeaseTermsChange $change The new terms and the selected approach.
+	 *
+	 * @return array<string,mixed>|null The persisted event payload, or null when out of scope.
+	 */
+	private function remeasureModification(LeaseEventRequest $request, LeaseTermsChange $change): ?array {
+		$lease = $this->leaseFor(request: $request);
+		if ($lease === null) {
+			return null;
+		}
+
+		$run = new LeaseRemeasurementRun(
+			eventType: $this->resolveModificationEventType(newTerms: $change->newTerms),
+			approach: $change->validApproach(),
+			defaultTrigger: 'Lease terms modified',
+			lease: $lease,
+			newLease: array_merge($lease, $change->newTerms)
+		);
+		return $this->persistEvent(request: $request, run: $run);
+	}//end remeasureModification()
+
+	/**
+	 * Record an impairment write-down for the request's lease.
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param float $recoverableValue Post-impairment carrying amount (decimal money).
+	 *
+	 * @return array<string,mixed>|null The persisted event payload, or null when out of scope.
+	 */
+	private function impair(LeaseEventRequest $request, float $recoverableValue): ?array {
+		$lease = $this->leaseFor(request: $request);
+		if ($lease === null) {
+			return null;
+		}
+
+		$run = new LeaseRemeasurementRun(
+			eventType: 'impairment',
+			approach: 'catch-up-adjustment',
+			defaultTrigger: 'Impairment write-down',
+			lease: $lease,
+			newLease: $lease
+		);
+		$this->measureImpairment(run: $run, recoverableValue: $recoverableValue);
+		return $this->saveEvent(request: $request, run: $run);
+	}//end impair()
+
+	/**
+	 * Load the request's lease in its administration.
+	 *
+	 * @param LeaseEventRequest $request The request.
+	 *
+	 * @return array<string,mixed>|null The LeaseContract, or null when out of scope.
+	 */
+	private function leaseFor(LeaseEventRequest $request): ?array {
+		return $this->fetchLease(leaseContractId: $request->leaseContractId, administrationId: $request->administrationId);
+	}//end leaseFor()
+
+	/**
+	 * Measure, persist and return an indexation / extension / modification
+	 * event (REQ-LR-001..REQ-LR-003).
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param LeaseRemeasurementRun $run The event with its pre- and post-event lease.
+	 *
+	 * @return array<string,mixed> The persisted event payload.
+	 */
+	private function persistEvent(LeaseEventRequest $request, LeaseRemeasurementRun $run): array {
+		$this->measureRemeasurement(run: $run);
+		return $this->saveEvent(request: $request, run: $run);
+	}//end persistEvent()
+
+	/**
+	 * Measure a remeasurement.
 	 *
 	 * The pre-event liability is computed off the original lease snapshot and
 	 * the post-event off the merged snapshot; the RoU adjustment equals the
@@ -347,67 +382,119 @@ class LeaseReassessmentService {
 	 * approach freezes the existing carrying amount and only updates the future
 	 * schedule (no RoU adjustment recorded here).
 	 *
-	 * @param string $eventType One of the REQ-LR-001 enum values.
-	 * @param array<string,mixed> $lease The pre-event lease snapshot.
-	 * @param array<string,mixed> $newLease The post-event lease snapshot.
-	 * @param string $remeasurementApproach catch-up-adjustment|prospective|separate-lease.
-	 * @param string $triggerDescription Free-text business reason.
-	 * @param string $approver Approver person id.
-	 * @param string $administrationId Administration scope.
+	 * @param LeaseRemeasurementRun $run The event; its figures are set.
+	 *
+	 * @return void
+	 */
+	private function measureRemeasurement(LeaseRemeasurementRun $run): void {
+		$run->preOpening = $this->calculator->openingBalances(lease: $run->lease);
+		$run->postOpening = $this->calculator->openingBalances(lease: $run->newLease);
+
+		$run->preEventLiabilityCents = $this->calculator->toCents(amount: $run->preOpening['liability']);
+		$liabilityDeltaCents = ($this->calculator->toCents(amount: $run->postOpening['liability']) - $run->preEventLiabilityCents);
+
+		$run->rouDeltaCents = $this->rouDeltaFor(approach: $run->approach, liabilityDeltaCents: $liabilityDeltaCents);
+		$run->plImpact = 0.0;
+		$run->glLines = $this->buildGlLines(liabilityDeltaCents: $liabilityDeltaCents, rouDeltaCents: $run->rouDeltaCents);
+	}//end measureRemeasurement()
+
+	/**
+	 * The RoU adjustment of a remeasurement.
+	 *
+	 * Catch-up: RoU mirrors the liability delta (no gain/loss).
+	 * Prospective: RoU unchanged, the delta is absorbed by future periods.
+	 * Separate-lease: this event records the split; the new lease is created by the caller.
+	 *
+	 * @param string $approach The remeasurement approach.
+	 * @param int $liabilityDeltaCents The liability delta in cents.
+	 *
+	 * @return int The RoU adjustment in cents.
+	 */
+	private function rouDeltaFor(string $approach, int $liabilityDeltaCents): int {
+		if ($approach === 'catch-up-adjustment') {
+			return $liabilityDeltaCents;
+		}
+
+		return 0;
+	}//end rouDeltaFor()
+
+	/**
+	 * Measure an impairment: it freezes the liability and writes down only the RoU asset.
+	 *
+	 * The recoverable value is the post-impairment carrying amount; the
+	 * difference vs the pre-event RoU asset is the impairment loss, recognised
+	 * in P&L via a `lease-modification-gain-loss` GL subtype.
+	 *
+	 * @param LeaseRemeasurementRun $run The event; its figures are set.
+	 * @param float $recoverableValue Post-impairment carrying amount (decimal money).
+	 *
+	 * @return void
+	 */
+	private function measureImpairment(LeaseRemeasurementRun $run, float $recoverableValue): void {
+		$run->preOpening = $this->calculator->openingBalances(lease: $run->lease);
+		$run->postOpening = $run->preOpening;
+
+		$run->preEventLiabilityCents = $this->calculator->toCents(amount: $run->preOpening['liability']);
+		$preEventRouCents = $this->calculator->toCents(amount: $run->preOpening['rouAsset']);
+		$run->rouDeltaCents = ($this->calculator->toCents(amount: $recoverableValue) - $preEventRouCents);
+
+		$run->plImpact = $this->calculator->fromCents(cents: -$run->rouDeltaCents);
+		$run->glLines = $this->buildImpairmentGlLines(rouDeltaCents: $run->rouDeltaCents);
+	}//end measureImpairment()
+
+	/**
+	 * Persist a measured event through save().
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param LeaseRemeasurementRun $run The measured event.
 	 *
 	 * @return array<string,mixed> The persisted event payload.
 	 */
-	private function persistEvent(
-		string $eventType,
-		array $lease,
-		array $newLease,
-		string $remeasurementApproach,
-		string $triggerDescription,
-		string $approver,
-		string $administrationId,
-	): array {
-		$preOpening = $this->calculator->openingBalances(lease: $lease);
-		$postOpening = $this->calculator->openingBalances(lease: $newLease);
-
-		$preEventLiabilityCents = $this->calculator->toCents(amount: $preOpening['liability']);
-		$postEventLiabilityCents = $this->calculator->toCents(amount: $postOpening['liability']);
-		$liabilityDeltaCents = ($postEventLiabilityCents - $preEventLiabilityCents);
-
-		// Catch-up: RoU mirrors the liability delta (no gain/loss).
-		// Prospective: RoU unchanged, the delta is absorbed by future periods.
-		// Separate-lease: this event records the split; the new lease is created by the caller.
-		if ($remeasurementApproach === 'catch-up-adjustment') {
-			$rouDeltaCents = $liabilityDeltaCents;
-		} else {
-			$rouDeltaCents = 0;
-		}
-
-		$payload = [
-			'eventType' => $eventType,
-			'remeasurementApproach' => $remeasurementApproach,
-			'oldContractSnapshot' => $this->snapshotLease(lease: $lease),
-			'newContractSnapshot' => $this->snapshotLease(lease: $newLease),
-			'preEventLeaseLiability' => $preOpening['liability'],
-			'postEventLeaseLiability' => $postOpening['liability'],
-			'rouAssetAdjustment' => $this->calculator->fromCents(cents: $rouDeltaCents),
-			'plImpact' => 0.0,
-			'triggerDescription' => $triggerDescription,
-			'approver' => $approver,
-			'glLines' => $this->buildGlLines(
-				liabilityDeltaCents: $liabilityDeltaCents,
-				rouDeltaCents: $rouDeltaCents,
-			),
-			'rouAdjustmentMagnitudeCents' => abs($rouDeltaCents),
-		];
-
+	private function saveEvent(LeaseEventRequest $request, LeaseRemeasurementRun $run): array {
 		return $this->save(
-			lease: $lease,
-			administrationId: $administrationId,
-			payload: $payload,
-			preEventLiabilityCents: $preEventLiabilityCents,
+			lease: $run->lease,
+			administrationId: $request->administrationId,
+			payload: $this->contractChangePayload(run: $run) + $this->outcomePayload(request: $request, run: $run),
+			preEventLiabilityCents: $run->preEventLiabilityCents,
 		);
+	}//end saveEvent()
 
-	}//end persistEvent()
+	/**
+	 * The contract part of an event payload: what changed and the liability before and after.
+	 *
+	 * @param LeaseRemeasurementRun $run The measured event.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function contractChangePayload(LeaseRemeasurementRun $run): array {
+		return [
+			'eventType' => $run->eventType,
+			'remeasurementApproach' => $run->approach,
+			'oldContractSnapshot' => $this->snapshotLease(lease: $run->lease),
+			'newContractSnapshot' => $this->snapshotLease(lease: $run->newLease),
+			'preEventLeaseLiability' => $run->preOpening['liability'],
+			'postEventLeaseLiability' => $run->postOpening['liability'],
+		];
+	}//end contractChangePayload()
+
+	/**
+	 * The outcome part of an event payload: the RoU and P&L effect, reason, approver and GL lines.
+	 *
+	 * @param LeaseEventRequest $request The lease, scope, reason and approver.
+	 * @param LeaseRemeasurementRun $run The measured event.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function outcomePayload(LeaseEventRequest $request, LeaseRemeasurementRun $run): array {
+		return [
+			'rouAssetAdjustment' => $this->calculator->fromCents(cents: $run->rouDeltaCents),
+			'plImpact' => $run->plImpact,
+			'triggerDescription' => $request->triggerOr(default: $run->defaultTrigger),
+			'approver' => $request->approver,
+			'glLines' => $run->glLines,
+			'rouAdjustmentMagnitudeCents' => abs($run->rouDeltaCents),
+		];
+	}//end outcomePayload()
 
 	/**
 	 * Persist the event payload to OpenRegister and return the saved row.
