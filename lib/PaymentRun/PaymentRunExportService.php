@@ -301,34 +301,67 @@ class PaymentRunExportService {
 		}
 
 		foreach ($files as $file) {
-			$class = '\\OCA\\Shillinq\\PaymentRun\\Generator\\' . basename($file, '.php');
-			if (class_exists($class) === false) {
-				continue;
+			$class = self::generatorClass(file: $file);
+			$instance = null;
+			if ($class !== null) {
+				$instance = $this->instantiateGenerator(class: $class);
 			}
 
-			if (in_array(PaymentRunGeneratorInterface::class, class_implements($class), true) === false) {
-				continue;
-			}
-
-			if ((new ReflectionClass($class))->isInstantiable() === false) {
-				continue;
-			}
-
-			try {
-				// Resolve via the container so generators with constructor DI are autowired.
-				$instance = $this->container->get($class);
+			if ($instance !== null) {
 				$found[$instance::format()] = $instance;
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'PaymentRunExportService: failed to instantiate generator',
-					['class' => $class, 'exception' => $e->getMessage()]
-				);
 			}
-		}//end foreach
+		}
 
 		$this->generators = $found;
 		return $found;
 	}//end generators()
+
+	/**
+	 * The generator class a file in Generator/ declares, or null when it is not
+	 * an existing, instantiable PaymentRunGeneratorInterface implementation.
+	 *
+	 * @param string $file The PHP file.
+	 *
+	 * @return string|null
+	 */
+	private static function generatorClass(string $file): ?string {
+		$class = '\\OCA\\Shillinq\\PaymentRun\\Generator\\' . basename($file, '.php');
+		if (class_exists($class) === false) {
+			return null;
+		}
+
+		if (in_array(PaymentRunGeneratorInterface::class, class_implements($class), true) === false) {
+			return null;
+		}
+
+		if ((new ReflectionClass($class))->isInstantiable() === false) {
+			return null;
+		}
+
+		return $class;
+
+	}//end generatorClass()
+
+	/**
+	 * Resolve a generator via the container, so generators with constructor
+	 * DI are autowired; null (logged) when that fails.
+	 *
+	 * @param string $class The generator class.
+	 *
+	 * @return object|null The generator (container-resolved), or null.
+	 */
+	private function instantiateGenerator(string $class): ?object {
+		try {
+			return $this->container->get($class);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'PaymentRunExportService: failed to instantiate generator',
+				['class' => $class, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end instantiateGenerator()
 
 	/**
 	 * Write the rendered bytes to /Shillinq/PaymentRuns/<administrationId>/.
