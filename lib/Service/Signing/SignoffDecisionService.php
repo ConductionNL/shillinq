@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -64,7 +64,7 @@ class SignoffDecisionService {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IEventDispatcher $eventDispatcher Event dispatcher for the decidesk contract.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ApprovalActivityEmitter|null $activityEmitter Optional Activity emitter for the
@@ -73,7 +73,7 @@ class SignoffDecisionService {
 	 *                                                      IActivityManager.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IEventDispatcher $eventDispatcher,
 		private readonly LoggerInterface $logger,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
@@ -168,7 +168,7 @@ class SignoffDecisionService {
 
 		return new $eventClass(
 			sourceApp: 'shillinq',
-			subjectRegister: $this->settingsService->getRegisterSlug(),
+			subjectRegister: $this->registerLocation->getRegisterSlug(),
 			subjectSchema: $request->subjectSchema,
 			subjectId: $request->subjectId,
 			subjectLabel: $request->subjectLabel,

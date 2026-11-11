@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillFiscalPeriods;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -48,9 +48,9 @@ class BackfillFiscalPeriodsTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -86,7 +86,7 @@ class BackfillFiscalPeriodsTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->output = $this->createMock(IOutput::class);

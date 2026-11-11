@@ -36,7 +36,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IL10N;
@@ -63,9 +63,9 @@ class CalendarControllerTest extends TestCase {
 	/**
 	 * Settings service stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Administration context stub.
@@ -125,7 +125,7 @@ class CalendarControllerTest extends TestCase {
 		parent::setUp();
 
 		$this->request = $this->createMock(IRequest::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->guard = $this->createMock(TransactionalGuard::class);
 		$this->conflicts = $this->createMock(ConflictDetectionService::class);

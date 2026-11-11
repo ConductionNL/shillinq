@@ -34,7 +34,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -116,7 +116,7 @@ final class CalendarBookingsGoldenTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturnOnConsecutiveCalls(...match ($world['or']) {
 			'drops' => [true, false],
 			default => [$world['or'], $world['or']],

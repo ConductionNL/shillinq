@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -70,12 +70,12 @@ class BackfillControlAccountRoles implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The register slug.
+	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

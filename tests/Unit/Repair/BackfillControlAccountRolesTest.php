@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillControlAccountRoles;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\Migration\IOutput;
@@ -55,7 +55,7 @@ final class BackfillControlAccountRolesTest extends TestCase {
 			['id' => 'c1', 'administrationId' => 'adm-3', 'accountNumber' => '2000', 'name' => 'Crediteuren', 'controlAccountFor' => 'expense-claims', 'accountType' => 'liabilities', 'currency' => 'EUR', 'lifecycleState' => 'active'],
 		];
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$messages = [];
 		$output = $this->createMock(IOutput::class);

@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillArInvoiceProvenance;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -200,7 +200,7 @@ final class BackfillArInvoiceProvenanceTest extends TestCase {
 	 * @return BackfillArInvoiceProvenance
 	 */
 	private function step(BackfillInvoiceStore $store): BackfillArInvoiceProvenance {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new BackfillArInvoiceProvenance(
@@ -509,7 +509,7 @@ final class BackfillArInvoiceProvenanceTest extends TestCase {
 			}
 		};
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('warning');

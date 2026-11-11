@@ -35,7 +35,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use RuntimeException;
 
@@ -57,13 +57,13 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      The register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 * @param SupplierInvoiceChecks  $checks        Payee lookup and the IBAN rule.
 	 * @param ObjectTransitionRunner $transitions   Runs the AP transaction's declared transitions.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly SupplierInvoiceChecks $checks,
 		private readonly ObjectTransitionRunner $transitions,
 	) {

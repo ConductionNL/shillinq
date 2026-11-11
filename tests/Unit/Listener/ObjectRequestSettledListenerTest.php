@@ -29,7 +29,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\ObjectRequestSettledListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ObjectRequestReceiptMailer;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IL10N;
 use OCP\L10N\IFactory;
@@ -126,7 +126,7 @@ class ObjectRequestSettledListenerTest extends TestCase {
 
 		$resolver = $this->createStub(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturnCallback(static fn (?object $entity): string => (string)$entity?->getSchema());
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new ObjectRequestSettledListener(
