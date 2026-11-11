@@ -249,6 +249,33 @@ class SettingsServiceTest extends TestCase {
 	}//end testIsOpenRegisterAvailableDelegatesToAppManager()
 
 	/**
+	 * getRegisterSlug returns the configured slug, read with the 'shillinq' default.
+	 *
+	 * @return void
+	 */
+	public function testGetRegisterSlugReturnsConfiguredSlug(): void {
+		$this->appConfig->expects($this->once())
+			->method('getValueString')
+			->with('shillinq', 'register', 'shillinq')
+			->willReturn('finance-register');
+
+		self::assertSame('finance-register', $this->service->getRegisterSlug());
+
+	}//end testGetRegisterSlugReturnsConfiguredSlug()
+
+	/**
+	 * getRegisterSlug falls back to 'shillinq' when the stored slug is empty.
+	 *
+	 * @return void
+	 */
+	public function testGetRegisterSlugFallsBackWhenEmpty(): void {
+		$this->appConfig->method('getValueString')->willReturn('');
+
+		self::assertSame('shillinq', $this->service->getRegisterSlug());
+
+	}//end testGetRegisterSlugFallsBackWhenEmpty()
+
+	/**
 	 * seedRetentionPolicies fails when OpenRegister is unavailable.
 	 *
 	 * @return void
