@@ -589,27 +589,79 @@ class BudgetGridReader {
 	 * @return array{key:string,label:string,granularity:string,startDate:string,endDate:string,monthKeys:list<string>,isPast:bool,fiscalYears:list<int>}
 	 */
 	private function buildColumn(int $startOrdinal, int $step, string $granularity): array {
+		$months = self::spanMonths(startOrdinal: $startOrdinal, step: $step);
+		$dates = self::spanDates(startOrdinal: $startOrdinal, step: $step);
+		[$key, $label] = self::columnKeyAndLabel(startOrdinal: $startOrdinal, granularity: $granularity);
+
+		return [
+			'key' => $key,
+			'label' => $label,
+			'granularity' => $granularity,
+			'startDate' => $dates['startDate'],
+			'endDate' => $dates['endDate'],
+			'monthKeys' => $months['monthKeys'],
+			'isPast' => false,
+			'fiscalYears' => $months['fiscalYears'],
+		];
+
+	}//end buildColumn()
+
+	/**
+	 * The `yyyy-mm` keys and the distinct fiscal years of a span.
+	 *
+	 * @param integer $startOrdinal The span's first month, as `year*12 + (month-1)`.
+	 * @param integer $step         Span length in months.
+	 *
+	 * @return array{monthKeys: list<string>, fiscalYears: list<int>}
+	 */
+	private static function spanMonths(int $startOrdinal, int $step): array {
 		$monthKeys = [];
 		$fiscalYears = [];
 		for ($i = 0; $i < $step; $i++) {
 			$ordinal = ($startOrdinal + $i);
 			$year = intdiv($ordinal, 12);
-			$month = (($ordinal % 12) + 1);
-			$monthKeys[] = sprintf('%04d-%02d', $year, $month);
+			$monthKeys[] = sprintf('%04d-%02d', $year, (($ordinal % 12) + 1));
 			$fiscalYears[$year] = true;
 		}
 
-		$firstYear = intdiv($startOrdinal, 12);
-		$firstMonth = (($startOrdinal % 12) + 1);
+		return ['monthKeys' => $monthKeys, 'fiscalYears' => array_keys($fiscalYears)];
+
+	}//end spanMonths()
+
+	/**
+	 * The first and last day of a span.
+	 *
+	 * @param integer $startOrdinal The span's first month, as `year*12 + (month-1)`.
+	 * @param integer $step         Span length in months.
+	 *
+	 * @return array{startDate: string, endDate: string}
+	 */
+	private static function spanDates(int $startOrdinal, int $step): array {
 		$lastOrdinal = ($startOrdinal + $step - 1);
 		$lastYear = intdiv($lastOrdinal, 12);
 		$lastMonth = (($lastOrdinal % 12) + 1);
 		$lastDay = (int)date('t', mktime(0, 0, 0, $lastMonth, 1, $lastYear));
 
-		$startDate = sprintf('%04d-%02d-01', $firstYear, $firstMonth);
-		$endDate = sprintf('%04d-%02d-%02d', $lastYear, $lastMonth, $lastDay);
+		return [
+			'startDate' => sprintf('%04d-%02d-01', intdiv($startOrdinal, 12), (($startOrdinal % 12) + 1)),
+			'endDate' => sprintf('%04d-%02d-%02d', $lastYear, $lastMonth, $lastDay),
+		];
 
-		[$key, $label] = match ($granularity) {
+	}//end spanDates()
+
+	/**
+	 * The column key and label of a span starting at a month.
+	 *
+	 * @param integer $startOrdinal The span's first month, as `year*12 + (month-1)`.
+	 * @param string  $granularity  `month`, `quarter`, or `year`.
+	 *
+	 * @return array{0: string, 1: string}
+	 */
+	private static function columnKeyAndLabel(int $startOrdinal, string $granularity): array {
+		$firstYear = intdiv($startOrdinal, 12);
+		$firstMonth = (($startOrdinal % 12) + 1);
+
+		return match ($granularity) {
 			'quarter' => [
 				sprintf('%04d-Q%d', $firstYear, intdiv($firstMonth - 1, 3) + 1),
 				sprintf('Q%d %04d', intdiv($firstMonth - 1, 3) + 1, $firstYear),
@@ -621,18 +673,7 @@ class BudgetGridReader {
 			],
 		};
 
-		return [
-			'key' => $key,
-			'label' => $label,
-			'granularity' => $granularity,
-			'startDate' => $startDate,
-			'endDate' => $endDate,
-			'monthKeys' => $monthKeys,
-			'isPast' => false,
-			'fiscalYears' => array_keys($fiscalYears),
-		];
-
-	}//end buildColumn()
+	}//end columnKeyAndLabel()
 
 	/**
 	 * Resolve the `isDefault: true` `AnnualBudget` id for every fiscal year
