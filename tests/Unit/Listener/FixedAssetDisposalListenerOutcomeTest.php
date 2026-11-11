@@ -22,6 +22,9 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Service\FixedAssetDisposalService;
 use OCP\EventDispatcher\Event;
@@ -73,7 +76,7 @@ final class FixedAssetDisposalListenerOutcomeTest extends TestCase {
 	private function transition(string $schema, string $to, array $object): ObjectTransitionedEvent {
 		$entity = new ObjectEntity();
 		$entity->setObject($object);
-		return new ObjectTransitionedEvent($entity, 'retire', 'active', $to, 'alice', 'shillinq', $schema);
+		return new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: 'retire', from: 'active', to: $to), scope: new RegisterSchemaRef(register: 'shillinq', schema: $schema), actor: new TransitionActor(userId: 'alice'));
 	}
 
 	/**
