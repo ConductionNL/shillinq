@@ -859,20 +859,25 @@ class TaxCalculationService {
 
 		$this->upsertRecord(
 			schema: 'DeferredTaxMovement',
-			row: self::newRateChangeMovementRow(slug: 'dtm-' . $run->periodId . '-' . $run->jurisdiction . '-' . $adjustment->category, data: $data)
+			row: self::newRateChangeMovementRow(
+				slug: 'dtm-' . $run->periodId . '-' . $run->jurisdiction . '-' . $adjustment->category,
+				data: $data,
+				cents: $adjustment->cents
+			)
 		);
 	}//end recordRateChangeMovement()
 
 	/**
 	 * A new DeferredTaxMovement (with its slug) holding only a rate-change
-	 * adjustment: its P&L and closing balance are the adjustment.
+	 * adjustment: its P&L and closing balance are this run's adjustment.
 	 *
-	 * @param string              $slug The movement slug.
-	 * @param array<string,mixed> $data The movement key and its rateChangeAdjustment.
+	 * @param string              $slug  The movement slug.
+	 * @param array<string,mixed> $data  The movement key and its rateChangeAdjustment.
+	 * @param int                 $cents This run's adjustment in cents.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private static function newRateChangeMovementRow(string $slug, array $data): array {
+	private static function newRateChangeMovementRow(string $slug, array $data, int $cents): array {
 		return array_merge(
 			['slug' => $slug],
 			[
@@ -881,9 +886,9 @@ class TaxCalculationService {
 				'reversedInPeriod' => 0,
 				'acquiredViaBusinessCombination' => 0,
 				'translationAdjustment' => 0,
-				'recognisedInPL' => $data['rateChangeAdjustment'],
+				'recognisedInPL' => $cents,
 				'recognisedInOCI' => 0,
-				'closingBalance' => $data['rateChangeAdjustment'],
+				'closingBalance' => $cents,
 				'linkedJournalEntries' => [],
 			],
 			$data

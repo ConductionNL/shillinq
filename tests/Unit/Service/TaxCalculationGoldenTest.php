@@ -191,4 +191,17 @@ final class TaxCalculationGoldenTest extends TestCase {
 		self::assertSame((string)file_get_contents(self::GOLDEN), $json);
 
 	}//end testPeriodEndRunMatchesTheGoldenRecord()
+
+	/**
+	 * A new rate-change movement books this run's adjustment in P&L and the
+	 * closing balance, not the running total it carries.
+	 *
+	 * @return void
+	 */
+	public function testANewRateChangeMovementBooksOnlyThisRunsAdjustment(): void {
+		$method = new \ReflectionMethod(TaxCalculationService::class, 'newRateChangeMovementRow');
+		$row = $method->invoke(null, 'dtm-x', ['rateChangeAdjustment' => 12], 5);
+
+		$this->assertSame(['dtm-x', 5, 5, 12], [$row['slug'], $row['recognisedInPL'], $row['closingBalance'], $row['rateChangeAdjustment']]);
+	}//end testANewRateChangeMovementBooksOnlyThisRunsAdjustment()
 }//end class
