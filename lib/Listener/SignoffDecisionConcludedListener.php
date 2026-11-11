@@ -140,110 +140,33 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 * @return void
 	 */
 	private function project(array $payload): void {
-		// Filter to shillinq-originated decisions only.
-		if ($payload['sourceApp'] !== 'shillinq') {
-			return;
-		}
-
-		$outcome = self::STATUS_MAP[$payload['status']] ?? null;
-		if ($outcome === null) {
-			// Withdrawn / pending / unknown — no terminal projection.
-			return;
-		}
-
-		$found = $this->locateSubject(payload: $payload);
-		if ($found !== null) {
-			$this->recordOutcome(found: $found, conclusion: ($payload + ['outcome' => $outcome]));
+		$concluded = $this->flow()->conclude(payload: $payload);
+		if ($concluded !== null) {
+			$this->recordOutcome(concluded: $concluded);
 		}
 
 	}//end project()
-
-	/**
-	 * Find the finance object the decision belongs to, logging and answering
-	 * null when there is no subject id or no matching object.
-	 *
-	 * @param array<string,string> $payload The normalised payload.
-	 *
-	 * @return FoundSubject|null The finance object, or null.
-	 */
-	private function locateSubject(array $payload): FoundSubject|null {
-		$subjectId = $this->subjects()->subjectId(payload: $payload);
-		if ($subjectId === '') {
-			$this->logger->info(
-				'SignoffDecisionConcludedListener: no subject id on concluded decision (skipping)',
-				['decisionRef' => $payload['decisionId']]
-			);
-			return null;
-		}
-
-		return $this->locateOrLog(payload: $payload, subjectId: $subjectId);
-
-	}//end locateSubject()
-
-	/**
-	 * Search the subject schemas, logging when nothing matches.
-	 *
-	 * @param array<string,string> $payload   The normalised payload.
-	 * @param string               $subjectId The resolved subject id.
-	 *
-	 * @return FoundSubject|null The finance object, or null.
-	 */
-	private function locateOrLog(array $payload, string $subjectId): FoundSubject|null {
-		$found = $this->subjects()->locate(payload: $payload, knownSchemas: self::SUBJECT_SCHEMAS);
-		if ($found === null) {
-			$this->logger->info(
-				'SignoffDecisionConcludedListener: no matching finance object (skipping)',
-				['decisionRef' => $payload['decisionId'], 'subjectId' => $subjectId]
-			);
-		}
-
-		return $found;
-
-	}//end locateOrLog()
 
 	/**
 	 * Record the outcome through the sign-off service, persist the mirror
 	 * (decisionRef + decisionOutcome) plus any local accounting-consequence
 	 * delta (REQ-SIGN-006) through OR, and log it.
 	 *
-	 * @param FoundSubject          $found      The finance object.
-	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
+	 * @param ConcludedOutcome $concluded The finance object and its conclusion.
 	 *
 	 * @return void
 	 */
-	private function recordOutcome(FoundSubject $found, array $conclusion): void {
-		[$updated, $consequence] = $this->applyOutcome(found: $found, conclusion: $conclusion);
+	private function recordOutcome(ConcludedOutcome $concluded): void {
+		[$updated, $consequence] = $this->applyOutcome(concluded: $concluded);
 
 		$updates = [
-			'decisionRef' => $updated['decisionRef'] ?? $conclusion['decisionId'],
-			'decisionOutcome' => $updated['decisionOutcome'] ?? $conclusion['outcome'],
+			'decisionRef' => $updated['decisionRef'] ?? $concluded->conclusion['decisionId'],
+			'decisionOutcome' => $updated['decisionOutcome'] ?? $concluded->outcome(),
 		];
-		$this->subjects()->persist(ref: $found->ref, updates: ($updates + $consequence));
 
-		$this->logConsumed(found: $found, conclusion: $conclusion);
+		$this->flow()->finish(concluded: $concluded, updates: ($updates + $consequence));
 
 	}//end recordOutcome()
-
-	/**
-	 * Log the consumed outcome.
-	 *
-	 * @param FoundSubject          $found      The finance object.
-	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
-	 *
-	 * @return void
-	 */
-	private function logConsumed(FoundSubject $found, array $conclusion): void {
-		$this->logger->info(
-			'SignoffDecisionConcludedListener: outcome consumed',
-			[
-				'schema' => $found->ref->schema,
-				'subjectId' => $found->ref->id,
-				'outcome' => $conclusion['outcome'],
-				'decisionRef' => $conclusion['decisionId'],
-			]
-		);
-
-	}//end logConsumed()
 
 	/**
 	 * Hand the outcome to the sign-off service.
@@ -253,42 +176,60 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 * fires the consequence exactly once on 'approved'; a repeated conclusion
 	 * is a no-op and the consequence stays empty.
 	 *
-	 * @param FoundSubject          $found      The finance object.
-	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
+	 * @param ConcludedOutcome $concluded The finance object and its conclusion.
 	 *
 	 * @return array{0: array<string,mixed>, 1: array<string,mixed>} The updated object and the consequence delta.
 	 */
-	private function applyOutcome(FoundSubject $found, array $conclusion): array {
-		$consequence = [];
-		$updated = $this->signoffService->onDecisionCallback(
-			$found->object,
-			$conclusion['outcome'],
-			$conclusion['decisionId'],
-			function (array $object) use ($found, $conclusion, &$consequence): array {
-				$object = $this->applyAccountingConsequence(schema: $found->ref->schema, object: $object, outcome: $conclusion['outcome']);
-				$consequence = $this->consequenceDelta(object: $object, outcome: $conclusion['outcome']);
-				return $object;
-			},
+	private function applyOutcome(ConcludedOutcome $concluded): array {
+		$consequence = $this->flow()->consequence(concluded: $concluded);
+		$updated     = $this->signoffService->onDecisionCallback(
+			$concluded->found->object,
+			$concluded->outcome(),
+			$concluded->conclusion['decisionId'],
+			$consequence->apply(...),
 			// Activity object type for the REQ-RAP-006 `decision_made`
 			// event raised inside onDecisionCallback(). This listener is the
 			// sole production caller, so omitting it here would leave that
 			// event permanently unemitted.
-			$found->ref->schema,
+			$concluded->schema(),
 		);
 
-		return [$updated, $consequence];
+		return [$updated, $consequence->delta];
 
 	}//end applyOutcome()
 
 	/**
-	 * The register access for the concluded subject.
+	 * The shared projection steps, with this listener's settings.
 	 *
-	 * @return ConcludedSubjectStore The store.
+	 * @return ConcludedOutcomeFlow The flow.
 	 */
-	private function subjects(): ConcludedSubjectStore {
-		return new ConcludedSubjectStore(settingsService: $this->settingsService, objectService: $this->objectService);
+	private function flow(): ConcludedOutcomeFlow {
+		return new ConcludedOutcomeFlow(
+			spec: self::spec(),
+			subjects: new ConcludedSubjectStore(settingsService: $this->settingsService, objectService: $this->objectService),
+			logger: $this->logger,
+		);
 
-	}//end subjects()
+	}//end flow()
+
+	/**
+	 * This listener's settings for the shared projection.
+	 *
+	 * @return ConcludedOutcomeSpec The settings.
+	 */
+	private static function spec(): ConcludedOutcomeSpec {
+		return new ConcludedOutcomeSpec(
+			listener: 'SignoffDecisionConcludedListener',
+			requestNoun: 'decision',
+			requestIdKey: 'decisionId',
+			requestRefKey: 'decisionRef',
+			subjectSchemas: self::SUBJECT_SCHEMAS,
+			statusMap: self::STATUS_MAP,
+			completedOutcome: 'approved',
+			consequenceFields: ['signoffApprovedAt', 'signoffGateOpen'],
+		);
+
+	}//end spec()
 
 	/**
 	 * Read the cross-app event into a shape this app owns.
@@ -318,65 +259,4 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 			'subjectSchema'     => (string)($event->getSubjectSchema() ?? ''),
 		];
 	}//end readPayload()
-
-	/**
-	 * Apply the local accounting consequence on an approved sign-off
-	 * (REQ-SIGN-006). The consequence stays in shillinq: on `approved` the
-	 * finance lifecycle is flipped through the existing OR write path so the
-	 * report becomes submittable / the adoption posting can run. On `rejected`
-	 * no lifecycle advance happens.
-	 *
-	 * @param string $schema The finance schema.
-	 * @param array<string,mixed> $object The finance object (already carrying the mirror).
-	 * @param string $outcome 'approved' | 'rejected'.
-	 *
-	 * @return array<string,mixed> The (possibly mutated) finance object.
-	 */
-	private function applyAccountingConsequence(string $schema, array $object, string $outcome): array {
-		if ($outcome !== 'approved') {
-			return $object;
-		}
-
-		// The accounting consequence flips the finance lifecycle to the
-		// post-sign-off state through the existing OR write path. shillinq owns
-		// no approval logic — it records the decidesk outcome and opens its own
-		// downstream gate (submission / adoption posting) exactly once.
-		$object['signoffApprovedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		$object['signoffGateOpen'] = true;
-
-		$this->logger->info(
-			'SignoffDecisionConcludedListener: accounting consequence applied',
-			[
-				'schema' => $schema,
-				'outcome' => $outcome,
-			]
-		);
-
-		return $object;
-	}//end applyAccountingConsequence()
-
-	/**
-	 * Extract the accounting-consequence fields written by
-	 * {@see self::applyAccountingConsequence} so they can be persisted with the
-	 * mirror in a single OR write.
-	 *
-	 * @param array<string,mixed> $object The finance object after the consequence.
-	 * @param string $outcome 'approved' | 'rejected'.
-	 *
-	 * @return array<string,mixed> The consequence delta (empty on non-approved).
-	 */
-	private function consequenceDelta(array $object, string $outcome): array {
-		if ($outcome !== 'approved') {
-			return [];
-		}
-
-		$delta = [];
-		foreach (['signoffApprovedAt', 'signoffGateOpen'] as $key) {
-			if (array_key_exists($key, $object) === true) {
-				$delta[$key] = $object[$key];
-			}
-		}
-
-		return $delta;
-	}//end consequenceDelta()
 }//end class
