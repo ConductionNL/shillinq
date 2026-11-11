@@ -31,7 +31,7 @@ use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Platform\FieldRequirements;
 use OCA\Shillinq\Service\Platform\ObjectApiRequest;
 use OCA\Shillinq\Service\Platform\SchemaDefinitions;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -159,7 +159,7 @@ class FieldRequirementListenerTest extends TestCase {
 	 * @return FieldRequirements
 	 */
 	private function requirements(): FieldRequirements {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new FieldRequirements($this->store, $settings, $this->definitions(), $this->l10n());

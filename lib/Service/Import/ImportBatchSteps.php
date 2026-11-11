@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -47,14 +47,14 @@ class ImportBatchSteps {
 	 * @param ImportSourceReader     $reader        Reads the auditfile from Files.
 	 * @param ImportPeriod           $period        Whether the migration date's year is open.
 	 * @param ObjectServiceInterface $objectService Reads the batch's mapping rows.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ImportPipelineService $pipeline,
 		private readonly ImportSourceReader $reader,
 		private readonly ImportPeriod $period,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 	) {
 	}//end __construct()
 
@@ -217,7 +217,7 @@ class ImportBatchSteps {
 			return;
 		}
 
-		$rows = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('ImportBatch')
+		$rows = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('ImportBatch')
 			->findAll(['filters' => ['idempotencyKey' => $key, 'status' => 'posted']]);
 		foreach ($rows as $row) {
 			$other = ObjectIdentifier::recordWithId(candidate: $row);
@@ -245,7 +245,7 @@ class ImportBatchSteps {
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function mappingsOf(array $batch): array {
-		$rows = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('ImportMapping')
+		$rows = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('ImportMapping')
 			->findAll(['filters' => ['batchReference' => $this->idOf(batch: $batch)]]);
 
 		$mappings = [];

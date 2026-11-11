@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 use OCA\Shillinq\Lifecycle\Action\HandToAccountsPayableAction;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
@@ -67,7 +68,7 @@ class HandToAccountsPayableActionTest extends TestCase {
 		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === ObjectTransitionRunner::ENGINE_CLASS);
 		$container->method('get')->willReturn($this->engine);
 
-		return new HandToAccountsPayableAction($store, $settings, new SupplierInvoiceChecks($store, $settings), new ObjectTransitionRunner(container: $container));
+		return new HandToAccountsPayableAction($store, $settings, new SupplierInvoiceChecks($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])), new ObjectTransitionRunner(container: $container));
 
 	}//end action()
 

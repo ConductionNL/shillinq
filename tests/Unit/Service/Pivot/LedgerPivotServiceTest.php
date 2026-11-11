@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Pivot;
 use InvalidArgumentException;
 use OCA\Shillinq\Service\Pivot\LedgerPivotService;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +45,7 @@ class LedgerPivotServiceTest extends TestCase {
 	 * @return LedgerPivotService The service.
 	 */
 	private function service(array $data): LedgerPivotService {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new LedgerPivotService(new InMemoryObjectServiceStub($data), $settings);

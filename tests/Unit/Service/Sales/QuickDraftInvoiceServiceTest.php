@@ -22,7 +22,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
 use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
 use OCA\Shillinq\Service\Sales\QuickDraftRefusedException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\TestCase;
@@ -64,12 +64,12 @@ final class QuickDraftInvoiceServiceTest extends TestCase {
 				'ARInvoice' => $invoices,
 			]
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$random = $this->createMock(ISecureRandom::class);
 		$random->method('generate')->willReturnCallback(fn (): string => (string)array_shift($this->suffixes));
 
-		return new QuickDraftInvoiceService(objectService: $this->store, settings: $settings, random: $random);
+		return new QuickDraftInvoiceService(objectService: $this->store, registerLocation: $settings, random: $random);
 	}//end service()
 
 	/**

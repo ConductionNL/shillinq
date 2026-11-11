@@ -35,6 +35,7 @@ use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
@@ -267,7 +268,7 @@ class SalesUsageBillingTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $params = []): string => vsprintf($text, $params));
 
-		return new MeterReadingImportService($this->store, $this->settings(), $l10n);
+		return new MeterReadingImportService($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $l10n);
 
 	}//end importer()
 

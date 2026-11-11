@@ -16,7 +16,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
@@ -60,7 +60,7 @@ final class SupplierInvoiceLineLinkTest extends TestCase {
 		$administrationContext->method('canAccess')->willReturnCallback(
 			static fn (string $administrationId): bool => $administrationId === self::ADMIN
 		);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SupplierInvoiceService(

@@ -45,6 +45,7 @@ use OCA\Shillinq\Service\Import\ImportPosting;
 use OCA\Shillinq\Service\Import\ImportPostingPayloads;
 use OCA\Shillinq\Service\Import\ImportSourceReader;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -172,7 +173,7 @@ final class ImportBatchStepsTest extends TestCase {
 			reader: new ImportSourceReader(rootFolder: $root, userSession: $this->createMock(IUserSession::class)),
 			period: new ImportPeriod(objectService: $this->store, settings: $settings),
 			objectService: $this->store,
-			settings: $settings
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])
 		);
 
 		return new ImportBatchAction(steps: $steps);
