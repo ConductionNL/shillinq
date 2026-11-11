@@ -226,6 +226,69 @@ final class ExtractionCompletedListenerTest extends TestCase {
 	}//end testReExtractionRefreshesExistingDraftWithoutDuplicating()
 
 	/**
+	 * A re-extraction leaves a supplier invoice alone once it has moved past received.
+	 *
+	 * @return void
+	 */
+	public function testReExtractionDoesNotRewriteAnInvoicePastReceived(): void {
+		foreach (['matching', 'matched', 'exception', 'approved', 'paid', 'rejected'] as $status) {
+			$saved = [];
+			$existing = [
+				[
+					'id' => 'inv-1',
+					'invoiceNumber' => 'F-OLD',
+					'totalInclVat' => 10000,
+					'sourceDocumentUri' => 'docudesk://attachments/x/invoice.pdf',
+					'administrationId' => 'adm-1',
+					'statusCode' => $status,
+				],
+			];
+			$listener = $this->buildListener(existing: $existing, saved: $saved, notifications: $notifications);
+
+			$listener->handle(
+				$this->makeEvent(
+					docType: 'supplier-invoice',
+					fields: ['invoiceNumber' => 'F-NEW', 'totalIncl' => 999.0],
+					fieldConfidence: [],
+					overallConfidence: 0.9
+				)
+			);
+
+			self::assertSame([], $saved, 'an invoice in status ' . $status . ' is not rewritten');
+		}
+
+	}//end testReExtractionDoesNotRewriteAnInvoicePastReceived()
+
+	/**
+	 * A re-extraction requested by someone outside the record's administration
+	 * leaves the record alone.
+	 *
+	 * @return void
+	 */
+	public function testReExtractionByAnOutsiderDoesNotRewriteTheRecord(): void {
+		foreach (['supplier-invoice', 'receipt'] as $docType) {
+			$saved = [];
+			$existing = [
+				[
+					'id' => 'rec-1',
+					'sourceDocumentUri' => 'docudesk://attachments/x/invoice.pdf',
+					'administrationId' => 'adm-other',
+					'statusCode' => 'received',
+				],
+			];
+			$listener = $this->buildListener(existing: $existing, saved: $saved, notifications: $notifications);
+
+			$listener->handle($this->makeEvent(docType: $docType, fields: ['totalIncl' => 999.0], fieldConfidence: [], overallConfidence: 0.9));
+			$listener->handle(
+				$this->makeEvent(docType: $docType, fields: ['totalIncl' => 999.0], fieldConfidence: [], overallConfidence: 0.9, requestedBy: '')
+			);
+
+			self::assertSame([], $saved, 'a ' . $docType . ' of another administration is not rewritten');
+		}
+
+	}//end testReExtractionByAnOutsiderDoesNotRewriteTheRecord()
+
+	/**
 	 * OpenRegister's findAll() answers entities. A re-extraction still finds its
 	 * draft, and a new draft lands in the requester's own administration.
 	 *
@@ -237,7 +300,10 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			[
 				'SupplierInvoice' => [['id' => 'draft-1', 'sourceDocumentUri' => 'docudesk://attachments/x/invoice.pdf', 'administrationId' => 'adm-1']],
 				'Receipt' => [],
-				'AdministrationMembership' => [['id' => 'm-1', 'userId' => 'bob', 'administrationId' => 'adm-7']],
+				'AdministrationMembership' => [
+					['id' => 'm-1', 'userId' => 'bob', 'administrationId' => 'adm-7'],
+					['id' => 'm-2', 'userId' => 'alice', 'administrationId' => 'adm-1'],
+				],
 			],
 			$saved,
 			findAllRendersEntities: true
@@ -469,7 +535,7 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			 */
 			public function findAll(array $params = []): array {
 				if ($this->schema === 'AdministrationMembership') {
-					return [];
+					return [['id' => 'm-alice', 'userId' => 'alice', 'administrationId' => 'adm-1']];
 				}
 
 				$filters = ($params['filters'] ?? []);

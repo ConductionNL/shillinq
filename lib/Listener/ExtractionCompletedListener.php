@@ -83,6 +83,14 @@ class ExtractionCompletedListener implements IEventListener {
 	private const NOTIFICATION_SUBJECT = 'extraction_draft_created';
 
 	/**
+	 * The supplier-invoice statuses in which a re-extraction may still refresh
+	 * the invoice; later statuses belong to matching and payment.
+	 *
+	 * @var array<int,string>
+	 */
+	private const REFRESHABLE_INVOICE_STATUSES = ['', 'received'];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container DI container — OR ObjectService
@@ -187,6 +195,14 @@ class ExtractionCompletedListener implements IEventListener {
 		}
 
 		$existing = $this->findBySourceDocumentUri(schema: $schema, documentUri: $documentUri);
+		if ($existing !== null && $this->mayRefresh(schema: $schema, existing: $existing, requestedBy: $payload['requestedBy']) === false) {
+			$this->logger->info(
+				'ExtractionCompletedListener: existing record is not a draft of the requester, not refreshed',
+				['schema' => $schema, 'documentUri' => $documentUri, 'requestedBy' => $payload['requestedBy']]
+			);
+			return;
+		}
+
 		$saved = $this->saveObject(schema: $schema, object: $this->draftFor(payload: $payload, existing: $existing));
 
 		$this->logger->info(
@@ -230,6 +246,30 @@ class ExtractionCompletedListener implements IEventListener {
 		return $schema;
 
 	}//end knownSchema()
+
+	/**
+	 * Whether a re-extraction may overwrite the existing record: the requester
+	 * belongs to its administration, and a supplier invoice is still received.
+	 *
+	 * @param string               $schema      The draft schema.
+	 * @param array<string, mixed> $existing    The existing record.
+	 * @param string               $requestedBy The requesting NC user id.
+	 *
+	 * @return bool
+	 */
+	private function mayRefresh(string $schema, array $existing, string $requestedBy): bool {
+		$administrationId = (string)($existing['administrationId'] ?? '');
+		if ($this->administrationContext->canUserAccess(userId: $requestedBy, administrationId: $administrationId) === false) {
+			return false;
+		}
+
+		if ($schema !== ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE) {
+			return true;
+		}
+
+		return in_array((string)($existing['statusCode'] ?? ''), self::REFRESHABLE_INVOICE_STATUSES, true);
+
+	}//end mayRefresh()
 
 	/**
 	 * Build the draft, keeping the existing draft's administration when it has one.
