@@ -103,6 +103,18 @@ class DunningRunService {
 	private const INCASSO_CHANNEL = 'COLLECTION_AGENCY_API';
 
 	/**
+	 * The GL accounts a write-off posts on, with their posting description (REQ-CCD-010 task-26).
+	 * PHP stores the numeric account numbers as integer keys; a string account number looks them up as well.
+	 *
+	 * @var array<int,string>
+	 */
+	private const WRITE_OFF_ACCOUNTS = [
+		'7220' => 'Bad debt expense (art. 6:96 BW write-off)',
+		'1500' => 'Output VAT recoverable (art. 29 OB)',
+		'1300' => 'Accounts Receivable control',
+	];
+
+	/**
 	 * Construct the service with lazy DI of OR's ObjectService.
 	 *
 	 * @param ContainerInterface $container Lazy DI container.
@@ -624,62 +636,74 @@ class DunningRunService {
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
 	 */
 	public function writeOff(string $administrationId, array $params): array {
-		$invoiceId = (string)($params['invoiceId'] ?? '');
-		$principal = (float)($params['principalDepreciated'] ?? 0.0);
-		$vatAmount = ($params['vatAmount'] ?? null);
-		$period = (string)($params['vatTaxReturnPeriod'] ?? $this->nextVATPeriod());
-		$callerBoekId = (string)($params['entryId'] ?? '');
-
 		// Materialise the GL posting first so we can carry its id onto the OninbaarAfschrijving record.
-		$entryId = $callerBoekId;
-		if ($entryId === '' && $principal > 0.0) {
-			$vatCast = null;
-			if ($vatAmount !== null) {
-				$vatCast = (float)$vatAmount;
-			}
-
-			$entryId = $this->materialiseWriteOffGl(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				principal: $principal,
-				vatAmount: $vatCast,
-				period: $period
-			);
-		}
-
-		$entryIdValue = null;
-		if ($entryId !== '') {
-			$entryIdValue = $entryId;
-		}
-
-		$record = [
-			'invoiceId' => $invoiceId,
-			'principalDepreciated' => $principal,
-			'vatAmount' => $vatAmount,
-			'art29OBDeclaration' => (string)($params['art29OBDeclaration'] ?? ''),
-			'evidenceRef' => ($params['evidenceRef'] ?? null),
-			'entryId' => $entryIdValue,
-			'vatTaxReturnPeriod' => $period,
-			'administrationId' => $administrationId,
-			'lifecycleState' => 'posted',
-		];
-
-		$saved = $this->saveObject(schema: 'OninbaarAfschrijving', data: $record);
+		$writeOff = $this->bookWriteOffGl(writeOff: $this->writeOffFrom(administrationId: $administrationId, params: $params));
+		$saved = $this->saveObject(schema: 'OninbaarAfschrijving', data: $this->writeOffRecord(writeOff: $writeOff));
 
 		// Queue the BTW art. 29 OB correction for the next aangifte.
-		if ($vatAmount !== null && (float)$vatAmount > 0.0) {
-			$this->queueVatRefund(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				vatAmount: (float)$vatAmount,
-				period: $period,
-				entryId: $entryId,
-				oninbaarId: (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''))
-			);
+		if ($writeOff->vatAmount !== null && (float)$writeOff->vatAmount > 0.0) {
+			$this->queueVatRefund(writeOff: $writeOff, oninbaarId: (string)($saved['id'] ?? ($saved['@self']['id'] ?? '')));
 		}
 
 		return $saved;
 	}//end writeOff()
+
+	/**
+	 * Read the write-off from the request parameters; the VAT period defaults to the next filing period.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param array<string,mixed> $params The write-off parameters (see writeOff()).
+	 *
+	 * @return DunningWriteOff
+	 */
+	private function writeOffFrom(string $administrationId, array $params): DunningWriteOff {
+		return new DunningWriteOff(
+			administrationId: $administrationId,
+			invoiceId: (string)($params['invoiceId'] ?? ''),
+			principal: (float)($params['principalDepreciated'] ?? 0.0),
+			vatAmount: ($params['vatAmount'] ?? null),
+			period: (string)($params['vatTaxReturnPeriod'] ?? $this->nextVATPeriod()),
+			entryId: (string)($params['entryId'] ?? ''),
+			art29OBDeclaration: (string)($params['art29OBDeclaration'] ?? ''),
+			evidenceRef: ($params['evidenceRef'] ?? null),
+		);
+	}//end writeOffFrom()
+
+	/**
+	 * Book the GL posting of a write-off unless the caller supplied its GL transaction or nothing is written off.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 *
+	 * @return DunningWriteOff The write-off with the GL transaction it is booked under.
+	 */
+	private function bookWriteOffGl(DunningWriteOff $writeOff): DunningWriteOff {
+		if ($writeOff->entryId !== '' || ($writeOff->principal > 0.0) === false) {
+			return $writeOff;
+		}
+
+		return $writeOff->withEntryId(entryId: $this->materialiseWriteOffGl(writeOff: $writeOff));
+	}//end bookWriteOffGl()
+
+	/**
+	 * Build the OninbaarAfschrijving row of a write-off.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function writeOffRecord(DunningWriteOff $writeOff): array {
+		return [
+			'invoiceId' => $writeOff->invoiceId,
+			'principalDepreciated' => $writeOff->principal,
+			'vatAmount' => $writeOff->vatAmount,
+			'art29OBDeclaration' => $writeOff->art29OBDeclaration,
+			'evidenceRef' => $writeOff->evidenceRef,
+			'entryId' => $this->nullWhenEmpty(value: $writeOff->entryId),
+			'vatTaxReturnPeriod' => $writeOff->period,
+			'administrationId' => $writeOff->administrationId,
+			'lifecycleState' => 'posted',
+		];
+	}//end writeOffRecord()
 
 	/**
 	 * Materialise the balanced GL posting for a write-off.
@@ -690,67 +714,15 @@ class DunningRunService {
 	 * by `InvoiceGenerationService` so write-off + invoice posting net to zero
 	 * on the AR control account when reconciled.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $invoiceId Invoice FK (carried as sourceReference).
-	 * @param float $principal Principal written off (EUR).
-	 * @param float|null $vatAmount Output VAT recoverable per art. 29 OB.
-	 * @param string $period Target VAT period (e.g. `2026-Q2`).
+	 * @param DunningWriteOff $writeOff The write-off; its VAT is the output VAT recoverable per art. 29 OB.
 	 *
 	 * @return string The created GLTransaction id, or `''` when persistence failed.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-22
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-26
 	 */
-	private function materialiseWriteOffGl(
-		string $administrationId,
-		string $invoiceId,
-		float $principal,
-		?float $vatAmount,
-		string $period,
-	): string {
-		$principalCents = (int)round($principal * 100);
-		$vatCents = 0;
-		if ($vatAmount !== null) {
-			$vatCents = (int)round($vatAmount * 100);
-		}
-
-		$totalCents = ($principalCents + $vatCents);
-
-		$postings = [
-			[
-				'accountNumber' => '7220',
-				'debitCents' => $principalCents,
-				'creditCents' => 0,
-				'description' => 'Bad debt expense (art. 6:96 BW write-off)',
-			],
-		];
-		if ($vatCents > 0) {
-			$postings[] = [
-				'accountNumber' => '1500',
-				'debitCents' => $vatCents,
-				'creditCents' => 0,
-				'description' => 'Output VAT recoverable (art. 29 OB)',
-			];
-		}
-
-		$postings[] = [
-			'accountNumber' => '1300',
-			'debitCents' => 0,
-			'creditCents' => $totalCents,
-			'description' => 'Accounts Receivable control',
-		];
-
-		$journal = [
-			'administrationId' => $administrationId,
-			'description' => sprintf('Write-off invoice %s (oninbaar)', $invoiceId),
-			'postingDate' => (new DateTimeImmutable())->format('Y-m-d'),
-			'periodId' => $period,
-			'currency' => 'EUR',
-			'sourceReference' => $invoiceId,
-			'state' => 'posted',
-			'isBalanced' => true,
-			'postings' => $postings,
-		];
+	private function materialiseWriteOffGl(DunningWriteOff $writeOff): string {
+		$journal = $this->writeOffJournal(writeOff: $writeOff);
 
 		try {
 			$saved = $this->saveObject(schema: 'GLTransaction', data: $journal);
@@ -765,6 +737,98 @@ class DunningRunService {
 	}//end materialiseWriteOffGl()
 
 	/**
+	 * Build the GLTransaction of a write-off.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function writeOffJournal(DunningWriteOff $writeOff): array {
+		$postings = $this->writeOffPostings(writeOff: $writeOff);
+
+		return [
+			'administrationId' => $writeOff->administrationId,
+			'description' => sprintf('Write-off invoice %s (oninbaar)', $writeOff->invoiceId),
+			'postingDate' => (new DateTimeImmutable())->format('Y-m-d'),
+			'periodId' => $writeOff->period,
+			'currency' => 'EUR',
+			'sourceReference' => $writeOff->invoiceId,
+			'state' => 'posted',
+			'isBalanced' => true,
+			'postings' => $postings,
+		];
+	}//end writeOffJournal()
+
+	/**
+	 * The postings of a write-off: debit bad debt, debit VAT to recover when present, credit AR control.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function writeOffPostings(DunningWriteOff $writeOff): array {
+		$principalCents = (int)round($writeOff->principal * 100);
+		$vatCents = $this->writeOffVatCents(writeOff: $writeOff);
+
+		$postings = [$this->debitPosting(accountNumber: '7220', cents: $principalCents)];
+		if ($vatCents > 0) {
+			$postings[] = $this->debitPosting(accountNumber: '1500', cents: $vatCents);
+		}
+
+		$postings[] = $this->creditPosting(accountNumber: '1300', cents: ($principalCents + $vatCents));
+		return $postings;
+	}//end writeOffPostings()
+
+	/**
+	 * The VAT written off in cents, 0 when none.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 *
+	 * @return int
+	 */
+	private function writeOffVatCents(DunningWriteOff $writeOff): int {
+		if ($writeOff->vatAmount === null) {
+			return 0;
+		}
+
+		return (int)round((float)$writeOff->vatAmount * 100);
+	}//end writeOffVatCents()
+
+	/**
+	 * A debit posting on a write-off account.
+	 *
+	 * @param string $accountNumber One of the WRITE_OFF_ACCOUNTS.
+	 * @param int $cents The debit in cents.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function debitPosting(string $accountNumber, int $cents): array {
+		return [
+			'accountNumber' => $accountNumber,
+			'debitCents' => $cents,
+			'creditCents' => 0,
+			'description' => self::WRITE_OFF_ACCOUNTS[$accountNumber],
+		];
+	}//end debitPosting()
+
+	/**
+	 * A credit posting on a write-off account.
+	 *
+	 * @param string $accountNumber One of the WRITE_OFF_ACCOUNTS.
+	 * @param int $cents The credit in cents.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function creditPosting(string $accountNumber, int $cents): array {
+		return [
+			'accountNumber' => $accountNumber,
+			'debitCents' => 0,
+			'creditCents' => $cents,
+			'description' => self::WRITE_OFF_ACCOUNTS[$accountNumber],
+		];
+	}//end creditPosting()
+
+	/**
 	 * Queue a `VATLine` correction for the eerstvolgende BTW-aangifte per art. 29 OB.
 	 *
 	 * Per REQ-CCD-010 task-27 the actual return prep is owned by
@@ -772,49 +836,15 @@ class DunningRunService {
 	 * a typed correction line keyed to the target period so the return-prep
 	 * engine surfaces it on the next cycle.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $invoiceId Invoice FK.
-	 * @param float $vatAmount VAT amount to refund (EUR).
-	 * @param string $period Target aangifte period.
-	 * @param string $entryId Linked GLTransaction id (optional).
+	 * @param DunningWriteOff $writeOff The write-off; its VAT is refunded, its GL transaction linked (optional).
 	 * @param string $oninbaarId Linked OninbaarAfschrijving id.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
 	 */
-	private function queueVatRefund(
-		string $administrationId,
-		string $invoiceId,
-		float $vatAmount,
-		string $period,
-		string $entryId,
-		string $oninbaarId,
-	): void {
-		$glTxRef = null;
-		if ($entryId !== '') {
-			$glTxRef = $entryId;
-		}
-
-		$oninbaarRef = null;
-		if ($oninbaarId !== '') {
-			$oninbaarRef = $oninbaarId;
-		}
-
-		$line = [
-			'administrationId' => $administrationId,
-			'returnId' => $period,
-			'glTransactionId' => $glTxRef,
-			'type' => 'CORRECTION_ART_29_OB',
-			'taxableAmount' => 0.0,
-			'taxRate' => 0.0,
-			'vatAmount' => (-1.0 * $vatAmount),
-			'glAccountNumber' => '1500',
-			'glAccountName' => 'Output VAT recoverable (art. 29 OB)',
-			'description' => sprintf('Oninbaar art. 29 OB — invoice %s', $invoiceId),
-			'sourceOninbaarRef' => $oninbaarRef,
-			'sourceInvoiceRef' => $invoiceId,
-		];
+	private function queueVatRefund(DunningWriteOff $writeOff, string $oninbaarId): void {
+		$line = $this->vatRefundLine(writeOff: $writeOff, oninbaarId: $oninbaarId);
 
 		try {
 			$this->saveObject(schema: 'VATLine', data: $line);
@@ -824,7 +854,60 @@ class DunningRunService {
 			);
 		}
 
-	}//end queueVatTeruggaaf()
+	}//end queueVatRefund()
+
+	/**
+	 * Build the art. 29 OB correction VATLine of a write-off.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 * @param string $oninbaarId Linked OninbaarAfschrijving id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function vatRefundLine(DunningWriteOff $writeOff, string $oninbaarId): array {
+		return [
+			'administrationId' => $writeOff->administrationId,
+			'returnId' => $writeOff->period,
+			'glTransactionId' => $this->nullWhenEmpty(value: $writeOff->entryId),
+			'type' => 'CORRECTION_ART_29_OB',
+			'taxableAmount' => 0.0,
+			'taxRate' => 0.0,
+			'vatAmount' => (-1.0 * (float)$writeOff->vatAmount),
+			'glAccountNumber' => '1500',
+			'glAccountName' => self::WRITE_OFF_ACCOUNTS['1500'],
+		] + $this->vatRefundSources(writeOff: $writeOff, oninbaarId: $oninbaarId);
+	}//end vatRefundLine()
+
+	/**
+	 * The description and source links of an art. 29 OB correction line.
+	 *
+	 * @param DunningWriteOff $writeOff The write-off.
+	 * @param string $oninbaarId Linked OninbaarAfschrijving id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function vatRefundSources(DunningWriteOff $writeOff, string $oninbaarId): array {
+		return [
+			'description' => sprintf('Oninbaar art. 29 OB — invoice %s', $writeOff->invoiceId),
+			'sourceOninbaarRef' => $this->nullWhenEmpty(value: $oninbaarId),
+			'sourceInvoiceRef' => $writeOff->invoiceId,
+		];
+	}//end vatRefundSources()
+
+	/**
+	 * Null for an empty reference, the reference otherwise.
+	 *
+	 * @param string $value The reference.
+	 *
+	 * @return string|null
+	 */
+	private function nullWhenEmpty(string $value): ?string {
+		if ($value === '') {
+			return null;
+		}
+
+		return $value;
+	}//end nullWhenEmpty()
 
 	/**
 	 * Resolve the next BTW filing period for a write-off `posted` today.
