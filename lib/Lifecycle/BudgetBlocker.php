@@ -103,21 +103,10 @@ class BudgetBlocker {
 				return true;
 			}
 
-			$admin = (string)($commitment['administrationId'] ?? '');
-			$rules = $this->resolveRegels(commitment: $commitment);
-
-			foreach ($rules as $rule) {
-				if ($this->regelFitsBudget(rule: $rule, administrationId: $admin) === false) {
-					$this->logger->info(
-						'BudgetBlocker: insufficient budget — denying commitment',
-						[
-							'commitment' => $commitmentNumber,
-							'programme' => ($rule['programme'] ?? null),
-							'financialYear' => ($rule['financialYear'] ?? null),
-						]
-					);
-					return false;
-				}
+			$unfit = $this->firstUnfitRule(commitment: $commitment);
+			if ($unfit !== null) {
+				$this->logInsufficientBudget(commitmentNumber: $commitmentNumber, rule: $unfit);
+				return false;
 			}
 
 			return true;
@@ -130,6 +119,46 @@ class BudgetBlocker {
 		}//end try
 
 	}//end canCommit()
+
+	/**
+	 * The first of the commitment's rules that does not fit its budget, or
+	 * null when every rule fits. Later rules are not checked once one fails.
+	 *
+	 * @param array<string,mixed> $commitment The commitment.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstUnfitRule(array $commitment): ?array {
+		$admin = (string)($commitment['administrationId'] ?? '');
+		foreach ($this->resolveRegels(commitment: $commitment) as $rule) {
+			if ($this->regelFitsBudget(rule: $rule, administrationId: $admin) === false) {
+				return $rule;
+			}
+		}
+
+		return null;
+
+	}//end firstUnfitRule()
+
+	/**
+	 * Log the denial of a commitment one of whose rules exceeds its budget.
+	 *
+	 * @param string              $commitmentNumber The commitment.
+	 * @param array<string,mixed> $rule             The rule that does not fit.
+	 *
+	 * @return void
+	 */
+	private function logInsufficientBudget(string $commitmentNumber, array $rule): void {
+		$this->logger->info(
+			'BudgetBlocker: insufficient budget — denying commitment',
+			[
+				'commitment' => $commitmentNumber,
+				'programme' => ($rule['programme'] ?? null),
+				'financialYear' => ($rule['financialYear'] ?? null),
+			]
+		);
+
+	}//end logInsufficientBudget()
 
 	/**
 	 * Compute free budget room for a budget record (REQ-VPL-001). Pure function.
