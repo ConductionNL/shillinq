@@ -68,62 +68,17 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 	 */
 	public function render(array $paymentRun): RenderedFile {
 		$runNumber = (string)($paymentRun['runNumber'] ?? '');
-		$currency = $this->currency(paymentRun: $paymentRun);
-		$initiator = $this->initiatorName(paymentRun: $paymentRun);
-		$lines = $this->lines(paymentRun: $paymentRun);
-		$executionDt = (string)($paymentRun['executionDate'] ?? gmdate('Y-m-d'));
-		$controlSum = $this->money(value: $this->controlSum(paymentRun: $paymentRun, lines: $lines));
-		$txCount = (string)count($lines);
-
-		$writer = new XMLWriter();
-		$writer->openMemory();
-		$writer->setIndent(true);
-		$writer->setIndentString('  ');
-		$writer->startDocument('1.0', 'UTF-8');
+		$document = new Pain001Document(
+			writer: $this->openWriter(),
+			runNumber: $runNumber,
+			currency: $this->currency(paymentRun: $paymentRun)
+		);
+		$writer = $document->writer;
 
 		$writer->startElementNs(null, 'Document', self::PAIN_NS);
 		$writer->startElement('CstmrCdtTrfInitn');
-
-		// --- GrpHdr ---.
-		$writer->startElement('GrpHdr');
-		$writer->writeElement('MsgId', $this->messageId(paymentRun: $paymentRun));
-		$writer->writeElement('CreDtTm', gmdate('Y-m-d\TH:i:s'));
-		$writer->writeElement('NbOfTxs', $txCount);
-		$writer->writeElement('CtrlSum', $controlSum);
-		$writer->startElement('InitgPty');
-		$writer->writeElement('Nm', $initiator);
-		$writer->endElement();
-		// End InitgPty.
-		$writer->endElement();
-		// End GrpHdr.
-		// --- PmtInf: one block per requested execution date (REQ-BPR-006) ---.
-		$groups = $this->groupByExecutionDate(lines: $lines, runDate: $executionDt);
-		$blockIndex = 0;
-		foreach ($groups as $date => $groupLines) {
-			$blockIndex++;
-			$paymentInfoId = 'PMT';
-			if ($runNumber !== '') {
-				$paymentInfoId = $runNumber;
-			}
-
-			if (count($groups) > 1) {
-				$paymentInfoId .= '-' . $blockIndex;
-			}
-
-			$this->writePaymentBlock(
-				writer: $writer,
-				block: [
-					'id' => $paymentInfoId,
-					'date' => (string)$date,
-					'lines' => $groupLines,
-					'initiator' => $initiator,
-					'debtorIban' => (string)($paymentRun['debtorAccountIban'] ?? ''),
-				],
-				runNumber: $runNumber,
-				currency: $currency
-			);
-		}//end foreach
-
+		$this->writeGroupHeader(document: $document, paymentRun: $paymentRun);
+		$this->writePaymentBlocks(document: $document, paymentRun: $paymentRun);
 		$writer->endElement();
 		// End CstmrCdtTrfInitn.
 		$writer->endElement();
@@ -145,70 +100,218 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 	}//end render()
 
 	/**
-	 * Write a single CdtTrfTxInf transaction block for one payment line.
+	 * A memory XML writer, indented by two spaces, with the document started.
 	 *
-	 * @param XMLWriter $writer Open XML writer positioned inside PmtInf.
-	 * @param string $runNumber The PaymentRun runNumber (EndToEndId stem).
-	 * @param int $index 1-based line index (EndToEndId suffix).
-	 * @param array<string, mixed> $line The payment line.
-	 * @param string $currency ISO 4217 currency code.
+	 * @return XMLWriter
+	 */
+	private function openWriter(): XMLWriter {
+		$writer = new XMLWriter();
+		$writer->openMemory();
+		$writer->setIndent(true);
+		$writer->setIndentString('  ');
+		$writer->startDocument('1.0', 'UTF-8');
+		return $writer;
+
+	}//end openWriter()
+
+	/**
+	 * Write the GrpHdr: message id, creation time, count, control sum, initiator.
+	 *
+	 * @param Pain001Document      $document   The document being written.
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
 	 *
 	 * @return void
 	 */
-	private function writeTransaction(XMLWriter $writer, string $runNumber, int $index, array $line, string $currency): void {
-		$stem = 'PR';
-		if ($runNumber !== '') {
-			$stem = $runNumber;
+	private function writeGroupHeader(Pain001Document $document, array $paymentRun): void {
+		$lines = $this->lines(paymentRun: $paymentRun);
+		$writer = $document->writer;
+		$writer->startElement('GrpHdr');
+		$writer->writeElement('MsgId', $this->messageId(paymentRun: $paymentRun));
+		$writer->writeElement('CreDtTm', gmdate('Y-m-d\TH:i:s'));
+		$writer->writeElement('NbOfTxs', (string)count($lines));
+		$writer->writeElement('CtrlSum', $this->money(value: $this->controlSum(paymentRun: $paymentRun, lines: $lines)));
+		$writer->startElement('InitgPty');
+		$writer->writeElement('Nm', $this->initiatorName(paymentRun: $paymentRun));
+		$writer->endElement();
+		// End InitgPty.
+		$writer->endElement();
+		// End GrpHdr.
+	}//end writeGroupHeader()
+
+	/**
+	 * Write one PmtInf block per requested execution date (REQ-BPR-006).
+	 *
+	 * @param Pain001Document      $document   The document being written.
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 *
+	 * @return void
+	 */
+	private function writePaymentBlocks(Pain001Document $document, array $paymentRun): void {
+		$runDate = (string)($paymentRun['executionDate'] ?? gmdate('Y-m-d'));
+		$groups = $this->groupByExecutionDate(lines: $this->lines(paymentRun: $paymentRun), runDate: $runDate);
+		$ids = $this->paymentInfoIds(document: $document, blockCount: count($groups));
+		foreach (array_keys($groups) as $position => $date) {
+			$this->writePaymentBlock(
+				document: $document,
+				block: [
+					'id' => $ids[$position],
+					'date' => (string)$date,
+					'lines' => $groups[$date],
+					'initiator' => $this->initiatorName(paymentRun: $paymentRun),
+					'debtorIban' => (string)($paymentRun['debtorAccountIban'] ?? ''),
+				]
+			);
 		}
 
-		$endToEnd = $stem . '-' . $index;
-		$amount = $this->toFloat(value: ($line['amount'] ?? 0));
-		$payeeName = (string)($line['payeeName'] ?? '');
-		$iban = (string)($line['creditorIban'] ?? '');
-		$remit = (string)($line['remittanceInfo'] ?? '');
-		$bic = trim((string)($line['creditorBic'] ?? ''));
+	}//end writePaymentBlocks()
+
+	/**
+	 * The PmtInfId of each block: the run number (PMT without one), numbered
+	 * from 1 when there is more than one block.
+	 *
+	 * @param Pain001Document $document   The document being written.
+	 * @param int             $blockCount The number of blocks.
+	 *
+	 * @return list<string>
+	 */
+	private function paymentInfoIds(Pain001Document $document, int $blockCount): array {
+		$stem = 'PMT';
+		if ($document->runNumber !== '') {
+			$stem = $document->runNumber;
+		}
+
+		if ($blockCount <= 1) {
+			return array_fill(0, $blockCount, $stem);
+		}
+
+		return array_map(static fn (int $number): string => $stem . '-' . $number, range(1, $blockCount));
+
+	}//end paymentInfoIds()
+
+	/**
+	 * Write a single CdtTrfTxInf transaction block for one payment line.
+	 *
+	 * @param Pain001Document                                $document The document being written, positioned inside PmtInf.
+	 * @param array{index: int, line: array<string, mixed>} $entry    The 1-based line index (EndToEndId suffix) and the line.
+	 *
+	 * @return void
+	 */
+	private function writeTransaction(Pain001Document $document, array $entry): void {
+		$writer = $document->writer;
+		$line = $entry['line'];
+		$stem = 'PR';
+		if ($document->runNumber !== '') {
+			$stem = $document->runNumber;
+		}
 
 		$writer->startElement('CdtTrfTxInf');
-
 		$writer->startElement('PmtId');
-		$writer->writeElement('EndToEndId', $endToEnd);
+		$writer->writeElement('EndToEndId', $stem . '-' . (int)$entry['index']);
 		$writer->endElement();
 		// End PmtId.
+		$this->writeAmount(document: $document, amount: $this->toFloat(value: ($line['amount'] ?? 0)));
+		$this->writeCreditor(writer: $writer, line: $line);
+		$writer->endElement();
+		// End CdtTrfTxInf.
+	}//end writeTransaction()
+
+	/**
+	 * Write the instructed amount in the run currency.
+	 *
+	 * @param Pain001Document $document The document being written.
+	 * @param float           $amount   The amount.
+	 *
+	 * @return void
+	 */
+	private function writeAmount(Pain001Document $document, float $amount): void {
+		$writer = $document->writer;
 		$writer->startElement('Amt');
 		$writer->startElement('InstdAmt');
-		$writer->writeAttribute('Ccy', $currency);
+		$writer->writeAttribute('Ccy', $document->currency);
 		$writer->text($this->money(value: $amount));
 		$writer->endElement();
 		$writer->endElement();
 		// End Amt.
-		// BIC is OPTIONAL in pain.001 — only emit CdtrAgt when present.
-		if ($bic !== '') {
-			$writer->startElement('CdtrAgt');
-			$writer->startElement('FinInstnId');
-			$writer->writeElement('BIC', $bic);
-			$writer->endElement();
-			$writer->endElement();
+	}//end writeAmount()
+
+	/**
+	 * Write the creditor's agent (only with a BIC), name, account and the
+	 * remittance information (only when present).
+	 *
+	 * @param XMLWriter            $writer The open writer.
+	 * @param array<string, mixed> $line   The payment line.
+	 *
+	 * @return void
+	 */
+	private function writeCreditor(XMLWriter $writer, array $line): void {
+		$this->writeCreditorAgent(writer: $writer, line: $line);
+		$writer->startElement('Cdtr');
+		$writer->writeElement('Nm', (string)($line['payeeName'] ?? ''));
+		$writer->endElement();
+		$writer->startElement('CdtrAcct');
+		$this->writeIbanId(writer: $writer, iban: (string)($line['creditorIban'] ?? ''));
+		$writer->endElement();
+		// End CdtrAcct.
+		$this->writeRemittance(writer: $writer, line: $line);
+
+	}//end writeCreditor()
+
+	/**
+	 * Write the creditor's agent when the line carries a BIC (optional in pain.001).
+	 *
+	 * @param XMLWriter            $writer The open writer.
+	 * @param array<string, mixed> $line   The payment line.
+	 *
+	 * @return void
+	 */
+	private function writeCreditorAgent(XMLWriter $writer, array $line): void {
+		$bic = trim((string)($line['creditorBic'] ?? ''));
+		if ($bic === '') {
+			return;
 		}
 
-		$writer->startElement('Cdtr');
-		$writer->writeElement('Nm', $payeeName);
+		$writer->startElement('CdtrAgt');
+		$writer->startElement('FinInstnId');
+		$writer->writeElement('BIC', $bic);
+		$writer->endElement();
 		$writer->endElement();
 
-		$writer->startElement('CdtrAcct');
+	}//end writeCreditorAgent()
+
+	/**
+	 * Write the unstructured remittance information when the line carries it.
+	 *
+	 * @param XMLWriter            $writer The open writer.
+	 * @param array<string, mixed> $line   The payment line.
+	 *
+	 * @return void
+	 */
+	private function writeRemittance(XMLWriter $writer, array $line): void {
+		$remit = (string)($line['remittanceInfo'] ?? '');
+		if ($remit === '') {
+			return;
+		}
+
+		$writer->startElement('RmtInf');
+		$writer->writeElement('Ustrd', $remit);
+		$writer->endElement();
+
+	}//end writeRemittance()
+
+	/**
+	 * Write an account's Id/IBAN.
+	 *
+	 * @param XMLWriter $writer The open writer, inside the account element.
+	 * @param string    $iban   The IBAN.
+	 *
+	 * @return void
+	 */
+	private function writeIbanId(XMLWriter $writer, string $iban): void {
 		$writer->startElement('Id');
 		$writer->writeElement('IBAN', $iban);
 		$writer->endElement();
-		$writer->endElement();
-		// End CdtrAcct.
-		if ($remit !== '') {
-			$writer->startElement('RmtInf');
-			$writer->writeElement('Ustrd', $remit);
-			$writer->endElement();
-		}
 
-		$writer->endElement();
-		// End CdtTrfTxInf.
-	}//end writeTransaction()
+	}//end writeIbanId()
 
 	/**
 	 * The payment lines of the run as a 0-indexed list.
@@ -354,20 +457,38 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 	/**
 	 * Write one PmtInf block with its own count, control sum and date.
 	 *
-	 * @param XMLWriter            $writer    The open writer.
-	 * @param array<string, mixed> $block     id, date, lines (index + line), initiator, debtorIban.
-	 * @param string               $runNumber The run number for end-to-end ids.
-	 * @param string               $currency  The run currency.
+	 * @param Pain001Document      $document The document being written.
+	 * @param array<string, mixed> $block    id, date, lines (index + line), initiator, debtorIban.
 	 *
 	 * @return void
 	 */
-	private function writePaymentBlock(XMLWriter $writer, array $block, string $runNumber, string $currency): void {
+	private function writePaymentBlock(Pain001Document $document, array $block): void {
+		$writer = $document->writer;
+		$writer->startElement('PmtInf');
+		$this->writePaymentBlockHeader(writer: $writer, block: $block);
+		$this->writeDebtor(writer: $writer, block: $block);
+		foreach ($block['lines'] as $entry) {
+			$this->writeTransaction(document: $document, entry: $entry);
+		}
+
+		$writer->endElement();
+		// End PmtInf.
+	}//end writePaymentBlock()
+
+	/**
+	 * Write the block's id, method, booking, count, control sum and date.
+	 *
+	 * @param XMLWriter            $writer The open writer, inside PmtInf.
+	 * @param array<string, mixed> $block  The block.
+	 *
+	 * @return void
+	 */
+	private function writePaymentBlockHeader(XMLWriter $writer, array $block): void {
 		$sum = 0.0;
 		foreach ($block['lines'] as $entry) {
 			$sum += $this->toFloat(value: ($entry['line']['amount'] ?? 0));
 		}
 
-		$writer->startElement('PmtInf');
 		$writer->writeElement('PmtInfId', (string)$block['id']);
 		$writer->writeElement('PmtMtd', 'TRF');
 		$writer->writeElement('BtchBookg', 'true');
@@ -375,14 +496,22 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 		$writer->writeElement('CtrlSum', $this->money(value: round($sum, 2)));
 		$writer->writeElement('ReqdExctnDt', (string)$block['date']);
 
+	}//end writePaymentBlockHeader()
+
+	/**
+	 * Write the debtor, its account and its (not provided) agent.
+	 *
+	 * @param XMLWriter            $writer The open writer, inside PmtInf.
+	 * @param array<string, mixed> $block  The block.
+	 *
+	 * @return void
+	 */
+	private function writeDebtor(XMLWriter $writer, array $block): void {
 		$writer->startElement('Dbtr');
 		$writer->writeElement('Nm', (string)$block['initiator']);
 		$writer->endElement();
-
 		$writer->startElement('DbtrAcct');
-		$writer->startElement('Id');
-		$writer->writeElement('IBAN', (string)$block['debtorIban']);
-		$writer->endElement();
+		$this->writeIbanId(writer: $writer, iban: (string)$block['debtorIban']);
 		$writer->endElement();
 		// End DbtrAcct.
 		// pain.001.001.03 wants Othr/Id; a bare Othr text node fails the XSD.
@@ -394,17 +523,5 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 		$writer->endElement();
 		$writer->endElement();
 		// End DbtrAgt.
-		foreach ($block['lines'] as $entry) {
-			$this->writeTransaction(
-				writer: $writer,
-				runNumber: $runNumber,
-				index: (int)$entry['index'],
-				line: $entry['line'],
-				currency: $currency
-			);
-		}
-
-		$writer->endElement();
-		// End PmtInf.
-	}//end writePaymentBlock()
+	}//end writeDebtor()
 }//end class
