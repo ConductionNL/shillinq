@@ -50,7 +50,6 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Project a concluded decidesk Decision onto the originating shillinq finance
@@ -122,87 +121,174 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 		}
 
 		try {
-			$payload = $this->readPayload(event: $event);
-
-			// Filter to shillinq-originated decisions only.
-			if ($payload['sourceApp'] !== 'shillinq') {
-				return;
-			}
-
-			$outcome = self::STATUS_MAP[$payload['status']] ?? null;
-			if ($outcome === null) {
-				// Withdrawn / pending / unknown — no terminal projection.
-				return;
-			}
-
-			$decisionRef = $payload['decisionId'];
-			$subjectId = $this->resolveSubjectId(payload: $payload);
-			if ($subjectId === '') {
-				$this->logger->info(
-					'SignoffDecisionConcludedListener: no subject id on concluded decision (skipping)',
-					['decisionRef' => $decisionRef]
-				);
-				return;
-			}
-
-			$resolved = $this->resolveFinanceObject(payload: $payload, subjectId: $subjectId);
-			if ($resolved === null) {
-				$this->logger->info(
-					'SignoffDecisionConcludedListener: no matching finance object (skipping)',
-					['decisionRef' => $decisionRef, 'subjectId' => $subjectId]
-				);
-				return;
-			}
-
-			[$schema, $financeObject] = $resolved;
-
-			// Capture the accounting-consequence mutation so it can be
-			// persisted alongside the mirror. onDecisionCallback owns the
-			// idempotency guard and fires the consequence exactly once on
-			// 'approved'; a repeated conclusion is a no-op and $consequence
-			// stays null (nothing extra to persist).
-			$consequence = [];
-			$updated = $this->signoffService->onDecisionCallback(
-				$financeObject,
-				$outcome,
-				$decisionRef,
-				function (array $object) use ($schema, $outcome, &$consequence): array {
-					$object = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
-					$consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
-					return $object;
-				},
-				// Activity object type for the REQ-RAP-006 `decision_made`
-				// event raised inside onDecisionCallback(). This listener is the
-				// sole production caller, so omitting it here would leave that
-				// event permanently unemitted.
-				$schema,
-			);
-
-			// Persist the mirror (decisionRef + decisionOutcome) plus any local
-			// accounting-consequence delta (REQ-SIGN-006) through OR.
-			$updates = [
-				'decisionRef' => $updated['decisionRef'] ?? $decisionRef,
-				'decisionOutcome' => $updated['decisionOutcome'] ?? $outcome,
-			];
-			$this->persist(schema: $schema, id: $subjectId, updates: ($updates + $consequence));
-
-			$this->logger->info(
-				'SignoffDecisionConcludedListener: outcome consumed',
-				[
-					'schema' => $schema,
-					'subjectId' => $subjectId,
-					'outcome' => $outcome,
-					'decisionRef' => $decisionRef,
-				]
-			);
+			$this->project(payload: $this->readPayload(event: $event));
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'SignoffDecisionConcludedListener: projection failed (fail-soft)',
 				['exception' => $e->getMessage()]
 			);
-		}//end try
+		}
 
 	}//end handle()
+
+	/**
+	 * Project a shillinq-originated, terminal decision outcome onto its
+	 * finance object.
+	 *
+	 * @param array<string,string> $payload The normalised payload.
+	 *
+	 * @return void
+	 */
+	private function project(array $payload): void {
+		// Filter to shillinq-originated decisions only.
+		if ($payload['sourceApp'] !== 'shillinq') {
+			return;
+		}
+
+		$outcome = self::STATUS_MAP[$payload['status']] ?? null;
+		if ($outcome === null) {
+			// Withdrawn / pending / unknown — no terminal projection.
+			return;
+		}
+
+		$found = $this->locateSubject(payload: $payload);
+		if ($found !== null) {
+			$this->recordOutcome(found: $found, conclusion: ($payload + ['outcome' => $outcome]));
+		}
+
+	}//end project()
+
+	/**
+	 * Find the finance object the decision belongs to, logging and answering
+	 * null when there is no subject id or no matching object.
+	 *
+	 * @param array<string,string> $payload The normalised payload.
+	 *
+	 * @return FoundSubject|null The finance object, or null.
+	 */
+	private function locateSubject(array $payload): FoundSubject|null {
+		$subjectId = $this->subjects()->subjectId(payload: $payload);
+		if ($subjectId === '') {
+			$this->logger->info(
+				'SignoffDecisionConcludedListener: no subject id on concluded decision (skipping)',
+				['decisionRef' => $payload['decisionId']]
+			);
+			return null;
+		}
+
+		return $this->locateOrLog(payload: $payload, subjectId: $subjectId);
+
+	}//end locateSubject()
+
+	/**
+	 * Search the subject schemas, logging when nothing matches.
+	 *
+	 * @param array<string,string> $payload   The normalised payload.
+	 * @param string               $subjectId The resolved subject id.
+	 *
+	 * @return FoundSubject|null The finance object, or null.
+	 */
+	private function locateOrLog(array $payload, string $subjectId): FoundSubject|null {
+		$found = $this->subjects()->locate(payload: $payload, knownSchemas: self::SUBJECT_SCHEMAS);
+		if ($found === null) {
+			$this->logger->info(
+				'SignoffDecisionConcludedListener: no matching finance object (skipping)',
+				['decisionRef' => $payload['decisionId'], 'subjectId' => $subjectId]
+			);
+		}
+
+		return $found;
+
+	}//end locateOrLog()
+
+	/**
+	 * Record the outcome through the sign-off service, persist the mirror
+	 * (decisionRef + decisionOutcome) plus any local accounting-consequence
+	 * delta (REQ-SIGN-006) through OR, and log it.
+	 *
+	 * @param FoundSubject          $found      The finance object.
+	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
+	 *
+	 * @return void
+	 */
+	private function recordOutcome(FoundSubject $found, array $conclusion): void {
+		[$updated, $consequence] = $this->applyOutcome(found: $found, conclusion: $conclusion);
+
+		$updates = [
+			'decisionRef' => $updated['decisionRef'] ?? $conclusion['decisionId'],
+			'decisionOutcome' => $updated['decisionOutcome'] ?? $conclusion['outcome'],
+		];
+		$this->subjects()->persist(ref: $found->ref, updates: ($updates + $consequence));
+
+		$this->logConsumed(found: $found, conclusion: $conclusion);
+
+	}//end recordOutcome()
+
+	/**
+	 * Log the consumed outcome.
+	 *
+	 * @param FoundSubject          $found      The finance object.
+	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
+	 *
+	 * @return void
+	 */
+	private function logConsumed(FoundSubject $found, array $conclusion): void {
+		$this->logger->info(
+			'SignoffDecisionConcludedListener: outcome consumed',
+			[
+				'schema' => $found->ref->schema,
+				'subjectId' => $found->ref->id,
+				'outcome' => $conclusion['outcome'],
+				'decisionRef' => $conclusion['decisionId'],
+			]
+		);
+
+	}//end logConsumed()
+
+	/**
+	 * Hand the outcome to the sign-off service.
+	 *
+	 * The accounting-consequence mutation is captured so it can be persisted
+	 * alongside the mirror. onDecisionCallback owns the idempotency guard and
+	 * fires the consequence exactly once on 'approved'; a repeated conclusion
+	 * is a no-op and the consequence stays empty.
+	 *
+	 * @param FoundSubject          $found      The finance object.
+	 * @param array<string,string> $conclusion The payload plus the mapped outcome.
+	 *
+	 * @return array{0: array<string,mixed>, 1: array<string,mixed>} The updated object and the consequence delta.
+	 */
+	private function applyOutcome(FoundSubject $found, array $conclusion): array {
+		$consequence = [];
+		$updated = $this->signoffService->onDecisionCallback(
+			$found->object,
+			$conclusion['outcome'],
+			$conclusion['decisionId'],
+			function (array $object) use ($found, $conclusion, &$consequence): array {
+				$object = $this->applyAccountingConsequence(schema: $found->ref->schema, object: $object, outcome: $conclusion['outcome']);
+				$consequence = $this->consequenceDelta(object: $object, outcome: $conclusion['outcome']);
+				return $object;
+			},
+			// Activity object type for the REQ-RAP-006 `decision_made`
+			// event raised inside onDecisionCallback(). This listener is the
+			// sole production caller, so omitting it here would leave that
+			// event permanently unemitted.
+			$found->ref->schema,
+		);
+
+		return [$updated, $consequence];
+
+	}//end applyOutcome()
+
+	/**
+	 * The register access for the concluded subject.
+	 *
+	 * @return ConcludedSubjectStore The store.
+	 */
+	private function subjects(): ConcludedSubjectStore {
+		return new ConcludedSubjectStore(settingsService: $this->settingsService, objectService: $this->objectService);
+
+	}//end subjects()
 
 	/**
 	 * Read the cross-app event into a shape this app owns.
@@ -232,53 +318,6 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 			'subjectSchema'     => (string)($event->getSubjectSchema() ?? ''),
 		];
 	}//end readPayload()
-
-	/**
-	 * Resolve the subject id from the concluded event — prefer the
-	 * externalReference we sent on the request, fall back to subjectId.
-	 *
-	 * @param array{externalReference: string, subjectId: string} $payload The normalised event payload.
-	 *
-	 * @return string The subject id, or '' when none.
-	 */
-	private function resolveSubjectId(array $payload): string {
-		if ($payload['externalReference'] !== '') {
-			return $payload['externalReference'];
-		}
-
-		return $payload['subjectId'];
-	}//end resolveSubjectId()
-
-	/**
-	 * Resolve the finance object the concluded decision belongs to.
-	 *
-	 * Uses the event's subjectSchema when present; otherwise scans the three
-	 * known governance-decision subject schemas for the id.
-	 *
-	 * @param array{subjectSchema: string} $payload The normalised event payload.
-	 * @param string $subjectId The finance object id.
-	 *
-	 * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
-	 */
-	private function resolveFinanceObject(array $payload, string $subjectId): ?array {
-		$hintedSchema = $payload['subjectSchema'];
-
-		$schemas = self::SUBJECT_SCHEMAS;
-		if ($hintedSchema !== '') {
-			// Try the hinted schema first.
-			array_unshift($schemas, $hintedSchema);
-			$schemas = array_values(array_unique($schemas));
-		}
-
-		foreach ($schemas as $schema) {
-			$object = $this->findObject(schema: $schema, id: $subjectId);
-			if ($object !== null) {
-				return [$schema, $object];
-			}
-		}
-
-		return null;
-	}//end resolveFinanceObject()
 
 	/**
 	 * Apply the local accounting consequence on an approved sign-off
@@ -340,67 +379,4 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 
 		return $delta;
 	}//end consequenceDelta()
-
-	/**
-	 * Find a finance object by id within a schema, returning a plain array.
-	 *
-	 * @param string $schema The schema slug.
-	 * @param string $id The object id.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findObject(string $schema, string $id): ?array {
-		try {
-			$result = ObjectIdentifier::findScoped(
-				scoped: $this->objectService->setRegister($this->settingsService->getRegisterSlug())->setSchema($schema),
-				id: $id
-			);
-
-			return $this->toArray(result: $result);
-		} catch (Throwable $e) {
-			return null;
-		}
-
-	}//end findObject()
-
-	/**
-	 * Persist the mirror updates onto the finance object via OR.
-	 *
-	 * @param string $schema The schema slug.
-	 * @param string $id The object id.
-	 * @param array<string,mixed> $updates The fields to write.
-	 *
-	 * @return void
-	 */
-	private function persist(string $schema, string $id, array $updates): void {
-		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
-			->setSchema($schema)
-			->updateObject($id, $updates);
-
-	}//end persist()
-
-	/**
-	 * Normalise an OR find result to a plain array.
-	 *
-	 * @param mixed $result OR return value.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function toArray(mixed $result): ?array {
-		if (is_array($result) === true) {
-			return $result;
-		}
-
-		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-			$serialized = $result->jsonSerialize();
-			if (is_array($serialized) === true) {
-				return $serialized;
-			}
-
-			return null;
-		}
-
-		return null;
-	}//end toArray()
 }//end class
