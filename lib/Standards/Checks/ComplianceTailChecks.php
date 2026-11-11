@@ -71,79 +71,406 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'ARInvoice' => [
+			// Default: an ordinary (non-margin-scheme) supply, so the art. 315 /
+			// art. 322 margin predicates are vacuously satisfied.
+			'marginScheme' => false,
+		],
+	];
+
+	/**
+	 * The data seedObjects() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_OBJECTS = [
+		'SaftFile' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'fileVersion' => '2.0',
+				'auditFileCountry' => 'NL',
+				'xsdValid' => true,
+				'header' => [
+					'companyName' => 'Shillinq Demo B.V.',
+					'companyId' => 'NL854502130B01',
+					'taxRegistrationNbr' => 'NL854502130B01',
+					'currencyCode' => 'EUR',
+					'fiscalYear' => '2026',
+					'startDate' => '2026-01-01',
+					'endDate' => '2026-03-31',
+					'taxonomyVersion' => 'NT16',
+					'softwareId' => 'shillinq',
+					'softwareVersion' => '1.0.0',
+				],
+				'generalLedgerAccounts' => [
+					[
+						'accountId' => '1000',
+						'description' => 'Cash',
+						'accountType' => 'asset',
+						'openingBalance' => 5000.00,
+						'closingBalance' => 7200.00,
+					],
+					[
+						'accountId' => '8000',
+						'description' => 'Revenue',
+						'accountType' => 'income',
+						'openingBalance' => 0.00,
+						'closingBalance' => 12000.00,
+					],
+				],
+				'customers' => [
+					[
+						'customerId' => 'C-001',
+						'name' => 'Acme Buyer GmbH',
+						'vatNumber' => 'DE123456789',
+						'address' => 'Hauptstrasse 1, Berlin',
+						'openingBalance' => 0.00,
+						'closingBalance' => 1210.00,
+					],
+				],
+				'suppliers' => [
+					[
+						'supplierId' => 'S-001',
+						'name' => 'Office Supplies BV',
+						'vatNumber' => 'NL001234567B01',
+						'address' => 'Kerkstraat 5, Utrecht',
+						'openingBalance' => 0.00,
+						'closingBalance' => -363.00,
+					],
+				],
+				'taxTable' => [
+					[
+						'taxCode' => 'NL-HIGH',
+						'taxPercentage' => 21.0,
+						'description' => 'NL standaardtarief 21%',
+					],
+					[
+						'taxCode' => 'NL-LOW',
+						'taxPercentage' => 9.0,
+						'description' => 'NL verlaagd tarief 9%',
+					],
+				],
+				'glEntries' => [
+					[
+						'journalId' => 'SALES',
+						'transactionId' => 'T-2026-0001',
+						'lines' => [
+							[
+								'accountId' => '1000',
+								'postingDate' => '2026-01-15',
+								'debitAmount' => 1210.00,
+								'creditAmount' => 0.00,
+								'documentReference' => 'INV-2026-0001',
+							],
+							[
+								'accountId' => '8000',
+								'postingDate' => '2026-01-15',
+								'debitAmount' => 0.00,
+								'creditAmount' => 1000.00,
+								'documentReference' => 'INV-2026-0001',
+							],
+						],
+					],
+				],
+				'sourceDocuments' => [
+					[
+						'documentType' => 'sales-invoice',
+						'documentReference' => 'INV-2026-0001',
+						'glTransactionId' => 'T-2026-0001',
+						'date' => '2026-01-15',
+						'totalAmount' => 1210.00,
+					],
+				],
+			],
+		],
+	];
+
+	/**
 	 * Per-object-type, per-rule predicates for the compliance-tail rules.
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
 	public static function checks(): array {
 		return [
-			'ARInvoice' => [
-				// ===== EN 16931 — IGIC (Canary Islands general indirect tax), category 'L'. =====
-				// BR-AF-01: when a line/allowance/charge uses 'L', the VAT breakdown
-				// contains at least one breakdown group of 'L'.
-				'en16931-br-af-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'L'),
-				// BR-AF-05: every 'L' line carries a VAT rate of zero or greater (a
-				// present, non-negative rate).
-				'en16931-br-af-05' => static fn (array $o): bool => self::lineRateNonNegativeForCategory($o, 'L'),
-				// BR-AF-08: each 'L' breakdown group's taxable amount reconciles to the
-				// sum of 'L' line nets plus 'L' document charges minus 'L' allowances.
-				'en16931-br-af-08' => static fn (array $o): bool => self::breakdownTaxableReconciles($o, 'L'),
-				// BR-AF-10: a 'L' breakdown group carries no VAT exemption reason
-				// (code or text) — IGIC is a taxed, not exempt, category.
-				'en16931-br-af-10' => static fn (array $o): bool => self::breakdownNoExemptionReason($o, 'L'),
-
-				// ===== EN 16931 — IPSI (Ceuta/Melilla), category 'M'. =====
-				// BR-AG-01: when a line/allowance/charge uses 'M', the VAT breakdown
-				// contains at least one breakdown group of 'M'.
-				'en16931-br-ag-01' => static fn (array $o): bool => self::breakdownCoversCategory($o, 'M'),
-				// BR-AG-10: a 'M' breakdown group carries no VAT exemption reason
-				// (code or text) — IPSI is a taxed, not exempt, category.
-				'en16931-br-ag-10' => static fn (array $o): bool => self::breakdownNoExemptionReason($o, 'M'),
-
-				// ===== EN 16931 — Italian split payment (scissione dei pagamenti), category 'B'. =====
-				// BR-B-01: an invoice using the 'B' category is a domestic Italian
-				// invoice — seller and buyer country are both 'IT'.
-				'en16931-br-b-01' => static fn (array $o): bool => self::splitPaymentDomesticItaly($o),
-				// BR-B-02: an invoice that carries a 'B' (split-payment) line/allowance/
-				// charge must NOT also carry a standard-rated 'S' line/allowance/charge.
-				'en16931-br-b-02' => static fn (array $o): bool => self::splitPaymentNotMixedWithStandard($o),
-
-				// ===== VAT Directive — margin scheme. =====
-				// art. 315: under the margin scheme the taxable amount is the profit
-				// margin — selling price less purchase price (the modelled margin
-				// amount reconciles to selling - purchase, and is non-negative).
-				'vatdir-art315-margin-taxable-amount' => static fn (array $o): bool => self::marginTaxableAmountOk($o),
-				// arts. 322-325: a dealer using the margin scheme deducts no input VAT
-				// on the margin-scheme goods and shows no VAT separately on the invoice
-				// (no per-line / breakdown VAT, no separately-stated header VAT amount).
-				'vatdir-art322-margin-no-deduction' => static fn (array $o): bool => self::marginNoSeparateVat($o),
-			],
-			'SaftFile' => [
-				// ===== OECD SAF-T 2.0 — file structure. =====
-				// Header group: company id, fiscal/selection period, currency, schema
-				// version and producing-software details.
-				'saft-header-group' => static fn (array $o): bool => self::headerGroupComplete($o),
-				// GeneralLedgerAccounts master file: each account with id, description,
-				// type and opening/closing balances.
-				'saft-gl-accounts-group' => static fn (array $o): bool => self::glAccountsGroupComplete($o),
-				// Customers and Suppliers master files: party id, VAT registration,
-				// address and balances.
-				'saft-customers-suppliers-group' => static fn (array $o): bool => self::partiesGroupComplete($o),
-				// TaxTable master file: tax (VAT) codes, rates and descriptions.
-				'saft-taxtable-group' => static fn (array $o): bool => self::taxTableGroupComplete($o),
-				// GeneralLedgerEntries: journals and transaction lines, each line with
-				// account, date, debit/credit amount and document reference.
-				'saft-gl-entries-group' => static fn (array $o): bool => self::glEntriesGroupComplete($o),
-				// SourceDocuments: sales/purchase invoices, payments, movement-of-goods
-				// records linking source documents to ledger entries.
-				'saft-source-documents-group' => static fn (array $o): bool => self::sourceDocumentsGroupComplete($o),
-				// The export is a valid XML document conforming to the applicable
-				// national SAF-T XSD schema version.
-				'saft-xml-schema-validity' => static fn (array $o): bool => self::xsdValid($o),
-			],
+			'ARInvoice' => self::arInvoiceChecks(),
+			'SaftFile' => self::saftFileChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The ARInvoice predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceChecks(): array {
+		return [
+			// ===== EN 16931 — IGIC (Canary Islands general indirect tax), category 'L'. =====
+			'en16931-br-af-01' => self::en16931BrAf01(...),
+			'en16931-br-af-05' => self::en16931BrAf05(...),
+			'en16931-br-af-08' => self::en16931BrAf08(...),
+			'en16931-br-af-10' => self::en16931BrAf10(...),
+
+			// ===== EN 16931 — IPSI (Ceuta/Melilla), category 'M'. =====
+			'en16931-br-ag-01' => self::en16931BrAg01(...),
+			'en16931-br-ag-10' => self::en16931BrAg10(...),
+
+			// ===== EN 16931 — Italian split payment (scissione dei pagamenti), category 'B'. =====
+			'en16931-br-b-01' => self::en16931BrB01(...),
+			'en16931-br-b-02' => self::en16931BrB02(...),
+
+			// ===== VAT Directive — margin scheme. =====
+			'vatdir-art315-margin-taxable-amount' => self::vatdirArt315MarginTaxableAmount(...),
+			'vatdir-art322-margin-no-deduction' => self::vatdirArt322MarginNoDeduction(...),
+		];
+
+	}//end arInvoiceChecks()
+
+	/**
+	 * The SaftFile predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function saftFileChecks(): array {
+		return [
+			// ===== OECD SAF-T 2.0 — file structure. =====
+			'saft-header-group' => self::saftHeaderGroup(...),
+			'saft-gl-accounts-group' => self::saftGlAccountsGroup(...),
+			'saft-customers-suppliers-group' => self::saftCustomersSuppliersGroup(...),
+			'saft-taxtable-group' => self::saftTaxtableGroup(...),
+			'saft-gl-entries-group' => self::saftGlEntriesGroup(...),
+			'saft-source-documents-group' => self::saftSourceDocumentsGroup(...),
+			'saft-xml-schema-validity' => self::saftXmlSchemaValidity(...),
+		];
+
+	}//end saftFileChecks()
+
+	/**
+	 * BR-AF-01: when a line/allowance/charge uses 'L', the VAT breakdown
+	 * contains at least one breakdown group of 'L'.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAf01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'L');
+
+	}//end en16931BrAf01()
+
+	/**
+	 * BR-AF-05: every 'L' line carries a VAT rate of zero or greater (a
+	 * present, non-negative rate).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAf05(array $o): bool {
+		return self::lineRateNonNegativeForCategory($o, 'L');
+
+	}//end en16931BrAf05()
+
+	/**
+	 * BR-AF-08: each 'L' breakdown group's taxable amount reconciles to the
+	 * sum of 'L' line nets plus 'L' document charges minus 'L' allowances.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAf08(array $o): bool {
+		return self::breakdownTaxableReconciles($o, 'L');
+
+	}//end en16931BrAf08()
+
+	/**
+	 * BR-AF-10: a 'L' breakdown group carries no VAT exemption reason
+	 * (code or text) — IGIC is a taxed, not exempt, category.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAf10(array $o): bool {
+		return self::breakdownNoExemptionReason($o, 'L');
+
+	}//end en16931BrAf10()
+
+	/**
+	 * BR-AG-01: when a line/allowance/charge uses 'M', the VAT breakdown
+	 * contains at least one breakdown group of 'M'.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAg01(array $o): bool {
+		return self::breakdownCoversCategory($o, 'M');
+
+	}//end en16931BrAg01()
+
+	/**
+	 * BR-AG-10: a 'M' breakdown group carries no VAT exemption reason
+	 * (code or text) — IPSI is a taxed, not exempt, category.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrAg10(array $o): bool {
+		return self::breakdownNoExemptionReason($o, 'M');
+
+	}//end en16931BrAg10()
+
+	/**
+	 * BR-B-01: an invoice using the 'B' category is a domestic Italian
+	 * invoice — seller and buyer country are both 'IT'.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrB01(array $o): bool {
+		return self::splitPaymentDomesticItaly($o);
+
+	}//end en16931BrB01()
+
+	/**
+	 * BR-B-02: an invoice that carries a 'B' (split-payment) line/allowance/
+	 * charge must NOT also carry a standard-rated 'S' line/allowance/charge.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrB02(array $o): bool {
+		return self::splitPaymentNotMixedWithStandard($o);
+
+	}//end en16931BrB02()
+
+	/**
+	 * art. 315: under the margin scheme the taxable amount is the profit
+	 * margin — selling price less purchase price (the modelled margin
+	 * amount reconciles to selling - purchase, and is non-negative).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt315MarginTaxableAmount(array $o): bool {
+		return self::marginTaxableAmountOk($o);
+
+	}//end vatdirArt315MarginTaxableAmount()
+
+	/**
+	 * arts. 322-325: a dealer using the margin scheme deducts no input VAT
+	 * on the margin-scheme goods and shows no VAT separately on the invoice
+	 * (no per-line / breakdown VAT, no separately-stated header VAT amount).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt322MarginNoDeduction(array $o): bool {
+		return self::marginNoSeparateVat($o);
+
+	}//end vatdirArt322MarginNoDeduction()
+
+	/**
+	 * Header group: company id, fiscal/selection period, currency, schema
+	 * version and producing-software details.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftHeaderGroup(array $o): bool {
+		return self::headerGroupComplete($o);
+
+	}//end saftHeaderGroup()
+
+	/**
+	 * GeneralLedgerAccounts master file: each account with id, description,
+	 * type and opening/closing balances.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftGlAccountsGroup(array $o): bool {
+		return self::glAccountsGroupComplete($o);
+
+	}//end saftGlAccountsGroup()
+
+	/**
+	 * Customers and Suppliers master files: party id, VAT registration,
+	 * address and balances.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftCustomersSuppliersGroup(array $o): bool {
+		return self::partiesGroupComplete($o);
+
+	}//end saftCustomersSuppliersGroup()
+
+	/**
+	 * TaxTable master file: tax (VAT) codes, rates and descriptions.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftTaxtableGroup(array $o): bool {
+		return self::taxTableGroupComplete($o);
+
+	}//end saftTaxtableGroup()
+
+	/**
+	 * GeneralLedgerEntries: journals and transaction lines, each line with
+	 * account, date, debit/credit amount and document reference.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftGlEntriesGroup(array $o): bool {
+		return self::glEntriesGroupComplete($o);
+
+	}//end saftGlEntriesGroup()
+
+	/**
+	 * SourceDocuments: sales/purchase invoices, payments, movement-of-goods
+	 * records linking source documents to ledger entries.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftSourceDocumentsGroup(array $o): bool {
+		return self::sourceDocumentsGroupComplete($o);
+
+	}//end saftSourceDocumentsGroup()
+
+	/**
+	 * The export is a valid XML document conforming to the applicable
+	 * national SAF-T XSD schema version.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function saftXmlSchemaValidity(array $o): bool {
+		return self::xsdValid($o);
+
+	}//end saftXmlSchemaValidity()
 
 	/**
 	 * Field defaults backfilled onto existing ARInvoice rows so the margin-scheme
@@ -154,13 +481,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'ARInvoice' => [
-				// Default: an ordinary (non-margin-scheme) supply, so the art. 315 /
-				// art. 322 margin predicates are vacuously satisfied.
-				'marginScheme' => false,
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
@@ -174,107 +495,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'SaftFile' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'fileVersion' => '2.0',
-					'auditFileCountry' => 'NL',
-					'xsdValid' => true,
-					'header' => [
-						'companyName' => 'Shillinq Demo B.V.',
-						'companyId' => 'NL854502130B01',
-						'taxRegistrationNbr' => 'NL854502130B01',
-						'currencyCode' => 'EUR',
-						'fiscalYear' => '2026',
-						'startDate' => '2026-01-01',
-						'endDate' => '2026-03-31',
-						'taxonomyVersion' => 'NT16',
-						'softwareId' => 'shillinq',
-						'softwareVersion' => '1.0.0',
-					],
-					'generalLedgerAccounts' => [
-						[
-							'accountId' => '1000',
-							'description' => 'Cash',
-							'accountType' => 'asset',
-							'openingBalance' => 5000.00,
-							'closingBalance' => 7200.00,
-						],
-						[
-							'accountId' => '8000',
-							'description' => 'Revenue',
-							'accountType' => 'income',
-							'openingBalance' => 0.00,
-							'closingBalance' => 12000.00,
-						],
-					],
-					'customers' => [
-						[
-							'customerId' => 'C-001',
-							'name' => 'Acme Buyer GmbH',
-							'vatNumber' => 'DE123456789',
-							'address' => 'Hauptstrasse 1, Berlin',
-							'openingBalance' => 0.00,
-							'closingBalance' => 1210.00,
-						],
-					],
-					'suppliers' => [
-						[
-							'supplierId' => 'S-001',
-							'name' => 'Office Supplies BV',
-							'vatNumber' => 'NL001234567B01',
-							'address' => 'Kerkstraat 5, Utrecht',
-							'openingBalance' => 0.00,
-							'closingBalance' => -363.00,
-						],
-					],
-					'taxTable' => [
-						[
-							'taxCode' => 'NL-HIGH',
-							'taxPercentage' => 21.0,
-							'description' => 'NL standaardtarief 21%',
-						],
-						[
-							'taxCode' => 'NL-LOW',
-							'taxPercentage' => 9.0,
-							'description' => 'NL verlaagd tarief 9%',
-						],
-					],
-					'glEntries' => [
-						[
-							'journalId' => 'SALES',
-							'transactionId' => 'T-2026-0001',
-							'lines' => [
-								[
-									'accountId' => '1000',
-									'postingDate' => '2026-01-15',
-									'debitAmount' => 1210.00,
-									'creditAmount' => 0.00,
-									'documentReference' => 'INV-2026-0001',
-								],
-								[
-									'accountId' => '8000',
-									'postingDate' => '2026-01-15',
-									'debitAmount' => 0.00,
-									'creditAmount' => 1000.00,
-									'documentReference' => 'INV-2026-0001',
-								],
-							],
-						],
-					],
-					'sourceDocuments' => [
-						[
-							'documentType' => 'sales-invoice',
-							'documentReference' => 'INV-2026-0001',
-							'glTransactionId' => 'T-2026-0001',
-							'date' => '2026-01-15',
-							'totalAmount' => 1210.00,
-						],
-					],
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 
@@ -338,38 +559,74 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		$lineSum = 0.0;
-		foreach (self::lines($o) as $line) {
-			if ((string)($line['vatCategory'] ?? '') === $cat) {
-				$lineSum += (float)($line['netAmount'] ?? 0);
-			}
-		}
-
-		$allowanceSum = 0.0;
-		foreach (self::items($o, 'allowances') as $item) {
-			if ((string)($item['vatCategory'] ?? '') === $cat) {
-				$allowanceSum += (float)($item['amount'] ?? 0);
-			}
-		}
-
-		$chargeSum = 0.0;
-		foreach (self::items($o, 'charges') as $item) {
-			if ((string)($item['vatCategory'] ?? '') === $cat) {
-				$chargeSum += (float)($item['amount'] ?? 0);
-			}
-		}
+		$lineSum = self::lineNetOfCategory(self::lines($o), $cat);
+		$allowanceSum = self::itemAmountOfCategory(self::items($o, 'allowances'), $cat);
+		$chargeSum = self::itemAmountOfCategory(self::items($o, 'charges'), $cat);
 
 		$expected = ($lineSum - $allowanceSum + $chargeSum);
 
-		$taxableSum = 0.0;
-		foreach (self::vatBreakdown($o) as $group) {
-			if ((string)($group['category'] ?? '') === $cat) {
-				$taxableSum += (float)($group['taxableAmount'] ?? 0);
-			}
-		}
+		$taxableSum = self::taxableOfCategory(self::vatBreakdown($o), $cat);
 
 		return self::centsEqual($taxableSum, $expected);
 	}//end breakdownTaxableReconciles()
+
+	/**
+	 * The sum of the net amounts of the invoice lines of VAT category $cat.
+	 *
+	 * @param array<int, array<string, mixed>> $lines The invoice lines.
+	 * @param string $cat The UNTDID 5305 category code.
+	 *
+	 * @return float
+	 */
+	private static function lineNetOfCategory(array $lines, string $cat): float {
+		$sum = 0.0;
+		foreach ($lines as $line) {
+			if ((string)($line['vatCategory'] ?? '') === $cat) {
+				$sum += (float)($line['netAmount'] ?? 0);
+			}
+		}
+
+		return $sum;
+	}//end lineNetOfCategory()
+
+	/**
+	 * The sum of the amounts of the document allowances or charges of VAT
+	 * category $cat.
+	 *
+	 * @param array<int, array<string, mixed>> $items The allowances or charges.
+	 * @param string $cat The UNTDID 5305 category code.
+	 *
+	 * @return float
+	 */
+	private static function itemAmountOfCategory(array $items, string $cat): float {
+		$sum = 0.0;
+		foreach ($items as $item) {
+			if ((string)($item['vatCategory'] ?? '') === $cat) {
+				$sum += (float)($item['amount'] ?? 0);
+			}
+		}
+
+		return $sum;
+	}//end itemAmountOfCategory()
+
+	/**
+	 * The sum of the taxable amounts of the VAT breakdown groups of category $cat.
+	 *
+	 * @param array<int, array<string, mixed>> $groups The VAT breakdown groups.
+	 * @param string $cat The UNTDID 5305 category code.
+	 *
+	 * @return float
+	 */
+	private static function taxableOfCategory(array $groups, string $cat): float {
+		$sum = 0.0;
+		foreach ($groups as $group) {
+			if ((string)($group['category'] ?? '') === $cat) {
+				$sum += (float)($group['taxableAmount'] ?? 0);
+			}
+		}
+
+		return $sum;
+	}//end taxableOfCategory()
 
 	/**
 	 * Every breakdown group of category $cat (a taxed category) carries NO VAT
@@ -706,31 +963,69 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 		}
 
 		foreach ($transactions as $transaction) {
-			if (self::present($transaction, 'journalId') === false
-				|| self::present($transaction, 'transactionId') === false
-			) {
+			if (self::isCompleteGlTransaction($transaction) === false) {
 				return false;
 			}
-
-			$lines = self::items($transaction, 'lines');
-			if ($lines === []) {
-				return false;
-			}
-
-			foreach ($lines as $line) {
-				if (self::present($line, 'accountId') === false
-					|| self::present($line, 'postingDate') === false
-					|| self::numericPresent($line, 'debitAmount') === false
-					|| self::numericPresent($line, 'creditAmount') === false
-					|| self::present($line, 'documentReference') === false
-				) {
-					return false;
-				}
-			}
-		}//end foreach
+		}
 
 		return true;
 	}//end glEntriesGroupComplete()
+
+	/**
+	 * One SAF-T journal transaction carries a journal and transaction id and at
+	 * least one transaction line, each of them complete.
+	 *
+	 * @param array<string, mixed> $transaction The journal transaction.
+	 *
+	 * @return bool
+	 */
+	private static function isCompleteGlTransaction(array $transaction): bool {
+		if (self::present($transaction, 'journalId') === false
+			|| self::present($transaction, 'transactionId') === false
+		) {
+			return false;
+		}
+
+		$lines = self::items($transaction, 'lines');
+		if ($lines === []) {
+			return false;
+		}
+
+		return self::allCompleteGlLines($lines);
+	}//end isCompleteGlTransaction()
+
+	/**
+	 * Every SAF-T transaction line in $lines is complete.
+	 *
+	 * @param array<int, array<string, mixed>> $lines The transaction lines.
+	 *
+	 * @return bool
+	 */
+	private static function allCompleteGlLines(array $lines): bool {
+		foreach ($lines as $line) {
+			if (self::isCompleteGlLine($line) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allCompleteGlLines()
+
+	/**
+	 * One SAF-T transaction line carries an account, posting date, debit and
+	 * credit amount and a document reference.
+	 *
+	 * @param array<string, mixed> $line The transaction line.
+	 *
+	 * @return bool
+	 */
+	private static function isCompleteGlLine(array $line): bool {
+		return self::present($line, 'accountId') === true
+			&& self::present($line, 'postingDate') === true
+			&& self::numericPresent($line, 'debitAmount') === true
+			&& self::numericPresent($line, 'creditAmount') === true
+			&& self::present($line, 'documentReference') === true;
+	}//end isCompleteGlLine()
 
 	/**
 	 * The SourceDocuments group has at least one source document, each carrying a
