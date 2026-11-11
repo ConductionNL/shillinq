@@ -25,9 +25,11 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\SoftCloseExecutor;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 
 /**
@@ -316,4 +318,425 @@ final class SoftCloseExecutorTest extends TestCase {
 		self::assertSame(0, $report['fxPostings']);
 
 	}//end testExecuteReportsZeroFxPostingsWhenDelegateAbsent()
+
+	/**
+	 * Build an executor over a store that returns the given accrual rules and
+	 * a container that serves the given delegates.
+	 *
+	 * @param array<int,array<string,mixed>> $rules The active AutoAccrualRule rows.
+	 * @param array<string,object> $delegates Delegates keyed by container id.
+	 *
+	 * @return array{0: SoftCloseExecutor, 1: object, 2: AbstractLogger}
+	 */
+	private function executorWith(array $rules, array $delegates): array {
+		$store = new class($rules) {
+
+			/**
+			 * Saved rows keyed by schema.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			public array $saved = [];
+
+			/**
+			 * The schema being addressed.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
+
+			/**
+			 * Hold the rules.
+			 *
+			 * @param array<int,array<string,mixed>> $rules The rules.
+			 */
+			public function __construct(private array $rules) {
+			}//end __construct()
+
+			/**
+			 * Address a register.
+			 *
+			 * @param mixed $register The register.
+			 *
+			 * @return self
+			 */
+			public function setRegister($register): self {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Address a schema.
+			 *
+			 * @param mixed $schema The schema.
+			 *
+			 * @return self
+			 */
+			public function setSchema($schema): self {
+				$this->schema = (string)$schema;
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Find rows: the rules for AutoAccrualRule, nothing else.
+			 *
+			 * @param array<string,mixed> $config The query.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = []): array {
+				if ($this->schema === 'AutoAccrualRule') {
+					return $this->rules;
+				}
+
+				return [];
+			}//end findAll()
+
+			/**
+			 * Record a save.
+			 *
+			 * @param array<string,mixed> $object The row.
+			 * @param mixed $register The register.
+			 * @param mixed $schema The schema.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object, $register = null, $schema = null): array {
+				$this->saved[(string)($schema ?? $this->schema)][] = $object;
+				return $object;
+			}//end saveObject()
+		};
+		$logger = new class extends AbstractLogger {
+
+			/**
+			 * Every logged line as [level, message, context].
+			 *
+			 * @var array<int,array{0:mixed,1:string,2:array<mixed>}>
+			 */
+			public array $lines = [];
+
+			/**
+			 * Record one log line.
+			 *
+			 * @param mixed $level The level.
+			 * @param string|\Stringable $message The message.
+			 * @param array<mixed> $context The context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->lines[] = [$level, (string)$message, $context];
+			}//end log()
+		};
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturnCallback(static fn (string $id): bool => isset($delegates[$id]));
+		$container->method('get')->willReturnCallback(static fn (string $id): object => $delegates[$id]);
+		$config = $this->createStub(IAppConfig::class);
+		$config->method('getValueString')->willReturn('shillinq');
+
+		$executor = new SoftCloseExecutor($container, $config, $logger, objectService: new DuckObjectServiceAdapter($store));
+		return [$executor, $store, $logger];
+
+	}//end executorWith()
+
+	/**
+	 * A delegate whose one method throws.
+	 *
+	 * @param string $method The delegate method.
+	 * @param string $message The failure message.
+	 *
+	 * @return object
+	 */
+	private function throwing(string $method, string $message): object {
+		$delegates = [
+			'reval' => new class($message) {
+				/**
+				 * Hold the failure message.
+				 *
+				 * @param string $message The message.
+				 */
+				public function __construct(private string $message) {
+				}//end __construct()
+
+				/**
+				 * Fail.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function reval(string $administrationId, string $periodId): array {
+					throw new \RuntimeException($this->message);
+				}//end reval()
+			},
+			'cutoff' => new class($message) {
+				/**
+				 * Hold the failure message.
+				 *
+				 * @param string $message The message.
+				 */
+				public function __construct(private string $message) {
+				}//end __construct()
+
+				/**
+				 * Fail.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function cutoff(string $administrationId, string $periodId): array {
+					throw new \RuntimeException($this->message);
+				}//end cutoff()
+			},
+			'post' => new class($message) {
+				/**
+				 * Hold the failure message.
+				 *
+				 * @param string $message The message.
+				 */
+				public function __construct(private string $message) {
+				}//end __construct()
+
+				/**
+				 * Fail.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function post(string $administrationId, string $periodId): array {
+					throw new \RuntimeException($this->message);
+				}//end post()
+			},
+			'matchForPeriod' => new class($message) {
+				/**
+				 * Hold the failure message.
+				 *
+				 * @param string $message The message.
+				 */
+				public function __construct(private string $message) {
+				}//end __construct()
+
+				/**
+				 * Fail.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function matchForPeriod(string $administrationId, string $periodId): array {
+					throw new \RuntimeException($this->message);
+				}//end matchForPeriod()
+			},
+			'generate' => new class($message) {
+				/**
+				 * Hold the failure message.
+				 *
+				 * @param string $message The message.
+				 */
+				public function __construct(private string $message) {
+				}//end __construct()
+
+				/**
+				 * Fail.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function generate(string $administrationId, string $periodId): array {
+					throw new \RuntimeException($this->message);
+				}//end generate()
+			},
+		];
+
+		return $delegates[$method];
+
+	}//end throwing()
+
+	/**
+	 * The delegates of a full run keyed by container id.
+	 *
+	 * @return array<string,object>
+	 */
+	private function allDelegates(): array {
+		return [
+			'OCA\Shillinq\Service\Treasury\FxRevaluationService' => new class {
+				/**
+				 * Revalue.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function reval(string $administrationId, string $periodId): array {
+					return ['postingCount' => 2];
+				}//end reval()
+			},
+			'OCA\Shillinq\Service\Ifrs15\RevenueRecognitionService' => new class {
+				/**
+				 * Cut off.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function cutoff(string $administrationId, string $periodId): array {
+					return ['postingCount' => 3];
+				}//end cutoff()
+			},
+			'OCA\Shillinq\Service\Ifrs16\LeasePostingService' => new class {
+				/**
+				 * Post.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function post(string $administrationId, string $periodId): array {
+					return ['postingCount' => 4];
+				}//end post()
+			},
+			'OCA\Shillinq\Service\IntercompanyMatchingService' => new class {
+				/**
+				 * Match.
+				 *
+				 * @param string $administrationId The administration.
+				 * @param string $periodId The period.
+				 *
+				 * @return array<string,int>
+				 */
+				public function matchForPeriod(string $administrationId, string $periodId): array {
+					return ['matchCount' => 5];
+				}//end matchForPeriod()
+			},
+		];
+
+	}//end allDelegates()
+
+	/**
+	 * Pins the whole report, the accrual postings, the period status and the
+	 * completion log of a full run.
+	 *
+	 * @return void
+	 */
+	public function testACompleteRunReportsEveryStepAndWritesItsRecords(): void {
+		$rules = [
+			['id' => 'r-1', 'ruleName' => 'Huur', 'calculationMethod' => 'fixed-amount', 'calculationParameters' => ['amountCents' => 1500]],
+			['id' => 'r-2', 'ruleName' => 'Nul', 'calculationMethod' => 'fixed-amount', 'calculationParameters' => ['amountCents' => 0]],
+			[
+				'id' => 'r-3',
+				'ruleName' => 'Rente dag',
+				'ruleVersion' => 2,
+				'calculationMethod' => 'days-elapsed-of-period',
+				'calculationParameters' => ['monthlyAmountCents' => 3100],
+			],
+		];
+		[$executor, $store, $logger] = $this->executorWith(rules: $rules, delegates: $this->allDelegates());
+
+		$report = $executor->execute(administrationId: 'adm-1', periodId: '2026-03', asOf: new DateTimeImmutable('2026-03-15T10:00:00+00:00'));
+
+		self::assertSame(
+			[
+				'status' => 'completed',
+				'administrationId' => 'adm-1',
+				'periodId' => '2026-03',
+				'postingCount' => 11,
+				'accrualPostings' => 2,
+				'fxPostings' => 2,
+				'revenuePostings' => 3,
+				'leasePostings' => 4,
+				'intercompanyMatches' => 5,
+				'trialBalanceComplete' => true,
+				'completedAt' => '2026-03-15T10:00:00+00:00',
+				'alerts' => [],
+			],
+			$report
+		);
+		$posting = static fn (string $ruleId, int $version, string $journalEntryId): array => [
+			'ruleId' => $ruleId,
+			'ruleVersion' => $version,
+			'periodId' => '2026-03',
+			'amountCents' => 1500,
+			'journalEntryId' => $journalEntryId,
+			'postedAt' => '2026-03-15T10:00:00+00:00',
+			'postedBy' => 'SYSTEM:SoftCloseExecutor',
+			'reversalId' => null,
+			'reversalState' => 'posted',
+		];
+		self::assertSame(
+			[
+				$posting('r-1', 1, 'je-2026-03-15-huur'),
+				$posting('r-3', 2, 'je-2026-03-15-rente-dag'),
+			],
+			$store->saved['AutoAccrualPosting']
+		);
+		self::assertSame('soft-closed', $store->saved['PeriodStatus'][0]['stage']);
+		self::assertSame(
+			[['info', 'SoftCloseExecutor: soft-close completed', ['administrationId' => 'adm-1', 'periodId' => '2026-03', 'postingCount' => 11]]],
+			$logger->lines
+		);
+
+	}//end testACompleteRunReportsEveryStepAndWritesItsRecords()
+
+	/**
+	 * A failing fatal step stops the run with the report as it stood before
+	 * that step and one alert; a failing lease step only logs and the run
+	 * goes on.
+	 *
+	 * @return void
+	 */
+	public function testAFailingStepStopsTheRunAndAFailingLeaseStepDoesNot(): void {
+		$cases = [
+			'fx-revaluation' => ['OCA\Shillinq\Service\Treasury\FxRevaluationService', 'reval', 0],
+			'revenue-cutoff' => ['OCA\Shillinq\Service\Ifrs15\RevenueRecognitionService', 'cutoff', 2],
+			'intercompany-matching' => ['OCA\Shillinq\Service\IntercompanyMatchingService', 'matchForPeriod', 9],
+			'trial-balance' => ['OCA\Shillinq\Service\TrialBalanceService', 'generate', 9],
+		];
+		foreach ($cases as $step => [$id, $method, $postingCount]) {
+			$delegates = $this->allDelegates();
+			$delegates[$id] = $this->throwing(method: $method, message: 'boom');
+			[$executor, $store, $logger] = $this->executorWith(rules: [], delegates: $delegates);
+
+			$report = $executor->execute(administrationId: 'adm-1', periodId: '2026-03', asOf: new DateTimeImmutable('2026-03-15T10:00:00+00:00'));
+
+			self::assertSame('failed', $report['status'], $step);
+			self::assertSame($postingCount, $report['postingCount'], $step);
+			self::assertSame('2026-03-15T10:00:00+00:00', $report['completedAt'], $step);
+			self::assertSame('Soft-close failed at step "' . $step . '": boom', $report['alerts'][0]['message'], $step);
+			self::assertCount(1, $store->saved['ContinuousCloseAlert'], $step);
+			self::assertArrayNotHasKey('PeriodStatus', $store->saved, $step);
+			self::assertSame(
+				[
+					'error',
+					'SoftCloseExecutor: soft-close failed',
+					['administrationId' => 'adm-1', 'periodId' => '2026-03', 'step' => $step, 'exception' => 'boom'],
+				],
+				$logger->lines[0],
+				$step
+			);
+		}
+
+		$delegates = $this->allDelegates();
+		$delegates['OCA\Shillinq\Service\Ifrs16\LeasePostingService'] = $this->throwing(method: 'post', message: 'no ifrs16');
+		[$executor, $store, $logger] = $this->executorWith(rules: [], delegates: $delegates);
+		$report = $executor->execute(administrationId: 'adm-1', periodId: '2026-03', asOf: new DateTimeImmutable('2026-03-15T10:00:00+00:00'));
+		self::assertSame('completed', $report['status']);
+		self::assertSame(0, $report['leasePostings']);
+		self::assertSame(5, $report['postingCount']);
+		self::assertSame(
+			['info', 'SoftCloseExecutor: lease postings skipped', ['administrationId' => 'adm-1', 'periodId' => '2026-03', 'reason' => 'no ifrs16']],
+			$logger->lines[0]
+		);
+
+	}//end testAFailingStepStopsTheRunAndAFailingLeaseStepDoesNot()
 }//end class
