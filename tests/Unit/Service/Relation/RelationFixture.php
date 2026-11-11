@@ -25,7 +25,6 @@ namespace OCA\Shillinq\Tests\Unit\Service\Relation;
 
 use OCA\Shillinq\Service\Relation\RelationRecords;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 
@@ -83,11 +82,11 @@ final class RelationFixture {
 	 * @return RelationRecords The records.
 	 */
 	public static function records(TestCase $test, ?array $data = null, ?array &$sink = null): RelationRecords {
-		$settings = $test->getMockBuilder(SettingsService::class)->disableOriginalConstructor()->getMock();
+		$settings = $test->getMockBuilder(RegisterLocation::class)->disableOriginalConstructor()->getMock();
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$sink ??= [];
 
-		return new RelationRecords(new InMemoryObjectServiceStub($data ?? self::register(), $sink), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']));
+		return new RelationRecords(new InMemoryObjectServiceStub($data ?? self::register(), $sink), $settings);
 
 	}//end records()
 }//end class
