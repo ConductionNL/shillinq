@@ -164,19 +164,9 @@ class BudgetProjectionReader {
 	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
 	 */
 	public function loadContext(string $administrationId, bool $includeLedgerGroups = false): array {
-		$accountRows = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
-		$accounts = [];
-		foreach ($accountRows as $row) {
-			$number = (string)($row['accountNumber'] ?? '');
-			if ($number === '') {
-				continue;
-			}
-
-			$accounts[$number] = [
-				'accountNumber' => $number,
-				'accountType' => (string)($row['accountType'] ?? ''),
-			];
-		}
+		$accounts = self::accountsByNumber(
+			rows: $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId])
+		);
 
 		$monthByRef = $this->postedTransactionMonths(administrationId: $administrationId);
 		$byAccountMonth = $this->bucketByAccountMonth(monthByRef: $monthByRef);
@@ -185,18 +175,9 @@ class BudgetProjectionReader {
 		$ledgerGroupEntries = [];
 		$ledgerGroupKeyToIndex = [];
 		if ($includeLedgerGroups === true) {
-			$groupRows = $this->query(
-				schema: self::SCHEMA_LEDGER_GROUP,
-				filters: ['administrationId' => $administrationId]
-			);
-			// `array_keys()` on a map keyed by a purely-numeric account
-			// number (e.g. "1000") hands back an INT, not the string every
-			// caller compares account numbers as — cast back explicitly
-			// (the same gotcha BudgetVsActualsReader::resolveMembers()
-			// documents and guards against).
-			[$ledgerGroupEntries, $ledgerGroupKeyToIndex] = $this->buildLedgerGroupIndex(
-				rows: $groupRows,
-				accountNumbers: array_map('strval', array_keys($accounts))
+			[$ledgerGroupEntries, $ledgerGroupKeyToIndex] = $this->ledgerGroupIndexFor(
+				administrationId: $administrationId,
+				accounts: $accounts
 			);
 		}
 
@@ -209,6 +190,54 @@ class BudgetProjectionReader {
 		];
 
 	}//end loadContext()
+
+	/**
+	 * The accounts by number (number and type); rows without a number are skipped.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The Account rows.
+	 *
+	 * @return array<string,array{accountNumber: string, accountType: string}>
+	 */
+	private static function accountsByNumber(array $rows): array {
+		$accounts = [];
+		foreach ($rows as $row) {
+			$number = (string)($row['accountNumber'] ?? '');
+			if ($number !== '') {
+				$accounts[$number] = [
+					'accountNumber' => $number,
+					'accountType' => (string)($row['accountType'] ?? ''),
+				];
+			}
+		}
+
+		return $accounts;
+
+	}//end accountsByNumber()
+
+	/**
+	 * The administration's LedgerGroup index over the given accounts.
+	 *
+	 * `array_keys()` on a map keyed by a purely-numeric account number (e.g.
+	 * "1000") hands back an INT, not the string every caller compares account
+	 * numbers as — cast back explicitly (the same gotcha
+	 * BudgetVsActualsReader::resolveMembers() documents and guards against).
+	 *
+	 * @param string                           $administrationId The administration.
+	 * @param array<string,array<string,mixed>> $accounts         The accounts by number.
+	 *
+	 * @return array{0: array, 1: array} The entries and the key-to-index map.
+	 */
+	private function ledgerGroupIndexFor(string $administrationId, array $accounts): array {
+		$groupRows = $this->query(
+			schema: self::SCHEMA_LEDGER_GROUP,
+			filters: ['administrationId' => $administrationId]
+		);
+		return $this->buildLedgerGroupIndex(
+			rows: $groupRows,
+			accountNumbers: array_map('strval', array_keys($accounts))
+		);
+
+	}//end ledgerGroupIndexFor()
 
 	/**
 	 * Index the posting month of every POSTED transaction for this
