@@ -32,7 +32,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Integration;
 
-use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FinancialDocumentActions;
 use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCA\Shillinq\Service\FinancialDocumentFinder;
@@ -45,7 +44,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
-final class FinancialDocumentLeafProvider implements IntegrationProvider {
+final class FinancialDocumentLeafProvider extends ShillinqFinanceLeaf {
 	/**
 	 * The leaf id, equal on both halves so gate-24 can pair them.
 	 *
@@ -101,83 +100,6 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 	public function getIcon(): string {
 		return 'FileDocumentMultipleOutline';
 	}//end getIcon()
-
-	/**
-	 * The group the leaf sorts under.
-	 *
-	 * @return string The group.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function getGroup(): string {
-		return 'Finance';
-	}//end getGroup()
-
-	/**
-	 * The app that must be installed for this leaf to answer.
-	 *
-	 * @return string The app id.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function getRequiredApp(): string {
-		return 'shillinq';
-	}//end getRequiredApp()
-
-	/**
-	 * The documents are shillinq's own records.
-	 *
-	 * @return string The storage strategy.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function getStorageStrategy(): string {
-		return 'app-local';
-	}//end getStorageStrategy()
-
-	/**
-	 * No OpenConnector source.
-	 *
-	 * @return string|null The source.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function getOpenConnectorSource(): ?string {
-		return null;
-	}//end getOpenConnectorSource()
-
-	/**
-	 * The leaf answers whenever shillinq is installed.
-	 *
-	 * @return bool True.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function isEnabled(): bool {
-		return true;
-	}//end isEnabled()
-
-	/**
-	 * Reading needs no action of its own; what the caller may read is OpenRegister's answer.
-	 *
-	 * @return string|null The action.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function requiresPermission(): ?string {
-		return null;
-	}//end requiresPermission()
-
-	/**
-	 * The leaf needs no credentials of its own.
-	 *
-	 * @return array<string, mixed> The requirements.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function authRequirements(): array {
-		return [];
-	}//end authRequirements()
 
 	/**
 	 * Every financial document on the host object, newest first.
@@ -306,15 +228,4 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
 		throw new RuntimeException('A financial document is credited or voided, never deleted from an object.');
 	}//end delete()
-
-	/**
-	 * Health of the leaf.
-	 *
-	 * @return array<string, mixed> The health.
-	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
-	 */
-	public function health(): array {
-		return ['status' => 'ok', 'leaf' => self::LEAF_ID];
-	}//end health()
 }//end class

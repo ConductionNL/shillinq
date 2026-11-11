@@ -35,7 +35,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -44,7 +43,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
  */
-final class ContractLeafProvider implements IntegrationProvider {
+final class ContractLeafProvider extends ShillinqFinanceLeaf {
 	/**
 	 * The leaf id, equal on both halves so gate-24 can pair them.
 	 *
@@ -107,69 +106,6 @@ final class ContractLeafProvider implements IntegrationProvider {
 	public function getIcon(): string {
 		return 'FileDocumentOutline';
 	}//end getIcon()
-
-	/**
-	 * The group the leaf sorts under.
-	 *
-	 * @return string The group.
-	 */
-	public function getGroup(): string {
-		return 'Finance';
-	}//end getGroup()
-
-	/**
-	 * The app that must be installed for this leaf to answer.
-	 *
-	 * @return string The app id.
-	 */
-	public function getRequiredApp(): string {
-		return 'shillinq';
-	}//end getRequiredApp()
-
-	/**
-	 * Contracts live in shillinq's own register.
-	 *
-	 * @return string The storage strategy.
-	 */
-	public function getStorageStrategy(): string {
-		return 'app-local';
-	}//end getStorageStrategy()
-
-	/**
-	 * No OpenConnector source.
-	 *
-	 * @return string|null The source.
-	 */
-	public function getOpenConnectorSource(): ?string {
-		return null;
-	}//end getOpenConnectorSource()
-
-	/**
-	 * The leaf answers whenever shillinq is installed.
-	 *
-	 * @return bool True.
-	 */
-	public function isEnabled(): bool {
-		return true;
-	}//end isEnabled()
-
-	/**
-	 * Read only: no permission beyond being able to read the contract itself.
-	 *
-	 * @return string|null Null.
-	 */
-	public function requiresPermission(): ?string {
-		return null;
-	}//end requiresPermission()
-
-	/**
-	 * The leaf needs no credentials of its own.
-	 *
-	 * @return array<string, mixed> The requirements.
-	 */
-	public function authRequirements(): array {
-		return [];
-	}//end authRequirements()
 
 	/**
 	 * The contracts this host object is handled under.
@@ -286,15 +222,6 @@ final class ContractLeafProvider implements IntegrationProvider {
 	}//end delete()
 
 	/**
-	 * Health of the leaf.
-	 *
-	 * @return array<string, mixed> The health report.
-	 */
-	public function health(): array {
-		return ['status' => 'ok', 'leaf' => self::LEAF_ID];
-	}//end health()
-
-	/**
 	 * What the reading app is given. Deliberately a projection and not the
 	 * contract: the reading app holds the reference, not a copy.
 	 *
@@ -362,33 +289,58 @@ final class ContractLeafProvider implements IntegrationProvider {
 
 		$mine = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === false || is_array($row['linkedObjects'] ?? null) === false) {
-				continue;
-			}
-
-			foreach ($row['linkedObjects'] as $link) {
-				if (is_array($link) === false) {
-					continue;
-				}
-
-				$candidate = implode(
-					'|',
-					[
-						(string)($link['register'] ?? ''),
-						(string)($link['schema'] ?? ''),
-						(string)($link['id'] ?? ''),
-					]
-				);
-
-				if ($candidate === $key) {
-					$mine[] = $row;
-					break;
-				}
+			if (self::linksTo(row: $row, key: $key) === true) {
+				$mine[] = $row;
 			}
 		}
 
 		return $mine;
 	}//end contractsLinkedTo()
+
+	/**
+	 * Whether a stored row names the host object among its linked objects.
+	 *
+	 * @param mixed  $row The stored row.
+	 * @param string $key The host object's `register|schema|id` key.
+	 *
+	 * @return bool True when one of its links is the host object.
+	 */
+	private static function linksTo(mixed $row, string $key): bool {
+		if (is_array($row) === false || is_array($row['linkedObjects'] ?? null) === false) {
+			return false;
+		}
+
+		foreach ($row['linkedObjects'] as $link) {
+			if (self::linkKey(link: $link) === $key) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end linksTo()
+
+	/**
+	 * The `register|schema|id` key of one linked object, or null when the
+	 * link is not a record.
+	 *
+	 * @param mixed $link The stored link.
+	 *
+	 * @return string|null The key, or null.
+	 */
+	private static function linkKey(mixed $link): ?string {
+		if (is_array($link) === false) {
+			return null;
+		}
+
+		return implode(
+			'|',
+			[
+				(string)($link['register'] ?? ''),
+				(string)($link['schema'] ?? ''),
+				(string)($link['id'] ?? ''),
+			]
+		);
+	}//end linkKey()
 
 	/**
 	 * The register slug holding shillinq's own objects.
