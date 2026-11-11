@@ -36,7 +36,7 @@ use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use PHPUnit\Framework\TestCase;
@@ -271,10 +271,10 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 	/**
 	 * Build a settings stub.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
@@ -343,7 +343,7 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 	): void {
 		$job = new PipelinqTimelineRetryJob(
 			time: $this->timeAt($nowIso),
-			settings: $this->settings(),
+			registerLocation: $this->settings(),
 			container: $this->container($objectService, $adapter),
 			jobList: $this->jobList($added),
 			logger: $logger,

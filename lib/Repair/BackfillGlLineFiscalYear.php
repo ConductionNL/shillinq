@@ -59,7 +59,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\Migration\GlLineFiscalYearBackfillMigrator;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -74,13 +74,13 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService                    $settingsService Resolves the register slug.
+	 * @param RegisterLocation                    $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param GlLineFiscalYearBackfillMigrator   $migrator        The pure migration core.
 	 * @param LoggerInterface                    $logger          For failures.
 	 * @param ObjectServiceInterface             $objectService   Store access.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly GlLineFiscalYearBackfillMigrator $migrator,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
@@ -127,7 +127,7 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 */
 	private function runInner(IOutput $output): void {
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$lines = $this->readPayloads(
 				registerSlug: $registerSlug,

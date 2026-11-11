@@ -38,6 +38,7 @@ use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -243,7 +244,7 @@ trait PaymentPlanFixture {
 	 * @return PaymentPlanAllocator
 	 */
 	private function allocator(): PaymentPlanAllocator {
-		return new PaymentPlanAllocator($this->store, $this->settings(), $this->runner(), $this->createMock(LoggerInterface::class));
+		return new PaymentPlanAllocator($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->runner(), $this->createMock(LoggerInterface::class));
 
 	}//end allocator()
 
@@ -255,7 +256,7 @@ trait PaymentPlanFixture {
 	private function service(): PaymentPlanService {
 		return new PaymentPlanService(
 			$this->store,
-			$this->settings(),
+			$this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			new PaymentPlanSchedule(),
 			$this->allocator(),
 			$this->dunning(),

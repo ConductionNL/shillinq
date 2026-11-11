@@ -43,7 +43,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\BackfillGlLineAdministration;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -346,7 +346,7 @@ final class BackfillGlLineAdministrationTest extends TestCase {
 
 		$store = $this->store;
 
-		$settingsService = $this->createMock(SettingsService::class);
+		$settingsService = $this->createMock(RegisterLocation::class);
 		$settingsService->method('getRegisterSlug')->willReturn('shillinq');
 
 		$appConfig = $this->createMock(IAppConfig::class);
@@ -384,7 +384,7 @@ final class BackfillGlLineAdministrationTest extends TestCase {
 		$this->output = $output;
 
 		return new BackfillGlLineAdministration(
-			settingsService: $settingsService,
+			registerLocation: $settingsService,
 			migrator: new GlLineAdministrationBackfillMigrator(),
 			appConfig: $appConfig,
 			logger: $this->createMock(\Psr\Log\LoggerInterface::class),

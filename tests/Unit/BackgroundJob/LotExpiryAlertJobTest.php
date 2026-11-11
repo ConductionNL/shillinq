@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\LotExpiryAlertJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -64,13 +64,13 @@ class LotExpiryAlertJobTest extends TestCase {
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('getDateTime')->willReturn(new \DateTime('2026-05-16'));
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$container = $this->createMock(ContainerInterface::class);
 		$logger = $this->createMock(LoggerInterface::class);
 
 		$this->job = new LotExpiryAlertJob(
 			time: $time,
-			settings: $settings,
+			registerLocation: $settings,
 			container: $container,
 			logger: $logger,
 		);
