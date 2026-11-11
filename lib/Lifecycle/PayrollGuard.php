@@ -153,17 +153,9 @@ class PayrollGuard {
 				return false;
 			}
 
-			$deductions = $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId));
-			$incomeTaxSum = 0.0;
-			foreach ($deductions as $deduction) {
-				if (is_array($deduction) === false) {
-					continue;
-				}
-
-				if (($deduction['deductionType'] ?? '') === 'income-tax') {
-					$incomeTaxSum += (float)($deduction['amount'] ?? 0);
-				}
-			}
+			$incomeTaxSum = $this->incomeTaxWithheld(
+				deductions: $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId))
+			);
 
 			$ceiling = $this->incomeTaxCeiling(
 				period: (string)($payroll['period'] ?? ''),
@@ -178,6 +170,25 @@ class PayrollGuard {
 			return false;
 		}//end try
 	}//end canIssue()
+
+	/**
+	 * The sum of the income-tax deductions.
+	 *
+	 * @param array<int,mixed> $deductions The payroll's Deduction rows.
+	 *
+	 * @return float The income tax withheld.
+	 */
+	private function incomeTaxWithheld(array $deductions): float {
+		$incomeTaxSum = 0.0;
+		foreach ($deductions as $deduction) {
+			if (is_array($deduction) === true && ($deduction['deductionType'] ?? '') === 'income-tax') {
+				$incomeTaxSum += (float)($deduction['amount'] ?? 0);
+			}
+		}
+
+		return $incomeTaxSum;
+
+	}//end incomeTaxWithheld()
 
 	/**
 	 * Compute the statutory income-tax ceiling for the payroll period.
