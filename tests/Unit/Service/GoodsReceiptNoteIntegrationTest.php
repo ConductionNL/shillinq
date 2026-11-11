@@ -286,6 +286,174 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	}//end testAcceptEmptyGrnIsHarmless()
 
 	/**
+	 * Pins every field of the StockMove credits an accept posts, which lines
+	 * it skips (nothing accepted, no PO line reference, a missing PO line with
+	 * its warning), and the destination location fallback from line to GRN.
+	 *
+	 * @return void
+	 */
+	public function testAcceptPostsEachStockMoveFieldForField(): void {
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('warning')->with(
+			'GoodsReceiptNoteService: PO line missing on accept; StockMove skipped',
+			['poLineId' => 'poline-gone', 'grnId' => 'grn-1']
+		);
+		$service = $this->buildServiceWithLogger(stub: $stub, logger: $logger);
+
+		$accepted = $service->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1');
+
+		self::assertSame('accepted', $accepted['statusCode']);
+		$moves = $stub->rows('StockMove');
+		foreach ($moves as $i => $move) {
+			self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string)$move['draftedAt']);
+			self::assertSame($move['draftedAt'], $move['postedAt']);
+			unset($moves[$i]['draftedAt'], $moves[$i]['postedAt']);
+		}
+
+		$expected = static fn (string $number, float $quantity, ?string $destination, string $id): array => [
+			'movementNumber' => $number,
+			'itemId' => 'CHAIR-001',
+			'quantity' => $quantity,
+			'unitCost' => 45.5,
+			'movementType' => 'receipt',
+			'sourceLocationId' => null,
+			'destinationLocationId' => $destination,
+			'referenceDocumentUri' => 'shillinq://purchase-order/po-1',
+			'movementReason' => 'normal',
+			'notes' => 'Receipt for GRN-2026-adm-1-000001 / PO line poline-1',
+			'cancelledAt' => null,
+			'administrationId' => 'adm-1',
+			'locked' => true,
+			'glTransactionId' => null,
+			'offsetOfMoveId' => null,
+			'lifecycleState' => 'posted',
+			'id' => $id,
+		];
+		self::assertSame(
+			[
+				$expected('SM-2026-adm-1-000001-LINEA', 2.5, 'WH-LINE', 'obj-1'),
+				$expected('SM-2026-adm-1-000001-LINEB', 1.0, 'WH-GRN', 'obj-2'),
+			],
+			array_values($moves)
+		);
+		self::assertSame('partial_received', $stub->rows('PurchaseOrder')[0]['statusCode']);
+
+	}//end testAcceptPostsEachStockMoveFieldForField()
+
+	/**
+	 * Golden for the accept guards: an inaccessible or empty administration,
+	 * a GRN of another administration and a terminal GRN are refused before
+	 * anything is written; the accessible draft is accepted.
+	 *
+	 * @return void
+	 */
+	public function testAcceptRefusesOutsideItsAdministrationAndOnTerminalNotes(): void {
+		$refusals = [
+			['adm-2', 'grn-1', 'Administration not found'],
+			['', 'grn-1', 'administrationId is required'],
+			['adm-1', 'grn-other', 'Goods receipt note not found'],
+			['adm-1', 'grn-done', 'Goods receipt note is in a terminal state'],
+		];
+		foreach ($refusals as [$administrationId, $grnId, $message]) {
+			$stub = $this->buildObjectServiceStub($this->acceptFixture());
+			$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1', 'adm-3']);
+			try {
+				$service->acceptGRN(administrationId: $administrationId, grnId: $grnId);
+				self::fail('Expected a refusal for ' . $grnId . ' in "' . $administrationId . '"');
+			} catch (\RuntimeException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+
+			self::assertSame([], $stub->rows('StockMove'));
+			self::assertSame('received', $stub->rows('GoodsReceiptNote')[0]['statusCode']);
+		}
+
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1']);
+		self::assertSame('accepted', $service->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1')['statusCode']);
+
+	}//end testAcceptRefusesOutsideItsAdministrationAndOnTerminalNotes()
+
+	/**
+	 * The records of the accept goldens: one received GRN with five lines, a
+	 * GRN of another administration and a terminal GRN.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private function acceptFixture(): array {
+		$line = static fn (string $id, string $poLineId, float $accepted, array $extra = []): array => [
+			'id' => $id,
+			'grnId' => 'grn-1',
+			'administrationId' => 'adm-1',
+			'poLineId' => $poLineId,
+			'quantityAccepted' => $accepted,
+		] + $extra;
+
+		return [
+			'PurchaseOrder' => [['id' => 'po-1', 'administrationId' => 'adm-1', 'statusCode' => 'sent']],
+			'PurchaseOrderLine' => [
+				[
+					'id' => 'poline-1',
+					'poId' => 'po-1',
+					'administrationId' => 'adm-1',
+					'productOrServiceCode' => 'CHAIR-001',
+					'quantityOrdered' => 10.0,
+					'unitPrice' => 4550,
+				],
+			],
+			'GoodsReceiptNote' => [
+				[
+					'id' => 'grn-1',
+					'administrationId' => 'adm-1',
+					'grnNumber' => 'GRN-2026-adm-1-000001',
+					'statusCode' => 'received',
+					'poIds' => ['po-1'],
+					'destinationLocationId' => 'WH-GRN',
+				],
+				['id' => 'grn-other', 'administrationId' => 'adm-3', 'statusCode' => 'received'],
+				['id' => 'grn-done', 'administrationId' => 'adm-1', 'statusCode' => 'accepted'],
+			],
+			'GoodsReceiptLine' => [
+				$line('line-a', 'poline-1', 2.5, ['destinationLocationId' => ' WH-LINE ']),
+				$line('line-b', ' poline-1 ', 1.0),
+				$line('line-c', 'poline-1', 0.0),
+				$line('line-d', ' ', 4.0),
+				$line('line-e', 'poline-gone', 3.0),
+			],
+			'StockMove' => [],
+		];
+
+	}//end acceptFixture()
+
+	/**
+	 * Build the service for adm-1 with the given logger.
+	 *
+	 * @param object $stub The ObjectService stub.
+	 * @param LoggerInterface $logger The logger.
+	 *
+	 * @return GoodsReceiptNoteService
+	 */
+	private function buildServiceWithLogger(object $stub, LoggerInterface $logger): GoodsReceiptNoteService {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('currentUserId')->willReturn('warehouse-01');
+		$administrationContext->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-1'
+		);
+
+		return new GoodsReceiptNoteService(
+			appConfig: $appConfig,
+			administrationContext: $administrationContext,
+			logger: $logger,
+			objectService: new DuckObjectServiceAdapter($stub),
+		);
+
+	}//end buildServiceWithLogger()
+
+	/**
 	 * The manifest fragment shipped by this slice exposes both Vue pages and
 	 * the new menu group so the Vue layer can reach the new API.
 	 *
