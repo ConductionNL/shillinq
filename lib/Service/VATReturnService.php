@@ -188,25 +188,48 @@ class VATReturnService {
 		string $regime = 'standard',
 	): array {
 		if ($regime === 'kor') {
-			// KOR exempts both collected and paid VAT (REQ-VAT-004).
-			$this->updateReturnTotals(returnId: $returnId, totals: self::KOR_TOTALS);
-			return ['lineCount' => 0] + self::KOR_TOTALS;
+			return $this->writeKorTotals(returnId: $returnId);
 		}
 
 		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
-
-		// Persist declarations + their lines.
 		$scope = new VatReturnScope(returnId: $returnId, administrationId: $administrationId);
+
+		return $this->persistScan(scope: $scope, scan: $scan);
+
+	}//end deriveVATLines()
+
+	/**
+	 * Write the zero totals of a KOR return, which exempts both collected and paid VAT (REQ-VAT-004).
+	 *
+	 * @param string $returnId The VATReturn id.
+	 *
+	 * @return array{lineCount:int,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private function writeKorTotals(string $returnId): array {
+		$this->updateReturnTotals(returnId: $returnId, totals: self::KOR_TOTALS);
+
+		return ['lineCount' => 0] + self::KOR_TOTALS;
+	}//end writeKorTotals()
+
+	/**
+	 * Persist the scanned declarations with their lines and roll the totals up into the return.
+	 *
+	 * @param VatReturnScope $scope The return and administration the rows belong to.
+	 * @param array<string,mixed> $scan The result of scanRubrieken().
+	 *
+	 * @return array{lineCount:int,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private function persistScan(VatReturnScope $scope, array $scan): array {
+		// Persist declarations + their lines.
 		foreach ($scan['declarationsByKey'] as $group) {
 			$this->persistDeclarationGroup(scope: $scope, group: $group);
 		}
 
 		$totals = $this->scanTotals(scan: $scan);
-		$this->updateReturnTotals(returnId: $returnId, totals: $totals);
+		$this->updateReturnTotals(returnId: $scope->returnId, totals: $totals);
 
 		return ['lineCount' => $scan['lineNumber']] + $totals;
-
-	}//end deriveVATLines()
+	}//end persistScan()
 
 	/**
 	 * Non-mutating recompute of the GL-derived per-rubriek grouping (REQ-VBTW-013).
