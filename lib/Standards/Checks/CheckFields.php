@@ -29,6 +29,8 @@ use DateTimeImmutable;
 
 /**
  * Reads one field of a checked object.
+ *
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */
 final class CheckFields {
 	/**
@@ -38,6 +40,8 @@ final class CheckFields {
 	 * @param string               $key The field.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function present(array $o, string $key): bool {
 		return array_key_exists($key, $o) === true && trim((string)$o[$key]) !== '';
@@ -50,6 +54,8 @@ final class CheckFields {
 	 * @param string               $key The field.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function isBool(array $o, string $key): bool {
 		return array_key_exists($key, $o) === true
@@ -64,9 +70,11 @@ final class CheckFields {
 	 * @param string               $key The field.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function isTrue(array $o, string $key): bool {
-		return self::isBool($o, $key) === true
+		return self::isBool(o: $o, key: $key) === true
 			&& in_array($o[$key], [true, 1, '1', 'true'], true) === true;
 
 	}//end isTrue()
@@ -78,9 +86,11 @@ final class CheckFields {
 	 * @param string               $key The field.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function isFalse(array $o, string $key): bool {
-		return self::isBool($o, $key) === true
+		return self::isBool(o: $o, key: $key) === true
 			&& in_array($o[$key], [false, 0, '0', 'false'], true) === true;
 
 	}//end isFalse()
@@ -92,9 +102,15 @@ final class CheckFields {
 	 * @param string               $key The field.
 	 *
 	 * @return float
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function numericVal(array $o, string $key): float {
-		return is_numeric($o[$key] ?? null) === true ? (float)$o[$key] : 0.0;
+		if (is_numeric($o[$key] ?? null) === false) {
+			return 0.0;
+		}
+
+		return (float)$o[$key];
 	}//end numericVal()
 
 	/**
@@ -104,9 +120,11 @@ final class CheckFields {
 	 * @param string               $key The field.
 	 *
 	 * @return DateTimeImmutable|null
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function date(array $o, string $key): ?DateTimeImmutable {
-		if (self::present($o, $key) === false) {
+		if (self::present(o: $o, key: $key) === false) {
 			return null;
 		}
 
@@ -125,6 +143,8 @@ final class CheckFields {
 	 * @param string $value The date string.
 	 *
 	 * @return DateTimeImmutable|null
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function parseDate(string $value): ?DateTimeImmutable {
 		$value = trim($value);

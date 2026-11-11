@@ -26,6 +26,8 @@ namespace OCA\Shillinq\Standards\Checks;
 
 /**
  * Reads the lines of a GL transaction and judges their balance.
+ *
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */
 final class GlTransactionLines {
 	/**
@@ -35,6 +37,8 @@ final class GlTransactionLines {
 	 * @param array<string, mixed> $transaction The GL transaction.
 	 *
 	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function of(array $transaction): array {
 		$lines = ($transaction['lines'] ?? []);
@@ -52,6 +56,8 @@ final class GlTransactionLines {
 	 * @param array<string, mixed> $transaction The GL transaction, with `lines`.
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
 	 */
 	public static function balanced(array $transaction): bool {
 		$lines = self::of(transaction: $transaction);
