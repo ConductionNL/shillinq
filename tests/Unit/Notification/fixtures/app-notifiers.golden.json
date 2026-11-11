@@ -1,0 +1,181 @@
+{
+    "deadline": {
+        "identity": [
+            "shillinq",
+            "[]Shillinq",
+            [
+                [
+                    "l10n",
+                    "shillinq",
+                    null
+                ]
+            ]
+        ],
+        "own": {
+            "same": true,
+            "calls": [
+                [
+                    "l10n",
+                    "shillinq",
+                    "nl"
+                ],
+                [
+                    "setParsedSubject",
+                    "[nl]Deadline approaching: BTW Q1 (due 2026-04-30)"
+                ],
+                [
+                    "setParsedMessage",
+                    "[nl]This deadline is coming up. Open Shillinq to review it."
+                ]
+            ]
+        },
+        "ownEmpty": {
+            "same": true,
+            "calls": [
+                [
+                    "l10n",
+                    "shillinq",
+                    "nl"
+                ],
+                [
+                    "setParsedSubject",
+                    "[nl]Deadline approaching:  (due )"
+                ],
+                [
+                    "setParsedMessage",
+                    "[nl]This deadline is coming up. Open Shillinq to review it."
+                ]
+            ]
+        },
+        "otherApp": {
+            "exception": "OCP\\Notification\\UnknownNotificationException",
+            "calls": []
+        },
+        "otherSubject": {
+            "exception": "OCP\\Notification\\UnknownNotificationException",
+            "calls": []
+        }
+    },
+    "einvoice": {
+        "identity": [
+            "shillinq",
+            "[]Shillinq",
+            [
+                [
+                    "l10n",
+                    "shillinq",
+                    null
+                ]
+            ]
+        ],
+        "withReason": {
+            "same": true,
+            "calls": [
+                [
+                    "l10n",
+                    "shillinq",
+                    "nl"
+                ],
+                [
+                    "setParsedSubject",
+                    "[nl]E-invoice VF-1 was rejected"
+                ],
+                [
+                    "setParsedMessage",
+                    "[nl]Reason: bad VAT [nl]Open the invoice, correct it and send it again."
+                ],
+                [
+                    "route",
+                    "shillinq.dashboard.page"
+                ],
+                [
+                    "setLink",
+                    "https://cloud.example/apps/shillinq/bookkeeping/accounts-receivable/id%201%2F2"
+                ]
+            ]
+        },
+        "noReasonNoId": {
+            "same": true,
+            "calls": [
+                [
+                    "l10n",
+                    "shillinq",
+                    "nl"
+                ],
+                [
+                    "setParsedSubject",
+                    "[nl]E-invoice VF-2 was rejected"
+                ],
+                [
+                    "setParsedMessage",
+                    "[nl]The Peppol network gave no reason. [nl]Open the invoice, correct it and send it again."
+                ]
+            ]
+        },
+        "otherApp": {
+            "exception": "OCP\\Notification\\UnknownNotificationException",
+            "calls": []
+        },
+        "otherSubject": {
+            "exception": "OCP\\Notification\\UnknownNotificationException",
+            "calls": []
+        }
+    },
+    "posStock": {
+        "identity": [
+            "shillinq",
+            "[]Shillinq",
+            [
+                [
+                    "l10n",
+                    "shillinq",
+                    null
+                ]
+            ]
+        ],
+        "withProduct": {
+            "same": true,
+            "calls": [
+                [
+                    "l10n",
+                    "shillinq",
+                    "nl"
+                ],
+                [
+                    "setParsedSubject",
+                    "[nl]POS sale tx-1: product SKU-9 could not be matched to inventory"
+                ],
+                [
+                    "setParsedMessage",
+                    "[nl]Stock was not decremented for this line. Review it in Shillinq inventory reconciliation."
+                ]
+            ]
+        },
+        "noProduct": {
+            "same": true,
+            "calls": [
+                [
+                    "l10n",
+                    "shillinq",
+                    "nl"
+                ],
+                [
+                    "setParsedSubject",
+                    "[nl]POS sale tx-2: a sold line has no matching product reference"
+                ],
+                [
+                    "setParsedMessage",
+                    "[nl]Stock was not decremented for this line. Review it in Shillinq inventory reconciliation."
+                ]
+            ]
+        },
+        "otherApp": {
+            "exception": "OCP\\Notification\\UnknownNotificationException",
+            "calls": []
+        },
+        "otherSubject": {
+            "exception": "OCP\\Notification\\UnknownNotificationException",
+            "calls": []
+        }
+    }
+}
