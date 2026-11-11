@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -51,9 +52,9 @@ class WidgetAuthServiceTest extends TestCase {
 	/**
 	 * SettingsService stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Cache factory stub.
@@ -98,7 +99,7 @@ class WidgetAuthServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->cacheFactory = $this->createMock(ICacheFactory::class);
 		$this->time = $this->createMock(ITimeFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);

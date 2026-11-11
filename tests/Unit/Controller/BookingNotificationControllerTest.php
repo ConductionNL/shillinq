@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\BookingNotificationController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http\JSONResponse;
@@ -142,7 +143,7 @@ class BookingNotificationControllerTest extends TestCase {
 	private function buildController(object $store): BookingNotificationController {
 		return new BookingNotificationController(
 			request: $this->request,
-			settingsService: $this->settingsService,
+			settingsService: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,
 			logger: $this->logger,

@@ -26,7 +26,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -54,7 +54,7 @@ class BookingNotificationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param SettingsService $settingsService The settings service.
+	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param IGroupManager $groupManager The group manager.
 	 * @param IUserSession $userSession The user session.
 	 * @param LoggerInterface $logger The logger.
@@ -65,7 +65,7 @@ class BookingNotificationController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private SettingsService $settingsService,
+		private RegisterLocation $settingsService,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,

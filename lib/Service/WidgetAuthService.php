@@ -85,14 +85,14 @@ class WidgetAuthService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ICacheFactory $cacheFactory Distributed cache factory (rate-limit counters).
 	 * @param ITimeFactory $time Time provider (testable now()).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly ICacheFactory $cacheFactory,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,

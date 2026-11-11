@@ -12,7 +12,7 @@ namespace OCA\Shillinq\Tests\Unit\Security;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -73,7 +73,7 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 		} else {
 			$container->method('get')->willReturn($objectService);
 		}
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		if ($failing === 'settings') {
 			$settings->method('getRegisterSlug')->willThrowException(new \LogicException('config down'));
 		} else {

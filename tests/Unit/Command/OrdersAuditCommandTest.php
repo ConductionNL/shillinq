@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Command;
 
 use OCA\Shillinq\Command\OrdersAuditCommand;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -43,9 +43,9 @@ class OrdersAuditCommandTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -59,7 +59,7 @@ class OrdersAuditCommandTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
 

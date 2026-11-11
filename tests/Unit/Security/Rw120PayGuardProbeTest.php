@@ -12,7 +12,7 @@ namespace OCA\Shillinq\Tests\Unit\Security;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -145,7 +145,7 @@ final class Rw120PayGuardProbeTest extends TestCase {
 		};
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$schemas = $this->createMock(ListenerSchemaResolver::class);
 		$schemas->method('matchesRegisterAndSchema')->willReturnCallback(
