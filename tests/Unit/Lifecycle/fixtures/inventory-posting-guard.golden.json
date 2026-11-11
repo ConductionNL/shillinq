@@ -1,0 +1,362 @@
+{
+    "post.noUnitCost": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: posting skipped — unitCost_missing",
+                {
+                    "valuationId": "v2",
+                    "administrationId": "adm-1",
+                    "reason": "unitCost_missing"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "post.noAdministration": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: posting skipped — config_missing",
+                {
+                    "valuationId": "v3",
+                    "administrationId": "",
+                    "reason": "config_missing"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "post.noConfig": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: posting skipped — config_missing",
+                {
+                    "valuationId": "v1",
+                    "administrationId": "adm-1",
+                    "reason": "config_missing"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "post.disabled": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: posting skipped — posting_disabled",
+                {
+                    "valuationId": "v1",
+                    "administrationId": "adm-1",
+                    "reason": "posting_disabled"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "post.activeObject": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: posting skipped — config_missing",
+                {
+                    "valuationId": "v1",
+                    "administrationId": "adm-1",
+                    "reason": "config_missing"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "post.active": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "post.storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "InventoryPostingGuard: canPost failed — denying (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "variance.blocked": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: posting skipped — unitCost_missing",
+                {
+                    "valuationId": "v4",
+                    "administrationId": "",
+                    "reason": "unitCost_missing"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "variance.missing": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "InventoryPostingGuard: countVariance posting denied — missing variance \/ actualQuantity",
+                {
+                    "valuationId": "v1",
+                    "reason": "variance_missing"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "variance.zero": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "InventoryPostingGuard: countVariance posting skipped — zero delta",
+                {
+                    "valuationId": "v1",
+                    "reason": "zero_variance"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "variance.explicit": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "variance.pair": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "variance.pairZero": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "InventoryPostingGuard: countVariance posting skipped — zero delta",
+                {
+                    "valuationId": "v1",
+                    "reason": "zero_variance"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:InventoryGLConfig",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "fk.noAdministration": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "fk.allResolve": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Account",
+            {
+                "findAll": {
+                    "filters": {
+                        "accountNumber": "7000",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:shillinq",
+            "schema:Account",
+            {
+                "findAll": {
+                    "filters": {
+                        "accountNumber": "1650",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "fk.dangling": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "InventoryPostingGuard: account FK does not resolve",
+                {
+                    "administrationId": "adm-1",
+                    "field": "cogsAccountNumber",
+                    "accountNumber": "7000"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Account",
+            {
+                "findAll": {
+                    "filters": {
+                        "accountNumber": "7000",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "fk.noFields": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "fk.storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "InventoryPostingGuard: accountExists failed — denying (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Account",
+            {
+                "findAll": {
+                    "filters": {
+                        "accountNumber": "7000",
+                        "administrationId": "adm-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    }
+}
