@@ -76,6 +76,23 @@ class SoftCloseExecutor {
 	public const SYSTEM_ACTOR = 'SYSTEM:SoftCloseExecutor';
 
 	/**
+	 * The totals a run report starts from, after its status, administration and period.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private const NEW_REPORT_TOTALS = [
+		'postingCount' => 0,
+		'accrualPostings' => 0,
+		'fxPostings' => 0,
+		'revenuePostings' => 0,
+		'leasePostings' => 0,
+		'intercompanyMatches' => 0,
+		'trialBalanceComplete' => false,
+		'completedAt' => '',
+		'alerts' => [],
+	];
+
+	/**
 	 * Construct the executor.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService + delegate resolution.
@@ -116,107 +133,197 @@ class SoftCloseExecutor {
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
 	 */
 	public function execute(string $administrationId, string $periodId, DateTimeImmutable $asOf): array {
-		$report = [
+		$run = new SoftCloseRun(administrationId: $administrationId, periodId: $periodId, asOf: $asOf);
+		$report = $this->startedReport(run: $run);
+
+		foreach ($this->closeSteps(run: $run) as $step => $runStep) {
+			try {
+				$report = $runStep($report);
+			} catch (\Throwable $e) {
+				return $this->fail(report: $report, step: $step, exception: $e, asOf: $asOf);
+			}
+		}
+
+		return $this->completed(run: $run, report: $report);
+	}//end execute()
+
+	/**
+	 * The report of a run that has just started.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function startedReport(SoftCloseRun $run): array {
+		return [
 			'status' => 'running',
-			'administrationId' => $administrationId,
-			'periodId' => $periodId,
-			'postingCount' => 0,
-			'accrualPostings' => 0,
-			'fxPostings' => 0,
-			'revenuePostings' => 0,
-			'leasePostings' => 0,
-			'intercompanyMatches' => 0,
-			'trialBalanceComplete' => false,
-			'completedAt' => '',
-			'alerts' => [],
+			'administrationId' => $run->administrationId,
+			'periodId' => $run->periodId,
+		] + self::NEW_REPORT_TOTALS;
+	}//end startedReport()
+
+	/**
+	 * The steps of a soft-close in order, keyed by the step name an alert carries.
+	 *
+	 * Each step takes the report and returns it updated; a step that throws
+	 * fails the run at that step with the report as it stood before it.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 *
+	 * @return array<string,callable(array<string,mixed>):array<string,mixed>>
+	 */
+	private function closeSteps(SoftCloseRun $run): array {
+		return [
+			'accruals' => fn (array $report): array => $this->accrualStep(run: $run, report: $report),
+			'fx-revaluation' => fn (array $report): array => $this->fxRevaluationStep(run: $run, report: $report),
+			'revenue-cutoff' => fn (array $report): array => $this->revenueCutoffStep(run: $run, report: $report),
+			'lease-postings' => fn (array $report): array => $this->leaseStep(run: $run, report: $report),
+			'intercompany-matching' => fn (array $report): array => $this->intercompanyStep(run: $run, report: $report),
+			'trial-balance' => fn (array $report): array => $this->trialBalanceStep(run: $run, report: $report),
+			'mark-soft-closed' => fn (array $report): array => $this->markSoftClosedStep(run: $run, report: $report),
 		];
+	}//end closeSteps()
 
-		// Step 1: execute auto-accrual rules.
-		try {
-			$accrualResult = $this->runAccrualRules(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				asOf: $asOf
-			);
-			$report['accrualPostings'] = $accrualResult['postingCount'];
-			$report['postingCount'] += $accrualResult['postingCount'];
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'accruals', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 1: execute auto-accrual rules.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function accrualStep(SoftCloseRun $run, array $report): array {
+		$accrualResult = $this->runAccrualRules(run: $run);
+		$report['accrualPostings'] = $accrualResult['postingCount'];
+		$report['postingCount'] += $accrualResult['postingCount'];
+		return $report;
+	}//end accrualStep()
 
-		// Step 2: delegate to treasury for FX revaluation + interest accruals.
-		try {
-			$report['fxPostings'] = $this->delegateFxRevaluation(administrationId: $administrationId, periodId: $periodId);
-			$report['postingCount'] += $report['fxPostings'];
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'fx-revaluation', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 2: delegate to treasury for FX revaluation + interest accruals.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function fxRevaluationStep(SoftCloseRun $run, array $report): array {
+		$report['fxPostings'] = $this->delegateFxRevaluation(administrationId: $run->administrationId, periodId: $run->periodId);
+		$report['postingCount'] += $report['fxPostings'];
+		return $report;
+	}//end fxRevaluationStep()
 
-		// Step 3: delegate to IFRS 15 for revenue cut-off.
-		try {
-			$report['revenuePostings'] = $this->delegateRevenueCutoff(administrationId: $administrationId, periodId: $periodId);
-			$report['postingCount'] += $report['revenuePostings'];
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'revenue-cutoff', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 3: delegate to IFRS 15 for revenue cut-off.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function revenueCutoffStep(SoftCloseRun $run, array $report): array {
+		$report['revenuePostings'] = $this->delegateRevenueCutoff(administrationId: $run->administrationId, periodId: $run->periodId);
+		$report['postingCount'] += $report['revenuePostings'];
+		return $report;
+	}//end revenueCutoffStep()
 
-		// Step 4: delegate to IFRS 16 lease module (skip when unavailable).
+	/**
+	 * Step 4: delegate to IFRS 16 lease module (skip when unavailable).
+	 *
+	 * IFRS 16 not implemented yet is non-fatal per design.md D3: a failure is
+	 * logged and the run goes on with the report unchanged.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function leaseStep(SoftCloseRun $run, array $report): array {
 		try {
-			$report['leasePostings'] = $this->delegateLeasePostings(administrationId: $administrationId, periodId: $periodId);
+			$report['leasePostings'] = $this->delegateLeasePostings(administrationId: $run->administrationId, periodId: $run->periodId);
 			$report['postingCount'] += $report['leasePostings'];
 		} catch (\Throwable $e) {
-			// IFRS 16 not implemented yet is non-fatal per design.md D3.
 			$this->logger->info(
 				'SoftCloseExecutor: lease postings skipped',
-				['administrationId' => $administrationId, 'periodId' => $periodId, 'reason' => $e->getMessage()]
+				['administrationId' => $run->administrationId, 'periodId' => $run->periodId, 'reason' => $e->getMessage()]
 			);
 		}
 
-		// Step 5: intercompany matching.
-		try {
-			$report['intercompanyMatches'] = $this->runIntercompanyMatching(
-				administrationId: $administrationId,
-				periodId: $periodId
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'intercompany-matching', exception: $e, asOf: $asOf);
-		}
+		return $report;
+	}//end leaseStep()
 
-		// Step 6: trial-balance generation.
-		try {
-			$report['trialBalanceComplete'] = $this->generateTrialBalance(
-				administrationId: $administrationId,
-				periodId: $periodId
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'trial-balance', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 5: intercompany matching.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function intercompanyStep(SoftCloseRun $run, array $report): array {
+		$report['intercompanyMatches'] = $this->runIntercompanyMatching(
+			administrationId: $run->administrationId,
+			periodId: $run->periodId
+		);
+		return $report;
+	}//end intercompanyStep()
 
-		// Step 7: mark PeriodStatus as soft-closed.
-		try {
-			$this->markSoftClosed(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				asOf: $asOf
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(report: $report, step: 'mark-soft-closed', exception: $e, asOf: $asOf);
-		}
+	/**
+	 * Step 6: trial-balance generation.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function trialBalanceStep(SoftCloseRun $run, array $report): array {
+		$report['trialBalanceComplete'] = $this->generateTrialBalance(
+			administrationId: $run->administrationId,
+			periodId: $run->periodId
+		);
+		return $report;
+	}//end trialBalanceStep()
 
+	/**
+	 * Step 7: mark PeriodStatus as soft-closed.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function markSoftClosedStep(SoftCloseRun $run, array $report): array {
+		$this->markSoftClosed(
+			administrationId: $run->administrationId,
+			periodId: $run->periodId,
+			asOf: $run->asOf
+		);
+		return $report;
+	}//end markSoftClosedStep()
+
+	/**
+	 * Mark the report completed and log the completion.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report after every step.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function completed(SoftCloseRun $run, array $report): array {
 		$report['status'] = 'completed';
-		$report['completedAt'] = $asOf->format(DateTimeInterface::ATOM);
+		$report['completedAt'] = $run->asOf->format(DateTimeInterface::ATOM);
 
 		$this->logger->info(
 			'SoftCloseExecutor: soft-close completed',
 			[
-				'administrationId' => $administrationId,
-				'periodId' => $periodId,
+				'administrationId' => $run->administrationId,
+				'periodId' => $run->periodId,
 				'postingCount' => $report['postingCount'],
 			]
 		);
 
 		return $report;
-	}//end execute()
+	}//end completed()
 
 	/**
 	 * Compute the accrual amount in integer cents for one rule (REQ-CLS-003).
@@ -276,34 +383,18 @@ class SoftCloseExecutor {
 	/**
 	 * Execute every active AutoAccrualRule for the administratie + period (REQ-CLS-002, REQ-CLS-003).
 	 *
-	 * @param string $administrationId The administration scope.
-	 * @param string $periodId The yyyy-mm period.
-	 * @param DateTimeImmutable $asOf The run timestamp.
+	 * @param SoftCloseRun $run The run (administration scope, period and timestamp).
 	 *
 	 * @return array{postingCount:int,rulesEvaluated:int} The accrual summary.
 	 */
-	private function runAccrualRules(string $administrationId, string $periodId, DateTimeImmutable $asOf): array {
-		$rules = $this->findActiveRules(administrationId: $administrationId);
-		$context = [
-			'daysElapsed' => (int)$asOf->format('j'),
-			'daysInPeriod' => (int)$asOf->format('t'),
-		];
+	private function runAccrualRules(SoftCloseRun $run): array {
+		$rules = $this->findActiveRules(administrationId: $run->administrationId);
 
 		$postings = 0;
 		foreach ($rules as $rule) {
-			$amountCents = $this->computeAccrualCents(rule: $rule, context: $context);
-			if ($amountCents <= 0) {
-				continue;
+			if ($this->postAccrual(run: $run, rule: $rule) === true) {
+				$postings++;
 			}
-
-			// Persist an AutoAccrualPosting record per execution (REQ-CLS-010).
-			$this->persistAccrualPosting(
-				rule: $rule,
-				periodId: $periodId,
-				amountCents: $amountCents,
-				asOf: $asOf
-			);
-			$postings++;
 		}
 
 		return [
@@ -312,6 +403,44 @@ class SoftCloseExecutor {
 		];
 
 	}//end runAccrualRules()
+
+	/**
+	 * Post one rule's accrual for the run, when it computes to more than zero.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $rule The AutoAccrualRule record.
+	 *
+	 * @return bool True when an AutoAccrualPosting was persisted.
+	 */
+	private function postAccrual(SoftCloseRun $run, array $rule): bool {
+		$amountCents = $this->computeAccrualCents(rule: $rule, context: $this->accrualContext(run: $run));
+		if ($amountCents <= 0) {
+			return false;
+		}
+
+		// Persist an AutoAccrualPosting record per execution (REQ-CLS-010).
+		$this->persistAccrualPosting(
+			rule: $rule,
+			periodId: $run->periodId,
+			amountCents: $amountCents,
+			asOf: $run->asOf
+		);
+		return true;
+	}//end postAccrual()
+
+	/**
+	 * The accrual context of a run: the days elapsed and the days in the period.
+	 *
+	 * @param SoftCloseRun $run The run.
+	 *
+	 * @return array{daysElapsed:int,daysInPeriod:int}
+	 */
+	private function accrualContext(SoftCloseRun $run): array {
+		return [
+			'daysElapsed' => (int)$run->asOf->format('j'),
+			'daysInPeriod' => (int)$run->asOf->format('t'),
+		];
+	}//end accrualContext()
 
 	/**
 	 * Find every active AutoAccrualRule for an administratie.
