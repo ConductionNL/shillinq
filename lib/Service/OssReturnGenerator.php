@@ -86,73 +86,117 @@ class OssReturnGenerator {
 	public function aggregate(array $documents): array {
 		$buckets = [];
 		foreach ($documents as $document) {
-			$ossContext = ($document['ossContext'] ?? null);
-			if (is_array($ossContext) === false || ($ossContext['ossEligible'] ?? false) !== true) {
-				continue;
+			$share = $this->documentShare(document: $document);
+			if ($share !== null) {
+				$buckets[$share['key']] = $this->addedToBucket(bucket: ($buckets[$share['key']] ?? null), share: $share);
 			}
-
-			$country = (string)($ossContext['destinationCountry'] ?? '');
-			$category = (string)($ossContext['appliedRateCategory'] ?? 'standard');
-			$rate = (float)($ossContext['appliedVatRate'] ?? 0);
-			if ($country === '') {
-				continue;
-			}
-
-			$key = $country . '|' . $category;
-			if (isset($buckets[$key]) === false) {
-				$buckets[$key] = [
-					'countryCode' => $country,
-					'rateCategory' => $category,
-					'vatRate' => $rate,
-					'baseCents' => 0,
-					'vatCents' => 0,
-				];
-			}
-
-			$sign = 1;
-			$isCredit = ((string)($document['documentType'] ?? '') === 'credit-note');
-			$netAmount = (float)($document['netAmount'] ?? ($document['grossAmount'] ?? 0));
-			$vatAmount = (float)($document['vatAmount'] ?? 0);
-			if ($isCredit === true) {
-				$sign = -1;
-				$netAmount = abs($netAmount);
-				$vatAmount = abs($vatAmount);
-			}
-
-			$baseCents = ($sign * $this->toCents(amount: $netAmount));
-			$vatCents = (int)round($baseCents * $rate / 100);
-			if ($vatAmount > 0) {
-				$vatCents = ($sign * $this->toCents(amount: $vatAmount));
-			}
-
-			$buckets[$key]['baseCents'] += $baseCents;
-			$buckets[$key]['vatCents'] += $vatCents;
-		}//end foreach
+		}
 
 		ksort($buckets);
 
-		$lineItems = [];
-		$totalBase = 0;
-		$totalVat = 0;
-		foreach ($buckets as $bucket) {
-			$totalBase += $bucket['baseCents'];
-			$totalVat += $bucket['vatCents'];
-			$lineItems[] = [
-				'countryCode' => $bucket['countryCode'],
-				'rateCategory' => $bucket['rateCategory'],
-				'taxableBase' => (float)($bucket['baseCents'] / 100),
-				'vatRate' => (float)$bucket['vatRate'],
-				'vatAmount' => (float)($bucket['vatCents'] / 100),
-			];
-		}
-
 		return [
-			'lineItems' => $lineItems,
-			'totalTaxableBase' => (float)($totalBase / 100),
-			'totalVatAmount' => (float)($totalVat / 100),
+			'lineItems' => array_values(array_map(fn (array $bucket): array => $this->lineItem(bucket: $bucket), $buckets)),
+			'totalTaxableBase' => (float)(array_sum(array_column($buckets, 'baseCents')) / 100),
+			'totalVatAmount' => (float)(array_sum(array_column($buckets, 'vatCents')) / 100),
 		];
 
 	}//end aggregate()
+
+	/**
+	 * One OSS-eligible document's contribution to its (country, rate
+	 * category) bucket, or null when it is not OSS-eligible or names no
+	 * destination country.
+	 *
+	 * @param array<string,mixed> $document An invoice or credit note.
+	 *
+	 * @return array{key:string,countryCode:string,rateCategory:string,vatRate:float,baseCents:int,vatCents:int}|null
+	 */
+	private function documentShare(array $document): array|null {
+		$ossContext = ($document['ossContext'] ?? null);
+		if (is_array($ossContext) === false || ($ossContext['ossEligible'] ?? false) !== true) {
+			return null;
+		}
+
+		$country = (string)($ossContext['destinationCountry'] ?? '');
+		$category = (string)($ossContext['appliedRateCategory'] ?? 'standard');
+		$rate = (float)($ossContext['appliedVatRate'] ?? 0);
+		if ($country === '') {
+			return null;
+		}
+
+		$share = ['key' => $country . '|' . $category, 'countryCode' => $country, 'rateCategory' => $category, 'vatRate' => $rate];
+
+		return ($share + $this->documentCents(document: $document, rate: $rate));
+
+	}//end documentShare()
+
+	/**
+	 * A document's signed taxable base and VAT in cents. A credit note nets
+	 * against the bucket; VAT is derived from the rate unless the document
+	 * states a positive amount.
+	 *
+	 * @param array<string,mixed> $document An invoice or credit note.
+	 * @param float               $rate     The applied VAT rate.
+	 *
+	 * @return array{baseCents:int,vatCents:int}
+	 */
+	private function documentCents(array $document, float $rate): array {
+		$sign = 1;
+		$netAmount = (float)($document['netAmount'] ?? ($document['grossAmount'] ?? 0));
+		$vatAmount = (float)($document['vatAmount'] ?? 0);
+		if ((string)($document['documentType'] ?? '') === 'credit-note') {
+			$sign = -1;
+			$netAmount = abs($netAmount);
+			$vatAmount = abs($vatAmount);
+		}
+
+		$baseCents = ($sign * $this->toCents(amount: $netAmount));
+		if ($vatAmount > 0) {
+			return ['baseCents' => $baseCents, 'vatCents' => ($sign * $this->toCents(amount: $vatAmount))];
+		}
+
+		return ['baseCents' => $baseCents, 'vatCents' => (int)round($baseCents * $rate / 100)];
+
+	}//end documentCents()
+
+	/**
+	 * Add a document's share to its bucket; the first share opens the bucket
+	 * and fixes its reported rate.
+	 *
+	 * @param array<string,mixed>|null $bucket The bucket so far, or null.
+	 * @param array<string,mixed>      $share  One document's share.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function addedToBucket(array|null $bucket, array $share): array {
+		if ($bucket === null) {
+			return $share;
+		}
+
+		$bucket['baseCents'] += $share['baseCents'];
+		$bucket['vatCents'] += $share['vatCents'];
+
+		return $bucket;
+
+	}//end addedToBucket()
+
+	/**
+	 * One return line item from a bucket.
+	 *
+	 * @param array<string,mixed> $bucket A (country, rate category) bucket.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function lineItem(array $bucket): array {
+		return [
+			'countryCode' => $bucket['countryCode'],
+			'rateCategory' => $bucket['rateCategory'],
+			'taxableBase' => (float)($bucket['baseCents'] / 100),
+			'vatRate' => (float)$bucket['vatRate'],
+			'vatAmount' => (float)($bucket['vatCents'] / 100),
+		];
+
+	}//end lineItem()
 
 	/**
 	 * Generate a draft OssReturn for a closed quarter (REQ-OSS-004).

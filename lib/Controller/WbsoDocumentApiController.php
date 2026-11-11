@@ -56,14 +56,19 @@ use RuntimeException;
  *     verification of each branch.
  */
 class WbsoDocumentApiController extends Controller {
-	use WbsoAdministrationScopeTrait;
-
 	/**
 	 * Identifier-safe slug pattern.
 	 *
 	 * @var string
 	 */
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+
+	/**
+	 * Roles that may create and file documents.
+	 *
+	 * @var array<int,string>
+	 */
+	private const BOOKKEEPER_ROLES = ['bookkeeper', 'administrator'];
 
 	/**
 	 * Construct the controller.
@@ -97,67 +102,17 @@ class WbsoDocumentApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$rows = $this->loadDocuments(administrationId: $administrationId);
+		if ($rows instanceof JSONResponse) {
+			return $rows;
 		}
 
-		$type = (string)$this->request->getParam('type', '');
-		$status = (string)$this->request->getParam('status', '');
-
-		try {
-			if ($type !== '') {
-				$rows = $this->documents->getDocumentsByType(administrationId: $administrationId, type: $type);
-			} else {
-				$rows = $this->documents->getDocumentsByAdministration(administrationId: $administrationId);
-			}
-		} catch (InvalidArgumentException $e) {
-			$this->logger->error(
-				'WbsoDocumentApiController: document list filter rejected',
-				['administrationId' => $administrationId, 'type' => $type, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to load documents: the filter is invalid'),
-					'error' => 'wbso-document-list-failed',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(message: 'Failed to load documents', context: ['exception' => $e->getMessage()]);
-		}
-
-		if ($status !== '') {
-			$rows = array_values(
-				array_filter(
-					$rows,
-					static fn (array $row): bool => ((string)($row['status'] ?? '') === $status)
-				)
-			);
-		}
-
-		$filedFrom = (string)$this->request->getParam('filedFrom', '');
-		if ($filedFrom !== '') {
-			$rows = array_values(
-				array_filter(
-					$rows,
-					static fn (array $row): bool => ((string)($row['filedAt'] ?? $row['documentDate'] ?? '') >= $filedFrom)
-				)
-			);
-		}
-
-		return new JSONResponse(
-			[
-				'documents' => $rows,
-				'canCreate' => $this->rbac->hasAny(['bookkeeper', 'administrator']),
-			],
-			Http::STATUS_OK
-		);
+		return $this->listing(rows: $this->filedSince(rows: $this->withStatus(rows: $rows)));
 
 	}//end index()
 
@@ -172,18 +127,13 @@ class WbsoDocumentApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid document id'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidId();
 		}
 
 		try {
@@ -192,11 +142,7 @@ class WbsoDocumentApiController extends Controller {
 			return $this->fail(message: 'Failed to load document', context: ['exception' => $e->getMessage()]);
 		}
 
-		if ($row === null) {
-			return new JSONResponse(['error' => 'Document not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->rowOrNotFound(row: $row);
 	}//end show()
 
 	/**
@@ -208,45 +154,15 @@ class WbsoDocumentApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
-			return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
-		}
-
-		$payload = [
-			'documentType' => (string)$this->request->getParam('documentType', ''),
-			'documentNumber' => (string)$this->request->getParam('documentNumber', ''),
-			'documentDate' => (string)$this->request->getParam('documentDate', ''),
-			'fileReference' => (string)$this->request->getParam('fileReference', ''),
-		];
-
-		if ($payload['fileReference'] === '') {
-			unset($payload['fileReference']);
+		$administrationId = $this->guard()->write(roles: self::BOOKKEEPER_ROLES, refusal: 'Bookkeeper or administrator role required');
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		try {
-			$row = $this->documents->createDocument(administrationId: $administrationId, payload: $payload);
+			$row = $this->documents->createDocument(administrationId: $administrationId, payload: $this->documentPayload());
 		} catch (InvalidArgumentException $e) {
-			$this->logger->error(
-				'WbsoDocumentApiController: document creation payload rejected',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to create document: the submitted details are invalid'),
-					'error' => 'wbso-document-create-failed',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			return $this->invalidDocument(administrationId: $administrationId, failure: $e);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to create document', context: ['exception' => $e->getMessage()]);
 		}
@@ -265,63 +181,16 @@ class WbsoDocumentApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function file(string $id): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		if ($this->rbac->hasAny(['bookkeeper', 'administrator']) === false) {
-			return new JSONResponse(['error' => 'Bookkeeper or administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->write(roles: self::BOOKKEEPER_ROLES, refusal: 'Bookkeeper or administrator role required');
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid document id'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidId();
 		}
 
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			$approver = '';
-		} else {
-			$approver = $user->getUID();
-		}
-
-		try {
-			$row = $this->documents->fileDocument(
-				administrationId: $administrationId,
-				documentId: $id,
-				approver: $approver,
-			);
-		} catch (InvalidArgumentException $e) {
-			$this->logger->error(
-				'WbsoDocumentApiController: document to file not found',
-				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['message' => $this->l10n->t('Document not found'), 'error' => 'wbso-document-not-found'],
-				Http::STATUS_NOT_FOUND,
-			);
-		} catch (RuntimeException $e) {
-			$this->logger->error(
-				'WbsoDocumentApiController: document file transition rejected',
-				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to file this document in its current state'),
-					'error' => 'wbso-document-file-conflict',
-				],
-				Http::STATUS_CONFLICT,
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(message: 'Failed to file document', context: ['exception' => $e->getMessage()]);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->fileDocument(administrationId: $administrationId, documentId: $id);
 	}//end file()
 
 	/**
@@ -335,79 +204,24 @@ class WbsoDocumentApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function archive(string $id): JSONResponse {
-		$auth = $this->requireAuthenticated();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		if ($this->rbac->hasAny(['auditor', 'administrator']) === false) {
-			return new JSONResponse(['error' => 'Auditor or administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->write(roles: ['auditor', 'administrator'], refusal: 'Auditor or administrator role required');
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid document id'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidId();
 		}
 
-		$reason = (string)$this->request->getParam('reason', '');
-		$allowEarly = (bool)$this->request->getParam('allowEarly', false);
+		$archival = new WbsoDocumentArchival(request: $this->request, documentId: $id);
 
 		// Only administrators may override the seven-year retention boundary.
-		if ($allowEarly === true && $this->rbac->hasAny(['administrator']) === false) {
+		if ($archival->allowEarly === true && $this->rbac->hasAny(['administrator']) === false) {
 			return new JSONResponse(['error' => 'Only administrators can override the 7-year retention boundary'], Http::STATUS_FORBIDDEN);
 		}
 
-		try {
-			$row = $this->documents->archiveDocument(
-				administrationId: $administrationId,
-				documentId: $id,
-				reason: $reason,
-				allowEarly: $allowEarly,
-			);
-		} catch (InvalidArgumentException $e) {
-			$this->logger->error(
-				'WbsoDocumentApiController: document to archive not found',
-				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['message' => $this->l10n->t('Document not found'), 'error' => 'wbso-document-not-found'],
-				Http::STATUS_NOT_FOUND,
-			);
-		} catch (RuntimeException $e) {
-			$this->logger->error(
-				'WbsoDocumentApiController: document archive transition rejected',
-				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to archive this document in its current state'),
-					'error' => 'wbso-document-archive-conflict',
-				],
-				Http::STATUS_CONFLICT,
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(message: 'Failed to archive document', context: ['exception' => $e->getMessage()]);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->archiveDocument(administrationId: $administrationId, archival: $archival);
 	}//end archive()
-
-	/**
-	 * Authentication precondition.
-	 *
-	 * @return JSONResponse|null
-	 */
-	private function requireAuthenticated(): ?JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		return null;
-	}//end requireAuthenticated()
 
 	/**
 	 * Log + return a 500 without stack-traces.
@@ -422,4 +236,361 @@ class WbsoDocumentApiController extends Controller {
 
 		return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}//end fail()
+
+	/**
+	 * The access steps of this API.
+	 *
+	 * @return WbsoActionGuard
+	 */
+	private function guard(): WbsoActionGuard {
+		return new WbsoActionGuard(
+			caller: new WbsoCallerCheck(userSession: $this->userSession, rbac: $this->rbac),
+			scope: new WbsoAdministrationScope(request: $this->request, administrationContext: $this->administrationContext),
+		);
+
+	}//end guard()
+
+	/**
+	 * The documents of the administration, of the requested type when one is
+	 * given; a rejected filter is a 400.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<int,array<string,mixed>>|JSONResponse
+	 */
+	private function loadDocuments(string $administrationId): array|JSONResponse {
+		$type = (string)$this->request->getParam('type', '');
+
+		try {
+			return $this->documentsOfType(administrationId: $administrationId, type: $type);
+		} catch (InvalidArgumentException $e) {
+			return $this->rejectedFilter(context: ['administrationId' => $administrationId, 'type' => $type, 'exception' => $e->getMessage()]);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to load documents', context: ['exception' => $e->getMessage()]);
+		}
+
+	}//end loadDocuments()
+
+	/**
+	 * The documents of one type, or all of them when no type is given.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $type The document type, '' for all.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function documentsOfType(string $administrationId, string $type): array {
+		if ($type !== '') {
+			return $this->documents->getDocumentsByType(administrationId: $administrationId, type: $type);
+		}
+
+		return $this->documents->getDocumentsByAdministration(administrationId: $administrationId);
+
+	}//end documentsOfType()
+
+	/**
+	 * Answer a document filter the service rejected with a 400.
+	 *
+	 * @param array<string,string> $context The log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function rejectedFilter(array $context): JSONResponse {
+		$this->logger->error('WbsoDocumentApiController: document list filter rejected', $context);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to load documents: the filter is invalid'),
+				'error' => 'wbso-document-list-failed',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+
+	}//end rejectedFilter()
+
+	/**
+	 * The listing response, with whether the caller may create.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The documents.
+	 *
+	 * @return JSONResponse
+	 */
+	private function listing(array $rows): JSONResponse {
+		return new JSONResponse(
+			[
+				'documents' => $rows,
+				'canCreate' => $this->rbac->hasAny(self::BOOKKEEPER_ROLES),
+			],
+			Http::STATUS_OK
+		);
+
+	}//end listing()
+
+	/**
+	 * Keep the documents with the requested status, all when none is given.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The documents.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function withStatus(array $rows): array {
+		$status = (string)$this->request->getParam('status', '');
+		if ($status === '') {
+			return $rows;
+		}
+
+		return array_values(
+			array_filter(
+				$rows,
+				static fn (array $row): bool => ((string)($row['status'] ?? '') === $status)
+			)
+		);
+
+	}//end withStatus()
+
+	/**
+	 * Keep the documents filed (or dated) on or after filedFrom, all when it
+	 * is not given.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The documents.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function filedSince(array $rows): array {
+		$filedFrom = (string)$this->request->getParam('filedFrom', '');
+		if ($filedFrom === '') {
+			return $rows;
+		}
+
+		return array_values(
+			array_filter(
+				$rows,
+				static fn (array $row): bool => ((string)($row['filedAt'] ?? $row['documentDate'] ?? '') >= $filedFrom)
+			)
+		);
+
+	}//end filedSince()
+
+	/**
+	 * The document to create, from the request; an empty fileReference is left out.
+	 *
+	 * @return array<string,string>
+	 */
+	private function documentPayload(): array {
+		$payload = [
+			'documentType' => (string)$this->request->getParam('documentType', ''),
+			'documentNumber' => (string)$this->request->getParam('documentNumber', ''),
+			'documentDate' => (string)$this->request->getParam('documentDate', ''),
+			'fileReference' => (string)$this->request->getParam('fileReference', ''),
+		];
+
+		if ($payload['fileReference'] === '') {
+			unset($payload['fileReference']);
+		}
+
+		return $payload;
+
+	}//end documentPayload()
+
+	/**
+	 * Answer a document the service rejected as invalid with a 400.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param InvalidArgumentException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidDocument(string $administrationId, InvalidArgumentException $failure): JSONResponse {
+		$this->logger->error(
+			'WbsoDocumentApiController: document creation payload rejected',
+			['administrationId' => $administrationId, 'exception' => $failure->getMessage()]
+		);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to create document: the submitted details are invalid'),
+				'error' => 'wbso-document-create-failed',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+
+	}//end invalidDocument()
+
+	/**
+	 * File the document with the caller as approver: 404 when the service does
+	 * not know it, 409 when its state does not allow filing.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $documentId The document.
+	 *
+	 * @return JSONResponse
+	 */
+	private function fileDocument(string $administrationId, string $documentId): JSONResponse {
+		$context = ['administrationId' => $administrationId, 'documentId' => $documentId];
+		try {
+			$row = $this->filed(administrationId: $administrationId, documentId: $documentId);
+		} catch (InvalidArgumentException $e) {
+			$this->logger->error('WbsoDocumentApiController: document to file not found', $context + ['exception' => $e->getMessage()]);
+			return $this->documentNotFound();
+		} catch (RuntimeException $e) {
+			return $this->fileConflict(context: $context + ['exception' => $e->getMessage()]);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to file document', context: ['exception' => $e->getMessage()]);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end fileDocument()
+
+	/**
+	 * Hand the filing, with the caller as approver, to the service.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $documentId The document.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function filed(string $administrationId, string $documentId): array {
+		return $this->documents->fileDocument(
+			administrationId: $administrationId,
+			documentId: $documentId,
+			approver: $this->approver(),
+		);
+
+	}//end filed()
+
+	/**
+	 * The uid of the caller, '' when nobody is logged in.
+	 *
+	 * @return string
+	 */
+	private function approver(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return '';
+		}
+
+		return $user->getUID();
+
+	}//end approver()
+
+	/**
+	 * Answer a filing the document's state does not allow with a 409.
+	 *
+	 * @param array<string,string> $context The log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function fileConflict(array $context): JSONResponse {
+		$this->logger->error('WbsoDocumentApiController: document file transition rejected', $context);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to file this document in its current state'),
+				'error' => 'wbso-document-file-conflict',
+			],
+			Http::STATUS_CONFLICT,
+		);
+
+	}//end fileConflict()
+
+	/**
+	 * Archive the document: 404 when the service does not know it, 409 when
+	 * its state does not allow archiving.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param WbsoDocumentArchival $archival The document, reason and override.
+	 *
+	 * @return JSONResponse
+	 */
+	private function archiveDocument(string $administrationId, WbsoDocumentArchival $archival): JSONResponse {
+		$context = ['administrationId' => $administrationId, 'documentId' => $archival->documentId];
+		try {
+			$row = $this->archived(administrationId: $administrationId, archival: $archival);
+		} catch (InvalidArgumentException $e) {
+			$this->logger->error('WbsoDocumentApiController: document to archive not found', $context + ['exception' => $e->getMessage()]);
+			return $this->documentNotFound();
+		} catch (RuntimeException $e) {
+			return $this->archiveConflict(context: $context + ['exception' => $e->getMessage()]);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to archive document', context: ['exception' => $e->getMessage()]);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end archiveDocument()
+
+	/**
+	 * Hand the archival to the service.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param WbsoDocumentArchival $archival The document, reason and override.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function archived(string $administrationId, WbsoDocumentArchival $archival): array {
+		return $this->documents->archiveDocument(
+			administrationId: $administrationId,
+			documentId: $archival->documentId,
+			reason: $archival->reason,
+			allowEarly: $archival->allowEarly,
+		);
+
+	}//end archived()
+
+	/**
+	 * Answer an archival the document's state does not allow with a 409.
+	 *
+	 * @param array<string,string> $context The log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function archiveConflict(array $context): JSONResponse {
+		$this->logger->error('WbsoDocumentApiController: document archive transition rejected', $context);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to archive this document in its current state'),
+				'error' => 'wbso-document-archive-conflict',
+			],
+			Http::STATUS_CONFLICT,
+		);
+
+	}//end archiveConflict()
+
+	/**
+	 * The 404 for a document the service does not know.
+	 *
+	 * @return JSONResponse
+	 */
+	private function documentNotFound(): JSONResponse {
+		return new JSONResponse(
+			['message' => $this->l10n->t('Document not found'), 'error' => 'wbso-document-not-found'],
+			Http::STATUS_NOT_FOUND,
+		);
+
+	}//end documentNotFound()
+
+	/**
+	 * The 400 for a malformed document id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidId(): JSONResponse {
+		return new JSONResponse(['error' => 'Invalid document id'], Http::STATUS_BAD_REQUEST);
+
+	}//end invalidId()
+
+	/**
+	 * The document, or a 404 when there is none.
+	 *
+	 * @param array<string,mixed>|null $row The document.
+	 *
+	 * @return JSONResponse
+	 */
+	private function rowOrNotFound(?array $row): JSONResponse {
+		if ($row === null) {
+			return new JSONResponse(['error' => 'Document not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end rowOrNotFound()
+
 }//end class

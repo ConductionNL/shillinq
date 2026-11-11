@@ -260,4 +260,95 @@ final class InnovatieboxControllerTest extends TestCase {
 		self::assertSame($payload, $response->getData());
 
 	}//end testDoorsnijdingsverbodReturnsFindings()
+	/**
+	 * The export: the method allowlist, the SBR and PDF payloads built from
+	 * one aggregation, and the failure log context; plus the other failure
+	 * and refusal bodies.
+	 *
+	 * @return void
+	 */
+	public function testExportAndFailureBodies(): void {
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$aggregation = ['totals' => ['qualifying' => 1000.0], 'assets' => []];
+		$this->aggregation->method('aggregate')->willReturnCallback(
+			static function (string $administrationId, int $financialYear) use ($aggregation): array {
+				if ($financialYear === 2020) {
+					throw new \RuntimeException('boom');
+				}
+
+				return $aggregation;
+			}
+		);
+		$this->doorsnijden->method('validateNoDuplication')->willThrowException(new \RuntimeException('dup down'));
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+
+		$params = ['administration_id' => 'a/b'];
+		self::assertSame(['error' => 'administration_id must be a valid administration identifier'], $this->controller->export()->getData());
+		$params = ['administration_id' => 'adm-1', 'financialYear' => '26'];
+		self::assertSame(['error' => 'boekjaar must be a 4-digit fiscal year'], $this->controller->export()->getData());
+		$params = ['administration_id' => 'adm-1', 'financialYear' => '2026', 'method' => 'other'];
+		self::assertSame(['error' => 'methode must be one of per_asset_afpelmethode, flat_rate_25pct, cost_plus'], $this->controller->export()->getData());
+
+		$params = ['administration_id' => ' adm-1 ', 'financialYear' => ' 2026 ', 'method' => ' cost_plus '];
+		$expected = [
+			'sbr' => $this->sbrExport->toSbrInstancePayload(aggregation: $aggregation, administrationId: 'adm-1', financialYear: 2026, method: 'cost_plus'),
+			'pdf' => $this->sbrExport->toPdfRenderContext(aggregation: $aggregation, administrationId: 'adm-1', financialYear: 2026, method: 'cost_plus'),
+		];
+		self::assertSame([Http::STATUS_OK, $expected], [$this->controller->export()->getStatus(), $this->controller->export()->getData()]);
+		$params = ['administration_id' => 'adm-1', 'financialYear' => '2026'];
+		self::assertSame(Http::STATUS_OK, $this->controller->export()->getStatus());
+
+		$params = ['administration_id' => 'adm-1', 'financialYear' => '2020'];
+		self::assertSame(['error' => 'Failed to render innovatiebox SBR/PDF export'], $this->controller->export()->getData());
+		self::assertSame(['error' => 'Failed to compute innovatiebox aggregation'], $this->controller->aggregation()->getData());
+		self::assertSame(['error' => 'Failed to run doorsnijdingsverbod check'], $this->controller->doorsnijdingsverbod()->getData());
+		self::assertSame(
+			[
+				['InnovatieboxController: Failed to render innovatiebox SBR/PDF export', ['administrationId' => 'adm-1', 'financialYear' => '2020', 'method' => 'per_asset_afpelmethode', 'exception' => 'boom']],
+				['InnovatieboxController: Failed to compute innovatiebox aggregation', ['administrationId' => 'adm-1', 'financialYear' => '2020', 'exception' => 'boom']],
+				['InnovatieboxController: Failed to run doorsnijdingsverbod check', ['administrationId' => 'adm-1', 'financialYear' => '2020', 'exception' => 'dup down']],
+			],
+			$logged
+		);
+
+		$params = ['own_rd_cost' => '1', 'uitbesteed_derden' => '-1', 'uitbesteed_verbonden' => '0'];
+		self::assertSame(['error' => 'uitbesteed_derden must be a non-negative number'], $this->controller->scenario()->getData());
+		$params = ['own_rd_cost' => '1', 'uitbesteed_derden' => '1'];
+		self::assertSame(['error' => 'uitbesteed_verbonden must be a non-negative number'], $this->controller->scenario()->getData());
+
+	}//end testExportAndFailureBodies()
+
+	/**
+	 * An anonymous scenario is refused before its inputs are read.
+	 *
+	 * @return void
+	 */
+	public function testScenarioRefusesAnonymous(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$this->request->expects($this->never())->method('getParam');
+		$controller = new InnovatieboxController(
+			request: $this->request,
+			aggregation: $this->aggregation,
+			nexus: $this->nexus,
+			doorsnijden: $this->doorsnijden,
+			sbrExport: $this->sbrExport,
+			userSession: $session,
+			logger: $this->logger,
+		);
+
+		$response = $controller->scenario();
+		self::assertSame([Http::STATUS_UNAUTHORIZED, ['error' => 'Authentication required']], [$response->getStatus(), $response->getData()]);
+
+	}//end testScenarioRefusesAnonymous()
 }//end class

@@ -128,13 +128,50 @@ final class PaymentSettlementService {
 	 */
 	public function build(array $input, string $actor, string $settledAt = ''): array {
 		$method = (string)($input['method'] ?? '');
+		$this->assertKnownMethod(method: $method);
+
+		$amount = ($input['amount'] ?? null);
+		$this->assertAmountAndActor(amount: $amount, actor: $actor);
+		$this->assertEvidence(method: $method, input: $input);
+
+		return [
+			'method' => $method,
+			'amount' => (float)$amount,
+			'reference' => trim((string)($input['reference'] ?? '')),
+			'actor' => $actor,
+			'settledAt' => $this->instantOrNow(instant: $settledAt),
+			'reason' => trim((string)($input['reason'] ?? '')),
+		];
+	}//end build()
+
+	/**
+	 * Refuse a settlement method outside the known list.
+	 *
+	 * @param string $method The method.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the method is unknown.
+	 */
+	private function assertKnownMethod(string $method): void {
 		if (in_array($method, self::METHODS, true) === false) {
 			throw new InvalidArgumentException(
 				sprintf('Unknown settlement method "%s"; expected one of %s.', $method, implode(', ', self::METHODS))
 			);
 		}
+	}//end assertKnownMethod()
 
-		$amount = ($input['amount'] ?? null);
+	/**
+	 * Refuse a missing or negative amount, then a settlement nobody is named for.
+	 *
+	 * @param mixed  $amount The amount that arrived.
+	 * @param string $actor  The user recording it.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the amount or the actor is missing.
+	 */
+	private function assertAmountAndActor(mixed $amount, string $actor): void {
 		if (is_numeric($amount) === false || (float)$amount < 0.0) {
 			throw new InvalidArgumentException('A settlement needs the amount that arrived.');
 		}
@@ -142,34 +179,48 @@ final class PaymentSettlementService {
 		if ($actor === '') {
 			throw new InvalidArgumentException('A settlement nobody is named for cannot be questioned later; the actor is required.');
 		}
+	}//end assertAmountAndActor()
 
-		$reference = trim((string)($input['reference'] ?? ''));
-		$reason = trim((string)($input['reason'] ?? ''));
-
+	/**
+	 * Refuse a settlement without its evidence: a waiver has no money and
+	 * therefore no bank evidence, so it needs the reason it was granted;
+	 * anything else needs the reference a reconciliation matches on.
+	 *
+	 * @param string               $method The method.
+	 * @param array<string, mixed> $input  The settlement as the caller gave it.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the evidence is missing.
+	 */
+	private function assertEvidence(string $method, array $input): void {
 		if ($method === 'waived') {
-			// A waiver has no money and therefore no bank evidence. What it needs
-			// instead is the reason it was granted.
-			if ($reason === '') {
+			if (trim((string)($input['reason'] ?? '')) === '') {
 				throw new InvalidArgumentException('A waived fee needs the reason it was waived.');
 			}
-		} elseif ($reference === '') {
+
+			return;
+		}
+
+		if (trim((string)($input['reference'] ?? '')) === '') {
 			throw new InvalidArgumentException('A settlement needs the reference a later bank reconciliation will match on.');
 		}
+	}//end assertEvidence()
 
-		$when = $settledAt;
-		if ($when === '') {
-			$when = gmdate('Y-m-d\TH:i:s\Z');
+	/**
+	 * The given ISO-8601 instant, or now (UTC) when it is empty.
+	 *
+	 * @param string $instant The instant, or an empty string.
+	 *
+	 * @return string
+	 */
+	private function instantOrNow(string $instant): string {
+		if ($instant === '') {
+			return gmdate('Y-m-d\TH:i:s\Z');
 		}
 
-		return [
-			'method' => $method,
-			'amount' => (float)$amount,
-			'reference' => $reference,
-			'actor' => $actor,
-			'settledAt' => $when,
-			'reason' => $reason,
-		];
-	}//end build()
+		return $instant;
+	}//end instantOrNow()
 
 	/**
 	 * Stamp the settled edge the first time the request reports paid.
@@ -202,12 +253,7 @@ final class PaymentSettlementService {
 			return $request;
 		}
 
-		$when = $settledAt;
-		if ($when === '') {
-			$when = gmdate('Y-m-d\TH:i:s\Z');
-		}
-
-		$request['settledAt'] = $when;
+		$request['settledAt'] = $this->instantOrNow(instant: $settledAt);
 		$request['settledVia'] = $via;
 
 		return $request;
@@ -296,12 +342,23 @@ final class PaymentSettlementService {
 		}
 
 		$cents = round(((float)$value * 100));
-		if (is_finite($cents) === false || $cents < 0.0 || $cents > 1.0e+15) {
+		if ($this->isStorableCents(cents: $cents) === false) {
 			return null;
 		}
 
 		return (int)$cents;
 	}//end cents()
+
+	/**
+	 * Whether a cent amount is finite, not negative and small enough to be one.
+	 *
+	 * @param float $cents The rounded cent amount.
+	 *
+	 * @return bool
+	 */
+	private function isStorableCents(float $cents): bool {
+		return is_finite($cents) === true && $cents >= 0.0 && $cents <= 1.0e+15;
+	}//end isStorableCents()
 
 	/**
 	 * Everything settled by hand, in cents, or null when one entry cannot be read.
@@ -353,44 +410,72 @@ final class PaymentSettlementService {
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	public function report(array $request): array {
-		$dueCents = $this->cents(value: ($request['amount'] ?? null));
-		$settledCents = $this->settledCents(request: $request);
+		$dueCents      = $this->cents(value: ($request['amount'] ?? null));
+		$settledCents  = $this->settledCents(request: $request);
 		$providerState = (string)($request['state'] ?? 'pending');
 
 		if ($dueCents === null || $settledCents === null) {
-			// The sum cannot be done. A provider state that says no money will
-			// ever come is still a fact about this request, and it does not
-			// need the amount, so it is reported. Everything else says plainly
-			// that the amount is unknown, with no number attached, because the
-			// number this branch used to invent was zero.
-			if ($settledCents === 0
-				&& in_array($providerState, self::PROVIDER_DEAD_STATES, true) === true
-			) {
-				return ['state' => self::REPORTED_UNPAYABLE, 'settled' => 0.0, 'due' => null, 'over' => null];
-			}
-
-			// What IS readable is still reported: a counter payment that was
-			// recorded happened, whatever the request says it owes.
-			$settledSoFar = null;
-			if ($settledCents !== null) {
-				$settledSoFar = (float)($settledCents / 100);
-			}
-
-			return [
-				'state' => self::REPORTED_INDETERMINATE,
-				'settled' => $settledSoFar,
-				'due' => null,
-				'over' => null,
-			];
+			return $this->unknownSumReport(settledCents: $settledCents, providerState: $providerState);
 		}
 
 		if (in_array($providerState, self::PROVIDER_PAID_STATES, true) === true) {
 			$settledCents += $dueCents;
 		}
 
+		$report = $this->sumReport(dueCents: $dueCents, settledCents: $settledCents);
+		if ($report['state'] === self::REPORTED_OPEN && in_array($providerState, self::PROVIDER_DEAD_STATES, true) === true) {
+			$report['state'] = self::REPORTED_UNPAYABLE;
+		}
+
+		return $report;
+	}//end report()
+
+	/**
+	 * The report when the sum cannot be done.
+	 *
+	 * A provider state that says no money will ever come is still a fact about
+	 * the request, and it does not need the amount, so it is reported.
+	 * Everything else says plainly that the amount is unknown, with no number
+	 * attached, because the number this branch used to invent was zero. What
+	 * IS readable is still reported: a counter payment that was recorded
+	 * happened, whatever the request says it owes.
+	 *
+	 * @param int|null $settledCents  Everything settled by hand, or null when unreadable.
+	 * @param string   $providerState The provider state.
+	 *
+	 * @return array{state: string, settled: float|null, due: null, over: null}
+	 */
+	private function unknownSumReport(?int $settledCents, string $providerState): array {
+		if ($settledCents === 0 && in_array($providerState, self::PROVIDER_DEAD_STATES, true) === true) {
+			return ['state' => self::REPORTED_UNPAYABLE, 'settled' => 0.0, 'due' => null, 'over' => null];
+		}
+
+		$settledSoFar = null;
+		if ($settledCents !== null) {
+			$settledSoFar = (float)($settledCents / 100);
+		}
+
+		return [
+			'state' => self::REPORTED_INDETERMINATE,
+			'settled' => $settledSoFar,
+			'due' => null,
+			'over' => null,
+		];
+	}//end unknownSumReport()
+
+	/**
+	 * The report when the sum can be done: overpaid, paid, partly paid or
+	 * open, in that order.
+	 *
+	 * @param int $dueCents     What the request owes, in cents.
+	 * @param int $settledCents What arrived, in cents.
+	 *
+	 * @return array{state: string, settled: float, due: float, over: float}
+	 */
+	private function sumReport(int $dueCents, int $settledCents): array {
 		$overCents = max(0, ($settledCents - $dueCents));
-		$settled = (float)($settledCents / 100);
-		$due = (float)($dueCents / 100);
+		$settled   = (float)($settledCents / 100);
+		$due       = (float)($dueCents / 100);
 
 		if ($overCents > 0) {
 			return ['state' => self::REPORTED_OVERPAID, 'settled' => $settled, 'due' => $due, 'over' => (float)($overCents / 100)];
@@ -404,10 +489,6 @@ final class PaymentSettlementService {
 			return ['state' => self::REPORTED_PART_PAID, 'settled' => $settled, 'due' => $due, 'over' => 0.0];
 		}
 
-		if (in_array($providerState, self::PROVIDER_DEAD_STATES, true) === true) {
-			return ['state' => self::REPORTED_UNPAYABLE, 'settled' => 0.0, 'due' => $due, 'over' => 0.0];
-		}
-
 		return ['state' => self::REPORTED_OPEN, 'settled' => 0.0, 'due' => $due, 'over' => 0.0];
-	}//end report()
+	}//end sumReport()
 }//end class

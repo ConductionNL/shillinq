@@ -434,19 +434,7 @@ class BadoControleprotocolService {
 	 * @return array<int,array<string,mixed>> Findings with a recomputed severity.
 	 */
 	private function classifiedFindings(string $protocolId, array $toleranceByTopic, float $materialityAmount): array {
-		$samples = $this->objects()
-			->setRegister($this->register())
-			->setSchema('AuditSample')
-			->findAll(['filters' => ['protocol' => $protocolId]]);
-
-		$sampleIds = [];
-		foreach ($samples as $sample) {
-			$id = (string)($sample['id'] ?? ($sample['@self']['id'] ?? ''));
-			if ($id !== '') {
-				$sampleIds[$id] = true;
-			}
-		}
-
+		$sampleIds = $this->protocolSampleIds(protocolId: $protocolId);
 		if (empty($sampleIds) === true) {
 			return [];
 		}
@@ -477,6 +465,31 @@ class BadoControleprotocolService {
 
 		return $classified;
 	}//end classifiedFindings()
+
+	/**
+	 * The ids of the protocol's AuditSamples, as a set.
+	 *
+	 * @param string $protocolId The Controleprotocol.id.
+	 *
+	 * @return array<string,true> The sample ids.
+	 */
+	private function protocolSampleIds(string $protocolId): array {
+		$samples = $this->objects()
+			->setRegister($this->register())
+			->setSchema('AuditSample')
+			->findAll(['filters' => ['protocol' => $protocolId]]);
+
+		$sampleIds = [];
+		foreach ($samples as $sample) {
+			$id = (string)($sample['id'] ?? ($sample['@self']['id'] ?? ''));
+			if ($id !== '') {
+				$sampleIds[$id] = true;
+			}
+		}
+
+		return $sampleIds;
+
+	}//end protocolSampleIds()
 
 	/**
 	 * Whether every AuditFinding for the protocol is agreed or resolved (REQ-008).

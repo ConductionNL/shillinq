@@ -1,0 +1,2122 @@
+{
+    "account x accountGroup": {
+        "rowAxis": "account",
+        "columnAxis": "accountGroup",
+        "rows": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "columns": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "cells": {
+            "4000": {
+                "40": -90000.0
+            },
+            "8000": {
+                "80": 180000.0
+            }
+        },
+        "rowTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "columnTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "account x period": {
+        "rowAxis": "account",
+        "columnAxis": "period",
+        "rows": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "cells": {
+            "4000": {
+                "2026-02": -30000.0,
+                "2026-05": -30000.0,
+                "2026-08": -30000.0
+            },
+            "8000": {
+                "2026-02": 60000.0,
+                "2026-05": 58000.0,
+                "2026-08": 62000.0
+            }
+        },
+        "rowTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "columnTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "account x quarter": {
+        "rowAxis": "account",
+        "columnAxis": "quarter",
+        "rows": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "cells": {
+            "4000": {
+                "2026-Q1": -30000.0,
+                "2026-Q2": -30000.0,
+                "2026-Q3": -30000.0
+            },
+            "8000": {
+                "2026-Q1": 60000.0,
+                "2026-Q2": 58000.0,
+                "2026-Q3": 62000.0
+            }
+        },
+        "rowTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "columnTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "account x costCenter": {
+        "rowAxis": "account",
+        "columnAxis": "costCenter",
+        "rows": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "columns": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "4000": {
+                "": -90000.0
+            },
+            "8000": {
+                "KP-ADV": 180000.0
+            }
+        },
+        "rowTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "columnTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "account x project": {
+        "rowAxis": "account",
+        "columnAxis": "project",
+        "rows": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "columns": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "4000": {
+                "": -90000.0
+            },
+            "8000": {
+                "": 180000.0
+            }
+        },
+        "rowTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "columnTotals": {
+            "": 90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "account x customer": {
+        "rowAxis": "account",
+        "columnAxis": "customer",
+        "rows": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "columns": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "4000": {
+                "": -90000.0
+            },
+            "8000": {
+                "cust-gemeente": 180000.0
+            }
+        },
+        "rowTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "columnTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "accountGroup x account": {
+        "rowAxis": "accountGroup",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "40": {
+                "4000": -90000.0
+            },
+            "80": {
+                "8000": 180000.0
+            }
+        },
+        "rowTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "columnTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "accountGroup x period": {
+        "rowAxis": "accountGroup",
+        "columnAxis": "period",
+        "rows": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "cells": {
+            "40": {
+                "2026-02": -30000.0,
+                "2026-05": -30000.0,
+                "2026-08": -30000.0
+            },
+            "80": {
+                "2026-02": 60000.0,
+                "2026-05": 58000.0,
+                "2026-08": 62000.0
+            }
+        },
+        "rowTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "columnTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "accountGroup x quarter": {
+        "rowAxis": "accountGroup",
+        "columnAxis": "quarter",
+        "rows": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "cells": {
+            "40": {
+                "2026-Q1": -30000.0,
+                "2026-Q2": -30000.0,
+                "2026-Q3": -30000.0
+            },
+            "80": {
+                "2026-Q1": 60000.0,
+                "2026-Q2": 58000.0,
+                "2026-Q3": 62000.0
+            }
+        },
+        "rowTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "columnTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "accountGroup x costCenter": {
+        "rowAxis": "accountGroup",
+        "columnAxis": "costCenter",
+        "rows": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "columns": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "40": {
+                "": -90000.0
+            },
+            "80": {
+                "KP-ADV": 180000.0
+            }
+        },
+        "rowTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "columnTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "accountGroup x project": {
+        "rowAxis": "accountGroup",
+        "columnAxis": "project",
+        "rows": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "columns": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "40": {
+                "": -90000.0
+            },
+            "80": {
+                "": 180000.0
+            }
+        },
+        "rowTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "columnTotals": {
+            "": 90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "accountGroup x customer": {
+        "rowAxis": "accountGroup",
+        "columnAxis": "customer",
+        "rows": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "columns": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "40": {
+                "": -90000.0
+            },
+            "80": {
+                "cust-gemeente": 180000.0
+            }
+        },
+        "rowTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "columnTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x account": {
+        "rowAxis": "period",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "2026-02": {
+                "4000": -30000.0,
+                "8000": 60000.0
+            },
+            "2026-05": {
+                "4000": -30000.0,
+                "8000": 58000.0
+            },
+            "2026-08": {
+                "4000": -30000.0,
+                "8000": 62000.0
+            }
+        },
+        "rowTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "columnTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x accountGroup": {
+        "rowAxis": "period",
+        "columnAxis": "accountGroup",
+        "rows": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "columns": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "cells": {
+            "2026-02": {
+                "40": -30000.0,
+                "80": 60000.0
+            },
+            "2026-05": {
+                "40": -30000.0,
+                "80": 58000.0
+            },
+            "2026-08": {
+                "40": -30000.0,
+                "80": 62000.0
+            }
+        },
+        "rowTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "columnTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x quarter": {
+        "rowAxis": "period",
+        "columnAxis": "quarter",
+        "rows": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "cells": {
+            "2026-02": {
+                "2026-Q1": 30000.0
+            },
+            "2026-05": {
+                "2026-Q2": 28000.0
+            },
+            "2026-08": {
+                "2026-Q3": 32000.0
+            }
+        },
+        "rowTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "columnTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x costCenter": {
+        "rowAxis": "period",
+        "columnAxis": "costCenter",
+        "rows": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "columns": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "2026-02": {
+                "KP-ADV": 60000.0,
+                "": -30000.0
+            },
+            "2026-05": {
+                "KP-ADV": 58000.0,
+                "": -30000.0
+            },
+            "2026-08": {
+                "KP-ADV": 62000.0,
+                "": -30000.0
+            }
+        },
+        "rowTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "columnTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x project": {
+        "rowAxis": "period",
+        "columnAxis": "project",
+        "rows": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "columns": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "2026-02": {
+                "": 30000.0
+            },
+            "2026-05": {
+                "": 28000.0
+            },
+            "2026-08": {
+                "": 32000.0
+            }
+        },
+        "rowTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "columnTotals": {
+            "": 90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x customer": {
+        "rowAxis": "period",
+        "columnAxis": "customer",
+        "rows": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "columns": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "2026-02": {
+                "cust-gemeente": 60000.0,
+                "": -30000.0
+            },
+            "2026-05": {
+                "cust-gemeente": 58000.0,
+                "": -30000.0
+            },
+            "2026-08": {
+                "cust-gemeente": 62000.0,
+                "": -30000.0
+            }
+        },
+        "rowTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "columnTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "quarter x account": {
+        "rowAxis": "quarter",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "2026-Q1": {
+                "4000": -30000.0,
+                "8000": 60000.0
+            },
+            "2026-Q2": {
+                "4000": -30000.0,
+                "8000": 58000.0
+            },
+            "2026-Q3": {
+                "4000": -30000.0,
+                "8000": 62000.0
+            }
+        },
+        "rowTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "columnTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "quarter x accountGroup": {
+        "rowAxis": "quarter",
+        "columnAxis": "accountGroup",
+        "rows": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "columns": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "cells": {
+            "2026-Q1": {
+                "40": -30000.0,
+                "80": 60000.0
+            },
+            "2026-Q2": {
+                "40": -30000.0,
+                "80": 58000.0
+            },
+            "2026-Q3": {
+                "40": -30000.0,
+                "80": 62000.0
+            }
+        },
+        "rowTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "columnTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "quarter x period": {
+        "rowAxis": "quarter",
+        "columnAxis": "period",
+        "rows": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "cells": {
+            "2026-Q1": {
+                "2026-02": 30000.0
+            },
+            "2026-Q2": {
+                "2026-05": 28000.0
+            },
+            "2026-Q3": {
+                "2026-08": 32000.0
+            }
+        },
+        "rowTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "columnTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "quarter x costCenter": {
+        "rowAxis": "quarter",
+        "columnAxis": "costCenter",
+        "rows": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "columns": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "2026-Q1": {
+                "KP-ADV": 60000.0,
+                "": -30000.0
+            },
+            "2026-Q2": {
+                "KP-ADV": 58000.0,
+                "": -30000.0
+            },
+            "2026-Q3": {
+                "KP-ADV": 62000.0,
+                "": -30000.0
+            }
+        },
+        "rowTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "columnTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "quarter x project": {
+        "rowAxis": "quarter",
+        "columnAxis": "project",
+        "rows": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "columns": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "2026-Q1": {
+                "": 30000.0
+            },
+            "2026-Q2": {
+                "": 28000.0
+            },
+            "2026-Q3": {
+                "": 32000.0
+            }
+        },
+        "rowTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "columnTotals": {
+            "": 90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "quarter x customer": {
+        "rowAxis": "quarter",
+        "columnAxis": "customer",
+        "rows": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "columns": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "2026-Q1": {
+                "cust-gemeente": 60000.0,
+                "": -30000.0
+            },
+            "2026-Q2": {
+                "cust-gemeente": 58000.0,
+                "": -30000.0
+            },
+            "2026-Q3": {
+                "cust-gemeente": 62000.0,
+                "": -30000.0
+            }
+        },
+        "rowTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "columnTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "costCenter x account": {
+        "rowAxis": "costCenter",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "KP-ADV": {
+                "8000": 180000.0
+            },
+            "": {
+                "4000": -90000.0
+            }
+        },
+        "rowTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "costCenter x accountGroup": {
+        "rowAxis": "costCenter",
+        "columnAxis": "accountGroup",
+        "rows": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "cells": {
+            "KP-ADV": {
+                "80": 180000.0
+            },
+            "": {
+                "40": -90000.0
+            }
+        },
+        "rowTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "costCenter x period": {
+        "rowAxis": "costCenter",
+        "columnAxis": "period",
+        "rows": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "cells": {
+            "KP-ADV": {
+                "2026-02": 60000.0,
+                "2026-05": 58000.0,
+                "2026-08": 62000.0
+            },
+            "": {
+                "2026-02": -30000.0,
+                "2026-05": -30000.0,
+                "2026-08": -30000.0
+            }
+        },
+        "rowTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "costCenter x quarter": {
+        "rowAxis": "costCenter",
+        "columnAxis": "quarter",
+        "rows": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "cells": {
+            "KP-ADV": {
+                "2026-Q1": 60000.0,
+                "2026-Q2": 58000.0,
+                "2026-Q3": 62000.0
+            },
+            "": {
+                "2026-Q1": -30000.0,
+                "2026-Q2": -30000.0,
+                "2026-Q3": -30000.0
+            }
+        },
+        "rowTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "costCenter x project": {
+        "rowAxis": "costCenter",
+        "columnAxis": "project",
+        "rows": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "KP-ADV": {
+                "": 180000.0
+            },
+            "": {
+                "": -90000.0
+            }
+        },
+        "rowTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "": 90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "costCenter x customer": {
+        "rowAxis": "costCenter",
+        "columnAxis": "customer",
+        "rows": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "KP-ADV": {
+                "cust-gemeente": 180000.0
+            },
+            "": {
+                "": -90000.0
+            }
+        },
+        "rowTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "project x account": {
+        "rowAxis": "project",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "": {
+                "4000": -90000.0,
+                "8000": 180000.0
+            }
+        },
+        "rowTotals": {
+            "": 90000.0
+        },
+        "columnTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "project x accountGroup": {
+        "rowAxis": "project",
+        "columnAxis": "accountGroup",
+        "rows": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "cells": {
+            "": {
+                "40": -90000.0,
+                "80": 180000.0
+            }
+        },
+        "rowTotals": {
+            "": 90000.0
+        },
+        "columnTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "project x period": {
+        "rowAxis": "project",
+        "columnAxis": "period",
+        "rows": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "cells": {
+            "": {
+                "2026-02": 30000.0,
+                "2026-05": 28000.0,
+                "2026-08": 32000.0
+            }
+        },
+        "rowTotals": {
+            "": 90000.0
+        },
+        "columnTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "project x quarter": {
+        "rowAxis": "project",
+        "columnAxis": "quarter",
+        "rows": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "cells": {
+            "": {
+                "2026-Q1": 30000.0,
+                "2026-Q2": 28000.0,
+                "2026-Q3": 32000.0
+            }
+        },
+        "rowTotals": {
+            "": 90000.0
+        },
+        "columnTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "project x costCenter": {
+        "rowAxis": "project",
+        "columnAxis": "costCenter",
+        "rows": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "": {
+                "KP-ADV": 180000.0,
+                "": -90000.0
+            }
+        },
+        "rowTotals": {
+            "": 90000.0
+        },
+        "columnTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "project x customer": {
+        "rowAxis": "project",
+        "columnAxis": "customer",
+        "rows": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "": {
+                "cust-gemeente": 180000.0,
+                "": -90000.0
+            }
+        },
+        "rowTotals": {
+            "": 90000.0
+        },
+        "columnTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "customer x account": {
+        "rowAxis": "customer",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "cust-gemeente": {
+                "8000": 180000.0
+            },
+            "": {
+                "4000": -90000.0
+            }
+        },
+        "rowTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "8000": 180000.0,
+            "4000": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "customer x accountGroup": {
+        "rowAxis": "customer",
+        "columnAxis": "accountGroup",
+        "rows": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "40",
+                "label": "Personeelskosten"
+            },
+            {
+                "key": "80",
+                "label": "Omzet"
+            }
+        ],
+        "cells": {
+            "cust-gemeente": {
+                "80": 180000.0
+            },
+            "": {
+                "40": -90000.0
+            }
+        },
+        "rowTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "80": 180000.0,
+            "40": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "customer x period": {
+        "rowAxis": "customer",
+        "columnAxis": "period",
+        "rows": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-02",
+                "label": "2026-02"
+            },
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            },
+            {
+                "key": "2026-08",
+                "label": "2026-08"
+            }
+        ],
+        "cells": {
+            "cust-gemeente": {
+                "2026-02": 60000.0,
+                "2026-05": 58000.0,
+                "2026-08": 62000.0
+            },
+            "": {
+                "2026-02": -30000.0,
+                "2026-05": -30000.0,
+                "2026-08": -30000.0
+            }
+        },
+        "rowTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "2026-02": 30000.0,
+            "2026-05": 28000.0,
+            "2026-08": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "customer x quarter": {
+        "rowAxis": "customer",
+        "columnAxis": "quarter",
+        "rows": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "2026-Q1",
+                "label": "2026-Q1"
+            },
+            {
+                "key": "2026-Q2",
+                "label": "2026-Q2"
+            },
+            {
+                "key": "2026-Q3",
+                "label": "2026-Q3"
+            }
+        ],
+        "cells": {
+            "cust-gemeente": {
+                "2026-Q1": 60000.0,
+                "2026-Q2": 58000.0,
+                "2026-Q3": 62000.0
+            },
+            "": {
+                "2026-Q1": -30000.0,
+                "2026-Q2": -30000.0,
+                "2026-Q3": -30000.0
+            }
+        },
+        "rowTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "2026-Q1": 30000.0,
+            "2026-Q2": 28000.0,
+            "2026-Q3": 32000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "customer x costCenter": {
+        "rowAxis": "customer",
+        "columnAxis": "costCenter",
+        "rows": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "KP-ADV",
+                "label": "KP-ADV"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "cust-gemeente": {
+                "KP-ADV": 180000.0
+            },
+            "": {
+                "": -90000.0
+            }
+        },
+        "rowTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "KP-ADV": 180000.0,
+            "": -90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "customer x project": {
+        "rowAxis": "customer",
+        "columnAxis": "project",
+        "rows": [
+            {
+                "key": "cust-gemeente",
+                "label": "Gemeente Tiel"
+            },
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "columns": [
+            {
+                "key": "",
+                "label": null
+            }
+        ],
+        "cells": {
+            "cust-gemeente": {
+                "": 180000.0
+            },
+            "": {
+                "": -90000.0
+            }
+        },
+        "rowTotals": {
+            "cust-gemeente": 180000.0,
+            "": -90000.0
+        },
+        "columnTotals": {
+            "": 90000.0
+        },
+        "total": 90000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "period x account, one quarter": {
+        "rowAxis": "period",
+        "columnAxis": "account",
+        "rows": [
+            {
+                "key": "2026-05",
+                "label": "2026-05"
+            }
+        ],
+        "columns": [
+            {
+                "key": "4000",
+                "label": "4000 Lonen"
+            },
+            {
+                "key": "8000",
+                "label": "8000 Omzet advies"
+            }
+        ],
+        "cells": {
+            "2026-05": {
+                "4000": -30000.0,
+                "8000": 58000.0
+            }
+        },
+        "rowTotals": {
+            "2026-05": 28000.0
+        },
+        "columnTotals": {
+            "8000": 58000.0,
+            "4000": -30000.0
+        },
+        "total": 28000.0,
+        "capped": {
+            "rows": false,
+            "columns": false
+        },
+        "truncated": false
+    },
+    "refused vatCode period 2026-01-01 2026-12-31": "Unknown pivot axis: vatCode",
+    "refused period vatCode 2026-01-01 2026-12-31": "Unknown pivot axis: vatCode",
+    "refused period period 2026-01-01 2026-12-31": "Rows and columns need two different axes",
+    "refused account period 2026-13-01 2026-12-31": "Dates must read YYYY-MM-DD",
+    "refused account period 2026-01-01 26-12-31": "Dates must read YYYY-MM-DD",
+    "refused account period 2026-12-31 2026-01-01": "The range ends before it starts",
+    "refused account period 2023-01-01 2026-12-31": "The range may span at most 36 months"
+}

@@ -120,20 +120,15 @@ class InventoryScanController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function resolve(string $barcode = '', string $administrationId = ''): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+		if ($this->userSession->getUser() === null) {
+			return self::notLoggedIn();
 		}
 
 		$barcode = trim($barcode);
-		if ($barcode === '') {
-			return new JSONResponse(data: ['message' => 'A barcode or SKU is required.'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
 		$administrationId = trim($administrationId);
-		$error = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($error !== null) {
-			return $error;
+		$refusal = self::barcodeRefusal(barcode: $barcode) ?? $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$item = $this->scanService->resolveBarcode(barcode: $barcode, administrationId: $administrationId);
@@ -143,6 +138,30 @@ class InventoryScanController extends Controller {
 
 		return new JSONResponse(data: ['found' => true, 'item' => $item]);
 	}//end resolve()
+
+	/**
+	 * The 401 for a request without a session user.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function notLoggedIn(): JSONResponse {
+		return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+	}//end notLoggedIn()
+
+	/**
+	 * The 400 for a blank barcode.
+	 *
+	 * @param string $barcode The trimmed barcode or SKU.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private static function barcodeRefusal(string $barcode): ?JSONResponse {
+		if ($barcode === '') {
+			return new JSONResponse(data: ['message' => 'A barcode or SKU is required.'], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
+	}//end barcodeRefusal()
 
 	/**
 	 * Download the InventoryStock delta modified since a timestamp (REQ-OFFLINE-002).
@@ -158,32 +177,36 @@ class InventoryScanController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function sync(string $since = '', string $administrationId = ''): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		$sinceArg = trim($since);
-		if ($sinceArg === '') {
-			$sinceArg = null;
+		if ($this->userSession->getUser() === null) {
+			return self::notLoggedIn();
 		}
 
 		$administrationId = trim($administrationId);
-		$error = $this->requireAccessibleAdministration(administrationId: $administrationId);
-		if ($error !== null) {
-			return $error;
+		$refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		$stock = $this->scanService->getStockDelta(since: $sinceArg, administrationId: $administrationId);
+		$stock = $this->scanService->getStockDelta(since: self::sinceOrNull(since: $since), administrationId: $administrationId);
 
-		return new JSONResponse(
-			data: [
-				'serverTime' => gmdate('Y-m-d\TH:i:s\Z'),
-				'stock' => $stock,
-			]
-		);
-
+		return new JSONResponse(data: ['serverTime' => gmdate('Y-m-d\TH:i:s\Z'), 'stock' => $stock]);
 	}//end sync()
+
+	/**
+	 * The trimmed `since` value; null (a full sync) when blank.
+	 *
+	 * @param string $since The query value.
+	 *
+	 * @return string|null
+	 */
+	private static function sinceOrNull(string $since): ?string {
+		$sinceArg = trim($since);
+		if ($sinceArg === '') {
+			return null;
+		}
+
+		return $sinceArg;
+	}//end sinceOrNull()
 
 	/**
 	 * Upload a batch of scan operations and apply them server-side (REQ-OFFLINE-002).
@@ -208,9 +231,32 @@ class InventoryScanController extends Controller {
 	public function scan(array $operations = [], string $administrationId = ''): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+			return self::notLoggedIn();
 		}
 
+		$admin = trim($administrationId);
+		$refusal = self::batchRefusal(operations: $operations) ?? $this->requireAccessibleAdministration(administrationId: $admin);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$actor = new ScanActor(userId: $user->getUID(), administrationId: $admin);
+		$results = [];
+		foreach ($operations as $operation) {
+			$results[] = $this->processOne(operation: $operation, actor: $actor);
+		}
+
+		return new JSONResponse(data: ['results' => $results]);
+	}//end scan()
+
+	/**
+	 * The 400 for an empty or oversized batch.
+	 *
+	 * @param array<mixed> $operations The operations.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private static function batchRefusal(array $operations): ?JSONResponse {
 		if ($operations === []) {
 			return new JSONResponse(data: ['message' => 'No operations supplied.'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
@@ -222,21 +268,8 @@ class InventoryScanController extends Controller {
 			);
 		}
 
-		$admin = trim($administrationId);
-		$error = $this->requireAccessibleAdministration(administrationId: $admin);
-		if ($error !== null) {
-			return $error;
-		}
-
-		$userId = $user->getUID();
-		$results = [];
-
-		foreach ($operations as $operation) {
-			$results[] = $this->processOne(operation: $operation, userId: $userId, administrationId: $admin);
-		}
-
-		return new JSONResponse(data: ['results' => $results]);
-	}//end scan()
+		return null;
+	}//end batchRefusal()
 
 	/**
 	 * Require the caller to be a member of the named administration (ADR-005).
@@ -254,17 +287,11 @@ class InventoryScanController extends Controller {
 	 */
 	private function requireAccessibleAdministration(string $administrationId): ?JSONResponse {
 		if ($administrationId === '') {
-			return new JSONResponse(
-				data: ['message' => 'An administrationId is required.'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new JSONResponse(data: ['message' => 'An administrationId is required.'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		if ($this->context->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(
-				data: ['message' => 'Administration not found'],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new JSONResponse(data: ['message' => 'Administration not found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 
 		return null;
@@ -274,61 +301,85 @@ class InventoryScanController extends Controller {
 	 * Validate, authorise and apply a single operation, returning its ACK.
 	 *
 	 * @param mixed $operation The operation payload (must be an array).
-	 * @param string $userId Acting user id.
-	 * @param string $administrationId Administration scope.
+	 * @param ScanActor $actor The acting user and the administration scope.
 	 *
 	 * @return array<string, mixed> The ACK for this operation.
 	 */
-	private function processOne(mixed $operation, string $userId, string $administrationId): array {
+	private function processOne(mixed $operation, ScanActor $actor): array {
+		$rejection = self::shapeRejection(operation: $operation)
+			?? $this->permissionRejection(operation: $operation, userId: $actor->userId);
+		if ($rejection !== null) {
+			return $rejection;
+		}
+
+		return $this->applied(operation: $operation, actor: $actor);
+	}//end processOne()
+
+	/**
+	 * The ACK rejecting a malformed operation, one without a transactionId, or one of an unknown type.
+	 *
+	 * @param mixed $operation One operation of the batch.
+	 *
+	 * @return array<string, mixed>|null The rejection, or null for a well-formed operation.
+	 */
+	private static function shapeRejection(mixed $operation): ?array {
 		if (is_array($operation) === false) {
 			return ['transactionId' => null, 'status' => 'rejected', 'message' => 'Malformed operation.'];
 		}
 
 		$transactionId = trim((string)($operation['transactionId'] ?? ''));
-		$type = (string)($operation['type'] ?? '');
-
 		if ($transactionId === '') {
 			return ['transactionId' => null, 'status' => 'rejected', 'message' => 'Missing transactionId.'];
 		}
 
-		if (isset(self::ROLE_GROUPS[$type]) === false) {
+		if (isset(self::ROLE_GROUPS[(string)($operation['type'] ?? '')]) === false) {
 			return ['transactionId' => $transactionId, 'status' => 'rejected', 'message' => 'Unknown operation type.'];
 		}
 
-		// REQ-PERM-001 — re-check the acting user's role server-side. The
-		// client-asserted role is never trusted.
-		if ($this->userHasRole(userId: $userId, type: $type) === false) {
-			$this->logger->info(
-				'InventoryScanController: permission denied for operation',
-				['user' => $userId, 'type' => $type, 'transactionId' => $transactionId]
-			);
-			return [
-				'transactionId' => $transactionId,
-				'status' => 'rejected',
-				'message' => 'You do not have permission to perform a ' . $type . ' operation.',
-			];
+		return null;
+	}//end shapeRejection()
+
+	/**
+	 * REQ-PERM-001 — the ACK rejecting an operation the acting user's role does not
+	 * allow, re-checked server-side (the client-asserted role is never trusted).
+	 *
+	 * @param array<string, mixed> $operation A well-formed operation.
+	 * @param string               $userId    The acting user.
+	 *
+	 * @return array<string, mixed>|null The rejection, or null when permitted.
+	 */
+	private function permissionRejection(array $operation, string $userId): ?array {
+		$transactionId = trim((string)($operation['transactionId'] ?? ''));
+		$type = (string)($operation['type'] ?? '');
+		if ($this->userHasRole(userId: $userId, type: $type) === true) {
+			return null;
 		}
 
-		try {
-			return $this->scanService->applyOperation(
-				operation: $operation,
-				userId: $userId,
-				administrationId: $administrationId
-			);
-		} catch (\Throwable $e) {
-			// Fail-closed: never leak a stack trace to the client.
-			$this->logger->error(
-				'InventoryScanController: operation failed',
-				['transactionId' => $transactionId, 'exception' => $e->getMessage()]
-			);
-			return [
-				'transactionId' => $transactionId,
-				'status' => 'rejected',
-				'message' => 'The operation could not be applied. Please retry.',
-			];
-		}//end try
+		$this->logger->info(
+			'InventoryScanController: permission denied for operation',
+			['user' => $userId, 'type' => $type, 'transactionId' => $transactionId]
+		);
 
-	}//end processOne()
+		return ['transactionId' => $transactionId, 'status' => 'rejected', 'message' => 'You do not have permission to perform a ' . $type . ' operation.'];
+	}//end permissionRejection()
+
+	/**
+	 * Apply a permitted operation; a failure is logged and rejected without a stack trace (fail-closed).
+	 *
+	 * @param array<string, mixed> $operation A permitted operation.
+	 * @param ScanActor            $actor     The acting user and the administration scope.
+	 *
+	 * @return array<string, mixed> The ACK.
+	 */
+	private function applied(array $operation, ScanActor $actor): array {
+		try {
+			return $this->scanService->applyOperation(operation: $operation, userId: $actor->userId, administrationId: $actor->administrationId);
+		} catch (\Throwable $e) {
+			$transactionId = trim((string)($operation['transactionId'] ?? ''));
+			$this->logger->error('InventoryScanController: operation failed', ['transactionId' => $transactionId, 'exception' => $e->getMessage()]);
+			return ['transactionId' => $transactionId, 'status' => 'rejected', 'message' => 'The operation could not be applied. Please retry.'];
+		}
+	}//end applied()
 
 	/**
 	 * Whether the user may perform an operation of the given type (REQ-PERM-001).

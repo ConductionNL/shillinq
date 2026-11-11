@@ -54,6 +54,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 class VATDeclarationController extends Controller {
+	use AdministrationScopedListing;
+
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
 	/**
@@ -97,40 +99,25 @@ class VATDeclarationController extends Controller {
 		// ADR-005 / REQ-MA-001. VATDeclaration carries administrationId; the
 		// scope is the caller's memberships, one query per administration.
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$declarations = [];
-			foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
-				$declarations = array_merge(
-					$declarations,
-					$objectService
-						->setRegister(register: 'shillinq')
-						->setSchema(schema: 'VATDeclaration')
-						->findAll(
-							[
-								'filters' => [
-									'returnId' => $returnId,
-									'administrationId' => $administrationId,
-								],
-							]
-						)
-				);
-			}
+			$declarations = $this->scopedRows(schema: 'VATDeclaration', filter: ['returnId' => $returnId]);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'VATDeclarationController: failed to list declarations',
-				['returnId' => $returnId, 'exception' => $e->getMessage()]
-			);
+			return $this->listFailed(returnId: $returnId, e: $e);
+		}
 
-			return new JSONResponse(['error' => 'Failed to list declarations'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
-
-		return new JSONResponse(
-			[
-				'data' => $declarations,
-				'total' => count($declarations),
-			],
-			Http::STATUS_OK
-		);
-
+		return self::listed(rows: $declarations);
 	}//end listByReturn()
+
+	/**
+	 * Log a failed listing and answer 500 without detail.
+	 *
+	 * @param string     $returnId The VATReturn id.
+	 * @param \Throwable $e        The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function listFailed(string $returnId, \Throwable $e): JSONResponse {
+		$this->logger->error('VATDeclarationController: failed to list declarations', ['returnId' => $returnId, 'exception' => $e->getMessage()]);
+
+		return new JSONResponse(['error' => 'Failed to list declarations'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end listFailed()
 }//end class

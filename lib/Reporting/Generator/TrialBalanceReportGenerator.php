@@ -55,10 +55,6 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Trial-balance CSV generator built natively from GLLine + Account.
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
 final class TrialBalanceReportGenerator implements ReportGeneratorInterface {
 
@@ -108,72 +104,88 @@ final class TrialBalanceReportGenerator implements ReportGeneratorInterface {
 		$lines = $this->loadAll('GLLine', $filters);
 		$accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));
 
-		// accountNumber => [name, debit, credit].
-		$byAccount = [];
-		foreach ($lines as $line) {
-			if (($line['eliminationFlag'] ?? false) === true) {
-				continue;
-			}
-
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			if (isset($byAccount[$accountNumber]) === false) {
-				$byAccount[$accountNumber] = [
-					'name' => (string)($accounts[$accountNumber]['name'] ?? $line['accountName'] ?? ''),
-					'debit' => 0.0,
-					'credit' => 0.0,
-				];
-			}
-
-			$amount = $this->toFloat($line['amount'] ?? 0);
-			if ((string)($line['side'] ?? '') === 'debit') {
-				$byAccount[$accountNumber]['debit'] += $amount;
-			} else {
-				$byAccount[$accountNumber]['credit'] += $amount;
-			}
-		}//end foreach
-
-		ksort($byAccount);
-
-		$handle = fopen('php://temp', 'r+');
-		fputcsv($handle, ['accountNumber', 'accountName', 'debit', 'credit', 'balance']);
-		$totalDebit = 0.0;
-		$totalCredit = 0.0;
-		foreach ($byAccount as $accountNumber => $row) {
-			$balance = ($row['debit'] - $row['credit']);
-			$totalDebit += $row['debit'];
-			$totalCredit += $row['credit'];
-			fputcsv(
-				$handle,
-				[
-					$accountNumber,
-					$row['name'],
-					$this->money($row['debit']),
-					$this->money($row['credit']),
-					$this->money($balance),
-				]
-			);
-		}
-
-		// Footing row so the balance is self-checking.
-		fputcsv(
-			$handle,
-			['TOTAL', '', $this->money($totalDebit), $this->money($totalCredit), $this->money(($totalDebit - $totalCredit))]
-		);
-
-		rewind($handle);
-		$content = (string)stream_get_contents($handle);
-		fclose($handle);
-
 		return new GeneratedFile(
 			fileName: $this->fileName('trial-balance', $context, 'csv'),
 			mimeType: 'text/csv',
 			format: 'csv',
-			content: $content,
+			content: $this->csvContent(rows: $this->balanceRows(totals: $this->totalsByAccount(lines: $lines, accounts: $accounts))),
 		);
 
 	}//end generate()
+
+	/**
+	 * Debit and credit totals per account (eliminated and unassigned lines
+	 * left out), accounts in key order; the name comes from the Account,
+	 * else the first line's accountName.
+	 *
+	 * @param list<array<string, mixed>>          $lines    The GL lines.
+	 * @param array<string, array<string, mixed>> $accounts Accounts by number.
+	 *
+	 * @return array<string, array{name: string, debit: float, credit: float}> accountNumber => totals.
+	 */
+	private function totalsByAccount(array $lines, array $accounts): array {
+		$byAccount = [];
+		foreach ($lines as $line) {
+			$accountNumber = (string)($line['accountNumber'] ?? '');
+			if (($line['eliminationFlag'] ?? false) === true || $accountNumber === '') {
+				continue;
+			}
+
+			$byAccount[$accountNumber] ??= [
+				'name' => (string)($accounts[$accountNumber]['name'] ?? $line['accountName'] ?? ''),
+				'debit' => 0.0,
+				'credit' => 0.0,
+			];
+			$side = $this->sideOf(line: $line);
+			$byAccount[$accountNumber][$side] += $this->toFloat($line['amount'] ?? 0);
+		}
+
+		ksort($byAccount);
+
+		return $byAccount;
+	}//end totalsByAccount()
+
+	/**
+	 * The side a line books on: `debit`, anything else counts as `credit`.
+	 *
+	 * @param array<string, mixed> $line The GL line.
+	 *
+	 * @return string debit or credit.
+	 */
+	private function sideOf(array $line): string {
+		if ((string)($line['side'] ?? '') === 'debit') {
+			return 'debit';
+		}
+
+		return 'credit';
+	}//end sideOf()
+
+	/**
+	 * The CSV rows: header, one row per account with its balance, and a
+	 * footing row so the balance is self-checking.
+	 *
+	 * @param array<string, array{name: string, debit: float, credit: float}> $totals Totals per account.
+	 *
+	 * @return list<list<string>> The rows.
+	 */
+	private function balanceRows(array $totals): array {
+		$rows = [['accountNumber', 'accountName', 'debit', 'credit', 'balance']];
+		$totalDebit = 0.0;
+		$totalCredit = 0.0;
+		foreach ($totals as $accountNumber => $row) {
+			$totalDebit += $row['debit'];
+			$totalCredit += $row['credit'];
+			$rows[] = [
+				$accountNumber,
+				$row['name'],
+				$this->money($row['debit']),
+				$this->money($row['credit']),
+				$this->money(($row['debit'] - $row['credit'])),
+			];
+		}
+
+		$rows[] = ['TOTAL', '', $this->money($totalDebit), $this->money($totalCredit), $this->money(($totalDebit - $totalCredit))];
+
+		return $rows;
+	}//end balanceRows()
 }//end class

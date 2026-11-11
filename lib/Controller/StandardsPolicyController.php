@@ -82,23 +82,10 @@ class StandardsPolicyController extends Controller {
 	public function show(string $administrationId): JSONResponse {
 		$canManage = $this->managementAccess->canManage(administrationId: $administrationId);
 		if ($canManage === false && $this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
+			return $this->notFound();
 		}
 
-		try {
-			$policy = $this->policies->policyFor(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('StandardsPolicyController: failed to load the policy', ['exception' => $e->getMessage()]);
-			return new JSONResponse(['error' => 'load-failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse(
-			[
-				'administrationId' => $administrationId,
-				'frameworks' => $policy['frameworks'],
-				'canEdit' => $canManage,
-			]
-		);
+		return $this->loadedPolicy(administrationId: $administrationId, canManage: $canManage);
 	}//end show()
 
 	/**
@@ -112,15 +99,9 @@ class StandardsPolicyController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function update(string $administrationId): JSONResponse {
-		if ($this->managementAccess->canManage(administrationId: $administrationId) === false) {
-			if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-				return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
-			}
-
-			return new JSONResponse(
-				['error' => 'forbidden', 'message' => $this->l10n->t('Only an owner of this administration can change its standards policy.')],
-				Http::STATUS_FORBIDDEN
-			);
+		$refusal = $this->managementRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$frameworks = $this->request->getParam('frameworks', null);
@@ -128,24 +109,78 @@ class StandardsPolicyController extends Controller {
 			return new JSONResponse(['error' => 'invalid-frameworks'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $this->savedPolicy(administrationId: $administrationId, frameworks: array_values($frameworks));
+	}//end update()
+
+	/**
+	 * The masked 404 for a non-member, the translated 403 for a member who is no owner, or null for an owner.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function managementRefusal(string $administrationId): JSONResponse|null {
+		if ($this->managementAccess->canManage(administrationId: $administrationId) === true) {
+			return null;
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return $this->notFound();
+		}
+
+		return new JSONResponse(
+			['error' => 'forbidden', 'message' => $this->l10n->t('Only an owner of this administration can change its standards policy.')],
+			Http::STATUS_FORBIDDEN
+		);
+	}//end managementRefusal()
+
+	/**
+	 * Load the policy and answer it, or the 500 when loading fails.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param bool   $canManage        Whether the caller may change it.
+	 *
+	 * @return JSONResponse
+	 */
+	private function loadedPolicy(string $administrationId, bool $canManage): JSONResponse {
 		try {
-			$policy = $this->policies->savePolicy(administrationId: $administrationId, frameworks: array_values($frameworks));
+			$policy = $this->policies->policyFor(administrationId: $administrationId);
+		} catch (\Throwable $e) {
+			$this->logger->error('StandardsPolicyController: failed to load the policy', ['exception' => $e->getMessage()]);
+			return new JSONResponse(['error' => 'load-failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse(['administrationId' => $administrationId, 'frameworks' => $policy['frameworks'], 'canEdit' => $canManage]);
+	}//end loadedPolicy()
+
+	/**
+	 * Save the frameworks and answer the saved policy, the translated 400 or the 500.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param array  $frameworks       The submitted frameworks, re-indexed.
+	 *
+	 * @return JSONResponse
+	 */
+	private function savedPolicy(string $administrationId, array $frameworks): JSONResponse {
+		try {
+			$policy = $this->policies->savePolicy(administrationId: $administrationId, frameworks: $frameworks);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				['error' => 'invalid-frameworks', 'message' => $this->l10n->t('Each framework needs a key, an on or off state and a position.')],
-				Http::STATUS_BAD_REQUEST
-			);
+			$message = $this->l10n->t('Each framework needs a key, an on or off state and a position.');
+			return new JSONResponse(['error' => 'invalid-frameworks', 'message' => $message], Http::STATUS_BAD_REQUEST);
 		} catch (\Throwable $e) {
 			$this->logger->error('StandardsPolicyController: failed to save the policy', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'save-failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse(
-			[
-				'administrationId' => $administrationId,
-				'frameworks' => $policy['frameworks'],
-				'canEdit' => true,
-			]
-		);
-	}//end update()
+		return new JSONResponse(['administrationId' => $administrationId, 'frameworks' => $policy['frameworks'], 'canEdit' => true]);
+	}//end savedPolicy()
+
+	/**
+	 * The masked not-found answer.
+	 *
+	 * @return JSONResponse
+	 */
+	private function notFound(): JSONResponse {
+		return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
+	}//end notFound()
 }//end class

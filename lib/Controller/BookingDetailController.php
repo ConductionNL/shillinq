@@ -65,6 +65,28 @@ use Throwable;
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-05-detail-controller-inject/tasks.md
  */
 class BookingDetailController extends Controller {
+	/**
+	 * The booking fields shown, in order; each as a string.
+	 *
+	 * @var array<int,string>
+	 */
+	private const BOOKING_FIELDS = [
+		'appointmentId',
+		'administrationId',
+		'serviceId',
+		'resourceId',
+		'customerId',
+		'customerName',
+		'customerEmail',
+		'startTime',
+		'endTime',
+		'status',
+		'notes',
+		'pipelinqContactId',
+		'createdAt',
+		'updatedAt',
+	];
+
 
 	/**
 	 * Default klantbeeld history page size — 5 rows is enough for the
@@ -121,132 +143,21 @@ class BookingDetailController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function show(string $id = ''): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		$appointment = $this->accessibleAppointment(id: $id);
+		if ($appointment instanceof JSONResponse) {
+			return $appointment;
 		}
 
-		$bookingId = trim($id);
-		if ($bookingId === '') {
-			return new JSONResponse(['error' => 'id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
-		}
-
-		$appointment = $this->loadAppointment(appointmentId: $bookingId);
-		if ($appointment === null) {
-			return new JSONResponse(['error' => 'Booking not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		// ADR-005 IDOR — the Appointment record carries the owning
-		// administration; the context service rejects callers without
-		// membership. Masked as 404 so the controller does not leak
-		// existence to out-of-tenant users.
-		// The `$administrationId !== ''` short-circuit that used to guard this
-		// call DISABLED THE CHECK for exactly the records that need it most.
-		// `?? ''` catches an absent or null administrationId and turns it into
-		// '', and '' then made the whole condition false — so an Appointment
-		// with no owning administration was readable by ANY authenticated user,
-		// cross-tenant, in a bookkeeping app. Records in that state are not
-		// hypothetical here: seed objects that fail their schema's `required`
-		// list are skipped on import, which leaves schemas unpopulated and
-		// partially-formed rows in play (see tests/validate-seeds.js).
-		//
-		// canAccess() already fails closed — AdministrationContextService::
-		// canAccess() returns false for '' on its own line. The service was
-		// right; the caller opted out of it. Calling it unconditionally makes
-		// an unknown administration a 404 instead of a free read.
-		$administrationId = (string)($appointment['administrationId'] ?? '');
-		if ($this->context->canAccess($administrationId) === false) {
-			return new JSONResponse(['error' => 'Booking not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$payload = [
-			'booking' => $this->presentBooking(appointment: $appointment),
-			'contact' => null,
-			'klantbeeld' => null,
-			'contactError' => null,
-			'notLinkedToPipelinq' => false,
-		];
-
+		$payload = $this->basePayload(appointment: $appointment);
 		$pipelinqContactId = trim((string)($appointment['pipelinqContactId'] ?? ''));
 		if ($pipelinqContactId === '') {
 			$payload['notLinkedToPipelinq'] = true;
 			return new JSONResponse($payload);
 		}
 
-		// Dev / test cache-bust hook — when ?nocache=1 the slice-03
-		// contact cache is wiped so a fresh upstream call happens. Tests
-		// exercise this to avoid relying on the 5-minute TTL.
-		$noCache = filter_var(
-			$this->request->getParam('nocache', false),
-			FILTER_VALIDATE_BOOLEAN
-		);
-		if ($noCache === true) {
-			$this->pipelinq->clearCache();
-		}
-
-		$limit = $this->resolveLimit();
-		$offset = $this->resolveOffset();
-
-		try {
-			$contact = $this->pipelinq->getContact(externalId: $pipelinqContactId);
-			$payload['contact'] = $this->presentContact(contact: $contact);
-		} catch (PipelinqTransportException $e) {
-			$this->logger->warning(
-				'BookingDetailController: pipelinq Contact unavailable',
-				[
-					'app' => AppIdentity::APP_ID,
-					'bookingId' => $bookingId,
-					'externalId' => $pipelinqContactId,
-					'status' => $e->statusCode(),
-				]
-			);
-			$payload['contactError'] = $this->sanitiseAdapterError(exception: $e);
-			// Skip klantbeeld when Contact is unreachable — there is
-			// nothing for the history to attach to in the UI.
-			return new JSONResponse($payload);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BookingDetailController: pipelinq Contact failed',
-				[
-					'app' => AppIdentity::APP_ID,
-					'bookingId' => $bookingId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			$payload['contactError'] = 'Customer profile temporarily unavailable.';
-			return new JSONResponse($payload);
-		}//end try
-
-		// Klantbeeld returns an envelope (`isUnavailable()`/`isEmpty()`)
-		// and never throws by contract, so we let the UI distinguish the
-		// three legitimate outcomes (rows / empty / unavailable) without
-		// collapsing them into a single `contactError`.
-		try {
-			$payload['klantbeeld'] = $this->presentKlantbeeld(
-				result: $this->pipelinq->fetchKlantbeeld(
-					externalId: $pipelinqContactId,
-					limit: $limit,
-					offset: $offset
-				)
-			);
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'BookingDetailController: klantbeeld fetch threw unexpectedly',
-				[
-					'app' => AppIdentity::APP_ID,
-					'bookingId' => $bookingId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			$payload['klantbeeld'] = $this->presentKlantbeeld(
-				result: KlantbeeldResult::unavailable(limit: $limit, offset: $offset)
-			);
-		}//end try
-
-		return new JSONResponse($payload);
+		$run = new BookingDetailRun(bookingId: trim($id), contactId: $pipelinqContactId);
+		$run->payload = $payload;
+		return $this->withCustomer(run: $run);
 	}//end show()
 
 	/**
@@ -289,27 +200,11 @@ class BookingDetailController extends Controller {
 	 */
 	private function loadAppointment(string $appointmentId): ?array {
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$records = $objectService
-				->setRegister($this->settings->getRegisterSlug())
-				->setSchema('Appointment')
-				->findAll(
-					[
-						'filters' => ['appointmentId' => $appointmentId],
-						'limit' => 1,
-					]
-				);
+			$records = $this->appointmentRecords(appointmentId: $appointmentId);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'BookingDetailController: appointment lookup failed',
-				[
-					'app' => AppIdentity::APP_ID,
-					'appointmentId' => $appointmentId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logLookupFailure(appointmentId: $appointmentId, failure: $e);
 			return null;
-		}//end try
+		}
 
 		foreach ($records as $record) {
 			return $this->toArray(object: $record);
@@ -319,6 +214,47 @@ class BookingDetailController extends Controller {
 	}//end loadAppointment()
 
 	/**
+	 * Log an appointment lookup that failed.
+	 *
+	 * @param string $appointmentId The appointment id.
+	 * @param Throwable $failure The failure.
+	 *
+	 * @return void
+	 */
+	private function logLookupFailure(string $appointmentId, Throwable $failure): void {
+		$this->logger->error(
+			'BookingDetailController: appointment lookup failed',
+			[
+				'app' => AppIdentity::APP_ID,
+				'appointmentId' => $appointmentId,
+				'exception' => $failure->getMessage(),
+			]
+		);
+
+	}//end logLookupFailure()
+
+	/**
+	 * The Appointment records with the id (at most one).
+	 *
+	 * @param string $appointmentId The appointment id.
+	 *
+	 * @return iterable<mixed>
+	 */
+	private function appointmentRecords(string $appointmentId): iterable {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		return $objectService
+			->setRegister($this->settings->getRegisterSlug())
+			->setSchema('Appointment')
+			->findAll(
+				[
+					'filters' => ['appointmentId' => $appointmentId],
+					'limit' => 1,
+				]
+			);
+
+	}//end appointmentRecords()
+
+	/**
 	 * Shape an Appointment row for the detail response.
 	 *
 	 * @param array<string,mixed> $appointment Flat OR row.
@@ -326,29 +262,19 @@ class BookingDetailController extends Controller {
 	 * @return array<string,mixed>
 	 */
 	private function presentBooking(array $appointment): array {
-		$pipelinqContactId = null;
-		// `isset()` is already false for null — the `!== null` conjunct this
-		// replaces was unreachable.
-		if (isset($appointment['pipelinqContactId']) === true) {
-			$pipelinqContactId = (string)$appointment['pipelinqContactId'];
+		$booking = [];
+		foreach (self::BOOKING_FIELDS as $field) {
+			$booking[$field] = (string)($appointment[$field] ?? '');
 		}
 
-		return [
-			'appointmentId' => (string)($appointment['appointmentId'] ?? ''),
-			'administrationId' => (string)($appointment['administrationId'] ?? ''),
-			'serviceId' => (string)($appointment['serviceId'] ?? ''),
-			'resourceId' => (string)($appointment['resourceId'] ?? ''),
-			'customerId' => (string)($appointment['customerId'] ?? ''),
-			'customerName' => (string)($appointment['customerName'] ?? ''),
-			'customerEmail' => (string)($appointment['customerEmail'] ?? ''),
-			'startTime' => (string)($appointment['startTime'] ?? ''),
-			'endTime' => (string)($appointment['endTime'] ?? ''),
-			'status' => (string)($appointment['status'] ?? ''),
-			'notes' => (string)($appointment['notes'] ?? ''),
-			'pipelinqContactId' => $pipelinqContactId,
-			'createdAt' => (string)($appointment['createdAt'] ?? ''),
-			'updatedAt' => (string)($appointment['updatedAt'] ?? ''),
-		];
+		// `isset()` is already false for null — the `!== null` conjunct this
+		// replaces was unreachable.
+		$booking['pipelinqContactId'] = null;
+		if (isset($appointment['pipelinqContactId']) === true) {
+			$booking['pipelinqContactId'] = (string)$appointment['pipelinqContactId'];
+		}
+
+		return $booking;
 
 	}//end presentBooking()
 
@@ -431,23 +357,286 @@ class BookingDetailController extends Controller {
 		}
 
 		if (is_object($object) === true) {
-			if (method_exists($object, 'jsonSerialize') === true) {
-				$serialised = $object->jsonSerialize();
-				if (is_array($serialised) === true) {
-					return $serialised;
-				}
-			}
-
-			if (method_exists($object, 'getObject') === true) {
-				$inner = $object->getObject();
-				if (is_array($inner) === true) {
-					return $inner;
-				}
-			}
-
-			return (array)$object;
+			return self::objectToArray(object: $object);
 		}
 
 		return [];
 	}//end toArray()
+
+	/**
+	 * An entity as an array: its serialisation, else its object data, else
+	 * its public properties.
+	 *
+	 * @param object $object The entity.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function objectToArray(object $object): array {
+		if (method_exists($object, 'jsonSerialize') === true) {
+			$serialised = $object->jsonSerialize();
+			if (is_array($serialised) === true) {
+				return $serialised;
+			}
+		}
+
+		if (method_exists($object, 'getObject') === true) {
+			$inner = $object->getObject();
+			if (is_array($inner) === true) {
+				return $inner;
+			}
+		}
+
+		return (array)$object;
+
+	}//end objectToArray()
+
+	/**
+	 * The appointment the caller may see: 401 without a user, 400 without an
+	 * id, 503 without OpenRegister, a masked 404 when it is unknown or of an
+	 * administration the caller does not belong to.
+	 *
+	 * @param string $id The route id.
+	 *
+	 * @return array<string,mixed>|JSONResponse
+	 */
+	private function accessibleAppointment(string $id): array|JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$bookingId = trim($id);
+		if ($bookingId === '') {
+			return new JSONResponse(['error' => 'id is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
+		}
+
+		return $this->ownAppointment(bookingId: $bookingId);
+
+	}//end accessibleAppointment()
+
+	/**
+	 * The appointment when it exists and the caller belongs to its
+	 * administration; a masked 404 otherwise.
+	 *
+	 * @param string $bookingId The trimmed booking id.
+	 *
+	 * @return array<string,mixed>|JSONResponse
+	 */
+	private function ownAppointment(string $bookingId): array|JSONResponse {
+		$appointment = $this->loadAppointment(appointmentId: $bookingId);
+		if ($appointment === null) {
+			return new JSONResponse(['error' => 'Booking not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		// ADR-005 IDOR — the Appointment record carries the owning
+		// administration; the context service rejects callers without
+		// membership. Masked as 404 so the controller does not leak
+		// existence to out-of-tenant users.
+		// The `$administrationId !== ''` short-circuit that used to guard this
+		// call DISABLED THE CHECK for exactly the records that need it most.
+		// `?? ''` catches an absent or null administrationId and turns it into
+		// '', and '' then made the whole condition false — so an Appointment
+		// with no owning administration was readable by ANY authenticated user,
+		// cross-tenant, in a bookkeeping app. Records in that state are not
+		// hypothetical here: seed objects that fail their schema's `required`
+		// list are skipped on import, which leaves schemas unpopulated and
+		// partially-formed rows in play (see tests/validate-seeds.js).
+		//
+		// canAccess() already fails closed — AdministrationContextService::
+		// canAccess() returns false for '' on its own line. The service was
+		// right; the caller opted out of it. Calling it unconditionally makes
+		// an unknown administration a 404 instead of a free read.
+		$administrationId = (string)($appointment['administrationId'] ?? '');
+		if ($this->context->canAccess($administrationId) === false) {
+			return new JSONResponse(['error' => 'Booking not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $appointment;
+
+	}//end ownAppointment()
+
+	/**
+	 * The payload before the customer is attached.
+	 *
+	 * @param array<string,mixed> $appointment The appointment.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function basePayload(array $appointment): array {
+		return [
+			'booking' => $this->presentBooking(appointment: $appointment),
+			'contact' => null,
+			'klantbeeld' => null,
+			'contactError' => null,
+			'notLinkedToPipelinq' => false,
+		];
+
+	}//end basePayload()
+
+	/**
+	 * Attach the pipelinq contact and, when it is reachable, its history.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 *
+	 * @return JSONResponse
+	 */
+	private function withCustomer(BookingDetailRun $run): JSONResponse {
+		$this->bustCacheIfAsked();
+		$run->limit = $this->resolveLimit();
+		$run->offset = $this->resolveOffset();
+
+		// Skip klantbeeld when Contact is unreachable — there is nothing for
+		// the history to attach to in the UI.
+		if ($this->attachContact(run: $run) === true) {
+			$this->attachKlantbeeld(run: $run);
+		}
+
+		return new JSONResponse($run->payload);
+
+	}//end withCustomer()
+
+	/**
+	 * Dev / test cache-bust hook — when ?nocache=1 the slice-03 contact cache
+	 * is wiped so a fresh upstream call happens. Tests exercise this to avoid
+	 * relying on the 5-minute TTL.
+	 *
+	 * @return void
+	 */
+	private function bustCacheIfAsked(): void {
+		$noCache = filter_var(
+			$this->request->getParam('nocache', false),
+			FILTER_VALIDATE_BOOLEAN
+		);
+		if ($noCache === true) {
+			$this->pipelinq->clearCache();
+		}
+
+	}//end bustCacheIfAsked()
+
+	/**
+	 * Attach the contact; a failure is logged and shown as contactError.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 *
+	 * @return bool Whether the contact was attached.
+	 */
+	private function attachContact(BookingDetailRun $run): bool {
+		try {
+			$contact = $this->pipelinq->getContact(externalId: $run->contactId);
+			$run->payload['contact'] = $this->presentContact(contact: $contact);
+			return true;
+		} catch (PipelinqTransportException $e) {
+			$this->contactUnavailable(run: $run, failure: $e);
+			return false;
+		} catch (Throwable $e) {
+			$this->contactFailed(run: $run, failure: $e);
+			return false;
+		}
+
+	}//end attachContact()
+
+	/**
+	 * Log an unreachable pipelinq and show its sanitised error.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 * @param PipelinqTransportException $failure The failure.
+	 *
+	 * @return void
+	 */
+	private function contactUnavailable(BookingDetailRun $run, PipelinqTransportException $failure): void {
+		$this->logger->warning(
+			'BookingDetailController: pipelinq Contact unavailable',
+			[
+				'app' => AppIdentity::APP_ID,
+				'bookingId' => $run->bookingId,
+				'externalId' => $run->contactId,
+				'status' => $failure->statusCode(),
+			]
+		);
+		$run->payload['contactError'] = $this->sanitiseAdapterError(exception: $failure);
+
+	}//end contactUnavailable()
+
+	/**
+	 * Log an unexpected contact failure and show a generic error.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 * @param Throwable $failure The failure.
+	 *
+	 * @return void
+	 */
+	private function contactFailed(BookingDetailRun $run, Throwable $failure): void {
+		$this->logger->error(
+			'BookingDetailController: pipelinq Contact failed',
+			[
+				'app' => AppIdentity::APP_ID,
+				'bookingId' => $run->bookingId,
+				'exception' => $failure->getMessage(),
+			]
+		);
+		$run->payload['contactError'] = 'Customer profile temporarily unavailable.';
+
+	}//end contactFailed()
+
+	/**
+	 * Attach the history page.
+	 *
+	 * Klantbeeld returns an envelope (`isUnavailable()`/`isEmpty()`) and never
+	 * throws by contract, so the UI can distinguish the three legitimate
+	 * outcomes (rows / empty / unavailable); a throw anyway is logged and
+	 * shown as unavailable.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 *
+	 * @return void
+	 */
+	private function attachKlantbeeld(BookingDetailRun $run): void {
+		try {
+			$run->payload['klantbeeld'] = $this->presentKlantbeeld(result: $this->historyPage(run: $run));
+		} catch (Throwable $e) {
+			$run->payload['klantbeeld'] = $this->presentKlantbeeld(result: $this->historyUnavailable(run: $run, failure: $e));
+		}
+
+	}//end attachKlantbeeld()
+
+	/**
+	 * The contact's history page.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 *
+	 * @return KlantbeeldResult
+	 */
+	private function historyPage(BookingDetailRun $run): KlantbeeldResult {
+		return $this->pipelinq->fetchKlantbeeld(
+			externalId: $run->contactId,
+			limit: $run->limit,
+			offset: $run->offset
+		);
+
+	}//end historyPage()
+
+	/**
+	 * Log a history fetch that threw and answer an unavailable page.
+	 *
+	 * @param BookingDetailRun $run The run.
+	 * @param Throwable $failure The failure.
+	 *
+	 * @return KlantbeeldResult
+	 */
+	private function historyUnavailable(BookingDetailRun $run, Throwable $failure): KlantbeeldResult {
+		$this->logger->warning(
+			'BookingDetailController: klantbeeld fetch threw unexpectedly',
+			[
+				'app' => AppIdentity::APP_ID,
+				'bookingId' => $run->bookingId,
+				'exception' => $failure->getMessage(),
+			]
+		);
+
+		return KlantbeeldResult::unavailable(limit: $run->limit, offset: $run->offset);
+
+	}//end historyUnavailable()
 }//end class

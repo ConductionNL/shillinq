@@ -124,6 +124,32 @@ final class TaxPaymentReconciliationServiceTest extends TestCase {
 	}//end testMatchedPaymentZeroVariance()
 
 	/**
+	 * A payment without a linked account or a payment date reads no GL lines.
+	 *
+	 * @return void
+	 */
+	public function testPaymentWithoutAccountOrDateReadsNoLines(): void {
+		$records = [
+			'TaxPaymentTracking' => [
+				['@self' => ['slug' => 'pay-a'], 'administrationId' => 'adm-1', 'linkedGLAccount' => '', 'amount' => 10.5, 'paymentDate' => '2025-04-20'],
+				['@self' => ['slug' => 'pay-d'], 'administrationId' => 'adm-1', 'linkedGLAccount' => '1200', 'amount' => 10.5, 'paymentDate' => ''],
+			],
+			'GLLine' => [
+				['accountNumber' => '1200', 'amount' => 10.5, 'periodId' => '2025-Q2'],
+			],
+		];
+		$this->service = $this->buildService($this->buildObjectServiceStub($records));
+
+		foreach (['pay-a', 'pay-d'] as $paymentId) {
+			self::assertSame(
+				['matched' => false, 'paymentAmount' => 10.5, 'glAmount' => 0.0, 'variance' => -10.5, 'glLineCount' => 0],
+				$this->service->reconcile(administrationId: 'adm-1', paymentId: $paymentId)
+			);
+		}
+
+	}//end testPaymentWithoutAccountOrDateReadsNoLines()
+
+	/**
 	 * A divergent GL amount is reported as a non-zero variance, not matched (REQ-VPB-008).
 	 *
 	 * @return void

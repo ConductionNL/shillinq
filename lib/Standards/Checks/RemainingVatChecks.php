@@ -69,6 +69,94 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The data seedObjects() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_OBJECTS = [
+		'VatReturnFiling' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'periodType' => 'quarter',
+				'periodYear' => 2026,
+				'periodQuarter' => 1,
+				'state' => 'submitted',
+				'currency' => 'EUR',
+				'periodEndDate' => '2026-03-31',
+				'filingDeadline' => '2026-04-30',
+				'outputVat' => 4200.00,
+				'deductibleVat' => 1100.00,
+				'amount' => 3100.00,
+				'intraCommunitySupplies' => 0,
+				'recapitulativeSubmitted' => false,
+				'submittedAt' => '2026-04-25T10:00:00+00:00',
+			],
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'periodType' => 'quarter',
+				'periodYear' => 2026,
+				'periodQuarter' => 2,
+				'state' => 'submitted',
+				'currency' => 'EUR',
+				'periodEndDate' => '2026-06-30',
+				'filingDeadline' => '2026-07-31',
+				'outputVat' => 5000.00,
+				'deductibleVat' => 1500.00,
+				'amount' => 3500.00,
+				'intraCommunitySupplies' => 8000.00,
+				'recapitulativeSubmitted' => true,
+				'recapPeriodEndDate' => '2026-06-30',
+				'recapSubmittedDate' => '2026-07-15',
+				'recapTotal' => 8000.00,
+				'recapLines' => [
+					['customerVatId' => 'DE123456789', 'value' => 5000.00],
+					['customerVatId' => 'BE0123456789', 'value' => 3000.00],
+				],
+				'submittedAt' => '2026-07-20T10:00:00+00:00',
+			],
+		],
+	];
+
+	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'ARInvoice' => [
+			// Nature of the supply (VAT Directive title V). Default: a domestic
+			// supply of goods that are transported to the customer.
+			'supplyType' => 'goods',
+			'customerType' => 'business',
+			'goodsTransported' => true,
+			// Place of supply (art. 31/32 ff.) defaulted to the seller country so
+			// the goods-with-transport rule reconciles (dispatch origin = seller).
+			'placeOfSupplyCountry' => 'NL',
+			'sellerCountryCode' => 'NL',
+			'dispatchOriginCountry' => 'NL',
+			'continuousSupply' => false,
+		],
+		'APTransaction' => [
+			// Purchase posture: a domestic, non-deductible-flagged, non-ICA
+			// transaction so the ICA/deduction conditional rules are satisfied.
+			'intraCommunityAcquisition' => false,
+			'deductible' => false,
+		],
+		'VatReturnFiling' => [
+			// Backfill any pre-existing VatReturn row (the seedObjects samples
+			// only create when the type is empty) so art250/art252 reconcile:
+			// net payable = output - deductible, filed within the period window.
+			'outputVat' => 4200.00,
+			'deductibleVat' => 1100.00,
+			'amount' => 3100.00,
+			'periodEndDate' => '2026-03-31',
+			'filingDeadline' => '2026-04-30',
+			'intraCommunitySupplies' => 0,
+			'recapitulativeSubmitted' => false,
+		],
+	];
+
+	/**
 	 * Per-object-type, per-rule predicates for the remaining `vat` domain rules.
 	 *
 	 * @return array<string, array<string, callable>>
@@ -76,176 +164,495 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	public static function checks(): array {
 		return [
 			'ARInvoice' => [
-				// --- Place of supply of goods (arts. 31/32). ---
-				// art. 31: where goods are NOT dispatched/transported, the place of
-				// supply is where the goods are located at supply — the stated place
-				// of supply must equal that goods location.
-				'vatdir-art31-pos-goods-no-transport' => static fn (array $o): bool => (self::isSupply($o, 'goods') === false
-					|| self::truthy($o, 'goodsTransported') === true
-					|| self::placeEquals($o, 'goodsLocationCountry')),
-				// art. 32: where goods ARE dispatched/transported, the place of supply
-				// is where transport to the customer begins — the stated place of
-				// supply must equal the dispatch-origin country.
-				'vatdir-art32-pos-goods-with-transport' => static fn (array $o): bool => (self::isSupply($o, 'goods') === false
-					|| self::truthy($o, 'goodsTransported') === false
-					|| self::placeEquals($o, 'dispatchOriginCountry')),
-
-				// --- Place of supply of services (arts. 44/45). ---
-				// art. 44: B2B general services are supplied where the customer is
-				// established — place of supply equals the buyer country.
-				'vatdir-art44-pos-b2b-general' => static fn (array $o): bool => (self::isGeneralService($o) === false
-					|| self::isBusinessCustomer($o) === false
-					|| self::placeEquals($o, 'buyerCountryCode')),
-				// art. 45: B2C general services are supplied where the supplier is
-				// established — place of supply equals the seller country.
-				'vatdir-art45-pos-b2c-general' => static fn (array $o): bool => (self::isGeneralService($o) === false
-					|| self::isBusinessCustomer($o) === true
-					|| self::placeEquals($o, 'sellerCountryCode')),
-
-				// --- Place of supply of immovable-property services (art. 47). ---
-				// Services connected with immovable property are supplied where the
-				// property is located, for both B2B and B2C.
-				'vatdir-art47-pos-immovable-property' => static fn (array $o): bool => (self::isSupply($o, 'immovable') === false
-					|| self::placeEquals($o, 'propertyCountry')),
-
-				// --- Place of supply of events (arts. 53/54). ---
-				// art. 53: admission to an event for a taxable person is supplied where
-				// the event actually takes place.
-				'vatdir-art53-pos-event-admission-b2b' => static fn (array $o): bool => (self::isSupply($o, 'admission') === false
-					|| self::isBusinessCustomer($o) === false
-					|| self::placeEquals($o, 'eventCountry')),
-				// art. 54: cultural/artistic/etc. activities for a non-taxable person
-				// are supplied where the activities actually take place.
-				'vatdir-art54-pos-cultural-activities-b2c' => static fn (array $o): bool => (self::isSupply($o, 'event') === false
-					|| self::isBusinessCustomer($o) === true
-					|| self::placeEquals($o, 'eventCountry')),
-
-				// --- Place of supply of restaurant/catering (art. 55). ---
-				// Restaurant and catering services are supplied where physically
-				// carried out — place of supply equals the service country.
-				'vatdir-art55-pos-restaurant-catering' => static fn (array $o): bool => (self::isSupply($o, 'restaurant') === false
-					|| self::placeEquals($o, 'serviceCountry')),
-
-				// --- Place of supply of short-term hire of transport (art. 56). ---
-				// Short-term hire of a means of transport is supplied where the vehicle
-				// is put at the customer's disposal.
-				'vatdir-art56-pos-hire-means-transport' => static fn (array $o): bool => (self::isSupply($o, 'transport-hire') === false
-					|| self::placeEquals($o, 'serviceCountry')),
-
-				// --- Place of supply of TBE services to consumers (art. 58). ---
-				// Telecom/broadcasting/electronic services to a non-taxable person are
-				// supplied where the customer is established — place equals buyer.
-				'vatdir-art58-pos-tbe-b2c' => static fn (array $o): bool => (self::isSupply($o, 'tbe') === false
-					|| self::isBusinessCustomer($o) === true
-					|| self::placeEquals($o, 'buyerCountryCode')),
-
-				// --- Tax point: continuous supplies (art. 64). ---
-				// Successive statements/payments are completed on expiry of the period
-				// — the tax point must be stated and on/after the period end date.
-				'vatdir-art64-tax-point-continuous' => static fn (array $o): bool => (self::truthy($o, 'continuousSupply') === false
-					|| (self::isDate($o, 'periodEndDate') && self::taxPointOnOrAfter($o, (string)$o['periodEndDate']))),
-
-				// --- Tax point: prepayment (art. 65). ---
-				// VAT becomes chargeable on receipt of a payment on account — when a
-				// prepayment is recorded its receipt date is stated and the tax point
-				// is on/after that receipt (VAT chargeable from receipt).
-				'vatdir-art65-tax-point-prepayment' => static fn (array $o): bool => (self::numericPresent($o, 'prepaymentAmount') === false
-					|| (float)$o['prepaymentAmount'] <= 0.0
-					|| (self::isDate($o, 'prepaymentReceiptDate')
-					&& self::taxPointOnOrAfter($o, (string)$o['prepaymentReceiptDate']))),
-
-				// --- ICS invoice deadline (art. 222). ---
-				// For an exempt intra-Community supply ('K') the invoice must be issued
-				// no later than the 15th day of the month following the supply.
-				'vatdir-art222-invoice-deadline-ics' => static fn (array $o): bool => (self::anyCategory($o, 'K') === false
-					|| self::issuedBy15thNextMonth($o)),
-
-				// --- Bad-debt relief (art. 90). ---
-				// On a credit note / non-payment adjustment the taxable amount is
-				// reduced: the reduction is a stated non-negative number and the
-				// document net amount is non-positive (a reducing document).
-				'vatdir-art90-bad-debt-relief' => static fn (array $o): bool => (self::numericPresent($o, 'taxableAmountReduction') === false
-					|| ((float)$o['taxableAmountReduction'] >= 0.0
-					&& (float)($o['netAmount'] ?? 0) <= 0.0)),
+				...self::arInvoicePlaceOfSupplyChecks(),
+				...self::arInvoiceTaxPointAndAmountChecks(),
 			],
-			'APTransaction' => [
-				// --- Place of an intra-Community acquisition (art. 40). ---
-				// The place of an ICA is where dispatch/transport to the acquirer ends
-				// — the stated acquisition place must equal the arrival country.
-				'vatdir-art40-ica-place' => static fn (array $o): bool => (self::truthy($o, 'intraCommunityAcquisition') === false
-					|| self::sameCountry((string)($o['acquisitionPlaceCountry'] ?? ''), (string)($o['arrivalCountry'] ?? ''))),
-				// --- ICA safety-net (art. 41). ---
-				// An ICA is also taxed in the Member State that issued the VAT number
-				// used, unless taxation at arrival is proven — require the acquirer VAT
-				// id used (so the safety-net Member State is identifiable) OR proof of
-				// taxation at arrival.
-				'vatdir-art41-ica-safety-net' => static fn (array $o): bool => (self::truthy($o, 'intraCommunityAcquisition') === false
-					|| self::vatIdShapeOk((string)($o['acquirerVatIdUsed'] ?? ''))
-					|| self::truthy($o, 'taxedAtArrivalProven') === true),
-				// --- ICA tax point (art. 68). ---
-				// VAT becomes chargeable on issue of the invoice, at the latest the
-				// 15th of the month following the chargeable event — the received
-				// invoice's date is stated and on/before that statutory backstop.
-				'vatdir-art68-tax-point-ica' => static fn (array $o): bool => (self::truthy($o, 'intraCommunityAcquisition') === false
-					|| (self::isDate($o, 'invoiceDate') && self::icaTaxPointOk($o))),
-				// --- Right of deduction arises (art. 167). ---
-				// The deduction right arises when the deductible VAT becomes chargeable
-				// — a deductible purchase records a tax point (invoice date) and a
-				// non-negative deductible VAT amount.
-				'vatdir-art167-deduction-arises' => static fn (array $o): bool => (self::truthy($o, 'deductible') === false
-					|| (self::isDate($o, 'invoiceDate') && self::numericPresent($o, 'taxAmount')
-					&& (float)$o['taxAmount'] >= 0.0)),
-				// --- Deduction invoice condition (art. 178). ---
-				// To exercise the deduction right the taxable person must hold an
-				// invoice — a deductible purchase carries an invoice reference number.
-				'vatdir-art178-deduction-invoice-condition' => static fn (array $o): bool => (self::truthy($o, 'deductible') === false
-					|| self::present($o, 'invoiceNumber') || self::present($o, 'invoiceReference')),
-			],
-			'VatReturnFiling' => [
-				// --- VAT return content (art. 250). ---
-				// The return sets out the information needed to calculate the VAT
-				// chargeable and the deductions: it states the output VAT, the input
-				// (deductible) VAT and the resulting net liability, which reconciles.
-				'vatdir-art250-vat-return' => static fn (array $o): bool => (self::numericPresent($o, 'outputVat')
-					&& self::numericPresent($o, 'deductibleVat')
-					&& self::numericPresent($o, 'amount')
-					&& self::centsEqual((float)$o['outputVat'] - (float)$o['deductibleVat'], (float)$o['amount'])),
-				// --- Return period & deadline (art. 252). ---
-				// The return covers a defined tax period and is filed within the
-				// statutory window: the period end is stated, the filing deadline is
-				// stated, the deadline is on/after the period end and at most two
-				// months after it.
-				'vatdir-art252-return-period' => static fn (array $o): bool => (self::isDate($o, 'periodEndDate')
-					&& self::isDate($o, 'filingDeadline')
-					&& self::deadlineWithinMonths($o, 2)),
-				// --- Recapitulative statement obligation (art. 262). ---
-				// Where the return reports exempt intra-Community supplies or art.-44
-				// reverse-charge services, a recapitulative statement (EC Sales List)
-				// is submitted listing the customer lines.
-				'vatdir-art262-recapitulative-statement' => static fn (array $o): bool => (self::numericOrZero($o, 'intraCommunitySupplies') <= 0.0
-					|| (self::truthy($o, 'recapitulativeSubmitted') === true && self::recapHasLines($o))),
-				// --- Recapitulative period & deadline (art. 263). ---
-				// The statement is drawn up per calendar month and submitted within at
-				// most one month — when a statement is submitted it carries a period
-				// end and a submission date within one month of it.
-				'vatdir-art263-recapitulative-period' => static fn (array $o): bool => (self::truthy($o, 'recapitulativeSubmitted') === false
-					|| (self::isDate($o, 'recapPeriodEndDate') && self::isDate($o, 'recapSubmittedDate')
-					&& self::withinMonths((string)$o['recapPeriodEndDate'], (string)$o['recapSubmittedDate'], 1))),
-				// --- Recapitulative content (art. 264). ---
-				// Each statement line states the customer VAT id and the total value
-				// supplied; the listed total reconciles to the reported ICS value.
-				'vatdir-art264-recapitulative-content' => static fn (array $o): bool => (self::truthy($o, 'recapitulativeSubmitted') === false
-					|| self::recapContentOk($o)),
-				// --- ICS exemption recapitulative condition (art. 138). ---
-				// The ICS exemption does not apply where the recapitulative statement
-				// covering the supply was not (or incorrectly) submitted: any reported
-				// intra-Community supply requires a submitted, reconciling statement.
-				'vatdir-art138-recap-condition' => static fn (array $o): bool => (self::numericOrZero($o, 'intraCommunitySupplies') <= 0.0
-					|| (self::truthy($o, 'recapitulativeSubmitted') === true && self::recapContentOk($o))),
-			],
+			'APTransaction' => self::apTransactionChecks(),
+			'VatReturnFiling' => self::vatReturnFilingChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The ARInvoice place-of-supply predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoicePlaceOfSupplyChecks(): array {
+		return [
+			// --- Place of supply of goods (arts. 31/32). ---
+			'vatdir-art31-pos-goods-no-transport' => self::art31PlaceOfSupplyGoodsNoTransport(...),
+			'vatdir-art32-pos-goods-with-transport' => self::art32PlaceOfSupplyGoodsWithTransport(...),
+
+			// --- Place of supply of services (arts. 44/45). ---
+			'vatdir-art44-pos-b2b-general' => self::art44PlaceOfSupplyB2bGeneral(...),
+			'vatdir-art45-pos-b2c-general' => self::art45PlaceOfSupplyB2cGeneral(...),
+
+			// --- Place of supply of immovable-property services (art. 47). ---
+			'vatdir-art47-pos-immovable-property' => self::art47PlaceOfSupplyImmovableProperty(...),
+
+			// --- Place of supply of events (arts. 53/54). ---
+			'vatdir-art53-pos-event-admission-b2b' => self::art53PlaceOfSupplyEventAdmissionB2b(...),
+			'vatdir-art54-pos-cultural-activities-b2c' => self::art54PlaceOfSupplyCulturalActivitiesB2c(...),
+
+			// --- Place of supply of restaurant/catering (art. 55). ---
+			'vatdir-art55-pos-restaurant-catering' => self::art55PlaceOfSupplyRestaurantCatering(...),
+
+			// --- Place of supply of short-term hire of transport (art. 56). ---
+			'vatdir-art56-pos-hire-means-transport' => self::art56PlaceOfSupplyHireMeansTransport(...),
+
+			// --- Place of supply of TBE services to consumers (art. 58). ---
+			'vatdir-art58-pos-tbe-b2c' => self::art58PlaceOfSupplyTbeB2c(...),
+		];
+
+	}//end arInvoicePlaceOfSupplyChecks()
+
+	/**
+	 * The ARInvoice tax-point, invoice-deadline and bad-debt predicates, keyed by
+	 * rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceTaxPointAndAmountChecks(): array {
+		return [
+			// --- Tax point: continuous supplies (art. 64). ---
+			'vatdir-art64-tax-point-continuous' => self::art64TaxPointContinuous(...),
+
+			// --- Tax point: prepayment (art. 65). ---
+			'vatdir-art65-tax-point-prepayment' => self::art65TaxPointPrepayment(...),
+
+			// --- ICS invoice deadline (art. 222). ---
+			'vatdir-art222-invoice-deadline-ics' => self::art222InvoiceDeadlineIcs(...),
+
+			// --- Bad-debt relief (art. 90). ---
+			'vatdir-art90-bad-debt-relief' => self::art90BadDebtRelief(...),
+		];
+
+	}//end arInvoiceTaxPointAndAmountChecks()
+
+	/**
+	 * The APTransaction predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function apTransactionChecks(): array {
+		return [
+			// --- Place of an intra-Community acquisition (art. 40). ---
+			'vatdir-art40-ica-place' => self::art40IcaPlace(...),
+			// --- ICA safety-net (art. 41). ---
+			'vatdir-art41-ica-safety-net' => self::art41IcaSafetyNet(...),
+			// --- ICA tax point (art. 68). ---
+			'vatdir-art68-tax-point-ica' => self::art68TaxPointIca(...),
+			// --- Right of deduction arises (art. 167). ---
+			'vatdir-art167-deduction-arises' => self::art167DeductionArises(...),
+			// --- Deduction invoice condition (art. 178). ---
+			'vatdir-art178-deduction-invoice-condition' => self::art178DeductionInvoiceCondition(...),
+		];
+
+	}//end apTransactionChecks()
+
+	/**
+	 * The VatReturnFiling predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function vatReturnFilingChecks(): array {
+		return [
+			// --- VAT return content (art. 250). ---
+			'vatdir-art250-vat-return' => self::art250VatReturn(...),
+			// --- Return period & deadline (art. 252). ---
+			'vatdir-art252-return-period' => self::art252ReturnPeriod(...),
+			// --- Recapitulative statement obligation (art. 262). ---
+			'vatdir-art262-recapitulative-statement' => self::art262RecapitulativeStatement(...),
+			// --- Recapitulative period & deadline (art. 263). ---
+			'vatdir-art263-recapitulative-period' => self::art263RecapitulativePeriod(...),
+			// --- Recapitulative content (art. 264). ---
+			'vatdir-art264-recapitulative-content' => self::art264RecapitulativeContent(...),
+			// --- ICS exemption recapitulative condition (art. 138). ---
+			'vatdir-art138-recap-condition' => self::art138RecapCondition(...),
+		];
+
+	}//end vatReturnFilingChecks()
+
+	/**
+	 * art. 31: where goods are NOT dispatched/transported, the place of
+	 * supply is where the goods are located at supply — the stated place
+	 * of supply must equal that goods location.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art31PlaceOfSupplyGoodsNoTransport(array $o): bool {
+		return (self::isSupply($o, 'goods') === false
+			|| self::truthy($o, 'goodsTransported') === true
+			|| self::placeEquals($o, 'goodsLocationCountry'));
+
+	}//end art31PlaceOfSupplyGoodsNoTransport()
+
+	/**
+	 * art. 32: where goods ARE dispatched/transported, the place of supply
+	 * is where transport to the customer begins — the stated place of
+	 * supply must equal the dispatch-origin country.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art32PlaceOfSupplyGoodsWithTransport(array $o): bool {
+		return (self::isSupply($o, 'goods') === false
+			|| self::truthy($o, 'goodsTransported') === false
+			|| self::placeEquals($o, 'dispatchOriginCountry'));
+
+	}//end art32PlaceOfSupplyGoodsWithTransport()
+
+	/**
+	 * art. 44: B2B general services are supplied where the customer is
+	 * established — place of supply equals the buyer country.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art44PlaceOfSupplyB2bGeneral(array $o): bool {
+		return (self::isGeneralService($o) === false
+			|| self::isBusinessCustomer($o) === false
+			|| self::placeEquals($o, 'buyerCountryCode'));
+
+	}//end art44PlaceOfSupplyB2bGeneral()
+
+	/**
+	 * art. 45: B2C general services are supplied where the supplier is
+	 * established — place of supply equals the seller country.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art45PlaceOfSupplyB2cGeneral(array $o): bool {
+		return (self::isGeneralService($o) === false
+			|| self::isBusinessCustomer($o) === true
+			|| self::placeEquals($o, 'sellerCountryCode'));
+
+	}//end art45PlaceOfSupplyB2cGeneral()
+
+	/**
+	 * Services connected with immovable property are supplied where the
+	 * property is located, for both B2B and B2C.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art47PlaceOfSupplyImmovableProperty(array $o): bool {
+		return (self::isSupply($o, 'immovable') === false
+			|| self::placeEquals($o, 'propertyCountry'));
+
+	}//end art47PlaceOfSupplyImmovableProperty()
+
+	/**
+	 * art. 53: admission to an event for a taxable person is supplied where
+	 * the event actually takes place.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art53PlaceOfSupplyEventAdmissionB2b(array $o): bool {
+		return (self::isSupply($o, 'admission') === false
+			|| self::isBusinessCustomer($o) === false
+			|| self::placeEquals($o, 'eventCountry'));
+
+	}//end art53PlaceOfSupplyEventAdmissionB2b()
+
+	/**
+	 * art. 54: cultural/artistic/etc. activities for a non-taxable person
+	 * are supplied where the activities actually take place.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art54PlaceOfSupplyCulturalActivitiesB2c(array $o): bool {
+		return (self::isSupply($o, 'event') === false
+			|| self::isBusinessCustomer($o) === true
+			|| self::placeEquals($o, 'eventCountry'));
+
+	}//end art54PlaceOfSupplyCulturalActivitiesB2c()
+
+	/**
+	 * Restaurant and catering services are supplied where physically
+	 * carried out — place of supply equals the service country.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art55PlaceOfSupplyRestaurantCatering(array $o): bool {
+		return (self::isSupply($o, 'restaurant') === false
+			|| self::placeEquals($o, 'serviceCountry'));
+
+	}//end art55PlaceOfSupplyRestaurantCatering()
+
+	/**
+	 * Short-term hire of a means of transport is supplied where the vehicle
+	 * is put at the customer's disposal.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art56PlaceOfSupplyHireMeansTransport(array $o): bool {
+		return (self::isSupply($o, 'transport-hire') === false
+			|| self::placeEquals($o, 'serviceCountry'));
+
+	}//end art56PlaceOfSupplyHireMeansTransport()
+
+	/**
+	 * Telecom/broadcasting/electronic services to a non-taxable person are
+	 * supplied where the customer is established — place equals buyer.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art58PlaceOfSupplyTbeB2c(array $o): bool {
+		return (self::isSupply($o, 'tbe') === false
+			|| self::isBusinessCustomer($o) === true
+			|| self::placeEquals($o, 'buyerCountryCode'));
+
+	}//end art58PlaceOfSupplyTbeB2c()
+
+	/**
+	 * Successive statements/payments are completed on expiry of the period
+	 * — the tax point must be stated and on/after the period end date.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art64TaxPointContinuous(array $o): bool {
+		return (self::truthy($o, 'continuousSupply') === false
+			|| (self::isDate($o, 'periodEndDate') && self::taxPointOnOrAfter($o, (string)$o['periodEndDate'])));
+
+	}//end art64TaxPointContinuous()
+
+	/**
+	 * VAT becomes chargeable on receipt of a payment on account — when a
+	 * prepayment is recorded its receipt date is stated and the tax point
+	 * is on/after that receipt (VAT chargeable from receipt).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art65TaxPointPrepayment(array $o): bool {
+		return (self::numericPresent($o, 'prepaymentAmount') === false
+			|| (float)$o['prepaymentAmount'] <= 0.0
+			|| (self::isDate($o, 'prepaymentReceiptDate')
+			&& self::taxPointOnOrAfter($o, (string)$o['prepaymentReceiptDate'])));
+
+	}//end art65TaxPointPrepayment()
+
+	/**
+	 * For an exempt intra-Community supply ('K') the invoice must be issued
+	 * no later than the 15th day of the month following the supply.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art222InvoiceDeadlineIcs(array $o): bool {
+		return (self::anyCategory($o, 'K') === false
+			|| self::issuedBy15thNextMonth($o));
+
+	}//end art222InvoiceDeadlineIcs()
+
+	/**
+	 * On a credit note / non-payment adjustment the taxable amount is
+	 * reduced: the reduction is a stated non-negative number and the
+	 * document net amount is non-positive (a reducing document).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art90BadDebtRelief(array $o): bool {
+		return (self::numericPresent($o, 'taxableAmountReduction') === false
+			|| ((float)$o['taxableAmountReduction'] >= 0.0
+			&& (float)($o['netAmount'] ?? 0) <= 0.0));
+
+	}//end art90BadDebtRelief()
+
+	/**
+	 * The place of an ICA is where dispatch/transport to the acquirer ends
+	 * — the stated acquisition place must equal the arrival country.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art40IcaPlace(array $o): bool {
+		return (self::truthy($o, 'intraCommunityAcquisition') === false
+			|| self::sameCountry((string)($o['acquisitionPlaceCountry'] ?? ''), (string)($o['arrivalCountry'] ?? '')));
+
+	}//end art40IcaPlace()
+
+	/**
+	 * An ICA is also taxed in the Member State that issued the VAT number
+	 * used, unless taxation at arrival is proven — require the acquirer VAT
+	 * id used (so the safety-net Member State is identifiable) OR proof of
+	 * taxation at arrival.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art41IcaSafetyNet(array $o): bool {
+		return (self::truthy($o, 'intraCommunityAcquisition') === false
+			|| self::vatIdShapeOk((string)($o['acquirerVatIdUsed'] ?? ''))
+			|| self::truthy($o, 'taxedAtArrivalProven') === true);
+
+	}//end art41IcaSafetyNet()
+
+	/**
+	 * VAT becomes chargeable on issue of the invoice, at the latest the
+	 * 15th of the month following the chargeable event — the received
+	 * invoice's date is stated and on/before that statutory backstop.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art68TaxPointIca(array $o): bool {
+		return (self::truthy($o, 'intraCommunityAcquisition') === false
+			|| (self::isDate($o, 'invoiceDate') && self::icaTaxPointOk($o)));
+
+	}//end art68TaxPointIca()
+
+	/**
+	 * The deduction right arises when the deductible VAT becomes chargeable
+	 * — a deductible purchase records a tax point (invoice date) and a
+	 * non-negative deductible VAT amount.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art167DeductionArises(array $o): bool {
+		return (self::truthy($o, 'deductible') === false
+			|| (self::isDate($o, 'invoiceDate') && self::numericPresent($o, 'taxAmount')
+			&& (float)$o['taxAmount'] >= 0.0));
+
+	}//end art167DeductionArises()
+
+	/**
+	 * To exercise the deduction right the taxable person must hold an
+	 * invoice — a deductible purchase carries an invoice reference number.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art178DeductionInvoiceCondition(array $o): bool {
+		return (self::truthy($o, 'deductible') === false
+			|| self::present($o, 'invoiceNumber') || self::present($o, 'invoiceReference'));
+
+	}//end art178DeductionInvoiceCondition()
+
+	/**
+	 * The return sets out the information needed to calculate the VAT
+	 * chargeable and the deductions: it states the output VAT, the input
+	 * (deductible) VAT and the resulting net liability, which reconciles.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art250VatReturn(array $o): bool {
+		return (self::numericPresent($o, 'outputVat')
+			&& self::numericPresent($o, 'deductibleVat')
+			&& self::numericPresent($o, 'amount')
+			&& self::centsEqual((float)$o['outputVat'] - (float)$o['deductibleVat'], (float)$o['amount']));
+
+	}//end art250VatReturn()
+
+	/**
+	 * The return covers a defined tax period and is filed within the
+	 * statutory window: the period end is stated, the filing deadline is
+	 * stated, the deadline is on/after the period end and at most two
+	 * months after it.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art252ReturnPeriod(array $o): bool {
+		return (self::isDate($o, 'periodEndDate')
+			&& self::isDate($o, 'filingDeadline')
+			&& self::deadlineWithinMonths($o, 2));
+
+	}//end art252ReturnPeriod()
+
+	/**
+	 * Where the return reports exempt intra-Community supplies or art.-44
+	 * reverse-charge services, a recapitulative statement (EC Sales List)
+	 * is submitted listing the customer lines.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art262RecapitulativeStatement(array $o): bool {
+		return (self::numericOrZero($o, 'intraCommunitySupplies') <= 0.0
+			|| (self::truthy($o, 'recapitulativeSubmitted') === true && self::recapHasLines($o)));
+
+	}//end art262RecapitulativeStatement()
+
+	/**
+	 * The statement is drawn up per calendar month and submitted within at
+	 * most one month — when a statement is submitted it carries a period
+	 * end and a submission date within one month of it.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art263RecapitulativePeriod(array $o): bool {
+		return (self::truthy($o, 'recapitulativeSubmitted') === false
+			|| (self::isDate($o, 'recapPeriodEndDate') && self::isDate($o, 'recapSubmittedDate')
+			&& self::withinMonths((string)$o['recapPeriodEndDate'], (string)$o['recapSubmittedDate'], 1)));
+
+	}//end art263RecapitulativePeriod()
+
+	/**
+	 * Each statement line states the customer VAT id and the total value
+	 * supplied; the listed total reconciles to the reported ICS value.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art264RecapitulativeContent(array $o): bool {
+		return (self::truthy($o, 'recapitulativeSubmitted') === false
+			|| self::recapContentOk($o));
+
+	}//end art264RecapitulativeContent()
+
+	/**
+	 * The ICS exemption does not apply where the recapitulative statement
+	 * covering the supply was not (or incorrectly) submitted: any reported
+	 * intra-Community supply requires a submitted, reconciling statement.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art138RecapCondition(array $o): bool {
+		return (self::numericOrZero($o, 'intraCommunitySupplies') <= 0.0
+			|| (self::truthy($o, 'recapitulativeSubmitted') === true && self::recapContentOk($o)));
+
+	}//end art138RecapCondition()
 
 	/**
 	 * Test-data field defaults this provider's checks expect on ARInvoice and
@@ -260,39 +667,7 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'ARInvoice' => [
-				// Nature of the supply (VAT Directive title V). Default: a domestic
-				// supply of goods that are transported to the customer.
-				'supplyType' => 'goods',
-				'customerType' => 'business',
-				'goodsTransported' => true,
-				// Place of supply (art. 31/32 ff.) defaulted to the seller country so
-				// the goods-with-transport rule reconciles (dispatch origin = seller).
-				'placeOfSupplyCountry' => 'NL',
-				'sellerCountryCode' => 'NL',
-				'dispatchOriginCountry' => 'NL',
-				'continuousSupply' => false,
-			],
-			'APTransaction' => [
-				// Purchase posture: a domestic, non-deductible-flagged, non-ICA
-				// transaction so the ICA/deduction conditional rules are satisfied.
-				'intraCommunityAcquisition' => false,
-				'deductible' => false,
-			],
-			'VatReturnFiling' => [
-				// Backfill any pre-existing VatReturn row (the seedObjects samples
-				// only create when the type is empty) so art250/art252 reconcile:
-				// net payable = output - deductible, filed within the period window.
-				'outputVat' => 4200.00,
-				'deductibleVat' => 1100.00,
-				'amount' => 3100.00,
-				'periodEndDate' => '2026-03-31',
-				'filingDeadline' => '2026-04-30',
-				'intraCommunitySupplies' => 0,
-				'recapitulativeSubmitted' => false,
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
@@ -306,49 +681,7 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'VatReturnFiling' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'periodType' => 'quarter',
-					'periodYear' => 2026,
-					'periodQuarter' => 1,
-					'state' => 'submitted',
-					'currency' => 'EUR',
-					'periodEndDate' => '2026-03-31',
-					'filingDeadline' => '2026-04-30',
-					'outputVat' => 4200.00,
-					'deductibleVat' => 1100.00,
-					'amount' => 3100.00,
-					'intraCommunitySupplies' => 0,
-					'recapitulativeSubmitted' => false,
-					'submittedAt' => '2026-04-25T10:00:00+00:00',
-				],
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'periodType' => 'quarter',
-					'periodYear' => 2026,
-					'periodQuarter' => 2,
-					'state' => 'submitted',
-					'currency' => 'EUR',
-					'periodEndDate' => '2026-06-30',
-					'filingDeadline' => '2026-07-31',
-					'outputVat' => 5000.00,
-					'deductibleVat' => 1500.00,
-					'amount' => 3500.00,
-					'intraCommunitySupplies' => 8000.00,
-					'recapitulativeSubmitted' => true,
-					'recapPeriodEndDate' => '2026-06-30',
-					'recapSubmittedDate' => '2026-07-15',
-					'recapTotal' => 8000.00,
-					'recapLines' => [
-						['customerVatId' => 'DE123456789', 'value' => 5000.00],
-						['customerVatId' => 'BE0123456789', 'value' => 3000.00],
-					],
-					'submittedAt' => '2026-07-20T10:00:00+00:00',
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 
@@ -522,19 +855,32 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		$issueTs = strtotime((string)$issue);
-		$supplyTs = strtotime((string)$supply);
-		if ($issueTs === false || $supplyTs === false) {
+		return self::onOrBefore15thOfNextMonth((string)$issue, (string)$supply);
+	}//end issuedBy15thNextMonth()
+
+	/**
+	 * The issue date is on or before the 15th day of the month following the anchor
+	 * date. False when either date cannot be parsed.
+	 *
+	 * @param string $issue  The issue date string.
+	 * @param string $anchor The supply / chargeable-event date string.
+	 *
+	 * @return bool
+	 */
+	private static function onOrBefore15thOfNextMonth(string $issue, string $anchor): bool {
+		$issueTs = strtotime($issue);
+		$anchorTs = strtotime($anchor);
+		if ($issueTs === false || $anchorTs === false) {
 			return false;
 		}
 
-		$deadline = strtotime('+1 month', strtotime(date('Y-m-15', $supplyTs)));
+		$deadline = strtotime('+1 month', strtotime(date('Y-m-15', $anchorTs)));
 		if ($deadline === false) {
 			return false;
 		}
 
 		return $issueTs <= $deadline;
-	}//end issuedBy15thNextMonth()
+	}//end onOrBefore15thOfNextMonth()
 
 	/**
 	 * The intra-Community-acquisition tax point: the received-invoice date is on or
@@ -552,18 +898,7 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		$eventTs = strtotime((string)$event);
-		$issueTs = strtotime((string)$issue);
-		if ($eventTs === false || $issueTs === false) {
-			return false;
-		}
-
-		$backstop = strtotime('+1 month', strtotime(date('Y-m-15', $eventTs)));
-		if ($backstop === false) {
-			return false;
-		}
-
-		return $issueTs <= $backstop;
+		return self::onOrBefore15thOfNextMonth((string)$issue, (string)$event);
 	}//end icaTaxPointOk()
 
 	/**
@@ -622,21 +957,33 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 		}
 
 		foreach ($lines as $l) {
-			if (is_array($l) === false) {
-				return false;
-			}
-
-			if (self::vatIdShapeOk((string)($l['customerVatId'] ?? '')) === false) {
-				return false;
-			}
-
-			if (is_numeric($l['value'] ?? null) === false) {
+			if (self::isRecapLine($l) === false) {
 				return false;
 			}
 		}
 
 		return true;
 	}//end recapHasLines()
+
+	/**
+	 * One recapitulative-statement line states a well-formed customer VAT id and a
+	 * numeric value.
+	 *
+	 * @param mixed $l The statement line.
+	 *
+	 * @return bool
+	 */
+	private static function isRecapLine(mixed $l): bool {
+		if (is_array($l) === false) {
+			return false;
+		}
+
+		if (self::vatIdShapeOk((string)($l['customerVatId'] ?? '')) === false) {
+			return false;
+		}
+
+		return is_numeric($l['value'] ?? null);
+	}//end isRecapLine()
 
 	/**
 	 * The recapitulative statement content is well-formed: it has valid lines, and the
@@ -671,26 +1018,54 @@ class RemainingVatChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function anyCategory(array $o, string $category): bool {
+		return self::breakdownHasCategory($o, $category) || self::linesHaveCategory($o, $category);
+	}//end anyCategory()
+
+	/**
+	 * Whether any VAT breakdown group carries VAT category $category.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 * @param string $category UNTDID 5305 category code (e.g. 'K').
+	 *
+	 * @return bool
+	 */
+	private static function breakdownHasCategory(array $o, string $category): bool {
 		$breakdown = ($o['vatBreakdown'] ?? null);
-		if (is_array($breakdown) === true) {
-			foreach ($breakdown as $b) {
-				if (is_array($b) === true && (string)($b['category'] ?? '') === $category) {
-					return true;
-				}
-			}
+		if (is_array($breakdown) === false) {
+			return false;
 		}
 
-		$lines = ($o['invoiceLines'] ?? null);
-		if (is_array($lines) === true) {
-			foreach ($lines as $l) {
-				if (is_array($l) === true && (string)($l['vatCategory'] ?? '') === $category) {
-					return true;
-				}
+		foreach ($breakdown as $b) {
+			if (is_array($b) === true && (string)($b['category'] ?? '') === $category) {
+				return true;
 			}
 		}
 
 		return false;
-	}//end anyCategory()
+	}//end breakdownHasCategory()
+
+	/**
+	 * Whether any invoice line carries VAT category $category.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 * @param string $category UNTDID 5305 category code (e.g. 'K').
+	 *
+	 * @return bool
+	 */
+	private static function linesHaveCategory(array $o, string $category): bool {
+		$lines = ($o['invoiceLines'] ?? null);
+		if (is_array($lines) === false) {
+			return false;
+		}
+
+		foreach ($lines as $l) {
+			if (is_array($l) === true && (string)($l['vatCategory'] ?? '') === $category) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end linesHaveCategory()
 
 	/**
 	 * A VAT identifier is well-formed (VIES shape): an EU country prefix (or 'EL'/'XI')

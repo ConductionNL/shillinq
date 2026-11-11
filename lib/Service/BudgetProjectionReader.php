@@ -77,10 +77,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Reads and batches every schema the projection engine needs
@@ -166,19 +164,9 @@ class BudgetProjectionReader {
 	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
 	 */
 	public function loadContext(string $administrationId, bool $includeLedgerGroups = false): array {
-		$accountRows = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
-		$accounts = [];
-		foreach ($accountRows as $row) {
-			$number = (string)($row['accountNumber'] ?? '');
-			if ($number === '') {
-				continue;
-			}
-
-			$accounts[$number] = [
-				'accountNumber' => $number,
-				'accountType' => (string)($row['accountType'] ?? ''),
-			];
-		}
+		$accounts = self::accountsByNumber(
+			rows: $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId])
+		);
 
 		$monthByRef = $this->postedTransactionMonths(administrationId: $administrationId);
 		$byAccountMonth = $this->bucketByAccountMonth(monthByRef: $monthByRef);
@@ -187,18 +175,9 @@ class BudgetProjectionReader {
 		$ledgerGroupEntries = [];
 		$ledgerGroupKeyToIndex = [];
 		if ($includeLedgerGroups === true) {
-			$groupRows = $this->query(
-				schema: self::SCHEMA_LEDGER_GROUP,
-				filters: ['administrationId' => $administrationId]
-			);
-			// `array_keys()` on a map keyed by a purely-numeric account
-			// number (e.g. "1000") hands back an INT, not the string every
-			// caller compares account numbers as — cast back explicitly
-			// (the same gotcha BudgetVsActualsReader::resolveMembers()
-			// documents and guards against).
-			[$ledgerGroupEntries, $ledgerGroupKeyToIndex] = $this->buildLedgerGroupIndex(
-				rows: $groupRows,
-				accountNumbers: array_map('strval', array_keys($accounts))
+			[$ledgerGroupEntries, $ledgerGroupKeyToIndex] = $this->ledgerGroupIndexFor(
+				administrationId: $administrationId,
+				accounts: $accounts
 			);
 		}
 
@@ -213,6 +192,54 @@ class BudgetProjectionReader {
 	}//end loadContext()
 
 	/**
+	 * The accounts by number (number and type); rows without a number are skipped.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The Account rows.
+	 *
+	 * @return array<string,array{accountNumber: string, accountType: string}>
+	 */
+	private static function accountsByNumber(array $rows): array {
+		$accounts = [];
+		foreach ($rows as $row) {
+			$number = (string)($row['accountNumber'] ?? '');
+			if ($number !== '') {
+				$accounts[$number] = [
+					'accountNumber' => $number,
+					'accountType' => (string)($row['accountType'] ?? ''),
+				];
+			}
+		}
+
+		return $accounts;
+
+	}//end accountsByNumber()
+
+	/**
+	 * The administration's LedgerGroup index over the given accounts.
+	 *
+	 * `array_keys()` on a map keyed by a purely-numeric account number (e.g.
+	 * "1000") hands back an INT, not the string every caller compares account
+	 * numbers as — cast back explicitly (the same gotcha
+	 * BudgetVsActualsReader::resolveMembers() documents and guards against).
+	 *
+	 * @param string                           $administrationId The administration.
+	 * @param array<string,array<string,mixed>> $accounts         The accounts by number.
+	 *
+	 * @return array{0: array, 1: array} The entries and the key-to-index map.
+	 */
+	private function ledgerGroupIndexFor(string $administrationId, array $accounts): array {
+		$groupRows = $this->query(
+			schema: self::SCHEMA_LEDGER_GROUP,
+			filters: ['administrationId' => $administrationId]
+		);
+		return $this->buildLedgerGroupIndex(
+			rows: $groupRows,
+			accountNumbers: array_map('strval', array_keys($accounts))
+		);
+
+	}//end ledgerGroupIndexFor()
+
+	/**
 	 * Index the posting month of every POSTED transaction for this
 	 * administration, dual-keyed by object id AND `transactionNumber`
 	 * (REQ-BPE-009's `transactionRefs()` precedent) — bucketed from
@@ -225,31 +252,12 @@ class BudgetProjectionReader {
 	 * @return array<string,string> Transaction reference => `YYYY-MM` posting month.
 	 */
 	private function postedTransactionMonths(string $administrationId): array {
-		$months = [];
 		$transactions = $this->query(
 			schema: self::SCHEMA_GL_TRANSACTION,
 			filters: ['administrationId' => $administrationId, 'state' => 'posted']
 		);
 
-		foreach ($transactions as $transaction) {
-			$postingDate = (string)($transaction['postingDate'] ?? '');
-			if ($postingDate === '') {
-				continue;
-			}
-
-			$month = substr($postingDate, 0, 7);
-			$objectId = (string)($transaction['@self']['id'] ?? $transaction['id'] ?? '');
-			if ($objectId !== '') {
-				$months[$objectId] = $month;
-			}
-
-			$number = (string)($transaction['transactionNumber'] ?? '');
-			if ($number !== '') {
-				$months[$number] = $month;
-			}
-		}
-
-		return $months;
+		return (new LedgerActuals())->postingMonths(transactions: $transactions);
 
 	}//end postedTransactionMonths()
 
@@ -263,33 +271,14 @@ class BudgetProjectionReader {
 	 * @return array<string,array<string,int>> accountNumber => monthKey => signed net-movement cents.
 	 */
 	private function bucketByAccountMonth(array $monthByRef): array {
-		$buckets = [];
 		if ($monthByRef === []) {
-			return $buckets;
+			return [];
 		}
 
-		$lines = $this->query(schema: self::SCHEMA_GL_LINE, filters: []);
-		foreach ($lines as $line) {
-			$ref = (string)($line['transactionId'] ?? '');
-			if ($ref === '' || isset($monthByRef[$ref]) === false) {
-				continue;
-			}
-
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$month = $monthByRef[$ref];
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			if ((string)($line['side'] ?? 'debit') === 'credit') {
-				$cents = -$cents;
-			}
-
-			$buckets[$accountNumber][$month] = (($buckets[$accountNumber][$month] ?? 0) + $cents);
-		}
-
-		return $buckets;
+		return (new LedgerActuals())->centsByAccountMonth(
+			lines: $this->query(schema: self::SCHEMA_GL_LINE, filters: []),
+			monthByRef: $monthByRef
+		);
 
 	}//end bucketByAccountMonth()
 
@@ -394,82 +383,9 @@ class BudgetProjectionReader {
 	 * @return list<string> The resolved, deduplicated member account numbers.
 	 */
 	private function resolveMembers(array $ledgerGroup, array $accountNumbers): array {
-		$ranges = [];
-		if (is_array($ledgerGroup['accountRanges'] ?? null) === true) {
-			$ranges = $ledgerGroup['accountRanges'];
-		}
-
-		$included = [];
-		if (is_array($ledgerGroup['includedAccountNumbers'] ?? null) === true) {
-			$included = $ledgerGroup['includedAccountNumbers'];
-		}
-
-		$excludedList = [];
-		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
-			$excludedList = $ledgerGroup['excludedAccountNumbers'];
-		}
-
-		$excluded = array_flip(array_map('strval', $excludedList));
-
-		$members = [];
-		foreach ($accountNumbers as $number) {
-			if (isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			if ($this->inAnyRange(accountNumber: $number, ranges: $ranges) === true) {
-				$members[$number] = true;
-			}
-		}
-
-		foreach ($included as $number) {
-			$number = (string)$number;
-			if ($number === '' || isset($excluded[$number]) === true) {
-				continue;
-			}
-
-			$members[$number] = true;
-		}
-
-		// PHP casts a purely-numeric string array key to an int key, so
-		// array_keys() would silently hand back integers here — cast back
-		// to string explicitly, since every caller compares account
-		// numbers as strings.
-		return array_values(array_map('strval', array_keys($members)));
+		return (new LedgerGroupMembers(ledgerGroup: $ledgerGroup))->resolve(accountNumbers: $accountNumbers);
 
 	}//end resolveMembers()
-
-	/**
-	 * Whether an account number falls inside any of the given range pairs,
-	 * compared numerically (not lexicographically) so a 5-digit account
-	 * number cannot fall inside a 4-digit range by string-sort accident.
-	 *
-	 * @param string $accountNumber The account number to test.
-	 * @param list<array{from?:string,to?:string}> $ranges The range pairs.
-	 *
-	 * @return boolean True when the account number is inside at least one range.
-	 */
-	private function inAnyRange(string $accountNumber, array $ranges): bool {
-		if (is_numeric($accountNumber) === false) {
-			return false;
-		}
-
-		$value = (int)$accountNumber;
-		foreach ($ranges as $range) {
-			$from = (string)($range['from'] ?? '');
-			$to = (string)($range['to'] ?? '');
-			if ($from === '' || $to === '' || is_numeric($from) === false || is_numeric($to) === false) {
-				continue;
-			}
-
-			if ($value >= (int)$from && $value <= (int)$to) {
-				return true;
-			}
-		}
-
-		return false;
-
-	}//end inAnyRange()
 
 	/**
 	 * Advance a `YYYY-MM` bucket by one calendar month.
@@ -514,7 +430,7 @@ class BudgetProjectionReader {
 	 * Run one property-filtered query against the shillinq register.
 	 *
 	 * A failure is logged and answered as an empty result set: a missing
-	 * schema must not stop the engine from computing whatever it can.
+	 * schema must not stop the reader from computing whatever it can.
 	 *
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters Property filters (never `id`).
@@ -522,50 +438,12 @@ class BudgetProjectionReader {
 	 * @return list<array<string,mixed>> The matching records as plain arrays.
 	 */
 	private function query(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BudgetProjectionReader: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$query = new RegisterQuery(
+			register: new ShillinqRegister(appConfig: $this->appConfig, objectService: $this->objectService),
+			failureLog: new QueryFailureLog(logger: $this->logger, component: 'BudgetProjectionReader'),
+		);
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
-			}
-		}
-
-		return $result;
+		return $query->rows(schema: $schema, filters: $filters);
 
 	}//end query()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config.
-	 *
-	 * @return string The register slug, defaulting to `shillinq`.
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-
-	}//end register()
 }//end class

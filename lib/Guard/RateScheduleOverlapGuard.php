@@ -82,63 +82,97 @@ class RateScheduleOverlapGuard {
 	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
 	 */
 	public function requireNonOverlappingWindow(array $schedule): bool {
-		$tier = (string)($schedule['tier'] ?? '');
-		$entityId = ($schedule['entityId'] ?? null);
-		$administrationId = (string)($schedule['administrationId'] ?? '');
-		$effectiveDate = trim((string)($schedule['effectiveDate'] ?? ''));
-		if ($effectiveDate === '') {
-			// No window to compare — nothing to gate against.
+		// No window to compare — nothing to gate against.
+		if (trim((string)($schedule['effectiveDate'] ?? '')) === '') {
 			return true;
 		}
 
-		$expiryDate = ($schedule['expiryDate'] ?? null);
-
 		try {
-			$siblings = $this->objectService
-				->setRegister($this->register())
-				->setSchema('RateSchedule')
-				->findAll(
-					[
-						'filters' => [
-							'tier' => $tier,
-							'entityId' => $entityId,
-							'administrationId' => $administrationId,
-							'status' => 'active',
-						],
-					]
-				);
-
-			$currentId = ($schedule['id'] ?? null);
-			foreach ($siblings as $sibling) {
-				if ($currentId !== null && ($sibling['id'] ?? null) === $currentId) {
-					continue;
-				}
-
-				if (DateWindow::overlaps(
-					aFrom: $effectiveDate,
-					aTo: $expiryDate,
-					bFrom: (string)($sibling['effectiveDate'] ?? ''),
-					bTo: ($sibling['expiryDate'] ?? null)
-				) === true
-				) {
-					$this->logger->info(
-						'RateScheduleOverlapGuard: overlapping active schedule found — denying reactivate',
-						['tier' => $tier, 'entityId' => $entityId, 'conflictingId' => ($sibling['id'] ?? null)]
-					);
-					return false;
-				}
-			}
-
-			return true;
+			return $this->windowFree(schedule: $schedule, siblings: $this->activeSiblings(schedule: $schedule));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RateScheduleOverlapGuard: requireNonOverlappingWindow check failed — denying (fail-closed)',
 				['exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end requireNonOverlappingWindow()
+
+	/**
+	 * The active schedules for the same tier, entity and administration.
+	 *
+	 * @param array<string, mixed> $schedule The RateSchedule being transitioned.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function activeSiblings(array $schedule): array {
+		$filters = [
+			'tier' => (string)($schedule['tier'] ?? ''),
+			'entityId' => ($schedule['entityId'] ?? null),
+			'administrationId' => (string)($schedule['administrationId'] ?? ''),
+			'status' => 'active',
+		];
+
+		return $this->objectService->setRegister($this->register())->setSchema('RateSchedule')->findAll(['filters' => $filters]);
+	}//end activeSiblings()
+
+	/**
+	 * Whether no sibling's window overlaps the schedule's; the first that does is logged.
+	 *
+	 * @param array<string, mixed> $schedule The RateSchedule being transitioned.
+	 * @param array<int, mixed>    $siblings The active sibling schedules.
+	 *
+	 * @return bool
+	 */
+	private function windowFree(array $schedule, array $siblings): bool {
+		$conflict = self::firstOverlap(schedule: $schedule, siblings: $siblings);
+		if ($conflict === null) {
+			return true;
+		}
+
+		$this->logger->info(
+			'RateScheduleOverlapGuard: overlapping active schedule found — denying reactivate',
+			['tier' => (string)($schedule['tier'] ?? ''), 'entityId' => ($schedule['entityId'] ?? null), 'conflictingId' => ($conflict['id'] ?? null)]
+		);
+		return false;
+	}//end windowFree()
+
+	/**
+	 * The first sibling, other than the schedule itself, whose window overlaps.
+	 *
+	 * @param array<string, mixed> $schedule The RateSchedule being transitioned.
+	 * @param array<int, mixed>    $siblings The active sibling schedules.
+	 *
+	 * @return mixed The overlapping sibling, or null.
+	 */
+	private static function firstOverlap(array $schedule, array $siblings): mixed {
+		$currentId = ($schedule['id'] ?? null);
+		foreach ($siblings as $sibling) {
+			$isSelf = ($currentId !== null && ($sibling['id'] ?? null) === $currentId);
+			if ($isSelf === false && self::overlaps(schedule: $schedule, sibling: $sibling) === true) {
+				return $sibling;
+			}
+		}
+
+		return null;
+	}//end firstOverlap()
+
+	/**
+	 * Whether two schedule windows share a day (DateWindow; an absent expiry is open-ended).
+	 *
+	 * @param array<string, mixed> $schedule The RateSchedule being transitioned.
+	 * @param mixed                $sibling  A sibling schedule.
+	 *
+	 * @return bool
+	 */
+	private static function overlaps(array $schedule, mixed $sibling): bool {
+		return DateWindow::overlaps(
+			aFrom: trim((string)($schedule['effectiveDate'] ?? '')),
+			aTo: ($schedule['expiryDate'] ?? null),
+			bFrom: (string)($sibling['effectiveDate'] ?? ''),
+			bTo: ($sibling['expiryDate'] ?? null)
+		);
+	}//end overlaps()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

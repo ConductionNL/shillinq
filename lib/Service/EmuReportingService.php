@@ -101,36 +101,17 @@ class EmuReportingService {
 	 */
 	public function classifyAdjustment(array $glLine, string $reportId): ?array {
 		$account = (string)($glLine['accountNumber'] ?? ($glLine['generalLedgerAccount'] ?? ''));
-		if ($account === '') {
-			return null;
-		}
-
-		$matched = null;
-		foreach (self::MACRO_RULES as $rule) {
-			if (str_starts_with($account, $rule[0]) === true) {
-				$matched = $rule;
-				break;
-			}
-		}
-
+		$matched = $this->matchMacroRule(account: $account);
 		if ($matched === null) {
 			return null;
 		}
 
-		$type = $matched[1];
-		$direction = $matched[2];
-
-		// Regel 7: transaction-moment correction when invoice and payment dates differ.
-		$invoice = (string)($glLine['invoiceMoment'] ?? '');
-		$payment = (string)($glLine['paymentMoment'] ?? '');
-		if ($invoice !== '' && $payment !== '' && substr($invoice, 0, 10) !== substr($payment, 0, 10)) {
-			$type = 'correction-transaction-moment';
-		}
+		$type = $this->adjustmentType(glLine: $glLine, ruleType: $matched[1]);
 
 		return [
 			'reportId' => $reportId,
 			'type' => $type,
-			'direction' => $direction,
+			'direction' => $matched[2],
 			'amount' => abs((float)($glLine['amount'] ?? 0)),
 			'source' => [
 				'generalLedgerAccount' => $account,
@@ -144,6 +125,48 @@ class EmuReportingService {
 		];
 
 	}//end classifyAdjustment()
+
+	/**
+	 * The first macro rule whose prefix the account starts with ('' matches none).
+	 *
+	 * @param string $account The GL account number
+	 *
+	 * @return array{0:string,1:string,2:string}|null The rule (prefix, type, direction), or null
+	 */
+	private function matchMacroRule(string $account): ?array {
+		if ($account === '') {
+			return null;
+		}
+
+		foreach (self::MACRO_RULES as $rule) {
+			if (str_starts_with($account, $rule[0]) === true) {
+				return $rule;
+			}
+		}
+
+		return null;
+
+	}//end matchMacroRule()
+
+	/**
+	 * The adjustment type: the rule's type, or the transaction-moment correction
+	 * when the invoice and payment dates differ (Regel 7).
+	 *
+	 * @param array<string,mixed> $glLine   The GL line
+	 * @param string              $ruleType The matched macro rule's type
+	 *
+	 * @return string The adjustment type
+	 */
+	private function adjustmentType(array $glLine, string $ruleType): string {
+		$invoice = (string)($glLine['invoiceMoment'] ?? '');
+		$payment = (string)($glLine['paymentMoment'] ?? '');
+		if ($invoice !== '' && $payment !== '' && substr($invoice, 0, 10) !== substr($payment, 0, 10)) {
+			return 'correction-transaction-moment';
+		}
+
+		return $ruleType;
+
+	}//end adjustmentType()
 
 	/**
 	 * Compute the net EMU-saldo effect of a set of adjustments (REQ-EMU-002).
@@ -501,37 +524,99 @@ class EmuReportingService {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function mapIv3Classification(array $item, array $taskFieldMap = [], array $accountMap = []): ?array {
+		$explicit = $this->explicitIv3(item: $item);
+		if ($explicit !== null) {
+			return $explicit;
+		}
+
+		$byTaskField = $this->taskFieldIv3(item: $item, taskFieldMap: $taskFieldMap);
+		if ($byTaskField !== null) {
+			return $byTaskField;
+		}
+
+		return $this->accountIv3(account: (string)($item['accountNumber'] ?? ''), accountMap: $accountMap);
+
+	}//end mapIv3Classification()
+
+	/**
+	 * The item's own non-empty iv3 classification, if it carries one.
+	 *
+	 * @param array<string,mixed> $item The line item
+	 *
+	 * @return array|null The explicit classification, or null
+	 */
+	private function explicitIv3(array $item): ?array {
 		$explicit = $item['iv3'] ?? null;
 		if (is_array($explicit) === true && empty($explicit) === false) {
 			return $explicit;
 		}
 
+		return null;
+
+	}//end explicitIv3()
+
+	/**
+	 * The classification mapped from the item's taakveld, if any.
+	 *
+	 * @param array<string,mixed> $item         The line item
+	 * @param array<string,array> $taskFieldMap Taakveld => iv3 classification
+	 *
+	 * @return array|null The mapped classification, or null
+	 */
+	private function taskFieldIv3(array $item, array $taskFieldMap): ?array {
 		$taskField = (string)($item['taskField'] ?? '');
 		if ($taskField !== '' && isset($taskFieldMap[$taskField]) === true) {
 			return $taskFieldMap[$taskField];
 		}
 
-		$account = (string)($item['accountNumber'] ?? '');
-		if ($account !== '') {
-			// Longest-prefix wins.
-			$bestKey = null;
-			foreach (array_keys($accountMap) as $prefix) {
-				if (str_starts_with($account, (string)$prefix) === false) {
-					continue;
-				}
+		return null;
 
-				if ($bestKey === null || strlen((string)$prefix) > strlen($bestKey)) {
-					$bestKey = (string)$prefix;
-				}
-			}
+	}//end taskFieldIv3()
 
-			if ($bestKey !== null) {
-				return $accountMap[$bestKey];
+	/**
+	 * The classification of the longest account-map prefix of an account (longest-prefix wins).
+	 *
+	 * @param string              $account    The account number ('' never matches)
+	 * @param array<string,mixed> $accountMap Account-prefix => iv3 classification
+	 *
+	 * @return array|null The mapped classification, or null
+	 */
+	private function accountIv3(string $account, array $accountMap): ?array {
+		if ($account === '') {
+			return null;
+		}
+
+		$bestKey = $this->longestPrefix(account: $account, prefixes: array_keys($accountMap));
+		if ($bestKey === null) {
+			return null;
+		}
+
+		return $accountMap[$bestKey];
+
+	}//end accountIv3()
+
+	/**
+	 * The longest of the prefixes the account starts with; the first wins a tie.
+	 *
+	 * @param string           $account  The account number
+	 * @param array<int|string> $prefixes Candidate prefixes, in map order
+	 *
+	 * @return string|null The longest matching prefix, or null when none matches
+	 */
+	private function longestPrefix(string $account, array $prefixes): ?string {
+		$bestKey = null;
+		$bestLen = -1;
+		foreach ($prefixes as $prefix) {
+			$prefix = (string)$prefix;
+			if (strlen($prefix) > $bestLen && str_starts_with($account, $prefix) === true) {
+				$bestKey = $prefix;
+				$bestLen = strlen($prefix);
 			}
 		}
 
-		return null;
-	}//end mapIv3Classification()
+		return $bestKey;
+
+	}//end longestPrefix()
 
 	/**
 	 * Resolve the consolidatieEMU flag for an intercompany counterparty (Task 25, REQ-EMU-005).

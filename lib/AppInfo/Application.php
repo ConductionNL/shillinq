@@ -43,6 +43,7 @@ use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
+use OCA\Shillinq\Lifecycle\APTransactionSettlementGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
@@ -1033,6 +1034,16 @@ class Application extends App implements IBootstrap {
 		// shillinq#425 convention and guarantees LifecycleGuardRegistry can
 		// resolve it. Fail-closed: an indeterminate preparer blocks the
 		// release (ADR-022 audit trail is the sole preparer-of-record).
+		// APTransaction matchFull / matchPartial run only inside the settlement
+		// of a confirmed bank match; registered under the FQCN tag the
+		// accounts-payable fragment names.
+		$context->registerService(
+			APTransactionSettlementGuard::class,
+			static function ($c): APTransactionSettlementGuard {
+				return new APTransactionSettlementGuard(logger: $c->get(LoggerInterface::class));
+			}
+		);
+
 		$context->registerService(
 			FourEyesPaymentRunGuard::class,
 			static function ($c): FourEyesPaymentRunGuard {

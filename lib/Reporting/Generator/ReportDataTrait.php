@@ -215,6 +215,27 @@ trait ReportDataTrait {
 	}//end money()
 
 	/**
+	 * Write rows as CSV (fputcsv's quoting) and answer the bytes.
+	 *
+	 * @param list<list<string|int|float>> $rows The rows, header first.
+	 *
+	 * @return string The CSV content.
+	 */
+	private function csvContent(array $rows): string {
+		$handle = fopen('php://temp', 'r+');
+		foreach ($rows as $row) {
+			fputcsv($handle, $row);
+		}
+
+		rewind($handle);
+		$content = (string)stream_get_contents($handle);
+		fclose($handle);
+
+		return $content;
+	}//end csvContent()
+
+
+	/**
 	 * Build a deterministic file name for a generated report.
 	 *
 	 * @param string $reportType Report-type id.

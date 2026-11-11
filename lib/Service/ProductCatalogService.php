@@ -141,6 +141,32 @@ class ProductCatalogService {
 	public const SOURCE_CONTRACT = 'contract';
 
 	/**
+	 * The attribute definitions the ADR-019 contract publishes: name, data
+	 * type, validation rule, owner, and source (null = the product master's
+	 * source, which depends on whether it answered).
+	 *
+	 * @var list<array{0:string,1:string,2:string,3:string,4:?string}>
+	 */
+	private const CONTRACT_ATTRIBUTES = [
+		['sku', 'text', 'Stock keeping unit resolved from the product master.', self::MASTER_REGISTER, null],
+		['name', 'text', 'Human-readable product name resolved from the product master.', self::MASTER_REGISTER, null],
+		['category', 'text', 'Product category resolved from the product master.', self::MASTER_REGISTER, null],
+		['unitPrice', 'number', 'Selling price per unit resolved from the product master.', self::MASTER_REGISTER, null],
+		['taxRate', 'number', 'VAT percentage resolved from the product master.', self::MASTER_REGISTER, null],
+		['unitCode', 'text', 'UN/CEFACT unit of measure resolved from the product master.', self::MASTER_REGISTER, null],
+		[
+			'primaryBarcode',
+			'text',
+			'Default scanned barcode. Held locally on Barcode, mirrored from the master.',
+			AppIdentity::APP_ID,
+			self::SOURCE_LOCAL_CACHE,
+		],
+		['unitCost', 'number', 'Valuation unit cost. Authored and owned by shillinq (REQ-SPVP-001).', AppIdentity::APP_ID, self::SOURCE_LOCAL_CACHE],
+		['quantityOnHand', 'number', 'Physical on-hand quantity. Authored and owned by shillinq.', AppIdentity::APP_ID, self::SOURCE_LOCAL_CACHE],
+		['status', 'enum', 'active | discontinued. Mirrored from the master onto local stock rows.', self::MASTER_REGISTER, null],
+	];
+
+	/**
 	 * Construct the catalog service.
 	 *
 	 * @param IAppConfig $appConfig App config (local OpenRegister register slug).
@@ -186,34 +212,55 @@ class ProductCatalogService {
 
 		$master = $this->query(register: self::MASTER_REGISTER, schema: self::MASTER_SCHEMA_PRODUCT, filters: []);
 		if ($master !== []) {
-			$categories = $this->categoryNames();
-			$products = [];
-			foreach ($master as $row) {
-				$products[] = $this->mapMasterProduct(row: $row, categories: $categories);
-			}
-
-			return [
-				'source' => self::SOURCE_MASTER,
-				'authoritative' => true,
-				'masterAvailable' => true,
-				'masterApp' => self::MASTER_REGISTER,
-				'total' => count($products),
-				'products' => $products,
-			];
+			return $this->catalogEnvelope(products: $this->masterProducts(rows: $master), fromMaster: true);
 		}
 
-		$products = $this->projectLocalReferences(administrationIds: $administrationIds);
+		return $this->catalogEnvelope(products: $this->projectLocalReferences(administrationIds: $administrationIds), fromMaster: false);
+
+	}//end listProducts()
+
+	/**
+	 * The catalog envelope around a list of product rows.
+	 *
+	 * @param list<array<string,mixed>> $products   The rows.
+	 * @param boolean                   $fromMaster Whether they came from the owning app.
+	 *
+	 * @return array{source:string,authoritative:bool,masterAvailable:bool,masterApp:string,total:int,products:list<array<string,mixed>>}
+	 */
+	private function catalogEnvelope(array $products, bool $fromMaster): array {
+		$source = self::SOURCE_LOCAL_CACHE;
+		if ($fromMaster === true) {
+			$source = self::SOURCE_MASTER;
+		}
 
 		return [
-			'source' => self::SOURCE_LOCAL_CACHE,
-			'authoritative' => false,
-			'masterAvailable' => false,
+			'source' => $source,
+			'authoritative' => $fromMaster,
+			'masterAvailable' => $fromMaster,
 			'masterApp' => self::MASTER_REGISTER,
 			'total' => count($products),
 			'products' => $products,
 		];
 
-	}//end listProducts()
+	}//end catalogEnvelope()
+
+	/**
+	 * Map the master's product rows, resolving category uuids to names.
+	 *
+	 * @param list<array<string,mixed>> $rows The pipelinq product-master rows.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function masterProducts(array $rows): array {
+		$categories = $this->categoryNames();
+		$products = [];
+		foreach ($rows as $row) {
+			$products[] = $this->mapMasterProduct(row: $row, categories: $categories);
+		}
+
+		return $products;
+
+	}//end masterProducts()
 
 	/**
 	 * List the attribute definitions the catalog can serve (REQ-IPC-004).
@@ -242,32 +289,39 @@ class ProductCatalogService {
 		}
 
 		$master = $this->query(register: self::MASTER_REGISTER, schema: self::MASTER_SCHEMA_PRODUCT, filters: []);
+		$fromMaster = [];
 		if ($master !== []) {
-			$attributes = $this->attributesFromMaster(rows: $master);
-			if ($attributes !== []) {
-				return [
-					'source' => self::SOURCE_MASTER,
-					'authoritative' => true,
-					'masterAvailable' => true,
-					'masterApp' => self::MASTER_REGISTER,
-					'total' => count($attributes),
-					'attributes' => $attributes,
-				];
-			}
+			$fromMaster = $this->attributesFromMaster(rows: $master);
 		}
 
-		$attributes = $this->contractAttributes(masterAvailable: ($master !== []));
+		if ($fromMaster !== []) {
+			$envelope = $this->attributeEnvelope(attributes: $fromMaster, masterAvailable: true);
+			return array_replace($envelope, ['source' => self::SOURCE_MASTER, 'authoritative' => true]);
+		}
 
+		return $this->attributeEnvelope(attributes: $this->contractAttributes(masterAvailable: ($master !== [])), masterAvailable: ($master !== []));
+
+	}//end listAttributes()
+
+	/**
+	 * The non-authoritative attribute envelope around a list of definitions.
+	 *
+	 * @param list<array<string,mixed>> $attributes      The definitions.
+	 * @param boolean                   $masterAvailable Whether the pipelinq master answered.
+	 *
+	 * @return array{source:string,authoritative:bool,masterAvailable:bool,masterApp:string,total:int,attributes:list<array<string,mixed>>}
+	 */
+	private function attributeEnvelope(array $attributes, bool $masterAvailable): array {
 		return [
 			'source' => self::SOURCE_CONTRACT,
 			'authoritative' => false,
-			'masterAvailable' => ($master !== []),
+			'masterAvailable' => $masterAvailable,
 			'masterApp' => self::MASTER_REGISTER,
 			'total' => count($attributes),
 			'attributes' => $attributes,
 		];
 
-	}//end listAttributes()
+	}//end attributeEnvelope()
 
 	/**
 	 * Map one pipelinq product-master row onto the catalog row shape.
@@ -331,61 +385,7 @@ class ProductCatalogService {
 	 * @return list<array<string,mixed>> One row per distinct referenced productId.
 	 */
 	private function projectLocalReferences(array $administrationIds): array {
-		$byProduct = [];
-
-		foreach ($administrationIds as $administrationId) {
-			$stockRows = $this->query(
-				register: $this->register(),
-				schema: self::LOCAL_SCHEMA_STOCK,
-				filters: ['administrationId' => $administrationId]
-			);
-
-			foreach ($stockRows as $stock) {
-				$productId = $this->stringOrNull(value: ($stock['productId'] ?? null));
-				if ($productId === null) {
-					continue;
-				}
-
-				$entry = ($byProduct[$productId] ?? $this->emptyLocalRow(productId: $productId));
-				$entry['sku'] = ($entry['sku'] ?? $this->stringOrNull(value: ($stock['productSku'] ?? null)));
-				$entry['status'] = ($entry['status'] ?? $this->stringOrNull(value: ($stock['status'] ?? null)));
-				$entry['stockLocations'] = ((int)$entry['stockLocations'] + 1);
-				$entry['quantityOnHand'] = ((float)($entry['quantityOnHand'] ?? 0.0) + (float)($stock['quantityOnHand'] ?? 0.0));
-
-				$unitCost = $this->numberOrNull(value: ($stock['unitCost'] ?? null));
-				if ($unitCost !== null) {
-					$entry['unitCost'] = $unitCost;
-				}
-
-				$byProduct[$productId] = $entry;
-			}
-		}
-
-		// The `Barcode` query carries NO `administrationId` filter, and that is
-		// not an omission: `20-inventory-barcode-sku.json` does not declare the
-		// property, so there is nothing to filter on — a filter naming it would
-		// address a non-property and match nothing for every value, silently.
-		// Barcodes are already an unscoped register in this app (the
-		// `/inventory/barcodes` index lists them the same way), so this adds no
-		// exposure; it does mean a product may appear here with a barcode and
-		// no stock. If `Barcode` ever gains an `administrationId`, this call
-		// must gain the filter with it.
-		foreach ($this->query(register: $this->register(), schema: self::LOCAL_SCHEMA_BARCODE, filters: []) as $barcode) {
-			$productId = $this->stringOrNull(value: ($barcode['productId'] ?? null));
-			if ($productId === null) {
-				continue;
-			}
-
-			$entry = ($byProduct[$productId] ?? $this->emptyLocalRow(productId: $productId));
-			$entry['sku'] = ($entry['sku'] ?? $this->stringOrNull(value: ($barcode['productSku'] ?? null)));
-			if ($entry['primaryBarcode'] === null || ($barcode['isDefault'] ?? false) === true) {
-				$entry['primaryBarcode'] = $this->stringOrNull(value: ($barcode['barcode'] ?? null));
-			}
-
-			$byProduct[$productId] = $entry;
-		}
-
-		$rows = array_values($byProduct);
+		$rows = array_values($this->withBarcodes(byProduct: $this->stockByProduct(administrationIds: $administrationIds)));
 		usort(
 			$rows,
 			static function (array $left, array $right): int {
@@ -396,6 +396,101 @@ class ProductCatalogService {
 		return $rows;
 
 	}//end projectLocalReferences()
+
+	/**
+	 * Fold the stock rows of each readable administration into one row per
+	 * referenced productId.
+	 *
+	 * @param array<int,string> $administrationIds Administrations the caller may read.
+	 *
+	 * @return array<string,array<string,mixed>> ProductId => projected row.
+	 */
+	private function stockByProduct(array $administrationIds): array {
+		$byProduct = [];
+		foreach ($administrationIds as $administrationId) {
+			$filters = ['administrationId' => $administrationId];
+			foreach ($this->query(register: $this->register(), schema: self::LOCAL_SCHEMA_STOCK, filters: $filters) as $stock) {
+				$productId = $this->stringOrNull(value: ($stock['productId'] ?? null));
+				if ($productId !== null) {
+					$entry = ($byProduct[$productId] ?? $this->emptyLocalRow(productId: $productId));
+					$byProduct[$productId] = $this->withStock(entry: $entry, stock: $stock);
+				}
+			}
+		}
+
+		return $byProduct;
+
+	}//end stockByProduct()
+
+	/**
+	 * Add one stock location to a projected row.
+	 *
+	 * @param array<string,mixed> $entry The projected row so far.
+	 * @param array<string,mixed> $stock One InventoryStock row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function withStock(array $entry, array $stock): array {
+		$entry['sku'] = ($entry['sku'] ?? $this->stringOrNull(value: ($stock['productSku'] ?? null)));
+		$entry['status'] = ($entry['status'] ?? $this->stringOrNull(value: ($stock['status'] ?? null)));
+		$entry['stockLocations'] = ((int)$entry['stockLocations'] + 1);
+		$entry['quantityOnHand'] = ((float)($entry['quantityOnHand'] ?? 0.0) + (float)($stock['quantityOnHand'] ?? 0.0));
+		$unitCost = $this->numberOrNull(value: ($stock['unitCost'] ?? null));
+		if ($unitCost !== null) {
+			$entry['unitCost'] = $unitCost;
+		}
+
+		return $entry;
+
+	}//end withStock()
+
+	/**
+	 * Attach barcodes (and a missing sku) to the projected rows.
+	 *
+	 * The `Barcode` query carries NO `administrationId` filter, and that is
+	 * not an omission: `20-inventory-barcode-sku.json` does not declare the
+	 * property, so there is nothing to filter on — a filter naming it would
+	 * address a non-property and match nothing for every value, silently.
+	 * Barcodes are already an unscoped register in this app (the
+	 * `/inventory/barcodes` index lists them the same way), so this adds no
+	 * exposure; it does mean a product may appear here with a barcode and
+	 * no stock. If `Barcode` ever gains an `administrationId`, this call
+	 * must gain the filter with it.
+	 *
+	 * @param array<string,array<string,mixed>> $byProduct ProductId => projected row.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function withBarcodes(array $byProduct): array {
+		foreach ($this->query(register: $this->register(), schema: self::LOCAL_SCHEMA_BARCODE, filters: []) as $barcode) {
+			$productId = $this->stringOrNull(value: ($barcode['productId'] ?? null));
+			if ($productId !== null) {
+				$entry = ($byProduct[$productId] ?? $this->emptyLocalRow(productId: $productId));
+				$byProduct[$productId] = $this->withBarcode(entry: $entry, barcode: $barcode);
+			}
+		}
+
+		return $byProduct;
+
+	}//end withBarcodes()
+
+	/**
+	 * Add one barcode to a projected row: the first one seen, or the default.
+	 *
+	 * @param array<string,mixed> $entry   The projected row so far.
+	 * @param array<string,mixed> $barcode One Barcode row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function withBarcode(array $entry, array $barcode): array {
+		$entry['sku'] = ($entry['sku'] ?? $this->stringOrNull(value: ($barcode['productSku'] ?? null)));
+		if ($entry['primaryBarcode'] === null || ($barcode['isDefault'] ?? false) === true) {
+			$entry['primaryBarcode'] = $this->stringOrNull(value: ($barcode['barcode'] ?? null));
+		}
+
+		return $entry;
+
+	}//end withBarcode()
 
 	/**
 	 * The shape of a locally-projected catalog row before any field is filled.
@@ -432,6 +527,28 @@ class ProductCatalogService {
 	 * @return list<array<string,mixed>> One definition per distinct attribute name.
 	 */
 	private function attributesFromMaster(array $rows): array {
+		$definitions = [];
+		$order = 10;
+		foreach ($this->distinctAttributes(rows: $rows) as $name => $dataType) {
+			$definition = $this->masterDefinition(name: $name, dataType: $dataType);
+			$definition['displayOrder'] = $order;
+			$definitions[] = $definition;
+			$order = ($order + 10);
+		}
+
+		return $definitions;
+
+	}//end attributesFromMaster()
+
+	/**
+	 * Every attribute name the master's products carry, first data type
+	 * winning, sorted by name.
+	 *
+	 * @param list<array<string,mixed>> $rows The pipelinq product-master rows.
+	 *
+	 * @return array<int|string,string> Attribute name => dataType.
+	 */
+	private function distinctAttributes(array $rows): array {
 		$seen = [];
 		foreach ($rows as $row) {
 			foreach ($this->attributeNamesOf(row: $row) as $name => $dataType) {
@@ -443,26 +560,32 @@ class ProductCatalogService {
 
 		ksort($seen);
 
-		$definitions = [];
-		$order = 10;
-		foreach ($seen as $name => $dataType) {
-			$definitions[] = [
-				'name' => $name,
-				'dataType' => $dataType,
-				'applicableToCategories' => 'all',
-				'isRequired' => false,
-				'displayOrder' => $order,
-				'validationRule' => null,
-				'status' => 'active',
-				'ownedBy' => self::MASTER_REGISTER,
-				'source' => self::SOURCE_MASTER,
-			];
-			$order = ($order + 10);
-		}
+		return $seen;
 
-		return $definitions;
+	}//end distinctAttributes()
 
-	}//end attributesFromMaster()
+	/**
+	 * One master-owned attribute definition (displayOrder filled in by the caller).
+	 *
+	 * @param int|string $name     Attribute name.
+	 * @param string     $dataType Its data type.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function masterDefinition(int|string $name, string $dataType): array {
+		return [
+			'name' => $name,
+			'dataType' => $dataType,
+			'applicableToCategories' => 'all',
+			'isRequired' => false,
+			'displayOrder' => 0,
+			'validationRule' => null,
+			'status' => 'active',
+			'ownedBy' => self::MASTER_REGISTER,
+			'source' => self::SOURCE_MASTER,
+		];
+
+	}//end masterDefinition()
 
 	/**
 	 * Collect the attribute names one master product declares.
@@ -478,43 +601,96 @@ class ProductCatalogService {
 	 * @return array<string,string> Attribute name => dataType.
 	 */
 	private function attributeNamesOf(array $row): array {
-		$names = [];
+		return array_replace(
+			$this->variantAttributeNames(variants: ($row['variants'] ?? [])),
+			$this->modifierGroupNames(groups: ($row['modifierGroups'] ?? []))
+		);
 
-		$variants = ($row['variants'] ?? []);
-		if (is_array($variants) === true) {
-			foreach ($variants as $variant) {
-				if (is_array($variant) === false) {
-					continue;
-				}
+	}//end attributeNamesOf()
 
-				$attributes = ($variant['attributes'] ?? []);
-				if (is_array($attributes) === false) {
-					continue;
-				}
-
-				foreach (array_keys($attributes) as $name) {
-					$names[(string)$name] = 'text';
-				}
-			}
+	/**
+	 * The attribute names on a product's variants, typed `text`.
+	 *
+	 * @param mixed $variants The `variants[]` value.
+	 *
+	 * @return array<int|string,string>
+	 */
+	private function variantAttributeNames(mixed $variants): array {
+		if (is_array($variants) === false) {
+			return [];
 		}
 
-		$groups = ($row['modifierGroups'] ?? []);
-		if (is_array($groups) === true) {
-			foreach ($groups as $group) {
-				if (is_array($group) === false) {
-					continue;
-				}
-
-				$name = $this->stringOrNull(value: ($group['name'] ?? null));
-				if ($name !== null) {
-					$names[$name] = 'enum';
-				}
+		$names = [];
+		foreach ($variants as $variant) {
+			foreach ($this->attributeKeysOf(variant: $variant) as $name) {
+				$names[(string)$name] = 'text';
 			}
 		}
 
 		return $names;
 
-	}//end attributeNamesOf()
+	}//end variantAttributeNames()
+
+	/**
+	 * The attribute keys of one variant, or none when it is malformed.
+	 *
+	 * @param mixed $variant One `variants[]` entry.
+	 *
+	 * @return array<int,int|string>
+	 */
+	private function attributeKeysOf(mixed $variant): array {
+		if (is_array($variant) === false) {
+			return [];
+		}
+
+		$attributes = ($variant['attributes'] ?? []);
+		if (is_array($attributes) === false) {
+			return [];
+		}
+
+		return array_keys($attributes);
+
+	}//end attributeKeysOf()
+
+	/**
+	 * The names of a product's modifier groups, typed `enum`.
+	 *
+	 * @param mixed $groups The `modifierGroups[]` value.
+	 *
+	 * @return array<string,string>
+	 */
+	private function modifierGroupNames(mixed $groups): array {
+		if (is_array($groups) === false) {
+			return [];
+		}
+
+		$names = [];
+		foreach ($groups as $group) {
+			$name = $this->groupName(group: $group);
+			if ($name !== null) {
+				$names[$name] = 'enum';
+			}
+		}
+
+		return $names;
+
+	}//end modifierGroupNames()
+
+	/**
+	 * The trimmed name of one modifier group, or null.
+	 *
+	 * @param mixed $group One `modifierGroups[]` entry.
+	 *
+	 * @return string|null
+	 */
+	private function groupName(mixed $group): ?string {
+		if (is_array($group) === false) {
+			return null;
+		}
+
+		return $this->stringOrNull(value: ($group['name'] ?? null));
+
+	}//end groupName()
 
 	/**
 	 * The attribute definitions the ADR-019 contract itself publishes.
@@ -535,43 +711,39 @@ class ProductCatalogService {
 			$remote = self::SOURCE_MASTER;
 		}
 
-		$local = self::SOURCE_LOCAL_CACHE;
-		$master = self::MASTER_REGISTER;
-		$app = AppIdentity::APP_ID;
-
-		$rows = [
-			['sku', 'text', 'Stock keeping unit resolved from the product master.', $master, $remote],
-			['name', 'text', 'Human-readable product name resolved from the product master.', $master, $remote],
-			['category', 'text', 'Product category resolved from the product master.', $master, $remote],
-			['unitPrice', 'number', 'Selling price per unit resolved from the product master.', $master, $remote],
-			['taxRate', 'number', 'VAT percentage resolved from the product master.', $master, $remote],
-			['unitCode', 'text', 'UN/CEFACT unit of measure resolved from the product master.', $master, $remote],
-			['primaryBarcode', 'text', 'Default scanned barcode. Held locally on Barcode, mirrored from the master.', $app, $local],
-			['unitCost', 'number', 'Valuation unit cost. Authored and owned by shillinq (REQ-SPVP-001).', $app, $local],
-			['quantityOnHand', 'number', 'Physical on-hand quantity. Authored and owned by shillinq.', $app, $local],
-			['status', 'enum', 'active | discontinued. Mirrored from the master onto local stock rows.', $master, $remote],
-		];
-
 		$definitions = [];
-		$order = 10;
-		foreach ($rows as [$name, $dataType, $rule, $owner, $source]) {
-			$definitions[] = [
-				'name' => $name,
-				'dataType' => $dataType,
-				'applicableToCategories' => 'all',
-				'isRequired' => in_array($name, ['sku', 'name'], true),
-				'displayOrder' => $order,
-				'validationRule' => $rule,
-				'status' => 'active',
-				'ownedBy' => $owner,
-				'source' => $source,
-			];
-			$order = ($order + 10);
+		foreach (self::CONTRACT_ATTRIBUTES as $index => [$name, $dataType, $rule, $owner, $source]) {
+			$definitions[] = $this->contractDefinition(row: [$name, $dataType, $rule, $owner, ($source ?? $remote)], order: (($index + 1) * 10));
 		}
 
 		return $definitions;
 
 	}//end contractAttributes()
+
+	/**
+	 * One contract attribute definition.
+	 *
+	 * @param array{0:string,1:string,2:string,3:string,4:string} $row   Name, data type, rule, owner, source.
+	 * @param int                                                $order Display order.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function contractDefinition(array $row, int $order): array {
+		[$name, $dataType, $rule, $owner, $source] = $row;
+
+		return [
+			'name' => $name,
+			'dataType' => $dataType,
+			'applicableToCategories' => 'all',
+			'isRequired' => in_array($name, ['sku', 'name'], true),
+			'displayOrder' => $order,
+			'validationRule' => $rule,
+			'status' => 'active',
+			'ownedBy' => $owner,
+			'source' => $source,
+		];
+
+	}//end contractDefinition()
 
 	/**
 	 * Read an object's identifier from the serialised row.
@@ -648,36 +820,74 @@ class ProductCatalogService {
 	 */
 	private function query(string $register, string $schema, array $filters): array {
 		try {
-			$rows = $this->objectService
-				->setRegister($register)
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
+			$rows = $this->objectService->setRegister($register)->setSchema($schema)->findAll(['filters' => $filters]);
 		} catch (Throwable $e) {
-			$this->logger->debug(
-				'ProductCatalogService: register/schema not readable',
-				['register' => $register, 'schema' => $schema, 'exception' => $e->getMessage()]
-			);
+			$context = ['register' => $register, 'schema' => $schema, 'exception' => $e->getMessage()];
+			$this->logger->debug('ProductCatalogService: register/schema not readable', $context);
 			return [];
 		}
 
+		return $this->plainRows(rows: $rows);
+
+	}//end query()
+
+	/**
+	 * The store rows that are, or wrap, plain arrays.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function plainRows(mixed $rows): array {
 		$result = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
+			$plain = $this->plainRow(row: $row);
+			if ($plain !== null) {
+				$result[] = $plain;
 			}
 		}
 
 		return $result;
 
-	}//end query()
+	}//end plainRows()
+
+	/**
+	 * A store row as a plain array: arrays as they are, wrapped objects by
+	 * their payload, anything else dropped.
+	 *
+	 * @param mixed $row One findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function plainRow(mixed $row): ?array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		$payload = $this->payloadOf(row: $row);
+		if (is_array($payload) === false) {
+			return null;
+		}
+
+		return $payload;
+
+	}//end plainRow()
+
+	/**
+	 * The payload of a wrapped record, or null when the row wraps nothing.
+	 *
+	 * @param mixed $row One findAll() row.
+	 *
+	 * @return mixed
+	 */
+	private function payloadOf(mixed $row): mixed {
+		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+			return $row->getObject();
+		}
+
+		return null;
+
+	}//end payloadOf()
 
 	/**
 	 * Resolve shillinq's own OpenRegister register slug from app config.

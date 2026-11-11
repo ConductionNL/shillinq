@@ -26,6 +26,22 @@ export async function classifyUnmatchedItems(
 	resolutionStatus,
 	resolutionReason,
 ) {
+	const read = await groupByReconciliation(matchIds)
+	const resolved = await resolveGroups(read.groups, {
+		resolutionStatus,
+		resolutionReason,
+	})
+	return { applied: resolved.applied, failed: read.failed + resolved.failed }
+}
+
+/**
+ * Read each match and group the ids by their reconciliation; an unreadable
+ * match, or one without a reconciliation, counts as failed.
+ *
+ * @param {Array<string>} matchIds The selected match ids.
+ * @return {Promise<{groups: object, failed: number}>} reconId => ids, and the failures.
+ */
+async function groupByReconciliation(matchIds) {
 	const groups = {}
 	let failed = 0
 	for (const id of matchIds) {
@@ -45,18 +61,28 @@ export async function classifyUnmatchedItems(
 			failed++
 		}
 	}
+	return { groups, failed }
+}
 
+/**
+ * Bulk-resolve each reconciliation's matches and total the outcome.
+ *
+ * @param {object} groups reconId => match ids.
+ * @param {{resolutionStatus: string, resolutionReason: string}} resolution The classification.
+ * @return {Promise<{applied: number, failed: number}>}
+ */
+async function resolveGroups(groups, resolution) {
 	let applied = 0
+	let failed = 0
 	for (const [reconId, ids] of Object.entries(groups)) {
 		const response = await axios.post(
 			generateUrl(
 				`/apps/shillinq/api/reconciliations/${encodeURIComponent(reconId)}/matches/bulk-resolve`,
 			),
-			{ matchIds: ids, resolutionStatus, resolutionReason },
+			{ matchIds: ids, ...resolution },
 		)
 		applied += Number(response.data?.applied ?? 0)
 		failed += Object.keys(response.data?.failed ?? {}).length
 	}
-
 	return { applied, failed }
 }

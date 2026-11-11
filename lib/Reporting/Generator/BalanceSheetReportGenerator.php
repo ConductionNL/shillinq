@@ -50,7 +50,7 @@ use OCA\Shillinq\Reporting\ReportSection;
 /**
  * Renders a balance sheet from Account balances (assets / liabilities / equity).
  */
-final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator {
+final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator {
 	/**
 	 * The catalogue report-type id this generator produces.
 	 *
@@ -80,91 +80,13 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 	protected function build(ReportSection $section, array $context): void {
 		$administrationId = $this->str($context, 'administrationId');
 		$accounts = $this->loadAccounts($administrationId);
-
-		$currency = 'EUR';
-		foreach ($accounts as $account) {
-			$accountCurrency = $this->str($account, 'currency');
-			if ($accountCurrency !== '') {
-				$currency = $accountCurrency;
-				break;
-			}
-		}
-
+		$run = new StatementRun(section: $section, currency: $this->accountsCurrency($accounts));
 		$grouped = $this->groupByType($accounts, $administrationId);
 
 		$this->addCover($section, 'Balans', 'Balans per peildatum', $context);
-
-		// --- Activa ---
-		$this->addHeading($section, 'Activa');
-		$assetLines = $this->lines($grouped['assets']);
-		$totalAssets = $this->total($grouped['assets']);
-		$this->addAmountTable(
-			$section,
-			'Rekening',
-			'Saldo',
-			$assetLines,
-			['label' => 'Totaal activa', 'amount' => $totalAssets],
-			$currency
-		);
-
-		// --- Passiva (equity + liabilities) ---
-		$section->addTextBreak(1);
-		$this->addHeading($section, 'Passiva');
-
-		$equityLines = $this->lines($grouped['equity']);
-		$liabilityLines = $this->lines($grouped['liabilities']);
-		$totalEquity = $this->total($grouped['equity']);
-		$totalLiabilities = $this->total($grouped['liabilities']);
-
-		$section->addText('Eigen vermogen', 'amountBold', 'tight');
-		$this->addAmountTable(
-			$section,
-			'Rekening',
-			'Saldo',
-			$equityLines,
-			['label' => 'Totaal eigen vermogen', 'amount' => $totalEquity],
-			$currency
-		);
-
-		$section->addTextBreak(1);
-		$section->addText('Schulden', 'amountBold', 'tight');
-		$this->addAmountTable(
-			$section,
-			'Rekening',
-			'Saldo',
-			$liabilityLines,
-			['label' => 'Totaal schulden', 'amount' => $totalLiabilities],
-			$currency
-		);
-
-		$section->addTextBreak(1);
-		$this->addAmountTable(
-			$section,
-			'Recapitulatie passiva',
-			'Bedrag',
-			[
-				['label' => 'Eigen vermogen', 'amount' => $totalEquity],
-				['label' => 'Schulden', 'amount' => $totalLiabilities],
-			],
-			['label' => 'Totaal passiva', 'amount' => ($totalEquity + $totalLiabilities)],
-			$currency
-		);
-
-		// --- Balanscontrole ---
-		$section->addTextBreak(1);
-		$this->addHeading($section, 'Balanscontrole');
-		$totalCredit = ($totalEquity + $totalLiabilities);
-		$difference = ($totalAssets - $totalCredit);
-		$this->addDetailsTable(
-			$section,
-			[
-				'Aantal grootboekrekeningen' => (string)count($accounts),
-				'Totaal activa' => $this->money($totalAssets, $currency),
-				'Totaal passiva' => $this->money($totalCredit, $currency),
-				'Verschil' => $this->money($difference, $currency),
-				'Balans sluit aan' => (abs($difference) <= 0.005 ? 'Ja' : 'Nee'),
-			]
-		);
+		$this->addAssets($run, $grouped);
+		$this->addPassiva($run, $grouped);
+		$this->addBalanceCheck($run, count($accounts));
 
 		if ($accounts === []) {
 			$this->addNote($section, 'Er zijn geen grootboekrekeningen gevonden voor deze administratie.');
@@ -173,52 +95,104 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 	}//end build()
 
 	/**
-	 * Load the Account objects for the administration (all accounts when no
-	 * administration is supplied).
+	 * Balance-sheet account tables show the account balance.
 	 *
-	 * @param string $administrationId The administration scope (may be empty).
-	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return string
 	 */
-	private function loadAccounts(string $administrationId): array {
-		$filters = [];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
-		}
-
-		$accounts = $this->loadObjects('Account', $filters);
-		if ($accounts === [] && $filters !== []) {
-			// Some installs do not scope Account by administration — fall back to all.
-			$accounts = $this->loadObjects('Account');
-		}
-
-		return $this->dedupeAccounts($accounts);
-	}//end loadAccounts()
+	protected function accountAmountHead(): string {
+		return 'Saldo';
+	}//end accountAmountHead()
 
 	/**
-	 * Collapse the chart of accounts to one row per (administration, account key)
-	 * so an unscoped read does not list the same general-ledger account multiple
-	 * times. The first occurrence wins.
+	 * The Activa side: the asset accounts and their total (the debit side).
 	 *
-	 * @param array<int, array<string, mixed>> $accounts The Account objects.
+	 * @param StatementRun $run     The rendering in progress.
+	 * @param array{assets: array<int, array{label: string, amount: float}>} $grouped The grouped accounts.
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return void
 	 */
-	private function dedupeAccounts(array $accounts): array {
-		$seen = [];
-		$out = [];
-		foreach ($accounts as $account) {
-			$key = $this->str($account, 'administrationId') . '|' . $this->accountKey($account);
-			if (isset($seen[$key]) === true) {
-				continue;
-			}
+	private function addAssets(StatementRun $run, array $grouped): void {
+		$this->addHeading($run->section, 'Activa');
+		$run->debitTotal = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal activa', lines: $grouped['assets']));
+	}//end addAssets()
 
-			$seen[$key] = true;
-			$out[] = $account;
-		}
+	/**
+	 * The Passiva side: equity and liabilities, then their recapitulation
+	 * (the credit side).
+	 *
+	 * @param StatementRun $run     The rendering in progress.
+	 * @param array{equity: array<int, array{label: string, amount: float}>, liabilities: array<int, array{label: string, amount: float}>} $grouped The grouped accounts.
+	 *
+	 * @return void
+	 */
+	private function addPassiva(StatementRun $run, array $grouped): void {
+		$run->section->addTextBreak(1);
+		$this->addHeading($run->section, 'Passiva');
+		$recap = $this->addEquityAndDebts($run, $grouped);
 
-		return $out;
-	}//end dedupeAccounts()
+		$run->section->addTextBreak(1);
+		$this->addAmountTable(
+			$run->section,
+			'Recapitulatie passiva',
+			'Bedrag',
+			$recap->lines,
+			['label' => $recap->totalLabel, 'amount' => $run->creditTotal],
+			$run->currency
+		);
+	}//end addPassiva()
+
+	/**
+	 * The equity and the liability tables; sets the credit-side total and
+	 * answers the recapitulation lines.
+	 *
+	 * @param StatementRun $run     The rendering in progress.
+	 * @param array{equity: array<int, array{label: string, amount: float}>, liabilities: array<int, array{label: string, amount: float}>} $grouped The grouped accounts.
+	 *
+	 * @return AccountBucket The recapitulation of the passiva.
+	 */
+	private function addEquityAndDebts(StatementRun $run, array $grouped): AccountBucket {
+		$run->section->addText('Eigen vermogen', 'amountBold', 'tight');
+		$totalEquity = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal eigen vermogen', lines: $grouped['equity']));
+
+		$run->section->addTextBreak(1);
+		$run->section->addText('Schulden', 'amountBold', 'tight');
+		$totalLiabilities = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal schulden', lines: $grouped['liabilities']));
+
+		$run->creditTotal = ($totalEquity + $totalLiabilities);
+
+		return new AccountBucket(
+			totalLabel: 'Totaal passiva',
+			lines: [
+				['label' => 'Eigen vermogen', 'amount' => $totalEquity],
+				['label' => 'Schulden', 'amount' => $totalLiabilities],
+			]
+		);
+	}//end addEquityAndDebts()
+
+	/**
+	 * The Balanscontrole: account count, both side totals, their difference
+	 * and whether the balance closes (within half a cent).
+	 *
+	 * @param StatementRun $run          The rendering in progress.
+	 * @param int          $accountCount Number of general-ledger accounts read.
+	 *
+	 * @return void
+	 */
+	private function addBalanceCheck(StatementRun $run, int $accountCount): void {
+		$run->section->addTextBreak(1);
+		$this->addHeading($run->section, 'Balanscontrole');
+		$difference = ($run->debitTotal - $run->creditTotal);
+		$this->addDetailsTable(
+			$run->section,
+			[
+				'Aantal grootboekrekeningen' => (string)$accountCount,
+				'Totaal activa' => $this->money($run->debitTotal, $run->currency),
+				'Totaal passiva' => $this->money($run->creditTotal, $run->currency),
+				'Verschil' => $this->money($difference, $run->currency),
+				'Balans sluit aan' => (abs($difference) <= 0.005 ? 'Ja' : 'Nee'),
+			]
+		);
+	}//end addBalanceCheck()
 
 	/**
 	 * Group accounts into the three balance-sheet buckets, resolving each
@@ -234,19 +208,7 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 		$movements = null;
 
 		foreach ($accounts as $account) {
-			$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
-			$bucket = match ($type) {
-				// `activa` stays: this arm is a deliberately BILINGUAL tolerance
-				// list — its siblings still accept `vreemd-vermogen` and
-				// `eigen-vermogen` — so it keeps reading rows the value migration
-				// has not reached yet. Translating it produced a duplicate arm and
-				// psalm caught it as a ParadoxicalCondition.
-				'assets', 'asset', 'activa' => 'assets',
-				'liabilities', 'liability', 'debts', 'vreemd-vermogen' => 'liabilities',
-				'equity', 'eigen-vermogen' => 'equity',
-				default => null,
-			};
-
+			$bucket = $this->balanceBucket($account);
 			if ($bucket === null) {
 				// Skip P&L accounts (revenue/expenses) — they do not sit on the balance.
 				continue;
@@ -254,20 +216,38 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 
 			$balance = $this->accountBalance($account);
 			if ($balance === null) {
-				if ($movements === null) {
-					$movements = $this->deriveMovements($administrationId);
-				}
-
-				$code = $this->accountKey($account);
-				$balance = ($movements[$code] ?? 0.0);
+				$movements ??= $this->deriveMovements($administrationId);
+				$balance = ($movements[$this->accountKey($account)] ?? 0.0);
 			}
 
-			$label = $this->accountLabel($account);
-			$grouped[$bucket][] = ['label' => $label, 'amount' => $balance];
-		}//end foreach
+			$grouped[$bucket][] = ['label' => $this->accountLabel($account), 'amount' => $balance];
+		}
 
 		return $grouped;
 	}//end groupByType()
+
+	/**
+	 * The balance-sheet bucket of an account, or null for a P&L account.
+	 *
+	 * @param array<string, mixed> $account The Account object.
+	 *
+	 * @return string|null assets / liabilities / equity, or null.
+	 */
+	private function balanceBucket(array $account): string|null {
+		$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
+
+		return match ($type) {
+			// `activa` stays: this arm is a deliberately BILINGUAL tolerance
+			// list — its siblings still accept `vreemd-vermogen` and
+			// `eigen-vermogen` — so it keeps reading rows the value migration
+			// has not reached yet. Translating it produced a duplicate arm and
+			// psalm caught it as a ParadoxicalCondition.
+			'assets', 'asset', 'activa' => 'assets',
+			'liabilities', 'liability', 'debts', 'vreemd-vermogen' => 'liabilities',
+			'equity', 'eigen-vermogen' => 'equity',
+			default => null,
+		};
+	}//end balanceBucket()
 
 	/**
 	 * Read a materialised balance field from an Account, or null when absent so
@@ -286,92 +266,4 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 
 		return null;
 	}//end accountBalance()
-
-	/**
-	 * Derive net balances per account code from the posted GLLine movements
-	 * (debit positive, credit negative), scoped to the administration.
-	 *
-	 * @param string $administrationId The administration scope (may be empty).
-	 *
-	 * @return array<string, float> accountNumber => net balance.
-	 */
-	private function deriveMovements(string $administrationId): array {
-		$filters = [];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
-		}
-
-		$lines = $this->loadObjects('GLLine', $filters);
-		if ($lines === [] && $filters !== []) {
-			$lines = $this->loadObjects('GLLine');
-		}
-
-		$balances = [];
-		foreach ($lines as $line) {
-			$code = $this->str($line, 'accountNumber', 'accountId', 'account');
-			if ($code === '') {
-				continue;
-			}
-
-			$amount = $this->num($line, 'amount', 'baseCurrencyAmount', 'transactionAmount');
-			$side = strtolower($this->str($line, 'side', 'drcr'));
-			$signed = $side === 'credit' ? (-1 * $amount) : $amount;
-
-			$balances[$code] = (($balances[$code] ?? 0.0) + $signed);
-		}
-
-		return $balances;
-	}//end deriveMovements()
-
-	/**
-	 * The account's join key (accountNumber preferred, then code/rgsCode/id).
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string
-	 */
-	private function accountKey(array $account): string {
-		return $this->str($account, 'accountNumber', 'code', 'rgsCode', 'id');
-	}//end accountKey()
-
-	/**
-	 * A display label for an account row: "<number> <name>".
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string
-	 */
-	private function accountLabel(array $account): string {
-		$number = $this->str($account, 'accountNumber', 'code', 'rgsCode');
-		$name = $this->str($account, 'name', 'accountName', 'title', 'description');
-		$label = trim($number . ' ' . $name);
-		return $label !== '' ? $label : ('Rekening ' . $this->str($account, 'id'));
-	}//end accountLabel()
-
-	/**
-	 * Convert a grouped bucket into amount-table line shapes.
-	 *
-	 * @param array<int, array{label: string, amount: float}> $bucket The bucket rows.
-	 *
-	 * @return array<int, array{label: string, amount: float}>
-	 */
-	private function lines(array $bucket): array {
-		return $bucket;
-	}//end lines()
-
-	/**
-	 * Sum the amounts in a bucket.
-	 *
-	 * @param array<int, array{label: string, amount: float}> $bucket The bucket rows.
-	 *
-	 * @return float
-	 */
-	private function total(array $bucket): float {
-		$sum = 0.0;
-		foreach ($bucket as $row) {
-			$sum += (float)($row['amount'] ?? 0.0);
-		}
-
-		return $sum;
-	}//end total()
 }//end class

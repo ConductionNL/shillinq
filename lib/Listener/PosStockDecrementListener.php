@@ -144,11 +144,9 @@ class PosStockDecrementListener implements IEventListener {
 	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	public function handle(Event $event): void {
-		if (class_exists(\OCA\Pipelinq\Event\PosStockMovedEvent::class) === false) {
-			return;
-		}
-
-		if (($event instanceof \OCA\Pipelinq\Event\PosStockMovedEvent) === false) {
+		if (class_exists(\OCA\Pipelinq\Event\PosStockMovedEvent::class) === false
+			|| ($event instanceof \OCA\Pipelinq\Event\PosStockMovedEvent) === false
+		) {
 			return;
 		}
 
@@ -175,98 +173,217 @@ class PosStockDecrementListener implements IEventListener {
 	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
 	private function process(\OCA\Pipelinq\Event\PosStockMovedEvent $event): void {
-		$posTxnId = trim((string)$event->getTransactionUuid());
-		$administrationId = trim((string)$event->getAdministrationId());
+		$sale = $this->saleOf(event: $event);
 		$lines = $event->getLines();
-
-		if ($posTxnId === '' || $administrationId === '' || is_array($lines) === false || $lines === []) {
-			$this->logger->info(
-				'PosStockDecrementListener: event carried no posTxnId/administrationId/lines — nothing to process',
-				['posTxnId' => $posTxnId, 'administrationId' => $administrationId]
-			);
+		if ($this->hasContent(sale: $sale, lines: $lines) === false) {
+			$this->logNothingToProcess(sale: $sale);
 			return;
 		}
 
-		$issueLines = [];
-		foreach ($lines as $index => $line) {
-			if (is_array($line) === false) {
-				continue;
-			}
-
-			$sku = trim((string)($line['productRef'] ?? ''));
-			$qty = (float)($line['qty'] ?? 0);
-
-			if ($sku === '' || $qty <= 0) {
-				$this->auditUnmatchedLine(
-					posTxnId: $posTxnId,
-					administrationId: $administrationId,
-					lineIndex: (int)$index,
-					productRef: $sku,
-					quantity: $qty,
-					reason: 'no_product_ref'
-				);
-				continue;
-			}
-
-			if ($this->hasInventoryStock(administrationId: $administrationId, sku: $sku) === false) {
-				$this->auditUnmatchedLine(
-					posTxnId: $posTxnId,
-					administrationId: $administrationId,
-					lineIndex: (int)$index,
-					productRef: $sku,
-					quantity: $qty,
-					reason: 'no_inventory_stock'
-				);
-				continue;
-			}
-
-			$issueLines[] = [
-				'productReference' => $sku,
-				'quantityShipped' => $qty,
-			];
-		}//end foreach
-
+		$issueLines = $this->issuableLines(saleLines: $this->saleLines(sale: $sale, lines: $lines));
 		if ($issueLines === []) {
 			return;
 		}
 
-		// Reuse issueForDelivery() unmodified: the synthetic delivery id
-		// (pos-{posTxnId}) is the referenceDocumentUri key its OWN existing
-		// idempotency check dedupes on, so a redelivered event for the same
-		// posTxnId is a no-op for free (REQ: idempotent on posTxnId).
+		$result = $this->issue(sale: $sale, issueLines: $issueLines);
+		$this->auditBlockedLines(sale: $sale, result: $result);
+
+	}//end process()
+
+	/**
+	 * The event's trimmed transaction id and administration.
+	 *
+	 * @param \OCA\Pipelinq\Event\PosStockMovedEvent $event The typed event.
+	 *
+	 * @return PosSaleRun
+	 */
+	private function saleOf(\OCA\Pipelinq\Event\PosStockMovedEvent $event): PosSaleRun {
+		return new PosSaleRun(
+			posTxnId: trim((string)$event->getTransactionUuid()),
+			administrationId: trim((string)$event->getAdministrationId())
+		);
+
+	}//end saleOf()
+
+	/**
+	 * Whether the event names a transaction and an administration and
+	 * carries lines.
+	 *
+	 * @param PosSaleRun $sale  The sale.
+	 * @param mixed      $lines The event's lines.
+	 *
+	 * @return bool
+	 */
+	private function hasContent(PosSaleRun $sale, mixed $lines): bool {
+		return $sale->posTxnId !== '' && $sale->administrationId !== '' && is_array($lines) === true && $lines !== [];
+
+	}//end hasContent()
+
+	/**
+	 * Log an event that carries no transaction id, administration or lines.
+	 *
+	 * @param PosSaleRun $sale The (partly empty) sale.
+	 *
+	 * @return void
+	 */
+	private function logNothingToProcess(PosSaleRun $sale): void {
+		$this->logger->info(
+			'PosStockDecrementListener: event carried no posTxnId/administrationId/lines — nothing to process',
+			['posTxnId' => $sale->posTxnId, 'administrationId' => $sale->administrationId]
+		);
+
+	}//end logNothingToProcess()
+
+	/**
+	 * The event's array lines, read as sale lines with their event index.
+	 *
+	 * @param PosSaleRun   $sale  The sale.
+	 * @param array<mixed> $lines The event's lines.
+	 *
+	 * @return list<PosSaleLine>
+	 */
+	private function saleLines(PosSaleRun $sale, array $lines): array {
+		$saleLines = [];
+		foreach ($lines as $index => $line) {
+			if (is_array($line) === true) {
+				$saleLines[] = new PosSaleLine(
+					posTxnId: $sale->posTxnId,
+					administrationId: $sale->administrationId,
+					lineIndex: (int)$index,
+					productRef: trim((string)($line['productRef'] ?? '')),
+					quantity: (float)($line['qty'] ?? 0)
+				);
+			}
+		}
+
+		return $saleLines;
+
+	}//end saleLines()
+
+	/**
+	 * The issue lines for every stock-tracked sale line; every other line is
+	 * audited, in event order.
+	 *
+	 * @param list<PosSaleLine> $saleLines The sale lines.
+	 *
+	 * @return list<array{productReference:string,quantityShipped:float}>
+	 */
+	private function issuableLines(array $saleLines): array {
+		$issueLines = [];
+		foreach ($saleLines as $line) {
+			$reason = $this->unmatchedReason(line: $line);
+			if ($reason !== '') {
+				$this->auditUnmatchedLine(line: $line->because(reason: $reason));
+				continue;
+			}
+
+			$issueLines[] = [
+				'productReference' => $line->productRef,
+				'quantityShipped' => $line->quantity,
+			];
+		}
+
+		return $issueLines;
+
+	}//end issuableLines()
+
+	/**
+	 * Why a sale line cannot be issued, or '' when it can.
+	 *
+	 * @param PosSaleLine $line The sale line.
+	 *
+	 * @return string
+	 */
+	private function unmatchedReason(PosSaleLine $line): string {
+		if ($line->productRef === '' || $line->quantity <= 0) {
+			return 'no_product_ref';
+		}
+
+		if ($this->hasInventoryStock(administrationId: $line->administrationId, sku: $line->productRef) === false) {
+			return 'no_inventory_stock';
+		}
+
+		return '';
+
+	}//end unmatchedReason()
+
+	/**
+	 * Issue the lines through the reused stock-issue pipeline and log its
+	 * counts.
+	 *
+	 * Reuse issueForDelivery() unmodified: the synthetic delivery id
+	 * (pos-{posTxnId}) is the referenceDocumentUri key its OWN existing
+	 * idempotency check dedupes on, so a redelivered event for the same
+	 * posTxnId is a no-op for free (REQ: idempotent on posTxnId).
+	 *
+	 * @param PosSaleRun                                                  $sale       The sale.
+	 * @param list<array{productReference:string,quantityShipped:float}> $issueLines The lines to issue.
+	 *
+	 * @return array<string,mixed> The pipeline's result.
+	 */
+	private function issue(PosSaleRun $sale, array $issueLines): array {
 		$result = $this->dispatchService->issueForDelivery(
 			delivery: [
-				'id' => self::POS_DELIVERY_ID_PREFIX . $posTxnId,
-				'administrationId' => $administrationId,
+				'id' => self::POS_DELIVERY_ID_PREFIX . $sale->posTxnId,
+				'administrationId' => $sale->administrationId,
 				'lines' => $issueLines,
 			]
 		);
 
 		$this->logger->info(
 			'PosStockDecrementListener: POS sale dispatched to the reused stock-issue pipeline',
-			[
-				'posTxnId' => $posTxnId,
-				'issued' => (int)($result['issued'] ?? 0),
-				'skipped' => (int)($result['skipped'] ?? 0),
-				'blocked' => (int)($result['blocked'] ?? 0),
-			]
+			$this->dispatchCounts(sale: $sale, result: $result)
 		);
 
-		// A lot-unsellable line was refused by the (reused) LotSellabilityGuard
-		// inside issueForDelivery() — surfaced the same as an unmatched line so
-		// it never vanishes silently.
+		return $result;
+
+	}//end issue()
+
+	/**
+	 * The log context of a dispatched sale.
+	 *
+	 * @param PosSaleRun          $sale   The sale.
+	 * @param array<string,mixed> $result The pipeline's result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function dispatchCounts(PosSaleRun $sale, array $result): array {
+		return [
+			'posTxnId' => $sale->posTxnId,
+			'issued' => (int)($result['issued'] ?? 0),
+			'skipped' => (int)($result['skipped'] ?? 0),
+			'blocked' => (int)($result['blocked'] ?? 0),
+		];
+
+	}//end dispatchCounts()
+
+	/**
+	 * Audit every line the pipeline blocked.
+	 *
+	 * A lot-unsellable line was refused by the (reused) LotSellabilityGuard
+	 * inside issueForDelivery() — surfaced the same as an unmatched line so
+	 * it never vanishes silently.
+	 *
+	 * @param PosSaleRun          $sale   The sale.
+	 * @param array<string,mixed> $result The pipeline's result.
+	 *
+	 * @return void
+	 */
+	private function auditBlockedLines(PosSaleRun $sale, array $result): void {
 		foreach (($result['blockedLines'] ?? []) as $blocked) {
 			$this->auditUnmatchedLine(
-				posTxnId: $posTxnId,
-				administrationId: $administrationId,
-				lineIndex: (int)($blocked['lineIndex'] ?? -1),
-				productRef: (string)($blocked['sku'] ?? ''),
-				quantity: (float)($blocked['quantityRequired'] ?? 0),
-				reason: 'unsellable_lot'
+				line: new PosSaleLine(
+					posTxnId: $sale->posTxnId,
+					administrationId: $sale->administrationId,
+					lineIndex: (int)($blocked['lineIndex'] ?? -1),
+					productRef: (string)($blocked['sku'] ?? ''),
+					quantity: (float)($blocked['quantityRequired'] ?? 0),
+					reason: 'unsellable_lot'
+				)
 			);
 		}
 
-	}//end process()
+	}//end auditBlockedLines()
 
 	/**
 	 * Whether a shillinq `InventoryStock` row exists for (administrationId,
@@ -282,18 +399,7 @@ class PosStockDecrementListener implements IEventListener {
 	 */
 	private function hasInventoryStock(string $administrationId, string $sku): bool {
 		try {
-			$rows = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('InventoryStock')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'sku' => $sku,
-						],
-					]
-				);
-
+			$rows = $this->inventoryStockRows(administrationId: $administrationId, sku: $sku);
 			return is_array($rows) === true && count($rows) > 0;
 		} catch (Throwable $e) {
 			$this->logger->debug(
@@ -306,73 +412,130 @@ class PosStockDecrementListener implements IEventListener {
 	}//end hasInventoryStock()
 
 	/**
+	 * The InventoryStock rows of one SKU in one administration.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $sku              Product SKU.
+	 *
+	 * @return mixed The findAll() result.
+	 */
+	private function inventoryStockRows(string $administrationId, string $sku): mixed {
+		return $this->objectService()
+			->setRegister($this->register())
+			->setSchema('InventoryStock')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'sku' => $sku,
+					],
+				]
+			);
+
+	}//end inventoryStockRows()
+
+	/**
 	 * Record + surface an unmatched (or blocked) POS stock line: logs at
 	 * error level and raises a Nextcloud notification to every `admin` group
 	 * member — the reconciliation/audit surface the spec requires. Never
 	 * throws (fail-soft): a notification-dispatch failure is only logged.
 	 *
-	 * @param string $posTxnId The POS transaction id.
-	 * @param string $administrationId Tenant scope.
-	 * @param int $lineIndex The line's ordinal index in the event.
-	 * @param string $productRef The (possibly empty) product reference.
-	 * @param float $quantity The sold quantity.
-	 * @param string $reason 'no_product_ref' | 'no_inventory_stock' | 'unsellable_lot'.
+	 * @param PosSaleLine $line The audited line, with its reason.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
 	 */
-	private function auditUnmatchedLine(
-		string $posTxnId,
-		string $administrationId,
-		int $lineIndex,
-		string $productRef,
-		float $quantity,
-		string $reason,
-	): void {
+	private function auditUnmatchedLine(PosSaleLine $line): void {
 		$this->logger->error(
 			'PosStockDecrementListener: unmatched POS stock line — surfaced for reconciliation, NOT silently dropped',
-			[
-				'posTxnId' => $posTxnId,
-				'administrationId' => $administrationId,
-				'lineIndex' => $lineIndex,
-				'productRef' => $productRef,
-				'quantity' => $quantity,
-				'reason' => $reason,
-			]
+			$this->unmatchedContext(line: $line)
 		);
 
 		try {
-			$adminGroup = $this->groupManager->get('admin');
-			if ($adminGroup === null) {
-				return;
-			}
-
-			foreach ($adminGroup->getUsers() as $user) {
-				$notification = $this->notificationMgr->createNotification();
-				$notification->setApp(AppIdentity::APP_ID)
-					->setUser($user->getUID())
-					->setObject('pos-stock-unmatched-line', $posTxnId . '#' . $lineIndex)
-					->setSubject(
-						self::NOTIFICATION_SUBJECT_UNMATCHED,
-						[
-							'posTxnId' => $posTxnId,
-							'productRef' => $productRef,
-							'quantity' => $quantity,
-							'reason' => $reason,
-						]
-					)
-					->setDateTime(new DateTime());
-				$this->notificationMgr->notify($notification);
-			}
+			$this->notifyAdmins(line: $line);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'PosStockDecrementListener: failed to notify admins of an unmatched line',
-				['posTxnId' => $posTxnId, 'exception' => $e->getMessage()]
+				['posTxnId' => $line->posTxnId, 'exception' => $e->getMessage()]
 			);
 		}//end try
 
 	}//end auditUnmatchedLine()
+
+	/**
+	 * The log context of an audited line.
+	 *
+	 * @param PosSaleLine $line The audited line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function unmatchedContext(PosSaleLine $line): array {
+		return [
+			'posTxnId' => $line->posTxnId,
+			'administrationId' => $line->administrationId,
+			'lineIndex' => $line->lineIndex,
+			'productRef' => $line->productRef,
+			'quantity' => $line->quantity,
+			'reason' => $line->reason,
+		];
+
+	}//end unmatchedContext()
+
+	/**
+	 * Notify every member of the `admin` group (none when the group is absent).
+	 *
+	 * @param PosSaleLine $line The audited line.
+	 *
+	 * @return void
+	 */
+	private function notifyAdmins(PosSaleLine $line): void {
+		$adminGroup = $this->groupManager->get('admin');
+		if ($adminGroup === null) {
+			return;
+		}
+
+		foreach ($adminGroup->getUsers() as $user) {
+			$this->notifyUser(uid: $user->getUID(), line: $line);
+		}
+
+	}//end notifyAdmins()
+
+	/**
+	 * Raise the unmatched-line notification for one user.
+	 *
+	 * @param string      $uid  The user id.
+	 * @param PosSaleLine $line The audited line.
+	 *
+	 * @return void
+	 */
+	private function notifyUser(string $uid, PosSaleLine $line): void {
+		$notification = $this->notificationMgr->createNotification();
+		$notification->setApp(AppIdentity::APP_ID)
+			->setUser($uid)
+			->setObject('pos-stock-unmatched-line', $line->posTxnId . '#' . $line->lineIndex)
+			->setSubject(self::NOTIFICATION_SUBJECT_UNMATCHED, $this->unmatchedSubject(line: $line))
+			->setDateTime(new DateTime());
+		$this->notificationMgr->notify($notification);
+
+	}//end notifyUser()
+
+	/**
+	 * The notification subject parameters of an audited line.
+	 *
+	 * @param PosSaleLine $line The audited line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function unmatchedSubject(PosSaleLine $line): array {
+		return [
+			'posTxnId' => $line->posTxnId,
+			'productRef' => $line->productRef,
+			'quantity' => $line->quantity,
+			'reason' => $line->reason,
+		];
+
+	}//end unmatchedSubject()
 
 	/**
 	 * Lazily resolve the OpenRegister ObjectService from the container.

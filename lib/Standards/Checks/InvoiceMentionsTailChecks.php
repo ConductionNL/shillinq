@@ -58,40 +58,170 @@ final class InvoiceMentionsTailChecks implements CheckProvider {
 	 */
 	public static function checks(): array {
 		return [
-			'ARInvoice' => [
-				// VAT Directive art. 226(7a): cash-accounting supply -> 'Kasstelsel' mention.
-				'vatdir-art226-7a' => static fn (array $o): bool => (self::truthy($o, 'cashAccounting') === false || self::present($o, 'cashAccountingMention')),
-				// art. 226(10a): customer-issued (self-billed) invoice -> 'Factuur uitgereikt door afnemer'.
-				'vatdir-art226-10a' => static fn (array $o): bool => (self::truthy($o, 'selfBilled') === false || self::present($o, 'selfBillingMention')),
-				// art. 226(11): exemption -> reference to the applicable provision (reuse the VAT
-				// breakdown exemption reason for the exempt/zero/reverse/export/IC/not-subject families).
-				'vatdir-art226-11' => static fn (array $o): bool => self::exemptBreakdownsReferenced($o),
-				// art. 226(11a): customer liable for VAT -> 'Btw verlegd' mention (when a line/breakdown is reverse-charge).
-				'vatdir-art226-11a' => static fn (array $o): bool => (self::hasCategory($o, 'AE') === false || self::present($o, 'reverseChargeMention')),
-				// art. 226(13): travel-agent margin scheme -> 'Bijzondere regeling reisbureaus'.
-				'vatdir-art226-13' => static fn (array $o): bool => (self::truthy($o, 'marginSchemeTravel') === false || self::present($o, 'marginSchemeMention')),
-				// art. 226(14): second-hand/art/antiques margin scheme -> the corresponding mention.
-				'vatdir-art226-14' => static fn (array $o): bool => (self::truthy($o, 'marginSchemeSecondHand') === false || self::present($o, 'marginSchemeMention')),
-				// art. 226(15): tax representative liable -> the representative's VAT id/details stated.
-				'vatdir-art226-15' => static fn (array $o): bool => (self::truthy($o, 'taxRepLiable') === false || self::present($o, 'sellerTaxRepVatId')),
-				// art. 226b: a simplified invoice must still carry date + supplier id + the VAT amount (or the data to derive it).
-				'vatdir-art226b-simplified' => static fn (array $o): bool => (self::truthy($o, 'simplifiedInvoice') === false
-					|| (self::present($o, 'invoiceDate') && self::present($o, 'sellerVatId') && self::numeric($o, 'vatAmount'))),
-				// art. 230: amounts may be in any currency, but the VAT amount must ALSO be in the national
-				// currency — satisfied when the invoice currency is the national one or a national VAT amount is given.
-				'vatdir-art230-currency' => static fn (array $o): bool => (in_array((string)($o['currency'] ?? 'EUR'), ['EUR'], true)
-					|| self::numeric($o, 'vatAmountNationalCurrency')),
-
-				// EN 16931 BR-CL-10: a party identifier scheme, when present, is from the ISO 6523 ICD list.
-				'en16931-br-cl-10' => static fn (array $o): bool => (self::present($o, 'sellerIdentifierScheme') === false
-					|| in_array((string)($o['sellerIdentifierScheme'] ?? ''), self::ID_SCHEMES, true)),
-				// EN 16931 BR-CL-25: an electronic-address (endpoint) scheme, when present, is from the CEF EAS list.
-				'en16931-br-cl-25' => static fn (array $o): bool => (self::present($o, 'endpointScheme') === false
-					|| in_array((string)($o['endpointScheme'] ?? ''), self::EAS_SCHEMES, true)),
-			],
+			'ARInvoice' => self::arInvoiceChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The ARInvoice predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceChecks(): array {
+		return [
+			'vatdir-art226-7a' => self::vatdirArt2267a(...),
+			'vatdir-art226-10a' => self::vatdirArt22610a(...),
+			'vatdir-art226-11' => self::vatdirArt22611(...),
+			'vatdir-art226-11a' => self::vatdirArt22611a(...),
+			'vatdir-art226-13' => self::vatdirArt22613(...),
+			'vatdir-art226-14' => self::vatdirArt22614(...),
+			'vatdir-art226-15' => self::vatdirArt22615(...),
+			'vatdir-art226b-simplified' => self::vatdirArt226bSimplified(...),
+			'vatdir-art230-currency' => self::vatdirArt230Currency(...),
+			'en16931-br-cl-10' => self::en16931BrCl10(...),
+			'en16931-br-cl-25' => self::en16931BrCl25(...),
+		];
+
+	}//end arInvoiceChecks()
+
+	/**
+	 * VAT Directive art. 226(7a): cash-accounting supply -> 'Kasstelsel' mention.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt2267a(array $o): bool {
+		return (self::truthy($o, 'cashAccounting') === false || self::present($o, 'cashAccountingMention'));
+
+	}//end vatdirArt2267a()
+
+	/**
+	 * art. 226(10a): customer-issued (self-billed) invoice -> 'Factuur uitgereikt door afnemer'.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt22610a(array $o): bool {
+		return (self::truthy($o, 'selfBilled') === false || self::present($o, 'selfBillingMention'));
+
+	}//end vatdirArt22610a()
+
+	/**
+	 * art. 226(11): exemption -> reference to the applicable provision (reuse the VAT
+	 * breakdown exemption reason for the exempt/zero/reverse/export/IC/not-subject families).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt22611(array $o): bool {
+		return self::exemptBreakdownsReferenced($o);
+
+	}//end vatdirArt22611()
+
+	/**
+	 * art. 226(11a): customer liable for VAT -> 'Btw verlegd' mention (when a line/breakdown is reverse-charge).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt22611a(array $o): bool {
+		return (self::hasCategory($o, 'AE') === false || self::present($o, 'reverseChargeMention'));
+
+	}//end vatdirArt22611a()
+
+	/**
+	 * art. 226(13): travel-agent margin scheme -> 'Bijzondere regeling reisbureaus'.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt22613(array $o): bool {
+		return (self::truthy($o, 'marginSchemeTravel') === false || self::present($o, 'marginSchemeMention'));
+
+	}//end vatdirArt22613()
+
+	/**
+	 * art. 226(14): second-hand/art/antiques margin scheme -> the corresponding mention.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt22614(array $o): bool {
+		return (self::truthy($o, 'marginSchemeSecondHand') === false || self::present($o, 'marginSchemeMention'));
+
+	}//end vatdirArt22614()
+
+	/**
+	 * art. 226(15): tax representative liable -> the representative's VAT id/details stated.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt22615(array $o): bool {
+		return (self::truthy($o, 'taxRepLiable') === false || self::present($o, 'sellerTaxRepVatId'));
+
+	}//end vatdirArt22615()
+
+	/**
+	 * art. 226b: a simplified invoice must still carry date + supplier id + the VAT amount (or the data to derive it).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt226bSimplified(array $o): bool {
+		return (self::truthy($o, 'simplifiedInvoice') === false
+			|| (self::present($o, 'invoiceDate') && self::present($o, 'sellerVatId') && self::numeric($o, 'vatAmount')));
+
+	}//end vatdirArt226bSimplified()
+
+	/**
+	 * art. 230: amounts may be in any currency, but the VAT amount must ALSO be in the national
+	 * currency — satisfied when the invoice currency is the national one or a national VAT amount is given.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt230Currency(array $o): bool {
+		return (in_array((string)($o['currency'] ?? 'EUR'), ['EUR'], true)
+			|| self::numeric($o, 'vatAmountNationalCurrency'));
+
+	}//end vatdirArt230Currency()
+
+	/**
+	 * EN 16931 BR-CL-10: a party identifier scheme, when present, is from the ISO 6523 ICD list.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl10(array $o): bool {
+		return (self::present($o, 'sellerIdentifierScheme') === false
+			|| in_array((string)($o['sellerIdentifierScheme'] ?? ''), self::ID_SCHEMES, true));
+
+	}//end en16931BrCl10()
+
+	/**
+	 * EN 16931 BR-CL-25: an electronic-address (endpoint) scheme, when present, is from the CEF EAS list.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function en16931BrCl25(array $o): bool {
+		return (self::present($o, 'endpointScheme') === false
+			|| in_array((string)($o['endpointScheme'] ?? ''), self::EAS_SCHEMES, true));
+
+	}//end en16931BrCl25()
 
 	/**
 	 * No test-data seeding required — every predicate is conditional on an optional

@@ -70,27 +70,33 @@ class KorThresholdGuard {
 
 		$total = 0.0;
 		foreach ($invoices as $invoice) {
-			if (($invoice['administrationId'] ?? null) !== $administrationId) {
-				continue;
+			if (($invoice['administrationId'] ?? null) === $administrationId && self::countsInYear(invoice: $invoice, year: $year) === true) {
+				$total += (float)($invoice['amount'] ?? ($invoice['netAmount'] ?? 0));
 			}
-
-			$invoiceDate = (string)($invoice['invoiceDate'] ?? ($invoice['issueDate'] ?? ''));
-			if (substr($invoiceDate, 0, 4) !== (string)$year) {
-				continue;
-			}
-
-			$status = (string)($invoice['status'] ?? ($invoice['state'] ?? ''));
-			if ($status === 'cancelled' || $status === 'credited') {
-				continue;
-			}
-
-			if (($invoice['documentType'] ?? '') === 'credit-note') {
-				continue;
-			}
-
-			$total += (float)($invoice['amount'] ?? ($invoice['netAmount'] ?? 0));
-		}//end foreach
+		}
 
 		return $total;
 	}//end currentYtdRevenue()
+
+	/**
+	 * Whether the invoice is dated in the year and is live revenue: not cancelled or credited (status before state), not a credit note.
+	 *
+	 * @param array<string,mixed> $invoice The invoice.
+	 * @param int                 $year    The year.
+	 *
+	 * @return bool
+	 */
+	private static function countsInYear(array $invoice, int $year): bool {
+		$invoiceDate = (string)($invoice['invoiceDate'] ?? ($invoice['issueDate'] ?? ''));
+		if (substr($invoiceDate, 0, 4) !== (string)$year) {
+			return false;
+		}
+
+		$status = (string)($invoice['status'] ?? ($invoice['state'] ?? ''));
+		if ($status === 'cancelled' || $status === 'credited') {
+			return false;
+		}
+
+		return ($invoice['documentType'] ?? '') !== 'credit-note';
+	}//end countsInYear()
 }//end class

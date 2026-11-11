@@ -100,6 +100,49 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcNoteCard, NcSelect } from '@nextcloud/vue'
 
+/**
+ * The confirmed link of a both-sides relation, or null without a linked payee.
+ *
+ * @param {object} data The both-sides response body.
+ * @return {object|null} payeeName, matchedOn, confirmedBy.
+ */
+function linkedPayee(data) {
+	if (!(data.link && data.payee && data.payee.id)) {
+		return null
+	}
+	return {
+		payeeName: data.payee.name,
+		matchedOn: data.link.matchedOn,
+		confirmedBy: data.link.confirmedBy,
+	}
+}
+
+/**
+ * The link suggestions for one customer.
+ *
+ * @param {object|null} data The suggestions response body.
+ * @param {string} customerId The customer.
+ * @return {Array<object>}
+ */
+function suggestionsFor(data, customerId) {
+	return ((data && data.suggestions) || []).filter(
+		(pair) => pair.customerId === customerId,
+	)
+}
+
+/**
+ * The payees as select options: their id and name.
+ *
+ * @param {object|null} data The Payee list response body.
+ * @return {Array<{id: string, name: string}>}
+ */
+function payeeOptions(data) {
+	return ((data && data.results) || []).map((payee) => ({
+		id: payee.id || (payee['@self'] && payee['@self'].id),
+		name: payee.name || payee.tradingName,
+	}))
+}
+
 export default {
 	name: 'RelationLinkDialog',
 	components: {
@@ -194,25 +237,9 @@ export default {
 						{ params: { _limit: 500 } },
 					),
 				])
-				const data = relation.data || {}
-				this.linked =
-					data.link && data.payee && data.payee.id
-						? {
-								payeeName: data.payee.name,
-								matchedOn: data.link.matchedOn,
-								confirmedBy: data.link.confirmedBy,
-							}
-						: null
-				this.suggestions = (
-					(suggestions.data && suggestions.data.suggestions)
-					|| []
-				).filter((pair) => pair.customerId === this.customerId)
-				this.payees = ((payees.data && payees.data.results) || []).map(
-					(payee) => ({
-						id: payee.id || (payee['@self'] && payee['@self'].id),
-						name: payee.name || payee.tradingName,
-					}),
-				)
+				this.linked = linkedPayee(relation.data || {})
+				this.suggestions = suggestionsFor(suggestions.data, this.customerId)
+				this.payees = payeeOptions(payees.data)
 			} catch {
 				this.error = this.t(
 					'shillinq',

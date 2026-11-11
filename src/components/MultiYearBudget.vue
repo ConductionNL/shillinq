@@ -176,23 +176,25 @@ export default {
 				return
 			}
 			try {
-				const view = await loadMultiYear(
-					this.administrationId,
-					new Date().getFullYear(),
-				)
-				this.years = view.years || []
-				this.rows = view.rows || []
-				this.budgets = view.budgets || []
-				if (!this.sourceId && this.budgets.length) {
-					this.sourceId = this.budgets[0].annualBudgetId
-				}
+				this.applyView(await loadMultiYear(this.administrationId, new Date().getFullYear()))
 			} catch (error) {
-				this.message = refusal(
-					error,
-					t('shillinq', 'The budgets could not be loaded.'),
-				)
+				this.message = refusal(error, t('shillinq', 'The budgets could not be loaded.'))
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Take a loaded view; the first budget becomes the source when none is chosen.
+		 *
+		 * @param {object} view The years, rows and budgets.
+		 */
+		applyView(view) {
+			this.years = view.years || []
+			this.rows = view.rows || []
+			this.budgets = view.budgets || []
+			if (!this.sourceId && this.budgets.length) {
+				this.sourceId = this.budgets[0].annualBudgetId
 			}
 		},
 
@@ -210,23 +212,26 @@ export default {
 			}
 			this.busy = true
 			try {
-				const created = await startNextYear(
-					this.administrationId,
-					this.sourceId,
-					percentage,
-				)
-				this.message = t('shillinq', 'Draft budget {year} started.', {
-					year: created.fiscalYear,
-				})
-				await this.load()
+				await this.startFrom(percentage)
 			} catch (error) {
-				this.message = refusal(
-					error,
-					t('shillinq', 'The budget could not be started.'),
-				)
+				this.message = refusal(error, t('shillinq', 'The budget could not be started.'))
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * Start next year's budget, announce it and reload.
+		 *
+		 * @param {number} percentage The change on the source budget.
+		 * @return {Promise<void>}
+		 */
+		async startFrom(percentage) {
+			const created = await startNextYear(this.administrationId, this.sourceId, percentage)
+			this.message = t('shillinq', 'Draft budget {year} started.', {
+				year: created.fiscalYear,
+			})
+			await this.load()
 		},
 
 		/**

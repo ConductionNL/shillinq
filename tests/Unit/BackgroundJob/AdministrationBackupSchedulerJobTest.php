@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\BackgroundJob\AdministrationBackupSchedulerJob;
+use OCA\Shillinq\BackgroundJob\BackupRunOutcome;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -275,10 +276,12 @@ final class AdministrationBackupSchedulerJobTest extends TestCase {
 
 		$record = $this->job->buildBackupRunRecord(
 			administration: $administration,
-			startedAt: $started,
-			completedAt: $completed,
-			status: 'success',
-			sizeBytes: 4096
+			outcome: new BackupRunOutcome(
+				startedAt: $started,
+				completedAt: $completed,
+				status: 'success',
+				sizeBytes: 4096
+			)
 		);
 
 		self::assertSame('adm-werk-001', $record['administrationId']);

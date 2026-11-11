@@ -1,0 +1,469 @@
+{
+    "emptyCode": {
+        "result": {
+            "programmeCode": "",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": []
+    },
+    "emptyArrayCode": {
+        "result": {
+            "programmeCode": "",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": []
+    },
+    "cacheHit": {
+        "result": {
+            "status": "cached",
+            "x": 1
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:2.3.2:fy:2026"
+            ]
+        ]
+    },
+    "cacheJunk": {
+        "result": {
+            "programmeCode": "2.3.2",
+            "utilization": -0.25,
+            "status": "on_track",
+            "budget": 1000,
+            "ytdSpend": -250
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:2.3.2"
+            ],
+            [
+                "register",
+                "reg"
+            ],
+            [
+                "find",
+                {
+                    "filters": {
+                        "programmeCode": "2.3.2"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:2.3.2",
+                {
+                    "programmeCode": "2.3.2",
+                    "utilization": -0.25,
+                    "status": "on_track",
+                    "budget": 1000,
+                    "ytdSpend": -250
+                },
+                3600
+            ]
+        ]
+    },
+    "wrappedRow": {
+        "result": {
+            "programmeCode": "2.3.2",
+            "utilization": -0.25,
+            "status": "on_track",
+            "budget": 1000,
+            "ytdSpend": -250
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:2.3.2:fy:2026"
+            ],
+            [
+                "register",
+                "reg"
+            ],
+            [
+                "find",
+                {
+                    "filters": {
+                        "programmeCode": "2.3.2",
+                        "fiscalYear": 2026
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:2.3.2:fy:2026",
+                {
+                    "programmeCode": "2.3.2",
+                    "utilization": -0.25,
+                    "status": "on_track",
+                    "budget": 1000,
+                    "ytdSpend": -250
+                },
+                3600
+            ]
+        ]
+    },
+    "serialisedRow": {
+        "result": {
+            "programmeCode": "1.1",
+            "utilization": 0.25,
+            "status": "unconfigured",
+            "budget": 2001,
+            "ytdSpend": 500
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:1.1"
+            ],
+            [
+                "register",
+                "reg"
+            ],
+            [
+                "find",
+                {
+                    "filters": {
+                        "programmeCode": "1.1"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:1.1",
+                {
+                    "programmeCode": "1.1",
+                    "utilization": 0.25,
+                    "status": "unconfigured",
+                    "budget": 2001,
+                    "ytdSpend": 500
+                },
+                3600
+            ]
+        ]
+    },
+    "scalarRow": {
+        "result": {
+            "programmeCode": "1.2",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:1.2"
+            ],
+            [
+                "register",
+                "reg"
+            ],
+            [
+                "find",
+                {
+                    "filters": {
+                        "programmeCode": "1.2"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:1.2",
+                {
+                    "programmeCode": "1.2",
+                    "utilization": 0.0,
+                    "status": "unconfigured",
+                    "budget": 0,
+                    "ytdSpend": 0
+                },
+                3600
+            ]
+        ]
+    },
+    "noRows": {
+        "result": {
+            "programmeCode": "1.3",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:1.3"
+            ],
+            [
+                "register",
+                "reg"
+            ],
+            [
+                "find",
+                {
+                    "filters": {
+                        "programmeCode": "1.3"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:1.3",
+                {
+                    "programmeCode": "1.3",
+                    "utilization": 0.0,
+                    "status": "unconfigured",
+                    "budget": 0,
+                    "ytdSpend": 0
+                },
+                3600
+            ]
+        ]
+    },
+    "orDown": {
+        "result": {
+            "programmeCode": "1.4",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:1.4"
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:1.4",
+                {
+                    "programmeCode": "1.4",
+                    "utilization": 0.0,
+                    "status": "unconfigured",
+                    "budget": 0,
+                    "ytdSpend": 0
+                },
+                3600
+            ]
+        ]
+    },
+    "lookupFails": {
+        "result": {
+            "programmeCode": "1.5",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:1.5:fy:2025"
+            ],
+            [
+                "register",
+                "reg"
+            ],
+            [
+                "find",
+                {
+                    "filters": {
+                        "programmeCode": "1.5",
+                        "fiscalYear": 2025
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "error",
+                "Shillinq compliance service: programme lookup failed",
+                {
+                    "programmeCode": "1.5",
+                    "fiscalYear": 2025,
+                    "exception": "or down"
+                }
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:1.5:fy:2025",
+                {
+                    "programmeCode": "1.5",
+                    "utilization": 0.0,
+                    "status": "unconfigured",
+                    "budget": 0,
+                    "ytdSpend": 0
+                },
+                3600
+            ]
+        ]
+    },
+    "arrayRecord": {
+        "result": {
+            "programmeCode": "A",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 10
+        },
+        "events": [
+            [
+                "factory.available"
+            ]
+        ]
+    },
+    "floatCents": {
+        "result": {
+            "programmeCode": "B",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 13
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "warning",
+                "Shillinq compliance service: cache factory threw",
+                {
+                    "exception": "factory down"
+                }
+            ]
+        ]
+    },
+    "setFails": {
+        "result": {
+            "programmeCode": "C",
+            "utilization": 0.0,
+            "status": "unconfigured",
+            "budget": 0,
+            "ytdSpend": 0
+        },
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.get",
+                "shillinq-bbv-compliance:C"
+            ],
+            [
+                "cache.set",
+                "shillinq-bbv-compliance:C",
+                {
+                    "programmeCode": "C",
+                    "utilization": 0.0,
+                    "status": "unconfigured",
+                    "budget": 0,
+                    "ytdSpend": 0
+                },
+                3600
+            ],
+            [
+                "warning",
+                "Shillinq compliance service: cache set failed",
+                {
+                    "exception": "set down"
+                }
+            ]
+        ]
+    },
+    "invalidateFy": {
+        "result": null,
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.remove",
+                "shillinq-bbv-compliance:2.3.2:fy:2026"
+            ]
+        ]
+    },
+    "invalidateAllFy": {
+        "result": null,
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.remove",
+                "shillinq-bbv-compliance:2.3.2"
+            ]
+        ]
+    },
+    "invalidateEmpty": {
+        "result": null,
+        "events": [
+            [
+                "factory.available"
+            ]
+        ]
+    },
+    "invalidateNoCache": {
+        "result": null,
+        "events": [
+            [
+                "factory.available"
+            ]
+        ]
+    },
+    "invalidateFails": {
+        "result": null,
+        "events": [
+            [
+                "factory.available"
+            ],
+            [
+                "cache.remove",
+                "shillinq-bbv-compliance:2.3.2:fy:2024"
+            ],
+            [
+                "warning",
+                "Shillinq compliance service: cache remove failed",
+                {
+                    "programmeCode": "2.3.2",
+                    "fiscalYear": 2024,
+                    "exception": "remove down"
+                }
+            ]
+        ]
+    }
+}

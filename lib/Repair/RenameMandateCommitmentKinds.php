@@ -71,6 +71,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCP\DB\Exception;
+use OCP\DB\IPreparedStatement;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -98,6 +99,13 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 * @var string
 	 */
 	private const COLUMN = 'kind_commitment';
+
+	/**
+	 * Lists every table that carries the column bound to :col.
+	 *
+	 * @var string
+	 */
+	private const COLUMN_LISTING_SQL = 'SELECT table_name, column_name FROM information_schema.columns WHERE column_name = :col';
 
 	/**
 	 * Dutch => English, identical to the Commitment.kind entries that
@@ -146,18 +154,7 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		try {
-			$tables = $this->shardTablesWithColumn();
-			if ($tables === []) {
-				$output->info('RenameMandateCommitmentKinds: no shillinq mandate table found; nothing to do.');
-				return;
-			}
-
-			$changed = 0;
-			foreach ($tables as $table) {
-				$changed += $this->rewriteTable(table: $table);
-			}
-
-			$output->info('RenameMandateCommitmentKinds: rewrote ' . $changed . ' mandate row(s).');
+			$this->rewriteAll(output: $output);
 		} catch (Throwable $e) {
 			// Fail-soft: never block the upgrade.
 			$this->logger->warning(
@@ -169,6 +166,28 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	}//end run()
 
 	/**
+	 * Rewrite every shillinq mandate table and report the row count.
+	 *
+	 * @param IOutput $output Repair output channel.
+	 *
+	 * @return void
+	 */
+	private function rewriteAll(IOutput $output): void {
+		$tables = $this->shardTablesWithColumn();
+		if ($tables === []) {
+			$output->info('RenameMandateCommitmentKinds: no shillinq mandate table found; nothing to do.');
+			return;
+		}
+
+		$changed = 0;
+		foreach ($tables as $table) {
+			$changed += $this->rewriteTable(table: $table);
+		}
+
+		$output->info('RenameMandateCommitmentKinds: rewrote ' . $changed . ' mandate row(s).');
+	}//end rewriteAll()
+
+	/**
 	 * Rewrite every row of one table whose list still holds a Dutch kind.
 	 *
 	 * @param string $table The shard table name.
@@ -176,6 +195,28 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 * @return int Number of rows rewritten.
 	 */
 	private function rewriteTable(string $table): int {
+		$rows = $this->readKinds(table: $table);
+		if ($rows === null) {
+			return 0;
+		}
+
+		$changed = 0;
+		foreach ($rows as $row) {
+			$changed += $this->rewriteRow(table: $table, row: $row);
+		}
+
+		return $changed;
+	}//end rewriteTable()
+
+	/**
+	 * Read every row's id and kinds list from one table, or null when the
+	 * table cannot be read (logged).
+	 *
+	 * @param string $table The shard table name.
+	 *
+	 * @return array<int,array<string,mixed>>|null
+	 */
+	private function readKinds(string $table): array|null {
 		try {
 			// `_id`, not `id`. OpenRegister prefixes every control column of a
 			// per-schema shard table with an underscore (_id, _uuid, _schema,
@@ -194,32 +235,53 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 				'RenameMandateCommitmentKinds: could not read a mandate table.',
 				['table' => $table, 'exception' => $e->getMessage()]
 			);
+			return null;
+		}
+
+		return $rows;
+	}//end readKinds()
+
+	/**
+	 * Rewrite one row when its list still holds a Dutch kind.
+	 *
+	 * @param string              $table The shard table name.
+	 * @param array<string,mixed> $row   The row read by rewriteTable().
+	 *
+	 * @return int 1 when the row was rewritten, else 0.
+	 */
+	private function rewriteRow(string $table, array $row): int {
+		$translated = $this->translate(raw: ($row['kinds'] ?? null));
+		if ($translated === null) {
 			return 0;
 		}
 
-		$changed = 0;
-		foreach ($rows as $row) {
-			$translated = $this->translate(raw: ($row['kinds'] ?? null));
-			if ($translated === null) {
-				continue;
-			}
+		$row['kinds'] = $translated;
+		return $this->writeRow(table: $table, row: $row);
+	}//end rewriteRow()
 
-			try {
-				$this->db->executeStatement(
-					'UPDATE `' . $table . '` SET `' . self::COLUMN . '` = ? WHERE _id = ?',
-					[$translated, $row['_id']]
-				);
-				$changed++;
-			} catch (Exception $e) {
-				$this->logger->warning(
-					'RenameMandateCommitmentKinds: could not write a mandate row.',
-					['table' => $table, 'id' => ($row['_id'] ?? '?'), 'exception' => $e->getMessage()]
-				);
-			}
-		}//end foreach
-
-		return $changed;
-	}//end rewriteTable()
+	/**
+	 * Write a row's new kinds list; a failed write is logged and not counted.
+	 *
+	 * @param string              $table The shard table name.
+	 * @param array<string,mixed> $row   The row, with its translated kinds.
+	 *
+	 * @return int 1 when the row was written, else 0.
+	 */
+	private function writeRow(string $table, array $row): int {
+		try {
+			$this->db->executeStatement(
+				'UPDATE `' . $table . '` SET `' . self::COLUMN . '` = ? WHERE _id = ?',
+				[$row['kinds'], $row['_id']]
+			);
+			return 1;
+		} catch (Exception $e) {
+			$this->logger->warning(
+				'RenameMandateCommitmentKinds: could not write a mandate row.',
+				['table' => $table, 'id' => ($row['_id'] ?? '?'), 'exception' => $e->getMessage()]
+			);
+			return 0;
+		}
+	}//end writeRow()
 
 	/**
 	 * Translate one stored cell, or return null when it needs no change.
@@ -232,36 +294,16 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 * @return string|null The new JSON, or null to leave the row alone.
 	 */
 	private function translate(mixed $raw): ?string {
-		if (is_string($raw) === false || $raw === '') {
+		$list = $this->storedList(raw: $raw);
+		if ($list === null) {
 			return null;
 		}
 
-		$decoded = json_decode($raw, true);
+		$out = array_map(fn (mixed $member): mixed => $this->translateMember(member: $member), $list);
 
-		// Only a LIST is rewritten. A null, a scalar or an object is left as it
-		// is rather than coerced into a shape it never had.
-		if (is_array($decoded) === false || $decoded === []) {
-			return null;
-		}
-
-		if (array_is_list($decoded) === false) {
-			return null;
-		}
-
-		$touched = false;
-		$out = [];
-		foreach ($decoded as $member) {
-			if (is_string($member) === true && isset(self::KIND_MAP[$member]) === true) {
-				$out[] = self::KIND_MAP[$member];
-				$touched = true;
-				continue;
-			}
-
-			// Unknown members survive verbatim.
-			$out[] = $member;
-		}
-
-		if ($touched === false) {
+		// Only a mapped member changes value, so an unchanged list means there
+		// was no Dutch member and nothing to write.
+		if ($out === $list) {
 			return null;
 		}
 
@@ -274,13 +316,91 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	}//end translate()
 
 	/**
+	 * The stored cell as a non-empty list, or null. Only a LIST is rewritten:
+	 * a null, a scalar or an object is left as it is rather than coerced into
+	 * a shape it never had.
+	 *
+	 * @param mixed $raw The stored cell.
+	 *
+	 * @return array<int,mixed>|null
+	 */
+	private function storedList(mixed $raw): array|null {
+		$decoded = $this->decodedCell(raw: $raw);
+		if (is_array($decoded) === false || $decoded === []) {
+			return null;
+		}
+
+		if (array_is_list($decoded) === false) {
+			return null;
+		}
+
+		return $decoded;
+	}//end storedList()
+
+	/**
+	 * The stored cell decoded from JSON, or null when it is not a non-empty
+	 * string (or does not parse).
+	 *
+	 * @param mixed $raw The stored cell.
+	 *
+	 * @return mixed
+	 */
+	private function decodedCell(mixed $raw): mixed {
+		if (is_string($raw) === false || $raw === '') {
+			return null;
+		}
+
+		return json_decode($raw, true);
+	}//end decodedCell()
+
+	/**
+	 * The English kind for a Dutch member; unknown members survive verbatim.
+	 *
+	 * @param mixed $member One list member.
+	 *
+	 * @return mixed
+	 */
+	private function translateMember(mixed $member): mixed {
+		if (is_string($member) === true && isset(self::KIND_MAP[$member]) === true) {
+			return self::KIND_MAP[$member];
+		}
+
+		return $member;
+	}//end translateMember()
+
+	/**
 	 * Shillinq shard tables that actually carry the kind_commitment column.
 	 *
 	 * @return array<int, string>
 	 */
 	private function shardTablesWithColumn(): array {
+		$ids = $this->shillinqRegisterIds();
+		if ($ids === []) {
+			return [];
+		}
+
+		$markers = [];
+		foreach ($ids as $id) {
+			$markers[] = 'openregister_table_' . ((int)$id) . '_';
+		}
+
+		$stmt = $this->columnListing();
+		if ($stmt === null) {
+			return [];
+		}
+
+		return $this->tablesMatching(stmt: $stmt, markers: $markers);
+	}//end shardTablesWithColumn()
+
+	/**
+	 * The ids of shillinq's registers, or [] when they cannot be resolved
+	 * (logged).
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function shillinqRegisterIds(): array {
 		try {
-			$ids = $this->db->executeQuery(
+			return $this->db->executeQuery(
 				'SELECT id FROM `*PREFIX*openregister_registers` WHERE slug LIKE ?',
 				[self::REGISTER_SLUG_PREFIX . '%']
 			)->fetchAll(\PDO::FETCH_COLUMN);
@@ -291,44 +411,48 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 			);
 			return [];
 		}
+	}//end shillinqRegisterIds()
 
-		if ($ids === []) {
-			return [];
-		}
-
-		$markers = [];
-		foreach ($ids as $id) {
-			$markers[] = 'openregister_table_' . ((int)$id) . '_';
-		}
-
+	/**
+	 * The executed listing of every table carrying the kind_commitment
+	 * column, or null when it cannot be run (logged).
+	 *
+	 * @return IPreparedStatement|null
+	 */
+	private function columnListing(): IPreparedStatement|null {
 		try {
-			$stmt = $this->db->prepare(
-				'SELECT table_name, column_name FROM information_schema.columns WHERE column_name = :col'
-			);
+			$stmt = $this->db->prepare(self::COLUMN_LISTING_SQL);
 			$stmt->bindValue('col', self::COLUMN);
 			$stmt->execute();
+			return $stmt;
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'RenameMandateCommitmentKinds: could not list columns.',
 				['exception' => $e->getMessage()]
 			);
-			return [];
+			return null;
 		}
+	}//end columnListing()
 
+	/**
+	 * The distinct listed tables whose name holds one of the shard markers.
+	 *
+	 * @param IPreparedStatement $stmt    The executed column listing.
+	 * @param array<int,string>  $markers The shard table name markers.
+	 *
+	 * @return array<int, string>
+	 */
+	private function tablesMatching(IPreparedStatement $stmt, array $markers): array {
 		$tables = [];
 		while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
 			$name = (string)($row['table_name'] ?? '');
-			if ($name === '') {
-				continue;
-			}
-
 			foreach ($markers as $marker) {
-				if (strpos($name, $marker) !== false) {
+				if ($name !== '' && strpos($name, $marker) !== false) {
 					$tables[] = $name;
 				}
 			}
 		}
 
 		return array_values(array_unique($tables));
-	}//end shardTablesWithColumn()
+	}//end tablesMatching()
 }//end class

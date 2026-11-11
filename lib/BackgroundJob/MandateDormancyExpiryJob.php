@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\BackgroundJob\Support\MandateStore;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Lifecycle\MandateGuard;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -108,43 +109,51 @@ class MandateDormancyExpiryJob extends TimedJob {
 		try {
 			$register = $this->resolveRegister();
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-			$mandates = $objectService
-				->setRegister($register)
-				->setSchema('SepaMandate')
-				->findAll(['filters' => ['status' => 'active']]);
-
-			$expired = 0;
-			foreach ($mandates as $mandate) {
-				if (is_array($mandate) === false) {
-					continue;
-				}
-
-				$mandateId = (string)($mandate['id'] ?? '');
-				if ($this->guard->canExpire(mandateId: $mandateId, object: $mandate) === false) {
-					continue;
-				}
-
-				$mandate['status'] = 'expired';
-				$objectService
-					->setRegister($register)
-					->setSchema('SepaMandate')
-					->saveObject($mandate);
-				$expired++;
-			}//end foreach
-
+			$expired = $this->expireDormant(store: new MandateStore(objectService: $objectService, register: $register));
 			if ($expired > 0) {
-				$this->logger->info(
-					'MandateDormancyExpiryJob: expired ' . $expired . ' dormant SEPA mandate(s) (REQ-SDD-008)'
-				);
+				$this->logger->info('MandateDormancyExpiryJob: expired ' . $expired . ' dormant SEPA mandate(s) (REQ-SDD-008)');
 			}
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'MandateDormancyExpiryJob: run failed',
-				['exception' => $e->getMessage()]
-			);
-		}//end try
+			$this->logger->error('MandateDormancyExpiryJob: run failed', ['exception' => $e->getMessage()]);
+		}
 	}//end runAsJob()
+
+	/**
+	 * Expire every active mandate the guard says is dormant.
+	 *
+	 * @param MandateStore $store The mandate store.
+	 *
+	 * @return int The number expired.
+	 */
+	private function expireDormant(MandateStore $store): int {
+		$expired = 0;
+		foreach ($store->scoped()->findAll(['filters' => ['status' => 'active']]) as $mandate) {
+			if ($this->expireIfDormant(store: $store, mandate: $mandate) === true) {
+				$expired++;
+			}
+		}
+
+		return $expired;
+	}//end expireDormant()
+
+	/**
+	 * Save one mandate as expired when it is a record the guard may expire.
+	 *
+	 * @param MandateStore $store   The mandate store.
+	 * @param mixed        $mandate An active SepaMandate row.
+	 *
+	 * @return bool Whether it was expired.
+	 */
+	private function expireIfDormant(MandateStore $store, mixed $mandate): bool {
+		if (is_array($mandate) === false || $this->guard->canExpire(mandateId: (string)($mandate['id'] ?? ''), object: $mandate) === false) {
+			return false;
+		}
+
+		$mandate['status'] = 'expired';
+		$store->scoped()->saveObject($mandate);
+
+		return true;
+	}//end expireIfDormant()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.

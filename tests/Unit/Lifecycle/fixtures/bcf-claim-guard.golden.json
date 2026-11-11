@@ -1,0 +1,194 @@
+{
+    "closedQuarter": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            [
+                "GLTransaction",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "BbvAccountMapping",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "FiscalPeriod",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ]
+        ]
+    },
+    "closedFlag": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            [
+                "GLTransaction",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "BbvAccountMapping",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "FiscalPeriod",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ]
+        ]
+    },
+    "openQuarter": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            [
+                "GLTransaction",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "BbvAccountMapping",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "FiscalPeriod",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ]
+        ]
+    },
+    "emptyClaim": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            [
+                "GLTransaction",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "BbvAccountMapping",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "FiscalPeriod",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ]
+        ]
+    },
+    "byLookup": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            [
+                "BcfClaim",
+                {
+                    "id": "bc-1"
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "periodId": "2026-Q1"
+                }
+            ],
+            [
+                "BbvAccountMapping",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "FiscalPeriod",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ]
+        ]
+    },
+    "notFound": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noQuarter": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "BcfClaimGuard: submit precondition check failed — denying submit transition (fail-closed)",
+                {
+                    "bcfClaimId": "bc-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            [
+                "GLTransaction",
+                {
+                    "administrationId": "adm-1",
+                    "periodId": "2026-Q1"
+                }
+            ]
+        ]
+    }
+}

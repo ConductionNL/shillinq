@@ -35,6 +35,9 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SettingsService;
@@ -159,13 +162,10 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 			->setObject($payload);
 
 		return new ObjectTransitionedEvent(
-			$entity,
-			$action,
-			'draft',
-			'ready-for-submission',
-			'concerncontroller1',
-			'shillinq',
-			$schemaSlug,
+			object: $entity,
+			move: new TransitionMove(action: $action, from: 'draft', to: 'ready-for-submission'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: $schemaSlug),
+			actor: new TransitionActor(userId: 'concerncontroller1'),
 		);
 
 	}//end makeEvent()
@@ -276,4 +276,21 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		self::assertCount(0, $this->updates);
 
 	}//end testNonMatchingEventTypeIsIgnored()
+
+	/**
+	 * The subject id falls back to the entity id and is stamped on the
+	 * object sent for signing; a result without status or reference
+	 * persists only `requested`; a namespaced slug matches.
+	 *
+	 * @return void
+	 */
+	public function testEntityIdFallbackAndMinimalResult(): void {
+		$listener = $this->makeListener([], schemaSlug: ' shillinq/ACMReport ');
+
+		$listener->handle($this->makeEvent(['administrationId' => 'adm-1', 'signingStatus' => 'draft'], id: 'acm-7'));
+
+		self::assertSame('acm-7', $this->signingCalls[0][0]['id']);
+		self::assertSame([['id' => 'acm-7', 'signingStatus' => 'requested']], $this->updates);
+
+	}//end testEntityIdFallbackAndMinimalResult()
 }//end class

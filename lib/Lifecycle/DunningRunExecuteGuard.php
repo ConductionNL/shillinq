@@ -83,6 +83,7 @@ class DunningRunExecuteGuard {
 				$register = 'shillinq';
 			}
 
+			$check = new DunningRunCheck(runId: $runId, register: $register);
 			$runs = $this->objectService
 				->setRegister($register)
 				->setSchema('DunningRun')
@@ -91,49 +92,87 @@ class DunningRunExecuteGuard {
 				return false;
 			}
 
-			$run = $runs[0];
-
-			$invoiceId = (string)($run['invoiceId'] ?? '');
-			if ($invoiceId === '') {
-				return false;
-			}
-
-			$pauses = $this->objectService
-				->setRegister($register)
-				->setSchema('DunningPauseDispute')
-				->findAll(
-					[
-						'filters' => [
-							'invoiceId' => $invoiceId,
-							'lifecycleState' => 'active',
-						],
-					]
-				);
-			if ($pauses !== []) {
-				$this->logger->info('Shillinq: DunningRun ' . $runId . ' blocked by active pause.');
-				return false;
-			}
-
-			// REQ-CCD-006: B2C stage 3 MUST include the 14-day grace text.
-			$stageNr = (int)($run['stageNr'] ?? 0);
-			if ($stageNr === 3) {
-				$body = (string)($run['renderedBody'] ?? '');
-				// The partyType lookup would normally resolve through the
-				// invoice record; absent an integrated AR core, treat the
-				// run's presence-of-fragment as the authoritative signal.
-				if (mb_stripos($body, self::B2C_14D_FRAGMENT) === false) {
-					$this->logger->info(
-						'Shillinq: DunningRun ' . $runId . ' stage-3 missing 14-day grace fragment; blocked.'
-					);
-					return false;
-				}
-			}
-
-			return true;
+			return $this->runExecutable(check: $check, run: $runs[0]);
 		} catch (\Throwable $e) {
 			$this->logger->warning('Shillinq: DunningRunExecuteGuard failed: ' . $e->getMessage());
 			return false;
 		}//end try
 
 	}//end canExecute()
+
+	/**
+	 * The run has an invoice, no active pause and, at stage 3, the grace text.
+	 *
+	 * @param DunningRunCheck $check The run being executed.
+	 * @param mixed $run The DunningRun record.
+	 *
+	 * @return bool True when execution is allowed.
+	 */
+	private function runExecutable(DunningRunCheck $check, mixed $run): bool {
+		$invoiceId = (string)($run['invoiceId'] ?? '');
+		if ($invoiceId === '') {
+			return false;
+		}
+
+		if ($this->activePauseExists(check: $check, invoiceId: $invoiceId) === true) {
+			$this->logger->info('Shillinq: DunningRun ' . $check->runId . ' blocked by active pause.');
+			return false;
+		}
+
+		// REQ-CCD-006: B2C stage 3 MUST include the 14-day grace text.
+		if ($this->graceTextMissing(run: $run) === true) {
+			$this->logger->info(
+				'Shillinq: DunningRun ' . $check->runId . ' stage-3 missing 14-day grace fragment; blocked.'
+			);
+			return false;
+		}
+
+		return true;
+
+	}//end runExecutable()
+
+	/**
+	 * Whether an active DunningPauseDispute holds the invoice.
+	 *
+	 * @param DunningRunCheck $check The run being executed.
+	 * @param string $invoiceId The run's invoice id.
+	 *
+	 * @return bool True when the invoice is paused.
+	 */
+	private function activePauseExists(DunningRunCheck $check, string $invoiceId): bool {
+		$pauses = $this->objectService
+			->setRegister($check->register)
+			->setSchema('DunningPauseDispute')
+			->findAll(
+				[
+					'filters' => [
+						'invoiceId' => $invoiceId,
+						'lifecycleState' => 'active',
+					],
+				]
+			);
+
+		return $pauses !== [];
+
+	}//end activePauseExists()
+
+	/**
+	 * Whether a stage-3 run's body lacks the mandatory 14-day grace fragment.
+	 *
+	 * The partyType lookup would normally resolve through the invoice record;
+	 * absent an integrated AR core, the run's presence-of-fragment is the
+	 * authoritative signal.
+	 *
+	 * @param mixed $run The DunningRun record.
+	 *
+	 * @return bool True when the run is at stage 3 without the fragment.
+	 */
+	private function graceTextMissing(mixed $run): bool {
+		if ((int)($run['stageNr'] ?? 0) !== 3) {
+			return false;
+		}
+
+		return mb_stripos((string)($run['renderedBody'] ?? ''), self::B2C_14D_FRAGMENT) === false;
+
+	}//end graceTextMissing()
 }//end class

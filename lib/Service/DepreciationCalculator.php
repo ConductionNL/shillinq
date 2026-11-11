@@ -110,52 +110,91 @@ class DepreciationCalculator {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function yearlyDepreciation(array $asset, string $referenceDate = '', ?int $floatPrecision = null): float {
+		return $this->applyFloatPrecision(
+			value: $this->yearlyAmount(asset: $asset, referenceDate: $referenceDate),
+			floatPrecision: $floatPrecision
+		);
+	}//end yearlyDepreciation()
+
+	/**
+	 * Unrounded yearly depreciation by method; 0 for `none` and any method
+	 * without a yearly rule.
+	 *
+	 * @param array<string,mixed> $asset         FixedAsset record.
+	 * @param string              $referenceDate Reference date for declining-balance.
+	 *
+	 * @return float
+	 */
+	private function yearlyAmount(array $asset, string $referenceDate): float {
 		$method = (string)($asset['depreciationMethod'] ?? 'none');
-		if ($method === 'none') {
-			return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
-		}
-
-		$costCents = $this->toCents(amount: ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0)));
-		$residualCents = $this->toCents(amount: ($asset['residualValue'] ?? 0));
-
-		// Useful-life lookup honours both REQ-FA-002 aliases (usefulLifeYears
-		// / usefulLifeMonths). When both are present they MUST agree to
-		// within 1-month rounding per the schema alias contract; the months
-		// form wins as the canonical storage shape.
-		$lifeMonths = (int)($asset['usefulLifeMonths'] ?? 0);
-		if ($lifeMonths <= 0) {
-			$lifeYears = (int)($asset['usefulLifeYears'] ?? 0);
-			if ($lifeYears > 0) {
-				$lifeMonths = ($lifeYears * 12);
-			}
-		}
-
 		if ($method === 'linear') {
-			if ($lifeMonths <= 0) {
-				return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
-			}
-
-			$depreciableCents = max(0, ($costCents - $residualCents));
-			$yearlyCents = (int)round(($depreciableCents * 12) / $lifeMonths);
-			$yearly = ($yearlyCents / 100);
-			return $this->applyFloatPrecision(value: $yearly, floatPrecision: $floatPrecision);
+			return $this->yearlyLinear(asset: $asset);
 		}
 
 		if ($method === 'declining-balance' || $method === 'degressive') {
-			$rate = (float)($asset['declineRate'] ?? ($asset['degressiveRate'] ?? 0));
-			if ($rate <= 0.0) {
-				return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
-			}
-
-			$bookValue = $this->currentBookValue(asset: $asset, referenceDate: $referenceDate);
-			$bookValueCents = $this->toCents(amount: $bookValue);
-			$yearlyCents = (int)round($bookValueCents * $rate);
-			$yearly = ($yearlyCents / 100);
-			return $this->applyFloatPrecision(value: $yearly, floatPrecision: $floatPrecision);
+			return $this->yearlyDeclining(asset: $asset, referenceDate: $referenceDate);
 		}
 
-		return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
-	}//end yearlyDepreciation()
+		return 0.0;
+	}//end yearlyAmount()
+
+	/**
+	 * Linear yearly depreciation: depreciable cents × 12 ÷ useful-life months.
+	 *
+	 * @param array<string,mixed> $asset FixedAsset record.
+	 *
+	 * @return float
+	 */
+	private function yearlyLinear(array $asset): float {
+		$lifeMonths = $this->usefulLifeMonths(asset: $asset);
+		if ($lifeMonths <= 0) {
+			return 0.0;
+		}
+
+		$costCents = $this->toCents(amount: ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0)));
+		$depreciableCents = max(0, ($costCents - $this->toCents(amount: ($asset['residualValue'] ?? 0))));
+
+		return ((int)round(($depreciableCents * 12) / $lifeMonths) / 100);
+	}//end yearlyLinear()
+
+	/**
+	 * Declining-balance yearly depreciation: current book value × rate.
+	 *
+	 * @param array<string,mixed> $asset         FixedAsset record.
+	 * @param string              $referenceDate Reference date for the book value.
+	 *
+	 * @return float
+	 */
+	private function yearlyDeclining(array $asset, string $referenceDate): float {
+		$rate = (float)($asset['declineRate'] ?? ($asset['degressiveRate'] ?? 0));
+		if ($rate <= 0.0) {
+			return 0.0;
+		}
+
+		$bookValueCents = $this->toCents(amount: $this->currentBookValue(asset: $asset, referenceDate: $referenceDate));
+
+		return ((int)round($bookValueCents * $rate) / 100);
+	}//end yearlyDeclining()
+
+	/**
+	 * Useful life in months, honouring both REQ-FA-002 aliases
+	 * (usefulLifeYears / usefulLifeMonths). When both are present they MUST
+	 * agree to within 1-month rounding per the schema alias contract; the
+	 * months form wins as the canonical storage shape.
+	 *
+	 * @param array<string,mixed> $asset FixedAsset record.
+	 *
+	 * @return int Months, or a non-positive value when unknown.
+	 */
+	private function usefulLifeMonths(array $asset): int {
+		$lifeMonths = (int)($asset['usefulLifeMonths'] ?? 0);
+		$lifeYears = (int)($asset['usefulLifeYears'] ?? 0);
+		if ($lifeMonths <= 0 && $lifeYears > 0) {
+			return ($lifeYears * 12);
+		}
+
+		return $lifeMonths;
+	}//end usefulLifeMonths()
 
 	/**
 	 * Gain/loss on disposal at retirement (REQ-FA-008).
@@ -313,41 +352,57 @@ class DepreciationCalculator {
 	 */
 	public function monthlyDepreciation(array $asset, string $referenceDate = ''): float {
 		$method = (string)($asset['depreciationMethod'] ?? 'none');
-		if ($method === 'none') {
-			return 0.0;
-		}
-
-		$costCents = $this->toCents(amount: ($asset['acquisitionCost'] ?? 0));
-		$residualCents = $this->toCents(amount: ($asset['residualValue'] ?? 0));
-		$usefulLife = (int)($asset['usefulLifeMonths'] ?? 0);
-
 		if ($method === 'linear') {
-			if ($usefulLife <= 0) {
-				return 0.0;
-			}
-
-			$depreciableCents = max(0, ($costCents - $residualCents));
-			$monthlyCents = (int)round($depreciableCents / $usefulLife);
-			return $this->fromCents(cents: $monthlyCents);
+			return $this->fromCents(cents: $this->linearMonthlyCents(asset: $asset));
 		}
 
 		if ($method === 'degressive') {
-			$rate = (float)($asset['degressiveRate'] ?? 0);
-			if ($rate <= 0.0) {
-				return 0.0;
-			}
-
-			$bookValue = $this->currentBookValue(asset: $asset, referenceDate: $referenceDate);
-			$bookValueCents = $this->toCents(amount: $bookValue);
-			$monthlyCents = (int)round(($bookValueCents * $rate) / 12);
-			return $this->fromCents(cents: $monthlyCents);
+			return $this->monthlyDegressive(asset: $asset, referenceDate: $referenceDate);
 		}
 
-		// Units-of-production and any other method fall through to 0 by
-		// default; explicit unit-production posting is operator-driven and
-		// not part of this declarative scheduled flow.
+		// None, units-of-production and any other method are 0 by default;
+		// explicit unit-production posting is operator-driven and not part of
+		// this declarative scheduled flow.
 		return 0.0;
 	}//end monthlyDepreciation()
+
+	/**
+	 * Degressive monthly charge: current book value × rate ÷ 12.
+	 *
+	 * @param array<string,mixed> $asset         FixedAsset record.
+	 * @param string              $referenceDate Reference date for the book value.
+	 *
+	 * @return float
+	 */
+	private function monthlyDegressive(array $asset, string $referenceDate): float {
+		$rate = (float)($asset['degressiveRate'] ?? 0);
+		if ($rate <= 0.0) {
+			return 0.0;
+		}
+
+		$bookValueCents = $this->toCents(amount: $this->currentBookValue(asset: $asset, referenceDate: $referenceDate));
+
+		return $this->fromCents(cents: (int)round(($bookValueCents * $rate) / 12));
+	}//end monthlyDegressive()
+
+	/**
+	 * Linear monthly charge in cents: depreciable cents ÷ usefulLifeMonths,
+	 * 0 without a useful life.
+	 *
+	 * @param array<string,mixed> $asset FixedAsset record.
+	 *
+	 * @return int
+	 */
+	private function linearMonthlyCents(array $asset): int {
+		$usefulLife = (int)($asset['usefulLifeMonths'] ?? 0);
+		if ($usefulLife <= 0) {
+			return 0;
+		}
+
+		$depreciableCents = max(0, ($this->costCents(asset: $asset) - $this->residualCents(asset: $asset)));
+
+		return (int)round($depreciableCents / $usefulLife);
+	}//end linearMonthlyCents()
 
 	/**
 	 * Current net book value at `referenceDate` (REQ-FA-003).
@@ -370,49 +425,68 @@ class DepreciationCalculator {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function currentBookValue(array $asset, string $referenceDate = ''): float {
-		$costCents = $this->toCents(amount: ($asset['acquisitionCost'] ?? 0));
-		$method = (string)($asset['depreciationMethod'] ?? 'none');
-		if ($method === 'none') {
-			return $this->fromCents(cents: $costCents);
+		if ((string)($asset['depreciationMethod'] ?? 'none') === 'none') {
+			return $this->fromCents(cents: $this->costCents(asset: $asset));
 		}
 
 		if ($referenceDate === '') {
 			$referenceDate = date('Y-m-d');
 		}
 
-		$residualCents = $this->toCents(amount: ($asset['residualValue'] ?? 0));
 		$months = $this->monthsElapsed(
 			acquisitionDate: (string)($asset['acquisitionDate'] ?? $referenceDate),
 			referenceDate: $referenceDate
 		);
 
-		if ($method === 'linear') {
-			$usefulLife = (int)($asset['usefulLifeMonths'] ?? 0);
-			if ($usefulLife <= 0) {
-				return $this->fromCents(cents: $costCents);
-			}
-
-			$depreciableCents = max(0, ($costCents - $residualCents));
-			$perMonthCents = (int)round($depreciableCents / $usefulLife);
-			$accumCents = ($perMonthCents * $months);
-			$bookCents = max($residualCents, ($costCents - $accumCents));
-			return $this->fromCents(cents: $bookCents);
-		}
-
-		if ($method === 'degressive') {
-			$rate = (float)($asset['degressiveRate'] ?? 0);
-			if ($rate <= 0.0) {
-				return $this->fromCents(cents: $costCents);
-			}
-
-			$factor = max(0.0, (1.0 - ($rate * ($months / 12.0))));
-			$bookCents = (int)round($costCents * $factor);
-			$bookCents = max($residualCents, $bookCents);
-			return $this->fromCents(cents: $bookCents);
-		}
-
-		return $this->fromCents(cents: $costCents);
+		return $this->fromCents(cents: $this->bookCents(asset: $asset, months: $months));
 	}//end currentBookValue()
+
+	/**
+	 * Book value in cents after `$months` of depreciation; never below the
+	 * residual value, and the full cost for a method without a book-value rule.
+	 *
+	 * @param array<string,mixed> $asset  FixedAsset record.
+	 * @param int                 $months Whole months elapsed.
+	 *
+	 * @return int
+	 */
+	private function bookCents(array $asset, int $months): int {
+		$method = (string)($asset['depreciationMethod'] ?? 'none');
+		if ($method === 'linear' && (int)($asset['usefulLifeMonths'] ?? 0) > 0) {
+			$accumCents = ($this->linearMonthlyCents(asset: $asset) * $months);
+			return max($this->residualCents(asset: $asset), ($this->costCents(asset: $asset) - $accumCents));
+		}
+
+		$rate = (float)($asset['degressiveRate'] ?? 0);
+		if ($method === 'degressive' && $rate > 0.0) {
+			$factor = max(0.0, (1.0 - ($rate * ($months / 12.0))));
+			return max($this->residualCents(asset: $asset), (int)round($this->costCents(asset: $asset) * $factor));
+		}
+
+		return $this->costCents(asset: $asset);
+	}//end bookCents()
+
+	/**
+	 * Acquisition cost in cents.
+	 *
+	 * @param array<string,mixed> $asset FixedAsset record.
+	 *
+	 * @return int
+	 */
+	private function costCents(array $asset): int {
+		return $this->toCents(amount: ($asset['acquisitionCost'] ?? 0));
+	}//end costCents()
+
+	/**
+	 * Residual value in cents.
+	 *
+	 * @param array<string,mixed> $asset FixedAsset record.
+	 *
+	 * @return int
+	 */
+	private function residualCents(array $asset): int {
+		return $this->toCents(amount: ($asset['residualValue'] ?? 0));
+	}//end residualCents()
 
 	/**
 	 * Book value under the commercial stream (REQ-FA-004).

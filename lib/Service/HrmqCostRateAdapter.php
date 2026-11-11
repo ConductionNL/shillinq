@@ -142,44 +142,88 @@ class HrmqCostRateAdapter {
 			return [];
 		}
 
+		$run = new CostRateRun();
+		$run->service = $service;
+		$run->period = $period;
+		$run->additions = $additions;
+
+		return $this->ratesOver(personIds: $personIds, run: $run);
+	}//end ratesFor()
+
+	/**
+	 * The rate map over the distinct people, omitting everyone hrmq cannot price.
+	 *
+	 * @param array<int, string> $personIds Person ids to price.
+	 * @param CostRateRun        $run       Service, period and additions.
+	 *
+	 * @return array<string, int> personId => employer cost in cents per hour.
+	 */
+	private function ratesOver(array $personIds, CostRateRun $run): array {
 		$rates = [];
 		foreach (array_unique($personIds) as $personId) {
 			$personId = trim((string)$personId);
-			if ($personId === '') {
-				continue;
-			}
-
-			$employee = $this->hrmqObject(schema: 'Employee', id: $personId);
-			if ($employee === null) {
-				continue;
-			}
-
-			try {
-				$resolved = $service->resolve(
-					employee: $employee,
-					contract: $this->activeContract(employeeId: $personId),
-					period: $period,
-					extraAdditions: $additions
-				);
-			} catch (Throwable $e) {
-				// An indefensible composition (override with no reason, an
-				// addition with no basis) is hrmq refusing to guess. Omit the
-				// person so the aggregator withholds the total, and say why.
-				$this->logger->warning(
-					'HrmqCostRateAdapter: hrmq refused a cost rate',
-					['personId' => $personId, 'reason' => $e->getMessage()]
-				);
-				continue;
-			}
-
-			$cents = ($resolved['totalCentsPerHour'] ?? null);
-			if (is_int($cents) === true && $cents >= 0) {
+			$cents = $this->rateFor(personId: $personId, run: $run);
+			if ($cents !== null) {
 				$rates[$personId] = $cents;
 			}
-		}//end foreach
+		}
 
 		return $rates;
-	}//end ratesFor()
+	}//end ratesOver()
+
+	/**
+	 * One person's rate, or null when the id is blank, the Employee is not
+	 * readable, or hrmq cannot price them.
+	 *
+	 * @param string      $personId Trimmed person id.
+	 * @param CostRateRun $run      Service, period and additions.
+	 *
+	 * @return integer|null Cents per hour.
+	 */
+	private function rateFor(string $personId, CostRateRun $run): int|null {
+		if ($personId === '') {
+			return null;
+		}
+
+		$employee = $this->hrmqObject(schema: 'Employee', id: $personId);
+		if ($employee === null) {
+			return null;
+		}
+
+		$person = clone $run;
+		$person->personId = $personId;
+		$person->employee = $employee;
+
+		return $this->resolvedCents(run: $person);
+	}//end rateFor()
+
+	/**
+	 * Ask hrmq for the person's rate against their active contract.
+	 *
+	 * An indefensible composition (override with no reason, an addition with
+	 * no basis) is hrmq refusing to guess: the person is omitted so the
+	 * aggregator withholds the total, and the reason is logged.
+	 *
+	 * @param CostRateRun $run The run, for one person.
+	 *
+	 * @return integer|null Cents per hour, or null when refused or unusable.
+	 */
+	private function resolvedCents(CostRateRun $run): int|null {
+		try {
+			$contract = $this->activeContract(employeeId: $run->personId);
+			$resolved = $run->service->resolve(employee: $run->employee, contract: $contract, period: $run->period, extraAdditions: $run->additions);
+		} catch (Throwable $e) {
+			$this->logger->warning('HrmqCostRateAdapter: hrmq refused a cost rate', ['personId' => $run->personId, 'reason' => $e->getMessage()]);
+			return null;
+		}
+
+		$cents = ($resolved['totalCentsPerHour'] ?? null);
+		if (is_int($cents) === true && $cents >= 0) {
+			return $cents;
+		}
+
+		return null;
+	}//end resolvedCents()
 
 	/**
 	 * The hrmq cost-rate service, or null when hrmq is not installed.
@@ -206,9 +250,7 @@ class HrmqCostRateAdapter {
 			try {
 				return $this->container->get(id: $candidate);
 			} catch (Throwable $e) {
-				$this->logger->debug(
-					'HrmqCostRateAdapter: ' . $candidate . ' present but unresolvable: ' . $e->getMessage()
-				);
+				$this->logger->debug('HrmqCostRateAdapter: ' . $candidate . ' present but unresolvable: ' . $e->getMessage());
 			}
 		}
 
@@ -234,26 +276,30 @@ class HrmqCostRateAdapter {
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md
 	 */
 	public function registerSlug(): string {
-		if ($this->resolvedRegister !== null) {
-			return $this->resolvedRegister;
+		if ($this->resolvedRegister === null) {
+			$this->resolvedRegister = ($this->answeringRegister() ?? self::REGISTERS[0]);
 		}
 
+		return $this->resolvedRegister;
+	}//end registerSlug()
+
+	/**
+	 * The first candidate register the ObjectService accepts, newest first.
+	 *
+	 * @return string|null The slug, or null when none answers.
+	 */
+	private function answeringRegister(): string|null {
 		foreach (self::REGISTERS as $candidate) {
 			try {
-				$this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
-					->setRegister($candidate);
-				$this->resolvedRegister = $candidate;
+				$this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')->setRegister($candidate);
 				return $candidate;
 			} catch (Throwable $e) {
-				$this->logger->debug(
-					'HrmqCostRateAdapter: register ' . $candidate . ' did not resolve: ' . $e->getMessage()
-				);
+				$this->logger->debug('HrmqCostRateAdapter: register ' . $candidate . ' did not resolve: ' . $e->getMessage());
 			}
 		}
 
-		$this->resolvedRegister = self::REGISTERS[0];
-		return $this->resolvedRegister;
-	}//end registerSlug()
+		return null;
+	}//end answeringRegister()
 
 	/**
 	 * Read one object from hrmq's register under the caller's RBAC.
@@ -333,20 +379,46 @@ class HrmqCostRateAdapter {
 			return $row;
 		}
 
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$out = $row->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
+		return ($this->serialisedArray(row: $row) ?? $this->entityArray(row: $row));
+	}//end toArray()
+
+	/**
+	 * A row's jsonSerialize() result when it is an array, otherwise null.
+	 *
+	 * @param mixed $row The row.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function serialisedArray(mixed $row): array|null {
+		if (is_object($row) === false || method_exists($row, 'jsonSerialize') === false) {
+			return null;
 		}
 
-		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-			$out = $row->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
+		$out = $row->jsonSerialize();
+		if (is_array($out) === true) {
+			return $out;
 		}
 
 		return null;
-	}//end toArray()
+	}//end serialisedArray()
+
+	/**
+	 * A row's getObject() payload when it is an array, otherwise null.
+	 *
+	 * @param mixed $row The row.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function entityArray(mixed $row): array|null {
+		if (is_object($row) === false || method_exists($row, 'getObject') === false) {
+			return null;
+		}
+
+		$out = $row->getObject();
+		if (is_array($out) === true) {
+			return $out;
+		}
+
+		return null;
+	}//end entityArray()
 }//end class

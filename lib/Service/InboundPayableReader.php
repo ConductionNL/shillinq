@@ -78,39 +78,68 @@ class InboundPayableReader {
 			return;
 		}
 
-		$wanted = $event->getCorrelationIds();
-		$year = $event->getPaidInYear();
 		$payables = [];
 		foreach ($this->payablesOf(app: $app, category: $event->getCategory()) as $payable) {
-			if ($wanted !== [] && in_array((string)($payable['correlationId'] ?? ''), $wanted, true) === false) {
-				continue;
+			if ($this->isAsked(payable: $payable, event: $event) === true) {
+				$payables[] = ($this->identityOf(payable: $payable) + $this->settlementOf(payable: $payable));
 			}
-
-			if ($year > 0 && str_starts_with((string)($payable['paidOn'] ?? ''), $year . '-') === false) {
-				continue;
-			}
-
-			$payables[] = [
-				'payableId' => (string)$payable['id'],
-				'reference' => (string)($payable['reference'] ?? ''),
-				'correlationId' => (string)($payable['correlationId'] ?? ''),
-				'category' => (string)($payable['category'] ?? ''),
-				'amount' => (float)($payable['amount'] ?? 0),
-				'payee' => [
-					'name' => (string)($payable['payee']['name'] ?? ''),
-					'iban' => (string)($payable['payee']['iban'] ?? ''),
-				],
-				'currency' => (string)($payable['currency'] ?? 'EUR'),
-				'state' => (string)($payable['state'] ?? ''),
-				'paidOn' => (string)($payable['paidOn'] ?? ''),
-				'bankReference' => (string)($payable['bankReference'] ?? ''),
-				'historical' => (($payable['historical'] ?? false) === true),
-				'linkedObjects' => array_values((array)($payable['linkedObjects'] ?? [])),
-			];
-		}//end foreach
+		}
 
 		$event->answer(payables: $payables);
 	}//end listFor()
+
+	/**
+	 * Whether a payout matches the question's correlation ids and paid-in
+	 * year, each only when given.
+	 *
+	 * @param array<string, mixed>   $payable One payout.
+	 * @param PayablesRequestedEvent $event   The question.
+	 *
+	 * @return boolean
+	 */
+	private function isAsked(array $payable, PayablesRequestedEvent $event): bool {
+		$wanted = $event->getCorrelationIds();
+		$year = $event->getPaidInYear();
+
+		return ($wanted === [] || in_array((string)($payable['correlationId'] ?? ''), $wanted, true) === true)
+			&& ($year <= 0 || str_starts_with((string)($payable['paidOn'] ?? ''), $year . '-') === true);
+	}//end isAsked()
+
+	/**
+	 * What a payout is: id, reference, correlation, category and amount.
+	 *
+	 * @param array<string, mixed> $payable One payout.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function identityOf(array $payable): array {
+		return [
+			'payableId' => (string)$payable['id'],
+			'reference' => (string)($payable['reference'] ?? ''),
+			'correlationId' => (string)($payable['correlationId'] ?? ''),
+			'category' => (string)($payable['category'] ?? ''),
+			'amount' => (float)($payable['amount'] ?? 0),
+		];
+	}//end identityOf()
+
+	/**
+	 * How a payout was settled: payee, currency, state, payment and links.
+	 *
+	 * @param array<string, mixed> $payable One payout.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function settlementOf(array $payable): array {
+		return [
+			'payee' => ['name' => (string)($payable['payee']['name'] ?? ''), 'iban' => (string)($payable['payee']['iban'] ?? '')],
+			'currency' => (string)($payable['currency'] ?? 'EUR'),
+			'state' => (string)($payable['state'] ?? ''),
+			'paidOn' => (string)($payable['paidOn'] ?? ''),
+			'bankReference' => (string)($payable['bankReference'] ?? ''),
+			'historical' => (($payable['historical'] ?? false) === true),
+			'linkedObjects' => array_values((array)($payable['linkedObjects'] ?? [])),
+		];
+	}//end settlementOf()
 
 	/**
 	 * Every payout one app raised, read past the caller's rights.
@@ -121,22 +150,12 @@ class InboundPayableReader {
 	 * @return array<int, array<string, mixed>> The payouts, each with its id.
 	 */
 	private function payablesOf(string $app, string $category): array {
-		$filters = ['sourceApp' => $app];
-		if ($category !== '') {
-			$filters['category'] = $category;
-		}
-
+		$filters = $this->filtersFor(app: $app, category: $category);
 		$scoped = $this->objectService->setRegister($this->registerSlug())->setSchema(self::SCHEMA);
 		$found = [];
 		for ($page = 0; $page < 50; $page++) {
 			$rows = $scoped->findAll(['filters' => $filters, 'limit' => 200, 'offset' => ($page * 200)], _rbac: false, _multitenancy: false);
-			foreach ($rows as $row) {
-				$record = ObjectIdentifier::recordWithId(candidate: $row);
-				if ($record !== null && (string)($record['id'] ?? '') !== '') {
-					$found[] = $record;
-				}
-			}
-
+			array_push($found, ...$this->recordsWithIds(rows: $rows));
 			if (count($rows) < 200) {
 				break;
 			}
@@ -144,6 +163,42 @@ class InboundPayableReader {
 
 		return $found;
 	}//end payablesOf()
+
+	/**
+	 * The filters for one app's payouts, narrowed to a category when given.
+	 *
+	 * @param string $app      The raising app.
+	 * @param string $category Only this category, when not empty.
+	 *
+	 * @return array<string, string>
+	 */
+	private function filtersFor(string $app, string $category): array {
+		$filters = ['sourceApp' => $app];
+		if ($category !== '') {
+			$filters['category'] = $category;
+		}
+
+		return $filters;
+	}//end filtersFor()
+
+	/**
+	 * The rows that are records carrying an id.
+	 *
+	 * @param array<int, mixed> $rows One page of findAll() rows.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function recordsWithIds(array $rows): array {
+		$records = [];
+		foreach ($rows as $row) {
+			$record = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($record !== null && (string)($record['id'] ?? '') !== '') {
+				$records[] = $record;
+			}
+		}
+
+		return $records;
+	}//end recordsWithIds()
 
 	/**
 	 * The register slug shillinq's payouts live in.

@@ -289,4 +289,46 @@ final class LeaseDisclosureContractTest extends TestCase {
 		self::assertStringNotContainsString('SQLSTATE', json_encode($response->getData()));
 
 	}//end testServiceFailureIs500WithoutLeakingInternals()
+	/**
+	 * The trimmed scope and the normalised format and language reach the
+	 * service, the format is checked before the language, and a failure
+	 * (including an export failure) is logged with its context.
+	 *
+	 * @return void
+	 */
+	public function testNormalisedArgumentsCheckOrderAndFailureLog(): void {
+		$refused = $this->buildController($this->params(['format' => 'cvs', 'language' => 'fr']))->disclosure();
+		self::assertSame(['error' => 'format must be one of: json, csv, pdf, xbrl'], $refused->getData());
+		$refused = $this->buildController($this->params(['language' => 'fr']))->disclosure();
+		self::assertSame(['error' => 'language must be one of: en, nl'], $refused->getData());
+
+		$service = $this->createMock(LeaseDisclosureService::class);
+		$service->expects(self::exactly(2))->method('generateForPeriod')->with('adm-1', '2026-Q1')->willReturn(self::TABLE);
+		$service->expects(self::once())->method('exportDisclosureNoteToPDF')->with(self::TABLE, 'nl')->willReturn(['status' => 'p']);
+		$service->expects(self::once())->method('exportToXBRL')->willThrowException(new \RuntimeException('xbrl down'));
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('error')->with(
+			'LeaseController: failed to generate disclosure table',
+			['administrationId' => 'adm-1', 'fiscalPeriod' => '2026-Q1', 'format' => 'xbrl', 'exception' => 'xbrl down']
+		);
+		$build = function (array $params) use ($service, $logger): LeaseController {
+			$request = $this->createMock(IRequest::class);
+			$request->method('getParam')->willReturnCallback(static fn (string $key, $default = null) => ($params[$key] ?? $default));
+			$userSession = $this->createMock(IUserSession::class);
+			$userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+			return new LeaseController(
+				request: $request,
+				scheduleService: $this->createMock(LeasePaymentScheduleService::class),
+				disclosureService: $service,
+				userSession: $userSession,
+				logger: $logger,
+			);
+		};
+
+		$pdf = $build(['administration_id' => ' adm-1 ', 'fiscal_period' => ' 2026-Q1 ', 'format' => ' PDF ', 'language' => ' NL '])->disclosure();
+		self::assertSame([Http::STATUS_OK, ['status' => 'p']], [$pdf->getStatus(), $pdf->getData()]);
+		$xbrl = $build(['administration_id' => 'adm-1', 'fiscal_period' => '2026-Q1', 'format' => 'XBRL'])->disclosure();
+		self::assertSame([Http::STATUS_INTERNAL_SERVER_ERROR, ['error' => 'Failed to generate disclosure table']], [$xbrl->getStatus(), $xbrl->getData()]);
+
+	}//end testNormalisedArgumentsCheckOrderAndFailureLog()
 }//end class

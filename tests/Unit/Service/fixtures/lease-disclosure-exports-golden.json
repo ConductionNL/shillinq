@@ -1,0 +1,116 @@
+{
+    "full": {
+        "csv": "section,label,value\nheader,fiscalPeriod,2026 Q1 <draft>\nheader,administrationId,adm-1\nheader,materializedAtPeriodClose,true\nrou-by-class,vehicles,1234.50\nrou-by-class,real-estate,10.00\nrou-by-class,\"it, \"\"equip\"\"\",0.00\nmaturity-analysis,lt1y,100.00\nmaturity-analysis,gt5y,0.00\nweighted-average-ibr,vehicles,4.25\ntotals,totalRouAdditionsInPeriod,5.00\ntotals,totalRouDisposalsInPeriod,0.00\ntotals,totalLeaseLiabilityCurrent,12.35\ntotals,totalLeaseLiabilityNoncurrent,7.00\ntotals,totalInterestExpense,1.00\ntotals,totalShortTermLeaseExpense,2.00\ntotals,totalVariableLeaseExpense,3.00\nnarrative,qualitativeNarrative,\"Line one & two\nLine \"\"three\"\"\"\n",
+        "html.en": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note 2026 Q1 &lt;draft&gt;<\/title><\/head><body><h1>IFRS 16 Disclosure Note 2026 Q1 &lt;draft&gt;<\/h1><h2>Closing right-of-use asset by class<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>1234.50<\/td><\/tr><tr><th scope=\"row\">real-estate<\/th><td>10.00<\/td><\/tr><tr><th scope=\"row\">it, &quot;equip&quot;<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Undiscounted maturity analysis<\/h2><table><tbody><tr><th scope=\"row\">lt1y<\/th><td>100.00<\/td><\/tr><tr><th scope=\"row\">gt5y<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Weighted-average incremental borrowing rate by class<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>4.25<\/td><\/tr><\/tbody><\/table><h2>Other disclosures<\/h2><table><tbody><tr><th scope=\"row\">totalLeaseLiabilityCurrent<\/th><td>12.35<\/td><\/tr><tr><th scope=\"row\">totalLeaseLiabilityNoncurrent<\/th><td>7.00<\/td><\/tr><tr><th scope=\"row\">totalInterestExpense<\/th><td>1.00<\/td><\/tr><tr><th scope=\"row\">totalShortTermLeaseExpense<\/th><td>2.00<\/td><\/tr><tr><th scope=\"row\">totalVariableLeaseExpense<\/th><td>3.00<\/td><\/tr><\/tbody><\/table><h2>Qualitative narrative<\/h2><p>Line one &amp; two<br \/>\nLine &quot;three&quot;<\/p><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>",
+        "html.nl": "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"UTF-8\"><title>IFRS 16-toelichting 2026 Q1 &lt;draft&gt;<\/title><\/head><body><h1>IFRS 16-toelichting 2026 Q1 &lt;draft&gt;<\/h1><h2>Boekwaarde gebruiksrechtactivum per activaklasse<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>1234.50<\/td><\/tr><tr><th scope=\"row\">real-estate<\/th><td>10.00<\/td><\/tr><tr><th scope=\"row\">it, &quot;equip&quot;<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Looptijdanalyse (niet-verdisconteerd)<\/h2><table><tbody><tr><th scope=\"row\">lt1y<\/th><td>100.00<\/td><\/tr><tr><th scope=\"row\">gt5y<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Gewogen gemiddelde marginale rentevoet per activaklasse<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>4.25<\/td><\/tr><\/tbody><\/table><h2>Overige toelichtingen<\/h2><table><tbody><tr><th scope=\"row\">totalLeaseLiabilityCurrent<\/th><td>12.35<\/td><\/tr><tr><th scope=\"row\">totalLeaseLiabilityNoncurrent<\/th><td>7.00<\/td><\/tr><tr><th scope=\"row\">totalInterestExpense<\/th><td>1.00<\/td><\/tr><tr><th scope=\"row\">totalShortTermLeaseExpense<\/th><td>2.00<\/td><\/tr><tr><th scope=\"row\">totalVariableLeaseExpense<\/th><td>3.00<\/td><\/tr><\/tbody><\/table><h2>Toelichting op de leaseactiviteiten<\/h2><p>Line one &amp; two<br \/>\nLine &quot;three&quot;<\/p><footer><p><em>Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.<\/em><\/p><\/footer><\/body><\/html>",
+        "html.fr": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note 2026 Q1 &lt;draft&gt;<\/title><\/head><body><h1>IFRS 16 Disclosure Note 2026 Q1 &lt;draft&gt;<\/h1><h2>Closing right-of-use asset by class<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>1234.50<\/td><\/tr><tr><th scope=\"row\">real-estate<\/th><td>10.00<\/td><\/tr><tr><th scope=\"row\">it, &quot;equip&quot;<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Undiscounted maturity analysis<\/h2><table><tbody><tr><th scope=\"row\">lt1y<\/th><td>100.00<\/td><\/tr><tr><th scope=\"row\">gt5y<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Weighted-average incremental borrowing rate by class<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>4.25<\/td><\/tr><\/tbody><\/table><h2>Other disclosures<\/h2><table><tbody><tr><th scope=\"row\">totalLeaseLiabilityCurrent<\/th><td>12.35<\/td><\/tr><tr><th scope=\"row\">totalLeaseLiabilityNoncurrent<\/th><td>7.00<\/td><\/tr><tr><th scope=\"row\">totalInterestExpense<\/th><td>1.00<\/td><\/tr><tr><th scope=\"row\">totalShortTermLeaseExpense<\/th><td>2.00<\/td><\/tr><tr><th scope=\"row\">totalVariableLeaseExpense<\/th><td>3.00<\/td><\/tr><\/tbody><\/table><h2>Qualitative narrative<\/h2><p>Line one &amp; two<br \/>\nLine &quot;three&quot;<\/p><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>",
+        "pdf.nl": {
+            "kind": "lease-disclosure-note",
+            "fiscalPeriod": "2026 Q1 <draft>",
+            "administrationId": "adm-1",
+            "language": "nl",
+            "status": "pending-pdf-pipeline",
+            "html": "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"UTF-8\"><title>IFRS 16-toelichting 2026 Q1 &lt;draft&gt;<\/title><\/head><body><h1>IFRS 16-toelichting 2026 Q1 &lt;draft&gt;<\/h1><h2>Boekwaarde gebruiksrechtactivum per activaklasse<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>1234.50<\/td><\/tr><tr><th scope=\"row\">real-estate<\/th><td>10.00<\/td><\/tr><tr><th scope=\"row\">it, &quot;equip&quot;<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Looptijdanalyse (niet-verdisconteerd)<\/h2><table><tbody><tr><th scope=\"row\">lt1y<\/th><td>100.00<\/td><\/tr><tr><th scope=\"row\">gt5y<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Gewogen gemiddelde marginale rentevoet per activaklasse<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>4.25<\/td><\/tr><\/tbody><\/table><h2>Overige toelichtingen<\/h2><table><tbody><tr><th scope=\"row\">totalLeaseLiabilityCurrent<\/th><td>12.35<\/td><\/tr><tr><th scope=\"row\">totalLeaseLiabilityNoncurrent<\/th><td>7.00<\/td><\/tr><tr><th scope=\"row\">totalInterestExpense<\/th><td>1.00<\/td><\/tr><tr><th scope=\"row\">totalShortTermLeaseExpense<\/th><td>2.00<\/td><\/tr><tr><th scope=\"row\">totalVariableLeaseExpense<\/th><td>3.00<\/td><\/tr><\/tbody><\/table><h2>Toelichting op de leaseactiviteiten<\/h2><p>Line one &amp; two<br \/>\nLine &quot;three&quot;<\/p><footer><p><em>Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.<\/em><\/p><\/footer><\/body><\/html>"
+        },
+        "pdf.de": {
+            "kind": "lease-disclosure-note",
+            "fiscalPeriod": "2026 Q1 <draft>",
+            "administrationId": "adm-1",
+            "language": "en",
+            "status": "pending-pdf-pipeline",
+            "html": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note 2026 Q1 &lt;draft&gt;<\/title><\/head><body><h1>IFRS 16 Disclosure Note 2026 Q1 &lt;draft&gt;<\/h1><h2>Closing right-of-use asset by class<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>1234.50<\/td><\/tr><tr><th scope=\"row\">real-estate<\/th><td>10.00<\/td><\/tr><tr><th scope=\"row\">it, &quot;equip&quot;<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Undiscounted maturity analysis<\/h2><table><tbody><tr><th scope=\"row\">lt1y<\/th><td>100.00<\/td><\/tr><tr><th scope=\"row\">gt5y<\/th><td>0.00<\/td><\/tr><\/tbody><\/table><h2>Weighted-average incremental borrowing rate by class<\/h2><table><tbody><tr><th scope=\"row\">vehicles<\/th><td>4.25<\/td><\/tr><\/tbody><\/table><h2>Other disclosures<\/h2><table><tbody><tr><th scope=\"row\">totalLeaseLiabilityCurrent<\/th><td>12.35<\/td><\/tr><tr><th scope=\"row\">totalLeaseLiabilityNoncurrent<\/th><td>7.00<\/td><\/tr><tr><th scope=\"row\">totalInterestExpense<\/th><td>1.00<\/td><\/tr><tr><th scope=\"row\">totalShortTermLeaseExpense<\/th><td>2.00<\/td><\/tr><tr><th scope=\"row\">totalVariableLeaseExpense<\/th><td>3.00<\/td><\/tr><\/tbody><\/table><h2>Qualitative narrative<\/h2><p>Line one &amp; two<br \/>\nLine &quot;three&quot;<\/p><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>"
+        },
+        "xbrl": {
+            "kind": "lease-disclosure-xbrl",
+            "status": "pending-sbr-xbrl-reporting",
+            "contextRef": "ctx-2026_Q1_<draft>",
+            "facts": {
+                "ifrs-full:RightofuseAssets": 99.9,
+                "ifrs-full:LeaseLiabilitiesCurrent": 12.345,
+                "ifrs-full:LeaseLiabilitiesNoncurrent": 7.0,
+                "ifrs-full:InterestExpenseOnLeaseLiabilities": 1.0,
+                "ifrs-full:ExpenseRelatingToShorttermLeases": 2.0,
+                "ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets": 0.0,
+                "ifrs-full:ExpenseRelatingToVariableLeasePayments": 3.0
+            },
+            "taxonomy": "ifrs-full-2024",
+            "note": "Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change."
+        }
+    },
+    "sparse": {
+        "csv": "section,label,value\nheader,fiscalPeriod,\nheader,administrationId,\nheader,materializedAtPeriodClose,false\ntotals,totalLowValueLeaseExpense,4.00\nnarrative,qualitativeNarrative,\n",
+        "html.en": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note <\/title><\/head><body><h1>IFRS 16 Disclosure Note <\/h1><h2>Other disclosures<\/h2><table><tbody><tr><th scope=\"row\">totalLowValueLeaseExpense<\/th><td>4.00<\/td><\/tr><\/tbody><\/table><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>",
+        "html.nl": "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"UTF-8\"><title>IFRS 16-toelichting <\/title><\/head><body><h1>IFRS 16-toelichting <\/h1><h2>Overige toelichtingen<\/h2><table><tbody><tr><th scope=\"row\">totalLowValueLeaseExpense<\/th><td>4.00<\/td><\/tr><\/tbody><\/table><footer><p><em>Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.<\/em><\/p><\/footer><\/body><\/html>",
+        "html.fr": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note <\/title><\/head><body><h1>IFRS 16 Disclosure Note <\/h1><h2>Other disclosures<\/h2><table><tbody><tr><th scope=\"row\">totalLowValueLeaseExpense<\/th><td>4.00<\/td><\/tr><\/tbody><\/table><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>",
+        "pdf.nl": {
+            "kind": "lease-disclosure-note",
+            "fiscalPeriod": "",
+            "administrationId": "",
+            "language": "nl",
+            "status": "pending-pdf-pipeline",
+            "html": "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"UTF-8\"><title>IFRS 16-toelichting <\/title><\/head><body><h1>IFRS 16-toelichting <\/h1><h2>Overige toelichtingen<\/h2><table><tbody><tr><th scope=\"row\">totalLowValueLeaseExpense<\/th><td>4.00<\/td><\/tr><\/tbody><\/table><footer><p><em>Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.<\/em><\/p><\/footer><\/body><\/html>"
+        },
+        "pdf.de": {
+            "kind": "lease-disclosure-note",
+            "fiscalPeriod": "",
+            "administrationId": "",
+            "language": "en",
+            "status": "pending-pdf-pipeline",
+            "html": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note <\/title><\/head><body><h1>IFRS 16 Disclosure Note <\/h1><h2>Other disclosures<\/h2><table><tbody><tr><th scope=\"row\">totalLowValueLeaseExpense<\/th><td>4.00<\/td><\/tr><\/tbody><\/table><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>"
+        },
+        "xbrl": {
+            "kind": "lease-disclosure-xbrl",
+            "status": "pending-sbr-xbrl-reporting",
+            "contextRef": "ctx-period",
+            "facts": {
+                "ifrs-full:RightofuseAssets": 0.0,
+                "ifrs-full:LeaseLiabilitiesCurrent": 0.0,
+                "ifrs-full:LeaseLiabilitiesNoncurrent": 0.0,
+                "ifrs-full:InterestExpenseOnLeaseLiabilities": 0.0,
+                "ifrs-full:ExpenseRelatingToShorttermLeases": 0.0,
+                "ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets": 4.0,
+                "ifrs-full:ExpenseRelatingToVariableLeasePayments": 0.0
+            },
+            "taxonomy": "ifrs-full-2024",
+            "note": "Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change."
+        }
+    },
+    "empty": {
+        "csv": "section,label,value\nheader,fiscalPeriod,\nheader,administrationId,\nheader,materializedAtPeriodClose,false\n",
+        "html.en": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note <\/title><\/head><body><h1>IFRS 16 Disclosure Note <\/h1><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>",
+        "html.nl": "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"UTF-8\"><title>IFRS 16-toelichting <\/title><\/head><body><h1>IFRS 16-toelichting <\/h1><footer><p><em>Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.<\/em><\/p><\/footer><\/body><\/html>",
+        "html.fr": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note <\/title><\/head><body><h1>IFRS 16 Disclosure Note <\/h1><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>",
+        "pdf.nl": {
+            "kind": "lease-disclosure-note",
+            "fiscalPeriod": "",
+            "administrationId": "",
+            "language": "nl",
+            "status": "pending-pdf-pipeline",
+            "html": "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"UTF-8\"><title>IFRS 16-toelichting <\/title><\/head><body><h1>IFRS 16-toelichting <\/h1><footer><p><em>Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.<\/em><\/p><\/footer><\/body><\/html>"
+        },
+        "pdf.de": {
+            "kind": "lease-disclosure-note",
+            "fiscalPeriod": "",
+            "administrationId": "",
+            "language": "en",
+            "status": "pending-pdf-pipeline",
+            "html": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>IFRS 16 Disclosure Note <\/title><\/head><body><h1>IFRS 16 Disclosure Note <\/h1><footer><p><em>Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.<\/em><\/p><\/footer><\/body><\/html>"
+        },
+        "xbrl": {
+            "kind": "lease-disclosure-xbrl",
+            "status": "pending-sbr-xbrl-reporting",
+            "contextRef": "ctx-period",
+            "facts": {
+                "ifrs-full:RightofuseAssets": 0.0,
+                "ifrs-full:LeaseLiabilitiesCurrent": 0.0,
+                "ifrs-full:LeaseLiabilitiesNoncurrent": 0.0,
+                "ifrs-full:InterestExpenseOnLeaseLiabilities": 0.0,
+                "ifrs-full:ExpenseRelatingToShorttermLeases": 0.0,
+                "ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets": 0.0,
+                "ifrs-full:ExpenseRelatingToVariableLeasePayments": 0.0
+            },
+            "taxonomy": "ifrs-full-2024",
+            "note": "Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change."
+        }
+    }
+}

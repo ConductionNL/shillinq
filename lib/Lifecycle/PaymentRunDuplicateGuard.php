@@ -162,11 +162,29 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 			return GuardResult::deny(self::MESSAGE_NO_OBJECT);
 		}
 
+		$check = new PaymentRunExportCheck(
+			objectId: $objectId,
+			action: $action,
+			administrationId: trim((string)($object['administrationId'] ?? ''))
+		);
+
+		return $this->linesDecision(check: $check, object: $object);
+	}//end check()
+
+	/**
+	 * Decide over the batch's lines: indeterminate lines and failed lookups deny.
+	 *
+	 * @param PaymentRunExportCheck $check The export being checked.
+	 * @param array<string,mixed> $object The PaymentRun payload.
+	 *
+	 * @return GuardResult Allow when no line is a duplicate, paid or blocked invoice.
+	 */
+	private function linesDecision(PaymentRunExportCheck $check, array $object): GuardResult {
 		$refs = $this->resolveLineRefs(object: $object);
 		if ($refs === null) {
 			$this->logger->error(
 				'PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).',
-				['paymentRun' => $objectId, 'action' => $action]
+				['paymentRun' => $check->objectId, 'action' => $check->action]
 			);
 			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
 		}
@@ -176,43 +194,68 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 			return GuardResult::allow();
 		}
 
-		$administrationId = trim((string)($object['administrationId'] ?? ''));
-
 		try {
-			if ($this->anyAlreadyPaid(refs: $refs, administrationId: $administrationId) === true) {
-				$this->logger->warning(
-					'PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.',
-					['paymentRun' => $objectId, 'action' => $action]
-				);
-				return GuardResult::deny(self::MESSAGE_ALREADY_PAID);
-			}
-
-			if ($this->anyAlreadyBatched(refs: $refs, administrationId: $administrationId, selfId: $objectId) === true) {
-				$this->logger->warning(
-					'PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.',
-					['paymentRun' => $objectId, 'action' => $action]
-				);
-				return GuardResult::deny(self::MESSAGE_ALREADY_BATCHED);
-			}
-
-			$blocked = $this->blockChecker->blockedLines(paymentRun: $object);
-			if ($blocked !== []) {
-				$this->logger->warning(
-					'PaymentRunDuplicateGuard: a line pays a blocked or disputed invoice — denying export.',
-					['paymentRun' => $objectId, 'action' => $action, 'invoices' => array_column($blocked, 'invoiceNumber')]
-				);
-				return GuardResult::deny(sprintf(self::MESSAGE_PAYMENT_BLOCKED, implode(', ', array_column($blocked, 'invoiceNumber'))));
-			}
+			return ($this->duplicateDenial(check: $check->withRefs(refs: $refs), object: $object) ?? GuardResult::allow());
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PaymentRunDuplicateGuard: duplicate-payment lookup threw — denying export (fail-closed).',
-				['paymentRun' => $objectId, 'action' => $action, 'error' => $e->getMessage()]
+				['paymentRun' => $check->objectId, 'action' => $check->action, 'error' => $e->getMessage()]
 			);
 			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
 		}//end try
 
-		return GuardResult::allow();
-	}//end check()
+	}//end linesDecision()
+
+	/**
+	 * The first denial among already-paid, already-batched and blocked lines.
+	 *
+	 * @param PaymentRunExportCheck $check The export, with its ref set.
+	 * @param array<string,mixed> $object The PaymentRun payload.
+	 *
+	 * @return GuardResult|null The denial, or null when the batch may be exported.
+	 */
+	private function duplicateDenial(PaymentRunExportCheck $check, array $object): GuardResult|null {
+		if ($this->anyAlreadyPaid(refs: $check->refs, administrationId: $check->administrationId) === true) {
+			$this->logger->warning(
+				'PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.',
+				['paymentRun' => $check->objectId, 'action' => $check->action]
+			);
+			return GuardResult::deny(self::MESSAGE_ALREADY_PAID);
+		}
+
+		if ($this->anyAlreadyBatched(refs: $check->refs, administrationId: $check->administrationId, selfId: $check->objectId) === true) {
+			$this->logger->warning(
+				'PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.',
+				['paymentRun' => $check->objectId, 'action' => $check->action]
+			);
+			return GuardResult::deny(self::MESSAGE_ALREADY_BATCHED);
+		}
+
+		return $this->blockedDenial(check: $check, object: $object);
+
+	}//end duplicateDenial()
+
+	/**
+	 * Deny when a line pays a blocked or disputed invoice (REQ-BPR-005).
+	 *
+	 * @param PaymentRunExportCheck $check The export being checked.
+	 * @param array<string,mixed> $object The PaymentRun payload.
+	 *
+	 * @return GuardResult|null The denial naming the invoices, or null when none is blocked.
+	 */
+	private function blockedDenial(PaymentRunExportCheck $check, array $object): GuardResult|null {
+		$blocked = $this->blockChecker->blockedLines(paymentRun: $object);
+		if ($blocked === []) {
+			return null;
+		}
+
+		$this->logger->warning(
+			'PaymentRunDuplicateGuard: a line pays a blocked or disputed invoice — denying export.',
+			['paymentRun' => $check->objectId, 'action' => $check->action, 'invoices' => array_column($blocked, 'invoiceNumber')]
+		);
+		return GuardResult::deny(sprintf(self::MESSAGE_PAYMENT_BLOCKED, implode(', ', array_column($blocked, 'invoiceNumber'))));
+
+	}//end blockedDenial()
 
 	/**
 	 * Extract the object uuid from the transition payload.
@@ -304,39 +347,65 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 	private function anyAlreadyBatched(array $refs, string $administrationId, string $selfId): bool {
 		$runs = $this->findBySchema(schema: 'PaymentRun', administrationId: $administrationId);
 		foreach ($runs as $run) {
-			if (is_array($run) === false) {
+			if (is_array($run) === false || $this->occupiesInvoices(run: $run, selfId: $selfId) === false) {
 				continue;
 			}
 
-			if ($this->recordIdentity(record: $run) === $selfId) {
-				// The batch being exported never counts as a duplicate of itself.
-				continue;
+			if ($this->linesReference(lines: ($run['paymentLines'] ?? []), refs: $refs) === true) {
+				return true;
 			}
-
-			$state = (string)($run['lifecycleState'] ?? ($run['status'] ?? ''));
-			if (in_array($state, self::OCCUPYING_STATES, true) === false) {
-				continue;
-			}
-
-			$lines = ($run['paymentLines'] ?? []);
-			if (is_array($lines) === false) {
-				continue;
-			}
-
-			foreach ($lines as $line) {
-				if (is_array($line) === false) {
-					continue;
-				}
-
-				$ref = trim((string)($line['apTransactionRef'] ?? ''));
-				if ($ref !== '' && isset($refs[$ref]) === true) {
-					return true;
-				}
-			}
-		}//end foreach
+		}
 
 		return false;
 	}//end anyAlreadyBatched()
+
+	/**
+	 * Whether another batch still occupies its invoices (open or executed).
+	 *
+	 * The batch being exported never counts as a duplicate of itself.
+	 *
+	 * @param array<string,mixed> $run The PaymentRun record.
+	 * @param string $selfId The id of the batch being exported.
+	 *
+	 * @return bool True when the run is another batch in an occupying state.
+	 */
+	private function occupiesInvoices(array $run, string $selfId): bool {
+		if ($this->recordIdentity(record: $run) === $selfId) {
+			return false;
+		}
+
+		$state = (string)($run['lifecycleState'] ?? ($run['status'] ?? ''));
+		return in_array($state, self::OCCUPYING_STATES, true);
+
+	}//end occupiesInvoices()
+
+	/**
+	 * Whether any of a run's payment lines settles a referenced invoice.
+	 *
+	 * @param mixed $lines The run's paymentLines.
+	 * @param array<string,true> $refs The apTransactionRef set.
+	 *
+	 * @return bool True when a line's apTransactionRef is in the set.
+	 */
+	private function linesReference(mixed $lines, array $refs): bool {
+		if (is_array($lines) === false) {
+			return false;
+		}
+
+		foreach ($lines as $line) {
+			$ref = '';
+			if (is_array($line) === true) {
+				$ref = trim((string)($line['apTransactionRef'] ?? ''));
+			}
+
+			if ($ref !== '' && isset($refs[$ref]) === true) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end linesReference()
 
 	/**
 	 * Fetch every record of a schema, scoped by administration when known.

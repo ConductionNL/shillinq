@@ -78,6 +78,13 @@ class InvoiceSettlementService {
 	];
 
 	/**
+	 * Invoice ids whose settlement transition is running in this request.
+	 *
+	 * @var array<string,int>
+	 */
+	private static array $settling = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
@@ -166,22 +173,13 @@ class InvoiceSettlementService {
 	 * @return array{outcome:string,transition:?string,reason:string}
 	 */
 	private function settleOne(string $schema, string $invoiceId, bool $partial): array {
-		try {
-			$invoice = ObjectIdentifier::findOne(
-				scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema),
-				id: $invoiceId
-			);
-		} catch (Throwable $e) {
-			$invoice = null;
-		}
-
+		$invoice = $this->findInvoice(schema: $schema, invoiceId: $invoiceId);
 		if ($invoice === null) {
 			$this->logger->warning('InvoiceSettlementService: invoice not found', ['schema' => $schema, 'invoiceId' => $invoiceId]);
 			return ['outcome' => self::FAILED, 'transition' => null, 'reason' => 'not found'];
 		}
 
-		$stateField = self::STATE_FIELDS[$schema];
-		$state = (string)($invoice[$stateField] ?? '');
+		$state = (string)($invoice[self::STATE_FIELDS[$schema]] ?? '');
 		$transition = self::transitionFor(schema: $schema, state: $state, partial: $partial);
 		if ($transition === null) {
 			$reason = 'state ' . $state . ' is not payable';
@@ -193,6 +191,59 @@ class InvoiceSettlementService {
 			return ['outcome' => self::SKIPPED, 'transition' => null, 'reason' => $reason];
 		}
 
+		return $this->runSettlement(invoiceId: $invoiceId, transition: $transition, storedId: (string)($invoice['id'] ?? ''));
+
+	}//end settleOne()
+
+	/**
+	 * Whether a settlement transition for this invoice id is running now.
+	 *
+	 * @param string $invoiceId The invoice uuid.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 */
+	public static function isSettling(string $invoiceId): bool {
+		return $invoiceId !== '' && (self::$settling[$invoiceId] ?? 0) > 0;
+
+	}//end isSettling()
+
+	/**
+	 * The invoice by id, or null when it is missing or the lookup fails.
+	 *
+	 * @param string $schema The invoice schema.
+	 * @param string $invoiceId The invoice id.
+	 *
+	 * @return array<string,mixed>|null The invoice.
+	 */
+	private function findInvoice(string $schema, string $invoiceId): array|null {
+		try {
+			return ObjectIdentifier::findOne(
+				scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema),
+				id: $invoiceId
+			);
+		} catch (Throwable $e) {
+			return null;
+		}
+
+	}//end findInvoice()
+
+	/**
+	 * Run the settlement transition; a refusal is logged and reported as failed.
+	 *
+	 * @param string $invoiceId The invoice id.
+	 * @param string $transition The lifecycle action.
+	 * @param string $storedId The id the stored invoice carries.
+	 *
+	 * @return array{outcome: string, transition: string, reason: string} The outcome.
+	 */
+	private function runSettlement(string $invoiceId, string $transition, string $storedId): array {
+		$ids = array_values(array_unique(array_filter([$invoiceId, $storedId], static fn (string $id): bool => $id !== '')));
+		foreach ($ids as $id) {
+			self::$settling[$id] = ((self::$settling[$id] ?? 0) + 1);
+		}
+
 		try {
 			$this->transitions->run(objectId: $invoiceId, action: $transition);
 		} catch (Throwable $e) {
@@ -201,11 +252,18 @@ class InvoiceSettlementService {
 				['invoiceId' => $invoiceId, 'transition' => $transition, 'exception' => $e->getMessage()]
 			);
 			return ['outcome' => self::FAILED, 'transition' => $transition, 'reason' => 'transition refused'];
+		} finally {
+			foreach ($ids as $id) {
+				self::$settling[$id]--;
+				if (self::$settling[$id] <= 0) {
+					unset(self::$settling[$id]);
+				}
+			}
 		}
 
 		return ['outcome' => self::SETTLED, 'transition' => $transition, 'reason' => ''];
 
-	}//end settleOne()
+	}//end runSettlement()
 
 	/**
 	 * The invoice schema for a match target type.

@@ -124,47 +124,101 @@ class PayrollWebhookController extends Controller {
 			// #[PublicPage] route. STATUS_UNAUTHORIZED would conflict with the
 			// route's public posture (gate-9 semantic-auth).
 			$this->logger->warning('Shillinq payroll webhook: signature verification failed — rejected.');
-			return new JSONResponse(
-				data: ['message' => 'Invalid or missing signature.'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(message: 'Invalid or missing signature.');
 		}
 
+		$event = $this->decodedEvent(rawBody: $rawBody);
+		if ($event instanceof JSONResponse) {
+			return $event;
+		}
+
+		return $this->processed(event: $event);
+	}//end receive()
+
+	/**
+	 * The decoded, complete CloudEvent, or the 400 for a malformed body or a
+	 * missing id or payrollId.
+	 *
+	 * @param string $rawBody The verified request body.
+	 *
+	 * @return PayrollEvent|JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	private function decodedEvent(string $rawBody): PayrollEvent|JSONResponse {
 		$event = json_decode($rawBody, true);
 		if (is_array($event) === false || json_last_error() !== JSON_ERROR_NONE) {
-			return new JSONResponse(
-				data: ['message' => 'Malformed request body.'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(message: 'Malformed request body.');
 		}
 
-		$eventId = (string)($event['id'] ?? '');
-		$data = [];
-		if (is_array($event['data'] ?? null) === true) {
-			$data = $event['data'];
+		$payrollEvent = new PayrollEvent(event: $event);
+		if ($payrollEvent->isComplete() === false) {
+			return $this->badRequest(message: 'Missing CloudEvent id or payrollId.');
 		}
 
-		$payrollId = (string)($data['payrollId'] ?? '');
-		if ($eventId === '' || $payrollId === '') {
-			return new JSONResponse(
-				data: ['message' => 'Missing CloudEvent id or payrollId.'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
+		return $payrollEvent;
+	}//end decodedEvent()
 
+	/**
+	 * A 400 with a message.
+	 *
+	 * @param string $message The message.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $message): JSONResponse {
+		return new JSONResponse(
+			data: ['message' => $message],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+	}//end badRequest()
+
+	/**
+	 * Apply the event: 200 with the result, 422 for an unknown payroll, or a logged 500.
+	 *
+	 * @param PayrollEvent $event The complete event.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	private function processed(PayrollEvent $event): JSONResponse {
 		try {
-			$result = $this->applyEvent(eventId: $eventId, payrollId: $payrollId, data: $data);
+			$result = $this->applyEvent(event: $event);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq payroll webhook: processing failed.',
-				['eventId' => $eventId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				data: ['message' => 'Webhook processing failed.'],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->processingFailed(event: $event, e: $e);
 		}
 
+		return $this->appliedResponse(result: $result);
+	}//end processed()
+
+	/**
+	 * Log a failed event and answer 500.
+	 *
+	 * @param PayrollEvent $event The event.
+	 * @param \Throwable   $e     The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function processingFailed(PayrollEvent $event, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'Shillinq payroll webhook: processing failed.',
+			['eventId' => $event->eventId, 'exception' => $e->getMessage()]
+		);
+		return new JSONResponse(
+			data: ['message' => 'Webhook processing failed.'],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end processingFailed()
+
+	/**
+	 * 200 with the applied result, or 422 when the payroll is unknown.
+	 *
+	 * @param array<string, mixed>|null $result The result (null = unknown payroll).
+	 *
+	 * @return JSONResponse
+	 */
+	private function appliedResponse(array|null $result): JSONResponse {
 		if ($result === null) {
 			return new JSONResponse(
 				data: ['message' => 'Unknown payroll.'],
@@ -173,7 +227,7 @@ class PayrollWebhookController extends Controller {
 		}
 
 		return new JSONResponse(data: $result);
-	}//end receive()
+	}//end appliedResponse()
 
 	/**
 	 * Verify the request's HMAC-SHA256 signature against the configured secret.
@@ -207,96 +261,166 @@ class PayrollWebhookController extends Controller {
 	 * Idempotent on the CloudEvent id — when the payroll already records this
 	 * externalReference, the event is a replay and no records are created.
 	 *
-	 * @param string $eventId The CloudEvent id (idempotency key).
-	 * @param string $payrollId The target Payroll.id.
-	 * @param array<string,mixed> $data The CloudEvent `data` envelope.
+	 * @param PayrollEvent $event The CloudEvent: id (idempotency key), target Payroll.id and `data` envelope.
 	 *
 	 * @return array<string,mixed>|null Summary on success, null when the payroll is unknown.
 	 */
-	private function applyEvent(string $eventId, string $payrollId, array $data): ?array {
-		$register = $this->resolveRegister();
+	private function applyEvent(PayrollEvent $event): ?array {
+		$run = new PayrollEventRun(register: $this->resolveRegister(), event: $event);
 
-		// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
-		// properties and the entity's `id` is not one, so that shape matched
-		// nothing for every value and every inbound payroll webhook was
-		// treated as referencing an unknown Payroll.
-		$payroll = ObjectIdentifier::findOne(
-			scoped: $this->objectService
-				->setRegister($register)
-				->setSchema('Payroll'),
-			id: $payrollId
-		);
-
+		$payroll = $this->findPayroll(run: $run);
 		if ($payroll === null) {
 			return null;
 		}
 
+		$run->payroll = $payroll;
+
 		// Idempotency: a replay of the same CloudEvent is a no-op.
-		if ((string)($payroll['externalReference'] ?? '') === $eventId) {
-			return [
-				'payrollId' => $payrollId,
-				'status' => (string)($payroll['status'] ?? ''),
-				'replayed' => true,
-			];
+		if ($run->isReplay() === true) {
+			return $this->replayedResult(run: $run);
 		}
 
-		$administrationId = (string)($payroll['administrationId'] ?? '');
-		$taxYear = (int)substr((string)($payroll['period'] ?? ''), 0, 4);
-		$created = 0;
+		return $this->applied(run: $run);
+	}//end applyEvent()
 
-		$deductions = [];
-		if (is_array($data['deductions'] ?? null) === true) {
-			$deductions = $data['deductions'];
-		}
+	/**
+	 * The result of a replayed event: the payroll as it stands.
+	 *
+	 * @param PayrollEventRun $run The run, with the payroll found.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function replayedResult(PayrollEventRun $run): array {
+		return [
+			'payrollId' => $run->event->payrollId,
+			'status' => (string)($run->payroll['status'] ?? ''),
+			'replayed' => true,
+		];
+	}//end replayedResult()
 
-		foreach ($deductions as $deduction) {
-			if (is_array($deduction) === false) {
-				continue;
-			}
+	/**
+	 * The payroll the event is about, or null when it is unknown.
+	 *
+	 * NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+	 * properties and the entity's `id` is not one, so that shape matched
+	 * nothing for every value and every inbound payroll webhook was
+	 * treated as referencing an unknown Payroll.
+	 *
+	 * @param PayrollEventRun $run The run.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function findPayroll(PayrollEventRun $run): ?array {
+		return ObjectIdentifier::findOne(
+			scoped: $this->objectService
+				->setRegister($run->register)
+				->setSchema('Payroll'),
+			id: $run->event->payrollId
+		);
+	}//end findPayroll()
 
-			$rate = null;
-			if (isset($deduction['rate']) === true) {
-				$rate = (float)$deduction['rate'];
-			}
-
-			$this->objectService
-				->setRegister($register)
-				->setSchema('Deduction')
-				->saveObject(
-					[
-						'payrollId' => $payrollId,
-						'deductionType' => (string)($deduction['deductionType'] ?? 'other'),
-						'deductionName' => (string)($deduction['deductionName'] ?? ($deduction['deductionType'] ?? 'Deduction')),
-						'amount' => (float)($deduction['amount'] ?? 0),
-						'rate' => $rate,
-						'rateSource' => (string)($deduction['rateSource'] ?? ''),
-						'taxYear' => $taxYear,
-						'administrationId' => $administrationId,
-					]
-				);
-			$created++;
-		}//end foreach
-
-		// Reflect the external calculation and stamp the idempotency reference.
-		$payroll['status'] = 'calculated';
-		$payroll['externalReference'] = $eventId;
-		$this->objectService
-			->setRegister($register)
-			->setSchema('Payroll')
-			->saveObject($payroll);
+	/**
+	 * Write the event's deductions, mark the payroll calculated and log it.
+	 *
+	 * @param PayrollEventRun $run The run, with the payroll found.
+	 *
+	 * @return array<string, mixed> The applied result.
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	private function applied(PayrollEventRun $run): array {
+		$created = $this->savedDeductions(run: $run);
+		$this->markCalculated(run: $run);
 
 		$this->logger->info(
 			'Shillinq payroll webhook: applied external deductions.',
-			['eventId' => $eventId, 'payrollId' => $payrollId, 'deductionsCreated' => $created]
+			['eventId' => $run->event->eventId, 'payrollId' => $run->event->payrollId, 'deductionsCreated' => $created]
 		);
 
 		return [
-			'payrollId' => $payrollId,
+			'payrollId' => $run->event->payrollId,
 			'status' => 'calculated',
 			'deductionsCreated' => $created,
 			'replayed' => false,
 		];
-	}//end applyEvent()
+	}//end applied()
+
+	/**
+	 * Save one Deduction per well-formed deduction of the event.
+	 *
+	 * @param PayrollEventRun $run The run.
+	 *
+	 * @return int How many were saved.
+	 */
+	private function savedDeductions(PayrollEventRun $run): int {
+		$created = 0;
+		foreach ($run->event->deductions() as $deduction) {
+			if (is_array($deduction) === false) {
+				continue;
+			}
+
+			$this->objectService
+				->setRegister($run->register)
+				->setSchema('Deduction')
+				->saveObject($this->deductionRecord(run: $run, deduction: $deduction));
+			$created++;
+		}
+
+		return $created;
+	}//end savedDeductions()
+
+	/**
+	 * The Deduction record of one external deduction.
+	 *
+	 * @param PayrollEventRun      $run       The run.
+	 * @param array<string, mixed> $deduction The external deduction.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function deductionRecord(PayrollEventRun $run, array $deduction): array {
+		return [
+			'payrollId' => $run->event->payrollId,
+			'deductionType' => (string)($deduction['deductionType'] ?? 'other'),
+			'deductionName' => (string)($deduction['deductionName'] ?? ($deduction['deductionType'] ?? 'Deduction')),
+			'amount' => (float)($deduction['amount'] ?? 0),
+			'rate' => $this->rateOf(deduction: $deduction),
+			'rateSource' => (string)($deduction['rateSource'] ?? ''),
+			'taxYear' => $run->taxYear(),
+			'administrationId' => $run->administrationId(),
+		];
+	}//end deductionRecord()
+
+	/**
+	 * The deduction's rate, null when it has none.
+	 *
+	 * @param array<string, mixed> $deduction The external deduction.
+	 *
+	 * @return float|null
+	 */
+	private function rateOf(array $deduction): float|null {
+		if (isset($deduction['rate']) === true) {
+			return (float)$deduction['rate'];
+		}
+
+		return null;
+	}//end rateOf()
+
+	/**
+	 * Reflect the external calculation and stamp the idempotency reference.
+	 *
+	 * @param PayrollEventRun $run The run.
+	 *
+	 * @return void
+	 */
+	private function markCalculated(PayrollEventRun $run): void {
+		$payroll = $run->payroll;
+		$payroll['status'] = 'calculated';
+		$payroll['externalReference'] = $run->event->eventId;
+		$this->objectService
+			->setRegister($run->register)
+			->setSchema('Payroll')
+			->saveObject($payroll);
+	}//end markCalculated()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.

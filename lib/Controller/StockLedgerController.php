@@ -95,45 +95,93 @@ class StockLedgerController extends Controller {
 			);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$locationId = trim((string)$this->request->getParam('location_id', ''));
-		$sku = trim((string)$this->request->getParam('sku', ''));
+		$query = new StockLocationQuery(request: $this->request);
+		$refusal = $this->queryRefusal(query: $query) ?? $this->accessRefusal(query: $query);
+		if ($refusal !== null) {
+			return $refusal;
+		}
 
-		if ($administrationId === '' || $locationId === '' || $sku === '') {
+		return $this->traceLocation(query: $query);
+
+	}//end trace()
+
+	/**
+	 * A 400 for a missing or malformed identifier, otherwise null.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function queryRefusal(StockLocationQuery $query): ?JSONResponse {
+		if ($query->isComplete() === false) {
 			return new JSONResponse(
 				['error' => 'administration_id, location_id and sku are required'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		$pattern = '/^[A-Za-z0-9_.\\-]{1,64}$/';
-		if (preg_match($pattern, $administrationId) !== 1
-			|| preg_match($pattern, $locationId) !== 1
-			|| preg_match($pattern, $sku) !== 1
-		) {
+		if ($query->isWellFormed() === false) {
 			return new JSONResponse(
 				['error' => 'Invalid identifier in administration_id / location_id / sku'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
+		return null;
+
+	}//end queryRefusal()
+
+	/**
+	 * A masked 404 for an administration the caller may not access, a logged
+	 * 500 when that cannot be checked, otherwise null.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function accessRefusal(StockLocationQuery $query): ?JSONResponse {
 		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
+			$allowed = $this->context->canAccess(administrationId: $query->administrationId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'StockLedgerController: failed to check administration access',
-				[
-					'administrationId' => $administrationId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			return $this->accessCheckFailure(query: $query, failure: $e);
+		}
 
-			return new JSONResponse(
-				['error' => 'Failed to authorise stock ledger'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		return self::notFoundUnless(allowed: $allowed);
 
+	}//end accessRefusal()
+
+	/**
+	 * Log an access check that failed and answer a 500.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function accessCheckFailure(StockLocationQuery $query, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'StockLedgerController: failed to check administration access',
+			[
+				'administrationId' => $query->administrationId,
+				'exception' => $failure->getMessage(),
+			]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to authorise stock ledger'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end accessCheckFailure()
+
+	/**
+	 * The masked 404 when access is not allowed, otherwise null.
+	 *
+	 * @param bool $allowed Whether the caller may access the administration.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private static function notFoundUnless(bool $allowed): ?JSONResponse {
 		if ($allowed === false) {
 			return new JSONResponse(
 				['error' => 'Administration not found'],
@@ -141,52 +189,87 @@ class StockLedgerController extends Controller {
 			);
 		}
 
+		return null;
+
+	}//end notFoundUnless()
+
+	/**
+	 * The on-hand, reserved and available quantity and the movement trace of
+	 * the location; a failing read is a logged 500.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 *
+	 * @return JSONResponse
+	 */
+	private function traceLocation(StockLocationQuery $query): JSONResponse {
 		try {
-			$onHand = $this->ledger->quantityForLocation(
-				administrationId: $administrationId,
-				locationId: $locationId,
-				sku: $sku
-			);
-			$reserved = $this->ledger->reservedForLocation(
-				administrationId: $administrationId,
-				locationId: $locationId,
-				sku: $sku
-			);
-			$available = ($onHand - $reserved);
-			$trace = $this->ledger->traceLocation(
-				administrationId: $administrationId,
-				locationId: $locationId,
-				sku: $sku
-			);
+			$balance = $this->balance(query: $query);
+			$trace = $this->movements(query: $query);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'StockLedgerController: failed to compute stock-ledger trace',
-				[
-					'administrationId' => $administrationId,
-					'locationId' => $locationId,
-					'sku' => $sku,
-					'exception' => $e->getMessage(),
-				]
-			);
+			return $this->traceFailure(query: $query, failure: $e);
+		}
 
-			return new JSONResponse(
-				['error' => 'Failed to compute stock-ledger trace'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		return new JSONResponse($query->logContext() + $balance + ['trace' => $trace], Http::STATUS_OK);
 
-		return new JSONResponse(
-			[
-				'administrationId' => $administrationId,
-				'locationId' => $locationId,
-				'sku' => $sku,
-				'onHand' => $onHand,
-				'reserved' => $reserved,
-				'available' => $available,
-				'trace' => $trace,
-			],
-			Http::STATUS_OK
+	}//end traceLocation()
+
+	/**
+	 * The movement trace of the location.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function movements(StockLocationQuery $query): array {
+		return $this->ledger->traceLocation(
+			administrationId: $query->administrationId,
+			locationId: $query->locationId,
+			sku: $query->sku
 		);
 
-	}//end trace()
+	}//end movements()
+
+	/**
+	 * Log a trace that failed and answer a 500.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 * @param \Throwable $failure The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function traceFailure(StockLocationQuery $query, \Throwable $failure): JSONResponse {
+		$this->logger->error(
+			'StockLedgerController: failed to compute stock-ledger trace',
+			$query->logContext() + ['exception' => $failure->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute stock-ledger trace'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+
+	}//end traceFailure()
+
+	/**
+	 * The on-hand, reserved and available quantity of the location.
+	 *
+	 * @param StockLocationQuery $query The query.
+	 *
+	 * @return array{onHand: float, reserved: float, available: float}
+	 */
+	private function balance(StockLocationQuery $query): array {
+		$onHand = $this->ledger->quantityForLocation(
+			administrationId: $query->administrationId,
+			locationId: $query->locationId,
+			sku: $query->sku
+		);
+		$reserved = $this->ledger->reservedForLocation(
+			administrationId: $query->administrationId,
+			locationId: $query->locationId,
+			sku: $query->sku
+		);
+
+		return ['onHand' => $onHand, 'reserved' => $reserved, 'available' => ($onHand - $reserved)];
+
+	}//end balance()
 }//end class

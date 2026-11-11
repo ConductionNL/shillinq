@@ -106,41 +106,37 @@ class SoftCloseJob extends TimedJob {
 		try {
 			$administrations = $this->findActiveAdministrations();
 			$periodId = (new DateTimeImmutable())->format('Y-m');
-
 			foreach ($administrations as $admin) {
 				$administrationId = (string)($admin['id'] ?? ($admin['administrationId'] ?? ''));
-				if ($administrationId === '') {
-					continue;
+				if ($administrationId !== '') {
+					$this->closeOne(administrationId: $administrationId, periodId: $periodId);
 				}
-
-				try {
-					$report = $this->executor->execute(
-						administrationId: $administrationId,
-						periodId: $periodId,
-						asOf: new DateTimeImmutable()
-					);
-
-					$this->logger->info(
-						'SoftCloseJob: soft-close run completed',
-						[
-							'administrationId' => $administrationId,
-							'periodId' => $periodId,
-							'status' => $report['status'],
-							'postingCount' => $report['postingCount'],
-						]
-					);
-				} catch (Throwable $e) {
-					$this->logger->error(
-						'SoftCloseJob: soft-close run failed',
-						['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
-					);
-				}//end try
-			}//end foreach
+			}
 		} catch (Throwable $e) {
 			$this->logger->error('SoftCloseJob: top-level failure', ['exception' => $e->getMessage()]);
-		}//end try
-
+		}
 	}//end runAsJob()
+
+	/**
+	 * Run the soft-close for one administration and period; a failure is logged and does not stop the run.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $periodId         The yyyy-mm period.
+	 *
+	 * @return void
+	 */
+	private function closeOne(string $administrationId, string $periodId): void {
+		$scope = ['administrationId' => $administrationId, 'periodId' => $periodId];
+		try {
+			$report = $this->executor->execute(administrationId: $administrationId, periodId: $periodId, asOf: new DateTimeImmutable());
+			$this->logger->info(
+				'SoftCloseJob: soft-close run completed',
+				$scope + ['status' => $report['status'], 'postingCount' => $report['postingCount']]
+			);
+		} catch (Throwable $e) {
+			$this->logger->error('SoftCloseJob: soft-close run failed', $scope + ['exception' => $e->getMessage()]);
+		}
+	}//end closeOne()
 
 	/**
 	 * Find every active Administration via OpenRegister.
@@ -149,26 +145,31 @@ class SoftCloseJob extends TimedJob {
 	 */
 	private function findActiveAdministrations(): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$found = $objectService
-				->setRegister($this->register())
-				->setSchema('Administration')
-				->findAll(['filters' => ['lifecycleState' => 'active']]);
-
+			$found = $this->activeAdministrationRows();
 			if (is_array($found) === false) {
 				return [];
 			}
 
 			return array_values(array_map(static fn ($r): array => (array)$r, $found));
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'SoftCloseJob: failed to enumerate administrations',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('SoftCloseJob: failed to enumerate administrations', ['exception' => $e->getMessage()]);
 			return [];
 		}
-
 	}//end findActiveAdministrations()
+
+	/**
+	 * The active Administration rows, as findAll() answers them.
+	 *
+	 * @return mixed
+	 */
+	private function activeAdministrationRows(): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+		return $objectService
+			->setRegister($this->register())
+			->setSchema('Administration')
+			->findAll(['filters' => ['lifecycleState' => 'active']]);
+	}//end activeAdministrationRows()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

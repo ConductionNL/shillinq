@@ -1,0 +1,67 @@
+{
+    "mixed": [
+        {
+            "valueDate": "2026-01-15",
+            "amount": 1210.0,
+            "currency": "EUR",
+            "remittanceInfo": "Factuur 1",
+            "endToEndRef": "E2E-1",
+            "status": "unmatched"
+        },
+        {
+            "valueDate": "",
+            "amount": -300.5,
+            "currency": "EUR",
+            "remittanceInfo": "",
+            "endToEndRef": "",
+            "status": "unmatched"
+        },
+        {
+            "valueDate": "",
+            "amount": 0.0,
+            "currency": "EUR",
+            "remittanceInfo": "",
+            "endToEndRef": "",
+            "status": "unmatched"
+        },
+        {
+            "valueDate": "",
+            "amount": 7.0,
+            "currency": "EUR",
+            "remittanceInfo": "",
+            "endToEndRef": "",
+            "status": "unmatched"
+        },
+        {
+            "valueDate": "",
+            "amount": -0.0,
+            "currency": "EUR",
+            "remittanceInfo": "",
+            "endToEndRef": "",
+            "status": "unmatched"
+        }
+    ],
+    "noEntries": [],
+    "notXml": [],
+    "empty": [],
+    "doctype": [],
+    "entityLower": [],
+    "nestedNtry": [
+        {
+            "valueDate": "",
+            "amount": 2.25,
+            "currency": "EUR",
+            "remittanceInfo": "",
+            "endToEndRef": "",
+            "status": "unmatched"
+        },
+        {
+            "valueDate": "",
+            "amount": 3.0,
+            "currency": "EUR",
+            "remittanceInfo": "",
+            "endToEndRef": "",
+            "status": "unmatched"
+        }
+    ]
+}

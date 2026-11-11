@@ -79,6 +79,29 @@ final class OrderFulfilmentEvidenceListenerTest extends TestCase {
 	}//end testCompletionWithoutBewijsstukIsVetoed()
 
 	/**
+	 * The status is matched trimmed and case-insensitively, and the refusal
+	 * carries exactly its message, field, requirement and attempted state.
+	 *
+	 * @return void
+	 */
+	public function testTheRefusalPayloadIsExact(): void {
+		$event = $this->creatingEvent(['commitmentId' => 'V-1', 'status' => ' Completed ', 'supportingDocuments' => []]);
+
+		$this->listener(matches: true)->handle($event);
+
+		self::assertSame(
+			[
+				'message' => OrderFulfilmentEvidenceListener::DENY_MESSAGE,
+				'field' => 'supportingDocuments',
+				'requirement' => 'REQ-004',
+				'attemptedState' => 'completed',
+			],
+			$event->getErrors()
+		);
+
+	}//end testTheRefusalPayloadIsExact()
+
+	/**
 	 * A completion WITH a valid bewijsstuk still goes through.
 	 *
 	 * @return void
