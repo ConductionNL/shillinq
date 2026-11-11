@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -103,7 +104,7 @@ class SettingsServiceTest extends TestCase {
 
 		$this->service = new SettingsService(
 			appConfig: $this->appConfig,
-			appManager: $this->appManager,
+			registerLocation: new RegisterLocation(appConfig: $this->appConfig, appManager: $this->appManager),
 			container: $this->container,
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,

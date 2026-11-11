@@ -46,7 +46,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\Shillinq\Service\ComplianceService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -73,13 +73,13 @@ final class BBVComplianceWidget {
 	 * Construct the widget with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ComplianceService $compliance Compliance envelope source.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ComplianceService $compliance,
 		private readonly LoggerInterface $logger,
 	) {
@@ -290,7 +290,7 @@ final class BBVComplianceWidget {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function findAllRows(string $schema, array $filters): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return [];
 		}
 
@@ -314,7 +314,7 @@ final class BBVComplianceWidget {
 	private function lookup(string $schema, array $filters): ?array {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			return $objectService->setRegister($registerSlug)->setSchema($schema)->findAll(['filters' => $filters, 'limit' => 1000]);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq BBV compliance widget: register lookup failed', ['schema' => $schema, 'exception' => $e->getMessage()]);

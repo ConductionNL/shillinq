@@ -39,7 +39,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\WbsoDocumentService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -76,14 +76,14 @@ class DocumentArchiveCron extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param SettingsService $settings Settings (register slug + OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param WbsoDocumentService $documents Document archival service.
 	 * @param ContainerInterface $container DI container (OR ObjectService).
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly WbsoDocumentService $documents,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
@@ -123,7 +123,7 @@ class DocumentArchiveCron extends TimedJob {
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
 	private function runAsJob($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('DocumentArchiveCron: OpenRegister not available, skipping.');
 			return;
 		}
@@ -162,7 +162,7 @@ class DocumentArchiveCron extends TimedJob {
 	 */
 	private function filedDocuments(): array {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$registerSlug = $this->settings->getRegisterSlug();
+		$registerSlug = $this->registerLocation->getRegisterSlug();
 
 		return $objectService
 			->setRegister($registerSlug)

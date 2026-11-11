@@ -33,7 +33,7 @@ use OCA\Shillinq\Dashboard\BBVComplianceWidget;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ComplianceService;
 use OCA\Shillinq\Service\FiscalYearContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -70,7 +70,7 @@ final class BBVDashboardControllerTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$logger = $this->createMock(LoggerInterface::class);
 
-		$settings = $this->getMockBuilder(SettingsService::class)
+		$settings = $this->getMockBuilder(RegisterLocation::class)
 			->disableOriginalConstructor()
 			->getMock();
 		$settings->method('isOpenRegisterAvailable')->willReturn(false);

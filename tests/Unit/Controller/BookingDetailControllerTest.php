@@ -40,7 +40,7 @@ use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -65,9 +65,9 @@ final class BookingDetailControllerTest extends TestCase {
 	/**
 	 * Mocked settings service.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mocked context service.
@@ -113,7 +113,7 @@ final class BookingDetailControllerTest extends TestCase {
 		parent::setUp();
 
 		$this->request = $this->createMock(IRequest::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->pipelinq = $this->createMock(PipelinqContactAdapter::class);
 
@@ -543,7 +543,7 @@ final class BookingDetailControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testOrUnavailableReturns503(): void {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(false);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 

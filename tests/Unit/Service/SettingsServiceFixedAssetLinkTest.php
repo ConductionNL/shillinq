@@ -52,6 +52,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -95,9 +96,11 @@ class SettingsServiceFixedAssetLinkTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($this->objectService);
 
+		$appConfig = $this->createMock(IAppConfig::class);
+
 		return new SettingsService(
-			$this->createMock(IAppConfig::class),
-			$appManager,
+			$appConfig,
+			new RegisterLocation($appConfig, $appManager),
 			$container,
 			$this->createMock(IGroupManager::class),
 			$this->createMock(IUserSession::class),

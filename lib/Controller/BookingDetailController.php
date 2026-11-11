@@ -46,7 +46,7 @@ use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -99,7 +99,7 @@ class BookingDetailController extends Controller {
 	 *
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param AdministrationContextService $context Per-administration IDOR guard (ADR-005).
 	 * @param PipelinqContactAdapter $pipelinq Slice 02-04 adapter (getContact + fetchKlantbeeld).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
@@ -107,7 +107,7 @@ class BookingDetailController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly AdministrationContextService $context,
 		private readonly PipelinqContactAdapter $pipelinq,
 		private readonly LoggerInterface $logger,
@@ -243,7 +243,7 @@ class BookingDetailController extends Controller {
 	private function appointmentRecords(string $appointmentId): iterable {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		return $objectService
-			->setRegister($this->settings->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema('Appointment')
 			->findAll(
 				[
@@ -409,7 +409,7 @@ class BookingDetailController extends Controller {
 			return new JSONResponse(['error' => 'id is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 

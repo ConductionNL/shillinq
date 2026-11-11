@@ -51,7 +51,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InventoryMobileScannerService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -95,7 +95,7 @@ class InventoryMobileScannerController extends Controller {
 	 * @param IRequest $request The HTTP request.
 	 * @param IUserSession $userSession Authenticated user session.
 	 * @param IGroupManager $groupManager Group membership lookups.
-	 * @param SettingsService $settings Shillinq settings.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param AdministrationContextService $admin Per-user administration scope.
 	 * @param InventoryMobileScannerService $scanner Sync core.
 	 * @param ContainerInterface $container DI container (locations lookup).
@@ -105,7 +105,7 @@ class InventoryMobileScannerController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly AdministrationContextService $admin,
 		private readonly InventoryMobileScannerService $scanner,
 		private readonly ContainerInterface $container,
@@ -201,7 +201,7 @@ class InventoryMobileScannerController extends Controller {
 		}
 
 		$records = null;
-		if ($this->settings->isOpenRegisterAvailable() === true) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === true) {
 			$records = $this->locationRecords(administrationId: $administrationId);
 		}
 
@@ -297,7 +297,7 @@ class InventoryMobileScannerController extends Controller {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			return $objectService
-				->setRegister($this->settings->getRegisterSlug())
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema('Location')
 				->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 500]);
 		} catch (\Throwable $e) {

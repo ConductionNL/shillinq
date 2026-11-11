@@ -86,13 +86,13 @@ final class ComplianceService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ICacheFactory $cacheFactory Distributed cache factory (compliance cache).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ICacheFactory $cacheFactory,
 		private readonly LoggerInterface $logger,
 	) {
@@ -326,7 +326,7 @@ final class ComplianceService {
 	 * @return array<string,mixed>|null Record or null when unavailable.
 	 */
 	private function loadProgrammeRecord(string $programmeCode, ?int $fiscalYear = null): ?array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return null;
 		}
 
@@ -356,7 +356,7 @@ final class ComplianceService {
 		}
 
 		$query = ['filters' => $filters, 'limit' => 1];
-		$records = $objectService->setRegister($this->settings->getRegisterSlug())->setSchema('BBVProgramme')->findAll($query);
+		$records = $objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('BBVProgramme')->findAll($query);
 		foreach ($records as $candidate) {
 			return $this->toArray(object: $candidate);
 		}
