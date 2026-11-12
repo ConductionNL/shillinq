@@ -66,7 +66,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -114,14 +114,14 @@ class RetireSubsidieSchema implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Provides the shillinq register slug.
+	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger for per-object failures.
 	 * @param IGroupManager $groupManager Resolves the admin IUser for OR writes.
 	 * @param IDBConnection $db Direct DB access (delete-if-empty schema row).
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly IGroupManager $groupManager,
 		private readonly IDBConnection $db,

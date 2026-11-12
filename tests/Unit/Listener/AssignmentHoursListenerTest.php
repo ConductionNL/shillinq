@@ -30,7 +30,7 @@ use OCA\Shillinq\Listener\AssignmentHoursListener;
 use OCA\Shillinq\Repair\BackfillAssignmentHours;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Project\AssignmentHours;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\Migration\IOutput;
@@ -158,7 +158,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	 * @return AssignmentHours
 	 */
 	private function hours(): AssignmentHours {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new AssignmentHours($this->store, $settings);

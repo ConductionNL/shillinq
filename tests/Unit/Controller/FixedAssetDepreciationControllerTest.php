@@ -32,7 +32,7 @@ use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Asset\DepreciationPlanner;
 use OCA\Shillinq\Service\Asset\DepreciationScheduleService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -91,7 +91,7 @@ class FixedAssetDepreciationControllerTest extends TestCase {
 		$context->method('currentUserId')->willReturn($user);
 		$context->method('canAccess')->willReturn($access);
 		$context->method('canPostJournalEntry')->willReturn($post);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$engine = new LifecycleFaithfulTransitionEngine($this->store, ['JournalEntry']);
 		$container = $this->createMock(ContainerInterface::class);

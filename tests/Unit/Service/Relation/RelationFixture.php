@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Relation;
 
 use OCA\Shillinq\Service\Relation\RelationRecords;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
@@ -86,7 +87,7 @@ final class RelationFixture {
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$sink ??= [];
 
-		return new RelationRecords(new InMemoryObjectServiceStub($data ?? self::register(), $sink), $settings);
+		return new RelationRecords(new InMemoryObjectServiceStub($data ?? self::register(), $sink), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']));
 
 	}//end records()
 }//end class

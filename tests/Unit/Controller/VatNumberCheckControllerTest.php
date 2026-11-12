@@ -26,7 +26,7 @@ use OCA\Shillinq\Controller\VatNumberCheckController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCA\Shillinq\Service\ViesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -111,7 +111,7 @@ class VatNumberCheckControllerTest extends TestCase {
 		$context = $this->createMock(AdministrationContextService::class);
 		$context->method('currentUserId')->willReturn($user);
 		$context->method('canAccess')->willReturn($access);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$records = new AssetRecords($this->store, new ObjectTransitionRunner(container: $this->createMock(ContainerInterface::class)), $settings);
 

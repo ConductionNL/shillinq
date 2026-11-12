@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service\Tax;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\ViesService;
 use Psr\Log\LoggerInterface;
 
@@ -63,7 +63,7 @@ class VatNumberCheck {
 	 *
 	 * @param ViesService            $vies          The VIES client and evidence store.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      For the register slug.
+	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 *
 	 * @return void
@@ -71,7 +71,7 @@ class VatNumberCheck {
 	public function __construct(
 		private readonly ViesService $vies,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly LoggerInterface $logger,
 	) {
 
