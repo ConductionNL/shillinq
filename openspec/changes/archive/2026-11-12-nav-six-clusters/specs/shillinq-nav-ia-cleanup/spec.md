@@ -25,6 +25,11 @@ removed from nav — the duplicate page itself goes away), and `Utilisatie`
 relocates alongside `Projects` as a companion card rather than staying under
 a now-dissolved `Projecten` top-level group.
 
+## RENAMED Requirements
+
+- FROM: `### Requirement: REQ-NAVIA-002 — The system SHALL expose `Project` under exactly one navigation home — the "People & Projects" group`
+- TO: `### Requirement: REQ-NAVIA-002 — The system SHALL expose `Project` under exactly one navigation home — a `Projects` page inside the Bookkeeping cluster`
+
 ## MODIFIED Requirements
 
 ### Requirement: REQ-NAVIA-002 — The system SHALL expose `Project` under exactly one navigation home — a `Projects` page inside the Bookkeeping cluster
@@ -43,7 +48,7 @@ requirement. The `CostProjects` leaf (schema `CostProject`, the distinct
 analytical management-accounting register, already removed by
 `retire-cost-project`) remains unaffected.
 
-#### Scenario: Only one Project nav entry remains, and it survives a manifest re-merge
+#### Scenario: Only one Project nav entry remains
 - **GIVEN** the restructured `src/manifest.json` + `src/manifest.d/*.json` +
   `src/menu-layout.json` (no `ProjectenOverzicht` page definition anywhere
   in any fragment)
