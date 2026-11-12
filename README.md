@@ -102,6 +102,29 @@ for the architecture, admin guide, and audit-export usage.
 4. Enable the app through the Nextcloud Administration panel
 5. Navigate to the Shillinq application to begin configuration
 
+### Try it with Docker
+
+The repository builds an evaluation image: the official Nextcloud image with shillinq and OpenRegister installed and enabled. It is meant for trying the app out and for test environments. For production, install the app from the Nextcloud App Store.
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
+
+Open http://localhost:8080/apps/shillinq/ and sign in as `admin` with password `admin`. The first start takes a minute or two. Set `NEXTCLOUD_ADMIN_PASSWORD` and `APP_PORT` to change the password and the port; `docker-compose.yml` lists every setting. `docker compose -f docker-compose.yml down -v` removes the stack and its data.
+
+Released versions are published as `ghcr.io/conductionnl/shillinq`, so leaving out `--build` uses the published image.
+
+### Run it on Kubernetes
+
+`charts/shillinq` wraps the official [Nextcloud Helm chart](https://github.com/nextcloud/helm) and runs the same image with PostgreSQL:
+
+```bash
+helm dependency build charts/shillinq
+helm install shillinq charts/shillinq --set nextcloud.nextcloud.host=shillinq.example.org
+```
+
+Change the passwords in `charts/shillinq/values.yaml` before you install it anywhere that matters.
+
 ## Development
 
 ### Requirements
