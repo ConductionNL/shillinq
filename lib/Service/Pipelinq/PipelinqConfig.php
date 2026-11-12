@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Service\StoredSecret;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -163,15 +164,7 @@ class PipelinqConfig {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
 	public function getPipelinqToken(): string {
-		$secret = $this->credentialsManager->retrieve(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN
-		);
-		if (is_string($secret) === false || $secret === '') {
-			return '';
-		}
-
-		return $secret;
+		return $this->token()->read();
 	}//end getPipelinqToken()
 
 	/**
@@ -189,23 +182,18 @@ class PipelinqConfig {
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
 	public function setPipelinqToken(string $token): void {
-		$trimmed = trim($token);
-		if ($trimmed === '') {
-			$this->credentialsManager->delete(
-				userId: '',
-				identifier: self::CREDENTIAL_ID_TOKEN
-			);
-
-			return;
-		}
-
-		$this->credentialsManager->store(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN,
-			credentials: $trimmed
-		);
+		$this->token()->write(value: $token);
 
 	}//end setPipelinqToken()
+
+	/**
+	 * The token in the secrets store.
+	 *
+	 * @return StoredSecret
+	 */
+	private function token(): StoredSecret {
+		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_TOKEN);
+	}//end token()
 
 	/**
 	 * Indicates whether a non-empty token is stored.
