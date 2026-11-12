@@ -50,6 +50,7 @@ use OCA\Shillinq\Lifecycle\APTransactionSettlementGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
+use OCA\Shillinq\Middleware\ApiContractMiddleware;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
@@ -187,6 +188,10 @@ class Application extends App implements IBootstrap {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	public function register(IRegistrationContext $context): void {
+		// The API contract (version header, deprecation of unversioned paths,
+		// problem details). Registered first: Nextcloud runs afterController in
+		// reverse order, so it sees the final response of every other middleware.
+		$context->registerMiddleware(class: ApiContractMiddleware::class);
 
 		$this->registerOpenRegisterContracts(context: $context);
 		// OpenRegister AppHost adoption (adopt-apphost) — the mechanical
