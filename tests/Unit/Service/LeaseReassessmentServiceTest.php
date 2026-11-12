@@ -460,6 +460,103 @@ final class LeaseReassessmentServiceTest extends TestCase {
 	}//end testOutOfScopeLeaseReturnsNull()
 
 	/**
+	 * Pins every saved reassessment event field for field, in key order, for
+	 * an indexation, an extension-option reassessment, a modification with an
+	 * unknown approach (normalised to catch-up) and with a prospective one,
+	 * and an impairment; and that every record method refuses a lease of
+	 * another administration with null and writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testEveryRecordMethodWritesItsEventFieldForFieldAndRefusesOutOfScope(): void {
+		$calls = [
+			static fn (LeaseReassessmentService $s, string $adm): ?array => $s->recordIndexationEvent(
+				leaseContractId: 'lease-v',
+				administrationId: $adm,
+				newPaymentAmount: 1030.0,
+				approver: 'p-1'
+			),
+			static fn (LeaseReassessmentService $s, string $adm): ?array => $s->recordExtensionOptionReassessment(
+				leaseContractId: 'lease-v',
+				administrationId: $adm,
+				updatedExtensionOptions: [['termMonths' => 12, 'exerciseLikelihood' => 'reasonably-certain']],
+				triggerDescription: 'Optie zeker'
+			),
+			static fn (LeaseReassessmentService $s, string $adm): ?array => $s->recordModification(
+				leaseContractId: 'lease-v',
+				administrationId: $adm,
+				newTerms: ['basePaymentAmount' => 900.0, 'newField' => 'x'],
+				approach: 'bogus'
+			),
+			static fn (LeaseReassessmentService $s, string $adm): ?array => $s->recordModification(
+				leaseContractId: 'lease-v',
+				administrationId: $adm,
+				newTerms: ['nonCancellableTermMonths' => 48],
+				approach: 'prospective',
+				approver: 'p-2'
+			),
+			static fn (LeaseReassessmentService $s, string $adm): ?array => $s->recordImpairment(
+				leaseContractId: 'lease-v',
+				administrationId: $adm,
+				recoverableValue: 10000.0
+			),
+		];
+
+		$rows = [];
+		foreach ($calls as $call) {
+			[$service, $stub] = $this->buildService([$this->leaseFixture()]);
+			self::assertNull($call($service, 'OTHER-ADMIN'));
+			self::assertSame([], $stub->saved);
+
+			$event = $call($service, 'adm-1');
+			self::assertSame($event, $stub->saved['LeaseReassessmentEvent'][0]);
+			self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}/', (string)$event['eventDate']);
+			unset($event['eventDate']);
+			$rows[] = $event;
+		}
+
+		self::assertSame(
+			[
+				'eventType', 'remeasurementApproach', 'oldContractSnapshot', 'newContractSnapshot', 'preEventLeaseLiability',
+				'postEventLeaseLiability', 'rouAssetAdjustment', 'plImpact', 'triggerDescription', 'approver', 'glLines',
+				'reassessmentNumber', 'sourceLease', 'lease', 'administrationId', 'status', 'postedToGl', 'approvalDate',
+			],
+			array_keys($rows[0])
+		);
+		self::assertSame(
+			['indexation-remeasurement', 'extension-option-reassessment', 'scope-modification', 'term-modification', 'impairment'],
+			array_column($rows, 'eventType')
+		);
+		self::assertSame(
+			['catch-up-adjustment', 'catch-up-adjustment', 'catch-up-adjustment', 'prospective', 'catch-up-adjustment'],
+			array_column($rows, 'remeasurementApproach')
+		);
+		self::assertSame(
+			['Indexation clause triggered', 'Optie zeker', 'Lease terms modified', 'Lease terms modified', 'Impairment write-down'],
+			array_column($rows, 'triggerDescription')
+		);
+		self::assertSame(['p-1', '', '', 'p-2', ''], array_column($rows, 'approver'));
+		self::assertSame(1030.0, $rows[0]['newContractSnapshot']['basePaymentAmount']);
+		self::assertSame($rows[0]['oldContractSnapshot'], $rows[4]['newContractSnapshot']);
+		self::assertSame($rows[4]['preEventLeaseLiability'], $rows[4]['postEventLeaseLiability']);
+		self::assertSame(0.0, $rows[0]['plImpact']);
+		self::assertSame(-$rows[4]['rouAssetAdjustment'], $rows[4]['plImpact']);
+		self::assertSame(0.0, $rows[3]['rouAssetAdjustment']);
+		self::assertSame(
+			round($rows[0]['postEventLeaseLiability'] - $rows[0]['preEventLeaseLiability'], 2),
+			$rows[0]['rouAssetAdjustment']
+		);
+
+		$golden = json_encode($rows, JSON_THROW_ON_ERROR);
+		self::assertSame(
+			'12c0667d',
+			substr(hash('sha256', $golden), 0, 8),
+			'Saved event rows changed: ' . $golden
+		);
+
+	}//end testEveryRecordMethodWritesItsEventFieldForFieldAndRefusesOutOfScope()
+
+	/**
 	 * Prospective approach records the event without a GL adjustment line
 	 * (the future schedule absorbs the change).
 	 *
