@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Service\Usage;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
@@ -43,12 +43,12 @@ class MeterReadingRating {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param UsageRatingCalculator  $calculator    Flat and graduated rating.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly UsageRatingCalculator $calculator,
 	) {
 	}//end __construct()
@@ -92,7 +92,7 @@ class MeterReadingRating {
 			return null;
 		}
 
-		$scoped = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('UsageRatePlan');
+		$scoped = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('UsageRatePlan');
 		$plan   = ObjectIdentifier::findOne(scoped: $scoped, id: $planId);
 		if ($plan === null || (string)($plan['administrationId'] ?? '') !== (string)($reading['administrationId'] ?? '')) {
 			return null;

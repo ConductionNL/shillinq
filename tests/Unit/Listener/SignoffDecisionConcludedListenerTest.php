@@ -87,7 +87,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
@@ -136,7 +135,7 @@ final class SignoffDecisionConcludedListenerTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SignoffDecisionConcludedListener(

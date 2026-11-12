@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Throwable;
 
@@ -42,11 +42,11 @@ final class ConcludedSubjectStore {
 	/**
 	 * Hold the settings and the object service.
 	 *
-	 * @param SettingsService        $settingsService Shillinq settings (register slug).
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ObjectServiceInterface $objectService   OpenRegister's published object surface (ADR-084).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
@@ -105,7 +105,7 @@ final class ConcludedSubjectStore {
 	 */
 	public function persist(SubjectRef $ref, array $updates): void {
 		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema($ref->schema)
 			->updateObject($ref->id, $updates);
 	}//end persist()
@@ -139,7 +139,7 @@ final class ConcludedSubjectStore {
 	private function findObject(SubjectRef $ref): array|null {
 		try {
 			$result = ObjectIdentifier::findScoped(
-				scoped: $this->objectService->setRegister($this->settingsService->getRegisterSlug())->setSchema($ref->schema),
+				scoped: $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($ref->schema),
 				id: $ref->id
 			);
 

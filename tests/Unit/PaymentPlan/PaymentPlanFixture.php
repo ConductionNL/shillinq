@@ -39,7 +39,6 @@ use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -159,10 +158,10 @@ trait PaymentPlanFixture {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return $settings;
 

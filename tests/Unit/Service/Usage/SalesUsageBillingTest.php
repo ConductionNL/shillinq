@@ -36,7 +36,6 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCA\Shillinq\Service\Usage\MeterReadingRating;
@@ -285,10 +284,10 @@ class SalesUsageBillingTest extends TestCase {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return $settings;

@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Import;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -39,11 +39,11 @@ class ImportPeriod {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      Supplies the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 	) {
 	}//end __construct()
 
@@ -61,7 +61,7 @@ class ImportPeriod {
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	public function isOpen(string $administrationId, string $date): bool {
-		$years = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('FiscalYear')
+		$years = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema('FiscalYear')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 		foreach ($years as $row) {
 			$year = ObjectIdentifier::recordWithId(candidate: $row);

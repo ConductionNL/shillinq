@@ -44,7 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
@@ -88,7 +88,7 @@ final class SigningConcludedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param SigningDelegationService $signingService The document-signing consumer service.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's published object
@@ -98,7 +98,7 @@ final class SigningConcludedListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly SigningDelegationService $signingService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
@@ -316,7 +316,7 @@ final class SigningConcludedListener implements IEventListener {
 	 * @return ConcludedSubjectStore The store.
 	 */
 	private function subjects(): ConcludedSubjectStore {
-		return new ConcludedSubjectStore(settingsService: $this->settingsService, objectService: $this->objectService);
+		return new ConcludedSubjectStore(registerLocation: $this->registerLocation, objectService: $this->objectService);
 
 	}//end subjects()
 
