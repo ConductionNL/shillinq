@@ -41,12 +41,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
-use OCP\Files\Folder;
+use OCA\Shillinq\Reporting\SystemTagAssigner;
+use OCA\Shillinq\Reporting\TaggedFileStore;
+use OCA\Shillinq\Reporting\TaggedFileStoreLog;
+use OCA\Shillinq\Reporting\TaggedFileStoreMessages;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
-use OCP\SystemTag\TagNotFoundException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -70,13 +72,6 @@ class PaymentRunExportService {
 	 * @var string
 	 */
 	private const SCHEMA = 'PaymentRun';
-
-	/**
-	 * The Nextcloud object type the system tags are mapped against.
-	 *
-	 * @var string
-	 */
-	private const TAG_OBJECT_TYPE = 'files';
 
 	/**
 	 * Memoised generator index (format => instance).
@@ -191,7 +186,7 @@ class PaymentRunExportService {
 		$stored = $this->storeFile(administrationId: $run->administrationId, rendered: $file, userId: $run->userId);
 
 		if ($stored['fileId'] !== null) {
-			$this->applyTags(
+			$this->fileStore()->applyTags(
 				fileId: $stored['fileId'],
 				tags: [
 					'shillinq-payment-run:' . $run->runNumber,
@@ -433,12 +428,12 @@ class PaymentRunExportService {
 				$segments[] = $administrationId;
 			}
 
-			$folder = $this->ensureFolder(base: $userFolder, segments: $segments);
+			$folder = $this->fileStore()->ensureFolder(base: $userFolder, segments: $segments);
 			if ($folder === null) {
 				return ['filePath' => null, 'fileId' => null, 'node' => null];
 			}
 
-			$fileName = $this->uniqueName(folder: $folder, name: $rendered->fileName);
+			$fileName = $this->fileStore()->uniqueName(folder: $folder, name: $rendered->fileName);
 			$file = $folder->newFile($fileName, $rendered->content);
 
 			return ['filePath' => $file->getPath(), 'fileId' => $file->getId(), 'node' => $file];
@@ -453,106 +448,18 @@ class PaymentRunExportService {
 	}//end storeFile()
 
 	/**
-	 * Ensure a nested folder path exists under a base folder, returning the leaf.
+	 * The store this service writes its files through, logging in its own words.
 	 *
-	 * @param Folder $base The base folder (the user's Files home).
-	 * @param array<string> $segments Path segments to create/descend.
-	 *
-	 * @return Folder|null
+	 * @return TaggedFileStore
 	 */
-	private function ensureFolder(Folder $base, array $segments): ?Folder {
-		$current = $base;
-		foreach ($segments as $segment) {
-			if ($current->nodeExists($segment) === true) {
-				$node = $current->get($segment);
-				if ($node instanceof Folder) {
-					$current = $node;
-					continue;
-				}
-
-				$this->logger->warning('PaymentRunExportService: path segment is not a folder', ['segment' => $segment]);
-				return null;
-			}
-
-			$current = $current->newFolder($segment);
-		}
-
-		return $current;
-	}//end ensureFolder()
-
-	/**
-	 * Produce a non-colliding file name within a folder (suffixes -1, -2, ...).
-	 *
-	 * @param Folder $folder The target folder.
-	 * @param string $name The desired file name.
-	 *
-	 * @return string
-	 */
-	private function uniqueName(Folder $folder, string $name): string {
-		if ($folder->nodeExists($name) === false) {
-			return $name;
-		}
-
-		$dot = strrpos($name, '.');
-		$stem = $name;
-		$extension = '';
-		if ($dot !== false) {
-			$stem = substr($name, 0, $dot);
-			$extension = substr($name, $dot);
-		}
-
-		$counter = 1;
-		do {
-			$candidate = $stem . '-' . $counter . $extension;
-			$counter++;
-		} while ($folder->nodeExists($candidate) === true && $counter < 1000);
-
-		return $candidate;
-	}//end uniqueName()
-
-	/**
-	 * Apply (creating if needed) the given system tags to a file id.
-	 *
-	 * @param int $fileId The Nextcloud file id.
-	 * @param array<string> $tags The tag names to apply.
-	 *
-	 * @return void
-	 */
-	private function applyTags(int $fileId, array $tags): void {
-		foreach ($tags as $tagName) {
-			$tagName = trim($tagName);
-			if ($tagName === '') {
-				continue;
-			}
-
-			try {
-				$tag = $this->resolveTag(tagName: $tagName);
-				$this->tagMapper->assignTags((string)$fileId, self::TAG_OBJECT_TYPE, [$tag->getId()]);
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'PaymentRunExportService: failed to apply system tag',
-					['tag' => $tagName, 'fileId' => $fileId, 'exception' => $e->getMessage()]
-				);
-			}
-		}
-
-	}//end applyTags()
-
-	/**
-	 * Resolve a user-visible, assignable system tag by name, creating it on miss.
-	 *
-	 * @param string $tagName The tag name.
-	 *
-	 * @return \OCP\SystemTag\ISystemTag
-	 */
-	private function resolveTag(string $tagName): \OCP\SystemTag\ISystemTag {
-		try {
-			return $this->tagManager->getTag($tagName, true, true);
-		} catch (TagNotFoundException $e) {
-			return $this->tagManager->createTag($tagName, true, true);
-		}
-
-	}//end resolveTag()
+	private function fileStore(): TaggedFileStore {
+		$messages = new TaggedFileStoreMessages(
+			notFolder: 'PaymentRunExportService: path segment is not a folder',
+			tagFailed: 'PaymentRunExportService: failed to apply system tag',
+		);
+		$tags = new SystemTagAssigner(tagManager: $this->tagManager, tagMapper: $this->tagMapper);
+		return new TaggedFileStore(tags: $tags, log: new TaggedFileStoreLog(logger: $this->logger, messages: $messages));
+	}//end fileStore()
 
 	/**
 	 * Persist the updated PaymentRun through OpenRegister (drives the transition).

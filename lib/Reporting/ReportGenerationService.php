@@ -70,12 +70,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting;
 
 use OCP\Files\File;
-use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
-use OCP\SystemTag\TagNotFoundException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -95,11 +93,6 @@ class ReportGenerationService {
 	 * The GeneratedReport schema slug.
 	 */
 	private const SCHEMA = 'GeneratedReport';
-
-	/**
-	 * The Nextcloud object type the system tags are mapped against.
-	 */
-	private const TAG_OBJECT_TYPE = 'files';
 
 	/**
 	 * Memoised generator index (reportType => instance).
@@ -245,7 +238,7 @@ class ReportGenerationService {
 		];
 
 		if ($stored['fileId'] !== null) {
-			$this->applyTags($stored['fileId'], $tags);
+			$this->fileStore()->applyTags(fileId: $stored['fileId'], tags: $tags);
 		}
 
 		$record = [
@@ -503,12 +496,12 @@ class ReportGenerationService {
 				$segments[] = $administrationId;
 			}
 
-			$folder = $this->ensureFolder($userFolder, $segments);
+			$folder = $this->fileStore()->ensureFolder(base: $userFolder, segments: $segments);
 			if ($folder === null) {
 				return ['filePath' => null, 'fileId' => null];
 			}
 
-			$fileName = $this->uniqueName($folder, $rendered->fileName);
+			$fileName = $this->fileStore()->uniqueName(folder: $folder, name: $rendered->fileName);
 
 			$file = $folder->newFile($fileName, $rendered->content);
 
@@ -524,103 +517,18 @@ class ReportGenerationService {
 	}//end storeFile()
 
 	/**
-	 * Ensure a nested folder path exists under a base folder, returning the leaf.
+	 * The store this service writes its files through, logging in its own words.
 	 *
-	 * @param Folder $base The base folder (the user's Files home).
-	 * @param array<string> $segments Path segments to create/descend.
-	 *
-	 * @return Folder|null The leaf folder, or null on failure.
+	 * @return TaggedFileStore
 	 */
-	private function ensureFolder(Folder $base, array $segments): ?Folder {
-		$current = $base;
-		foreach ($segments as $segment) {
-			if ($current->nodeExists($segment) === true) {
-				$node = $current->get($segment);
-				if ($node instanceof Folder) {
-					$current = $node;
-					continue;
-				}
-
-				$this->logger->warning('ReportGenerationService: report path segment is not a folder', ['segment' => $segment]);
-				return null;
-			}
-
-			$current = $current->newFolder($segment);
-		}
-
-		return $current;
-	}//end ensureFolder()
-
-	/**
-	 * Produce a non-colliding file name within a folder (suffixes -1, -2, ...).
-	 *
-	 * @param Folder $folder The target folder.
-	 * @param string $name The desired file name.
-	 *
-	 * @return string A name that does not yet exist in the folder.
-	 */
-	private function uniqueName(Folder $folder, string $name): string {
-		if ($folder->nodeExists($name) === false) {
-			return $name;
-		}
-
-		$dot = strrpos($name, '.');
-		$stem = $dot === false ? $name : substr($name, 0, $dot);
-		$extension = $dot === false ? '' : substr($name, $dot);
-
-		$counter = 1;
-		do {
-			$candidate = $stem . '-' . $counter . $extension;
-			$counter++;
-		} while ($folder->nodeExists($candidate) === true && $counter < 1000);
-
-		return $candidate;
-	}//end uniqueName()
-
-	/**
-	 * Apply (creating if needed) the given system tags to a file id.
-	 *
-	 * @param int $fileId The Nextcloud file id.
-	 * @param array<string> $tags The tag names to apply.
-	 *
-	 * @return void
-	 */
-	private function applyTags(int $fileId, array $tags): void {
-		foreach ($tags as $tagName) {
-			$tagName = trim($tagName);
-			if ($tagName === '') {
-				continue;
-			}
-
-			try {
-				$tag = $this->resolveTag($tagName);
-				$this->tagMapper->assignTags((string)$fileId, self::TAG_OBJECT_TYPE, [$tag->getId()]);
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'ReportGenerationService: failed to apply system tag',
-					['tag' => $tagName, 'fileId' => $fileId, 'exception' => $e->getMessage()]
-				);
-			}
-		}
-
-	}//end applyTags()
-
-	/**
-	 * Resolve a user-visible, assignable system tag by name, creating it on miss.
-	 *
-	 * @param string $tagName The tag name.
-	 *
-	 * @return \OCP\SystemTag\ISystemTag The resolved (or newly created) tag.
-	 */
-	private function resolveTag(string $tagName): \OCP\SystemTag\ISystemTag {
-		try {
-			$matches = $this->tagManager->getTag($tagName, true, true);
-			return $matches;
-		} catch (TagNotFoundException $e) {
-			return $this->tagManager->createTag($tagName, true, true);
-		}
-
-	}//end resolveTag()
+	private function fileStore(): TaggedFileStore {
+		$messages = new TaggedFileStoreMessages(
+			notFolder: 'ReportGenerationService: report path segment is not a folder',
+			tagFailed: 'ReportGenerationService: failed to apply system tag',
+		);
+		$tags = new SystemTagAssigner(tagManager: $this->tagManager, tagMapper: $this->tagMapper);
+		return new TaggedFileStore(tags: $tags, log: new TaggedFileStoreLog(logger: $this->logger, messages: $messages));
+	}//end fileStore()
 
 	/**
 	 * Persist a GeneratedReport record through OpenRegister, returning it as an
