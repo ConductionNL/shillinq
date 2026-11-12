@@ -191,8 +191,13 @@ function loadJson(file) {
 	return JSON.parse(raw)
 }
 
-function collectSchemas() {
-	const registry = {}
+/**
+ * The register files in merge order: the main register, then the register.d
+ * fragments sorted by name.
+ *
+ * @return {string[]} The file paths.
+ */
+function registerSourceFiles() {
 	const files = []
 	if (fs.existsSync(MAIN_REGISTER)) files.push(MAIN_REGISTER)
 	if (fs.existsSync(FRAGMENT_DIR) && fs.statSync(FRAGMENT_DIR).isDirectory()) {
@@ -201,7 +206,65 @@ function collectSchemas() {
 			files.push(path.join(FRAGMENT_DIR, fn))
 		}
 	}
-	for (const fp of files) {
+	return files
+}
+
+/**
+ * Fold one file's definition of a schema into its registry entry.
+ *
+ * @param {object} entry The schema's registry entry, changed in place.
+ * @param {{def: object, fp: string}} source The definition and the file it is in.
+ * @return {void}
+ */
+function recordSchemaDefinition(entry, { def, fp }) {
+	entry.files.push(fp)
+	// Accumulate the MERGED property set across every fragment that
+	// touches this slug — a cross-schema field reference must be
+	// checked against what the schema ends up with after
+	// deepMergeConfig(), not against one fragment in isolation.
+	if (def && def.properties && typeof def.properties === 'object') {
+		for (const p of Object.keys(def.properties))
+			entry.props.add(p)
+	}
+	const aggs = def && def['x-openregister-aggregations']
+	if (aggs && typeof aggs === 'object') {
+		for (const [aggName, agg] of Object.entries(aggs)) {
+			if (agg && typeof agg === 'object')
+				entry.aggregations.push({ aggName, agg, file: fp })
+		}
+	}
+	// The DB slug is the explicit `slug` when present, else the
+	// components.schemas key. OpenRegister resolves the slug, not the
+	// key. `files` is walked in the same sorted order that
+	// SettingsService::deepMergeConfig() merges fragments in, and a
+	// scalar in a later fragment overwrites the base — so the LAST
+	// explicit `slug` is the one that reaches the database.
+	if (def && typeof def.slug === 'string' && def.slug !== '') {
+		entry.slug = def.slug
+	}
+	const flag = def && def['x-openregister-audit-trail']
+	if (flag && typeof flag === 'object' && flag.enabled === true) {
+		entry.auditDeclaredIn.push(fp)
+	}
+	// Scoped to register.d FRAGMENTS only (per the spec Requirement's own
+	// wording: "two or more `register.d` source files"). The monolith
+	// `shillinq_register.json` is deliberately excluded here: fragments
+	// routinely restate a full definition for a schema the monolith
+	// already carries (the pre-ADR-037 baseline predates the fragment
+	// split), and `deepMergeConfig` scalar-overwrite semantics mean a
+	// later fragment's `required` still concatenates onto the base's —
+	// a large, separate, pre-existing debt class across ~60 schemas that
+	// is out of scope for this collision gate to police. This check's
+	// job is the ADR-037 fragment-vs-fragment case that has no single
+	// "authoritative base" to defer to — exactly the Contract collision.
+	if (fp !== MAIN_REGISTER && isFullSchemaDefinition(def)) {
+		entry.fullDefinitionFiles.push(fp)
+	}
+}
+
+function collectSchemas() {
+	const registry = {}
+	for (const fp of registerSourceFiles()) {
 		let parsed
 		try {
 			parsed = loadJson(fp)
@@ -223,49 +286,7 @@ function collectSchemas() {
 					aggregations: [],
 					slug,
 				}
-			registry[slug].files.push(fp)
-			// Accumulate the MERGED property set across every fragment that
-			// touches this slug — a cross-schema field reference must be
-			// checked against what the schema ends up with after
-			// deepMergeConfig(), not against one fragment in isolation.
-			if (def && def.properties && typeof def.properties === 'object') {
-				for (const p of Object.keys(def.properties))
-					registry[slug].props.add(p)
-			}
-			const aggs = def && def['x-openregister-aggregations']
-			if (aggs && typeof aggs === 'object') {
-				for (const [aggName, agg] of Object.entries(aggs)) {
-					if (agg && typeof agg === 'object')
-						registry[slug].aggregations.push({ aggName, agg, file: fp })
-				}
-			}
-			// The DB slug is the explicit `slug` when present, else the
-			// components.schemas key. OpenRegister resolves the slug, not the
-			// key. `files` is walked in the same sorted order that
-			// SettingsService::deepMergeConfig() merges fragments in, and a
-			// scalar in a later fragment overwrites the base — so the LAST
-			// explicit `slug` is the one that reaches the database.
-			if (def && typeof def.slug === 'string' && def.slug !== '') {
-				registry[slug].slug = def.slug
-			}
-			const flag = def && def['x-openregister-audit-trail']
-			if (flag && typeof flag === 'object' && flag.enabled === true) {
-				registry[slug].auditDeclaredIn.push(fp)
-			}
-			// Scoped to register.d FRAGMENTS only (per the spec Requirement's own
-			// wording: "two or more `register.d` source files"). The monolith
-			// `shillinq_register.json` is deliberately excluded here: fragments
-			// routinely restate a full definition for a schema the monolith
-			// already carries (the pre-ADR-037 baseline predates the fragment
-			// split), and `deepMergeConfig` scalar-overwrite semantics mean a
-			// later fragment's `required` still concatenates onto the base's —
-			// a large, separate, pre-existing debt class across ~60 schemas that
-			// is out of scope for this collision gate to police. This check's
-			// job is the ADR-037 fragment-vs-fragment case that has no single
-			// "authoritative base" to defer to — exactly the Contract collision.
-			if (fp !== MAIN_REGISTER && isFullSchemaDefinition(def)) {
-				registry[slug].fullDefinitionFiles.push(fp)
-			}
+			recordSchemaDefinition(registry[slug], { def, fp })
 		}
 	}
 	return registry
@@ -909,60 +930,61 @@ function checkAggregationExpressionAliases(registry) {
 	return false
 }
 
-function checkAggregationBareRefs(registry) {
-	const offenders = []
-	let checked = 0
-
-	for (const slug of Object.keys(registry).sort()) {
-		for (const { aggName, agg, file } of registry[slug].aggregations) {
-			// Resolve the target the way AggregationRunner does.
-			const targetSlug =
-				typeof agg.from === 'string' && agg.from !== '' ? agg.from : slug
-			const target = registry[targetSlug]
-			// An unresolvable target is a different defect class — and may
-			// legitimately live in another app's register.
-			if (!target) continue
-
-			const refs = []
-			const gb = Array.isArray(agg.groupBy)
-				? agg.groupBy
-				: typeof agg.groupBy === 'string'
-					? [agg.groupBy]
-					: []
-			for (const g of gb)
-				if (typeof g === 'string')
-					refs.push({ key: 'groupBy', ref: g.trim() })
-			for (const src of ['filter', 'where']) {
-				const v = agg[src]
-				if (v && typeof v === 'object' && Array.isArray(v) === false)
-					for (const k of Object.keys(v))
-						refs.push({ key: src, ref: k.trim() })
-			}
-			if (typeof agg.field === 'string' && agg.field !== '')
-				refs.push({ key: 'field', ref: agg.field.trim() })
-			if (Array.isArray(agg.metrics))
-				for (const m of agg.metrics)
-					if (m && typeof m.field === 'string' && m.field !== '')
-						refs.push({ key: 'metrics[].field', ref: m.field.trim() })
-
-			for (const { key, ref } of refs) {
-				// Dotted refs are checkAggregationFieldRefs()' subject.
-				if (ref.includes('.') === true) continue
-				// `_`-prefixed keys are OpenRegister control params, not
-				// properties; `@`-prefixed values are placeholders.
-				if (ref.startsWith('_') === true || ref.startsWith('@') === true)
-					continue
-				if (IMPLICIT_OBJECT_FIELDS.has(ref) === true) continue
-				checked++
-				if (target.props.has(ref) === false)
-					offenders.push(
-						`${slug}.${aggName} ${key}="${ref}" — ${targetSlug} declares no such property`
-							+ `\n      declared in ${file}`,
-					)
-			}
-		}
+/**
+ * The plain field references an aggregation makes: its groupBy, filter and
+ * where keys, field, and metrics[].field.
+ *
+ * @param {object} agg The aggregation.
+ * @return {Array<{key: string, ref: string}>} The references, trimmed.
+ */
+function aggregationFieldRefs(agg) {
+	const refs = []
+	const gb = Array.isArray(agg.groupBy)
+		? agg.groupBy
+		: typeof agg.groupBy === 'string'
+			? [agg.groupBy]
+			: []
+	for (const g of gb)
+		if (typeof g === 'string')
+			refs.push({ key: 'groupBy', ref: g.trim() })
+	for (const src of ['filter', 'where']) {
+		const v = agg[src]
+		if (v && typeof v === 'object' && Array.isArray(v) === false)
+			for (const k of Object.keys(v))
+				refs.push({ key: src, ref: k.trim() })
 	}
+	if (typeof agg.field === 'string' && agg.field !== '')
+		refs.push({ key: 'field', ref: agg.field.trim() })
+	if (Array.isArray(agg.metrics))
+		for (const m of agg.metrics)
+			if (m && typeof m.field === 'string' && m.field !== '')
+				refs.push({ key: 'metrics[].field', ref: m.field.trim() })
+	return refs
+}
 
+/**
+ * Whether a reference names a property of the target schema: dotted refs are
+ * checkAggregationFieldRefs()' subject, `_`-prefixed keys are OpenRegister
+ * control params, `@`-prefixed values are placeholders, and implicit object
+ * fields always exist.
+ *
+ * @param {string} ref The reference.
+ * @return {boolean} True when it must resolve to a declared property.
+ */
+function isBarePropertyRef(ref) {
+	if (ref.includes('.') === true) return false
+	if (ref.startsWith('_') === true || ref.startsWith('@') === true) return false
+	return IMPLICIT_OBJECT_FIELDS.has(ref) === false
+}
+
+/**
+ * Report the bare reference count against the baseline.
+ *
+ * @param {number} checked How many references were checked.
+ * @param {string[]} offenders The references that resolve to nothing.
+ * @return {boolean} True when the count matches the baseline.
+ */
+function bareRefVerdict(checked, offenders) {
 	console.log(
 		`[validate-registers] aggregation BARE field references checked: ${checked}`,
 	)
@@ -994,6 +1016,35 @@ function checkAggregationBareRefs(registry) {
 		return false
 	}
 	return true
+}
+
+function checkAggregationBareRefs(registry) {
+	const offenders = []
+	let checked = 0
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			// Resolve the target the way AggregationRunner does.
+			const targetSlug =
+				typeof agg.from === 'string' && agg.from !== '' ? agg.from : slug
+			const target = registry[targetSlug]
+			// An unresolvable target is a different defect class — and may
+			// legitimately live in another app's register.
+			if (!target) continue
+
+			for (const { key, ref } of aggregationFieldRefs(agg)) {
+				if (isBarePropertyRef(ref) === false) continue
+				checked++
+				if (target.props.has(ref) === false)
+					offenders.push(
+						`${slug}.${aggName} ${key}="${ref}" — ${targetSlug} declares no such property`
+							+ `\n      declared in ${file}`,
+					)
+			}
+		}
+	}
+
+	return bareRefVerdict(checked, offenders)
 }
 
 function checkAggregationFieldRefs(registry) {
