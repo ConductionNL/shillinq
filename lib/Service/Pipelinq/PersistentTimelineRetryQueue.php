@@ -48,7 +48,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use Psr\Container\ContainerInterface;
@@ -71,7 +71,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 	/**
 	 * Construct the persistent queue.
 	 *
-	 * @param SettingsService $settings Resolves the active OR register
+	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
 	 *                                  slug.
 	 * @param ContainerInterface $container DI container for late-bound OR
 	 *                                      ObjectService lookup.
@@ -80,7 +80,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 	 * @param LoggerInterface $logger PSR logger.
 	 */
 	public function __construct(
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly ITimeFactory $time,

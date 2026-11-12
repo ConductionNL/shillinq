@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Seed;
 
 use Closure;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -45,14 +45,14 @@ class SeedImporter {
 	/**
 	 * Constructor for the SeedImporter.
 	 *
-	 * @param SettingsService $settings The settings service, for the register slug
+	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container The container, for OpenRegister's ObjectService
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private SettingsService $settings,
+		private RegisterLocation $settings,
 		private ContainerInterface $container,
 		private LoggerInterface $logger,
 	) {

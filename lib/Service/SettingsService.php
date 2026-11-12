@@ -1122,7 +1122,7 @@ class SettingsService {
 	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
 	 */
 	private function seedImporter(): SeedImporter {
-		return new SeedImporter(settings: $this, container: $this->container, logger: $this->logger);
+		return new SeedImporter(settings: $this->registerLocation, container: $this->container, logger: $this->logger);
 	}//end seedImporter()
 
 	/**
