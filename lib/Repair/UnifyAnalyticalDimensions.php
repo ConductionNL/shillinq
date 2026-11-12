@@ -69,7 +69,7 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -90,12 +90,12 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocation $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 	) {
@@ -166,7 +166,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	private function runInner(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$output->info('Shillinq: UnifyAnalyticalDimensions — migrating CostCenter → cost-center …');
 			$ccResult = $this->migrateCostCenters(

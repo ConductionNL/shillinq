@@ -725,7 +725,7 @@ class SettingsService {
 	 */
 	private function bbvAdministrationSeeds(): BbvAdministrationSeedService {
 		return new BbvAdministrationSeedService(
-			settings: $this,
+			settings: $this->registerLocation,
 			importer: $this->seedImporter(),
 			appConfig: $this->appConfig,
 			logger: $this->logger,
