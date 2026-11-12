@@ -19,6 +19,7 @@
 ## Test coverage
 
 <!-- coverage:start -->
+Measured test coverage: 85.3% of statements (PHP 85.3% of 79,928 statements), at commit `64ea0a7c3` on 2026-11-12. The JavaScript frontend is not in this figure, because it has no coverage measurement yet. The figures come from [`coverage-summary.json`](coverage-summary.json); refresh them with `composer coverage:publish`.
 <!-- coverage:end -->
 
 ## Overview
