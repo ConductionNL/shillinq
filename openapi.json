@@ -8381,6 +8381,7 @@
                 "tags": [
                     "preferences"
                 ],
+                "x-provided-by": "openregister",
                 "parameters": [
                     {
                         "name": "key",
@@ -8418,6 +8419,7 @@
                 "tags": [
                     "preferences"
                 ],
+                "x-provided-by": "openregister",
                 "parameters": [
                     {
                         "name": "key",
@@ -9908,6 +9910,7 @@
                 "tags": [
                     "settings"
                 ],
+                "x-provided-by": "openregister",
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",
@@ -9937,6 +9940,7 @@
                 "tags": [
                     "settings"
                 ],
+                "x-provided-by": "openregister",
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",
@@ -9966,6 +9970,7 @@
                 "tags": [
                     "settings"
                 ],
+                "x-provided-by": "openregister",
                 "requestBody": {
                     "required": false,
                     "content": {
@@ -10011,6 +10016,7 @@
                 "tags": [
                     "settings"
                 ],
+                "x-provided-by": "openregister",
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",
@@ -10177,6 +10183,7 @@
                 "tags": [
                     "store"
                 ],
+                "x-provided-by": "openregister",
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",
@@ -10205,6 +10212,7 @@
                 "tags": [
                     "store"
                 ],
+                "x-provided-by": "openregister",
                 "parameters": [
                     {
                         "name": "slug",
@@ -10269,6 +10277,7 @@
                 "tags": [
                     "store"
                 ],
+                "x-provided-by": "openregister",
                 "requestBody": {
                     "required": false,
                     "content": {
