@@ -88,6 +88,7 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  * strict-coverage check had nothing to report. It is used, not covered.
  *
  * @uses \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Service\DossierSummaryRenderer
  */
 final class BadoControleprotocolEndToEndTest extends TestCase {
 

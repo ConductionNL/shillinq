@@ -27,6 +27,7 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  * Pins calculateMonthlyScore() before it is split into named steps.
  *
  * @covers \OCA\Shillinq\Service\VendorPerformanceAggregation
+ * @uses   \OCA\Shillinq\Service\VendorScorecardRun
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
