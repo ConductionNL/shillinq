@@ -43,7 +43,7 @@ class InboundPayableCallbackSender {
 	 * App config key: a JSON map of app id to callback secret.
 	 * @var string
 	 */
-	public const CONFIG_SECRETS = 'inboundPayableCallbackSecrets';
+	public const CONFIG_CALLBACK_SIGNING = 'inboundPayableCallbackSecrets';
 
 	/**
 	 * The signature header.
@@ -85,7 +85,11 @@ class InboundPayableCallbackSender {
 		$sourceApp = (string)($payable['sourceApp'] ?? '');
 		$secret = $this->secretFor(app: $sourceApp);
 		if ($secret === '') {
-			$payable['callbackError'] = sprintf('No callback secret is set for %s in %s, so the step was not sent.', $sourceApp, self::CONFIG_SECRETS);
+			$payable['callbackError'] = sprintf(
+				'No callback secret is set for %s in %s, so the step was not sent.',
+				$sourceApp,
+				self::CONFIG_CALLBACK_SIGNING
+			);
 			return $payable;
 		}
 
@@ -146,7 +150,7 @@ class InboundPayableCallbackSender {
 	 * @return string The secret, or empty.
 	 */
 	private function secretFor(string $app): string {
-		$map = json_decode($this->appConfig->getValueString('shillinq', self::CONFIG_SECRETS, ''), true);
+		$map = json_decode($this->appConfig->getValueString('shillinq', self::CONFIG_CALLBACK_SIGNING, ''), true);
 		if (is_array($map) === false || $app === '') {
 			return '';
 		}

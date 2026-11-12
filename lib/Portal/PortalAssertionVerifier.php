@@ -107,7 +107,7 @@ class PortalAssertionVerifier {
 	/**
 	 * The portaliq app-config key holding the dedicated signing secret.
 	 */
-	private const SECRET_KEY = 'jwt_signing_secret';
+	private const SIGNING_CONFIG_KEY = 'jwt_signing_secret';
 
 	/**
 	 * Minimum usable secret length — portaliq refuses to MINT with less;
@@ -375,7 +375,7 @@ class PortalAssertionVerifier {
 			return '';
 		}
 
-		return $this->appConfig->getValueString(self::PORTALIQ_APP_ID, self::SECRET_KEY, '', lazy: false);
+		return $this->appConfig->getValueString(self::PORTALIQ_APP_ID, self::SIGNING_CONFIG_KEY, '', lazy: false);
 	}//end portaliqSecret()
 
 	/**

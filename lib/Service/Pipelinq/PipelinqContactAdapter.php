@@ -108,7 +108,7 @@ class PipelinqContactAdapter {
 	 *
 	 * @var string
 	 */
-	public const CONFIG_KEY_TOKEN = 'pipelinq_token';
+	public const CONFIG_KEY_BEARER = 'pipelinq_token';
 
 	/**
 	 * TTL (seconds) for cached Contact entries — giant decision D6.
@@ -1095,7 +1095,7 @@ class PipelinqContactAdapter {
 			'Invalid pipelinq API token; check config',
 			[
 				'app' => AppIdentity::APP_ID,
-				'configKey' => self::CONFIG_KEY_TOKEN,
+				'configKey' => self::CONFIG_KEY_BEARER,
 				'type' => $event->type(),
 				'externalId' => $event->externalId(),
 				'contactId' => $event->contactId(),
@@ -1230,7 +1230,7 @@ class PipelinqContactAdapter {
 	 *                request.
 	 */
 	private function resolveToken(): string {
-		return trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CONFIG_KEY_TOKEN, ''));
+		return trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CONFIG_KEY_BEARER, ''));
 	}//end resolveToken()
 
 	/**

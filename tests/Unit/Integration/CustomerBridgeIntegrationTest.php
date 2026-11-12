@@ -159,7 +159,7 @@ final class CustomerBridgeIntegrationTest extends TestCase {
 					return 'https://pipelinq.test';
 				}
 
-				if ($key === PipelinqContactAdapter::CONFIG_KEY_TOKEN) {
+				if ($key === PipelinqContactAdapter::CONFIG_KEY_BEARER) {
 					return 'integration-bearer-token-DO-NOT-LOG';
 				}
 

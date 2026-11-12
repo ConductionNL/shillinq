@@ -71,7 +71,7 @@ class LeaseDecideskWebhookService {
 	 *
 	 * @var string
 	 */
-	public const CREDENTIAL_ID_TOKEN = 'decidesk_webhook_token';
+	public const CREDENTIAL_ID_WEBHOOK = 'decidesk_webhook_token';
 
 	/**
 	 * HTTP timeout in seconds — short enough that an unreachable decidesk
@@ -145,7 +145,7 @@ class LeaseDecideskWebhookService {
 	public function getWebhookToken(): string {
 		$secret = $this->credentialsManager->retrieve(
 			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN
+			identifier: self::CREDENTIAL_ID_WEBHOOK
 		);
 		if (is_string($secret) === false || $secret === '') {
 			return '';
@@ -171,14 +171,14 @@ class LeaseDecideskWebhookService {
 		if ($trimmed === '') {
 			$this->credentialsManager->delete(
 				userId: '',
-				identifier: self::CREDENTIAL_ID_TOKEN
+				identifier: self::CREDENTIAL_ID_WEBHOOK
 			);
 			return;
 		}
 
 		$this->credentialsManager->store(
 			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN,
+			identifier: self::CREDENTIAL_ID_WEBHOOK,
 			credentials: $trimmed
 		);
 
