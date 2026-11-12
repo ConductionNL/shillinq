@@ -90,7 +90,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testJsonErrorBecomesProblemDetails(): void {
 		$response = $this->decorate(
-			path: '/apps/shillinq/api/things/7',
+			path: '/apps/shillinq/api/v1/things/7',
 			response: new JSONResponse(data: ['error' => 'Thing not found'], statusCode: 404)
 		);
 
@@ -113,7 +113,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testMessageIsUsedAsDetailAndUnknownStatusHasATitle(): void {
 		$response = $this->decorate(
-			path: '/apps/shillinq/api/things',
+			path: '/apps/shillinq/api/v1/things',
 			response: new JSONResponse(data: ['message' => 'Teapot', 'error' => 'ignored'], statusCode: 418)
 		);
 
@@ -130,13 +130,13 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testConflictingOrListBodiesAreLeftAlone(): void {
 		$conflict = $this->decorate(
-			path: '/apps/shillinq/api/things',
+			path: '/apps/shillinq/api/v1/things',
 			response: new JSONResponse(data: ['status' => 'error', 'message' => 'No'], statusCode: 400)
 		);
 		$this->assertSame(expected: ['status' => 'error', 'message' => 'No'], actual: $conflict->getData());
 		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $conflict)['Content-Type']);
 
-		$list = $this->decorate(path: '/apps/shillinq/api/things', response: new JSONResponse(data: ['a', 'b'], statusCode: 400));
+		$list = $this->decorate(path: '/apps/shillinq/api/v1/things', response: new JSONResponse(data: ['a', 'b'], statusCode: 400));
 		$this->assertSame(expected: ['a', 'b'], actual: $list->getData());
 	}//end testConflictingOrListBodiesAreLeftAlone()
 
@@ -147,12 +147,28 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testExistingProblemAndEmptyBodies(): void {
 		$problem = ['type' => 'about:blank', 'title' => 'Forbidden', 'status' => 403, 'detail' => 'No access'];
-		$kept    = $this->decorate(path: '/apps/shillinq/api/things', response: new JSONResponse(data: $problem, statusCode: 403));
+		$kept    = $this->decorate(path: '/apps/shillinq/api/v1/things', response: new JSONResponse(data: $problem, statusCode: 403));
 		$this->assertSame(expected: $problem, actual: $kept->getData());
 
-		$empty = $this->decorate(path: '/apps/shillinq/api/things', response: new JSONResponse(data: [], statusCode: 500));
+		$empty = $this->decorate(path: '/apps/shillinq/api/v1/things', response: new JSONResponse(data: [], statusCode: 500));
 		$this->assertSame(expected: ['type' => 'about:blank', 'title' => 'Internal Server Error', 'status' => 500], actual: $empty->getData());
 	}//end testExistingProblemAndEmptyBodies()
+
+	/**
+	 * An error of an unversioned path keeps its body and content type; only headers are added.
+	 *
+	 * @return void
+	 */
+	public function testUnversionedErrorKeepsItsBody(): void {
+		$response = $this->decorate(
+			path: '/apps/shillinq/api/things/7',
+			response: new JSONResponse(data: ['error' => 'Thing not found'], statusCode: 404)
+		);
+
+		$this->assertSame(expected: ['error' => 'Thing not found'], actual: $response->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $response)['Content-Type']);
+		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
+	}//end testUnversionedErrorKeepsItsBody()
 
 	/**
 	 * A non-JSON error response gets the header but no body rewrite.

@@ -61,6 +61,19 @@ class ApiPathAliasesTest extends TestCase {
 	}//end testTheSuccessorOfAPath()
 
 	/**
+	 * Only a path whose app-relative part carries a major version counts as versioned.
+	 *
+	 * @return void
+	 */
+	public function testIsVersioned(): void {
+		$this->assertTrue(ApiPathAliases::isVersioned(path: '/apps/shillinq/api/v1/things'));
+		$this->assertTrue(ApiPathAliases::isVersioned(path: '/api/v1'));
+		$this->assertFalse(ApiPathAliases::isVersioned(path: '/apps/shillinq/api/things'));
+		$this->assertFalse(ApiPathAliases::isVersioned(path: '/apps/shillinq/api/v1things'));
+		$this->assertFalse(ApiPathAliases::isVersioned(path: '/apps/shillinq/settings'));
+	}//end testIsVersioned()
+
+	/**
 	 * Aliases come right after the routes already declared under `/api/v1/`, and
 	 * the declared routes stay exactly as they were.
 	 *
