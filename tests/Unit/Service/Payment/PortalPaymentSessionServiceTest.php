@@ -851,4 +851,41 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 		self::assertSame('downstream_error', $service->initiateForRequest(claims: $this->claims(), target: 'pr-zero')->status);
 		self::assertSame([], $this->objectService->saved);
 	}//end testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable()
+
+	/**
+	 * Pins every field of the session a request without an invoice opens:
+	 * the default description when it has none, the currency default, the
+	 * URLs and the metadata; a string amount is charged as a number.
+	 *
+	 * @return void
+	 */
+	public function testARequestSessionCarriesEveryFieldAndItsDefaults(): void {
+		$this->seedRequestsWithoutAnInvoice();
+		$this->objectService->data['shillinq']['PaymentRequest'][] = [
+			'id' => 'pr-plain',
+			'amount' => '42.50',
+			'state' => 'pending',
+			'description' => '   ',
+			'customerId' => self::CUSTOMER_MASTER_ID,
+		];
+		$captured = null;
+		$this->provider->expects($this->once())->method('createSession')->willReturnCallback(
+			function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+				$captured = $request;
+				return new PaymentSessionResult(dormant: true, checkoutUrl: '', paymentIntentId: 'tr_d');
+			}
+		);
+
+		$result = $this->makeService()->initiateForRequest(claims: $this->claims(), target: ' pr-plain ');
+
+		self::assertSame('deferred', $result->status);
+		self::assertSame(
+			[42.5, 'EUR', 'Payment request', 'https://instance.example/', 'https://instance.example/webhook', 'ideal'],
+			[$captured->amount, $captured->currency, $captured->description, $captured->redirectUrl, $captured->webhookUrl, $captured->method]
+		);
+		self::assertSame(['paymentRequestId' => 'pr-plain', 'administrationId' => '', 'correlationId' => 'pr-plain'], $captured->metadata);
+		self::assertSame('pr-plain', $this->objectService->saved[0]['uuid']);
+		self::assertSame('tr_d', $this->objectService->saved[0]['object']['paymentIntentId']);
+
+	}//end testARequestSessionCarriesEveryFieldAndItsDefaults()
 }//end class
