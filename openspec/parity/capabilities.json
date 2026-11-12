@@ -1251,7 +1251,10 @@
 				"reachedOn": "AdministrationSwitcher /administratie/wisselen (via menu Bookkeeping > Switch administration); Administraties (settings gear > Administrations)",
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-multi-administration",
-				"requirement": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: The chosen administration sticks (REQ-LMA-001)"
+				"requirement": [
+					"openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: The chosen administration sticks (REQ-LMA-001)",
+					"openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: Lists show the active administration only (REQ-LMA-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2599,8 +2602,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json) The multi-step approver chain for supplier invoices is planned in purchasing-approval-delegation (REQ-PAD-004).",
+				"state": "specified",
+				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json) The multi-step approver chain for supplier invoices is planned in purchasing-approval-delegation (REQ-PAD-004). Not built: the only gate is the three-way match or an accepted exception; the approval chain on SupplierInvoice.approve (task 1.4) does not exist yet (state set to specified, 12 Nov 2026).",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
@@ -2845,7 +2848,7 @@
 			},
 			"screen": {
 				"canvas": "design-system",
-				"board": "ShLeveranciers"
+				"board": "ShInkooporder"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_requisition/models/purchase_requisition.py:22 'Blanket Order' agreement type; RFQs created against it take its prices (warning at :57 on open blanket order)",
@@ -3421,7 +3424,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-09-28-banking-connected-accounts",
 				"readOn": "2026-09-28",
-				"requirement": "openspec/specs/bookkeeping-treasury-ihb :: The cash position is shown per bank account and combined (REQ-BCON-004)"
+				"requirement": [
+					"openspec/specs/bookkeeping-treasury-ihb :: The cash position is shown per bank account and combined (REQ-BCON-004)",
+					"openspec/specs/bookkeeping-bank-connectors :: A bank account links to its ledger account and its connection (REQ-BCON-001)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3439,7 +3445,7 @@
 			"feature": "psd2-bank-feeds",
 			"featureConfidence": "high",
 			"source": "competitor",
-			"note": "Accounts are kept and a combined GL cash position is shown; accounts cannot be connected. Specified 2026-09-27 in openspec/changes/banking-connected-accounts (OpenSpec pass)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "bnk-fx-rates",
@@ -3525,7 +3531,7 @@
 			"odoo": "partial",
 			"built": {
 				"state": "built",
-				"evidence": "Leningen, Derivaten, CashPools, IntercompanyLoans, FXHedges index pages (bookkeeping-wet-fido-treasury.json, 30-treasury-ihb.json) keep records; TreasuryDashboard and GroupLiquidityDashboard widgets are stats-blocks with a static props.count 0 and no schema/aggregation",
+				"evidence": "Leningen, Derivaten, CashPools, IntercompanyLoans, FXHedges index pages (bookkeeping-wet-fido-treasury.json, 30-treasury-ihb.json) keep the records. TreasuryDashboard reads KasgeldLimiet and RenteRisicoNorm for its cash limit and interest risk tiles; its banking balance and open limit alerts tiles are still a static count 0. GroupLiquidityDashboard reads /api/v1/cash-position for the group cash position and the cash per bank account (src/manifest.d/30-treasury-ihb.json).",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard, Loans /treasury/leningen, Derivatives /treasury/derivaten, Cash Pools /treasury/cash-pools (menu BankingCashflow)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-treasury-ihb",
@@ -3552,7 +3558,7 @@
 			"feature": "cashflow-forecast",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The records exist; the 'one view' dashboard shows hard-coded zeros."
+			"note": "Records and the liquidity view work; two treasury dashboard tiles still show a static zero (checked 12 Nov 2026)."
 		},
 		{
 			"id": "tax-vat-calc",
@@ -4834,7 +4840,7 @@
 			"feature": "budgeting",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "Corrected 2026-09-26: spending authority and budget checks are not enforced, they abort. MandateEnforcer::requiresApproval (lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json:275) and BudgetBlocker::canCommit (:282, :301) are declared as lifecycle guards on unregistered guard tags, and the aangaan transition also declares the unhandled action record-mutatie (:286)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "pln-budget-grid",
@@ -5313,13 +5319,17 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "AvailabilityRule, ResourceBreak, BookingConstraint schemas and AvailabilityRules page (bookings-availability-rules.json, settingsSection in src/menu-layout.json), but no PHP file reads those schemas (grep 'AvailabilityRule'|'ResourceBreak'|'BookingConstraint' in lib: none); lib/Service/SlotService.php:136-160 uses only the resource's single openingTime/closingTime and existing appointments",
+				"state": "specified",
+				"evidence": "AvailabilityRule, ResourceBreak, BookingConstraint schemas and AvailabilityRules page (bookings-availability-rules.json, settingsSection in src/menu-layout.json), but no PHP file reads those schemas (grep 'AvailabilityRule'|'ResourceBreak'|'BookingConstraint' in lib: none); lib/Service/SlotService.php:136-160 uses only the resource's single openingTime/closingTime and existing appointments. Not built: no PHP reads AvailabilityRule, ResourceBreak or BookingConstraint, and SlotService offers slots from the resource's single opening window, so the rules a user sets change nothing (state set to specified, 12 Nov 2026).",
 				"reachedOn": "AvailabilityRules /verkoop/beschikbaarheidsregels (settings gear); Resources /bookings/resources (via menu Sales > Bookings > Resources)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-availability-rules",
 				"spec": "openspec/specs/bookings-availability-rules",
-				"requirement": "openspec/specs/bookings-availability-rules :: REQ-BAR-001 AvailabilityRule Register Definition"
+				"requirement": [
+					"openspec/specs/bookings-availability-rules :: REQ-BAR-001 AvailabilityRule Register Definition",
+					"openspec/changes/bookings-slots-follow-availability/specs/bookings-availability-rules :: Offered slots follow the availability rules, breaks and constraints (REQ-BAR-011)"
+				],
+				"plan": "bookings-slots-follow-availability"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5691,16 +5701,18 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "built",
-				"evidence": "IB47Record list on IB47Jaarbatch (src/manifest.d/add-shillinq-detachering-payroll-administratie.json); no PHP aggregates payments to third parties into IB47 records or builds the statement (grep Ib47 in lib/*.php finds only the adapter interface and lib/Service/External/Ib47/LogIb47Adapter.php), and the IB47 connection is log-only per lib/Settings/connections.json. The report catalogue has no IB47 entry.",
+				"state": "specified",
+				"evidence": "IB47Record list on IB47Jaarbatch (src/manifest.d/add-shillinq-detachering-payroll-administratie.json); no PHP aggregates payments to third parties into IB47 records or builds the statement (grep Ib47 in lib/*.php finds only the adapter interface and lib/Service/External/Ib47/LogIb47Adapter.php), and the IB47 connection is log-only per lib/Settings/connections.json. The report catalogue has no IB47 entry. Not built: IB47Record rows are typed by hand; no PHP collects the year's payments to third parties and no generator produces the statement (state set to specified, 12 Nov 2026).",
 				"reachedOn": "IB47Jaarbatch /bookkeeping/detachering-payroll/ib47 (via menu Bookkeeping > IB47 annual batch)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie",
 				"spec": "openspec/specs/bookkeeping-detachering-payroll-administratie",
 				"requirement": [
 					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-002: IB47Record register",
-					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-005: IB47-formulier docudesk template"
-				]
+					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-005: IB47-formulier docudesk template",
+					"openspec/changes/people-ib47-statement/specs/bookkeeping-detachering-payroll-administratie :: The annual IB47 batch is prepared from the payments to third parties (REQ-DPA-021)"
+				],
+				"plan": "people-ib47-statement"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6739,7 +6751,10 @@
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability",
-				"requirement": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)"
+				"requirement": [
+					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-subsidie-verantwoording :: Determining a grant settles the difference (REQ-SUBV-011)",
+					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6959,7 +6974,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109740"
 			],
-			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account. Built 2026-09-29 by ledger-booking-rules."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "led-open-years",
@@ -7002,7 +7017,7 @@
 				"intelligence-db requirements#109515",
 				"intelligence-db requirements#109513"
 			],
-			"note": "Several years can be open; the post path they would receive entries on is broken. Built 2026-09-29 by ledger-posting-path."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "pur-duplicate-check",
@@ -7086,7 +7101,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109648"
 			],
-			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344. Built 2026-09-29 by purchasing-supplier-invoice-intake."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "pur-last-invoice-close",
@@ -7171,7 +7186,7 @@
 				"intelligence-db requirements#109596",
 				"intelligence-db requirements#109604"
 			],
-			"note": "CommitmentLine carries financialYear, but no transition, job or service moves open remainders to the next year; searched carry, rollover, overhevel, doorschuiven. Specified 2026-09-27 in openspec/changes/planning-commitment-year-end (OpenSpec pass)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "bnk-payment-block",
@@ -7439,7 +7454,7 @@
 				"intelligence-db requirements#109628",
 				"intelligence-db requirements#109629"
 			],
-			"note": "Begrotingswijziging with a draft->vastgesteld lifecycle and BegrotingswijzigingGuard (lib/Lifecycle/BegrotingswijzigingGuard.php:43) exists and BudgetOverrunGuard stacks it, but no manifest page names Begrotingswijziging, so a user cannot record one. Specified 2026-09-27 in openspec/changes/planning-budget-editing (OpenSpec pass)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "rep-scheduled",
@@ -7484,7 +7499,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109807"
 			],
-			"note": "Reports are generated on demand from the report library (lib/Reporting/ReportCatalogue.php); no job or setting schedules a report. Specified 2026-09-27 in openspec/changes/reporting-data-delivery (OpenSpec pass)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "rep-bi-feed",
@@ -7664,7 +7679,7 @@
 				"intelligence-db requirements#109550",
 				"intelligence-db requirements#109551"
 			],
-			"note": "depreciationMethod and usefulLife are editable fields on FixedAsset, but no periodic depreciation is posted at all (see pln-fixed-assets), so a change of method or an extra depreciation books nothing. Specified 2026-09-27 in openspec/changes/assets-method-change-and-reserve (OpenSpec pass)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "bnk-pay-from-app",
@@ -8934,7 +8949,7 @@
 				"intelligence-db requirements#109523",
 				"intelligence-db requirements#109837"
 			],
-			"note": "Required fields are decided by the shipped schemas; a user cannot choose them in shillinq. Specified 2026-09-27 in openspec/changes/platform-required-fields (OpenSpec pass)."
+			"note": "Corrected 12 Nov 2026: the earlier note predates the build; the built evidence describes the code as it is now."
 		},
 		{
 			"id": "sal-down-payment",
@@ -9267,7 +9282,8 @@
 				"delivered": "2026-06-14-bookkeeping-cbcr-pillar2",
 				"requirement": [
 					"openspec/specs/bookkeeping-cbcr-pillar2 :: REQ-CBC-001 Drempelwaarde-detectie EUR 750M",
-					"openspec/specs/bookkeeping-cbcr-pillar2 :: REQ-CBC-002 CbCR-aggregatie per jurisdictie"
+					"openspec/specs/bookkeeping-cbcr-pillar2 :: REQ-CBC-002 CbCR-aggregatie per jurisdictie",
+					"openspec/specs/bookkeeping-cbcr-pillar2 :: REQ-CBC-004 ETR per jurisdictie berekenen"
 				]
 			},
 			"screen": {
