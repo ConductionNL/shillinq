@@ -164,7 +164,7 @@ final class ImportBatchStepsTest extends TestCase {
 			objectService: $this->store,
 			transitions: new ObjectTransitionRunner(container: $container),
 			payloads: new ImportPostingPayloads(),
-			settings: $settings,
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			logger: $this->createMock(LoggerInterface::class)
 		);
 		$pipeline = new ImportPipelineService($container, $this->createMock(LoggerInterface::class), new AuditfileParser(), new ImportBatchGuard(), $posting);

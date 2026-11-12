@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 
@@ -61,14 +61,14 @@ class BankfeedIntakeService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param StatementIntakeService $intake        Writes the statement and lines.
 	 * @param ExactMatchBooker       $booker        Books exact matches on arrival.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly StatementIntakeService $intake,
 		private readonly ExactMatchBooker $booker,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -215,7 +215,7 @@ class BankfeedIntakeService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

@@ -274,7 +274,7 @@ trait PaymentPlanFixture {
 	 * @return PaymentPlanBankMatcher
 	 */
 	private function matcher(): PaymentPlanBankMatcher {
-		$matches = new ManualMatchService($this->store, $this->runner(), $this->settings(), $this->createMock(LoggerInterface::class));
+		$matches = new ManualMatchService($this->store, $this->runner(), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(LoggerInterface::class));
 		return new PaymentPlanBankMatcher($this->store, $this->settings(), $matches, $this->service(), $this->createMock(LoggerInterface::class));
 
 	}//end matcher()

@@ -79,13 +79,13 @@ class InventoryMobileScannerService {
 	/**
 	 * Construct the sync service with DI dependencies.
 	 *
-	 * @param SettingsService $settings Provides register slug + OR availability check.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param ITimeFactory $time Time provider for server-side timestamps.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
@@ -110,7 +110,7 @@ class InventoryMobileScannerService {
 		$serverTimestamp = $this->nowIso();
 		$deltas = [];
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->warning('Shillinq mobile scanner: OpenRegister unavailable; returning empty deltas');
 			return ['deltas' => [], 'serverTimestamp' => $serverTimestamp];
 		}
@@ -122,7 +122,7 @@ class InventoryMobileScannerService {
 
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$filters = ['administrationId' => $administrationId];
 
@@ -185,7 +185,7 @@ class InventoryMobileScannerService {
 		$serverTimestamp = $this->nowIso();
 		$results = [];
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			foreach ($operations as $op) {
 				$results[] = [
 					'transactionId' => (string)($op['transactionId'] ?? ''),
@@ -211,7 +211,7 @@ class InventoryMobileScannerService {
 
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq mobile scanner: failed to acquire ObjectService',

@@ -44,7 +44,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -78,13 +78,13 @@ class VatLineBackfill {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      Resolves the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IAppConfig             $appConfig     The configured VAT accounts.
 	 * @param LoggerInterface        $logger        Logs the lines it cannot resolve.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 	) {
@@ -98,7 +98,7 @@ class VatLineBackfill {
 	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
 	 */
 	public function run(): array {
-		$register = $this->settings->getRegisterSlug();
+		$register = $this->registerLocation->getRegisterSlug();
 		$stamper  = new VatLineStamper(objectService: $this->objectService, register: $register);
 		$result   = ['stamped' => 0, 'unresolved' => 0];
 
@@ -368,7 +368,7 @@ class VatLineBackfill {
 
 			$rows = $this->readAllRows(
 				objectService: $this->objectService,
-				registerSlug: $this->settings->getRegisterSlug(),
+				registerSlug: $this->registerLocation->getRegisterSlug(),
 				schema: 'Account',
 				filters: $filters
 			);

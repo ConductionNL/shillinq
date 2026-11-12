@@ -70,7 +70,7 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -97,12 +97,12 @@ class RetireCostProjectStep implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Settings service (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger.
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocation $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 	) {
@@ -172,7 +172,7 @@ class RetireCostProjectStep implements IRepairStep {
 	private function runInner(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$output->info('Shillinq: RetireCostProjectStep — scanning CostProject objects …');
 

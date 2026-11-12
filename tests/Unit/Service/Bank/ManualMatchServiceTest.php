@@ -41,7 +41,6 @@ use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -165,10 +164,10 @@ final class ManualMatchServiceTest extends TestCase {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return $settings;
 
@@ -183,7 +182,7 @@ final class ManualMatchServiceTest extends TestCase {
 		return new ManualMatchService(
 			objectService: $this->store,
 			transitions: $this->runner(),
-			settings: $this->settings(),
+			registerLocation: $this->settings(),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 

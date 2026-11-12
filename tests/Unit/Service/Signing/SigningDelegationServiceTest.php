@@ -86,7 +86,7 @@ if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class, false
 namespace OCA\Shillinq\Tests\Unit\Service\Signing;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -110,9 +110,9 @@ final class SigningDelegationServiceTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Event dispatcher mock.
@@ -138,12 +138,12 @@ final class SigningDelegationServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->dispatcher = $this->createMock(IEventDispatcher::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
 		$this->svc = new SigningDelegationService(
-			settingsService: $this->settings,
+			registerLocation: $this->settings,
 			eventDispatcher: $this->dispatcher,
 			logger: $this->logger,
 		);

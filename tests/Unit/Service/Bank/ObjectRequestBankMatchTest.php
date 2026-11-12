@@ -46,7 +46,6 @@ use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
@@ -135,7 +134,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);
@@ -151,7 +150,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			}
 		);
 		$logger = $this->createMock(LoggerInterface::class);
-		$manual = new ManualMatchService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger);
+		$manual = new ManualMatchService(objectService: $this->store, transitions: $runner, registerLocation: $settings, logger: $logger);
 		$settlements = new PaymentSettlementService();
 		$resolver = $this->createStub(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturnCallback(static fn (?object $entity): string => (string)$entity?->getSchema());
@@ -164,7 +163,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			manualMatch: $manual,
 			settlement: new ObjectRequestBankSettlement(
 				objectService: $this->store,
-				settings: $settings,
+				registerLocation: $settings,
 				settlements: $settlements,
 				revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $appConfig),
 				invoices: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
