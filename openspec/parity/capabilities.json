@@ -1320,15 +1320,17 @@
 			"twinfield": "partial",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "Booking side works: lib/Listener/IntercompanyLinkListener.php (registered at lib/AppInfo/Application.php:337) mirrors an IntercompanyJournalEntry into the counter administration via lib/Service/IntercompanyLinkService.php:107. Eliminations: lib/Service/IntercompanyMatchingService.php:398 writes EliminationJournal, but its only runtime caller lib/Service/SoftCloseExecutor.php:469 calls matchForPeriod(), a method that does not exist (the service has matchRelationPeriod), so it silently returns 0; no page lists EliminationJournal.",
+				"state": "specified",
+				"evidence": "Booking side works: lib/Listener/IntercompanyLinkListener.php (registered at lib/AppInfo/Application.php:337) mirrors an IntercompanyJournalEntry into the counter administration via lib/Service/IntercompanyLinkService.php:107. Eliminations: lib/Service/IntercompanyMatchingService.php:398 writes EliminationJournal, but its only runtime caller lib/Service/SoftCloseExecutor.php:469 calls matchForPeriod(), a method that does not exist (the service has matchRelationPeriod), so it silently returns 0; no page lists EliminationJournal. Not built: the soft close calls IntercompanyMatchingService::matchForPeriod, which does not exist (the service has matchRelationPeriod), so no elimination entry is written (state set to specified, 12 Nov 2026).",
 				"reachedOn": "IntercompanyBoekingen /administratie/intercompany (via menu Bookkeeping > Intercompany journal entries); IntercompanyTransactions /financial-statements/intercompany-transactions (via menu Bookkeeping > Inter-Company Transactions); elimination output: nothing reaches it",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-intercompany-elimination",
 				"requirement": [
 					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-002: Auto-detectie intercompany-transacties",
-					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-006: Eliminatie-journaalpost generatie"
-				]
+					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-006: Eliminatie-journaalpost generatie",
+					"openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination :: The nightly soft close writes the elimination entries of each intercompany relation (REQ-ICE-011)"
+				],
+				"plan": "ledger-group-close"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1405,8 +1407,10 @@
 				"change": "2026-06-14-bookkeeping-ifrs-rj-dual-gaap",
 				"requirement": [
 					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-001: Dual GAAP reporting SHALL be declared via six register schemas and parallel GL materialisation",
-					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-005: IFRS 9 expected credit loss vs. RJ 290 incurred loss SHALL be calculated separately"
-				]
+					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-005: IFRS 9 expected credit loss vs. RJ 290 incurred loss SHALL be calculated separately",
+					"openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-ifrs-rj-dual-gaap :: Posting under one framework derives the other and the reconciling difference (REQ-DGAAP-011)"
+				],
+				"plan": "reporting-ifrs-calculations"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1437,15 +1441,16 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "RetentionRule records seeded by the setup 'seed' action (lib/Controller/SetupController.php:265 statutory retention rules); lib/BackgroundJob/DocumentArchiveCron.php (registered) archives WBSO Documents past seven years. But BewaartermijnenDashboard counts RetentionRule rows with daysUntilRetention_lt 90 (src/manifest.json), i.e. rules, not financial records due for destruction; BookkeepingDestructionReport is in menu-layout removals.",
+				"state": "specified",
+				"evidence": "RetentionRule records seeded by the setup 'seed' action (lib/Controller/SetupController.php:265 statutory retention rules); lib/BackgroundJob/DocumentArchiveCron.php (registered) archives WBSO Documents past seven years. But BewaartermijnenDashboard counts RetentionRule rows with daysUntilRetention_lt 90 (src/manifest.json), i.e. rules, not financial records due for destruction; BookkeepingDestructionReport is in menu-layout removals. Not built: the Retention periods dashboard counts RetentionRule rows with daysUntilRetention_lt 90, so no page lists the records due for destruction; the destruction report stays reachable as a card on Reporting & compliance (state set to specified, 12 Nov 2026).",
 				"reachedOn": "Bewaartermijnen /administratie/bewaartermijnen and BewaartermijnenDashboard (via menu Reporting & compliance > Retention periods / Retention periods dashboard)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-archiefwet-retention",
 				"requirement": [
 					"openspec/specs/bookkeeping-archiefwet-retention :: REQ-ARC-003: Retention rule mapping",
 					"openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention :: A list shows the records whose retention period has ended (REQ-RET-015)"
-				]
+				],
+				"plan": "ledger-retention-due-records"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1476,15 +1481,17 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "built",
-				"evidence": "lib/BackgroundJob/SoftCloseJob.php (registered in appinfo/info.xml, INTERVAL_SECONDS=86400) runs lib/Service/SoftCloseExecutor.php:118 per administration (accruals, FX, cut-off, intercompany, trial balance, PeriodStatus soft-closed). Swing flagging lives in lib/Service/FluxService.php:133 classifyMateriality, reached only via POST /api/v2/flux-runs/execute (appinfo/routes.php:579), which no page calls and the nightly run does not invoke. Of the executor's sub-steps only accruals and FX revaluation run: it probes OCA\\Shillinq\\Service\\Ifrs15\\RevenueRecognitionService and Ifrs16\\LeasePostingService (classes that do not exist) and calls IntercompanyMatchingService::matchForPeriod and TrialBalanceService::generate (methods that do not exist), each silently skipped via container->has/method_exists (SoftCloseExecutor.php:418-494).",
+				"state": "specified",
+				"evidence": "lib/BackgroundJob/SoftCloseJob.php (registered in appinfo/info.xml, INTERVAL_SECONDS=86400) runs lib/Service/SoftCloseExecutor.php:118 per administration (accruals, FX, cut-off, intercompany, trial balance, PeriodStatus soft-closed). Swing flagging lives in lib/Service/FluxService.php:133 classifyMateriality, reached only via POST /api/v2/flux-runs/execute (appinfo/routes.php:579), which no page calls and the nightly run does not invoke. Of the executor's sub-steps only accruals and FX revaluation run: it probes OCA\\Shillinq\\Service\\Ifrs15\\RevenueRecognitionService and Ifrs16\\LeasePostingService (classes that do not exist) and calls IntercompanyMatchingService::matchForPeriod and TrialBalanceService::generate (methods that do not exist), each silently skipped via container->has/method_exists (SoftCloseExecutor.php:418-494). Not built: the swing check (FluxService) runs only from POST /api/v2/flux-runs/execute, which no page and not the nightly job calls (state set to specified, 12 Nov 2026).",
 				"reachedOn": "ContinuousClose /bookkeeping/continuous-close (via menu Bookkeeping > Continuous Close, 'Run soft-close now' action); FluxAnalysis /bookkeeping/flux-analysis lists FluxRun records but nothing creates them from the UI",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-soft-close-flux",
 				"requirement": [
 					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-002: Nightly soft-close job SHALL execute per administratie and complete by 07:00 local with full trial balance",
-					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing"
-				]
+					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing",
+					"openspec/changes/ledger-group-close/specs/bookkeeping-continuous-close :: The nightly soft close flags the swings per account (REQ-CLS-011)"
+				],
+				"plan": "ledger-group-close"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2568,7 +2575,7 @@
 			"feature": "bill-import-ubl-csv",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Built 2026-09-29 by purchasing-supplier-invoice-intake."
+			"note": "Import without typing works. An invoice with an order is booked after the 3-way match; an invoice without an order is booked with the lifecycle action Book without order (SupplierInvoice.bookWithoutOrder)."
 		},
 		{
 			"id": "pur-invoice-approval",
@@ -2582,7 +2589,7 @@
 			"odoo": "partial",
 			"built": {
 				"state": "built",
-				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json)",
+				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json) The multi-step approver chain for supplier invoices is planned in purchasing-approval-delegation (REQ-PAD-004).",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
@@ -2810,12 +2817,16 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "lib/Service/PurchaseOrderService.php:307-312 calls FrameworkAgreementDrawdownGuard::assertWithinCeiling when the payload has frameworkAgreementId; src/components/purchase-order/PurchaseOrderForm.vue never sends frameworkAgreementId (grep empty)",
+				"state": "specified",
+				"evidence": "lib/Service/PurchaseOrderService.php:307-312 calls FrameworkAgreementDrawdownGuard::assertWithinCeiling when the payload has frameworkAgreementId; src/components/purchase-order/PurchaseOrderForm.vue never sends frameworkAgreementId (grep empty) Not built: the purchase order form never sends frameworkAgreementId, so no order is drawn against an agreement, and agreed prices are not applied (state set to specified, 12 Nov 2026).",
 				"reachedOn": "FrameworkAgreements /inkoop/framework-agreements (menu Purchasing > Framework Agreements); FrameworkAgreementDetail shows ceiling KPI and linked POs",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-15-procurement-governance",
-				"requirement": "openspec/specs/procurement-governance :: REQ-PG-004: A framework-agreement call-off exceeding the ceiling MUST be blocked"
+				"requirement": [
+					"openspec/specs/procurement-governance :: REQ-PG-004: A framework-agreement call-off exceeding the ceiling MUST be blocked",
+					"openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance :: A purchase order is drawn against a framework agreement at its agreed prices (REQ-PG-005)"
+				],
+				"plan": "purchasing-call-offs-and-reorder-proposals"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2885,12 +2896,16 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt) Corrections round 8 (2026-09-28), shillinq#1716: even a call to the decision endpoint cannot complete approval, because lib/Service/PurchaseOrderService.php:839-852 writes chain entries with status pending, lib/Service/PurchaseOrderApprovalService.php:217 skips every entry whose decision is not pending and :237 then throws Approval chain is fully signed, and the send checks at lib/Service/PurchaseOrderService.php:436-443 and :627-634 wait for status approved and a signedAt that nothing writes, at a165206.",
+				"state": "specified",
+				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt) Corrections round 8 (2026-09-28), shillinq#1716: even a call to the decision endpoint cannot complete approval, because lib/Service/PurchaseOrderService.php:839-852 writes chain entries with status pending, lib/Service/PurchaseOrderApprovalService.php:217 skips every entry whose decision is not pending and :237 then throws Approval chain is fully signed, and the send checks at lib/Service/PurchaseOrderService.php:436-443 and :627-634 wait for status approved and a signedAt that nothing writes, at a165206. Not built: no screen calls the approval decision endpoint, and the chain writes status where the decision code reads decision, so a chained purchase order can never be approved or sent (shillinq#1716) (state set to specified, 12 Nov 2026).",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-purchase-order-core",
-				"requirement": "openspec/specs/bookkeeping-purchase-order-core :: Create purchase order with amount-threshold approval chain (REQ-POC-001)"
+				"requirement": [
+					"openspec/specs/bookkeeping-purchase-order-core :: Create purchase order with amount-threshold approval chain (REQ-POC-001)",
+					"openspec/changes/purchasing-approval-delegation/specs/bookkeeping-purchase-order-3way :: Purchase order approval runs on OpenRegister's approval chain (REQ-PAD-001)"
+				],
+				"plan": "purchasing-approval-delegation"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3116,7 +3131,11 @@
 				"reachedOn": "ReimbursementPolicies /reimbursement-policies (settings gear > Reimbursement Policies) keeps records only",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-expense-reimbursement-or-passthrough",
-				"requirement": "openspec/specs/expense-reimbursement-or-passthrough :: REQ-ERP-004: ReimbursementPolicy master data MUST define per-administration settlement rules"
+				"requirement": [
+					"openspec/specs/expense-reimbursement-or-passthrough :: REQ-ERP-004: ReimbursementPolicy master data MUST define per-administration settlement rules",
+					"openspec/changes/expenses-category-mapping/specs/expense-capture-core :: A submitted claim is checked against the spending policy (REQ-ECM-004)"
+				],
+				"plan": "expenses-category-mapping"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4452,8 +4471,8 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "ConsolidationGroup/ConsolidationPeriod/ConsolidatedReport lists exist, but lib/Service/ConsolidationMappingService.php (applyMapping, shouldEliminate) has no caller outside itself, and the only elimination writer (IntercompanyMatchingService.php:398) is unreachable (SoftCloseExecutor.php:469 calls non-existent matchForPeriod). No code aggregates subsidiaries into group statements.",
+				"state": "specified",
+				"evidence": "ConsolidationGroup/ConsolidationPeriod/ConsolidatedReport lists exist, but lib/Service/ConsolidationMappingService.php (applyMapping, shouldEliminate) has no caller outside itself, and the only elimination writer (IntercompanyMatchingService.php:398) is unreachable (SoftCloseExecutor.php:469 calls non-existent matchForPeriod). No code aggregates subsidiaries into group statements. Not built: ConsolidationMappingService has no caller and no code sums the subsidiaries into group statements (state set to specified, 12 Nov 2026).",
 				"reachedOn": "ConsolidationGroups, ConsolidationPeriods, ConsolidatedReports (via menu Bookkeeping > Consolidation Groups / Consolidated Reports)",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-consolidation-commercial",
@@ -4462,8 +4481,10 @@
 					"openspec/specs/bookkeeping-consolidation-commercial :: Aggregate per-administration balance and P&L into a pre-elimination werkpapier (REQ-CONS-002)",
 					"openspec/specs/bookkeeping-consolidation-commercial :: Detect and eliminate intercompany trade transactions with a matching tolerance (REQ-CONS-003)",
 					"openspec/specs/bookkeeping-consolidation-commercial :: Eliminate intercompany receivables, payables, loans and dividends (REQ-CONS-004)",
-					"openspec/specs/bookkeeping-consolidation-commercial :: Translate foreign-currency administrations by the current-rate method with CTA (REQ-CONS-005)"
-				]
+					"openspec/specs/bookkeeping-consolidation-commercial :: Translate foreign-currency administrations by the current-rate method with CTA (REQ-CONS-005)",
+					"openspec/changes/ledger-group-close/specs/bookkeeping-consolidation-commercial :: A consolidation run sums the subsidiaries and applies the eliminations (REQ-CONS-011)"
+				],
+				"plan": "ledger-group-close"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4646,15 +4667,17 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "built",
-				"evidence": "LeaseRegister pages plus lib/Listener/LeaseActivationListener.php (registered Application.php:1273) persisting LeasePaymentSchedule rows via lib/Service/LeasePaymentScheduleService.php:143. Disclosures: lib/Service/LeaseDisclosureService.php:88 generateForPeriod is only reachable via GET /api/leases/disclosure (appinfo/routes.php:518), which no page calls, and it writes no LeaseDisclosureTable rows, so the LeaseDisclosures page lists nothing; reassessment POST endpoints (routes.php:524-527) are also uncalled; no GL posting of RoU/liability.",
+				"state": "specified",
+				"evidence": "LeaseRegister pages plus lib/Listener/LeaseActivationListener.php (registered Application.php:1273) persisting LeasePaymentSchedule rows via lib/Service/LeasePaymentScheduleService.php:143. Disclosures: lib/Service/LeaseDisclosureService.php:88 generateForPeriod is only reachable via GET /api/leases/disclosure (appinfo/routes.php:518), which no page calls, and it writes no LeaseDisclosureTable rows, so the LeaseDisclosures page lists nothing; reassessment POST endpoints (routes.php:524-527) are also uncalled; no GL posting of RoU/liability. Not built: LeaseDisclosureService writes no LeaseDisclosureTable rows and no page calls it, so the disclosures page stays empty (state set to specified, 12 Nov 2026).",
 				"reachedOn": "LeaseRegister /ifrs-16/leases (via menu Bookkeeping > Lease Register); LeaseDisclosures /ifrs-16/disclosures (via menu Bookkeeping > Annual Disclosures) shows an unfilled list",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-ifrs-16-lease",
 				"requirement": [
 					"openspec/specs/bookkeeping-lease-contracts :: REQ-LC-001: The system SHALL store lease contracts as an OpenRegister-managed `lease-contract` register",
-					"openspec/specs/bookkeeping-lease-disclosures :: REQ-LD-001: The system SHALL generate a `lease-disclosure-table` snapshot at period close"
-				]
+					"openspec/specs/bookkeeping-lease-disclosures :: REQ-LD-001: The system SHALL generate a `lease-disclosure-table` snapshot at period close",
+					"openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures :: Closing a period fills the lease disclosure table (REQ-LD-008)"
+				],
+				"plan": "reporting-ifrs-calculations"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4844,8 +4867,10 @@
 				"change": "2026-06-14-bookkeeping-pension-ias19",
 				"requirement": [
 					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-001 PUC method enforced for DB plans",
-					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-003 Three-bucket movement: P&L (service/interest) vs OCI (remeasurement)"
-				]
+					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-003 Three-bucket movement: P&L (service/interest) vs OCI (remeasurement)",
+					"openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-pension-ias19 :: An actuarial valuation books service cost, net interest and remeasurement (REQ-PEN-011)"
+				],
+				"plan": "reporting-ifrs-calculations"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5148,15 +5173,17 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "Public widget API lib/Controller/WidgetApiController.php:104-274 (services, slots, appointments; #[PublicPage], bearer API key via WidgetAuthService, keys managed on BookingWidgetKeys) and the embeddable bundle src/components/widget/WidgetEmbed.js -> widget.js (webpack.config.js:46-54). The controller sets no CORS headers and there is no OPTIONS/preflight route, so a browser on another origin sending the Authorization header is refused; the /widget/iframe URL in widget/README.md has no route in appinfo/routes.php",
+				"state": "specified",
+				"evidence": "Public widget API lib/Controller/WidgetApiController.php:104-274 (services, slots, appointments; #[PublicPage], bearer API key via WidgetAuthService, keys managed on BookingWidgetKeys) and the embeddable bundle src/components/widget/WidgetEmbed.js -> widget.js (webpack.config.js:46-54). The controller sets no CORS headers and there is no OPTIONS/preflight route, so a browser on another origin sending the Authorization header is refused; the /widget/iframe URL in widget/README.md has no route in appinfo/routes.php Not built: WidgetApiController sets no CORS headers and has no preflight route, so the widget cannot book from another website (state set to specified, 12 Nov 2026).",
 				"reachedOn": "BookingWidgetKeys /settings/booking-widget-keys (settings gear) to issue a key; the booking itself happens in the embedded widget on the customer's site",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-self-service-widget",
 				"requirement": [
 					"openspec/specs/bookings-self-service-widget :: REQ-WSW-003: Widget frontend component SHALL support service and resource selection with time slot picker",
-					"openspec/specs/bookings-self-service-widget :: REQ-WSW-001: Widget API SHALL expose public endpoints for service list, slot availability, and appointment creation"
-				]
+					"openspec/specs/bookings-self-service-widget :: REQ-WSW-001: Widget API SHALL expose public endpoints for service list, slot availability, and appointment creation",
+					"openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget :: The widget books from another website (REQ-WSW-011)"
+				],
+				"plan": "bookings-messages-and-embedding"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5262,15 +5289,17 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "AppointmentCreatedListener (registered lib/AppInfo/Application.php:1242) issues a token via lib/Service/Booking/ConfirmationTokenService.php:160-174, whose dispatchEmail (:477) needs integriq 'Service\\NotificationDispatcher', a class integriq does not ship (openconnector/lib/Service has none), so the request only reaches the log; CancelUnconfirmedAppointments job (appinfo/info.xml) runs AppointmentConfirmationService::cancelExpired() and does cancel; confirmation portal /confirm/:appointmentId works",
+				"state": "specified",
+				"evidence": "AppointmentCreatedListener (registered lib/AppInfo/Application.php:1242) issues a token via lib/Service/Booking/ConfirmationTokenService.php:160-174, whose dispatchEmail (:477) needs integriq 'Service\\NotificationDispatcher', a class integriq does not ship (openconnector/lib/Service has none), so the request only reaches the log; CancelUnconfirmedAppointments job (appinfo/info.xml) runs AppointmentConfirmationService::cancelExpired() and does cancel; confirmation portal /confirm/:appointmentId works Not built: the confirmation request needs integriq Service\\NotificationDispatcher, which integriq does not ship, so the customer never receives it and only the cancel job works (state set to specified, 12 Nov 2026).",
 				"reachedOn": "BookingsPendingConfirmations /verkoop/openstaande-bevestigingen (via menu Sales > Sales > Pending confirmations); BookingsConfirmationPortal /confirm/:appointmentId for the customer",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-confirm-flow",
 				"requirement": [
 					"openspec/specs/bookings-confirm-flow :: REQ-BCF-004: Appointment SHALL transition from `pending_confirmation` to `confirmed` on token validation",
-					"openspec/specs/bookings-confirm-flow :: REQ-BCF-005: Appointment SHALL auto-cancel if confirmation deadline passes"
-				]
+					"openspec/specs/bookings-confirm-flow :: REQ-BCF-005: Appointment SHALL auto-cancel if confirmation deadline passes",
+					"openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow :: The confirmation request reaches the customer by email (REQ-BCF-013)"
+				],
+				"plan": "bookings-messages-and-embedding"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5308,8 +5337,10 @@
 				"change": "2026-06-14-bookings-email-templates",
 				"requirement": [
 					"openspec/specs/notification-booking-email-templates :: REQ-BET-001: Template CRUD operations",
-					"openspec/specs/notification-booking-email-templates :: REQ-BET-005: Reminder template timing configuration"
-				]
+					"openspec/specs/notification-booking-email-templates :: REQ-BET-005: Reminder template timing configuration",
+					"openspec/changes/bookings-messages-and-embedding/specs/notification-booking-email-templates :: A booking reminder mail leaves at its configured time (REQ-BET-011)"
+				],
+				"plan": "bookings-messages-and-embedding"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5347,8 +5378,10 @@
 				"change": "2026-06-14-bookings-sms-reminder-channel",
 				"requirement": [
 					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-001: Channel CRUD operations",
-					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-005: Delivery scheduling with send time"
-				]
+					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-005: Delivery scheduling with send time",
+					"openspec/changes/bookings-messages-and-embedding/specs/notification-booking-sms-reminders :: A reminder SMS goes to the configured provider at its send time (REQ-SMS-021)"
+				],
+				"plan": "bookings-messages-and-embedding"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5384,7 +5417,11 @@
 				"reachedOn": "nothing reaches it: the endpoint has no page or button",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-bookings-depth",
-				"requirement": "openspec/specs/bookings-recurring-series :: REQ-BRS-001 AppointmentSeries register + Appointment recurrence overlay"
+				"requirement": [
+					"openspec/specs/bookings-recurring-series :: REQ-BRS-001 AppointmentSeries register + Appointment recurrence overlay",
+					"openspec/changes/bookings-messages-and-embedding/specs/bookings-recurring-series :: The booking form offers a repeat option that creates the series (REQ-BRS-004)"
+				],
+				"plan": "bookings-messages-and-embedding"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5656,7 +5693,7 @@
 			"feature": "payroll",
 			"featureConfidence": "high",
 			"source": "own-code",
-			"note": "The journal is computed in code with no caller, and nothing posts it. Built 2026-09-29 by ledger-posting-path."
+			"note": "humaniq posts the journal of an approved run with `occ humaniq:glpost:run` (humaniq lib/Command/GlPostRunCommand.php over PayrollGLPostService); shillinq posts it as any JournalEntry. The live hand-off on one instance is not yet checked."
 		},
 		{
 			"id": "plt-accountant",
@@ -7198,7 +7235,7 @@
 				"intelligence-db requirements#109556",
 				"intelligence-db requirements#109553"
 			],
-			"note": "Reserve has a rentetoerekening flag and the programmabegroting register describes an Investering kapitaallasten schedule (lib/Settings/register.d/bookkeeping-programmabegroting.json:7), but no page reaches Investering and nothing charges interest to tasks. Specified 2026-09-27 in openspec/changes/public-sector-reserves-and-interest (OpenSpec pass)."
+			"note": "Interest is charged through InterestAllocationRun (calculate, post) over InterestAllocationService. Corrected 12 Nov 2026: the earlier note predates the public-sector-reserves-and-interest build."
 		},
 		{
 			"id": "pub-reserves",
@@ -8870,7 +8907,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "Only booking deposits exist (see bok-deposit, pending on a declared lifecycle); a down payment on a sales order is not built. Specified 2026-09-27 in openspec/changes/sales-down-payments (OpenSpec pass)."
+			"note": "Down payments on an order are invoiced and deducted through DownPaymentService and DownPaymentGuard (shillinq#1772). Corrected 12 Nov 2026: the earlier note predates the sales-down-payments build."
 		},
 		{
 			"id": "bok-deposits",
@@ -8979,8 +9016,10 @@
 				"change": "2026-06-14-inventory-reorder-automation",
 				"requirement": [
 					"openspec/specs/inventory-reorder-automation :: REQ-IRA-003: Low-stock alert SHALL fire when inventory falls below or equals minimum level",
-					"openspec/specs/inventory-reorder-automation :: REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders"
-				]
+					"openspec/specs/inventory-reorder-automation :: REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders",
+					"openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation :: Stock at or below its reorder point proposes a purchase (REQ-IRA-011)"
+				],
+				"plan": "purchasing-call-offs-and-reorder-proposals"
 			},
 			"screen": {
 				"canvas": "design-system",

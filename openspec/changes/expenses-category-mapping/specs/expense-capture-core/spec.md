@@ -64,3 +64,22 @@ without a person confirming it.
 - GIVEN a claim with one receipt left uncategorised and no confirmed account
 - WHEN the bookkeeper posts it
 - THEN the post is refused naming that receipt and the claim stays approved
+
+### Requirement: A submitted claim is checked against the spending policy (REQ-ECM-004)
+
+Submitting an expense claim SHALL check each line against the limit its
+category carries in the administration's reimbursement policy. A line over
+its limit SHALL hold the claim for approval and show the limit it passed. A
+claim within every limit SHALL go on without that step.
+
+#### Scenario: A hotel night over the limit holds the claim
+
+- **GIVEN** a policy limit of EUR 150 per night for category hotel
+- **WHEN** an employee submits a claim with a EUR 210 hotel night
+- **THEN** the claim waits for approval and the line shows the EUR 150 limit
+
+#### Scenario: A claim within the limits goes on
+
+- **GIVEN** the same policy
+- **WHEN** an employee submits a claim with a EUR 120 hotel night
+- **THEN** the claim goes on without the approval step
