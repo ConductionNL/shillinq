@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -51,9 +52,9 @@ class WidgetAuthServiceTest extends TestCase {
 	/**
 	 * SettingsService stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Cache factory stub.
@@ -98,7 +99,7 @@ class WidgetAuthServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->cacheFactory = $this->createMock(ICacheFactory::class);
 		$this->time = $this->createMock(ITimeFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -275,6 +276,84 @@ class WidgetAuthServiceTest extends TestCase {
 		self::assertSame(expected: [false, false], actual: $objectService->rbacFlags);
 
 	}//end testKeyLookupBypassesObjectRbac()
+
+	/**
+	 * A store holding one active key for salon-001, but only in the 'finance' register.
+	 *
+	 * @param string $hash The stored key hash.
+	 *
+	 * @return object The store double.
+	 */
+	private function financeKeyStore(string $hash): object {
+		return new class($hash) {
+			/**
+			 * The register selected through the fluent setter.
+			 *
+			 * @var string
+			 */
+			public string $register = '';
+
+			/**
+			 * @param string $hash The stored key hash.
+			 */
+			public function __construct(private string $hash) {
+			}//end __construct()
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				$this->register = $register;
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * @param array<string,mixed> $config Query.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				if ($this->register !== 'finance') {
+					return [];
+				}
+
+				return [['businessId' => 'salon-001', 'status' => 'active', 'apiKeyHash' => $this->hash]];
+			}//end findAll()
+		};
+
+	}//end financeKeyStore()
+
+	/**
+	 * A key is accepted only when it is looked up in the configured register,
+	 * and refused when the configured register does not hold it.
+	 *
+	 * @return void
+	 */
+	public function testValidateApiKeyLooksUpTheConfiguredRegister(): void {
+		$plaintext = 'bk_live_register_pin';
+		$this->container->method('get')->willReturn($this->financeKeyStore($this->service->hashKey($plaintext)));
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturnOnConsecutiveCalls('finance', 'shillinq');
+
+		$allowed = $this->service->validateApiKey(businessId: 'salon-001', apiKey: $plaintext);
+		$refused = $this->service->validateApiKey(businessId: 'salon-001', apiKey: $plaintext);
+
+		self::assertTrue($allowed['valid']);
+		self::assertSame(['valid' => false, 'error' => 'Invalid or missing API key'], $refused);
+
+	}//end testValidateApiKeyLooksUpTheConfiguredRegister()
 
 	/**
 	 * Revoking a key replaces the stored WidgetAccessKey under its uuid with

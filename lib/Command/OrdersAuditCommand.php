@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -73,11 +73,11 @@ class OrdersAuditCommand extends Command {
 	/**
 	 * Construct the orders-audit command.
 	 *
-	 * @param SettingsService $settingsService Provides the shillinq register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ContainerInterface $container,
 	) {
 		parent::__construct();
@@ -117,7 +117,7 @@ class OrdersAuditCommand extends Command {
 			return 1;
 		}
 
-		$scope = new AuditScope(objectService: $objectService, registerSlug: $this->settingsService->getRegisterSlug());
+		$scope = new AuditScope(objectService: $objectService, registerSlug: $this->registerLocation->getRegisterSlug());
 		$output->writeln('<info>Shillinq Order-fold count-equality audit</info>');
 
 		$allMatched = true;

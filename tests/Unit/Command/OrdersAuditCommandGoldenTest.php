@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Command;
 
 use OCA\Shillinq\Command\OrdersAuditCommand;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -115,7 +115,7 @@ class OrdersAuditCommandGoldenTest extends TestCase {
 			$container->method('get')->willReturn($store);
 		}
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('reg-i');
 		$tester = new CommandTester(new OrdersAuditCommand($settings, $container));
 		$code   = $tester->execute([]);
