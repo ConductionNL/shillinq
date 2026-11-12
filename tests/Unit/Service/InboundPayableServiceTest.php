@@ -122,7 +122,7 @@ final class InboundPayableServiceTest extends TestCase {
 			'register' => 'shillinq',
 			InboundPayableService::CONFIG_PAYABLE_ACCOUNT => '1610',
 			InboundPayableService::CONFIG_EXPENSE_ACCOUNTS => '{"dwangsom":"4390","dossiq":"4999"}',
-			InboundPayableCallbackSender::CONFIG_SECRETS => '{"dossiq":"s3cret"}',
+			InboundPayableCallbackSender::CONFIG_CALLBACK_SIGNING => '{"dossiq":"s3cret"}',
 		];
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -481,7 +481,7 @@ final class InboundPayableServiceTest extends TestCase {
 	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-004)
 	 */
 	public function testNoSecretMeansNoUnsignedCallback(): void {
-		$service = $this->service(config: [InboundPayableCallbackSender::CONFIG_SECRETS => '{}']);
+		$service = $this->service(config: [InboundPayableCallbackSender::CONFIG_CALLBACK_SIGNING => '{}']);
 		$id = (string)self::dispatch(service: $service, event: self::raised())->getResult()['payableId'];
 
 		$payable = $service->approve(payableId: $id);

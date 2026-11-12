@@ -55,7 +55,7 @@ class PayrollWebhookController extends Controller {
 	/**
 	 * App config key holding the shared HMAC secret for the webhook (ADR-005).
 	 */
-	private const SECRET_KEY = 'payroll_webhook_secret';
+	private const HMAC_CONFIG_KEY = 'payroll_webhook_secret';
 
 	/**
 	 * Request header carrying the hex HMAC-SHA256 signature of the raw body.
@@ -241,7 +241,7 @@ class PayrollWebhookController extends Controller {
 	 * @return bool True only when a configured secret produces a matching HMAC.
 	 */
 	private function verifySignature(string $rawBody): bool {
-		$secret = $this->appConfig->getValueString(AppIdentity::APP_ID, self::SECRET_KEY, '');
+		$secret = $this->appConfig->getValueString(AppIdentity::APP_ID, self::HMAC_CONFIG_KEY, '');
 		if ($secret === '') {
 			return false;
 		}

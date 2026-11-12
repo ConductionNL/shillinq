@@ -276,7 +276,7 @@ final class LeaseDecideskWebhookServiceTest extends TestCase {
 			->method('store')
 			->with(
 				$this->anything(),
-				LeaseDecideskWebhookService::CREDENTIAL_ID_TOKEN,
+				LeaseDecideskWebhookService::CREDENTIAL_ID_WEBHOOK,
 				'abc-123'
 			);
 

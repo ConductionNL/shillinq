@@ -95,7 +95,7 @@ final class LoggingPipelinqAdminNotifierTest extends TestCase {
 		self::assertSame(LogLevel::ERROR, $logger->records[0]['level']);
 		self::assertStringContainsString('Invalid pipelinq API token', $logger->records[0]['message']);
 		self::assertSame(
-			PipelinqContactAdapter::CONFIG_KEY_TOKEN,
+			PipelinqContactAdapter::CONFIG_KEY_BEARER,
 			$logger->records[0]['context']['configKey']
 		);
 		self::assertSame('booking-z-1', $logger->records[0]['context']['externalId']);

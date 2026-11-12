@@ -67,7 +67,7 @@ class PipelinqConfig {
 	 *
 	 * @var string
 	 */
-	public const CREDENTIAL_ID_TOKEN = 'pipelinq_api_token';
+	public const CREDENTIAL_ID_API = 'pipelinq_api_token';
 
 	/**
 	 * Default health-check sub-path appended to the endpoint when
@@ -165,7 +165,7 @@ class PipelinqConfig {
 	public function getPipelinqToken(): string {
 		$secret = $this->credentialsManager->retrieve(
 			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN
+			identifier: self::CREDENTIAL_ID_API
 		);
 		if (is_string($secret) === false || $secret === '') {
 			return '';
@@ -193,7 +193,7 @@ class PipelinqConfig {
 		if ($trimmed === '') {
 			$this->credentialsManager->delete(
 				userId: '',
-				identifier: self::CREDENTIAL_ID_TOKEN
+				identifier: self::CREDENTIAL_ID_API
 			);
 
 			return;
@@ -201,7 +201,7 @@ class PipelinqConfig {
 
 		$this->credentialsManager->store(
 			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN,
+			identifier: self::CREDENTIAL_ID_API,
 			credentials: $trimmed
 		);
 

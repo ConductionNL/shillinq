@@ -58,7 +58,7 @@ final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
 	/**
 	 * Emit one ERROR-level alert describing the rejected publish.
 	 *
-	 * The log entry references {@see PipelinqContactAdapter::CONFIG_KEY_TOKEN}
+	 * The log entry references {@see PipelinqContactAdapter::CONFIG_KEY_BEARER}
 	 * so operators know *where* to rotate the token without us ever
 	 * naming its value (ADR-005).
 	 *
@@ -72,7 +72,7 @@ final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
 			'Invalid pipelinq API token; check config',
 			[
 				'app' => AppIdentity::APP_ID,
-				'configKey' => PipelinqContactAdapter::CONFIG_KEY_TOKEN,
+				'configKey' => PipelinqContactAdapter::CONFIG_KEY_BEARER,
 				'type' => $event->type(),
 				'externalId' => $event->externalId(),
 				'contactId' => $event->contactId(),
