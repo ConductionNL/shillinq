@@ -40,6 +40,7 @@ use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -138,7 +139,7 @@ final class ManualMatchServiceTest extends TestCase {
 			settlement: new InvoiceSettlementService(
 				objectService: $this->store,
 				transitions: $this->runner(),
-				settings: $this->settings(),
+				registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				logger: $this->createMock(LoggerInterface::class),
 			),
 			schemas: $this->createConfiguredMock(ListenerSchemaResolver::class, ['matchesSchema' => true]),

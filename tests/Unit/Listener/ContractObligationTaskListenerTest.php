@@ -30,7 +30,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ObligationTaskBridge;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
@@ -142,7 +142,7 @@ final class ContractObligationTaskListenerTest extends TestCase {
 				return new ObjectEntity();
 			}
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$resolver = $this->createMock(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturn($slug);

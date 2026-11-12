@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
@@ -87,12 +87,12 @@ class PaymentRunProposalService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param SettingsService        $settings      The register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentBlockChecker    $blockChecker  The shared block check.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly PaymentBlockChecker $blockChecker,
 	) {
 
@@ -395,7 +395,7 @@ class PaymentRunProposalService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

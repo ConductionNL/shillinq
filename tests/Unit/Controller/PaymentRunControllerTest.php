@@ -26,6 +26,7 @@ use OCA\Shillinq\Controller\PaymentRunController;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\PaymentRun\PaymentRunFixture;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -262,10 +263,10 @@ class PaymentRunControllerTest extends TestCase {
 	 */
 	private function proposalOver(array $records): PaymentRunProposalService {
 		$store = new InMemoryObjectServiceStub($records);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new PaymentRunProposalService($store, $settings, new PaymentBlockChecker($store, $settings));
+		return new PaymentRunProposalService($store, $settings, new PaymentBlockChecker($store, $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq'])));
 	}//end proposalOver()
 
 	/**
