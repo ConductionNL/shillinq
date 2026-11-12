@@ -425,6 +425,98 @@ final class VATReturnServiceTest extends TestCase {
 	}//end testTheKorenbloemQuarterSumsTheBookedLinesPerBox()
 
 	/**
+	 * Pins the declaration rows, the stamped lines and the return totals a
+	 * derivation writes, field for field, so the split of the persistence
+	 * helpers keeps every record as it was.
+	 *
+	 * @return void
+	 */
+	public function testTheDerivationWritesDeclarationLineAndTotalsRecordsFieldForField(): void {
+		$stub = $this->fakeObjectService($this->postedByTheMapper($this->korenbloemQ3()));
+		$created = $this->buildService($stub)->createReturn(
+			administrationId: 'adm-kb',
+			period: 'quarter',
+			periodYear: 2026,
+			periodNumber: 3,
+			regime: 'standard'
+		);
+
+		$returnId = (string)$created['id'];
+		$declarations = $stub->dump('VATDeclaration');
+		self::assertSame(
+			[
+				[
+					'declarationNumber' => 'VAT-' . $returnId . '-1B',
+					'returnId' => $returnId,
+					'returnBox' => '1b',
+					'type' => 'collected',
+					'taxRate' => 9.0,
+					'totalVATAmount' => 900.0,
+					'totalTaxableAmount' => 10000.0,
+					'lineCount' => 2,
+					'administrationId' => 'adm-kb',
+					'id' => $declarations[0]['id'],
+				],
+				[
+					'declarationNumber' => 'VAT-' . $returnId . '-5B',
+					'returnId' => $returnId,
+					'returnBox' => '5b',
+					'type' => 'paid',
+					'taxRate' => 0.0,
+					'totalVATAmount' => 1020.0,
+					'totalTaxableAmount' => 0.0,
+					'lineCount' => 2,
+					'administrationId' => 'adm-kb',
+					'id' => $declarations[1]['id'],
+				],
+			],
+			$declarations
+		);
+
+		$lines = $stub->dump('VATLine');
+		self::assertSame(
+			[$declarations[0]['id'], $declarations[0]['id'], $declarations[1]['id'], $declarations[1]['id']],
+			array_map(static fn (array $l): string => (string)$l['declarationId'], $lines)
+		);
+		foreach ($lines as $line) {
+			self::assertSame($returnId, $line['returnId']);
+			self::assertSame('adm-kb', $line['administrationId']);
+		}
+
+		self::assertSame(
+			[900.0, 1020.0, 120.0, 10000.0],
+			[$created['totalVATCollected'], $created['totalVATPaid'], $created['vatBalance'], $created['totalTaxableAmount']]
+		);
+	}//end testTheDerivationWritesDeclarationLineAndTotalsRecordsFieldForField()
+
+	/**
+	 * Pins the zero totals a KOR derivation writes onto the return and returns.
+	 *
+	 * @return void
+	 */
+	public function testAKorDerivationWritesZeroTotalsOntoTheReturn(): void {
+		$stub = $this->fakeObjectService();
+		$stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-kor', 'statusCode' => 'draft']);
+
+		$totals = $this->buildService($stub)->deriveVATLines(
+			returnId: 'ret-kor',
+			administrationId: 'adm-1',
+			startDate: '2026-01-01',
+			endDate: '2026-03-31',
+			regime: 'kor'
+		);
+
+		self::assertSame(
+			['lineCount' => 0, 'totalVATCollected' => 0.0, 'totalVATPaid' => 0.0, 'vatBalance' => 0.0, 'totalTaxableAmount' => 0.0],
+			$totals
+		);
+		self::assertSame(
+			['id' => 'ret-kor', 'statusCode' => 'draft', 'totalVATCollected' => 0.0, 'totalVATPaid' => 0.0, 'vatBalance' => 0.0, 'totalTaxableAmount' => 0.0],
+			$stub->dump('BtwAangifte')[0]
+		);
+	}//end testAKorDerivationWritesZeroTotalsOntoTheReturn()
+
+	/**
 	 * The VAT is taken as booked, not recalculated: an invoice that charged
 	 * EUR 7.01 on EUR 33.33 at 21 percent (the stray cent of its breakdown)
 	 * declares EUR 7.01 in box 1a, where base times rate gives EUR 7.00.
