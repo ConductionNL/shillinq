@@ -5049,7 +5049,9 @@
 				"evidence": "lib/Service/ProductCatalogService.php reads pipelinq's product master (shillinq-pipelinq-product-vendor-integration.json contract) read-only, incl. variants[] (:470-485), merged with shillinq stock; ProductCatalogIndex calls /api/inventory/products and /api/inventory/product-attributes",
 				"reachedOn": "ProductCatalog /inventory/products (menu Purchasing > Products); ProductAttributeCatalog /inventory/product-attributes (menu Purchasing > Product Attributes)",
 				"owner": "ConductionNL/pipelinq",
-				"change": "2026-06-14-inventory-product-catalog"
+				"change": "2026-06-14-inventory-product-catalog",
+				"spec": "pipelinq/product-catalog",
+				"note": "decision 392 (12 Nov): pipelinq owns products and variants (REQ-SPVP-004 moved the product master there); shillinq reads it read-only and adds stock. Provider row for the pipelinq lane: no pipelinq requirement says variants yet."
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7930,7 +7932,7 @@
 		{
 			"id": "bnk-integrated-account",
 			"area": "banking",
-			"name": "Open a business payment account inside the bookkeeping app so every payment is booked as it happens.",
+			"name": "Connect your business bank account through integriq, so its payments arrive in the books as statement lines.",
 			"shillinq": "partial",
 			"exact-online": "unknown",
 			"moneybird": "yes",
@@ -7943,7 +7945,12 @@
 				"readOn": "2026-09-28",
 				"reachedOn": "Banking > Bank accounts, Connect a bank; bank reconciliation statements with source feed",
 				"change": "2026-09-28-banking-connected-accounts",
-				"evidence": "A connected account books its payments on arrival: BankfeedIntakeService writes each integriq pull as a statement and ExactMatchBooker confirms a line that can only mean one open invoice as system:bankfeed, which settles the invoice (shillinq#1768). Shillinq holds no money; the account is the bank, connected through integriq."
+				"evidence": "A connected account books its payments on arrival: BankfeedIntakeService writes each integriq pull as a statement and ExactMatchBooker confirms a line that can only mean one open invoice as system:bankfeed, which settles the invoice (shillinq#1768). Shillinq holds no money; the account is the bank, connected through integriq.",
+				"requirement": [
+					"openspec/specs/bookkeeping-bank-connectors :: A bank account links to its ledger account and its connection (REQ-BCON-001)",
+					"openspec/specs/bookkeeping-bank-connectors :: Transactions from the bank feed arrive as statement lines (REQ-BCON-002)"
+				],
+				"note": "decision 392 (12 Nov): reworded to the spec. Before: Open a business payment account inside the bookkeeping app so every payment is booked as it happens. Shillinq holds no money; the bank is connected through integriq."
 			},
 			"screen": {
 				"canvas": "design-system",
