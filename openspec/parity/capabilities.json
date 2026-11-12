@@ -8198,8 +8198,8 @@
 				"requirement": "openspec/changes/sales-cancellation/specs/portal-contribution :: The withdrawal function is offered where a consumer booked online (REQ-SCX-004)"
 			},
 			"screen": {
-				"board": null,
-				"reason": "Lives on the seller's own web shop page, outside the bookkeeping app."
+				"canvas": "design-system",
+				"board": "ShHerroepen"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
