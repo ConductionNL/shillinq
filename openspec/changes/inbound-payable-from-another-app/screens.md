@@ -1,3 +1,3 @@
 # Screens
 
-- No screen: another app hands shillinq a payout through an endpoint; the payable then goes through the payment run like any other.
+- ShBetaalrun: pay out what another app owes someone, after finance approves it; the "Payouts to pay" list is not drawn yet (see task 2.1) https://identity.conduction.nl/screens/board?id=shillinq/ShBetaalrun
