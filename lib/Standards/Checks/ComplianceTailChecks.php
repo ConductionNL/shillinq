@@ -521,7 +521,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::breakdownHasCategory($o, $cat);
+		return InvoiceParts::breakdownHasCategory($o, $cat);
 	}//end breakdownCoversCategory()
 
 	/**
@@ -535,7 +535,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function lineRateNonNegativeForCategory(array $o, string $cat): bool {
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			if ((string)($line['vatCategory'] ?? '') !== $cat) {
 				continue;
 			}
@@ -560,17 +560,17 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function breakdownTaxableReconciles(array $o, string $cat): bool {
-		if (self::breakdownHasCategory($o, $cat) === false) {
+		if (InvoiceParts::breakdownHasCategory($o, $cat) === false) {
 			return true;
 		}
 
-		$lineSum = self::lineNetOfCategory(self::lines($o), $cat);
-		$allowanceSum = self::itemAmountOfCategory(self::items($o, 'allowances'), $cat);
-		$chargeSum = self::itemAmountOfCategory(self::items($o, 'charges'), $cat);
+		$lineSum = self::lineNetOfCategory(InvoiceParts::lines($o), $cat);
+		$allowanceSum = self::itemAmountOfCategory(InvoiceParts::items($o, 'allowances'), $cat);
+		$chargeSum = self::itemAmountOfCategory(InvoiceParts::items($o, 'charges'), $cat);
 
 		$expected = ($lineSum - $allowanceSum + $chargeSum);
 
-		$taxableSum = self::taxableOfCategory(self::vatBreakdown($o), $cat);
+		$taxableSum = self::taxableOfCategory(InvoiceParts::vatBreakdown($o), $cat);
 
 		return self::centsEqual($taxableSum, $expected);
 	}//end breakdownTaxableReconciles()
@@ -644,7 +644,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function breakdownNoExemptionReason(array $o, string $cat): bool {
-		foreach (self::vatBreakdown($o) as $group) {
+		foreach (InvoiceParts::vatBreakdown($o) as $group) {
 			if ((string)($group['category'] ?? '') !== $cat) {
 				continue;
 			}
@@ -717,14 +717,14 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function categoryUsed(array $o, string $cat): bool {
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			if ((string)($line['vatCategory'] ?? '') === $cat) {
 				return true;
 			}
 		}
 
 		foreach (['allowances', 'charges'] as $key) {
-			foreach (self::items($o, $key) as $item) {
+			foreach (InvoiceParts::items($o, $key) as $item) {
 				if ((string)($item['vatCategory'] ?? '') === $cat) {
 					return true;
 				}
@@ -733,24 +733,6 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 
 		return false;
 	}//end categoryUsed()
-
-	/**
-	 * True when at least one VAT breakdown group carries the category $cat.
-	 *
-	 * @param array<string, mixed> $o The ARInvoice.
-	 * @param string $cat The UNTDID 5305 category code.
-	 *
-	 * @return bool
-	 */
-	private static function breakdownHasCategory(array $o, string $cat): bool {
-		foreach (self::vatBreakdown($o) as $group) {
-			if ((string)($group['category'] ?? '') === $cat) {
-				return true;
-			}
-		}
-
-		return false;
-	}//end breakdownHasCategory()
 
 	// ===================== margin-scheme helpers =====================
 
@@ -809,14 +791,14 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 		}
 
 		// No invoice line shows a positive VAT rate (no VAT shown separately).
-		foreach (self::lines($o) as $line) {
+		foreach (InvoiceParts::lines($o) as $line) {
 			if (is_numeric($line['vatRate'] ?? null) === true && ((float)$line['vatRate']) > 0.0) {
 				return false;
 			}
 		}
 
 		// No breakdown group shows a positive tax amount.
-		foreach (self::vatBreakdown($o) as $group) {
+		foreach (InvoiceParts::vatBreakdown($o) as $group) {
 			if (is_numeric($group['taxAmount'] ?? null) === true && ((float)$group['taxAmount']) > 0.0) {
 				return false;
 			}
@@ -861,7 +843,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function glAccountsGroupComplete(array $o): bool {
-		$accounts = self::items($o, 'generalLedgerAccounts');
+		$accounts = InvoiceParts::items($o, 'generalLedgerAccounts');
 		if ($accounts === []) {
 			return false;
 		}
@@ -906,7 +888,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function partyListComplete(array $o, string $key, string $idKey): bool {
-		$parties = self::items($o, $key);
+		$parties = InvoiceParts::items($o, $key);
 		if ($parties === []) {
 			return false;
 		}
@@ -935,7 +917,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function taxTableGroupComplete(array $o): bool {
-		$taxes = self::items($o, 'taxTable');
+		$taxes = InvoiceParts::items($o, 'taxTable');
 		if ($taxes === []) {
 			return false;
 		}
@@ -962,7 +944,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function glEntriesGroupComplete(array $o): bool {
-		$transactions = self::items($o, 'glEntries');
+		$transactions = InvoiceParts::items($o, 'glEntries');
 		if ($transactions === []) {
 			return false;
 		}
@@ -991,7 +973,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		$lines = self::items($transaction, 'lines');
+		$lines = InvoiceParts::items($transaction, 'lines');
 		if ($lines === []) {
 			return false;
 		}
@@ -1042,7 +1024,7 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function sourceDocumentsGroupComplete(array $o): bool {
-		$documents = self::items($o, 'sourceDocuments');
+		$documents = InvoiceParts::items($o, 'sourceDocuments');
 		if ($documents === []) {
 			return false;
 		}
@@ -1125,53 +1107,4 @@ class ComplianceTailChecks implements CheckProvider, SeedsObjects {
 	private static function centsEqual(float $a, float $b): bool {
 		return (int)round($a * 100) === (int)round($b * 100);
 	}//end centsEqual()
-
-	/**
-	 * The invoice lines (BG-25) normalised to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The ARInvoice.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function lines(array $o): array {
-		$lines = ($o['invoiceLines'] ?? []);
-		if (is_array($lines) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($lines, 'is_array'));
-	}//end lines()
-
-	/**
-	 * The VAT breakdown groups (BG-23) normalised to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The ARInvoice.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function vatBreakdown(array $o): array {
-		$vb = ($o['vatBreakdown'] ?? []);
-		if (is_array($vb) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($vb, 'is_array'));
-	}//end vatBreakdown()
-
-	/**
-	 * A named array-of-objects property normalised to a list of arrays.
-	 *
-	 * @param array<string, mixed> $o The host object.
-	 * @param string $key The property.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function items(array $o, string $key): array {
-		$items = ($o[$key] ?? []);
-		if (is_array($items) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($items, 'is_array'));
-	}//end items()
 }//end class
