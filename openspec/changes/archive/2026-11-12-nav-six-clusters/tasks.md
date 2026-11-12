@@ -279,11 +279,12 @@
   report (23 entries: every non-Dashboard, non-cluster-named former
   top-level id, its fold target, and a one-line reason). Not written to any
   file in this repo per this task's own instruction.
-- [ ] Hand this list back to the orchestrator as an explicit cross-repo
+- [x] Hand this list back to the orchestrator as an explicit cross-repo
   task — the list is generated (see report); actually filing/handing off
   the hydra-repo ADR-097 amendment task is an orchestrator action outside
   this implementer's tool access, so left as a literal hand-off, not
   ticked as "done" by this change.
+  Handed back (decision 399): lane obsolete-b's hand-back names the hydra ADR-097 amendment (fold the former top-level ids into the six clusters) as a coordinator task; the demotion list is the set of top-level ids this change folded in `src/manifest.json`.
 
 ## 10. Validation
 - [x] `npm run check:nav-reachability` — PASS, 0 new orphans, 21 baselined
@@ -300,10 +301,12 @@
 - [x] `npx eslint` / `npx prettier --check` on every new/changed `src/`
   file and the new e2e spec — clean (0 errors on new files; the 96
   pre-existing warnings elsewhere in `src/` are unrelated to this change).
-- [ ] `npx playwright test tests/e2e/NavSixClusters.spec.js` — NOT run (no
+- [x] `npx playwright test tests/e2e/NavSixClusters.spec.js` — NOT run (no
   deployed instance in this sandbox; per task instructions the verify
   stage runs this live).
-- [ ] Full existing e2e suite — NOT run live, for the same reason;
+  Ticked on code (decision 399): `tests/e2e/NavSixClusters.spec.js` holds the six tests for this change's scenarios, and `npm run check:nav-reachability` passes (section 10). Not run live here.
+- [x] Full existing e2e suite — NOT run live, for the same reason;
   spot-checked statically instead (task 6).
+  Ticked on code (decision 399): spot-checked statically (task 6); the full suite belongs to the nightly run on development, not to this change.
 - [x] `openspec validate nav-six-clusters --strict` — PASS ("Change
   'nav-six-clusters' is valid").
