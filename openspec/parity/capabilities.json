@@ -1092,7 +1092,11 @@
 				"reachedOn": "GeneralLedgerDetail /general-ledger/:id, lifecycle button Post transaction; JournalDetail /journals/:id, Post",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"change": "2026-09-29-ledger-posting-path"
+				"change": "2026-09-29-ledger-posting-path",
+				"requirement": [
+					"openspec/specs/bookkeeping-journal-entries :: A posted journal entry materialises one balanced transaction (REQ-LPP-004)",
+					"openspec/specs/bookkeeping-general-ledger :: A balanced transaction posts from the general ledger page (REQ-LPP-001)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1127,7 +1131,11 @@
 				"evidence": "lib/Service/SettingsService.php:182 seedRgsTemplate() imports lib/Settings/seeds/rgs-3.5-mkb.json (143 accounts), rgs-3.5-zzp.json or rgs-bbv.json into Account; called from lib/Controller/SetupController.php:260 (setup wizard 'seed' action) and lib/Repair/InitializeSettings.php:1637.",
 				"reachedOn": "First-run setup wizard (src/manifest.json setup steps rgs-template + seed), result on ChartOfAccounts /chart-of-accounts (via menu Bookkeeping > Chart of Accounts)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-add-shillinq-chart-of-accounts"
+				"change": "2026-06-14-add-shillinq-chart-of-accounts",
+				"requirement": [
+					"openspec/specs/bookkeeping-chart-of-accounts :: REQ-CoA-006: The system SHALL ship RGS template seed data for SMB, ZZP, and government variants",
+					"openspec/specs/bookkeeping-chart-of-accounts :: REQ-CoA-007: The repair step SHALL seed the selected RGS template on first install, idempotently"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1163,7 +1171,11 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (menu Bookkeeping > Segment P&L)",
 				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the cost centre, hierarchy, cost object and project aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
-				"change": "2026-09-29-reporting-segment-results"
+				"change": "2026-09-29-reporting-segment-results",
+				"requirement": [
+					"openspec/specs/bookkeeping-cost-centers-dimensions :: REQ-CC-003: The `GLLine` schema SHALL carry optional dimension references additively",
+					"openspec/specs/bookkeeping-cost-centers-dimensions :: The segment dashboard shows revenue, costs and result (REQ-RSR-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1198,7 +1210,11 @@
 				"evidence": "src/components/period-close/PeriodCloseDetail.vue:162 renders taskChecklistItems and lib/Service/PeriodCloseService.php:324 blocks close on unresolved AP/AR items, but every writer initialises the list empty (lib/Repair/PeriodCloseBackfill.php:158, lib/Repair/BackfillFiscalPeriods.php:276) and no code or button adds or resolves an item; CloseChecklistTemplate/Instance schemas (bookkeeping-soft-close-flux.json) have no page.",
 				"reachedOn": "PeriodCloseDetail /bookkeeping/period-close/:id (via menu Bookkeeping > Period Close); YearEndCloseChecklist /bookkeeping/year-end-close-checklist is only a FiscalYear list filtered to open/closing",
 				"owner": "ConductionNL/shillinq",
-				"change": "ledger-period-end"
+				"change": "ledger-period-end",
+				"requirement": [
+					"openspec/changes/ledger-period-end/specs/bookkeeping-period-close :: A period that starts closing copies the checklist template (REQ-LPE-001)",
+					"openspec/changes/ledger-period-end/specs/bookkeeping-period-close :: A person resolves, reopens and adds checklist items (REQ-LPE-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1269,7 +1285,8 @@
 				"evidence": "Detail pages carry the openregister-audit-trail sidebar widget (src/manifest.json GeneralLedgerDetail/JournalDetail sidebarProps audit tab -> /apps/openregister/api/objects/shillinq/:schema/:id/audit-trails); BookkeepingAuditTrail and BookkeepingChangeHistory are `logs` pages reading /apps/openregister/api/audit-trails?objectTypes=Account,GLTransaction,... (src/manifest.json).",
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail and BookkeepingChangeHistory /bookkeeping/change-history (via menu Bookkeeping > Audit Trail / Change history); Audit Trail tab on every financial detail page",
 				"owner": "ConductionNL/openregister",
-				"change": "2026-06-14-add-shillinq-audit-trail"
+				"change": "2026-06-14-add-shillinq-audit-trail",
+				"requirement": "openspec/changes/archive/2026-06-14-add-shillinq-audit-trail/specs/bookkeeping-audit-trail :: REQ-AT-002: The OR audit trail SHALL record actor, action, timestamp, before/after diff, and hash chain for every state change"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1304,7 +1321,11 @@
 				"evidence": "Booking side works: lib/Listener/IntercompanyLinkListener.php (registered at lib/AppInfo/Application.php:337) mirrors an IntercompanyJournalEntry into the counter administration via lib/Service/IntercompanyLinkService.php:107. Eliminations: lib/Service/IntercompanyMatchingService.php:398 writes EliminationJournal, but its only runtime caller lib/Service/SoftCloseExecutor.php:469 calls matchForPeriod(), a method that does not exist (the service has matchRelationPeriod), so it silently returns 0; no page lists EliminationJournal.",
 				"reachedOn": "IntercompanyBoekingen /administratie/intercompany (via menu Bookkeeping > Intercompany journal entries); IntercompanyTransactions /financial-statements/intercompany-transactions (via menu Bookkeeping > Inter-Company Transactions); elimination output: nothing reaches it",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-intercompany-elimination"
+				"change": "2026-06-14-bookkeeping-intercompany-elimination",
+				"requirement": [
+					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-002: Auto-detectie intercompany-transacties",
+					"openspec/specs/bookkeeping-intercompany-elimination :: REQ-ICE-006: Eliminatie-journaalpost generatie"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1339,7 +1360,11 @@
 				"evidence": "lib/Service/SoftCloseExecutor.php:233 computeAccrualCents (fixed-amount, percentage-of-revenue, straight-line-from-contract) runs nightly from lib/BackgroundJob/SoftCloseJob.php (registered) over AutoAccrualRule and saves AutoAccrualPosting records (line ~352), not GLTransactions; no service spreads prepaid costs or deferred revenue balances over periods (grep prepaid/deferred revenue in lib/Service finds only lease and tax code).",
 				"reachedOn": "AccrualRules /bookkeeping/accrual-rules (settings gear > Accrual Rules); results on ContinuousClose /bookkeeping/continuous-close",
 				"owner": "ConductionNL/shillinq",
-				"change": "ledger-period-end"
+				"change": "ledger-period-end",
+				"requirement": [
+					"openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close :: An invoice line spanning several periods is spread over them (REQ-LPE-004)",
+					"openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close :: The nightly close releases each ended period (REQ-LPE-005)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1370,11 +1395,15 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json declares DualTransaction (rjJournalEntries, ifrsJournalEntries, divergenceAmount) and ReconciliationBridge (adjustments, totals via x-openregister-aggregations); only PHP is lib/Lifecycle/DualGaapGuard.php:95/147 (reconcile/election guards). No service derives the second-GAAP entries or computes the reconciling differences; they are typed in.",
+				"state": "specified",
+				"evidence": "lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json declares DualTransaction (rjJournalEntries, ifrsJournalEntries, divergenceAmount) and ReconciliationBridge (adjustments, totals via x-openregister-aggregations); only PHP is lib/Lifecycle/DualGaapGuard.php:95/147 (reconcile/election guards). No service derives the second-GAAP entries or computes the reconciling differences; they are typed in. Not built: no service derives the second-GAAP entries or computes the reconciling differences, so only the schemas and guards exist (state set to specified, 12 Nov 2026).",
 				"reachedOn": "AccountingFrameworks, ChartOfAccountsMappings, DualTransactions, ReconciliationBridges, FrameworkElections (via menu Bookkeeping > Framework Configuration / Chart of Accounts Mapping / Dual Ledger Explorer / Reconciliation Bridge / Framework Election)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-ifrs-rj-dual-gaap"
+				"change": "2026-06-14-bookkeeping-ifrs-rj-dual-gaap",
+				"requirement": [
+					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-001: Dual GAAP reporting SHALL be declared via six register schemas and parallel GL materialisation",
+					"openspec/specs/bookkeeping-ifrs-rj-dual-gaap :: REQ-DGAAP-005: IFRS 9 expected credit loss vs. RJ 290 incurred loss SHALL be calculated separately"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1409,7 +1438,11 @@
 				"evidence": "RetentionRule records seeded by the setup 'seed' action (lib/Controller/SetupController.php:265 statutory retention rules); lib/BackgroundJob/DocumentArchiveCron.php (registered) archives WBSO Documents past seven years. But BewaartermijnenDashboard counts RetentionRule rows with daysUntilRetention_lt 90 (src/manifest.json), i.e. rules, not financial records due for destruction; BookkeepingDestructionReport is in menu-layout removals.",
 				"reachedOn": "Bewaartermijnen /administratie/bewaartermijnen and BewaartermijnenDashboard (via menu Reporting & compliance > Retention periods / Retention periods dashboard)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-archiefwet-retention"
+				"change": "2026-06-14-bookkeeping-archiefwet-retention",
+				"requirement": [
+					"openspec/changes/archive/2026-06-14-bookkeeping-archiefwet-retention/specs/bookkeeping-archiefwet-retention :: REQ-RET-003 — Track document lifecycle through retention states",
+					"openspec/changes/archive/2026-06-14-bookkeeping-archiefwet-retention/specs/bookkeeping-archiefwet-retention :: REQ-RET-006 — Generate compliance reports"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1444,7 +1477,11 @@
 				"evidence": "lib/BackgroundJob/SoftCloseJob.php (registered in appinfo/info.xml, INTERVAL_SECONDS=86400) runs lib/Service/SoftCloseExecutor.php:118 per administration (accruals, FX, cut-off, intercompany, trial balance, PeriodStatus soft-closed). Swing flagging lives in lib/Service/FluxService.php:133 classifyMateriality, reached only via POST /api/v2/flux-runs/execute (appinfo/routes.php:579), which no page calls and the nightly run does not invoke. Of the executor's sub-steps only accruals and FX revaluation run: it probes OCA\\Shillinq\\Service\\Ifrs15\\RevenueRecognitionService and Ifrs16\\LeasePostingService (classes that do not exist) and calls IntercompanyMatchingService::matchForPeriod and TrialBalanceService::generate (methods that do not exist), each silently skipped via container->has/method_exists (SoftCloseExecutor.php:418-494).",
 				"reachedOn": "ContinuousClose /bookkeeping/continuous-close (via menu Bookkeeping > Continuous Close, 'Run soft-close now' action); FluxAnalysis /bookkeeping/flux-analysis lists FluxRun records but nothing creates them from the UI",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-soft-close-flux"
+				"change": "2026-06-14-bookkeeping-soft-close-flux",
+				"requirement": [
+					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-002: Nightly soft-close job SHALL execute per administratie and complete by 07:00 local with full trial balance",
+					"openspec/specs/bookkeeping-continuous-close :: REQ-CLS-005: Flux analysis SHALL run post-soft-close, computing variance vs budget/PY/PP/forecast with materiality-driven routing"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1479,7 +1516,8 @@
 				"evidence": "lib/Reporting/Generator/XafAuditfileGenerator.php:118 writes XAF 3.2 (ns http://www.auditfiles.nl/XAF/3.2) from Account/GLTransaction/GLLine; SaftReportGenerator.php for SAF-T; both in lib/Reporting/ReportCatalogue.php:99-100; generated via src/modals/GenerateReportDialog.vue POST /api/reporting/generate.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report card -> GenerateReportDialog",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-07-xaf-auditfile-export-generator"
+				"change": "2026-07-07-xaf-auditfile-export-generator",
+				"requirement": "openspec/specs/bookkeeping-multi-administratie :: REQ-MA-011 Shillinq SHALL export a real XAF 3.2 Auditfile Financieel per administration"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1513,7 +1551,8 @@
 				"evidence": "src/views/ReceiptCapture.vue:500 and src/modals/BillImportModal.vue:549 POST /api/v1/extraction/drafts/{id}/suggest-account; lib/Controller/ExtractionRequestController.php suggestGlAccount proxies docudesk's ai-gl-account-suggestion with shillinq's chart; operator clicks 'Use suggestion'. The bank-line variant /api/v1/bank-rules/suggest-account (appinfo/routes.php:727) has no frontend caller.",
 				"reachedOn": "ReceiptDetail (ReceiptCapture) from Receipts /inkoop/receipts (via menu Purchasing > Receipts); BillImportModal on SupplierInvoices (via menu Purchasing > Supplier Invoices)",
 				"owner": "ConductionNL/filinq",
-				"change": "2026-07-13-gl-account-suggestion-consume"
+				"change": "2026-07-13-gl-account-suggestion-consume",
+				"requirement": "openspec/specs/gl-account-suggestion-consume :: REQ-GAC-003 — The system SHALL request and surface a GL-account suggestion with confidence and rationale"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3335,7 +3374,11 @@
 				"evidence": "lib/Service/VATCalculationService.php:31 fixes the rates in a VALID_RATES constant (0, 6, 9, 21); lib/Service/InvoiceGenerationService.php:67 applies it per line when an invoice is generated from time and expense",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (menu Sales > Invoices)",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-vat-rates-and-deductibility"
+				"change": "tax-vat-rates-and-deductibility",
+				"requirement": [
+					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-vat-btw-filing :: VAT is calculated per line from the tariff valid on the document date (REQ-TVRD-002)",
+					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-vat-btw-filing :: The VAT tariffs are seeded and can be extended (REQ-TVRD-001)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3370,7 +3413,8 @@
 				"evidence": "lib/Reporting/Generator/VatReturnReportGenerator.php renders the return XML by rubriek from a stored VatReturnFiling or, failing that, from the period's ARInvoice rows (output tax only, input tax only from the filing record); opened by src/modals/GenerateReportDialog.vue:330 POST /api/reporting/generate",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card BTW-aangifte, Genereer",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-vat-return-from-books"
+				"change": "tax-vat-return-from-books",
+				"requirement": "openspec/specs/bookkeeping-vat-btw-filing :: REQ-VBTW-004 — The BTW journal SHALL be derived from period-filtered GL aggregations"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3405,7 +3449,8 @@
 				"evidence": "lib/Settings/connections.json key digipoort-sbr: available false, 'Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches Digipoort.'; lib/Service/External/Digipoort/LogDigipoortSbrAdapter.php",
 				"reachedOn": "nothing reaches it: the Submit button on VATReturnDetail is an OpenRegister lifecycle transition that changes a status, it sends nothing",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-digipoort-filing"
+				"change": "tax-digipoort-filing",
+				"requirement": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing :: A VAT return is filed through its XBRL instance (REQ-TDF-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3440,7 +3485,11 @@
 				"evidence": "lib/Service/IcpService.php, IcpCalculator.php and IcpFilingService.php exist and ViesOutageRetryJob is registered in appinfo/info.xml, but /api/icp/* (appinfo/routes.php:479-485) is called by nothing under src/; filing depends on digipoort-sbr, unavailable in lib/Settings/connections.json; lib/Reporting/ReportCatalogue.php lists icp-opgaaf but lib/Reporting/Generator has no generator for it (ReportGenerationService.php:160 'no generator for report type')",
 				"reachedOn": "IcpOpgaaf /belastingen/icp-opgaaf (menu Taxes) lists IcpStatement records only",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-icp-and-reverse-charge"
+				"change": "tax-icp-and-reverse-charge",
+				"requirement": [
+					"openspec/changes/tax-icp-and-reverse-charge/specs/bookkeeping-icp-opgaaf :: The ICP statement is prepared from the books (REQ-ICR-002)",
+					"openspec/changes/tax-icp-and-reverse-charge/specs/bookkeeping-icp-opgaaf :: The ICP statement is filed through Digipoort (REQ-ICR-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3475,7 +3524,8 @@
 				"evidence": "lib/Service/VatSuppletieDetectionService.php detects corrections, called from VATReturnService and AansluitingService, neither reached from a page (no /api/vat-returns or /api/aansluitingen call under src/)",
 				"reachedOn": "BtwCorrecties /belastingen/btw-correcties (menu Taxes) lists VatCorrection records",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-vat-position-and-suppletie"
+				"change": "tax-vat-position-and-suppletie",
+				"requirement": "openspec/changes/tax-vat-position-and-suppletie/specs/bookkeeping-vat-btw-filing :: A filed period is corrected with a supplementary return (REQ-VPS-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3510,7 +3560,8 @@
 				"evidence": "lib/Service/ArInvoiceIcpPdfRenderer.php renders the reverse-charge mention but is reached only by GET /api/icp/invoice-pdf, uncalled from src/; the BtwAangifte regime filter offers reverse-charge (src/manifest.d/bookkeeping-vat-btw-filing.json)",
 				"reachedOn": "nothing reaches the invoice mention; the regime is a filter value on VATReturns /vat-returns",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-icp-and-reverse-charge"
+				"change": "tax-icp-and-reverse-charge",
+				"requirement": "openspec/changes/tax-icp-and-reverse-charge/specs/bookkeeping-icp-opgaaf :: A reverse-charged invoice says so (REQ-ICR-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3603,7 +3654,8 @@
 				"evidence": "VATReports /vat-reports is a dashboard of summary widgets summing BtwAangifte.vatBalance (src/manifest.d/bookkeeping-vat-btw-filing.json); it sums returns already made, not the running position from the ledger",
 				"reachedOn": "VATReports /vat-reports (menu Taxes)",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-vat-position-and-suppletie"
+				"change": "tax-vat-position-and-suppletie",
+				"requirement": "openspec/changes/tax-vat-position-and-suppletie/specs/bookkeeping-vat-btw-filing :: The VAT position of the open period is shown per box (REQ-VPS-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3842,7 +3894,11 @@
 				"evidence": "lib/Settings/register.d/bookkeeping-investeringsaftrek.json and seeds lib/Settings/seeds/investeringsaftrek-*-2026.json exist; no manifest page and no service reads them; the RVO adapter is log-only (lib/Service/External/RvO/LogRvOAanvraagAdapter.php)",
 				"reachedOn": "nothing reaches it: no page in src/manifest.json or src/manifest.d",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-investment-deduction-claims"
+				"change": "tax-investment-deduction-claims",
+				"requirement": [
+					"openspec/changes/tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek :: An activated fixed asset gets its deduction eligibility (REQ-IDC-001)",
+					"openspec/changes/tax-investment-deduction-claims/specs/bookkeeping-investeringsaftrek :: A year's deduction is calculated per scheme (REQ-IDC-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3877,7 +3933,8 @@
 				"evidence": "lib/BackgroundJob/DeadlineReminderJob.php and TaxDeadlineReminderJob.php, both registered in appinfo/info.xml:174 and :185; lib/Service/ComplianceDeadlineCalendarService.php publishes VEVENTs; src/views/DeadlineCalendarSettings.vue calls /api/deadline-calendar/settings",
 				"reachedOn": "DeadlineCalendarSettings /settings/deadline-calendar (settings gear) and the user's Nextcloud calendar",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-12-compliance-deadline-calendar"
+				"change": "2026-07-12-compliance-deadline-calendar",
+				"requirement": "openspec/specs/compliance-deadline-calendar :: REQ-CDC-000 — Shillinq SHALL surface compliance deadlines in the Nextcloud Calendar and Notifications"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3911,7 +3968,11 @@
 				"evidence": "lib/Settings/connections.json key digipoort-sbr: available false, log-only adapter; SbrXbrlFilings and SBRDocuments pages list XbrlInstance records only; the sbr-xbrl report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "nothing reaches a submission; SbrXbrlFilings /sbr-xbrl-filings lists records",
 				"owner": "ConductionNL/shillinq",
-				"change": "tax-digipoort-filing"
+				"change": "tax-digipoort-filing",
+				"requirement": [
+					"openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing :: A VAT return is filed through its XBRL instance (REQ-TDF-001)",
+					"openspec/changes/tax-digipoort-filing/specs/bookkeeping-sbr-xbrl-reporting :: Annual accounts produce their KvK XBRL instance (REQ-TDF-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6428,7 +6489,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "PostingRestrictions /settings/posting-restrictions (settings gear), detail /settings/posting-restrictions/:id",
 				"evidence": "PostingRestriction (lib/Settings/register.d/ledger-booking-rules.json: accountPattern prefix, costCenterCode, projectCode, reason, validFrom, validTo, lifecycle active/retired) per administration; lib/Lifecycle/PostingRestrictionGuard.php refuses a person's posting whose line matches an active restriction on the posting date, naming the reason. Journal lines carry costCenterCode and projectCode into the GL line (MaterialiseGlTransactionAction).",
-				"change": "2026-09-29-ledger-booking-rules"
+				"change": "2026-09-29-ledger-booking-rules",
+				"requirement": "openspec/specs/bookkeeping-cost-centers-dimensions :: A blocked combination cannot be posted (REQ-LBR-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6470,7 +6532,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "JournalDetail /journals/:id, Post; GeneralLedgerDetail /general-ledger/:id, Post transaction; the role on ChartOfAccountsDetail",
 				"evidence": "lib/Lifecycle/PostingRestrictionGuard.php refuses a journal entry or GL transaction a person posts when a line is on an account with Account.controlAccountFor set (lib/Settings/register.d/ledger-booking-rules.json), naming the account and its role; JournalEntryGuard::canPost and RuleComplianceGuard::validateTransaction delegate to it and RegisterRequiresGuardAdapter shows the refusal. Sub-ledger postings pass: MaterialiseGlTransactionAction writes them directly, GR/IR drafts carry journalCode, a bank booking (sourceApp bank) may post its VAT line. The RGS MKB seed and lib/Repair/BackfillControlAccountRoles.php mark 1100, 2000, 1230 and 2110 (shillinq PR ledger-booking-rules).",
-				"change": "2026-09-29-ledger-booking-rules"
+				"change": "2026-09-29-ledger-booking-rules",
+				"requirement": "openspec/specs/bookkeeping-chart-of-accounts :: A person cannot post by hand on a control account (REQ-LBR-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6511,7 +6574,8 @@
 				"readOn": "2026-09-29",
 				"evidence": "Posting goes through the same guard and actions in any FiscalYear in state open (lib/Lifecycle/RuleComplianceGuard.php, lib/Lifecycle/Action/MaterialiseGlTransactionAction.php periodId); nothing limits how many FiscalYear records are open at once (lib/Settings/shillinq_register.json FiscalYear lifecycle) (shillinq#1775).",
 				"reachedOn": "FiscalYears /bookkeeping/fiscal-years (settings gear); GeneralLedgerDetail /general-ledger/:id, Post transaction",
-				"change": "2026-09-29-ledger-posting-path"
+				"change": "2026-09-29-ledger-posting-path",
+				"requirement": "openspec/specs/bookkeeping-general-ledger :: Posting works in every open fiscal year (REQ-LPP-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7250,7 +7314,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "tax-vat-return-from-books"
+				"change": "tax-vat-return-from-books",
+				"requirement": "openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing :: Checks run on the VAT return and block filing when they fail (REQ-TVRB-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7320,7 +7385,8 @@
 				"readOn": "2026-09-29",
 				"evidence": "src/components/ledger/LedgerLinesGuidancePanel.vue lists the lines of JournalDetail and GeneralLedgerDetail with each account's description under the account as guidance and marks a control account (src/manifest.d/ledger-booking-rules.json, slots widget-journal-lines and widget-transaction-lines); Account.description is titled Guidance.",
 				"reachedOn": "JournalDetail /journals/:id and GeneralLedgerDetail /general-ledger/:id, Lines panel",
-				"change": "2026-09-29-ledger-booking-rules"
+				"change": "2026-09-29-ledger-booking-rules",
+				"requirement": "openspec/specs/bookkeeping-chart-of-accounts :: The booking line shows the account's guidance (REQ-LBR-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7358,7 +7424,11 @@
 				"readOn": "2026-09-26",
 				"evidence": "lib/Settings/register.d/bookkeeping-single-audit-eu-fondsen.json declares the AuditTrail schema appendOnly, so OpenRegister keeps audit records insert-only; lib/Service/AuditExportService.php:31 and lib/Service/AccountantsdossierExportService.php:23 stamp a SHA-256 over exported packages so later tampering is detectable. Posted entries themselves are not hash-chained.",
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail; export packages",
-				"change": "ledger-sealed-entries"
+				"change": "ledger-sealed-entries",
+				"requirement": [
+					"openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail :: A posted transaction is sealed into its administration's chain (REQ-LSE-001)",
+					"openspec/changes/ledger-sealed-entries/specs/bookkeeping-audit-trail :: A controller checks the seal chain (REQ-LSE-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7427,7 +7497,11 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "tax-vat-rates-and-deductibility"
+				"change": "tax-vat-rates-and-deductibility",
+				"requirement": [
+					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-journal-entries :: A cost line with a deductible share posts in two parts (REQ-TVRD-004)",
+					"openspec/changes/tax-vat-rates-and-deductibility/specs/bookkeeping-chart-of-accounts :: A ledger account carries a deductible share and a private-share account (REQ-TVRD-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7761,7 +7835,11 @@
 				"readOn": "2026-10-01",
 				"reachedOn": "Fixed Assets > an asset: Dispose with Add the gain to a reinvestment reserve, and Apply reinvestment reserve; Fixed Assets > Reinvestment reserves (/fixed-assets/reinvestment-reserves)",
 				"evidence": "FixedAssetDisposalService credits the gain to the reserve account instead of profit and forms a ReinvestmentReserve expiring at the end of the third year (lib/Settings/register.d/assets-method-change-and-reserve.json); applyReinvestmentReserve lowers the replacement's fiscalCostBasis and debits the reserve account, partly or fully; the daily run releases an expired remainder to profit (lib/Service/Asset/ReinvestmentReserves.php, tests/Unit/Asset/AssetsMethodChangeAndReserveTest.php, tests/Unit/Listener/FixedAssetDisposalListenerTest.php).",
-				"change": "assets-method-change-and-reserve"
+				"change": "assets-method-change-and-reserve",
+				"requirement": [
+					"openspec/changes/assets-method-change-and-reserve/specs/bookkeeping-fixed-assets-depreciation :: A disposal gain can form a reinvestment reserve (REQ-AMCR-004)",
+					"openspec/changes/assets-method-change-and-reserve/specs/bookkeeping-fixed-assets-depreciation :: A reserve is applied to a replacement or released (REQ-AMCR-005)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7836,7 +7914,11 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "ledger-open-item-clearing"
+				"change": "ledger-open-item-clearing",
+				"requirement": [
+					"openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger :: A bookkeeper clears selected lines into a group (REQ-LOIC-002)",
+					"openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger :: Groups that do not net to zero are listed (REQ-LOIC-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7873,7 +7955,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "tax-vat-return-from-books"
+				"change": "tax-vat-return-from-books",
+				"requirement": "openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing :: A VAT fiscal unity files one return (REQ-TVRB-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7911,7 +7994,8 @@
 				"readOn": "2026-10-02",
 				"reachedOn": "Customer page (CustomerDetail) and supplier page (PayeeDetail): Check VAT number; the supplier invoice page shows the seller's VAT number with its check; ARInvoiceDetail Send e-invoice still checks the buyer",
 				"evidence": "POST /api/vat-number-checks/{type}/{id} (VatNumberCheckController) validates the customer's vatId or the supplier's vatNumber through ViesService and writes valid, invalid or vies_outage with the last valid date onto the record (lib/Service/Tax/VatNumberCheck.php); SupplierInvoiceService keeps the UBL seller VAT number as sellerVatId and checks a number from another EU country on arrival (tests/Unit/Service/Tax/VatNumberCheckTest.php, tests/Unit/Service/SupplierInvoiceServiceTest.php).",
-				"change": "tax-vat-number-check"
+				"change": "tax-vat-number-check",
+				"requirement": "openspec/changes/tax-vat-number-check/specs/bookkeeping-icp-opgaaf :: A person checks a VAT number from the record (REQ-TVNC-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8094,7 +8178,11 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "ledger-foreign-legislation"
+				"change": "ledger-foreign-legislation",
+				"requirement": [
+					"openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie :: An administration has a jurisdiction (REQ-LFL-001)",
+					"openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie :: Rule checks follow the administration's jurisdiction (REQ-LFL-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8131,7 +8219,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "ledger-multi-administration"
+				"change": "ledger-multi-administration",
+				"requirement": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: Followers receive template changes (REQ-LMA-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8310,7 +8399,8 @@
 				"readOn": "2026-09-26",
 				"evidence": "The administration record carries nonCalendarFiscalYear (lib/Settings/register.d/bookkeeping-multi-administratie.json:145), so a broken fiscal year can be kept; VAT returns stay on calendar periods and no screen groups corrections by the broken year.",
 				"reachedOn": "Administraties settings",
-				"change": "tax-vat-return-from-books"
+				"change": "tax-vat-return-from-books",
+				"requirement": "openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing :: Corrections are grouped by a broken fiscal year (REQ-TVRB-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8483,7 +8573,11 @@
 				"reachedOn": "Provisions and ProvisionMovements pages",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-bookkeeping-voorzieningen-claims"
+				"change": "2026-06-14-bookkeeping-voorzieningen-claims",
+				"requirement": [
+					"openspec/specs/bookkeeping-voorzieningen-claims :: REQ-PROV-002 Best-estimate met sensitivity bandbreedte (IAS 37 §39 / RJ 252 §306)",
+					"openspec/specs/bookkeeping-voorzieningen-claims :: REQ-PROV-004 Mutatieoverzicht per voorziening per jaar (IAS 37 §84)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8591,7 +8685,8 @@
 				"reachedOn": "RevenueContracts page",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-bookkeeping-ifrs15-revenue"
+				"change": "2026-06-14-bookkeeping-ifrs15-revenue",
+				"requirement": "openspec/specs/bookkeeping-ifrs15-revenue :: REQ-IFRS15-005 — Over-time performance obligations MUST support input methods (cost-to-cost, labour-hours, machine-hours) and output methods (units delivered, milestones, time-elapsed)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8675,7 +8770,11 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
 				"change": "tax-cbcr-and-pillar2-returns",
-				"delivered": "2026-06-14-bookkeeping-cbcr-pillar2"
+				"delivered": "2026-06-14-bookkeeping-cbcr-pillar2",
+				"requirement": [
+					"openspec/specs/bookkeeping-cbcr-pillar2 :: REQ-CBC-001 Drempelwaarde-detectie EUR 750M",
+					"openspec/specs/bookkeeping-cbcr-pillar2 :: REQ-CBC-002 CbCR-aggregatie per jurisdictie"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
