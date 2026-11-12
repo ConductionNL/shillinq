@@ -57,8 +57,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
-use DateTimeImmutable;
-
 /**
  * Executable AML / cash-handling / bank-integrity rule checks.
  *
@@ -485,7 +483,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function ledgerDoubleEntryBalance(array $o): bool {
-		return self::balanced($o);
+		return GlTransactionLines::balanced(transaction: $o);
 
 	}//end ledgerDoubleEntryBalance()
 
@@ -697,7 +695,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function usCtr15DayEfile(array $o): bool {
-		return self::filedWithinDays($o, 'CTR', 'transactionDate', 15) && self::isTrue($o, 'eFiled');
+		return self::filedWithinDays($o, 'CTR', 'transactionDate', 15) && CheckFields::isTrue($o, 'eFiled');
 
 	}//end usCtr15DayEfile()
 
@@ -1021,54 +1019,6 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 */
 
 	/**
-	 * The GLLine children of a transaction (injected under `lines`), normalised to a
-	 * list of arrays.
-	 *
-	 * @param array<string, mixed> $o The GL transaction.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function lines(array $o): array {
-		$lines = ($o['lines'] ?? []);
-		if (is_array($lines) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($lines, 'is_array'));
-	}//end lines()
-
-	/**
-	 * Double-entry balance: Σ debit-side amounts = Σ credit-side amounts (to the
-	 * cent). Fail-closed on no lines or an unsided line.
-	 *
-	 * @param array<string, mixed> $o The GL transaction, with `lines`.
-	 *
-	 * @return bool
-	 */
-	private static function balanced(array $o): bool {
-		$lines = self::lines($o);
-		if ($lines === []) {
-			return false;
-		}
-
-		$debit = 0;
-		$credit = 0;
-		foreach ($lines as $line) {
-			$cents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-			$side = (string)($line['side'] ?? '');
-			if ($side === 'debit') {
-				$debit += $cents;
-			} elseif ($side === 'credit') {
-				$credit += $cents;
-			} else {
-				return false;
-			}
-		}
-
-		return $debit === $credit;
-	}//end balanced()
-
-	/**
 	 * An electronic payment posting carries a matching bank / payment-service
 	 * record: a payment reference, a counterparty and a value date. A posting that
 	 * is not an electronic payment (no electronic paymentMethod) is out of scope
@@ -1108,12 +1058,12 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 
 		$periodState = strtolower(trim((string)($o['periodState'] ?? '')));
 		if ($periodState === 'closed') {
-			return self::isTrue($o, 'reopened');
+			return CheckFields::isTrue($o, 'reopened');
 		}
 
 		// Treat a locked period flag as closed when no explicit periodState is given.
-		if ($periodState === '' && self::isTrue($o, 'periodLocked') === true) {
-			return self::isTrue($o, 'reopened');
+		if ($periodState === '' && CheckFields::isTrue($o, 'periodLocked') === true) {
+			return CheckFields::isTrue($o, 'reopened');
 		}
 
 		return true;
@@ -1136,16 +1086,16 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 */
 	private static function accountSegregated(array $o): bool {
 		$type = strtolower(trim((string)($o['accountType'] ?? '')));
-		$isTrust = self::isTrue($o, 'isTrustAccount')
-			|| self::isTrue($o, 'isEscrowAccount')
-			|| self::isTrue($o, 'isDerdengeldenAccount')
+		$isTrust = CheckFields::isTrue($o, 'isTrustAccount')
+			|| CheckFields::isTrue($o, 'isEscrowAccount')
+			|| CheckFields::isTrue($o, 'isDerdengeldenAccount')
 			|| in_array($type, ['trust', 'escrow', 'iolta', 'derdengelden'], true);
 
 		if ($isTrust === false) {
 			return true;
 		}
 
-		return self::isTrue($o, 'segregated') === true && self::isTrue($o, 'commingled') === false;
+		return CheckFields::isTrue($o, 'segregated') === true && CheckFields::isTrue($o, 'commingled') === false;
 	}//end accountSegregated()
 
 	/*
@@ -1264,7 +1214,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::isTrue($o, 'cddPerformed');
+		return CheckFields::isTrue($o, 'cddPerformed');
 	}//end cddAtOrAbove()
 
 	/**
@@ -1285,7 +1235,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::isTrue($o, 'cddPerformed');
+		return CheckFields::isTrue($o, 'cddPerformed');
 	}//end preciousMetalsCdd()
 
 	/**
@@ -1302,7 +1252,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::isTrue($o, 'form8300Required') === true;
+		return CheckFields::isTrue($o, 'form8300Required') === true;
 	}//end form8300Filed()
 
 	/**
@@ -1320,7 +1270,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::isTrue($o, 'form8300Required') === true;
+		return CheckFields::isTrue($o, 'form8300Required') === true;
 	}//end form8300Aggregate()
 
 	/*
@@ -1398,8 +1348,8 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		$from = self::parseDate((string)($o[$fromKey] ?? ''));
-		$filed = self::parseDate((string)($o['filedDate'] ?? ''));
+		$from = CheckFields::parseDate((string)($o[$fromKey] ?? ''));
+		$filed = CheckFields::parseDate((string)($o['filedDate'] ?? ''));
 		if ($from === null || $filed === null) {
 			return false;
 		}
@@ -1425,13 +1375,13 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		$txn = self::parseDate((string)($o['transactionDate'] ?? ''));
-		$statement = self::parseDate((string)($o['payerStatementDate'] ?? ''));
+		$txn = CheckFields::parseDate((string)($o['transactionDate'] ?? ''));
+		$statement = CheckFields::parseDate((string)($o['payerStatementDate'] ?? ''));
 		if ($txn === null || $statement === null) {
 			return false;
 		}
 
-		$deadline = self::parseDate(((int)$txn->format('Y') + 1) . '-01-31');
+		$deadline = CheckFields::parseDate(((int)$txn->format('Y') + 1) . '-01-31');
 		if ($deadline === null) {
 			return false;
 		}
@@ -1482,12 +1432,12 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function screenedBeforeTransaction(array $o): bool {
-		$screened = self::parseDate((string)($o['screenedDate'] ?? ''));
+		$screened = CheckFields::parseDate((string)($o['screenedDate'] ?? ''));
 		if ($screened === null) {
 			return false;
 		}
 
-		$txn = self::parseDate((string)($o['transactionDate'] ?? ''));
+		$txn = CheckFields::parseDate((string)($o['transactionDate'] ?? ''));
 		if ($txn === null) {
 			// Screened, but no transaction recorded yet (pre-relationship) — still valid.
 			return true;
@@ -1508,7 +1458,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		if (self::isTrue($o, 'matched') === true) {
+		if (CheckFields::isTrue($o, 'matched') === true) {
 			return self::present($o, 'reportedDate');
 		}
 
@@ -1541,7 +1491,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return false;
 		}
 
-		if (self::isTrue($o, 'matched') === true) {
+		if (CheckFields::isTrue($o, 'matched') === true) {
 			return self::present($o, 'reportedDate');
 		}
 
@@ -1568,7 +1518,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::isTrue($o, 'performed');
+		return CheckFields::isTrue($o, 'performed');
 	}//end cddRecordPerformedAt()
 
 	/**
@@ -1590,7 +1540,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 			return true;
 		}
 
-		return self::isTrue($o, 'uboIdentified');
+		return CheckFields::isTrue($o, 'uboIdentified');
 	}//end uboThresholdRecorded()
 
 	/*
@@ -1759,23 +1709,6 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	}//end numeric()
 
 	/**
-	 * True when a boolean-ish field is strictly truthy (true / 1 / "1" / "true").
-	 *
-	 * @param array<string, mixed> $o Object.
-	 * @param string $key Field.
-	 *
-	 * @return bool
-	 */
-	private static function isTrue(array $o, string $key): bool {
-		$value = ($o[$key] ?? null);
-		if (is_bool($value) === true) {
-			return $value;
-		}
-
-		return in_array($value, [1, '1', 'true'], true);
-	}//end isTrue()
-
-	/**
 	 * The retention date for a record is at least $years after the reference date.
 	 *
 	 * @param array<string, mixed> $o The object.
@@ -1785,8 +1718,8 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 	 * @return bool
 	 */
 	private static function retainsYearsFrom(array $o, string $fromKey, int $years): bool {
-		$from = self::parseDate((string)($o[$fromKey] ?? ''));
-		$retention = self::parseDate((string)($o['retentionUntil'] ?? ''));
+		$from = CheckFields::parseDate((string)($o[$fromKey] ?? ''));
+		$retention = CheckFields::parseDate((string)($o['retentionUntil'] ?? ''));
 		if ($from === null || $retention === null) {
 			return false;
 		}
@@ -1798,26 +1731,4 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects {
 
 		return $retention >= $required;
 	}//end retainsYearsFrom()
-
-	/**
-	 * Parse a Y-m-d (or ISO 8601) date string to an immutable date, or null when
-	 * empty / unparseable.
-	 *
-	 * @param string $value The date string.
-	 *
-	 * @return DateTimeImmutable|null
-	 */
-	private static function parseDate(string $value): ?DateTimeImmutable {
-		$value = trim($value);
-		if ($value === '') {
-			return null;
-		}
-
-		try {
-			return new DateTimeImmutable($value);
-		} catch (\Exception $e) {
-			return null;
-		}
-
-	}//end parseDate()
 }//end class
