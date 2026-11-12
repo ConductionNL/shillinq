@@ -1250,7 +1250,7 @@
 				"reachedOn": "AdministrationSwitcher /administratie/wisselen (via menu Bookkeeping > Switch administration); Administraties (settings gear > Administrations)",
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-multi-administration",
-				"requirement": "The chosen administration sticks (REQ-LMA-001)"
+				"requirement": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: The chosen administration sticks (REQ-LMA-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1286,7 +1286,10 @@
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail and BookkeepingChangeHistory /bookkeeping/change-history (via menu Bookkeeping > Audit Trail / Change history); Audit Trail tab on every financial detail page",
 				"owner": "ConductionNL/openregister",
 				"change": "2026-06-14-add-shillinq-audit-trail",
-				"requirement": "openspec/changes/archive/2026-06-14-add-shillinq-audit-trail/specs/bookkeeping-audit-trail :: REQ-AT-002: The OR audit trail SHALL record actor, action, timestamp, before/after diff, and hash chain for every state change"
+				"requirement": [
+					"openregister:openspec/specs/audit-trail-immutable :: Every mutation MUST produce an immutable audit trail entry",
+					"openspec/specs/bookkeeping-audit-trail :: REQ-AT-004: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1440,8 +1443,8 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-archiefwet-retention",
 				"requirement": [
-					"openspec/changes/archive/2026-06-14-bookkeeping-archiefwet-retention/specs/bookkeeping-archiefwet-retention :: REQ-RET-003 — Track document lifecycle through retention states",
-					"openspec/changes/archive/2026-06-14-bookkeeping-archiefwet-retention/specs/bookkeeping-archiefwet-retention :: REQ-RET-006 — Generate compliance reports"
+					"openspec/specs/bookkeeping-archiefwet-retention :: REQ-ARC-003: Retention rule mapping",
+					"openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention :: A list shows the records whose retention period has ended (REQ-RET-015)"
 				]
 			},
 			"screen": {
@@ -2299,7 +2302,7 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
 				"change": "receivables-automatic-dunning",
-				"requirement": "A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)"
+				"requirement": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning :: A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2583,7 +2586,12 @@
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
-				"requirement": "Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
+				"requirement": [
+					"openspec/specs/bookkeeping-three-way-matching-engine :: Automated line-level 3-way matching within tolerance (REQ-TWM-001)",
+					"openspec/specs/bookkeeping-purchase-order-3way :: REQ-PO3W-005: Exception workflow for price deviation",
+					"openspec/changes/purchasing-approval-delegation/specs/bookkeeping-purchase-order-3way :: A matched supplier invoice above a threshold runs on an approval chain before payment (REQ-PAD-004)"
+				],
+				"plan": "purchasing-approval-delegation"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2619,7 +2627,7 @@
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches); ThreeWayMatchDetail /inkoop/3way-matches/:id",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
-				"requirement": "Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
+				"requirement": "openspec/specs/bookkeeping-three-way-matching-engine :: Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2771,7 +2779,7 @@
 				"reachedOn": "VendorPerformanceIndex /inkoop/vendor-performance (menu Purchasing > Vendor performance); VendorPerformanceDetail /inkoop/vendor-performance/:id",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-vendor-performance",
-				"requirement": "Monthly vendor scoring with auto-review eligibility (REQ-VPS-001)"
+				"requirement": "openspec/specs/bookkeeping-vendor-performance :: Monthly vendor scoring with auto-review eligibility (REQ-VPS-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2882,7 +2890,7 @@
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-purchase-order-core",
-				"requirement": "Create purchase order with amount-threshold approval chain (REQ-POC-001)"
+				"requirement": "openspec/specs/bookkeeping-purchase-order-core :: Create purchase order with amount-threshold approval chain (REQ-POC-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4449,7 +4457,13 @@
 				"reachedOn": "ConsolidationGroups, ConsolidationPeriods, ConsolidatedReports (via menu Bookkeeping > Consolidation Groups / Consolidated Reports)",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-consolidation-commercial",
-				"requirement": "Define a consolidation group with parent + subsidiaries, ownership and method (REQ-CONS-001); REQ-CONS-002 to REQ-CONS-005 aggregate, eliminate and translate"
+				"requirement": [
+					"openspec/specs/bookkeeping-consolidation-commercial :: Define a consolidation group with parent + subsidiaries, ownership and method (REQ-CONS-001)",
+					"openspec/specs/bookkeeping-consolidation-commercial :: Aggregate per-administration balance and P&L into a pre-elimination werkpapier (REQ-CONS-002)",
+					"openspec/specs/bookkeeping-consolidation-commercial :: Detect and eliminate intercompany trade transactions with a matching tolerance (REQ-CONS-003)",
+					"openspec/specs/bookkeeping-consolidation-commercial :: Eliminate intercompany receivables, payables, loans and dividends (REQ-CONS-004)",
+					"openspec/specs/bookkeeping-consolidation-commercial :: Translate foreign-currency administrations by the current-rate method with CTA (REQ-CONS-005)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4676,7 +4690,11 @@
 				"reachedOn": "Contracts /contracts and ContractObligations /contracts/obligations (via menu Purchasing > Procurement Contracts / Obligations)",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/contract-lifecycle-management",
-				"requirement": "Contracts are stored as a Contract schema with a Nextcloud contact as counterparty (REQ-CLM-001); obligations in REQ-CLM-003, renewal alerts in REQ-CLM-004"
+				"requirement": [
+					"openspec/specs/contract-lifecycle-management :: REQ-CLM-001 — The system SHALL store contracts as an OpenRegister-managed `Contract` schema with the counterparty referencing a Nextcloud addressbook contact",
+					"openspec/specs/contract-lifecycle-management :: REQ-CLM-003 — Obligations SHALL be stored as `ContractObligation` records and surfaced as Nextcloud Tasks / Deck cards via a thin, fail-closed bridge",
+					"openspec/specs/contract-lifecycle-management :: REQ-CLM-004 — Renewal and obligation deadlines SHALL be notified through the x-openregister-notifications dialect — never imperative dispatch"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5213,7 +5231,7 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-availability-rules",
 				"spec": "openspec/specs/bookings-availability-rules",
-				"requirement": "REQ-BAR-001 AvailabilityRule Register Definition"
+				"requirement": "openspec/specs/bookings-availability-rules :: REQ-BAR-001 AvailabilityRule Register Definition"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5580,7 +5598,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie",
 				"spec": "openspec/specs/bookkeeping-detachering-payroll-administratie",
-				"requirement": "IB47Record register (REQ-DPA-002)"
+				"requirement": [
+					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-002: IB47Record register",
+					"openspec/specs/bookkeeping-detachering-payroll-administratie :: REQ-DPA-005: IB47-formulier docudesk template"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5692,7 +5713,7 @@
 				"reachedOn": "Nextcloud login, before any shillinq page",
 				"owner": "nextcloud/server",
 				"change": "platform-properties",
-				"requirement": "Sign-in, including two-factor authentication, is the Nextcloud login (REQ-PLAT-001)"
+				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: Sign-in, including two-factor authentication, is the Nextcloud login (REQ-PLAT-001)"
 			},
 			"screen": {
 				"board": null,
@@ -5727,7 +5748,7 @@
 				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
 				"owner": "ConductionNL/openregister",
 				"change": "platform-properties",
-				"requirement": "Other software reaches shillinq's records through a REST API (REQ-PLAT-003)"
+				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: Other software reaches shillinq's records through a REST API (REQ-PLAT-003)"
 			},
 			"screen": {
 				"board": null,
@@ -5840,7 +5861,7 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
 				"change": "mcp-action-tool-surface",
-				"requirement": "A user SHALL be able to command shillinq from chat, with agent-facing descriptions carrying the routing knowledge (REQ-MCP-005)"
+				"requirement": "openspec/changes/mcp-action-tool-surface/specs/shillinq-mcp-tool-surface :: REQ-MCP-005 — A user SHALL be able to command shillinq from chat, with agent-facing descriptions carrying the routing knowledge"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5947,7 +5968,7 @@
 				"reachedOn": "every page, following the Nextcloud user language",
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-properties",
-				"requirement": "The interface follows the user's Nextcloud language (REQ-PLAT-004)"
+				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: The interface follows the user's Nextcloud language (REQ-PLAT-004)"
 			},
 			"screen": {
 				"board": null,
@@ -6059,7 +6080,7 @@
 				"reachedOn": "Nextcloud app store or a manual install",
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-properties",
-				"requirement": "shillinq runs on the customer's own Nextcloud (REQ-PLAT-005)"
+				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: shillinq runs on the customer's own Nextcloud (REQ-PLAT-005)"
 			},
 			"screen": {
 				"board": null,
@@ -6245,7 +6266,10 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-30",
 				"change": "iv3-report-takes-case-costs-by-case-type",
-				"requirement": "The Iv3 report shows case costs per taakveld from the case type classification (REQ-IV3-010); The same case cost source is grouped per case type per period (REQ-IV3-012)"
+				"requirement": [
+					"openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting :: The Iv3 report shows case costs per taakveld from the case type classification (REQ-IV3-010)",
+					"openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting :: The same case cost source is grouped per case type per period (REQ-IV3-012)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6384,7 +6408,10 @@
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-quarterly-returns",
-				"requirement": "The cash limit is computed (REQ-FDO-010); The interest risk norm is shown on the dashboard (REQ-FDO-011)"
+				"requirement": [
+					"openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury :: The cash limit is computed (REQ-FDO-010)",
+					"openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury :: The interest risk norm is shown on the dashboard (REQ-FDO-011)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6607,7 +6634,7 @@
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability",
-				"requirement": "Indicators are computed per specific grant (REQ-SISA-012)"
+				"requirement": "openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6644,7 +6671,7 @@
 				"change": "public-sector-grant-accountability",
 				"requirement": [
 					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: A declaration bundles eligible expenditure with evidence (REQ-EUF-012)",
-					"openspec/changes/archive/2026-06-14-bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen :: REQ-EUF-007 The system SHALL report irregularities via IMS above the OLAF threshold"
+					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: An irregularity at or above the reporting threshold needs an external reference (REQ-EUF-007)"
 				]
 			},
 			"screen": {
@@ -7549,7 +7576,7 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "fees-payments-and-the-contract-register",
-				"requirement": "A payment run is submitted to a provider (REQ-FPCR-004)"
+				"requirement": "openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register :: REQ-FPCR-004 A payment run is submitted to a provider"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8696,7 +8723,7 @@
 				"evidence": "Shillinq has no login of its own; Nextcloud authentication applies, and Nextcloud supports SAML and OpenID Connect through its user_saml and user_oidc apps.",
 				"reachedOn": "Nextcloud login, before any shillinq page",
 				"change": "platform-properties",
-				"requirement": "Single sign-on works through the Nextcloud login (REQ-PLAT-002)"
+				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: Single sign-on works through the Nextcloud login (REQ-PLAT-002)"
 			},
 			"screen": {
 				"board": null,

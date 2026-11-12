@@ -22,7 +22,7 @@ This specification defines the requirements for bookkeeping cashflow 13wk in the
 @e2e exclude unbuilt UI: cashflow dashboard pages not yet implemented
 
 
-### REQ-CF-000: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360
+### Requirement: REQ-CF-000: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360
 
 The system SHALL satisfy this requirement: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360.
 
@@ -43,7 +43,7 @@ Cashflow categorization follows IAS 7 statement-of-cashflows pattern (operatione
 - **THEN** horizon SHALL update to `horizonStart: 2026-05-25`, `horizonEind: 2026-08-24` (shifted by 1 week)
 - **AND** `rolledOp: 2026-05-25T02:00:00Z`
 
-### REQ-CF-001: CashflowForecastHorizon Schema
+### Requirement: REQ-CF-001: CashflowForecastHorizon Schema
 
 The `CashflowForecastHorizon` register SHALL declare the following required fields:
 
@@ -72,7 +72,7 @@ The `CashflowForecastHorizon` register SHALL declare the following required fiel
 - **WHEN** `{horizonStart: "2026-05-25", horizonEind: "2026-08-23", openingSaldo: {zakelijkeRekening: 14820.00, spaardoel_btw: 3200.00, spaardoel_ib: 5800.00, spaardoel_buffer: 8200.00}, administrazioneId: "adm-1"}` is saved
 - **THEN** validation MUST pass
 
-### REQ-CF-002: CashflowWeek Schema — Weekly slot within the 13-week horizon
+### Requirement: REQ-CF-002: CashflowWeek Schema — Weekly slot within the 13-week horizon
 
 The `CashflowWeek` register SHALL declare one record per calendar week in the horizon, with aggregated inflows/outflows by category and computed ending saldo.
 
@@ -117,7 +117,7 @@ The `CashflowWeek` register SHALL declare one record per calendar week in the ho
 - **WHEN** horizon weeks are populated
 - **THEN** weeks containing day-1 of any month within the horizon SHALL include €850 in `outflows_recurring_huur`
 
-### REQ-CF-003: Customer-specific AR projection using betalingsgedrag history
+### Requirement: REQ-CF-003: Customer-specific AR projection using betalingsgedrag history
 
 For each open AR invoice, the system MUST project the expected receipt date based on the customer's historical payment pattern, not the contractual due date.
 
@@ -147,7 +147,7 @@ For variance analysis, support scenario weights: "80% probability on-time, 20% d
 - **THEN** `verwachtOntvangstDatum` SHALL be 2026-06-22 (30 days + 7-day buffer)
 - **AND** `betrouwbaarheidScore` SHALL be marked "LAAG" (< 5 samples)
 
-### REQ-CF-004: CashflowARProjection Schema
+### Requirement: REQ-CF-004: CashflowARProjection Schema
 
 The `CashflowARProjection` register SHALL track one record per open AR invoice, with expected receipt date and confidence.
 
@@ -178,7 +178,7 @@ The `CashflowARProjection` register SHALL track one record per open AR invoice, 
 - **WHEN** a `CashflowARProjection` is created for the invoice
 - **THEN** the record SHALL store `verwachtOntvangstDatum: "2026-05-28"`, `verwachtOntvangstWeek: "2026-w22"` and `betrouwbaarheidScore: 0.75`
 
-### REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing
+### Requirement: REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing
 
 The system SHALL satisfy this requirement: Recurring costs automatic scheduling with lifecycle + CPI indexing.
 
@@ -249,7 +249,7 @@ CPI-applicable-to-annual-only) is unchanged.
   assumed live CBS-published figure, which this codebase has never
   implemented (`budget-known-costs` REQ-BKC-003)
 
-### REQ-CF-006: AP scheduling from open invoices + due-date projection
+### Requirement: REQ-CF-006: AP scheduling from open invoices + due-date projection
 
 The system SHALL satisfy this requirement: AP scheduling from open invoices + due-date projection.
 
@@ -261,7 +261,7 @@ All open `APTransaction` (accounts-payable invoices) within the 13-week horizon 
 - **WHEN** horizon for weeks 22-23 (May 25 - June 7) is computed
 - **THEN** `CashflowWeek` for week-22 SHALL include €184 in `outflows_ap_geprognosticeerd`
 
-### REQ-CF-007: Quarterly BTW-afdracht automatic projection per Belastingdienst calendar
+### Requirement: REQ-CF-007: Quarterly BTW-afdracht automatic projection per Belastingdienst calendar
 
 The system MUST project quarterly BTW settlements on the following hardcoded Dutch dates (last business day of the month following quarter-end, per Belastingdienst regulation):
 
@@ -279,7 +279,7 @@ BTW amount is projected based on the current year's cumulative turnover and VAT 
 - **WHEN** horizon for week-31 (July 26 – August 1) is computed
 - **THEN** `CashflowWeek` for week-31 SHALL include €4.820 in `outflows_btw_afdracht`
 
-### REQ-CF-008: VA IB/VPB aanslag projection on peilmaanden
+### Requirement: REQ-CF-008: VA IB/VPB aanslag projection on peilmaanden
 
 The system MUST project annual IB (inkomstenbelasting) / VPB (vennootschapsbelasting) settlements on the following peilmaanden per Belastingdienst calendar (subject to final aanslag lags of 3-6 months):
 
@@ -297,7 +297,7 @@ Aanslag amounts are estimated based on prior-year aanslag adjusted for projected
 - **WHEN** horizon for week-36 (September 2026) is computed
 - **THEN** `CashflowWeek` for the week containing September peilmaand SHALL include estimated €2.100 × 1.15 = €2.415 in `outflows_ib_aanslag`
 
-### REQ-CF-009: Buffer-policy definition with two-tier alerts
+### Requirement: REQ-CF-009: Buffer-policy definition with two-tier alerts
 
 The operator SHALL configure a `CashflowBufferPolicy` record defining the minimum cash reserve for the business, with two alert levels:
 
@@ -338,7 +338,7 @@ The operator SHALL configure a `CashflowBufferPolicy` record defining the minimu
 - **THEN** `bufferStatus` SHALL be `VOORALARM`
 - **AND** a yellow alert SHALL appear
 
-### REQ-CF-010: Crisis-mode activation at predicted negative saldo within 4 weeks
+### Requirement: REQ-CF-010: Crisis-mode activation at predicted negative saldo within 4 weeks
 
 When the 13-week forecast predicts a negative ending saldo in any week within the next 4 weeks (weeks 1-4), the system SHALL activate "crisis mode", which:
 
@@ -362,7 +362,7 @@ When the 13-week forecast predicts a negative ending saldo in any week within th
 - **THEN** crisis mode SHALL be deactivated
 - **AND** dashboard switches to weekly-only refresh schedule
 
-### REQ-CF-011: Scenario-analysis engine ("what if X")
+### Requirement: REQ-CF-011: Scenario-analysis engine ("what if X")
 
 The operator SHALL be able to create point-in-time copies of the current `CashflowForecastHorizon` with one or more adjustments, and re-compute the entire 13-week forecast for comparison.
 
@@ -438,7 +438,7 @@ The operator SHALL be able to create point-in-time copies of the current `Cashfl
 - **AND** total inflows over 13 weeks increase by ~€11.700 (€18.000 × 0.65)
 - **AND** if project has associated costs (+€800/month), those are also factored in
 
-### REQ-CF-012: Bankfeed reconciliation with PSD2 integration
+### Requirement: REQ-CF-012: Bankfeed reconciliation with PSD2 integration
 
 The system SHALL integrate with `openconnector` to fetch daily bank-feed data (saldo, transactions) from PSD2-connected Dutch business accounts (Bunq, Knab, ING zakelijk, Rabo zakelijk). Daily pull (by 08:00 AM; aligns with Monday cron at 02:00 AM).
 
@@ -467,7 +467,7 @@ The system SHALL integrate with `openconnector` to fetch daily bank-feed data (s
 - **THEN** transaction is flagged as "unmatched" (no corresponding invoice found)
 - **AND** operator is prompted in dashboard: "Unmatched inflow €1.200 on 2026-05-27 — is this a client payment, refund, or other?"
 
-### REQ-CF-013: Calibration reporting — post-month-end forecast accuracy
+### Requirement: REQ-CF-013: Calibration reporting — post-month-end forecast accuracy
 
 At month-end (configurable, default 1st of month 09:00 AM), the system MUST:
 
@@ -505,7 +505,7 @@ At month-end (configurable, default 1st of month 09:00 AM), the system MUST:
   - Betalingsgedrag updates for 3 customers with new payment-history samples
   - Pipeline conversion: "Design deal" closes at 72% actual (was 65% projected) → probability updated to 0.72
 
-### REQ-CF-014: Three spaardoel virtual accounts (1-2-3 strategy)
+### Requirement: REQ-CF-014: Three spaardoel virtual accounts (1-2-3 strategy)
 
 The system MUST support three earmarked reserve buckets on the opening-saldo breakdown, with optional auto-allocation rules:
 
@@ -523,7 +523,7 @@ The three spaardoelen are shown separately on the cashflow dashboard. Optional a
 - **THEN** transaction is split: €1.000 (net) stays in zakelijkeRekening, €210 → spaardoel_btw (21% rule overridden by VAT amount), €0 → spaardoel_ib (covered by net €1.000 × 15%)
 - **AND** if net > 15% allocation: €150 → spaardoel_ib, remainder in zakelijkeRekening
 
-### REQ-CF-015: Dashboard visualization — 13-week bar chart with alerts
+### Requirement: REQ-CF-015: Dashboard visualization — 13-week bar chart with alerts
 
 The cashflow dashboard MUST display:
 
@@ -542,7 +542,7 @@ The cashflow dashboard MUST display:
 - **AND** buffer line is visible
 - **AND** weeks with saldo < buffer are highlighted
 
-### REQ-CF-016: PDF export for bank/accountant meetings
+### Requirement: REQ-CF-016: PDF export for bank/accountant meetings
 
 The system MUST generate a PDF export of the 13-week cashflow forecast, suitable for sharing with a bank (for rekening-courant or financing discussions) or an accountant. The PDF SHALL include:
 
@@ -563,7 +563,7 @@ The system MUST generate a PDF export of the 13-week cashflow forecast, suitable
 - **THEN** system generates PDF with all sections above
 - **AND** PDF is downloadable or emailed to pre-configured recipient (accountant, bank contact)
 
-### REQ-CF-017: Model versioning and forward compatibility
+### Requirement: REQ-CF-017: Model versioning and forward compatibility
 
 The system MUST track the `modelVersie` on each `CashflowForecastHorizon` to support future enhancements without breaking historical forecasts.
 

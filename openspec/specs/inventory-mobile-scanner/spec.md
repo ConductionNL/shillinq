@@ -265,7 +265,7 @@ status: done
 
 ## Requirements
 
-### REQ-OFFLINE-001: Offline-First Architecture
+### Requirement: REQ-OFFLINE-001: Offline-First Architecture
 The app MUST complete all warehouse operations (receive, transfer, pick, count) without network connectivity. Local writes to IndexedDB MUST occur before any sync attempt. Sync MUST be asynchronous and non-blocking.
 
 **Rationale**: Warehouse network is intermittent. Staff cannot afford to wait for network acknowledgments during fast-paced operations.
@@ -277,7 +277,7 @@ THEN: Operation completes locally within 500 ms, UI shows "pending sync", and st
 
 ---
 
-### REQ-OFFLINE-002: Sync Delta Protocol
+### Requirement: REQ-OFFLINE-002: Sync Delta Protocol
 The app MUST sync changes using a delta protocol:
 - `GET /api/v1/inventory/sync?since=<timestamp>` — returns all InventoryStock records modified since timestamp
 - `POST /api/v1/inventory/sync` — uploads pendingOps with transactionId; server deduplicates on transactionId
@@ -291,7 +291,7 @@ THEN: Client sends 50 operations to server, server ACKs, client deletes synced r
 
 ---
 
-### REQ-OFFLINE-003: Conflict Resolution — Last-Write-Wins
+### Requirement: REQ-OFFLINE-003: Conflict Resolution — Last-Write-Wins
 When both client and server modify the same InventoryStock record concurrently, the timestamp-based last-write-wins (LWW) conflict resolution MUST apply: the version with the later timestamp is preserved. Client MUST compare `lastModified` timestamps and overwrite local if server is newer.
 
 **Rationale**: LWW is deterministic and simple. Manual review is available if needed, but auto-apply prevents data loss.
@@ -303,7 +303,7 @@ THEN: Client overwrites local quantity with server value and displays "Stock was
 
 ---
 
-### REQ-SYNC-001: Transaction ID Deduplication
+### Requirement: REQ-SYNC-001: Transaction ID Deduplication
 Every operation uploaded via `POST /api/v1/inventory/sync` MUST include a unique `transactionId` (UUID). Server MUST deduplicate on transactionId: duplicate requests within 24 hours MUST return the same ACK without re-applying the operation.
 
 **Rationale**: Network retries and app crashes can cause duplicate uploads. Deduplication prevents double-counting.
@@ -315,7 +315,7 @@ THEN: Server detects duplicate, returns same ACK without incrementing quantity t
 
 ---
 
-### REQ-SYNC-002: Idempotent Operations
+### Requirement: REQ-SYNC-002: Idempotent Operations
 All four operations (receive, transfer, pick, count) MUST be idempotent: running the same operation twice MUST result in the same final state. Receiving 50 units twice is not valid; duplicate scans within 5 seconds MUST be rejected.
 
 **Rationale**: Prevents accidental duplicates if staff taps "confirm" twice due to slow network feedback.
@@ -327,7 +327,7 @@ THEN: App checks if same (SKU, qty, location) was submitted in last 5 seconds, r
 
 ---
 
-### REQ-BARCODE-001: Camera-Based Barcode Scanning
+### Requirement: REQ-BARCODE-001: Camera-Based Barcode Scanning
 The app MUST support barcode scanning using the device's camera. The following formats MUST be decoded:
 - QR codes (jsQR library)
 - 1D barcodes: EAN-13, Code-128, Code-39, Code-93 (quagga library)
@@ -343,7 +343,7 @@ THEN: jsQR or quagga decodes it, camera closes, and SKU resolution proceeds
 
 ---
 
-### REQ-BARCODE-002: Manual SKU Entry Fallback
+### Requirement: REQ-BARCODE-002: Manual SKU Entry Fallback
 If camera is unavailable, disabled, or barcode decoding fails, the app MUST provide a manual text input field where staff can enter the barcode or SKU directly. This field MUST be searchable (filter matching SKU or product name).
 
 **Rationale**: Some locations lack adequate lighting or camera functionality. Manual entry is the fallback.
@@ -355,7 +355,7 @@ THEN: Camera is not accessed; manual entry textbox appears with placeholder "Ent
 
 ---
 
-### REQ-SKU-001: SKU Resolution via Barcode
+### Requirement: REQ-SKU-001: SKU Resolution via Barcode
 The app MUST resolve scanned barcodes to SKUs using the dependent spec `inventory-barcode-sku` service. If barcode is not found, the app MUST display "Barcode not found in system" and offer manual SKU entry.
 
 **Rationale**: Barcode → SKU mapping is external; this spec delegates to the upstream service.
@@ -367,7 +367,7 @@ THEN: Resolver returns SKU "WIDGET-001" or "not found" error; app displays produ
 
 ---
 
-### REQ-INVENTORY-001: Receive Operation
+### Requirement: REQ-INVENTORY-001: Receive Operation
 The receive operation MUST increment InventoryStock.quantity for a given (SKU, location) and create a GoodsReceipt record. Permission gate: only users with "warehouse_manager" role.
 
 **Rationale**: Goods receipt is a critical operation; only managers should authorize.
@@ -382,7 +382,7 @@ THEN:
 
 ---
 
-### REQ-INVENTORY-002: Transfer Operation
+### Requirement: REQ-INVENTORY-002: Transfer Operation
 The transfer operation MUST decrement InventoryStock at source location and increment at destination location. A single atomic InventoryTransfer record MUST be created. Permission gate: only users with "inventory_operator" role.
 
 **Rationale**: Transfers require auditing; a single record tracks both sides.
@@ -398,7 +398,7 @@ THEN:
 
 ---
 
-### REQ-INVENTORY-003: Pick Operation
+### Requirement: REQ-INVENTORY-003: Pick Operation
 The pick operation MUST decrement InventoryStock.quantity and mark an order line item as picked. Permission gate: "inventory_operator" role.
 
 **Rationale**: Picking is a fast operation; operators execute it.
@@ -413,7 +413,7 @@ THEN:
 
 ---
 
-### REQ-INVENTORY-004: Count Operation
+### Requirement: REQ-INVENTORY-004: Count Operation
 The count operation MUST capture physical inventory count, compare to system quantity, compute variance, and create an InventoryCount record. Permission gate: "counter" role. The operation MUST NOT automatically correct InventoryStock; a manual review step is required.
 
 **Rationale**: Counts are reference points for variance, not automatic corrections.
@@ -428,7 +428,7 @@ THEN:
 
 ---
 
-### REQ-DATA-001: IndexedDB Local Cache
+### Requirement: REQ-DATA-001: IndexedDB Local Cache
 The app MUST cache InventoryStock, InventoryItem, and Location data in IndexedDB with the following schema:
 
 ```
@@ -447,7 +447,7 @@ THEN: App queries IndexedDB for all InventoryStock records at WH-A1 and displays
 
 ---
 
-### REQ-DATA-002: Quota Management
+### Requirement: REQ-DATA-002: Quota Management
 The app MUST monitor IndexedDB quota usage and warn staff if usage exceeds 80% of available quota (typically 50 MB). If quota is exceeded, the app MUST automatically delete InventoryCount records older than 7 days to free space. Staff MUST be notified of auto-cleanup.
 
 **Rationale**: Large volume counts can exceed IndexedDB limits on older devices.
@@ -459,7 +459,7 @@ THEN: Warning toast appears "Storage nearly full; old counts will be cleared aut
 
 ---
 
-### REQ-PERM-001: Role-Based Access Control
+### Requirement: REQ-PERM-001: Role-Based Access Control
 The app MUST enforce role-based permission gates at the sync boundary. The three roles are:
 
 | Role | Allowed Operations |
@@ -479,7 +479,7 @@ THEN: Server returns 403 "Permission denied: receive requires warehouse_manager 
 
 ---
 
-### REQ-PERM-002: Audit Trail
+### Requirement: REQ-PERM-002: Audit Trail
 Every operation (receive, transfer, pick, count) MUST be logged in the audit trail (via OpenRegister's audit-trail-immutable abstraction) with:
 - Operation type
 - User ID / username
@@ -496,7 +496,7 @@ THEN: Record shows "Receive | user: john.smith | WIDGET-001 | WH-A1 | qty: 50 | 
 
 ---
 
-### REQ-UI-001: Sync Status Indicator
+### Requirement: REQ-UI-001: Sync Status Indicator
 The app MUST display a persistent sync status badge in the top-right corner:
 - 🟢 **Green** (Synced): last sync completed < 2 min ago
 - 🟡 **Yellow** (Pending): pending changes exist or last sync > 2 min ago
@@ -513,7 +513,7 @@ THEN: Badge turns green and shows "Synced at 14:23"
 
 ---
 
-### REQ-UI-002: Conflict Notification
+### Requirement: REQ-UI-002: Conflict Notification
 When a server write overwrites a local change (LWW conflict), the app MUST display a non-blocking toast notification:
 "Stock was updated by another user (102 units, 14:01:00). Your local change (+50) was merged."
 
@@ -528,7 +528,7 @@ THEN: Toast shows "Stock was updated…" and staff can continue scanning
 
 ---
 
-### REQ-UI-003: PWA Manifest & Install
+### Requirement: REQ-UI-003: PWA Manifest & Install
 The app MUST ship as a Progressive Web App with:
 - Web app manifest at `src/manifest.json` with name "Inventory Mobile"
 - 192×192 and 512×512 PNG app icons
@@ -545,7 +545,7 @@ THEN: "Add to Home Screen" prompt appears; tapping it installs the app; home scr
 
 ---
 
-### REQ-SW-001: Service Worker & Offline Cache
+### Requirement: REQ-SW-001: Service Worker & Offline Cache
 The app MUST register a service worker that implements:
 - **Static assets** (JS, CSS, HTML): cache-first strategy (serve from cache if available)
 - **API calls** (GET /inventory/sync, barcode-sku lookup): network-first strategy (try network first, fall back to cached data)
