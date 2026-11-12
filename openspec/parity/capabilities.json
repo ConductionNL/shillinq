@@ -2543,7 +2543,11 @@
 				"reachedOn": "SupplierInvoiceDetail /inkoop/supplier-invoices/:id, lifecycle action Book without order; import via the bill import dialog",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"change": "2026-09-29-purchasing-supplier-invoice-intake"
+				"change": "2026-09-29-purchasing-supplier-invoice-intake",
+				"requirement": [
+					"openspec/specs/bookkeeping-purchase-order-3way :: An imported invoice finds its supplier (REQ-PSII-001)",
+					"openspec/specs/bookkeeping-purchase-order-3way :: An invoice without an order is booked through accounts payable (REQ-PSII-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2649,7 +2653,11 @@
 				"evidence": "lib/Service/RequisitionService.php:186 submit, :224 approve (only from submitted, BudgetBlocker check), :260 reject; RequisitionConversionService.php:100 convertToPurchaseOrder refuses unless approved; src/manifest.json:13215-13273 RequisitionDetail actions call /api/requisitions/@objectId/submit|approve|reject|convert",
 				"reachedOn": "Requisitions /inkoop/requisitions (menu Purchasing > Requisitions); RequisitionDetail /inkoop/requisitions/:id",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-14-purchase-requisition"
+				"change": "2026-07-14-purchase-requisition",
+				"requirement": [
+					"openspec/specs/purchase-requisition :: REQ-REQ-002: Requisition approval MUST reuse BudgetBlocker synchronously and fail closed",
+					"openspec/specs/purchase-requisition :: REQ-REQ-003: Converting an approved Requisition to a PurchaseOrder MUST be fail-closed and MUST reuse PurchaseOrderService unmodified"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2684,7 +2692,11 @@
 				"evidence": "src/components/purchase-order/PurchaseOrderForm.vue:371 POSTs /api/purchase-orders (PurchaseOrderController.php:101); PurchaseOrderDetail.vue:367/374 call transmit/peppol and transmit/email, but Application.php:451 binds LogPeppolTransmissionAdapter and PurchaseOrderService defaults to LogPurchaseOrderMailer (lib/Service/PurchaseOrder/LogPurchaseOrderMailer.php: 'Records the dispatch attempt through Nextcloud's logger')",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders); PurchaseOrderDetail send buttons",
 				"owner": "ConductionNL/shillinq",
-				"change": "purchasing-order-dispatch-and-receipt"
+				"change": "purchasing-order-dispatch-and-receipt",
+				"requirement": [
+					"openspec/changes/purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A purchase order sent by Peppol is handed to integriq (REQ-PODR-001)",
+					"openspec/changes/purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A purchase order sent by email is handed to integriq's email channel (REQ-PODR-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2719,7 +2731,11 @@
 				"evidence": "src/components/goods-receipt-note/GoodsReceiptNoteForm.vue:414/437 POST /api/goods-receipt-notes + lines; lib/Service/GoodsReceiptNoteService.php:689 sets partial_received vs fully_received; GoodsReceiptNoteDetail.vue:339 accept -> GRIRClearingListener posts GR/IR; service receipts (/api/service-receipts*, ServiceReceiptService.php) have no page and are absent from _lane/frontend-api-paths.txt",
 				"reachedOn": "GoodsReceiptNoteForm /inkoop/goods-receipt-notes/new (menu Purchasing > Receive goods); GoodsReceipts /inkoop/goods-receipts (menu Purchasing > Goods Receipts)",
 				"owner": "ConductionNL/shillinq",
-				"change": "purchasing-order-dispatch-and-receipt"
+				"change": "purchasing-order-dispatch-and-receipt",
+				"requirement": [
+					"openspec/specs/bookkeeping-purchase-order-3way :: REQ-PO3W-003: Goods receipt note entry with line-level quantities",
+					"openspec/changes/purchasing-order-dispatch-and-receipt/specs/bookkeeping-purchase-order-3way :: A delivered service is confirmed from a screen (REQ-PODR-004)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2790,7 +2806,8 @@
 				"evidence": "lib/Service/PurchaseOrderService.php:307-312 calls FrameworkAgreementDrawdownGuard::assertWithinCeiling when the payload has frameworkAgreementId; src/components/purchase-order/PurchaseOrderForm.vue never sends frameworkAgreementId (grep empty)",
 				"reachedOn": "FrameworkAgreements /inkoop/framework-agreements (menu Purchasing > Framework Agreements); FrameworkAgreementDetail shows ceiling KPI and linked POs",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-15-procurement-governance"
+				"change": "2026-07-15-procurement-governance",
+				"requirement": "openspec/specs/procurement-governance :: REQ-PG-004: A framework-agreement call-off exceeding the ceiling MUST be blocked"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2896,7 +2913,8 @@
 				"evidence": "lib/Service/SpendAnalyticsService.php spend-by-supplier (APTransaction vendorId), -by-category (GLLine accountNumber), -by-cost-centre, -by-period via OR AggregationRunner; src/components/spend-analytics/SpendAnalyticsPanel.vue:505 GETs /api/analytics/spend",
 				"reachedOn": "SpendAnalytics /reporting-compliance/spend-analytics (menu ReportingCompliance > Spend analysis)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-14-spend-analytics"
+				"change": "2026-07-14-spend-analytics",
+				"requirement": "openspec/specs/spend-analytics :: REQ-SPA-002 — The system SHALL expose spend by supplier, category, cost-centre and period over the AP sub-ledger"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2966,7 +2984,11 @@
 				"evidence": "Receipt.category and ExpenseClaimEntry are free fields in shillinq_register.json with no category->GL account map; no ExpenseCategory schema (grep ExpenseCategory only hits docudesk-templates.json and a description); no service posts ExpenseClaimEntry/Receipt to the ledger",
 				"reachedOn": "nothing reaches it: no mapping table or page exists",
 				"owner": "ConductionNL/shillinq",
-				"change": "expenses-category-mapping"
+				"change": "expenses-category-mapping",
+				"requirement": [
+					"openspec/changes/expenses-category-mapping/specs/expense-capture-core :: Expense categories name an expense account (REQ-ECM-001)",
+					"openspec/changes/expenses-category-mapping/specs/expense-capture-core :: Each expense line resolves to an account in a fixed order (REQ-ECM-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3001,7 +3023,8 @@
 				"evidence": "CashflowRecurring schema (label, category, frequency, standardAmount, indexationRule, validFrom/To, accountNumberExpense) in shillinq_register.json; read by lib/Service/CashflowExportService.php:93 and lib/Service/BudgetScenarioEvaluator.php:21 as expected monthly costs",
 				"reachedOn": "CashflowRecurring /cashflow/recurring (settings gear > Recurring Costs)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-zzp-cashflow-13wk"
+				"change": "2026-06-14-zzp-cashflow-13wk",
+				"requirement": "openspec/specs/bookkeeping-cashflow-13wk :: REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3037,7 +3060,11 @@
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (menu Sales > Generate invoice); PassThroughMarkupRules (settings gear)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "sales-time-and-expense-billing"
+				"change": "sales-time-and-expense-billing",
+				"requirement": [
+					"openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: A recharged expense line carries its cost, markup and VAT treatment (REQ-STEB-003)",
+					"openspec/changes/sales-time-and-expense-billing/specs/expense-reimbursement-or-passthrough :: The matching markup rule is applied and locked at submit (REQ-STEB-004)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3068,11 +3095,12 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "ReimbursementPolicy (expense-reimbursement-or-passthrough.json) holds a markup-approval threshold, read only by lib/Lifecycle/ExpenseReimbursementGuard.php:405, whose requires tags are not registered in Application.php; no spending-limit check on claims anywhere in lib/",
+				"state": "specified",
+				"evidence": "ReimbursementPolicy (expense-reimbursement-or-passthrough.json) holds a markup-approval threshold, read only by lib/Lifecycle/ExpenseReimbursementGuard.php:405, whose requires tags are not registered in Application.php; no spending-limit check on claims anywhere in lib/ Not built: no spending-limit or policy check runs on a submitted claim, and the markup-threshold guard is not registered (state set to specified, 12 Nov 2026).",
 				"reachedOn": "ReimbursementPolicies /reimbursement-policies (settings gear > Reimbursement Policies) keeps records only",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-expense-reimbursement-or-passthrough"
+				"change": "2026-06-14-expense-reimbursement-or-passthrough",
+				"requirement": "openspec/specs/expense-reimbursement-or-passthrough :: REQ-ERP-004: ReimbursementPolicy master data MUST define per-administration settlement rules"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3108,7 +3136,8 @@
 				"reachedOn": "Banking > Bank accounts (BankAccounts), header action 'Connect a bank' opens integriq's connections; arrived lines show on the bank statements",
 				"owner": "ConductionNL/integriq",
 				"change": "2026-09-28-banking-connected-accounts",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"requirement": "openspec/specs/bookkeeping-bank-connectors :: Transactions from the bank feed arrive as statement lines (REQ-BCON-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3143,7 +3172,11 @@
 				"evidence": "lib/Controller/BankStatementImportController.php:71 ALLOWED_FORMATS camt053/mt940/csv parsed by StatementParser and saved as BankStatement + BankStatementLine; src/modals/BankStatementWizard.vue:361 POSTs /api/v1/bank-statements/import",
 				"reachedOn": "BankImportPage /configuratie/bank-import (settings gear > Import bank statements) opens BankStatementWizard",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-15-shillinq-bank-statement-wizard"
+				"change": "2026-06-15-shillinq-bank-statement-wizard",
+				"requirement": [
+					"openspec/specs/shillinq-bank-statement-wizard :: REQ-BSW-002 — Step 1: file format selection",
+					"openspec/specs/shillinq-bank-statement-wizard :: REQ-BSW-004 — Import endpoint parses and persists the statement"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3179,7 +3212,11 @@
 				"reachedOn": "Banking > Unmatched bank lines /bookkeeping/bank-lines/unmatched, row action Match by hand; Banking > Unmatched items row action and bulk classification",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-09-28-banking-manual-match",
-				"readOn": "2026-09-28"
+				"readOn": "2026-09-28",
+				"requirement": [
+					"openspec/specs/bookkeeping-bank-reconciliation :: A bank line is matched to open invoices by hand (REQ-BMM-001)",
+					"openspec/specs/bookkeeping-bank-reconciliation :: A bank line is booked to a ledger account by hand (REQ-BMM-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3215,7 +3252,11 @@
 				"reachedOn": "PaymentRuns /bookkeeping/payment-runs, header action Propose payment run; PaymentRunDetail Export to bank",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"change": "2026-09-29-banking-payment-run"
+				"change": "2026-09-29-banking-payment-run",
+				"requirement": [
+					"openspec/specs/payment-run-sepa-export :: A payment run is proposed from the invoices due (REQ-BPR-002)",
+					"openspec/specs/payment-run-sepa-export :: REQ-SEPA-002: The pain.001 document SHALL declare the canonical ISO 20022 structure"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3250,7 +3291,8 @@
 				"evidence": "bookkeeping-accounts-payable-core.json PaymentRun approve draft->approved requires FourEyesPaymentRunGuard, registered as a class at lib/AppInfo/Application.php:1026; lib/Lifecycle/FourEyesPaymentRunGuard.php denies when the approver is the preparer (from the OR audit trail), fail-closed; export is only offered when lifecycleState=approved",
 				"reachedOn": "PaymentRunDetail /bookkeeping/payment-runs/:id lifecycle actions (menu Purchasing > Payment Runs)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-14-payment-run-four-eyes"
+				"change": "2026-07-14-payment-run-four-eyes",
+				"requirement": "openspec/specs/payment-run-four-eyes :: REQ-PR4E-001 — The PaymentRun approve transition SHALL enforce approver ≠ preparer server-side"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3285,7 +3327,8 @@
 				"reachedOn": "Treasury > Group liquidity /treasury/group-liquidity; Banking > Bank accounts /bookkeeping/bank-accounts",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-09-28-banking-connected-accounts",
-				"readOn": "2026-09-28"
+				"readOn": "2026-09-28",
+				"requirement": "openspec/specs/bookkeeping-treasury-ihb :: The cash position is shown per bank account and combined (REQ-BCON-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3320,7 +3363,8 @@
 				"evidence": "lib/BackgroundJob/FxRateImportJob.php:130 skips when TreasuryRateAdapter is dormant (connections.json treasury-rates reportedOnly), manual FxRate entry via FxRatesAdmin; GLLine carries fxRate/fxRateSource fields (add-shillinq-multi-currency-t4.json:155) but no posting code looks up FxRate at booking time (only RealisedFxSettlementService.php:485 at settlement)",
 				"reachedOn": "FXRates /bookkeeping/multi-currency/fx-rates and FxRatesAdmin (menu BankingCashflow > FX Rates / FX Rates (Admin))",
 				"owner": "ConductionNL/shillinq",
-				"change": "banking-fx-at-booking"
+				"change": "banking-fx-at-booking",
+				"requirement": "openspec/changes/banking-fx-at-booking/specs/bookkeeping-multi-currency :: A foreign-currency line is booked at the rate of its date (REQ-BFX-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3355,7 +3399,8 @@
 				"evidence": "lib/Service/Treasury/FxRevaluationService.php marks open FXPositions to the closing rate (TreasuryRateService snapshot, falling back to the position's manual spotRate) and posts the unrealised movement, called from lib/Service/SoftCloseExecutor.php delegateFxRevaluation; SoftCloseJob registered in info.xml and /api/v2/soft-close/{id}/execute-now is in the frontend",
 				"reachedOn": "soft-close run (SoftCloseJob, or execute-now from the soft-close page); positions on CurrencyBalances /bookkeeping/currency-balances (menu BankingCashflow > Currency Balances)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-13-fx-period-end-revaluation"
+				"change": "2026-07-13-fx-period-end-revaluation",
+				"requirement": "openspec/specs/bookkeeping-multi-currency :: REQ-MC-006 — Period-end FX revaluation SHALL mark every open `FXPosition` to the administratie's functional-currency closing rate"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -3390,7 +3435,13 @@
 				"evidence": "Leningen, Derivaten, CashPools, IntercompanyLoans, FXHedges index pages (bookkeeping-wet-fido-treasury.json, 30-treasury-ihb.json) keep records; TreasuryDashboard and GroupLiquidityDashboard widgets are stats-blocks with a static props.count 0 and no schema/aggregation",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard, Loans /treasury/leningen, Derivatives /treasury/derivaten, Cash Pools /treasury/cash-pools (menu BankingCashflow)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-treasury-ihb"
+				"change": "2026-06-14-bookkeeping-treasury-ihb",
+				"requirement": [
+					"openspec/specs/bookkeeping-treasury-ihb :: REQ-IHB-001: Cash pools SHALL be declared as `CashPool` + `CashPoolMembership` registers with type discriminator (notional | zero-balance | target-balance)",
+					"openspec/specs/bookkeeping-treasury-ihb :: REQ-IHB-004: Inter-company loans MUST support fixed and floating rates with reference-rate look-up (EURIBOR, SOFR, SARON), accrue interest daily, and post monthly to both lender and borrower ledgers",
+					"openspec/specs/bookkeeping-treasury-ihb :: REQ-IHB-006: FX contracts MUST be recorded with full lifecycle (trade, confirmation, settlement), revalued at each period close using closing-rate FX, with unrealised gains/losses posted to OCI or P&L depending on hedge designation per IFRS 9",
+					"openspec/specs/bookkeeping-treasury-ihb :: REQ-IHB-011: Manifest navigation SHALL include five entries for treasury workflow"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4761,7 +4812,11 @@
 				"evidence": "InventoryStock unique per (productId, locationCode, administrationId) (inventory-stock-tracking.json); InventoryMobileScannerService.php applyMutation 'transfer' decrements the source location and increments toLocation via mutateStock; /api/v1/inventory/sync + /locations called from src/composables/useInventorySync.js",
 				"reachedOn": "StockByLocation /inventory/stock-by-location (menu Purchasing > Stock by Location); MobileScannerTransfer /inventory/mobile/transfer (menu Purchasing > Mobile Scanner)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-inventory-multi-warehouse"
+				"change": "2026-06-14-inventory-multi-warehouse",
+				"requirement": [
+					"openspec/specs/inventory-multi-warehouse :: REQ-LOC-001: Location entity SHALL support hierarchical warehouse organization with parent-child FK",
+					"openspec/specs/inventory-multi-warehouse :: REQ-LOC-006: Inter-location transfer workflow supports moves between any two locations"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4796,7 +4851,14 @@
 				"evidence": "src/components/inventory/BarcodeScanner.vue (camera decode or manual entry) feeding ReceiveOp/PickOp/CountOp/TransferOp; lib/Service/InventoryMobileScannerService.php:179 uploadOperations applies receive/transfer/pick/count with role checks and an idempotent MobileScannerSyncBatch",
 				"reachedOn": "MobileScannerHome /inventory/mobile (menu Purchasing > Mobile Scanner) and its receive/pick/count/transfer pages",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-inventory-mobile-scanner"
+				"change": "2026-06-14-inventory-mobile-scanner",
+				"requirement": [
+					"openspec/specs/inventory-mobile-scanner :: REQ-BARCODE-001: Camera-Based Barcode Scanning",
+					"openspec/specs/inventory-mobile-scanner :: REQ-INVENTORY-001: Receive Operation",
+					"openspec/specs/inventory-mobile-scanner :: REQ-INVENTORY-003: Pick Operation",
+					"openspec/specs/inventory-mobile-scanner :: REQ-INVENTORY-004: Count Operation",
+					"openspec/specs/inventory-mobile-scanner :: REQ-INVENTORY-002: Transfer Operation"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4831,7 +4893,11 @@
 				"evidence": "InventoryLot schema with expiryDate and lotStatus (inventory-lot-batch-expiry.json); lib/BackgroundJob/LotExpiryAlertJob.php (registered in info.xml) creates ExpiryAlert rows at 30/7 days and on expiry, idempotently",
 				"reachedOn": "InventoryLots /inventory/lots (menu Purchasing > Lots & Batches); ExpiryAlerts /inventory/expiry-alerts (menu Purchasing > Expiry Alerts)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-inventory-lot-batch-expiry"
+				"change": "2026-06-14-inventory-lot-batch-expiry",
+				"requirement": [
+					"openspec/specs/inventory-lot-batch-expiry :: REQ-LOT-005: Lots SHALL be returned in FEFO order (First-Expiry-First-Out) by default",
+					"openspec/specs/inventory-lot-batch-expiry :: REQ-LOT-007: The `ExpiryAlert` register SHALL track approaching-expiry and missing-expiry notifications"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4866,7 +4932,11 @@
 				"evidence": "lib/Listener/StockMoveTransitionedListener.php:103-112 runs FifoValuationService/MovingAverageValuationService only on an ObjectTransitionedEvent to 'posted'; GoodsReceiptNoteService.php:26-29/606 creates receipt StockMoves already posted via saveObject, and GRIRClearingListener.php:24 notes OR fires no transition event for a state set at create, so purchase receipts never add FIFO layers; /api/inventory/valuation-report is absent from _lane/frontend-api-paths.txt",
 				"reachedOn": "InventoryValuation /inventory/valuation (menu Purchasing > Valuation) lists InventoryValuation records",
 				"owner": "ConductionNL/shillinq",
-				"change": "inventory-receipt-cost-layers"
+				"change": "inventory-receipt-cost-layers",
+				"requirement": [
+					"openspec/specs/inventory-valuation-fifo-avg :: REQ-INV-003: The system SHALL compute FIFO valuation on each stock movement",
+					"openspec/specs/inventory-valuation-fifo-avg :: REQ-INV-004: The system SHALL compute moving-average valuation on each inbound receipt"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4901,7 +4971,8 @@
 				"evidence": "lib/Listener/DeliveryDispatchListener.php -> SalesDispatchStockIssueService.php:532-564 creates a draft issue StockMove and posts it through OR's TransitionEngine -> StockMoveTransitionedListener -> CogsPosterService::postCogs (balanced GLTransaction); POS sales via PosStockDecrementListener (Application.php:720, pipelinq event); but FIFO layers are never fed by GRN receipts (see inv-valuation), so the cost read on issue has no purchase layers",
 				"reachedOn": "no page of its own: fires when a Delivery is confirmed (Orders /orders, menu Sales) or a pipelinq POS sale posts; GL result on General Ledger",
 				"owner": "ConductionNL/shillinq",
-				"change": "inventory-receipt-cost-layers"
+				"change": "inventory-receipt-cost-layers",
+				"requirement": "openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4971,7 +5042,8 @@
 				"evidence": "lib/Service/SalesDispatchStockIssueService.php:171-215 asks LotSellabilityGuard and refuses to create the issue StockMove for quarantined/expired/exhausted lots, logging 'dispatch BLOCKED'; it runs inside DeliveryDispatchListener after the Delivery has already moved to confirmed (fail-soft), and scanner 'pick' (InventoryMobileScannerService) never consults lots",
 				"reachedOn": "no screen: runs when a Delivery is confirmed (Orders /orders, menu Sales)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-14-block-unsellable-stock-dispatch"
+				"change": "2026-07-14-block-unsellable-stock-dispatch",
+				"requirement": "openspec/specs/block-unsellable-stock-dispatch :: REQ-BLK-001: A Delivery line MUST NOT be issued from unsellable stock"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5006,7 +5078,11 @@
 				"evidence": "Public widget API lib/Controller/WidgetApiController.php:104-274 (services, slots, appointments; #[PublicPage], bearer API key via WidgetAuthService, keys managed on BookingWidgetKeys) and the embeddable bundle src/components/widget/WidgetEmbed.js -> widget.js (webpack.config.js:46-54). The controller sets no CORS headers and there is no OPTIONS/preflight route, so a browser on another origin sending the Authorization header is refused; the /widget/iframe URL in widget/README.md has no route in appinfo/routes.php",
 				"reachedOn": "BookingWidgetKeys /settings/booking-widget-keys (settings gear) to issue a key; the booking itself happens in the embedded widget on the customer's site",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-self-service-widget"
+				"change": "2026-06-14-bookings-self-service-widget",
+				"requirement": [
+					"openspec/specs/bookings-self-service-widget :: REQ-WSW-003: Widget frontend component SHALL support service and resource selection with time slot picker",
+					"openspec/specs/bookings-self-service-widget :: REQ-WSW-001: Widget API SHALL expose public endpoints for service list, slot availability, and appointment creation"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5041,7 +5117,11 @@
 				"evidence": "Service schema with duration and price (lib/Settings/register.d/10-bookings-create-appointment.json) plus basePrice/buffers/status (bookings-service-catalog.json); Diensten page (src/manifest.d/bookings-service-catalog.json); lib/Service/SlotService.php:125-160 uses the service duration to cut slots and the widget lists services",
 				"reachedOn": "Diensten /verkoop/diensten (via menu Sales > Sales > Services)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-service-catalog"
+				"change": "2026-06-14-bookings-service-catalog",
+				"requirement": [
+					"openspec/specs/bookings-service-catalog :: REQ-SC-002: The `Service` schema SHALL declare a fixed minimum field set",
+					"openspec/specs/bookings-service-catalog :: REQ-SC-004: Pricing SHALL support both fixed and dynamic models via a flag"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5112,7 +5192,11 @@
 				"evidence": "AppointmentCreatedListener (registered lib/AppInfo/Application.php:1242) issues a token via lib/Service/Booking/ConfirmationTokenService.php:160-174, whose dispatchEmail (:477) needs integriq 'Service\\NotificationDispatcher', a class integriq does not ship (openconnector/lib/Service has none), so the request only reaches the log; CancelUnconfirmedAppointments job (appinfo/info.xml) runs AppointmentConfirmationService::cancelExpired() and does cancel; confirmation portal /confirm/:appointmentId works",
 				"reachedOn": "BookingsPendingConfirmations /verkoop/openstaande-bevestigingen (via menu Sales > Sales > Pending confirmations); BookingsConfirmationPortal /confirm/:appointmentId for the customer",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-confirm-flow"
+				"change": "2026-06-14-bookings-confirm-flow",
+				"requirement": [
+					"openspec/specs/bookings-confirm-flow :: REQ-BCF-004: Appointment SHALL transition from `pending_confirmation` to `confirmed` on token validation",
+					"openspec/specs/bookings-confirm-flow :: REQ-BCF-005: Appointment SHALL auto-cancel if confirmation deadline passes"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5143,11 +5227,15 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "Confirmation/Reminder/Cancellation template pages and NotificationTriggers (bookings-email-templates.json, bookings-notification-triggers.json); BookingReminderJob is registered (appinfo/info.xml) and calls lib/Service/BookingNotificationService.php, whose sendViaOpenconnector (:600-640) POSTs to the relative URL '/openconnector/api/notifications/send' (:45), a route integriq does not have; ConfirmationMailer.php:148-157 calls integriq CallService::send(), which does not exist, and then logs 'queued' and returns true",
+				"state": "specified",
+				"evidence": "Confirmation/Reminder/Cancellation template pages and NotificationTriggers (bookings-email-templates.json, bookings-notification-triggers.json); BookingReminderJob is registered (appinfo/info.xml) and calls lib/Service/BookingNotificationService.php, whose sendViaOpenconnector (:600-640) POSTs to the relative URL '/openconnector/api/notifications/send' (:45), a route integriq does not have; ConfirmationMailer.php:148-157 calls integriq CallService::send(), which does not exist, and then logs 'queued' and returns true Not built: the mail goes to an integriq route that does not exist, so no confirmation or reminder email is delivered (state set to specified, 12 Nov 2026).",
 				"reachedOn": "ConfirmationTemplates, ReminderTemplates, CancellationTemplates, NotificationTriggers, NotificationMonitor (via menu Sales > Communication)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-email-templates"
+				"change": "2026-06-14-bookings-email-templates",
+				"requirement": [
+					"openspec/specs/notification-booking-email-templates :: REQ-BET-001: Template CRUD operations",
+					"openspec/specs/notification-booking-email-templates :: REQ-BET-005: Reminder template timing configuration"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5178,11 +5266,15 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "SmsReminderChannels page (bookings-sms-reminder-channel.json); lib/Service/Sms/SmsReminderDispatcher.php is referenced only in lib/AppInfo/Application.php (no job or listener calls it) and SmsProviderAdapterInterface is bound to LogSmsProviderAdapter (Application.php:452)",
+				"state": "specified",
+				"evidence": "SmsReminderChannels page (bookings-sms-reminder-channel.json); lib/Service/Sms/SmsReminderDispatcher.php is referenced only in lib/AppInfo/Application.php (no job or listener calls it) and SmsProviderAdapterInterface is bound to LogSmsProviderAdapter (Application.php:452) Not built: SmsReminderDispatcher has no job or listener calling it and the provider is the log adapter, so no SMS is sent (state set to specified, 12 Nov 2026).",
 				"reachedOn": "SmsReminderChannels /communication/sms-reminder-channels (via menu Sales > Communication > SMS Reminder Channels)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-sms-reminder-channel"
+				"change": "2026-06-14-bookings-sms-reminder-channel",
+				"requirement": [
+					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-001: Channel CRUD operations",
+					"openspec/specs/notification-booking-sms-reminders :: REQ-SMS-005: Delivery scheduling with send time"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5213,11 +5305,12 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "lib/Controller/BookingDepthController.php:190 createSeries (POST /api/v1/appointment-series) generates a recurring series, but no file in src calls 'appointment-series' and no page offers a repeat option",
+				"state": "specified",
+				"evidence": "lib/Controller/BookingDepthController.php:190 createSeries (POST /api/v1/appointment-series) generates a recurring series, but no file in src calls 'appointment-series' and no page offers a repeat option Not built for a user: the series endpoint exists but no page calls it or offers a repeat option (state set to specified, 12 Nov 2026).",
 				"reachedOn": "nothing reaches it: the endpoint has no page or button",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-14-bookings-depth"
+				"change": "2026-07-14-bookings-depth",
+				"requirement": "openspec/specs/bookings-recurring-series :: REQ-BRS-001 AppointmentSeries register + Appointment recurrence overlay"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5252,7 +5345,11 @@
 				"evidence": "src/views/bookings/CalendarPage.vue hosts CalendarView.vue, which loads /api/v2/calendars/{calendarId}/bookings (CalendarController listBookings) with month/week/day grid and click-to-book; page BookingsCalendarView /bookings/calendar/:calendarId (src/manifest.d/10-bookings-resource-calendar.json:294) is linked from no menu entry, card or detail action (its only mention elsewhere is a _note on BookingDetail)",
 				"reachedOn": "nothing reaches it: /bookings/calendar/:calendarId is routable only by typing the URL; BookingList /bookings/list (via menu Sales > Bookings > Bookings) shows bookings as a list",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-resource-calendar"
+				"change": "2026-06-14-bookings-resource-calendar",
+				"requirement": [
+					"openspec/specs/bookings :: REQ-002: Calendar entity with time zone and working hours",
+					"openspec/specs/bookings :: REQ-006: Calendar UI component for month/week/day views"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5318,7 +5415,11 @@
 				"reachedOn": "Urenregistratie /belastingen/urenregistratie (via menu Taxes > Time tracking, ZZP administrations only)",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-billable-rate-per-hour",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"requirement": [
+					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: An hour resolves its billable rate by tier from the assignment's rate card (REQ-BRPH-001)",
+					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: The project page shows rated hours and the unbilled value (REQ-BRPH-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5383,7 +5484,11 @@
 				"evidence": "lib/Controller/DBAController.php:126 scoreIntake / :155 saveIntake compute the authority/labour/financial/Deliveroo subtotals and store DBAIntake with actueleRisicoscore; src/manifest.json:17371 createAction POST:/api/dba/intake on the intake wizard; DBAFlagGenerationJob and DBAPortfolioAggregationJob are registered in appinfo/info.xml; evidence consent/upload endpoints feed DBAEvidenceBrowser.",
 				"reachedOn": "DBAIntakeWizard /dba/intake, DBAPortfolioDashboard, DBAEvidenceBrowser (via menu Reporting & compliance > DBA Intake Wizard / DBA Portfolio Dashboard / DBA Evidence Browser)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-dba-compliance-marker"
+				"change": "2026-06-14-dba-compliance-marker",
+				"requirement": [
+					"openspec/specs/dba-compliance-marker :: REQ-DBA-003: Risk-score on three pillars + Deliveroo criteria (0–100, four bands)",
+					"openspec/specs/dba-compliance-marker :: REQ-DBA-007: Evidence-dossier per opdracht"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5455,7 +5560,8 @@
 				"reachedOn": "Journals /journals, the humaniq payroll journal entry, Post; or occ humaniq:glpost:run",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-09-29-ledger-posting-path",
-				"readOn": "2026-09-29"
+				"readOn": "2026-09-29",
+				"requirement": "openspec/specs/bookkeeping-journal-entries :: A payroll journal handed in by humaniq posts to the ledger (REQ-LPP-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6498,7 +6604,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "purchasing-approval-delegation"
+				"change": "purchasing-approval-delegation",
+				"requirement": "openspec/changes/purchasing-approval-delegation/specs/bookkeeping-purchase-order-3way :: An approver hands a pending approval to a colleague (REQ-PAD-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6668,7 +6775,8 @@
 				"readOn": "2026-09-29",
 				"evidence": "lib/Service/Purchasing/SupplierInvoiceChecks.php duplicateOf is the one rule for the UBL import (409), the CSV import (skippedRows by number) and a typed invoice (lib/Listener/SupplierInvoiceWarningListener.php writes duplicateOfId on save); a failed lookup counts as a possible duplicate; booking needs duplicateAcknowledgedReason.",
 				"reachedOn": "SupplierInvoiceDetail field Same number as; SupplierInvoices column; bill import dialog (409 for UBL, skippedRows for CSV)",
-				"change": "2026-09-29-purchasing-supplier-invoice-intake"
+				"change": "2026-09-29-purchasing-supplier-invoice-intake",
+				"requirement": "openspec/specs/bookkeeping-purchase-order-3way :: A duplicate invoice number is flagged however the invoice arrived (REQ-PSII-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6709,7 +6817,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "SupplierInvoiceDetail field IBAN differs from supplier record; the AP transaction's payment block",
 				"evidence": "SupplierInvoiceChecks::ibanMismatch compares the invoice IBAN, without spaces and case, with Payee.bankAccount.iban and SupplierQualification.iban; booking needs ibanAcknowledgedReason and HandToAccountsPayableAction writes the APTransaction payment blocked with reason 'IBAN on invoice differs from supplier record', which banking-payment-run keeps out of every run.",
-				"change": "2026-09-29-purchasing-supplier-invoice-intake"
+				"change": "2026-09-29-purchasing-supplier-invoice-intake",
+				"requirement": "openspec/specs/payment-control-guards :: An invoice IBAN that differs from the supplier record holds payment (REQ-PSII-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6750,7 +6859,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "SupplierInvoiceDetail, Mark as last invoice",
 				"evidence": "An approved supplier invoice lowers the commitment of its order (lib/Listener/InvoiceCommitmentListener.php, lib/Service/Commitment/CommitmentInvoicing.php); SupplierInvoice.isLastInvoice or Mark as last invoice closes it through afsluiten, releasing the remainder to the budget with a closed movement.",
-				"change": "2026-09-29-planning-commitment-year-end"
+				"change": "2026-09-29-planning-commitment-year-end",
+				"requirement": "openspec/specs/bookkeeping-verplichtingenadministratie :: Marking the last invoice closes the commitment and releases the rest (REQ-PCYE-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6833,7 +6943,11 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "APTransactionDetail /bookkeeping/ap-transactions/:id and PayeeDetail /bookkeeping/payees/:id, actions Block payment and Release payment",
 				"evidence": "APTransaction and Payee carry paymentBlocked and paymentBlockReason (lib/Settings/register.d/bookkeeping-accounts-payable-core.json), set through src/modals/PaymentBlockModal.vue; lib/PaymentRun/PaymentBlockChecker.php is the one check the proposal, the export guard (lib/Lifecycle/PaymentRunDuplicateGuard.php) and the export service use, so a block set after approval refuses the export naming the invoice.",
-				"change": "2026-09-29-banking-payment-run"
+				"change": "2026-09-29-banking-payment-run",
+				"requirement": [
+					"openspec/specs/payment-control-guards :: A single invoice can be blocked from payment (REQ-BPR-003)",
+					"openspec/specs/payment-control-guards :: A supplier can be blocked from payment (REQ-BPR-004)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7212,7 +7326,11 @@
 				"readOn": "2026-09-30",
 				"evidence": "ProjectAssignment.loggedHours, remainingHours, hoursUsedPercent (declared calculation), hoursWarnedAt80/100 and two x-openregister-notifications to projectOwner (lib/Settings/register.d/people-hours-budget.json); AssignmentHoursListener re-sums an assignment when an UrenRegistratie is created, changed or deleted and re-arms the warnings when the estimate changes, AssignmentHours writes the project totals and hoursOverBudget, BackfillAssignmentHours sums history (tests/Unit/Listener/AssignmentHoursListenerTest.php).",
 				"reachedOn": "Projects > a project (/bookkeeping/dimensions/projects/:id): Hours budget and Hours per assignment; Projects list filter Over hours budget",
-				"change": "2026-09-30-people-hours-budget"
+				"change": "2026-09-30-people-hours-budget",
+				"requirement": [
+					"openspec/specs/bookkeeping-consultancy-project-accounting :: The project owner is warned at 80 and 100 percent (REQ-PHB-002)",
+					"openspec/specs/bookkeeping-consultancy-project-accounting :: Projects over budget can be found (REQ-PHB-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8091,7 +8209,8 @@
 				"readOn": "2026-09-29",
 				"evidence": "PaymentRun.paymentLines[].requestedExecutionDate; lib/PaymentRun/Generator/SepaPain001Generator.php writes one PmtInf block per requested date with its own ReqdExctnDt, so each payment asks the bank for its own day.",
 				"reachedOn": "PaymentRuns Propose payment run, option Pay each invoice on its due date; PaymentRunDetail paymentLines",
-				"change": "2026-09-29-banking-payment-run"
+				"change": "2026-09-29-banking-payment-run",
+				"requirement": "openspec/specs/payment-run-sepa-export :: Each payment can carry its own execution date (REQ-BPR-006)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8585,7 +8704,8 @@
 				"reachedOn": "Deposits (src/manifest.d bookings pages)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-bookings-deposits"
+				"change": "2026-06-14-bookings-deposits",
+				"requirement": "openspec/specs/bookings-deposits :: REQ-DP-003: Automatic ARInvoice Creation"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8666,12 +8786,16 @@
 			"twinfield": "unknown",
 			"odoo": "unknown",
 			"built": {
-				"state": "built",
-				"evidence": "ReorderRules and ReorderRuleDetail pages keep reorder rules on an InventoryStock location; no service or job in lib/ reads them to propose a purchase. Rated from a code read on 2026-10-07 (spec round), not driven on an instance.",
+				"state": "specified",
+				"evidence": "ReorderRules and ReorderRuleDetail pages keep reorder rules on an InventoryStock location; no service or job in lib/ reads them to propose a purchase. Rated from a code read on 2026-10-07 (spec round), not driven on an instance. Not built: no service or job reads the reorder rules, so no low-stock alert fires and no purchase is proposed (state set to specified, 12 Nov 2026).",
 				"reachedOn": "ReorderRules page",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-inventory-reorder-automation"
+				"change": "2026-06-14-inventory-reorder-automation",
+				"requirement": [
+					"openspec/specs/inventory-reorder-automation :: REQ-IRA-003: Low-stock alert SHALL fire when inventory falls below or equals minimum level",
+					"openspec/specs/inventory-reorder-automation :: REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8698,7 +8822,8 @@
 				"reachedOn": "CycleCounts page",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-inventory-cycle-count"
+				"change": "2026-06-14-inventory-cycle-count",
+				"requirement": "openspec/specs/inventory-cycle-count :: REQ-ICC-007: Variance posting SHALL generate `InventoryAdjustment` records and update `InventoryStock`"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8785,7 +8910,11 @@
 				"reachedOn": "TenderNedProcurements page",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-bookkeeping-tenderned-integratie"
+				"change": "2026-06-14-bookkeeping-tenderned-integratie",
+				"requirement": [
+					"openspec/specs/bookkeeping-tenderned-integratie :: REQ-001: Manual TenderNed dossier import",
+					"openspec/specs/bookkeeping-tenderned-integratie :: REQ-002: Automatic gunning trigger on status change"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
