@@ -1175,7 +1175,8 @@
 				"requirement": [
 					"openspec/specs/bookkeeping-cost-centers-dimensions :: REQ-CC-003: The `GLLine` schema SHALL carry optional dimension references additively",
 					"openspec/specs/bookkeeping-cost-centers-dimensions :: The segment dashboard shows revenue, costs and result (REQ-RSR-003)"
-				]
+				],
+				"plan": "ledger-journal-line-dimensions"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1894,7 +1895,8 @@
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice)",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-time-and-expense-billing",
-				"requirement": "openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: The generate page lists unbilled hours to tick (REQ-STEB-001)"
+				"requirement": "openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: The generate page lists unbilled hours to tick (REQ-STEB-001)",
+				"plan": "hours-to-humaniq"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1931,7 +1933,8 @@
 				"reachedOn": "Sales > Meter readings (Import readings, Rate readings; Rate reading on a reading's page), Sales > Rate plans, and the invoice generator's Usage billing model",
 				"evidence": "POST /api/meter-readings/import (MeterReadingImportController, lib/Service/Usage/MeterReadingImportService.php) creates unrated readings and refuses a row by number; MeterReading's rate transition runs RateMeterReadingAction and keeps ratedAmount; InvoiceGenerationService bills the selected rated readings as usage lines, refuses an invoiced one and moves each billed reading to invoiced with the invoice id (tests/Unit/Service/Usage/SalesUsageBillingTest.php, tests/Unit/Controller/MeterReadingImportControllerTest.php, tests/vitest/salesUsageBilling.spec.js).",
 				"change": "sales-usage-billing",
-				"requirement": "openspec/changes/sales-usage-billing/specs/usage-metered-billing :: Usage is a billing model in the invoice generator (REQ-USB-002)"
+				"requirement": "openspec/changes/sales-usage-billing/specs/usage-metered-billing :: Usage is a billing model in the invoice generator (REQ-USB-002)",
+				"plan": "billable-period-becomes-an-invoice"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2159,7 +2162,8 @@
 				"requirement": [
 					"openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice :: A sales order has its own states (REQ-QTI-002)",
 					"openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice :: A confirmed sales order becomes a draft invoice (REQ-QTI-003)"
-				]
+				],
+				"plan": "abstract-order-primitive"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2487,6 +2491,13 @@
 				"requirement": [
 					"openspec/changes/receivables-payment-links/specs/ar-invoice-payment-links :: A payment request gets a live link from the provider through integriq (REQ-RPL-001)",
 					"openspec/changes/receivables-payment-links/specs/ar-invoice-payment-links :: A payment reported by integriq is recorded automatically (REQ-RPL-003)"
+				],
+				"plan": [
+					"case-payment-requests",
+					"competitor-parity-2026-09",
+					"leges-at-intake",
+					"receivables-object-request-refund-and-credit",
+					"receivables-object-request-settlement"
 				]
 			},
 			"screen": {
@@ -2634,7 +2645,11 @@
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches); ThreeWayMatchDetail /inkoop/3way-matches/:id",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
-				"requirement": "openspec/specs/bookkeeping-three-way-matching-engine :: Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
+				"requirement": "openspec/specs/bookkeeping-three-way-matching-engine :: Automated line-level 3-way matching within tolerance (REQ-TWM-001)",
+				"plan": [
+					"three-way-match-delivery-date-exception",
+					"enforced-schema-authorization"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2941,7 +2956,11 @@
 				"reachedOn": "SpendAnalytics /reporting-compliance/spend-analytics (menu ReportingCompliance > Spend analysis)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-spend-analytics",
-				"requirement": "openspec/specs/spend-analytics :: REQ-SPA-002 — The system SHALL expose spend by supplier, category, cost-centre and period over the AP sub-ledger"
+				"requirement": "openspec/specs/spend-analytics :: REQ-SPA-002 — The system SHALL expose spend by supplier, category, cost-centre and period over the AP sub-ledger",
+				"plan": [
+					"glline-administration-scope",
+					"spend-analytics-ui"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2960,6 +2979,44 @@
 			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "GL-backed views refuse (500) until the GLLine administration backfill repair step has proven complete (SpendAnalyticsService.php:303); no supplier x category cross-tab."
+		},
+		{
+			"id": "pur-payable-from-app",
+			"area": "purchasing",
+			"name": "Pay out what another app owes someone, after finance approves it.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Listener/PayableRaisedListener.php and lib/Service/InboundPayableService.php raise an InboundPayable from another app's PayableRaisedEvent; InboundPayableController approves, marks paid and rejects with their bookings; InboundPayableCallbackSender posts the signed callback (inbound-payable-from-another-app tasks 1.1 to 1.5, 2.3). Not built: the \"Payouts to pay\" menu entry with its row actions (task 2.1).",
+				"owner": "ConductionNL/shillinq",
+				"change": "inbound-payable-from-another-app",
+				"plan": "inbound-payable-from-another-app",
+				"requirement": [
+					"openspec/changes/inbound-payable-from-another-app/specs/inbound-payables :: An app raises a payable through a typed event (REQ-IPY-001)",
+					"openspec/changes/inbound-payable-from-another-app/specs/inbound-payables :: Finance approves a payable (REQ-IPY-002)",
+					"openspec/changes/inbound-payable-from-another-app/specs/inbound-payables :: Finance pays or rejects a payable (REQ-IPY-003)"
+				]
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBetaalrun"
+			},
+			"evidence": {
+				"exact-online": "not checked: own-code row",
+				"moneybird": "not checked: own-code row",
+				"snelstart": "not checked: own-code row",
+				"twinfield": "not checked: own-code row",
+				"odoo": "not checked: own-code row"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"source": "own-code",
+			"note": "Added 12 Nov 2026 in the closing round (decision 395): the change covered no row. Board to be checked: see BOARDS-NEEDED-shillinq.md."
 		},
 		{
 			"id": "exp-receipt-photo",
@@ -3055,7 +3112,8 @@
 				"reachedOn": "CashflowRecurring /cashflow/recurring (settings gear > Recurring Costs)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-zzp-cashflow-13wk",
-				"requirement": "openspec/specs/bookkeeping-cashflow-13wk :: REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing"
+				"requirement": "openspec/specs/bookkeeping-cashflow-13wk :: REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing",
+				"plan": "budget-known-costs"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4401,7 +4459,8 @@
 				"reachedOn": "BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Grid)",
 				"owner": "ConductionNL/shillinq",
 				"change": "budget-grid-view",
-				"requirement": "openspec/changes/budget-grid-view/specs/budget-grid-view :: REQ-BGV-003 — A column MUST show actuals + deviation only when its period is closed, never a `today`-relative guess"
+				"requirement": "openspec/changes/budget-grid-view/specs/budget-grid-view :: REQ-BGV-003 — A column MUST show actuals + deviation only when its period is closed, never a `today`-relative guess",
+				"plan": "budget-charts"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4794,7 +4853,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-planning-budget-editing",
-				"requirement": "openspec/specs/budget-grid-view :: A controller types manual amounts into the grid (REQ-PBE-001)"
+				"requirement": "openspec/specs/budget-grid-view :: A controller types manual amounts into the grid (REQ-PBE-001)",
+				"plan": "budget-known-costs"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5065,7 +5125,8 @@
 				"reachedOn": "no page of its own: fires when a Delivery is confirmed (Orders /orders, menu Sales) or a pipelinq POS sale posts; GL result on General Ledger",
 				"owner": "ConductionNL/shillinq",
 				"change": "inventory-receipt-cost-layers",
-				"requirement": "openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)"
+				"requirement": "openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg :: An issue is costed from the receipt layers (REQ-IRCL-002)",
+				"plan": "inventory-pos-decrement"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5530,7 +5591,8 @@
 				"requirement": [
 					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: An hour resolves its billable rate by tier from the assignment's rate card (REQ-BRPH-001)",
 					"openspec/changes/sales-billable-rate-per-hour/specs/rate-card-management :: The project page shows rated hours and the unbilled value (REQ-BRPH-003)"
-				]
+				],
+				"plan": "hours-to-humaniq"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5934,7 +5996,11 @@
 				"reachedOn": "the Files tab on any detail page",
 				"owner": "ConductionNL/openregister",
 				"change": "2026-06-14-add-shillinq-document-attachment-integration",
-				"requirement": "openspec/specs/bookkeeping-document-attachment-integration :: REQ-DA-001: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq"
+				"requirement": "openspec/specs/bookkeeping-document-attachment-integration :: REQ-DA-001: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq",
+				"plan": [
+					"financial-documents-on-any-object",
+					"integration-leaves-consume"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6005,7 +6071,8 @@
 				"reachedOn": "every page, following the Nextcloud user language",
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-properties",
-				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: The interface follows the user's Nextcloud language (REQ-PLAT-004)"
+				"requirement": "openspec/changes/platform-properties/specs/platform-properties :: The interface follows the user's Nextcloud language (REQ-PLAT-004)",
+				"plan": "setup-wizard-english"
 			},
 			"screen": {
 				"board": null,
@@ -6192,7 +6259,8 @@
 				"requirement": [
 					"openspec/changes/adopt-connection-registry/specs/external-connections :: The External Connections page lists shillinq's rows from integriq's registry (REQ-EXTCONN-001)",
 					"openspec/changes/adopt-connection-registry/specs/external-connections :: Shillinq reports the adapter it sees for each called family (REQ-EXTCONN-003)"
-				]
+				],
+				"plan": "integration-config-to-openconnector"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7125,7 +7193,8 @@
 				"requirement": [
 					"openspec/specs/payment-control-guards :: A single invoice can be blocked from payment (REQ-BPR-003)",
 					"openspec/specs/payment-control-guards :: A supplier can be blocked from payment (REQ-BPR-004)"
-				]
+				],
+				"plan": "enforced-schema-authorization"
 			},
 			"screen": {
 				"canvas": "design-system",
