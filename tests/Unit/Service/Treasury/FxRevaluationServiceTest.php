@@ -30,6 +30,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 
 /**
@@ -285,6 +286,140 @@ final class FxRevaluationServiceTest extends TestCase {
 		self::assertEqualsWithDelta(3000.0, $updatedPosition['unrealisedPL'], 0.001);
 		self::assertSame(0.93, $updatedPosition['spotRate']);
 	}//end testOpenPositionRevaluesAndPostsGain()
+
+	/**
+	 * Pins every field of the posting and of the refreshed position, and that
+	 * both carry the one run timestamp of the revaluation.
+	 *
+	 * @return void
+	 */
+	public function testAPostedRevaluationCarriesTheRunAndTheMarkFieldForField(): void {
+		$this->objectService->fixtures['FXPosition'] = [
+			[
+				'id' => 'fxpos-usd-1',
+				'administrationId' => 'adm-holding-nl',
+				'foreignCurrency' => 'USD',
+				'position' => 100000.0,
+				'spotRate' => '0.90',
+				'fairValue' => 90000.0,
+				'unrealisedPL' => 25.0,
+			],
+		];
+		$this->treasuryRateService->method('getFxSpot')->willReturn($this->liveSnapshot('0.93'));
+
+		$result = $this->service->reval('adm-holding-nl', '2026-03');
+
+		self::assertSame(['postingCount' => 1, 'positionsEvaluated' => 1, 'functionalCurrency' => 'EUR', 'periodId' => '2026-03'], $result);
+
+		$position = $this->objectService->saved['FXPosition'][0];
+		$postedAt = (string)$position['lastUpdated'];
+		self::assertSame(
+			[
+				'id' => 'fxpos-usd-1',
+				'administrationId' => 'adm-holding-nl',
+				'foreignCurrency' => 'USD',
+				'position' => 100000.0,
+				'spotRate' => 0.93,
+				'fairValue' => (100000.0 * 0.93),
+				'unrealisedPL' => (25.0 + ((100000.0 * 0.93) - 90000.0)),
+				'lastUpdated' => $postedAt,
+			],
+			$position
+		);
+
+		$posting = $this->objectService->saved['FxRevaluationPosting'][0];
+		self::assertSame(
+			[
+				'administrationId' => 'adm-holding-nl',
+				'periodId' => '2026-03',
+				'positionId' => 'fxpos-usd-1',
+				'foreignCurrency' => 'USD',
+				'functionalCurrency' => 'EUR',
+				'netPosition' => 100000.0,
+				'priorRate' => 0.90,
+				'closingRate' => 0.93,
+				'rateSource' => 'live',
+				'unrealisedDeltaCents' => (int)round(((100000.0 * 0.93) - 90000.0) * 100),
+				'direction' => 'gain',
+				'targetGLAccount' => '8020',
+				'contraGLAccount' => '1699',
+				'journalEntryId' => 'je-2026-03-fx-usd-' . substr($postedAt, 8, 2),
+				'postedAt' => $postedAt,
+				'postedBy' => 'SYSTEM:FxRevaluationService',
+				'reversalId' => null,
+				'reversalState' => 'posted',
+			],
+			$posting
+		);
+
+	}//end testAPostedRevaluationCarriesTheRunAndTheMarkFieldForField()
+
+	/**
+	 * Pins the warning of an invalid period and the info line of a position
+	 * without a closing rate, with their context.
+	 *
+	 * @return void
+	 */
+	public function testTheSkipPathsLogTheirContext(): void {
+		$logger = new class extends AbstractLogger {
+
+			/**
+			 * Every logged line as [level, message, context].
+			 *
+			 * @var array<int,array{0:mixed,1:string,2:array<mixed>}>
+			 */
+			public array $lines = [];
+
+			/**
+			 * Record one log line.
+			 *
+			 * @param mixed $level The level.
+			 * @param string|\Stringable $message The message.
+			 * @param array<mixed> $context The context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->lines[] = [$level, (string)$message, $context];
+			}//end log()
+		};
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default): string => $default
+		);
+		$service = new FxRevaluationService(
+			$appConfig,
+			$this->treasuryRateService,
+			$logger,
+			objectService: new DuckObjectServiceAdapter($this->objectService),
+		);
+		$this->objectService->fixtures['FXPosition'] = [
+			['id' => 'fx-1', 'administrationId' => 'adm-holding-nl', 'foreignCurrency' => 'JPY', 'position' => 10.0, 'spotRate' => null],
+		];
+		$this->treasuryRateService->method('getFxSpot')->willReturn($this->dormantSnapshot());
+
+		self::assertSame(
+			['postingCount' => 0, 'positionsEvaluated' => 0, 'functionalCurrency' => '', 'periodId' => 'bad'],
+			$service->reval('adm-holding-nl', 'bad')
+		);
+		self::assertSame(
+			['postingCount' => 0, 'positionsEvaluated' => 1, 'functionalCurrency' => 'EUR', 'periodId' => '2026-03'],
+			$service->reval('adm-holding-nl', '2026-03')
+		);
+		self::assertSame(
+			[
+				['warning', 'FxRevaluationService: invalid periodId — skipping revaluation', ['periodId' => 'bad']],
+				[
+					'info',
+					'FxRevaluationService: no live or manual closing rate available — skipping position',
+					['administrationId' => 'adm-holding-nl', 'foreignCurrency' => 'JPY'],
+				],
+			],
+			$logger->lines
+		);
+		self::assertArrayNotHasKey('FXPosition', $this->objectService->saved);
+
+	}//end testTheSkipPathsLogTheirContext()
 
 	/**
 	 * REQ-MC-006 scenario 1 (loss variant): a weakening foreign currency
