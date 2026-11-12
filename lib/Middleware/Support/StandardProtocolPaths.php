@@ -48,7 +48,7 @@ final class StandardProtocolPaths {
 	/**
 	 * One pattern per protocol, matched against the app-relative path.
 	 *
-	 * @var array<string,string>
+	 * @var array<string,non-empty-string>
 	 */
 	public const PATTERNS = [
 		'Payment and payroll provider webhooks' => '#^/api/(?:webhooks/|v1/payment-requests/webhook/)#',

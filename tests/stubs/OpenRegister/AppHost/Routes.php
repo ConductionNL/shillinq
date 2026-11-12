@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * A copy of OpenRegister's lib/AppHost/Routes.php, the pure array builder that
+ * appinfo/routes.php calls, for unit runs without the OpenRegister sources.
+ *
  * OpenRegister AppHost — Canonical Route Table
  *
  * A leaf app's `appinfo/routes.php` becomes a single statement:
@@ -77,8 +80,6 @@ use InvalidArgumentException;
 /**
  * Canonical AppHost route table builder.
  *
- * @spec openspec/changes/apphost-boilerplate-controllers/tasks.md#task-3.2
- * @spec openspec/specs/apphost-boilerplate/spec.md — Requirement: Canonical Route Table
  */
 class Routes {
 	/**
@@ -104,8 +105,6 @@ class Routes {
 	 *
 	 * @throws \InvalidArgumentException When `$extra` contains duplicate route names.
 	 *
-	 * @spec openspec/specs/apphost-boilerplate/spec.md — Requirement: Canonical Route Table
-	 * @spec openspec/changes/public-pages-open-without-a-session/specs/apphost-public-pages/spec.md#requirement-a-page-opens-without-a-session-only-when-the-app-declares-it-public-req-pub-001
 	 */
 	public static function standard(array $extra = []): array {
 		return self::build(extra: $extra, publicPages: false);
@@ -128,7 +127,6 @@ class Routes {
 	 *
 	 * @throws \InvalidArgumentException When `$extra` contains duplicate route names.
 	 *
-	 * @spec openspec/changes/public-pages-open-without-a-session/specs/apphost-public-pages/spec.md#requirement-a-page-opens-without-a-session-only-when-the-app-declares-it-public-req-pub-001
 	 */
 	public static function standardWithPublicPages(array $extra = []): array {
 		return self::build(extra: $extra, publicPages: true);
@@ -144,7 +142,6 @@ class Routes {
 	 *
 	 * @throws \InvalidArgumentException When `$extra` contains duplicate route names.
 	 *
-	 * @spec openspec/specs/apphost-boilerplate/spec.md — Requirement: Canonical Route Table
 	 */
 	private static function build(array $extra, bool $publicPages): array {
 		self::assertNoDuplicateNames(extra: $extra);
@@ -197,7 +194,6 @@ class Routes {
 	 *
 	 * @return array<string, mixed> The route.
 	 *
-	 * @spec openspec/changes/public-pages-open-without-a-session/specs/apphost-public-pages/spec.md#requirement-a-page-opens-without-a-session-only-when-the-app-declares-it-public-req-pub-001
 	 */
 	public static function publicPageRoute(): array {
 		return [
