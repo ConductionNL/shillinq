@@ -75,6 +75,7 @@ require_once __DIR__ . '/InMemoryObjectService.php';
  * reconnected the lookup short-circuited before it. It is used, not covered.
  *
  * @uses \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Service\DossierSummaryRenderer
  */
 final class BadoSisaBijlageIIATest extends TestCase {
 
