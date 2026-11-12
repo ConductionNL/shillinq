@@ -44,7 +44,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -67,7 +67,7 @@ class TimelineDeadLetterController extends Controller {
 	 * Construct the controller with its dependencies.
 	 *
 	 * @param IRequest $request The current HTTP request.
-	 * @param SettingsService $settings Resolves OR register slug + availability.
+	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService.
 	 * @param IJobList $jobList Background-job list for manual re-queue.
 	 * @param ITimeFactory $time Time factory for stamping dispatchedAt.
@@ -75,7 +75,7 @@ class TimelineDeadLetterController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly ITimeFactory $time,

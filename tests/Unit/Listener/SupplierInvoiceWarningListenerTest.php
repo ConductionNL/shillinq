@@ -29,7 +29,6 @@ use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
@@ -59,7 +58,7 @@ class SupplierInvoiceWarningListenerTest extends TestCase {
 		$records['SupplierInvoice'][] = $typed;
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub($records, $this->saved);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$resolver = $this->createStub(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturn('SupplierInvoice');

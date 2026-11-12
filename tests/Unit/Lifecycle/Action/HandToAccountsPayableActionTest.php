@@ -26,7 +26,6 @@ use OCA\Shillinq\Lifecycle\Action\HandToAccountsPayableAction;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -61,7 +60,7 @@ class HandToAccountsPayableActionTest extends TestCase {
 	private function action(): HandToAccountsPayableAction {
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub(SupplierInvoiceChecksTest::records(), $this->saved);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$this->engine = new LifecycleFaithfulTransitionEngine(store: $store, schemas: ['APTransaction']);
 		$container = $this->createStub(ContainerInterface::class);
