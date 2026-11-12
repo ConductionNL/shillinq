@@ -39,7 +39,7 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -83,13 +83,13 @@ class LotExpiryAlertJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for job scheduling and current-time reads.
-	 * @param SettingsService $settings Resolves the active OR register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService lookup.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -129,7 +129,7 @@ class LotExpiryAlertJob extends TimedJob {
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
 	private function runAsJob($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('LotExpiryAlertJob: OpenRegister not available, skipping.');
 			return;
 		}
@@ -137,7 +137,7 @@ class LotExpiryAlertJob extends TimedJob {
 		try {
 			$today = $this->todayDate();
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$activeLots = $objectService
 				->setRegister($registerSlug)

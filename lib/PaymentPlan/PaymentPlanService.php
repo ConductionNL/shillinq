@@ -42,7 +42,7 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Log\LoggerInterface;
@@ -65,7 +65,7 @@ class PaymentPlanService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentPlanSchedule    $schedule      Draws up the instalments.
 	 * @param PaymentPlanAllocator   $allocator     Allocates payments.
 	 * @param DunningRunService      $dunning       Pauses and resumes dunning.
@@ -76,7 +76,7 @@ class PaymentPlanService {
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly PaymentPlanSchedule $schedule,
 		private readonly PaymentPlanAllocator $allocator,
 		private readonly DunningRunService $dunning,
@@ -653,7 +653,7 @@ class PaymentPlanService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

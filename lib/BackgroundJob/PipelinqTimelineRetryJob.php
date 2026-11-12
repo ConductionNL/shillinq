@@ -53,7 +53,7 @@ use DateTimeZone;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;
@@ -97,7 +97,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 *
 	 * @param ITimeFactory $time Time factory (also passed to
 	 *                           QueuedJob parent for scheduling).
-	 * @param SettingsService $settings Resolves the active OR register
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  slug.
 	 * @param ContainerInterface $container DI container for the late-bound
 	 *                                      OR ObjectService lookup (the
@@ -111,7 +111,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly LoggerInterface $logger,
@@ -158,7 +158,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			return;
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info(
 				'PipelinqTimelineRetryJob: OpenRegister not available, skipping',
 				['app' => AppIdentity::APP_ID]
@@ -167,7 +167,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		}
 
 		try {
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 
 			$entry = $this->loadEntry(

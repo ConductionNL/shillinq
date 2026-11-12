@@ -65,7 +65,7 @@ use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -84,7 +84,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param GlLineAdministrationBackfillMigrator $migrator The pure migration core.
 	 * @param IAppConfig $appConfig App config — holds the completeness gate.
 	 * @param LoggerInterface $logger The logger interface.
@@ -93,7 +93,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly GlLineAdministrationBackfillMigrator $migrator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
@@ -154,7 +154,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 */
 	private function runInner(IOutput $output): void {
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$lines = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigrator::SCHEMA_GL_LINE);
 			$transactions = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigrator::SCHEMA_GL_TRANSACTION);

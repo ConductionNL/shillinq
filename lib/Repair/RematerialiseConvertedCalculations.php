@@ -60,7 +60,7 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -125,7 +125,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -133,7 +133,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 * @param IAppManager $appManager App manager (installed shillinq version).
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocation $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private readonly ObjectServiceInterface $objectService,
@@ -174,7 +174,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 		}
 
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			// Re-saving an object that carries a folder association goes through
 			// the Files layer, which checks the ACTING USER's folder access — a

@@ -56,7 +56,7 @@ namespace OCA\Shillinq\Repair;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
@@ -91,13 +91,13 @@ class FoldIntoOrder implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Provides the shillinq register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger for per-row failures.
 	 * @param IGroupManager $groupManager Resolves the admin IUser for OR writes.
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 		private readonly IGroupManager $groupManager,
 		private readonly ContainerInterface $container,
@@ -128,7 +128,7 @@ class FoldIntoOrder implements IRepairStep {
 	public function run(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			$admin = $this->resolveAdminUser();
 			if ($admin === null) {
 				$output->warning('Shillinq: FoldIntoOrder — could not resolve an admin user; skipping (re-run after an admin exists).');

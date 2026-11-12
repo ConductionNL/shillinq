@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\RematerialiseConvertedCalculations;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -80,9 +80,9 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -132,7 +132,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->output = $this->createMock(IOutput::class);
@@ -538,7 +538,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 		$appManager->method('getAppVersion')->willReturn($this->installedVersion);
 
 		return new RematerialiseConvertedCalculations(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),

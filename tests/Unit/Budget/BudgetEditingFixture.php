@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Budget;
 
 use OCA\Shillinq\Budget\BudgetEditingService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 
@@ -90,7 +90,7 @@ trait BudgetEditingFixture {
 	 * @return BudgetEditingService
 	 */
 	private function service(): BudgetEditingService {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return new BudgetEditingService($this->store, $settings);
 
