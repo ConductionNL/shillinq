@@ -22,10 +22,9 @@
  *  - Cross-tenant access is masked as 404 by AdministrationContextService
  *    (not used here — exports are tenant-agnostic per REQ-RAP-005).
  *
- * The export request itself is recorded as a structured
- * `shillinq.compliance.export_request` log entry (REQ-RAP-005 scenario 3).
- * OpenRegister's audit trail only records events about an object, so an
- * export, which concerns no single object, cannot go on that chain.
+ * The export request itself is recorded on OpenRegister's hash-chained
+ * audit trail as a register-level `compliance.export_requested` event
+ * (REQ-RAP-005 scenario 3). An export that cannot be recorded is not served.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -174,6 +173,16 @@ class ComplianceExportController extends Controller {
 			return new JSONResponse(['error' => 'Could not generate compliance export'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 
+		try {
+			$this->complianceExportService->recordExportRequest(scope: $envelope['scope'], format: $envelope['format'], uid: $uid);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'ComplianceExportController: the export request could not be recorded on the audit trail',
+				['exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not generate compliance export'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
 		$this->logExportRequest(envelope: $envelope, uid: $uid);
 
 		if ($format === ComplianceExportService::FORMAT_CSV) {
@@ -196,10 +205,7 @@ class ComplianceExportController extends Controller {
 	}//end export()
 
 	/**
-	 * Record the export request itself per REQ-RAP-005 scenario 3.
-	 *
-	 * OpenRegister's audit trail records events about one object; an export
-	 * concerns none, so the request goes to the app log as a structured entry.
+	 * Log the export request with the window and size the audit-trail entry does not carry.
 	 *
 	 * @param array<string,mixed> $envelope Export envelope.
 	 * @param string $uid Caller UID.

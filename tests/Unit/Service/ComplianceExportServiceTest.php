@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use JsonSerializable;
+use OCA\OpenRegister\Db\AuditTrail\RegisterAuditEvent;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ListQuery;
 use OCA\OpenRegister\Db\Register;
@@ -91,6 +92,56 @@ final class ComplianceExportServiceTest extends TestCase {
 		self::assertSame(['amount' => 120], $row['afterValue']);
 
 	}//end testExportReadsTheRegisterAuditTrailInsideTheWindow()
+
+	/**
+	 * An export request is recorded on the register's hash-chained trail as a
+	 * register event naming the caller, the scope and the format
+	 * (REQ-RAP-005 scenario 3).
+	 *
+	 * @return void
+	 */
+	public function testAnExportRequestIsRecordedAsARegisterEvent(): void {
+		$registerMapper = $this->createMock(originalClassName: RegisterMapper::class);
+		$register = new Register();
+		$register->setId(7);
+		$registerMapper->expects(self::once())->method('find')->with('shillinq')->willReturn($register);
+
+		$recorded = null;
+		$auditTrailMapper = $this->createMock(originalClassName: AuditTrailMapper::class);
+		$auditTrailMapper->expects(self::once())->method('recordRegisterEvent')->willReturnCallback(
+			static function (RegisterAuditEvent $event) use (&$recorded): object {
+				$recorded = $event;
+				return new \stdClass();
+			}
+		);
+
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnMap(
+			[
+				[RegisterMapper::class, $registerMapper],
+				[AuditTrailMapper::class, $auditTrailMapper],
+			]
+		);
+
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$service = new ComplianceExportService(
+			container: $container,
+			appConfig: $appConfig,
+			userSession: $this->createMock(originalClassName: IUserSession::class),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+		);
+
+		$service->recordExportRequest(scope: 'all', format: 'csv', uid: 'auditor-alice');
+
+		self::assertInstanceOf(expected: RegisterAuditEvent::class, actual: $recorded);
+		self::assertSame(expected: 7, actual: $recorded->register);
+		self::assertSame(expected: 'compliance.export_requested', actual: $recorded->action);
+		self::assertSame(expected: ['scope' => 'all', 'format' => 'csv'], actual: $recorded->details);
+		self::assertSame(expected: 'auditor-alice', actual: $recorded->actor->id);
+
+	}//end testAnExportRequestIsRecordedAsARegisterEvent()
 
 	/**
 	 * One serialisable audit-trail entry as OpenRegister returns it.
