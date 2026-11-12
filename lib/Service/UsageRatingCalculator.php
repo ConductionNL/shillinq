@@ -3,6 +3,9 @@
 /**
  * Usage Rating Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure rating engine that turns a metered quantity plus a UsageRatePlan into a
  * cost in integer cents (REQ-UMB-002). It is the "rate" step of the
  * meter-reading -> rated-line -> invoice path that extends shillinq's billing
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/usage-metered-billing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

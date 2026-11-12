@@ -3,6 +3,9 @@
 /**
  * Lot Expiry Alert Job.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Daily background job that scans InventoryLot records and generates
  * ExpiryAlert records for lots approaching their expiryDate (at configurable
  * thresholds — default 30 and 7 days) and for lots that have crossed their
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

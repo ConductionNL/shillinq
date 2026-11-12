@@ -3,6 +3,9 @@
 /**
  * Compliance Export Controller.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Backs the REQ-RAP-005 manifest entry `BookkeepingComplianceExport`.
  *
  *   GET /api/audit/export
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

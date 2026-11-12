@@ -4,6 +4,9 @@
  * 3-way matching engine integration test (slice 06 of the
  * bookkeeping-purchase-order-3way chain).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires {@see ThreeWayMatchingEngine} on top of
  * {@see ToleranceProfileService} + {@see SupplierInvoiceService} with an
  * in-memory OpenRegister ObjectService stub seeded with a SupplierInvoice,
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

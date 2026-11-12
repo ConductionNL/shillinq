@@ -3,6 +3,9 @@
 /**
  * Budget Editing Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Types a budget into the grid, spreads a yearly amount, sets several years
  * side by side and starts next year's budget from this one
  * (planning-budget-editing, REQ-PBE-001 to REQ-PBE-003):
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/budget-grid-view/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

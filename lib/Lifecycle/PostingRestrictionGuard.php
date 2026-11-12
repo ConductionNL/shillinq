@@ -3,6 +3,9 @@
 /**
  * Shillinq PostingRestrictionGuard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The two booking rules a tender asks for, checked on every posting a person
  * makes (ledger-booking-rules):
  *
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

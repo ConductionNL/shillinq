@@ -4,6 +4,9 @@
  * Unit tests for ProductCatalogService — the read side of the inventory
  * product catalog (#860).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## What these tests are pointed at
  *
  * The failure mode this class exists to prevent is a catalog page that renders
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

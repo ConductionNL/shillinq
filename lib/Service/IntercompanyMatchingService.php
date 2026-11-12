@@ -3,6 +3,9 @@
 /**
  * Intercompany Matching Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Orchestrates the intercompany elimination engine over the real OpenRegister
  * ObjectService API (find/findAll/saveObject only — findObject/createFromArray are
  * not part of the API per ADR-022). Implements detection of intercompany
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-15
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

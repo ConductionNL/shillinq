@@ -3,6 +3,9 @@
 /**
  * No-Show Fee Capture Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Closes the bookings-depth "no-show-fee-capture" gap: the
  * bookings-cancellation-rules change DEFINES `CancellationPolicy.noShowFee`
  * (a 0-100 percentage of the appointment cost, snapshotted onto the
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-cancellation-rules/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

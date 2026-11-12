@@ -3,6 +3,9 @@
 /**
  * Shillinq Reporting & Compliance controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The HTTP surface for the consolidated "Reporting & Compliance" section. It
  * exposes the static report catalogue grouped by category (the overview cards),
  * triggers generation of a chosen report (rendering + Files storage + tagging +
@@ -49,9 +52,6 @@
  * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
  * directory, so pointing there would report conformance to a rule this code
  * breaks.
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

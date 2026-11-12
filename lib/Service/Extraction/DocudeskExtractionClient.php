@@ -3,6 +3,9 @@
 /**
  * Docudesk Extraction Client
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-005) — the ONLY outbound
  * coupling to docudesk: a single HTTP POST to docudesk's canonical
  * `POST /api/extraction/financial` endpoint (owned by docudesk's
@@ -44,9 +47,6 @@
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

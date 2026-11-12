@@ -3,6 +3,9 @@
 /**
  * BADO Controleprotocol Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol
  * computation + lifecycle guards (REQ-001, REQ-004, REQ-006, REQ-007, REQ-008).
  * Materialises the per-topic finding aggregation and the mechanically-derived
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

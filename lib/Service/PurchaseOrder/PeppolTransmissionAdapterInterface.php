@@ -3,6 +3,9 @@
 /**
  * Peppol Access Point Adapter Port
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Narrow port the PurchaseOrderService uses to transmit an approved PO as a UBL
  * 2.1 Order via the openconnector Peppol Access Point. The port is intentionally
  * minimal so the production binding (HTTP-backed against
@@ -34,9 +37,6 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

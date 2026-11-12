@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * The English wording of shillinq's notification rules, keyed `<schema>.<rule>`
  * as the library's notification preferences list them. The app shell passes
  * them to CnAppRoot as `notificationLabels` after translating each through the

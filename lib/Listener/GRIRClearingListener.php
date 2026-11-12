@@ -3,6 +3,9 @@
 /**
  * GR/IR Clearing Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change grir-accrual-wiring: the missing GR/IR accrual-posting trigger.
  * {@see \OCA\Shillinq\Service\GRIRClearingService} fully implements the
  * clearing (`createGRIRPosting()`) and settlement (`settleGRIRPosting()`)
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/grir-accrual-wiring/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

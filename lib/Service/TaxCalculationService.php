@@ -3,6 +3,9 @@
 /**
  * Tax Calculation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Orchestrates the deferred-tax lifecycle for a fiscal period: detecting
  * temporary differences per balance-sheet account (REQ-DT-001), compensating
  * tax-loss carry-forwards under the applicable Wet Vpb regime (REQ-DT-003),
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

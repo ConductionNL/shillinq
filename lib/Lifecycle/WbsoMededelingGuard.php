@@ -3,6 +3,9 @@
 /**
  * WBSO Mededeling Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the WbsoMededeling register
  * (bookkeeping-wbso-sno-administratie, T1). The submit / resubmit transition
  * precondition is referenced from the WbsoMededeling schema's
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

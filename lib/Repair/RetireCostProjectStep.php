@@ -3,6 +3,9 @@
 /**
  * Shillinq RetireCostProjectStep Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent, fail-safe migration that converts every existing `CostProject`
  * object into a project-flavoured `AnalyticalDimension` (dimensionType=project)
  * per REQ-RCP-005 from change `retire-cost-project`.
@@ -59,9 +62,6 @@
  *
  * @spec openspec/changes/retire-cost-project/tasks.md#phase-4
  * @spec openspec/changes/retire-cost-project/specs/retire-cost-project/spec.md (REQ-RCP-005)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

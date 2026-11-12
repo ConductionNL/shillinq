@@ -3,6 +3,9 @@
 /**
  * Payment Request Leaf Provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The read and append half of `shillinq-payment-requests`, the leaf a case app
  * places on its own object to ask a citizen or a company for money. ADR-066
  * decision 2 is the whole point of the shape: the consuming app calls `list`
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

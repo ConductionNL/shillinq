@@ -3,6 +3,9 @@
 /**
  * Shillinq DelegateSigningMigrationRepair Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent migration that backfills the delegation consumer fields on
  * finance objects that carry a legacy PKI signatureFingerprint (REQ-SIGN-009).
  *
@@ -41,9 +44,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

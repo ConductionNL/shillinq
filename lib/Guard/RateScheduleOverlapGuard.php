@@ -3,6 +3,9 @@
 /**
  * Rate Schedule Overlap Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Lifecycle precondition for the RateSchedule schema's `reactivate`
  * transition (on-hold... i.e. inactive -> active,
  * lib/Settings/shillinq_register.json, REQ-RATE-006).
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

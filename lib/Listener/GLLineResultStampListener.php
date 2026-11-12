@@ -3,6 +3,9 @@
 /**
  * GL Line Result Stamp Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Keeps the result stamps on ledger lines current (reporting-segment-results
  * REQ-RSR-002). Three moments change them:
  *
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

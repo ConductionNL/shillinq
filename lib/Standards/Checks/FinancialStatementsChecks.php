@@ -3,6 +3,9 @@
 /**
  * National Financial-Statement Reporting Check Provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Contributes executable checks for the `national-reporting` rule domain to the
  * RuleEngine. The predicates map the statutory annual-accounts obligations of the
  * NL (BW 2 Titel 9), DE (HGB), FR (PCG / FEC / greffe) and EU (ESEF iXBRL)

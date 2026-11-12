@@ -3,6 +3,9 @@
 /**
  * BBV Compliance Widget Envelope Builder.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookkeeping-waterschappen-bbv-variant` chain
  * (ADR-032). Assembles the per-programme widget envelope the slice-05
  * dashboard widgets (`BBVKPICards`, `BBVComplianceChart`,
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

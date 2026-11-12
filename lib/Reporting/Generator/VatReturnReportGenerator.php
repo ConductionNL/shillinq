@@ -3,6 +3,9 @@
 /**
  * BTW-aangifte (VAT return) data-report generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders the prepared VAT return of the period (a BtwAangifte with its
  * VATDeclaration records, one per return box) as an XML file laid out by
  * rubriek. The figures are the declarations as VATReturnService prepared them

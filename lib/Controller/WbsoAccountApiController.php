@@ -3,6 +3,9 @@
 /**
  * WBSO Account API Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REST surface for the Account register declared by the
  * bookkeeping-financial-administration spec (REQ-WBSO-001 / REQ-WBSO-005 /
  * REQ-WBSO-006). Endpoints:
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

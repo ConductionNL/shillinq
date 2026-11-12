@@ -3,6 +3,9 @@
 /**
  * WBSO Export Validation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Lifecycle precondition for the WBSOExportLog schema's `validate`
  * transition (generated -> validated, lib/Settings/shillinq_register.json,
  * REQ-WBSO-006).
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

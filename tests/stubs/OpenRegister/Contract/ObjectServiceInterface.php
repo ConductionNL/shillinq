@@ -17,6 +17,9 @@
  * and this stub is simply shadowed (same convention as the sibling stubs
  * registered in tests/bootstrap-unit.php).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The full 26-method surface (and every parameter name/type) is reverse
  * -derived from `DuckObjectServiceAdapter`'s own `implements
  * ObjectServiceInterface` — that adapter's docblock explicitly documents it
@@ -38,9 +41,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

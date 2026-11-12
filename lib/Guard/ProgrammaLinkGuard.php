@@ -3,6 +3,9 @@
 /**
  * Programma Link Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path save-precondition guard for the GLLine schema's
  * BBV provincie programme assignment (REQ-BBL-002 / REQ-BBL-005). It runs only
  * when a GL line carries a non-null programmaStructure (i.e. it is being mapped
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#task-15
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Requisition Conversion Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 imperative orchestrator for the Requisition `convertToPO`
  * transition (REQ-REQ-005). Converting an approved Requisition into a
  * PurchaseOrder is a genuine cross-schema materialisation — it creates a new
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/purchase-requisition/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

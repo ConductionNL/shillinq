@@ -3,6 +3,9 @@
 /**
  * Backfill Payment Request Customer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A payment request that stands on its own (leges on a case, a dwangsom, a
  * deposit) now carries its debtor's customer in `customerId`, so the customer
  * portal lists it and the debtor can pay it there (REQ-SOPR-005). Requests
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

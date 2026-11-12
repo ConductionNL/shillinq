@@ -3,6 +3,9 @@
 /**
  * CbCR / Pillar Two Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the CbCR / Pillar 2 (GloBE)
  * registers (bookkeeping-cbcr-pillar2, T3). The bulk of the CbCR / Pillar 2
  * measurement model is declarative (schema metadata + x-openregister-lifecycle +
@@ -44,9 +47,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

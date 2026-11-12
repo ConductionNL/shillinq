@@ -3,6 +3,9 @@
 /**
  * Payment-run export + reconcile controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The REST surface behind the "Export to bank" and "Reconcile / import
  * statement" actions on the PaymentRun detail page (payment-run-sepa-export):
  *
@@ -30,9 +33,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */

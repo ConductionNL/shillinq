@@ -3,6 +3,9 @@
 /**
  * Pipelinq Contact DTO.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Immutable value object carrying the subset of a pipelinq Contact that
  * shillinq surfaces to the booking detail view: external id, legal name,
  * email, phone, address, and kvk number. Created by
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Supplier Invoice Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 05 of the bookkeeping-purchase-order-3way chain: server-authoritative
  * ingestion of supplier invoices from a Peppol-received UBL Invoice XML or a
  * PDF invoice processed through OCR (REQ-PO3W-004 + REQ-PO3W-007). Persists
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

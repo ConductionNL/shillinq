@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * National Extra-Tail Check Provider
  *
  * Contributes the remaining machine-checkable rules of the `recognition` rule

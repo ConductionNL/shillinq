@@ -3,6 +3,9 @@
 /**
  * Commitment Carry Over Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * At year end, every open commitment line continues in the next year under
  * the same commitment number (planning-commitment-year-end, REQ-PCYE-004):
  *
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

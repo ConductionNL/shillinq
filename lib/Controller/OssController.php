@@ -3,6 +3,9 @@
 /**
  * OSS (One-Stop-Shop) Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 read API for the Union One-Stop-Shop pipeline. Exposes two GET
  * endpoints, both available to any authenticated user (#[NoAdminRequired]):
  * destination-country VAT-rate resolution (REQ-OSS-001, no administration
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

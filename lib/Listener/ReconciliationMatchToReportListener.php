@@ -3,6 +3,9 @@
 /**
  * Reconciliation Match → Reconciliation Reports Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * T4 bookkeeping-reconciliation-reports — REQ-REC-010. Listens for
  * T2 `bookkeeping-bank-reconciliation` events (T2 emits an OR
  * `ObjectTransitionedEvent` on every confirm of a `ReconciliationMatch`
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

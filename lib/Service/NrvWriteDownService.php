@@ -3,6 +3,9 @@
 /**
  * NRV Write-Down Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Period-end lower-of-cost-or-net-realisable-value adjustment for
  * inventory, mandated by RJ 220.301 and IAS 2.9 ("inventories shall be
  * measured at the lower of cost and net realisable value"). FIFO or
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

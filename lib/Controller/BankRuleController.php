@@ -3,6 +3,9 @@
 /**
  * Bank Rule Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bank-rule-automation-ux — the REST surface for the MatchingRule
  * "test / dry-run" UX (REQ-BR-011) and the history-based rule-suggestion
  * learning path (REQ-BR-012).
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

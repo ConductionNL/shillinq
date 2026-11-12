@@ -3,6 +3,9 @@
 /**
  * Contract Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Contract schema. Provides two
  * single-purpose, fail-closed precondition methods referenced from the Contract
  * schema's x-openregister-lifecycle transitions in
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/contract-lifecycle-management/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

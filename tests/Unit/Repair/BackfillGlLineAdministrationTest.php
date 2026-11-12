@@ -3,6 +3,9 @@
 /**
  * Unit tests for the BackfillGlLineAdministration repair step.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers `glline-administration-scope` REQ-GLS-003 — the COMPLETENESS GATE that
  * decides whether `SpendAnalyticsService` may scope its category / cost-centre /
  * period aggregations on `GLLine.administrationId` at all.
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

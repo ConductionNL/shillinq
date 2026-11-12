@@ -3,6 +3,9 @@
 /**
  * Unit tests for InventoryPostingGuard (inventory-cogs-posting).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers the four predicates per inventory-cogs-posting tasks 5/7/8/9:
  *   - canPost (REQ-CG-002 / REQ-CG-003 gate)
  *       * unitCost_missing skip
@@ -36,9 +39,6 @@
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-8
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

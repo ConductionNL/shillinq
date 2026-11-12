@@ -3,6 +3,9 @@
 /**
  * model-or-references-pilot schema + seed-data integration test.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `model-or-references-pilot` is a `kind:config` head (ADR-032) — no shillinq
  * PHP ships in this change; the declarative `$ref`/`inversedBy` idiom is
  * resolved entirely by OpenRegister's relation graph
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/model-or-references-pilot/tasks.md#verification-tasks
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

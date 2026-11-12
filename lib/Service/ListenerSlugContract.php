@@ -3,6 +3,9 @@
 /**
  * Feature gate for shillinq's corrected listener schema matching.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shillinq's OpenRegister listeners compared a schema **id** against a schema
  * **slug** literal, so their handler bodies had never run once. Correcting the
  * comparison is a small change, but it is emphatically not a behaviour-neutral
@@ -35,9 +38,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @version GIT: <git-id>
  *

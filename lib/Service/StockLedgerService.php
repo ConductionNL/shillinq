@@ -3,6 +3,9 @@
 /**
  * Stock Ledger Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Read-only stock-ledger aggregation service per REQ-SM-005 and
  * REQ-SM-009. Two responsibilities:
  *
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

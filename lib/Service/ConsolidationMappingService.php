@@ -3,6 +3,9 @@
 /**
  * Consolidation Mapping Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pre-positioned hook service for the future `bookkeeping-consolidatie` spec
  * (REQ-MA-005 / Task 19). The actual consolidation-export rendering belongs to
  * that spec; what ships here is the pure, side-effect-free toolkit the
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

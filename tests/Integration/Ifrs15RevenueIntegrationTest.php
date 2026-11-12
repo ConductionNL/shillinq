@@ -3,6 +3,9 @@
 /**
  * IFRS 15 Revenue Recognition Integration Tests
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires {@see RevenueCutoffService} + {@see RevenueRecognitionCalculator} against
  * an in-memory OpenRegister ObjectService stub seeded with Contract /
  * PerformanceObligation / TransactionPrice / PriceAllocation /
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#integration-tests
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

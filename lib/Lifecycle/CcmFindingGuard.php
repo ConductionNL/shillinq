@@ -3,6 +3,9 @@
 /**
  * CCM Finding & Report Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Continuous Controls Monitoring
  * registers (bookkeeping-ccm-rule-engine, T3). The finding triage four-state
  * workflow and the audit-committee-report approval gate are declarative

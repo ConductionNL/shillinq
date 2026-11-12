@@ -3,6 +3,9 @@
 /**
  * Accountantsdossier Export Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BADO (Besluit Accountantscontrole Decentrale Overheden) Task 16 of
  * `bookkeeping-bado-controleprotocol` — assembles the complete BADO audit
  * bundle (Controleprotocol header + adoptionDecision + ToleranceMatrix +
@@ -59,9 +62,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

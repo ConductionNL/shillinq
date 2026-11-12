@@ -3,6 +3,9 @@
 /**
  * OrderFulfilment Transition Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Task 5.3 / REQ-005 / REQ-006 — emit the cross-app `milestone.completed`
  * CloudEvent and trigger the outbound status-sync to TenderNed when an
  * OrderFulfilment transitions to `completed` AND the eindoplevering of
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

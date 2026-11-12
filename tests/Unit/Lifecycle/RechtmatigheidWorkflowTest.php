@@ -3,6 +3,9 @@
 /**
  * End-to-end workflow scenarios for bookkeeping-rechtmatigheidsverantwoording.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Composes the RechtmatigheidGuard transitions with the declarative
  * register-fragment metadata (notifications, aggregations, lifecycle) and
  * walks the REQ-RV-001/002/005/006/007/010 GIVEN/WHEN/THEN scenarios at the
@@ -38,9 +41,6 @@
  * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-22
  * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-28
  * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/tasks.md#task-29
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

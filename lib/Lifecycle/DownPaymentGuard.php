@@ -3,6 +3,9 @@
 /**
  * Shillinq DownPaymentGuard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The down-payment check and stamp on ARInvoice.issue (sales-down-payments
  * REQ-SDP-004), declared twice on that transition: `step: check` before the
  * posting action, `step: stamp` after it.
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

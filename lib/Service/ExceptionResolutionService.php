@@ -3,6 +3,9 @@
 /**
  * Exception Resolution Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the bookkeeping-purchase-order-3way chain — owns the
  * resolution side of out-of-tolerance 3-way matches (REQ-PO3W-005).
  * When a ThreeWayMatch carries an `exception_*` status (price, quantity,
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

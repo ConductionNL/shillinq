@@ -3,6 +3,9 @@
 /**
  * Accountant Dashboard Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Aggregates a per-client status overview for the accountant-portal in-app
  * surface (REQ-ACP-002): for every administration the authenticated user has
  * a valid {@see AdministrationContextService} membership for, it composes a
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/accountant-portal/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

@@ -3,6 +3,9 @@
 /**
  * Unit tests for the DisposalJournalEmitter (REQ-FA-006).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Exercises the closing-journal payload emitted when a `FixedAsset`
  * transitions from `active` to `disposed`:
  *
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * GR/IR Reconciliation Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#424 / #446): the missing
  * operator surface for the GR/IR period-end reconciliation.
  * {@see \OCA\Shillinq\Service\GRIRClearingService::reconcileGRIRSaldoForPeriod()}
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

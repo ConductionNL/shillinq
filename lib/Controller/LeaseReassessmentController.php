@@ -3,6 +3,9 @@
 /**
  * Lease Reassessment Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-lease-capabilities (shillinq#446): the missing operator
  * surface for IFRS-16 lease remeasurements.
  * {@see \OCA\Shillinq\Service\LeaseReassessmentService} fully implements the
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

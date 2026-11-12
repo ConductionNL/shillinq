@@ -3,6 +3,9 @@
 /**
  * Shillinq FoldIntoOrder Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent data migration that folds Subsidie, PurchaseOrder and DBAOpdracht
  * rows onto the unified `Order` primitive (abstract-order-primitive change).
  * Each row becomes a genuine `Order` object (orderType=subsidie|purchase|
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.PHP.DisallowInlineIf
  */

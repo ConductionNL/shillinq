@@ -3,6 +3,9 @@
 /**
  * Tax Payment Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 Vpb payment-reconciliation API (REQ-VPB-008). Exposes a single POST
  * endpoint that reconciles a TaxPaymentTracking record against the general
  * ledger and reports the variance. CRUD for payment records themselves is served
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

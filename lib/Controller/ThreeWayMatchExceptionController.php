@@ -3,6 +3,9 @@
 /**
  * Three-way Match Exception Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the bookkeeping-purchase-order-3way chain — exposes the
  * three resolution dispositions of {@see ExceptionResolutionService} so
  * the crediteuren-administrateur UI can:
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

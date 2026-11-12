@@ -3,6 +3,9 @@
 /**
  * Shillinq BBV Administration Bootstrap Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bootstraps newly-created BBV-tenants (administrationType ∈ {gemeente, provincie,
  * waterschap}) with the minimum mandatory book-keeping primitives:
  *
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

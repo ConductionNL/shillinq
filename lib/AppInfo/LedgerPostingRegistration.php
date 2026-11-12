@@ -3,6 +3,9 @@
 /**
  * Ledger posting path registrations (#516, #1103)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Registers the `requires` guard of every transition that posts to the
  * ledger, so OpenRegister's LifecycleGuardRegistry can resolve it. Each tag
  * was declared in the register and never registered, so the transition threw
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

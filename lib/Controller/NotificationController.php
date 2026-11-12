@@ -4,6 +4,9 @@
  * NotificationController — admin-monitor REST endpoints for booking
  * notification triggers.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Surfaces the four endpoints called out in REQ-BNT-007 / REQ-BNT-008:
  *
  *   GET    /api/bookings/{id}/notification-triggers       — list triggers
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

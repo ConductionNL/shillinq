@@ -3,6 +3,9 @@
 /**
  * SalesOrder / SalesOrderLine schema + seed-data integration test.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `order-revenue-recognition` is a `kind:config` head — no shillinq PHP ships in
  * this change; recognition arithmetic is deferred to the chained
  * `order-revenue-recognition-engine` service. This test therefore exercises
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/order-revenue-recognition/tasks.md#5-verification
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

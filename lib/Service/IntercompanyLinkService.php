@@ -3,6 +3,9 @@
 /**
  * Intercompany Link Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#418 / #446): the missing
  * intercompany mirroring + reconciliation trigger.
  * {@see \OCA\Shillinq\Service\IntercompanyJournalService} implements the
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

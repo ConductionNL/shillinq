@@ -3,6 +3,9 @@
 /**
  * Auditor Statement Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the AuditorStatement register
  * (bookkeeping-subsidie-verantwoording, T3 governance). The canApprove()
  * precondition is referenced from the AuditorStatement schema's
@@ -27,9 +30,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
  */

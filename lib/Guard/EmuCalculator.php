@@ -3,6 +3,9 @@
 /**
  * EMU-saldo calculator — ADR-031 exception-path guard.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Invoked by the x-openregister-aggregations engine (via the `guard:` clause on
  * `emuSaldoByQuarter` and `emuSaldoByYear`) when the declarative multi-sector +
  * emuInclusionRule combined filter cannot be expressed natively. The methods are

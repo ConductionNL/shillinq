@@ -3,6 +3,9 @@
 /**
  * Extraction Request Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-004 / REQ-RXC-005) — a thin
  * proxy so the BillImportModal / Receipt capture frontend never needs
  * docudesk credentials directly (design.md "API Design"):
@@ -46,9 +49,6 @@
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

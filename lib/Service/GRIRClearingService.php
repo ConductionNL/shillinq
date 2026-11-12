@@ -3,6 +3,9 @@
 /**
  * GR/IR Clearing Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the bookkeeping-purchase-order-3way chain
  * (REQ-PO3W-009). Materialises the two-stage Goods-Received/Invoice-Received
  * clearing GL postings that make the "no GRN -> no invoice approval"
@@ -69,9 +72,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

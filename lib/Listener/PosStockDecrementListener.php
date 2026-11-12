@@ -3,6 +3,9 @@
 /**
  * POS Stock Decrement Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change inventory-pos-decrement (shillinq#504) — the missing outbound
  * trigger between a pipelinq POS sale and shillinq's existing outbound
  * stock-issue + valuation + COGS pipeline (inventory-sales-issue-cogs-trigger).
@@ -60,9 +63,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

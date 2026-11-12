@@ -3,6 +3,9 @@
 /**
  * Purchase Order Approval Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 of the bookkeeping-purchase-order-3way chain — records
  * approver identities + decision timestamps on a PurchaseOrder's
  * approval chain so the audit-trail export (REQ-PO3W-010) can show,
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

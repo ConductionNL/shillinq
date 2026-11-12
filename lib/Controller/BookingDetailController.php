@@ -3,6 +3,9 @@
 /**
  * Booking Detail Controller — pipelinq customer-bridge slice 05.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REST surface for the booking detail view: GET /api/v1/bookings/{id}
  * returns the Appointment record hydrated with the linked pipelinq
  * Contact profile and the most recent klantbeeld transactions. This is
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-05-detail-controller-inject/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

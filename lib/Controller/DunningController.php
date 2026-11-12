@@ -3,6 +3,9 @@
 /**
  * Dunning Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 credit-control & dunning ladder API (REQ-CCD-002 .. REQ-CCD-010).
  * Exposes a handful of imperative endpoints layered on top of the declarative
  * registers + the DunningRunService orchestrator:
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

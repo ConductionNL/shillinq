@@ -3,6 +3,9 @@
 /**
  * Payment Request Portal Scope
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A payment request that stands on its own, without an invoice (leges on a
  * case, a dwangsom, a deposit), names its debtor in `debtor.customerMasterId`.
  * The customer portal cannot scope on that nested field: portaliq's per-row
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

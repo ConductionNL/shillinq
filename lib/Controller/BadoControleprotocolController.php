@@ -3,6 +3,9 @@
 /**
  * BADO Controleprotocol Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BADO (Besluit Accountantscontrole Decentrale Overheden) audit
  * aggregation API (REQ-006, REQ-007). Exposes a single GET endpoint that
  * returns the server-computed per-topic finding aggregation and the
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

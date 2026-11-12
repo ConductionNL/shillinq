@@ -3,6 +3,9 @@
 /**
  * Innovatiebox SBR/XBRL Export Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic converter that takes the InnovatieboxAggregationService output
  * (per-asset Vpb innovatiebox-sectie + grand total) and renders an SBR/XBRL
  * instance hand-off payload ready for pick-up by the Belastingdienst Vpb
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

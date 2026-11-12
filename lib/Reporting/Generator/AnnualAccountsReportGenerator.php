@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Annual accounts (jaarrekening) report generator
  *
  * Produces a Titel 9 BW2 jaarrekening — balans, winst-en-verliesrekening and

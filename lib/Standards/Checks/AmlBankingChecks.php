@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * AML / cash-handling / bank-integrity check provider
  *
  * Contributes executable checks for the AML, cash-payment-limit, currency- and

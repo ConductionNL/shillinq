@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * SAF-T audit-file data-report generator
  *
  * Renders a minimal OECD SAF-T (Standard Audit File for Tax) document natively as

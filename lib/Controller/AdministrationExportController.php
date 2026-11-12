@@ -3,6 +3,9 @@
 /**
  * Administration Export Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The streaming half of the Auditfile Financieel (XAF 3.2) export (REQ-MA-007 /
  * REQ-MA-011). Where {@see AdministrationController::exportScope()} returns only
  * a `{ format: 'xaf-3.2', ... }` scope descriptor, this controller resolves that
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

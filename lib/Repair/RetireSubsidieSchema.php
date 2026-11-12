@@ -3,6 +3,9 @@
 /**
  * Shillinq RetireSubsidieSchema Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent, fail-soft cleanup that retires the legacy `Subsidie` schema AFTER
  * the FoldIntoOrder repair step (which runs earlier in the same post-migration
  * repair list) has folded every Subsidie row onto an `Order` (orderType=subsidie).
@@ -54,9 +57,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.PHP.DisallowInlineIf
  */

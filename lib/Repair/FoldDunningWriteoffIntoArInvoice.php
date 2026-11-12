@@ -3,6 +3,9 @@
 /**
  * Shillinq FoldDunningWriteoffIntoArInvoice Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent repair step that folds the dunning (credit-control) and
  * write-off (oninbaar) sub-concepts onto the existing ARInvoice schema
  * (per the `abstract-arinvoice-types` change).
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.PHP.DisallowInlineIf
  */

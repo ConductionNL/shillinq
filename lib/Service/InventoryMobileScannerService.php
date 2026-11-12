@@ -3,6 +3,9 @@
 /**
  * Inventory Mobile Scanner Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side sync core for the Shillinq inventory warehouse PWA. Implements
  * the two halves of the delta-sync protocol declared by REQ-OFFLINE-002 /
  * REQ-SYNC-001 / REQ-SYNC-002:
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-mobile-scanner/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

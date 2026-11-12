@@ -3,6 +3,9 @@
 /**
  * Generated report file value object
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The in-memory result of a report generator: the rendered bytes plus the
  * filename, MIME type and format label. ReportGenerationService persists this to
  * Nextcloud Files and records a GeneratedReport object pointing at it.

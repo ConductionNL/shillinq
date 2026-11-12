@@ -3,6 +3,9 @@
 /**
  * Variance Gate
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the
  * inventory-cycle-count lifecycle. Three operations:
  *
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

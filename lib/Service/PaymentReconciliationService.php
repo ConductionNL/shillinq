@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Shillinq Payment Reconciliation Service (shared deposits + invoice payment links)
  *
  * Idempotently reconciles a payment record against an outcome reported by the

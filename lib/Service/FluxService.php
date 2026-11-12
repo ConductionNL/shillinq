@@ -3,6 +3,9 @@
 /**
  * Flux Analysis Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 post-soft-close variance analysis (REQ-CLS-005..007). Computes per-GL
  * variance vs the chosen comparison basis (budget | forecast | prior-period |
  * prior-year), classifies materiality per the configured MaterialityPolicy,
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

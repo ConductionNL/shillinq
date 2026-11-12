@@ -3,6 +3,9 @@
 /**
  * Unit tests for PosStockDecrementListener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Verifies the change inventory-pos-decrement (shillinq#504) contract:
  *
  *  - fail-closed when pipelinq's PosStockMovedEvent class does not exist /
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

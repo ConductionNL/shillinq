@@ -3,6 +3,9 @@
 /**
  * Administration Archival Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure rule + ObjectService-backed enforcement for the administratie archival
  * write-block (REQ-MA-007 / Task 17). An administratie in a read-only
  * lifecycle state (`gearchiveerd`, `opgeheven`) MUST reject every mutation
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

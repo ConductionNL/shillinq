@@ -3,6 +3,9 @@
 /**
  * Shillinq BackfillGlLineAdministration Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Runs the `GLLine.administrationId` backfill (REQ-GLS-002) and — only if it
  * can then PROVE the result complete — opens the gate that lets
  * {@see \OCA\Shillinq\Service\SpendAnalyticsService} scope its category /
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

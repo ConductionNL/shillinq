@@ -3,6 +3,9 @@
 /**
  * Final-tail check provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Closes the last in-scope rules by enforcing them PROPERLY rather than dropping
  * them. Three were previously left as tautologies because the data to check them
  * non-vacuously was not modelled; they are now enforced against a real, independent

@@ -3,6 +3,9 @@
 /**
  * Period Close Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 guided period-close orchestration (REQ-PC-002, REQ-PC-006, REQ-PC-008).
  * Drives the open → closing → closed → audit-locked lifecycle on PeriodClose
  * records through the real OpenRegister ObjectService API (find / findAll /
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Portal Payment Session Service (portal-payment-initiation).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The imperative half of the subject-initiated pay-now flow (design.md "The
  * initiation chain"). Given a VERIFIED assertion's claims and a client-chosen
  * opaque target id, this service:
@@ -44,9 +47,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003, REQ-SPPI-004)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Budget Overrun Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the budget-overrun precondition on
  * GL posting (REQ-010). When a JournalEntry is materialised (boekstuk posted),
  * the system validates that the cumulative lasten posted to a programma /
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

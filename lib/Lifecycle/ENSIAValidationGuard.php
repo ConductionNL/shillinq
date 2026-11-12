@@ -3,6 +3,9 @@
 /**
  * ENSIA Validation Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Single declarative-precondition seam the OpenRegister lifecycle engine
  * cannot yet express for the ENSIA (Eenduidige Normatiek Single Information
  * Audit) annual cycle (REQ-ENSIA-001..010).
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Administration Context Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Resolves the administratie-aware RBAC context for the authenticated user:
  * the set of administrations the user may access (via AdministrationMembership
  * records), the active administration for the session, and IDOR-safe access
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Payment Plan Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Agrees, follows and ends payment plans for a customer's overdue invoices
  * (receivables-payment-plans, REQ-RPPL-001 to REQ-RPPL-005):
  *
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

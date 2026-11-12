@@ -3,6 +3,9 @@
 /**
  * Period Close Assistant Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 AI close-assistant task detection (REQ-PC-004). Scans the ledger for
  * the incomplete pre-close tasks a guided month-end / quarter-end close must
  * surface, and formats them as non-blocking warning flags (design D3):
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Appointment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Appointment save precondition.
  * Validates, before any Appointment record is persisted, that:
  *   1. The appointment duration matches the related Service.duration (REQ-BCA-003).
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-create-appointment/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

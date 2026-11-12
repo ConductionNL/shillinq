@@ -3,6 +3,9 @@
 /**
  * Dormant default DepositPayment lifecycle adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Records the would-be deposit lifecycle operation
  * (request / status / refund) to the structured logger and returns a
  * synthetic `pending` / `PAYMENT_DEFERRED` outcome so the surrounding
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-deposits/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Klantbeeld transaction row returned by the pipelinq adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 04 of the `bookings-pipelinq-customer-bridge` chain (ADR-032). A
  * single row of the customer-360 transaction history surface: the date the
  * transaction was booked, a human-readable description, the amount and
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

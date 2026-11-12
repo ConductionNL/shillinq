@@ -3,6 +3,9 @@
 /**
  * Shillinq BackfillFiscalPeriods Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent repair step that backfills `FiscalPeriod` records for every
  * distinct historical `GLLine.periodId` value (per
  * `add-shillinq-period-close` REQ-PC-001 / Task 11).
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

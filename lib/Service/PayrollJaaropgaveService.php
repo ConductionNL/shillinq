@@ -3,6 +3,9 @@
 /**
  * Payroll Jaaropgave (Annual Statement) Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Aggregates all LoonStrook records for a (werknemer, jaar) into a per-employee
  * annual statement (Jaaropgave) per REQ-PAY-013. The payload contains the YTD
  * sums of fiscaalLoon, loonheffing, premies SV werkgever, ZVW werkgever,
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

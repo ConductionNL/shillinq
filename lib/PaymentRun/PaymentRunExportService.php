@@ -3,6 +3,9 @@
 /**
  * Payment-run SEPA export orchestration service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The orchestration layer behind the "Export to bank" action. It AUTO-DISCOVERS
  * the per-format generators (lib/PaymentRun/Generator/*.php implementing
  * PaymentRunGeneratorInterface, keyed by ::format()) — the same glob-and-filter
@@ -29,9 +32,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */

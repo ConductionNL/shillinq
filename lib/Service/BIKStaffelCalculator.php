@@ -3,6 +3,9 @@
 /**
  * BIK Staffel Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path PHP guard for the Besluit BIK (Besluit vergoeding voor
  * buitengerechtelijke incassokosten, Stb. 2012, 141) staffel computation, plus
  * the wettelijke rente accrual per BW art. 6:119 (B2C) and art. 6:119a (B2B
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

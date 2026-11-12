@@ -3,6 +3,9 @@
 /**
  * Mandate Enforcer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Commitment commitment
  * transitions. Mandate-checking is context-specific (amount + soort + effective
  * date + second-signature threshold), which the declarative lifecycle DSL cannot
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

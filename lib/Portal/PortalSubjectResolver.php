@@ -3,6 +3,9 @@
 /**
  * Portal Subject Resolver
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The ownership chain every portal write receiver in shillinq starts with: the
  * target must be an opaque object id (never a URL or a path), and the subject's
  * `customerMasterId` comes from their OWN portalAccount row in portaliq's
@@ -27,9 +30,6 @@
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003)
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

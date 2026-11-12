@@ -3,6 +3,9 @@
 /**
  * Intercompany Elimination Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (REQ-GLTAX-002). REQ-MA-004 requires a
  * non-zero afwijking (variance) between the two sides of an intercompany
  * pair to flag the pair for manual review — but nothing computed the
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

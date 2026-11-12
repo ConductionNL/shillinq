@@ -3,6 +3,9 @@
 /**
  * Obligation Task Bridge
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Thin, fail-closed integration glue between a ContractObligation register row
  * and a Nextcloud Tasks VTODO (CalDAV) — or a Deck card where Deck is enabled
  * and selected — per REQ-CLM-003 (ADR-031 exception path: integration glue, not
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/contract-lifecycle-management/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

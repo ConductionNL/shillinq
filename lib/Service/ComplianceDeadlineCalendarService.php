@@ -3,6 +3,9 @@
 /**
  * Compliance Deadline Calendar Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Publishes Shillinq's compliance and operational deadlines as RFC 5545
  * VEVENTs into a Nextcloud calendar per REQ-CDC-001..004 and REQ-CDC-006,
  * and raises NC Notifications ahead of each deadline per REQ-CDC-007.
@@ -66,9 +69,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Budget Scenario Modifier Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path save precondition for the `BudgetScenarioModifier`
  * schema (`lib/Settings/register.d/budget-scenarios.json`, REQ-BSC-004).
  * Validates, before any `BudgetScenarioModifier` is persisted:
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Extraction Prefill Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-001 / REQ-RXC-004) — maps a
  * docudesk `nl.conduction.docudesk.extraction.completed` payload onto a
  * confidence-scored `SupplierInvoice` (docType supplier-invoice) or `Receipt`
@@ -34,9 +37,6 @@
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @spec openspec/specs/receipt-extraction-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

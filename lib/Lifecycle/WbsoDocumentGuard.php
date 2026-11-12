@@ -3,6 +3,9 @@
 /**
  * WBSO Document Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path guards for the Document lifecycle transitions
  * declared by the bookkeeping-financial-administration spec
  * (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009). Referenced from the
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

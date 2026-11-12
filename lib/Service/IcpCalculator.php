@@ -3,6 +3,9 @@
 /**
  * ICP Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper for the Tier-3 intra-community supplies (ICP) filing
  * (REQ-ICP-002, REQ-ICP-003, REQ-ICP-004, REQ-ICP-005, REQ-ICP-006). Holds the
  * side-effect-free arithmetic and transforms that IcpService applies after
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

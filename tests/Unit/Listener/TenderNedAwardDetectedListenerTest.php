@@ -3,6 +3,9 @@
 /**
  * Unit tests for TenderNedAwardDetectedListener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Verifies the eligibility filter for the REQ-002 auto-promotion path:
  *
  *  - Non-aanbesteding schema -> NO promotion.
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

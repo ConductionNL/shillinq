@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Trial-balance data-report generator
  *
  * Renders the proef- en saldibalans (trial balance) natively as CSV. It loads the

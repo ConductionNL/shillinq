@@ -3,6 +3,9 @@
 /**
  * SBR / XBRL Seed Repair Step.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Declarative repair step that idempotently seeds the XBRLTaxonomy,
  * SBRDocumentType and XBRLMapping example records shipped with the
  * bookkeeping-sbr-xbrl-reporting T3 change. Per ADR-037 the canonical
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

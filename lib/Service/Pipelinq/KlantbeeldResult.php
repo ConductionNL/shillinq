@@ -3,6 +3,9 @@
 /**
  * Klantbeeld response envelope returned by the pipelinq adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 04 of the `bookings-pipelinq-customer-bridge` chain (ADR-032). The
  * envelope wraps the page of transactions with the pagination metadata
  * (the limit and offset that produced this page) AND an "unavailable"
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Confirmation Token Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Encapsulates the lifecycle of ConfirmationToken records: creation on
  * appointment.create (REQ-BCF-001), revoke + reissue on customer resend
  * (REQ-BCF-006), validate-and-redeem on confirmation (REQ-BCF-004), and
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

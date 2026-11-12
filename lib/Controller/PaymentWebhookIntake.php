@@ -16,6 +16,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

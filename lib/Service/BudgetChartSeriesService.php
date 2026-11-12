@@ -3,6 +3,9 @@
 /**
  * Budget Chart Series Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The composition layer behind `GET /api/budget-charts/series`
  * (REQ-BCH-003, REQ-BCH-008): shapes the actual / projected / begroot
  * trend+cumulative envelope both `BudgetTrendChart` placements consume, for
@@ -80,9 +83,6 @@
  *
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

@@ -3,6 +3,9 @@
 /**
  * ACMReport Sign Transition Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change shillinq-signing-via-events (REQ-SIGN-001) — wires the declarative
  * `ACMReport.sign` lifecycle transition
  * ({@see lib/Settings/register.d/bookkeeping-market-government-separation.json},
@@ -43,9 +46,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

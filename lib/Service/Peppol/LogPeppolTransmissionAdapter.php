@@ -3,6 +3,9 @@
 /**
  * Log-only Peppol Transmission Adapter (generalised, default DI binding)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Generalised from `PurchaseOrder\LogPeppolTransmissionAdapter` (REQ-EINV-004):
  * the same log-only, dev/CI-safe adapter now implements
  * {@see \OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface}
@@ -34,9 +37,6 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

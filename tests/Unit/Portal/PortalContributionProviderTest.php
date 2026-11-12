@@ -3,6 +3,9 @@
 /**
  * Unit tests for PortalContributionProvider.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pins shillinq's ADR-046 contribution contract: the dual v2/v1 audience
  * declaration (customer + supplier + accountant), the fail-closed null for
  * non-matching subjects, every declarative manifest's exact shape (verified
@@ -34,9 +37,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @version GIT: <git-id>
  *

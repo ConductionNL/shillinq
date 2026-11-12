@@ -3,6 +3,9 @@
 /**
  * Intercompany Tolerance Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the IntercompanyMatch create
  * transition (REQ-ICE-004). Evaluates a match's mismatch against the configured
  * ToleranceRule for the relation type and administration, returning true when the
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

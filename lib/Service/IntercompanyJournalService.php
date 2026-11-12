@@ -3,6 +3,9 @@
 /**
  * Intercompany Journal Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper for intercompany-journaalpost mirroring and reconciliation
  * (REQ-MA-004). A single conceptual intercompany transaction (e.g. a management
  * fee from Werk B.V. to Beheer B.V.) is booked as two self-contained journal
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

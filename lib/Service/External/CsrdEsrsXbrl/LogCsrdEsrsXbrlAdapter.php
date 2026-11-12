@@ -3,6 +3,9 @@
 /**
  * Dormant default CSRD / ESRS XBRL adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Records the would-be taxonomy mapping / mandatory-data-point
  * validation / iXBRL instance build to the structured logger and
  * returns a synthetic DEFERRED / VALIDATION_BLOCKED result so the
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

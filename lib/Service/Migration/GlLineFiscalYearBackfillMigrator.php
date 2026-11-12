@@ -3,6 +3,9 @@
 /**
  * Shillinq GlLineFiscalYearBackfillMigrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure migration core for the `GLLine.fiscalYearId` backfill: resolves each
  * line's fiscal year through its parent `GLTransaction` and stamps it onto the
  * line, so line-level roll-ups can group by year.
@@ -47,9 +50,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * CAMT.053 bank-statement parser (payment-run reconciliation)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Parses an ISO 20022 CAMT.053 (bank-to-customer account statement) document
  * natively via SimpleXML and extracts the booked OUTGOING credit-transfer
  * entries — the mirror image of the SepaPain001Generator. Each yielded entry
@@ -26,9 +29,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */

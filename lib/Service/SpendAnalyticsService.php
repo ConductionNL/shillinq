@@ -3,6 +3,9 @@
 /**
  * Spend Analytics Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Single-dimension spend analysis over the Accounts-Payable sub-ledger,
  * built by CONSUMING OpenRegister's aggregation-api primitive (ADR-022) —
  * it does NOT re-implement grouping or summing in the leaf. Every view is
@@ -83,9 +86,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/spend-analytics/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

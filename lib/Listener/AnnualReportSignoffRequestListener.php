@@ -3,6 +3,9 @@
 /**
  * AnnualReport Sign-off Request Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change shillinq-delegation-via-events (REQ-SIGN-005) — the REAL production
  * trigger for {@see \OCA\Shillinq\Service\Signing\SignoffDecisionService::requestSignoff}.
  * Without this listener the decidesk Decision dispatch was an orphaned
@@ -42,9 +45,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

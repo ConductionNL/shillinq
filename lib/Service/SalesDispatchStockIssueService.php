@@ -3,6 +3,9 @@
 /**
  * Sales Dispatch Stock Issue Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change inventory-sales-issue-cogs-trigger: the missing outbound trigger
  * between the sales funnel (bookkeeping-quote-order-invoice's Quote ->
  * SalesOrder -> Delivery -> Invoice model) and the existing
@@ -52,9 +55,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

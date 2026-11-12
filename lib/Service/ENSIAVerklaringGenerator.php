@@ -3,6 +3,9 @@
 /**
  * ENSIA College-Verklaring Generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-ENSIA-006 — produce a Word (DOCX) document on the VNG-template shape
  * with auto-filled organisatie data, evaluation date, per-domein samenvatting,
  * top findings, and blank handtekeningvelden for ondertekenaars.
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

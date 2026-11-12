@@ -3,6 +3,9 @@
 /**
  * Shillinq FX Period-End Revaluation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Fills the `SoftCloseExecutor::delegateFxRevaluation()` delegate contract
  * (`lib/Service/SoftCloseExecutor.php` ~line 406) that has probed the DI
  * container for `OCA\Shillinq\Service\Treasury\FxRevaluationService` since
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-multi-currency/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

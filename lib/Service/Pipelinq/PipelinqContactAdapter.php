@@ -3,6 +3,9 @@
 /**
  * HTTP adapter core for the pipelinq customer bridge.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 02 of the `bookings-pipelinq-customer-bridge` chain (ADR-032). This
  * is the *transport* layer: the resilient HTTP client that every later slice
  * (contact read, klantbeeld read, timeline publish, lifecycle events) uses
@@ -58,9 +61,6 @@
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

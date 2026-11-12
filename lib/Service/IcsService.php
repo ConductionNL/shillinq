@@ -3,6 +3,9 @@
 /**
  * ICS (iCalendar, RFC 5545) generator for the appointment confirmation flow.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Composes a single-event iCalendar payload from an Appointment array (the
  * shape OpenRegister hands back from ObjectService::find) and a customer
  * profile so it can be attached to the confirmation email per REQ-BCF-003 and
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

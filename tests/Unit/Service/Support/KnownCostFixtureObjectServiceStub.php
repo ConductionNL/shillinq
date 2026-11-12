@@ -4,6 +4,9 @@
  * Read/write in-memory ObjectService stub for `budget-known-costs` writer
  * tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `budget-core-schema`'s two existing doubles each model one half of what
  * {@see \OCA\Shillinq\Service\KnownCostBudgetWriter} needs:
  * `FilteredObjectServiceStub` models `{in: [...]}`-filtered reads but every
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

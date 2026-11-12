@@ -3,6 +3,9 @@
 /**
  * Shillinq Inventory Scan Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative API for the inventory mobile scanner. Three endpoints:
  *   - GET  /api/inventory/resolve?barcode=...  resolve a scanned barcode (or
  *          typed SKU) to its InventoryItem (REQ-SKU-001 / REQ-BARCODE-002).
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T5.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

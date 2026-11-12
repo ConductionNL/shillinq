@@ -4,6 +4,9 @@
  * Validation-rules integration test for member 03 of the
  * bookkeeping-waterschappen-bbv-variant chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Loads the slice-03 register fragment via the same deep-merge that
  * SettingsService runs at install time, asserts that the declarative
  * validation block on BBVProgramme and BudgetBBVMapping materialises with
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-03-validation-rules/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Object Payment Request Validator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A PaymentRequest used to be invoice-shaped: `invoiceReference` was required
  * and the amount was a calculation over the invoice. Since
  * `case-payment-requests` a request may instead stand on any object in any
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

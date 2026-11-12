@@ -3,6 +3,9 @@
 /**
  * Commitment Transition Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Task 5.2 / REQ-007 — emit the cross-app `obligation.activated` CloudEvent
  * when a `bron: tenderned` Commitment transitions to `active`, so the
  * launchpad budget-utilisation widget reflects the newly committed expense
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Dunning Preview Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The read side of automatic dunning (receivables-automatic-dunning 4.1,
  * REQ-RAD-008):
  *
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

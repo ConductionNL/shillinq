@@ -3,6 +3,9 @@
 /**
  * Invoice-mentions tail check provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The last cleanly-mappable in-scope invoicing/VAT-Directive rules: the conditional
  * invoice "mention" obligations (cash accounting, self-billing, exemption reference,
  * reverse charge, the travel-agent and second-hand margin schemes, tax representative,

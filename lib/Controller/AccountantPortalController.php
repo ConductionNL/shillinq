@@ -3,6 +3,9 @@
 /**
  * Accountant Portal Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The in-app accountant-portal surface (REQ-ACP-001..004): a scoped
  * multi-client dashboard plus a one-click handover pack, both built on the
  * existing administratie-aware RBAC (AdministrationContextService, ADR-022 OR
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/accountant-portal/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

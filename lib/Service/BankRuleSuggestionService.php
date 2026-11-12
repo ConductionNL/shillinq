@@ -3,6 +3,9 @@
 /**
  * Bank Rule Suggestion Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Bank-rule-automation-ux — the learning path (REQ-BR-012). It watches how
  * an operator repeatedly categorises the same counterparty and, once the
  * same counterparty has been booked to the same GL account K or more times,
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

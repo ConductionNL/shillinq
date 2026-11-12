@@ -3,6 +3,9 @@
 /**
  * Time Intake Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * External-integration ingress adapter (ADR-031 documented exception) for
  * the shillinq half of the pipelinq time-billing handoff
  * (time-expense-invoice-intake). Validates a batch of externally-approved
@@ -55,9 +58,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

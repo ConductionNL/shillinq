@@ -3,6 +3,9 @@
 /**
  * COGS Poster Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-INV-007 Cost-of-Goods-Sold poster for the shillinq general ledger.
  *
  * Called by {@see FifoValuationService} or
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

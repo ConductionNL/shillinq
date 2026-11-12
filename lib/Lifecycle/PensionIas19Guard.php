@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * IAS 19 / RJ 271 Pension Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the IAS 19 / RJ 271 pension

@@ -3,6 +3,9 @@
 /**
  * Integriq CloudEvent Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Takes the CloudEvents integriq publishes into shillinq. integriq does not
  * dispatch a Nextcloud event per CloudEvent: `EventService::emitCloudEvent()`
  * saves each one as an OpenRegister object in integriq's `integriq` register,
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Dual GAAP Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the dual GAAP reporting registers
  * (bookkeeping-ifrs-rj-dual-gaap, T3). The bulk of the dual-GAAP measurement
  * model is declarative (schema metadata + x-openregister-lifecycle +
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

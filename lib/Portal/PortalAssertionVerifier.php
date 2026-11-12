@@ -3,6 +3,9 @@
 /**
  * Shillinq Portal Assertion Verifier (portal-payment-initiation, A6 receiver).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * When portaliq forwards the `pay` endpoint-forward action server-to-server
  * (ADR-046 contract v2, A6) it attaches an `X-Portal-Subject` header: a
  * short-lived (60s TTL) HS256 JWT assertion carrying the resolved portal
@@ -40,9 +43,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @version GIT: <git-id>
  *

@@ -3,6 +3,9 @@
 /**
  * Soft Close Executor
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 continuous-close orchestration (REQ-CLS-002). Per ADR-031 exception:
  * the executor is *glue code only* — each sub-step is itself either a
  * declarative rule evaluation (AutoAccrualRule via calculation/aggregation)
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

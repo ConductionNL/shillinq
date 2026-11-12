@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * IFRS / IAS / US-GAAP Presentation & Structure Check Provider
  *
  * Contributes executable checks for the `ifrs` / `ifrs-usgaap-deep` / `us-gaap`

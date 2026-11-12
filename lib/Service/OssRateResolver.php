@@ -3,6 +3,9 @@
 /**
  * OSS Destination-Country VAT Rate Resolver
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service for the Union One-Stop-Shop scheme (REQ-OSS-001,
  * REQ-OSS-011). Resolves the destination-country VAT rate that applies to a B2C
  * cross-border EU invoice from the EuVatRate table (the seeded mirror of the EU
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

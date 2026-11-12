@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Remaining VAT Directive check provider
  *
  * Contributes the machine-checkable VAT-Directive (2006/112/EC) rules that the

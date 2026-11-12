@@ -3,6 +3,9 @@
 /**
  * Relation Both Sides Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Every invoice sent to and received from a linked relation, with invoiced
  * sales, invoiced purchases, open receivable, open payable and the net
  * position (reporting-relation-both-sides REQ-RRBS-002, REQ-RRBS-003).
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

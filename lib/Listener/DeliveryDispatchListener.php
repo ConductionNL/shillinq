@@ -3,6 +3,9 @@
 /**
  * Delivery Dispatch Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change inventory-sales-issue-cogs-trigger: reacts to OpenRegister's
  * `ObjectTransitionedEvent` on the `Delivery` schema — the missing
  * outbound trigger between the sales funnel
@@ -32,9 +35,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Audit Export Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 of the bookkeeping-purchase-order-3way chain — assembles the
  * complete 3-way-match lifecycle history for one SupplierInvoice and
  * exports it as an immutable, structured ZIP package per REQ-PO3W-010
@@ -49,9 +52,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

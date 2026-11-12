@@ -3,6 +3,9 @@
 /**
  * Budget Grid Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of the begroting grid (`budget-grid-view`,
  * REQ-BGV-001/002/003/009) — the year-basis screen rows-from-`LedgerGroup`,
  * columns-from-a-period-range view the user asked for. This class resolves
@@ -61,9 +64,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

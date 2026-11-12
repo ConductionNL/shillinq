@@ -3,6 +3,9 @@
 /**
  * Billing Intake Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * HTTP ingress for the time-expense-invoice-intake change: a single
  * authenticated endpoint another Conduction app (pipelinq, via its
  * time-billing-handoff-emit change) POSTs a batch of externally-approved
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

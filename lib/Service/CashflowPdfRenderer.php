@@ -3,6 +3,9 @@
 /**
  * Shillinq Cashflow PDF Renderer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Generates a PDF summary of a CashflowForecastHorizon (+ optional scenario)
  * for bank or accountant meetings. Per REQ-CF-016 the renderer is pure
  * data-to-PDF mapping: it does no forecasting and no aggregation — it reads
@@ -40,9 +43,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-27
  */

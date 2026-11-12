@@ -4,6 +4,9 @@
  * Fake KnownCostScheduleExpanderInterface implementation for
  * BudgetScenarioEvaluator tests.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * This fake implements the same interface as the real
  * `KnownCostScheduleExpander` with a small, deterministic, hand-verifiable
  * arithmetic (never budget-known-costs's own frequency/CPI/exact-occurrence-date
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

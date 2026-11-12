@@ -3,6 +3,9 @@
 /**
  * Shillinq Realised FX Settlement Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Posts the REALISED foreign-exchange gain or loss that arises when a
  * foreign-currency AR invoice is settled at a payment-date rate that differs
  * from the invoice-date rate it was booked at (REQ-MC-010).
@@ -41,9 +44,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-multi-currency/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

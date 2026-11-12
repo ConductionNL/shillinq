@@ -3,6 +3,9 @@
 /**
  * Circuit breaker for the pipelinq HTTP adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Encapsulates the three-state circuit breaker used by
  * {@see PipelinqContactAdapter}: CLOSED (normal traffic), OPEN (fail fast),
  * and HALF_OPEN (one probe call allowed after the cooldown). Calls to
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

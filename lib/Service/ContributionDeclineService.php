@@ -3,6 +3,9 @@
 /**
  * Contribution Decline Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A parent may refuse a voluntary school contribution (Wet vrijwillige
  * ouderbijdrage). The one reminder tells them how: "I will not pay" in the
  * parent portal (decision D28). Portaliq forwards that choice here, and this
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

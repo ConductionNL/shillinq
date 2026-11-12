@@ -4,6 +4,9 @@
  * Unit tests for MultiPoConsolidationService (slice 07 of
  * bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-007:
  *  - enumerateCandidateTuples() honours the supplier filter, the
  *    product_code filter and the 30-day date-proximity window;
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

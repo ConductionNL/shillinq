@@ -3,6 +3,9 @@
 /**
  * ICP Finalize Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the IcpOpgaaf draft → finalized
  * transition (REQ-ICP-004, REQ-ICP-005). This guard is registered because
  * OpenRegister's x-openregister-lifecycle engine cannot yet express the
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

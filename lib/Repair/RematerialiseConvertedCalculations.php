@@ -3,6 +3,9 @@
 /**
  * Shillinq RematerialiseConvertedCalculations Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `revive-declarative-calc-layer` converted 32 `x-openregister-calculations`
  * blocks from dead infix-string expressions to the JSON-AST dialect
  * `CalculationEvaluator` actually runs, and added `materialise: true` so
@@ -49,9 +52,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -4,6 +4,9 @@
  * Unit tests for the slice-08 auth-handling extension of
  * {@see PipelinqContactAdapter::publishWithOutcome()}.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Verifies:
  *
  *   - A 401 response yields {@see TimelinePublishOutcome::AuthRejected},
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

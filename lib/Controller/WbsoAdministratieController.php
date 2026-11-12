@@ -3,6 +3,9 @@
 /**
  * WBSO Administratie Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-1 read-only WBSO realisatie API (REQ-WBSO-010). Exposes a single GET
  * endpoint that returns, per WbsoBeschikking, the granted versus realised S&O
  * hours for one administration. The endpoint is available to any authenticated
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

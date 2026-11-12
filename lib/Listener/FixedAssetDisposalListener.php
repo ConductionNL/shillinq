@@ -3,6 +3,9 @@
 /**
  * Fixed-Asset Disposal Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities (shillinq#417 / #446): the missing
  * disposal-journal trigger. {@see \OCA\Shillinq\Service\DisposalJournalEmitter}
  * fully implements the closing `GLTransaction` payload for a retired
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

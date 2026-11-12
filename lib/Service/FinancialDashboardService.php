@@ -3,6 +3,9 @@
 /**
  * Financial Dashboard Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-side data layer for the Wave-4 financial dashboard endpoints
  * (financial-series + financial-summary). Replaces the client-side
  * useFinancialData.js fetch layer: each schema the dashboard consumes
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

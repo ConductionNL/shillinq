@@ -3,6 +3,9 @@
 /**
  * Purchase Order Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative create / approval-chain routing / send-block guard for the
  * 3-way-match Purchase Order sub-ledger (REQ-PO3W-001). Implements member 02 of
  * the bookkeeping-purchase-order-3way chain: the schemas + registers were declared
@@ -35,9 +38,6 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
