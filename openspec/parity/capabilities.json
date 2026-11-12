@@ -2217,12 +2217,13 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
-				"evidence": "src/modals/InvoiceQuickDraftModal.vue posts an ARInvoice draft to /apps/openregister/api/objects/{register}/ARInvoice (:472) with customer, lines and VAT; the only trigger is the Dashboard headerActions 'create-invoice' in src/manifest.json:5166-5172",
+				"state": "planned",
+				"evidence": "src/modals/InvoiceQuickDraftModal.vue posts an ARInvoice draft to /apps/openregister/api/objects/{register}/ARInvoice (:472) with customer, lines and VAT; the only trigger is the Dashboard headerActions 'create-invoice' in src/manifest.json:5166-5172 Not built for every page: the only trigger is the dashboard header action; open change sales-quick-draft-from-any-page adds it everywhere (state set to planned, 12 Nov 2026).",
 				"reachedOn": "Dashboard / header action 'Create invoice' (modal InvoiceQuickDraftModal)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-shillinq-invoice-quick-draft",
-				"requirement": "openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft :: The quick draft opens from every page of the app (REQ-IQD-009)"
+				"requirement": "openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft :: The quick draft opens from every page of the app (REQ-IQD-009)",
+				"plan": "openspec/changes/sales-quick-draft-from-any-page"
 			},
 			"screen": {
 				"canvas": "design-system",
