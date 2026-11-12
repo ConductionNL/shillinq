@@ -10177,7 +10177,6 @@
                 "tags": [
                     "store"
                 ],
-                "x-provided-by": "openregister",
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",
@@ -10206,7 +10205,6 @@
                 "tags": [
                     "store"
                 ],
-                "x-provided-by": "openregister",
                 "parameters": [
                     {
                         "name": "slug",
@@ -10271,7 +10269,6 @@
                 "tags": [
                     "store"
                 ],
-                "x-provided-by": "openregister",
                 "requestBody": {
                     "required": false,
                     "content": {
