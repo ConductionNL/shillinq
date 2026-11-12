@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\InventoryMobileScannerController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InventoryMobileScannerService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -71,11 +72,11 @@ final class InventoryMobileScannerControllerTest extends TestCase {
 	private IGroupManager&MockObject $groupManager;
 
 	/**
-	 * Mock SettingsService.
+	 * Mock RegisterLocation.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mock AdministrationContextService.
@@ -136,7 +137,7 @@ final class InventoryMobileScannerControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->admin = $this->createMock(AdministrationContextService::class);
 		$this->scanner = $this->createMock(InventoryMobileScannerService::class);
 		$this->container = $this->createMock(ContainerInterface::class);
@@ -162,7 +163,7 @@ final class InventoryMobileScannerControllerTest extends TestCase {
 			request: $this->request,
 			userSession: $this->userSession,
 			groupManager: $this->groupManager,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			admin: $this->admin,
 			scanner: $this->scanner,
 			container: $this->container,

@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -105,7 +106,7 @@ final class VatReturnBoxRegisterTest extends TestCase {
 
 		$service = new SettingsService(
 			appConfig: $appConfig,
-			appManager: $appManager,
+			registerLocation: new RegisterLocation(appConfig: $appConfig, appManager: $appManager),
 			container: $container,
 			groupManager: $this->createStub(IGroupManager::class),
 			userSession: $this->createStub(IUserSession::class),

@@ -29,7 +29,7 @@ use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -58,9 +58,9 @@ final class BookingDetailShowCharacterisationTest extends TestCase {
 	/**
 	 * Settings mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Request parameters.
@@ -92,7 +92,7 @@ final class BookingDetailShowCharacterisationTest extends TestCase {
 		parent::setUp();
 		$this->pipelinq = $this->createMock(PipelinqContactAdapter::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->settings->method('getRegisterSlug')->willReturn('books');
 		$this->appointments = [['appointmentId' => 'apt-1', 'administrationId' => 'adm-1', 'pipelinqContactId' => ' c-1 ']];
 

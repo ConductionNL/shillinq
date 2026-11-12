@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -103,7 +104,7 @@ class SettingsServiceTest extends TestCase {
 
 		$this->service = new SettingsService(
 			appConfig: $this->appConfig,
-			appManager: $this->appManager,
+			registerLocation: new RegisterLocation(appConfig: $this->appConfig, appManager: $this->appManager),
 			container: $this->container,
 			groupManager: $this->groupManager,
 			userSession: $this->userSession,
@@ -247,6 +248,33 @@ class SettingsServiceTest extends TestCase {
 		self::assertTrue($result);
 
 	}//end testIsOpenRegisterAvailableDelegatesToAppManager()
+
+	/**
+	 * getRegisterSlug returns the configured slug, read with the 'shillinq' default.
+	 *
+	 * @return void
+	 */
+	public function testGetRegisterSlugReturnsConfiguredSlug(): void {
+		$this->appConfig->expects($this->once())
+			->method('getValueString')
+			->with('shillinq', 'register', 'shillinq')
+			->willReturn('finance-register');
+
+		self::assertSame('finance-register', $this->service->getRegisterSlug());
+
+	}//end testGetRegisterSlugReturnsConfiguredSlug()
+
+	/**
+	 * getRegisterSlug falls back to 'shillinq' when the stored slug is empty.
+	 *
+	 * @return void
+	 */
+	public function testGetRegisterSlugFallsBackWhenEmpty(): void {
+		$this->appConfig->method('getValueString')->willReturn('');
+
+		self::assertSame('shillinq', $this->service->getRegisterSlug());
+
+	}//end testGetRegisterSlugFallsBackWhenEmpty()
 
 	/**
 	 * seedRetentionPolicies fails when OpenRegister is unavailable.

@@ -30,7 +30,6 @@ use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUserSession;
@@ -95,7 +94,7 @@ class SettingsService {
 	 * Constructor for the SettingsService.
 	 *
 	 * @param IAppConfig $appConfig The app config interface
-	 * @param IAppManager $appManager The app manager
+	 * @param RegisterLocation $registerLocation Where Shillinq's register lives
 	 * @param ContainerInterface $container The container
 	 * @param IGroupManager $groupManager The group manager
 	 * @param IUserSession $userSession The user session
@@ -105,7 +104,7 @@ class SettingsService {
 	 */
 	public function __construct(
 		private IAppConfig $appConfig,
-		private IAppManager $appManager,
+		private RegisterLocation $registerLocation,
 		private ContainerInterface $container,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
@@ -121,7 +120,7 @@ class SettingsService {
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 */
 	public function isOpenRegisterAvailable(): bool {
-		return $this->appManager->isInstalled('openregister');
+		return $this->registerLocation->isOpenRegisterAvailable();
 	}//end isOpenRegisterAvailable()
 
 	/**
@@ -216,12 +215,7 @@ class SettingsService {
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
 	 */
 	public function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
+		return $this->registerLocation->getRegisterSlug();
 	}//end getRegisterSlug()
 
 	/**

@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\WidgetApiController;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCA\Shillinq\Service\WidgetService;
@@ -68,9 +68,9 @@ class WidgetApiControllerTest extends TestCase {
 	/**
 	 * Settings stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Container stub.
@@ -103,7 +103,7 @@ class WidgetApiControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->auth = $this->createMock(WidgetAuthService::class);
 		$this->slots = $this->createMock(SlotService::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->widgetService = $this->createMock(WidgetService::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -121,7 +121,7 @@ class WidgetApiControllerTest extends TestCase {
 			auth: $this->auth,
 			widgetService: $this->widgetService,
 			slots: $this->slots,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			container: $this->container,
 			logger: $this->logger,
 		);
@@ -479,7 +479,6 @@ class WidgetApiControllerTest extends TestCase {
 	 */
 	public function testAppointmentsBookIntoTheKeysAdministration(): void {
 		$this->authoriseWidgetCaller();
-		$this->settings->method('getSettings')->willReturn(['administration_id' => 'adm-default']);
 
 		$captured = null;
 		$this->widgetService->method('createAppointment')

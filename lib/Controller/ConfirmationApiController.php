@@ -48,7 +48,7 @@ use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -111,7 +111,7 @@ class ConfirmationApiController extends Controller {
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy
 	 *                                      OR resolution.
-	 * @param SettingsService $settings Shillinq settings
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  (register slug, OR
 	 *                                  availability).
 	 * @param AdministrationContextService $context Per-administration
@@ -129,7 +129,7 @@ class ConfirmationApiController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly AdministrationContextService $context,
 		private readonly ConfirmationTokenService $tokens,
 		private readonly ITimeFactory $time,
@@ -191,7 +191,7 @@ class ConfirmationApiController extends Controller {
 	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
 	 */
 	private function confirmValidated(TokenConfirmation $confirmation): JSONResponse {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->errorResponse(error: 'OpenRegister unavailable', status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -362,7 +362,7 @@ class ConfirmationApiController extends Controller {
 			return $this->errorResponse(error: 'appointmentId is required', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->errorResponse(error: 'OpenRegister unavailable', status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -503,7 +503,7 @@ class ConfirmationApiController extends Controller {
 			return $this->lookupAnswer(reason: 'invalid_input', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->lookupAnswer(reason: 'or_unavailable', status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
@@ -608,7 +608,7 @@ class ConfirmationApiController extends Controller {
 	private function appointmentRecords(string $appointmentId): iterable {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		return $objectService
-			->setRegister($this->settings->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema('Appointment')
 			->findAll(
 				config: [

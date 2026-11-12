@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCA\Shillinq\Service\WidgetService;
@@ -94,7 +94,7 @@ class WidgetApiController extends Controller {
 	 * @param WidgetAuthService $auth API key + rate-limit gateway.
 	 * @param WidgetService $widgetService The single widget booking write path.
 	 * @param SlotService $slots Slot availability computation.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
@@ -103,7 +103,7 @@ class WidgetApiController extends Controller {
 		private readonly WidgetAuthService $auth,
 		private readonly WidgetService $widgetService,
 		private readonly SlotService $slots,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -134,13 +134,13 @@ class WidgetApiController extends Controller {
 			return $authResult;
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->serverError(message: 'Service catalogue unavailable.');
 		}
 
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			$records = $objectService
 				->setRegister($registerSlug)
 				->setSchema('Service')
@@ -423,7 +423,7 @@ class WidgetApiController extends Controller {
 			return $this->badRequest(message: $message);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->serverError(message: 'Booking unavailable.');
 		}
 
