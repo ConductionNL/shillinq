@@ -1548,7 +1548,8 @@
 				"evidence": "lib/Service/InvoicePdfGenerator.php:287-330 renderHtml emits one fixed layout (inline CSS, Helvetica, #222) with no logo, colour or template input; grep for logo/branding/huisstijl in lib and src finds nothing for invoices",
 				"reachedOn": "BillableInvoiceDetail /invoice/:invoiceId (via menu Sales > Invoices > All invoices), PDF button calls /api/v1/invoices/{id}/pdf",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-document"
+				"change": "sales-invoice-document",
+				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: An administration sets its invoice layout (REQ-SID-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1583,7 +1584,11 @@
 				"evidence": "lib/Service/InvoiceGenerationService.php:760-772 numbers BillableInvoice as BIL-<year>-<count+1> from a findAll count per administration (not a locked sequence; a deleted or concurrent invoice breaks it, count is not per year); ARInvoice.invoiceNumber is a free text field (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json)",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice); AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable) has a hand-typed number",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-issue-controls"
+				"change": "sales-invoice-issue-controls",
+				"requirement": [
+					"openspec/changes/sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core :: An issued invoice takes the next number of its series (REQ-SIIC-001)",
+					"openspec/changes/sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core :: Gaps in a year's numbers are reported (REQ-SIIC-004)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1619,7 +1624,8 @@
 				"reachedOn": "nothing reaches it: no send-by-email action on AccountsReceivable, ARInvoiceDetail or BillableInvoiceDetail",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "sales-invoice-sending"
+				"change": "sales-invoice-sending",
+				"requirement": "openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core :: An issued invoice is sent by email with its PDF attached (REQ-SIS-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1654,7 +1660,11 @@
 				"evidence": "Quote, QuoteLine, SalesOrder, Invoice, CreditNote schemas in lib/Settings/register.d/bookkeeping-quote-order-invoice.json plus lib/Lifecycle/QuoteOrderInvoiceGuard.php guards, but no manifest page uses schema Quote/SalesOrder/Invoice and no service copies quote lines to an invoice (grep 'quote' in lib/Service, src/views: none)",
 				"reachedOn": "nothing reaches it: no page for Quote in src/manifest.json or src/manifest.d",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-quote-and-order-to-invoice"
+				"change": "sales-quote-and-order-to-invoice",
+				"requirement": [
+					"openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice :: An accepted quote becomes a sales order (REQ-QTI-001)",
+					"openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice :: A confirmed sales order becomes a draft invoice (REQ-QTI-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1689,7 +1699,8 @@
 				"evidence": "PaymentRequest page (src/manifest.d/ar-invoice-payment-links.json) and lib/Controller/PaymentRequestActionController.php:102-150 mails an existing paymentLink; nothing in lib writes paymentLink (grep \"'paymentLink' =>\" only reads it, lib/Integration/PaymentRequestLeafProvider.php:222); Mollie is bound to LogMolliePaymentAdapter (lib/AppInfo/Application.php:497) and connections.json marks mollie reportedOnly; the invoice PDF (lib/Service/InvoicePdfGenerator.php renderHtml) carries no link",
 				"reachedOn": "PaymentRequests /bookkeeping/payment-requests (via menu Sales > Payment requests)",
 				"owner": "ConductionNL/shillinq",
-				"change": "receivables-payment-links"
+				"change": "receivables-payment-links",
+				"requirement": "openspec/changes/receivables-payment-links/specs/ar-invoice-payment-links :: The invoice carries a pay link that works until it is paid (REQ-RPL-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1724,7 +1735,8 @@
 				"evidence": "grep -i 'qr.?code|epc.?qr|scan.to.pay' in lib and src finds only barcode scanning (src/components/inventory/BarcodeScanner.vue) and a rule-check file; InvoicePdfGenerator.php renders no QR",
 				"reachedOn": "nothing reaches it: no QR on any invoice output",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-document"
+				"change": "sales-invoice-document",
+				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice carries a scan-to-pay code (REQ-SID-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1760,7 +1772,8 @@
 				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id header action AREInvoiceActions (via menu Sales > Accounts Receivable)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "sales-einvoice-exchange"
+				"change": "sales-einvoice-exchange",
+				"requirement": "openspec/specs/bookkeeping-einvoicing-ubl-peppol :: REQ-EINV-000 — Shillinq SHALL generate and transmit EN 16931 / NLCIUS e-invoices over Peppol from issued AR invoices"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1795,7 +1808,8 @@
 				"evidence": "CustomerMaster has no language/locale property (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json); lib/Service/InvoicePdfGenerator.php:320 hard-codes <html lang=\"nl\"> and Dutch number formatting (:371); no invoice email exists",
 				"reachedOn": "nothing reaches it: no language field on customer or invoice",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-document"
+				"change": "sales-invoice-document",
+				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice speaks the customer's language (REQ-SID-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1830,7 +1844,8 @@
 				"evidence": "lib/Service/InvoiceGenerationService.php:90-130 draftInvoice loads UrenRegistratie (:511) and ExpenseClaimEntry (:570) records, rates them via RateCardResolver and writes BillableInvoiceLine rows; src/components/invoice/InvoiceGenerator.vue:103,211 takes time-entry and expense ids as comma-separated text typed by the user",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice)",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-time-and-expense-billing"
+				"change": "sales-time-and-expense-billing",
+				"requirement": "openspec/changes/sales-time-and-expense-billing/specs/invoice-from-time-and-expense :: The generate page lists unbilled hours to tick (REQ-STEB-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1866,7 +1881,8 @@
 				"readOn": "2026-10-02",
 				"reachedOn": "Sales > Meter readings (Import readings, Rate readings; Rate reading on a reading's page), Sales > Rate plans, and the invoice generator's Usage billing model",
 				"evidence": "POST /api/meter-readings/import (MeterReadingImportController, lib/Service/Usage/MeterReadingImportService.php) creates unrated readings and refuses a row by number; MeterReading's rate transition runs RateMeterReadingAction and keeps ratedAmount; InvoiceGenerationService bills the selected rated readings as usage lines, refuses an invoiced one and moves each billed reading to invoiced with the invoice id (tests/Unit/Service/Usage/SalesUsageBillingTest.php, tests/Unit/Controller/MeterReadingImportControllerTest.php, tests/vitest/salesUsageBilling.spec.js).",
-				"change": "sales-usage-billing"
+				"change": "sales-usage-billing",
+				"requirement": "openspec/changes/sales-usage-billing/specs/usage-metered-billing :: Usage is a billing model in the invoice generator (REQ-USB-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1900,7 +1916,8 @@
 				"evidence": "ARInvoice lifecycle states draft/issued/paid/overdue/disputed/written-off have no approval state (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json); grep 'approv' in lib/Service/InvoiceGenerationService.php, lib/Controller/InvoiceApiController.php, src/views/invoice, src/components/ar-invoice finds nothing",
 				"reachedOn": "nothing reaches it: no approve step on any sales invoice page",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-issue-controls"
+				"change": "sales-invoice-issue-controls",
+				"requirement": "openspec/changes/sales-invoice-issue-controls/specs/bookkeeping-accounts-receivable-core :: Invoices above the threshold need a second person's approval (REQ-SIIC-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1935,7 +1952,11 @@
 				"evidence": "lib/Controller/InvoiceApiController.php generate/post/pdf act on one invoice; no batch route in appinfo/routes.php for invoices; the only multi-invoice generator is RecurringInvoiceGenerator, triggered by a declaration",
 				"reachedOn": "nothing reaches it: no batch create/send action on AccountsReceivable or BillableInvoiceList",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-sending"
+				"change": "sales-invoice-sending",
+				"requirement": [
+					"openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core :: A batch creates one invoice per customer (REQ-SIS-004)",
+					"openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core :: Selected invoices are sent in one action (REQ-SIS-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -1970,7 +1991,11 @@
 				"evidence": "RateSchedule carries tier (role), entityId (client), effectiveDate/expiryDate (lib/Settings/shillinq_register.json); RateCardTemplate/RateCardVersion versions; lib/Service/RateCardResolver.php resolves the rate for a date and is used by InvoiceGenerationService.php:528",
 				"reachedOn": "RateCards /beheer/rate-cards, RateSchedules /beheer/rate-schedules, RateAuditTrail /beheer/rate-audit-trail (via menu Sales > Rate Cards / Rate Schedules / Rate Audit Trail)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-rate-card-engine"
+				"change": "2026-06-14-rate-card-engine",
+				"requirement": [
+					"openspec/specs/rate-card-management :: REQ-RATE-001: Rate cards SHALL be declared as `RateCardTemplate` + `RateCardVersion` + `RateSchedule` registers",
+					"openspec/specs/rate-card-management :: REQ-RATE-003: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2006,7 +2031,11 @@
 				"reachedOn": "nothing reaches it: Customers /bookkeeping/customers (via menu Sales > Customers) has no terms field to set",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "sales-invoice-sending"
+				"change": "sales-invoice-sending",
+				"requirement": [
+					"openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core :: A customer carries a payment term and a delivery method (REQ-SIS-005)",
+					"openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core :: A send follows the customer's delivery method (REQ-SIS-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2041,7 +2070,8 @@
 				"evidence": "grep -i 'webshop|woocommerce|shopify|lightspeed|magento|e-?commerce' in lib and src hits only rule catalogue text (lib/Standards/rules/vat.json, ComplianceCatalogue.php) and a KOR fragment; no importer, connector or page",
 				"reachedOn": "nothing reaches it: no web shop source or order import",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-webshop-orders"
+				"change": "sales-webshop-orders",
+				"requirement": "openspec/changes/sales-webshop-orders/specs/bookkeeping-accounts-receivable-core :: A received web shop order becomes one issued sales invoice (REQ-SWO-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2076,7 +2106,11 @@
 				"evidence": "Orders page on OrderPrimitive (src/manifest.d/order-workspace.json) with OrderLine and Payment related lists; orderType enum has 'sales' but lib/Settings/register.d/zz-order-primitive.json says only purchase/subsidy/engagement are populated and the quick filters omit sales; SalesOrder schema (bookkeeping-quote-order-invoice.json) has no page; no code turns an order into an ARInvoice (the 'invoice' transition belongs to the purchase flow)",
 				"reachedOn": "Orders /orders (via menu Sales > Orders)",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-quote-and-order-to-invoice"
+				"change": "sales-quote-and-order-to-invoice",
+				"requirement": [
+					"openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice :: A sales order has its own states (REQ-QTI-002)",
+					"openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice :: A confirmed sales order becomes a draft invoice (REQ-QTI-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2112,7 +2146,11 @@
 				"reachedOn": "portaliq external portal (not a shillinq page); nothing in shillinq's own UI",
 				"owner": "ConductionNL/portaliq",
 				"readOn": "2026-09-26",
-				"change": "2026-07-14-customer-invoice-portal-wave2"
+				"change": "2026-07-14-customer-invoice-portal-wave2",
+				"requirement": [
+					"openspec/specs/portal-contribution :: Customer subjects can see their own AR invoices (REQ-SPC-020)",
+					"openspec/specs/portal-contribution :: Customer subjects can pay their own invoices, and another debtor's invoice is unreachable (REQ-SPC-021)"
+				]
 			},
 			"screen": {
 				"board": null,
@@ -2147,7 +2185,8 @@
 				"evidence": "ARInvoice.currency (add-shillinq-bookkeeping-compliance.json) is carried into UBL DocumentCurrencyCode (lib/Service/EInvoice/ArInvoiceUblMapper.php:92-127) and realised FX is posted on settlement (lib/Service/PaymentReconciliationService.php:664); but InvoicePdfGenerator.php renderHtml prints a hard-coded '€' and InvoiceGenerationService.php:154,160,537 fixes currency to EUR",
 				"reachedOn": "AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable), FX Rates pages under Banking & Cashflow",
 				"owner": "ConductionNL/shillinq",
-				"change": "sales-invoice-document"
+				"change": "sales-invoice-document",
+				"requirement": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core :: The invoice shows its own currency (REQ-SID-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2182,7 +2221,8 @@
 				"evidence": "src/modals/InvoiceQuickDraftModal.vue posts an ARInvoice draft to /apps/openregister/api/objects/{register}/ARInvoice (:472) with customer, lines and VAT; the only trigger is the Dashboard headerActions 'create-invoice' in src/manifest.json:5166-5172",
 				"reachedOn": "Dashboard / header action 'Create invoice' (modal InvoiceQuickDraftModal)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-shillinq-invoice-quick-draft"
+				"change": "2026-06-14-shillinq-invoice-quick-draft",
+				"requirement": "openspec/changes/sales-quick-draft-from-any-page/specs/shillinq-invoice-quick-draft :: The quick draft opens from every page of the app (REQ-IQD-009)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2254,7 +2294,8 @@
 				"evidence": "KlantLadderOverride page (src/manifest.json DunningKlantOverrides, settingsSection in src/menu-layout.json) and DunningRunService.php:297 resolveLadderForKlant applies it, but that service runs only from the uncalled /api/dunning endpoints",
 				"reachedOn": "DunningKlantOverrides /bookkeeping/dunning/overrides (settings gear)",
 				"owner": "ConductionNL/shillinq",
-				"change": "receivables-automatic-dunning"
+				"change": "receivables-automatic-dunning",
+				"requirement": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning :: Each customer is chased on its own ladder (REQ-RAD-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2289,7 +2330,11 @@
 				"evidence": "SepaMandate, DirectDebitCollection, DirectDebitBatch (pain008Xml field) schemas in lib/Settings/register.d/bookkeeping-sepa-direct-debit.json with guards (lib/Lifecycle/MandateGuard.php, SequenceTypeGuard.php) and MandateDormancyExpiryJob, but no manifest page uses any of them and no code writes a pain.008 file (grep pain.008 in lib: none); the Mandates page is the commitments register, not SEPA",
 				"reachedOn": "nothing reaches it: no page for SEPA mandates or collection batches",
 				"owner": "ConductionNL/shillinq",
-				"change": "receivables-sepa-direct-debit"
+				"change": "receivables-sepa-direct-debit",
+				"requirement": [
+					"openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit :: A batch is proposed from open invoices with a mandate (REQ-SDD-011)",
+					"openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit :: The batch is written as a validated pain.008 file (REQ-SDD-012)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2352,7 +2397,8 @@
 				"evidence": "grep payout/psp in lib/Service finds deposit and no-show fee code (DepositReconciliationService.php, NoShowFeeCaptureService.php) and payment session types; no service matches a provider payout batch to the ARInvoices it settles",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/shillinq",
-				"change": "receivables-provider-payouts"
+				"change": "receivables-provider-payouts",
+				"requirement": "openspec/changes/receivables-provider-payouts/specs/bookkeeping-bank-reconciliation :: Each payout line is matched to what it paid (REQ-RPPO-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2387,7 +2433,11 @@
 				"evidence": "PaymentRequests page (src/manifest.d/ar-invoice-payment-links.json) and the case leaf src/integrations/ShillinqPaymentRequestsPanel.vue call /api/payment-requests/{id}/send and /settle (src/integrations/leafApi.js:66,88; lib/Controller/PaymentRequestActionController.php); raiseLeges creates the request at intake; paid state comes from manual settle or the provider webhook, but no code creates the payment link (Mollie bound to LogMolliePaymentAdapter, lib/AppInfo/Application.php:497)",
 				"reachedOn": "PaymentRequests /bookkeeping/payment-requests (via menu Sales > Payment requests); panel on the case in dossiq via the shillinq-payment-requests leaf",
 				"owner": "ConductionNL/shillinq",
-				"change": "receivables-payment-links"
+				"change": "receivables-payment-links",
+				"requirement": [
+					"openspec/changes/receivables-payment-links/specs/ar-invoice-payment-links :: A payment request gets a live link from the provider through integriq (REQ-RPL-001)",
+					"openspec/changes/receivables-payment-links/specs/ar-invoice-payment-links :: A payment reported by integriq is recorded automatically (REQ-RPL-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6760,7 +6810,8 @@
 				"reachedOn": "PaymentPlans /bookkeeping/payment-plans; CustomerDetail and ARInvoiceDetail header action Agree a payment plan; Match by hand, Payment plan tab",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"change": "2026-09-29-receivables-payment-plans"
+				"change": "2026-09-29-receivables-payment-plans",
+				"requirement": "openspec/specs/bookkeeping-credit-control-dunning :: A payment plan is agreed for a customer's overdue invoices (REQ-RPPL-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7540,7 +7591,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "receivables-provider-payouts"
+				"change": "receivables-provider-payouts",
+				"requirement": "openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links :: A user takes an invoice's payment on the spot on their phone (REQ-RPPO-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7615,7 +7667,11 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "sales-cancellation"
+				"change": "sales-cancellation",
+				"requirement": [
+					"openspec/changes/sales-cancellation/specs/recurring-invoicing :: Ending a subscription records a reason (REQ-SCX-001)",
+					"openspec/changes/sales-cancellation/specs/recurring-invoicing :: The cancellation reasons are reported (REQ-SCX-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7653,7 +7709,8 @@
 				"readOn": "2026-09-27",
 				"reachedOn": "nothing",
 				"evidence": "No withdrawal function in lib/ or src/. Shillinq does serve an online consumer surface: the embeddable booking widget (webpack.config.js:42-54, REQ-WSW-004, POST /api/widget/appointments at appinfo/routes.php:153), which has no withdrawal button.",
-				"change": "sales-cancellation"
+				"change": "sales-cancellation",
+				"requirement": "openspec/changes/sales-cancellation/specs/portal-contribution :: The withdrawal function is offered where a consumer booked online (REQ-SCX-004)"
 			},
 			"screen": {
 				"board": null,
@@ -8019,7 +8076,11 @@
 				"readOn": "2026-09-27",
 				"evidence": "ARInvoice declares neither selfBilled nor selfBillingMention anywhere in lib/Settings; only the rule check lib/Standards/Checks/InvoiceMentionsTailChecks.php:65 reads them, and nothing imports an invoice the customer made.",
 				"reachedOn": "nothing reaches it",
-				"change": "sales-einvoice-exchange"
+				"change": "sales-einvoice-exchange",
+				"requirement": [
+					"openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A received self-billed invoice becomes a sales invoice to review (REQ-SEIX-006)",
+					"openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A self-billed invoice is booked only after review (REQ-SEIX-007)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8057,7 +8118,8 @@
 				"readOn": "2026-09-27",
 				"evidence": "lib/Listener/PeppolDeliveryStatusListener.php:85 would notify with subject einvoice_delivery_rejected, but no notifier renders that subject (only DeadlineReminderNotifier and PosStockUnmatchedLineNotifier are registered, lib/AppInfo/Application.php:752, :760), and the listener is registered on a named Nextcloud event (Application.php:340-350) that integriq never dispatches: integriq emits delivery status as a CloudEvent object in register integriq, schema event (integriq lib/Service/EventService.php:2584).",
 				"reachedOn": "nothing reaches it",
-				"change": "sales-einvoice-exchange"
+				"change": "sales-einvoice-exchange",
+				"requirement": "openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol :: A rejected e-invoice reaches the bookkeeper (REQ-SEIX-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8390,7 +8452,11 @@
 				"reachedOn": "Accounts Receivable /bookkeeping/accounts-receivable, header action New down-payment invoice; the Down payments panel on an invoice page",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-09-29-sales-down-payments",
-				"readOn": "2026-09-29"
+				"readOn": "2026-09-29",
+				"requirement": [
+					"openspec/specs/bookkeeping-accounts-receivable-core :: A down-payment invoice is raised on an order (REQ-SDP-001)",
+					"openspec/specs/bookkeeping-accounts-receivable-core :: The final invoice deducts every open down payment of the order (REQ-SDP-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8564,7 +8630,11 @@
 				"reachedOn": "RetainerPools page",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-retainer-billing-engine"
+				"change": "2026-06-14-retainer-billing-engine",
+				"requirement": [
+					"openspec/specs/retainer-billing-management :: REQ-RETN-002: Drawdown Materialization on Time Entry",
+					"openspec/specs/retainer-billing-management :: REQ-RETN-004: Rollover Policy Enforcement"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
