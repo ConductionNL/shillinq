@@ -4109,7 +4109,8 @@
 				"evidence": "lib/Reporting/Generator/ProfitLossReportGenerator.php renders one period's revenue minus expenses (no prior-period column; grep prior/compar finds nothing), document kind via docudesk; comparison exists only as KPIs: lib/Service/FinancialDashboardService.php:167 summary() returns turnover/margin for current vs previousPeriod on the Dashboard.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report card 'Winst- en verliesrekening' -> GenerateReportDialog; comparison KPIs on Dashboard / (via menu Dashboard)",
 				"owner": "ConductionNL/shillinq",
-				"change": "reporting-financial-statements"
+				"change": "reporting-financial-statements",
+				"requirement": "openspec/changes/reporting-financial-statements/specs/bookkeeping-financial-statements :: Profit and loss compares periods (REQ-RFS-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4144,7 +4145,8 @@
 				"evidence": "Statements are generated files (lib/Reporting/Generator/*); TrialBalanceLines index has no detailRoute/rowRoute (src/manifest.json TrialBalanceLines config) and SegmentPnLDashboard.vue has no router link to transactions; grep 'drill' in src finds only BudgetLineCommitments.vue (budget line -> commitments, not ledger transactions).",
 				"reachedOn": "nothing reaches it: no report figure links to GLTransaction/GLLine rows",
 				"owner": "ConductionNL/shillinq",
-				"change": "reporting-financial-statements"
+				"change": "reporting-financial-statements",
+				"requirement": "openspec/changes/reporting-financial-statements/specs/bookkeeping-financial-statements :: Every figure opens the lines behind it (REQ-RFS-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4179,7 +4181,8 @@
 				"evidence": "lib/Reporting/Generator/BalanceSheetReportGenerator.php:232 groupByType uses the account's stored balance or ALL GLLine movements (deriveMovements, no date filter), so 'per peildatum' is only a cover label; P&L accounts are skipped and the current result is not added to equity. BalanceSheet index page lists BalanceSheet objects no code writes.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance report card 'Balans' -> GenerateReportDialog (document kind, rendered through docudesk); BalanceSheet /financial-statements/balance-sheet (via menu Bookkeeping > Balance Sheet) is an empty list",
 				"owner": "ConductionNL/shillinq",
-				"change": "reporting-financial-statements"
+				"change": "reporting-financial-statements",
+				"requirement": "openspec/changes/reporting-financial-statements/specs/bookkeeping-financial-statements :: The balance sheet honours its date and includes the running result (REQ-RFS-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4214,7 +4217,8 @@
 				"evidence": "CashFlowStatement schema is declared (lib/Settings/register.d/bookkeeping-titel-9-jaarrekening.json) but no page uses it (grep src finds it only in audit-trail objectTypes lists), lib/Reporting/ReportCatalogue.php has no cash-flow report, and AnnualAccountsReportGenerator.php has no kasstroom section. CashflowExportService/CashflowPdfRenderer export the cash FORECAST, not a statement.",
 				"reachedOn": "nothing reaches it: no page or report card for a cash flow statement",
 				"owner": "ConductionNL/shillinq",
-				"change": "reporting-cash-flow-statement"
+				"change": "reporting-cash-flow-statement",
+				"requirement": "openspec/changes/reporting-cash-flow-statement/specs/bookkeeping-financial-statements :: The cash flow statement reconciles to the change in cash (REQ-RCF-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4249,7 +4253,8 @@
 				"evidence": "lib/Reporting/Generator/TrialBalanceReportGenerator.php sums GLLine debit/credit per accountNumber filtered by administrationId + periodId (ReportDataTrait.php:129 lineFilters), native CSV/PDF, in ReportCatalogue.php:95. The TrialBalance/TrialBalanceLines index pages list objects nothing writes, and /api/trial-balance has no frontend caller.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report card 'Proef- en saldibalans' -> GenerateReportDialog",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-trial-balance"
+				"change": "2026-06-14-bookkeeping-trial-balance",
+				"requirement": "openspec/specs/bookkeeping-trial-balance :: REQ-TB-002: The trial balance SHALL report opening balance, period movement, and closing balance per account per period"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4284,7 +4289,8 @@
 				"evidence": "lib/Reporting/Generator/GeneralLedgerReportGenerator.php:129-173 writes per-account cards with a carried runningBalance, filtered by administration and period; plus the GeneralLedger index with sortable/filterable columns.",
 				"reachedOn": "ReportingComplianceOverview report card 'Grootboekkaarten' -> GenerateReportDialog; GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger)",
 				"owner": "ConductionNL/shillinq",
-				"spec": "openspec/specs/reporting-report-library"
+				"spec": "openspec/specs/reporting-report-library",
+				"requirement": "openspec/specs/reporting-report-library :: The general ledger report SHALL give one card per account with a running balance"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4319,7 +4325,13 @@
 				"evidence": "lib/Service/FinancialDashboardService.php:167 summary() computes turnover, margin, openDebtors (ARInvoice), openCreditors, cashPosition from Account/GLLine/ARInvoice/APTransaction; src/manifest.json:5215-5333 Dashboard widgets fetch /api/dashboard/financial-summary and financial-series.",
 				"reachedOn": "Dashboard / (via menu Dashboard)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-financial-dashboard-graphs"
+				"change": "2026-06-14-financial-dashboard-graphs",
+				"requirement": [
+					"openspec/specs/financial-dashboard-graphs :: Turnover per month chart",
+					"openspec/specs/financial-dashboard-graphs :: Margin per month chart with value/percentage toggle",
+					"openspec/specs/financial-dashboard-graphs :: Financial KPI strip",
+					"openspec/specs/financial-dashboard-graphs :: Open debiteuren table"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4353,7 +4365,8 @@
 				"evidence": "lib/Controller/BudgetGridController.php (GET /api/budget-grid, called by src/views/BudgetGrid.vue) uses lib/Service/BudgetVsActualsReader.php + BudgetVsActualsCalculator.php to show actuals and deviation per ledger group for past periods; also /api/budget-charts/series (BudgetTrendChart.vue).",
 				"reachedOn": "BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Grid)",
 				"owner": "ConductionNL/shillinq",
-				"change": "budget-grid-view"
+				"change": "budget-grid-view",
+				"requirement": "openspec/changes/budget-grid-view/specs/budget-grid-view :: REQ-BGV-003 — A column MUST show actuals + deviation only when its period is closed, never a `today`-relative guess"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4387,7 +4400,12 @@
 				"evidence": "AnnualReport records with AnnualReportGuard (lib/Lifecycle/AnnualReportGuard.php) on Jaarrekening, and lib/Reporting/Generator/AnnualAccountsReportGenerator.php (document kind, docudesk) builds a Titel 9 document; it inherits the balance-sheet flaws (no as-of date, result not in equity), there is no cash flow statement, and filing is out: sbr-xbrl is in the catalogue with no generator and Digipoort SBR is log-only in lib/Settings/connections.json.",
 				"reachedOn": "Jaarrekening /bookkeeping/jaarrekening (via menu Bookkeeping > Annual accounts); report card 'Jaarrekening' on ReportingComplianceOverview",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-titel-9-jaarrekening"
+				"change": "2026-06-14-bookkeeping-titel-9-jaarrekening",
+				"requirement": [
+					"openspec/specs/bookkeeping-titel-9-jaarrekening :: REQ-T9-002: The system SHALL generate a Balans (balance sheet) conforming to art. 2:373 BW with wettelijke rubrieken and comparatief cijfers",
+					"openspec/specs/bookkeeping-titel-9-jaarrekening :: REQ-T9-008: The system SHALL convert the final jaarrekening to SBR-XBRL format and support electronic filing at KVK via Digipoort",
+					"openspec/specs/bookkeeping-titel-9-jaarrekening :: REQ-T9-010: The system SHALL orchestrate the complete jaarrekening workflow with termijn-tracking and audit trail"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4459,7 +4477,11 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (menu Bookkeeping > Segment P&L)",
 				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the cost centre, hierarchy, cost object and project aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
-				"change": "2026-09-29-reporting-segment-results"
+				"change": "2026-09-29-reporting-segment-results",
+				"requirement": [
+					"openspec/specs/bookkeeping-cost-centers-dimensions :: Only posted profit and loss lines count in a segment result (REQ-RSR-002)",
+					"openspec/specs/bookkeeping-cost-centers-dimensions :: The segment dashboard shows revenue, costs and result (REQ-RSR-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4495,7 +4517,8 @@
 				"readOn": "2026-09-30",
 				"reachedOn": "Reports > Financial pivot (/reports/pivot); the Nextcloud dashboard and launchpad widget pickers list Revenue this month, Open receivables, Cash position, Result by month and Top customers",
 				"evidence": "Five IAPIWidgetV2 widgets (lib/Dashboard/*Widget.php, registered by lib/AppInfo/DashboardWidgetRegistration.php) show FinancialDashboardService::widgetFigures() for the user's administration and say so when there is none; GET /api/analysis/pivot (lib/Controller/LedgerPivotController.php, lib/Service/Pivot/LedgerPivotService.php) sums signedAmount of posted profit and loss lines over two of account, account group, month, quarter, cost centre, project and customer, caps each axis at 200 groups and says so; the FinancialPivot page exports CSV and Excel (tests/Unit/Service/Pivot/LedgerPivotServiceTest.php, tests/Unit/Dashboard/FinancialWidgetsTest.php, tests/vitest/reportingFinancialPivot.spec.js).",
-				"change": "2026-09-30-reporting-custom-analysis"
+				"change": "2026-09-30-reporting-custom-analysis",
+				"requirement": "openspec/specs/financial-dashboard-graphs :: A user pivots posted ledger lines (REQ-RCA-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4530,7 +4553,8 @@
 				"evidence": "Generic index pages render @conduction/nextcloud-vue CnIndexPage whose mass-export (showMassExport defaults true) calls OpenRegister's export leaf in CSV or Excel (nextcloud-vue src/components/CnIndexPage/selfModeActions.js handleMassExport); PDF comes from the report library (lib/Reporting/ReportCatalogue.php formats csv/pdf, GenerateReportDialog.vue -> /api/reporting/generate) and SegmentPnLDashboard.vue:435 exportCsv.",
 				"reachedOn": "any index page, e.g. GeneralLedger /general-ledger (select rows > Export); ReportingComplianceOverview /reporting-compliance report cards for PDF",
 				"owner": "ConductionNL/nextcloud-vue",
-				"spec": "openspec/specs/reporting-report-library"
+				"spec": "openspec/specs/reporting-report-library",
+				"requirement": "openspec/specs/reporting-report-library :: Report output SHALL be offered as CSV, XML, or PDF through docudesk"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4565,7 +4589,11 @@
 				"evidence": "lib/Reporting/ReportCatalogue.php:83-109 lists 17 report types; src/modals/GenerateReportDialog.vue:330 POSTs /api/reporting/generate, GeneratedReportsIndex lists results via /api/reporting/generated and download. lib/Reporting/Generator/* implements 12; icp-opgaaf, ib-aangifte, vpb-aangifte, sbr-xbrl and audit-trail have no generator (ReportGenerationService.php:160 logs 'no generator'), and document-kind reports need docudesk.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report cards -> GenerateReportDialog",
 				"owner": "ConductionNL/shillinq",
-				"spec": "openspec/specs/reporting-report-library"
+				"spec": "openspec/specs/reporting-report-library",
+				"requirement": [
+					"openspec/specs/reporting-report-library :: The catalogue SHALL list every standard report in one place, grouped by category",
+					"openspec/specs/reporting-report-library :: Generating a report SHALL run the report type's generator for one administration, period and format"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4600,7 +4628,11 @@
 				"evidence": "LeaseRegister pages plus lib/Listener/LeaseActivationListener.php (registered Application.php:1273) persisting LeasePaymentSchedule rows via lib/Service/LeasePaymentScheduleService.php:143. Disclosures: lib/Service/LeaseDisclosureService.php:88 generateForPeriod is only reachable via GET /api/leases/disclosure (appinfo/routes.php:518), which no page calls, and it writes no LeaseDisclosureTable rows, so the LeaseDisclosures page lists nothing; reassessment POST endpoints (routes.php:524-527) are also uncalled; no GL posting of RoU/liability.",
 				"reachedOn": "LeaseRegister /ifrs-16/leases (via menu Bookkeeping > Lease Register); LeaseDisclosures /ifrs-16/disclosures (via menu Bookkeeping > Annual Disclosures) shows an unfilled list",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-ifrs-16-lease"
+				"change": "2026-06-14-bookkeeping-ifrs-16-lease",
+				"requirement": [
+					"openspec/specs/bookkeeping-lease-contracts :: REQ-LC-001: The system SHALL store lease contracts as an OpenRegister-managed `lease-contract` register",
+					"openspec/specs/bookkeeping-lease-disclosures :: REQ-LD-001: The system SHALL generate a `lease-disclosure-table` snapshot at period close"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4672,7 +4704,11 @@
 				"reachedOn": "CommitmentDetail /commitments/:id, Verplichting aangaan",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"change": "2026-09-29-planning-commitment-year-end"
+				"change": "2026-09-29-planning-commitment-year-end",
+				"requirement": [
+					"openspec/specs/bookkeeping-verplichtingenadministratie :: REQ-VPL-000 — Shillinq SHALL reserve budget on commitment and reconcile it through delivery, invoicing and payment",
+					"openspec/specs/bookkeeping-verplichtingenadministratie :: REQ-VPL-013 — The Verplichting `goedkeuren` transition SHALL be gated by a declarative approval chain"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4708,7 +4744,8 @@
 				"reachedOn": "BudgetGrid /begroting/grid, section Enter the budget (menu Banking & Cashflow > Budget Grid)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"change": "2026-09-29-planning-budget-editing"
+				"change": "2026-09-29-planning-budget-editing",
+				"requirement": "openspec/specs/budget-grid-view :: A controller types manual amounts into the grid (REQ-PBE-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4743,7 +4780,8 @@
 				"evidence": "src/views/BudgetScenarioComparison.vue:455 calls GET /api/v1/budget-scenarios/{id}/evaluate (lib/Controller/BudgetScenarioController.php:147, lib/Service/BudgetScenarioEvaluator.php) and lays scenario outcomes against the base per ledger group; BudgetScenarioModifiers define the deltas; promote endpoint sets the default.",
 				"reachedOn": "BudgetScenarioComparison /begroting/scenarios/compare (via menu Banking & Cashflow > Scenario Comparison); BudgetScenarios (menu Banking & Cashflow > Scenarios)",
 				"owner": "ConductionNL/shillinq",
-				"change": "budget-scenarios"
+				"change": "budget-scenarios",
+				"requirement": "openspec/changes/budget-scenarios/specs/budget-scenarios :: REQ-BSC-008 — Minimal pages MUST exist for `BudgetScenario`, `BudgetScenarioModifier`, and a standalone comparison view, reachable via navigation"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4773,11 +4811,15 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "built",
-				"evidence": "PensionPlan, ActuarialValuation and PensionDisclosureTable schemas (lib/Settings/register.d/bookkeeping-pension-ias19.json) with lib/Lifecycle/PensionIas19Guard.php; no service computes net interest, service cost or remeasurements, or posts IAS 19 entries (grep Pension/ActuarialValuation in lib/Service finds only PayrollCalculator and signing code).",
+				"state": "specified",
+				"evidence": "PensionPlan, ActuarialValuation and PensionDisclosureTable schemas (lib/Settings/register.d/bookkeeping-pension-ias19.json) with lib/Lifecycle/PensionIas19Guard.php; no service computes net interest, service cost or remeasurements, or posts IAS 19 entries (grep Pension/ActuarialValuation in lib/Service finds only PayrollCalculator and signing code). Not built: no service computes service cost, net interest or remeasurements or posts IAS 19 entries; only schemas and a guard exist (state set to specified, 12 Nov 2026).",
 				"reachedOn": "PensionPlans /pension/plans, ActuarialValuations, PensionDisclosureTables (via menu Bookkeeping > Pension plans (IAS 19) / Actuarial valuations / disclosure tables)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-pension-ias19"
+				"change": "2026-06-14-bookkeeping-pension-ias19",
+				"requirement": [
+					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-001 PUC method enforced for DB plans",
+					"openspec/specs/bookkeeping-pension-ias19 :: REQ-PEN-003 Three-bucket movement: P&L (service/interest) vs OCI (remeasurement)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5596,7 +5638,11 @@
 				"evidence": "src/views/AccountantPortalDashboard.vue calls /api/accountant/dashboard and /api/accountant/administrations (lib/Controller/AccountantPortalController.php)",
 				"reachedOn": "AccountantPortalDashboard /accountant-portal (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-07-13-accountant-portal"
+				"change": "2026-07-13-accountant-portal",
+				"requirement": [
+					"openspec/specs/accountant-portal :: REQ-ACP-001 The accountant dashboard MUST list exactly the administrations the authenticated user has a valid membership for",
+					"openspec/specs/accountant-portal :: REQ-ACP-002 Each client card MUST show period-close state, BTW filing status + deadline, missing-document count and open/attention items"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5702,7 +5748,11 @@
 				"evidence": "no native app; src/manifest.d/inventory-mobile-scanner.json registers a mobile scanner PWA (four custom pages) and src/views/ReceiptCapture.vue captures receipts in the browser; the Nextcloud web UI is responsive",
 				"reachedOn": "MobileScannerHome /inventory/mobile; Receipts /inkoop/receipts",
 				"owner": "ConductionNL/shillinq",
-				"change": "platform-mobile-pwa"
+				"change": "platform-mobile-pwa",
+				"requirement": [
+					"openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: A receipt is captured with the camera (REQ-PMP-002)",
+					"openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: An invoice is issued from the phone only online (REQ-PMP-004)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5738,7 +5788,8 @@
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/integriq",
 				"change": "contacts-kvk-lookup",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"requirement": "openspec/changes/contacts-kvk-lookup/specs/contact-kvk-lookup :: Picking a company fills the empty details (REQ-KVKL-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5810,7 +5861,8 @@
 				"evidence": "detail pages carry an openregister-file-references sidebar tab (e.g. src/manifest.json BtwAangifteDetail sidebarProps.tabs files)",
 				"reachedOn": "the Files tab on any detail page",
 				"owner": "ConductionNL/openregister",
-				"change": "2026-06-14-add-shillinq-document-attachment-integration"
+				"change": "2026-06-14-add-shillinq-document-attachment-integration",
+				"requirement": "openspec/specs/bookkeeping-document-attachment-integration :: REQ-DA-001: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5915,7 +5967,8 @@
 				"evidence": "no integration catalogue; ExternalAdaptersStatus /external-adapters lists the 15 connections of lib/Settings/connections.json, of which 11 are marked unavailable",
 				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
 				"owner": "ConductionNL/shillinq",
-				"change": "platform-integration-catalogue"
+				"change": "platform-integration-catalogue",
+				"requirement": "openspec/changes/platform-integration-catalogue/specs/integration-catalogue :: An Integrations page lists bookkeeping catalogue items (REQ-PIC-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5951,7 +6004,11 @@
 				"readOn": "2026-10-02",
 				"evidence": "src/views/import/ImportWizard.vue (registry page ImportWizard) takes an XAF auditfile from Files through parse, mapping review, validation, dry run and post; each step is an ImportBatch transition whose ImportBatchAction runs ImportPipelineService (lib/Service/Import/ImportBatchSteps.php). Post writes the customers and posts the opening JournalEntry through its lifecycle (ImportPosting); reverse posts the swapped entry. Open items and suppliers are not imported (named on postingReport).",
 				"reachedOn": "Import & migration > Import wizard (/import/wizard); batches at /import/batches",
-				"change": "platform-administration-import"
+				"change": "platform-administration-import",
+				"requirement": [
+					"openspec/changes/platform-administration-import/specs/administration-import-migration :: The import lifecycle runs the pipeline (REQ-AIW-001)",
+					"openspec/changes/platform-administration-import/specs/administration-import-migration :: A wizard guides the import (REQ-AIW-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6022,7 +6079,8 @@
 				"reachedOn": "The floating companion on every shillinq page when hermiq is installed",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "platform-help-agent"
+				"change": "platform-help-agent",
+				"requirement": "openspec/changes/platform-help-agent/specs/shillinq-mcp-tool-surface :: The helper answers for the page the user is on (REQ-PHA-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6057,7 +6115,11 @@
 				"evidence": "lib/Settings/connections.json registers 15 connections with an honest available flag; lib/BackgroundJob/ConnectionReportJob.php (registered in appinfo/info.xml) reports them to integriq daily; the page reads integriq's app_connection schema",
 				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
 				"owner": "ConductionNL/integriq",
-				"change": "adopt-connection-registry"
+				"change": "adopt-connection-registry",
+				"requirement": [
+					"openspec/changes/adopt-connection-registry/specs/external-connections :: The External Connections page lists shillinq's rows from integriq's registry (REQ-EXTCONN-001)",
+					"openspec/changes/adopt-connection-registry/specs/external-connections :: Shillinq reports the adapter it sees for each called family (REQ-EXTCONN-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6091,7 +6153,8 @@
 				"evidence": "Built half: BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12). The missing half is change public-sector-task-field-allocation (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-task-field-allocation"
+				"change": "public-sector-task-field-allocation",
+				"requirement": "openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance :: Realisation is shown per task field (REQ-BBV-012)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6126,7 +6189,11 @@
 				"evidence": "lib/Reporting/Generator/Iv3ReportGenerator.php sums GL lines per taakveld into baten and lasten, XML or CSV, via the report dialog; sending to CBS is unavailable in lib/Settings/connections.json (cbs-iv3)",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card IV3-rapportage",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-iv3-reporting"
+				"change": "2026-06-14-bookkeeping-iv3-reporting",
+				"requirement": [
+					"openspec/specs/bookkeeping-iv3-reporting :: REQ-IV3-001: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations",
+					"openspec/specs/bookkeeping-iv3-reporting :: REQ-IV3-003: The `buckets` field SHALL be derived from aggregations over GL postings filtered by BBV `iv3Bucket`"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6190,7 +6257,11 @@
 				"evidence": "Built half: SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "SisaRapportages /sisa-rapportages (report card)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-grant-accountability"
+				"change": "public-sector-grant-accountability",
+				"requirement": [
+					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: Indicators are computed per specific grant (REQ-SISA-012)",
+					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-sisa-reporting :: The appendix is exported for the annual accounts (REQ-SISA-013)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6224,7 +6295,11 @@
 				"evidence": "Built half: src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement. The missing half is change public-sector-council-and-auditor-statements (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "Rechtmatigheidstoetsing /rechtmatigheid/toetsing (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-council-and-auditor-statements"
+				"change": "public-sector-council-and-auditor-statements",
+				"requirement": [
+					"openspec/specs/bookkeeping-rechtmatigheidsverantwoording :: REQ-RV-003 Tolerantiegrens Configuration per Fiscal Year",
+					"openspec/specs/bookkeeping-rechtmatigheidsverantwoording :: REQ-RV-005 Aggregation Against Tolerances and Rollup to Rechtmatigheidsparagraaf"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6258,7 +6333,8 @@
 				"evidence": "Built half: lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls. The missing half is change public-sector-quarterly-returns (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "BcfClaims /overheid/bcf-claims lists claims",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-quarterly-returns"
+				"change": "public-sector-quarterly-returns",
+				"requirement": "openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-bcf-vat-compensation :: A claim is computed for its quarter (REQ-BCF-010)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6328,7 +6404,8 @@
 				"evidence": "lib/BackgroundJob/EmuQuarterlyDraftJob.php, registered in appinfo/info.xml, calls EmuReportingService::generateQuarterlyDraft 5 to 7 working days after quarter end",
 				"reachedOn": "EmuRapportage /emu-rapportage (report card on /reporting-compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-emu-reporting"
+				"change": "2026-06-14-bookkeeping-emu-reporting",
+				"requirement": "openspec/specs/bookkeeping-emu-reporting :: REQ-EMU-001 Kwartaal-EMU-saldo aangifte produceren"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6363,7 +6440,11 @@
 				"evidence": "Built half: GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json. The missing half is change public-sector-task-field-allocation (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "GRDeelnemers /gr/deelnemers (menu Bookkeeping)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-task-field-allocation"
+				"change": "public-sector-task-field-allocation",
+				"requirement": [
+					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation :: An allocation run splits a key's costs over the participants (REQ-GRC-007)",
+					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation :: A confirmed run invoices the participants (REQ-GRC-008)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6398,7 +6479,11 @@
 				"evidence": "Built half: eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/. The missing half is change public-sector-task-field-allocation (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "CommercialActivities /wmo/commercial-activities",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-task-field-allocation"
+				"change": "public-sector-task-field-allocation",
+				"requirement": [
+					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation :: A cost price is calculated from the books (REQ-WMO-013)",
+					"openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation :: Cross subsidy signals are logged (REQ-WMO-014)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6432,7 +6517,11 @@
 				"evidence": "Built half: ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/. The missing half is change public-sector-council-and-auditor-statements (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "ENSIACycles /compliance/ensia/cycles (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-council-and-auditor-statements"
+				"change": "public-sector-council-and-auditor-statements",
+				"requirement": [
+					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie :: Transitions produce the findings and the statement (REQ-ENSIA-011)",
+					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-ensia-zelfevaluatie :: The submission XML is downloaded (REQ-ENSIA-012)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6466,7 +6555,8 @@
 				"evidence": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme with src/components/bbv-provincie filter bar calls /api/bbv-provincie/programme-budget-vs-actuals (lib/Controller/BbvProgrammeBudgetController.php); the programmabegroting exports /api/programmabegroting/* are uncalled",
 				"reachedOn": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme (settings gear)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-add-shillinq-provincies-bbv-variant"
+				"change": "2026-06-14-add-shillinq-provincies-bbv-variant",
+				"requirement": "openspec/specs/bookkeeping-provincies-bbv-variant :: REQ-BBL-001 — Budget-to-Programme Linker SHALL allow bulk assignment of GL lines to BBV programmes"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6536,7 +6626,11 @@
 				"evidence": "Built half: five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "EuProjecten /eu-fondsen/projecten (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-grant-accountability"
+				"change": "public-sector-grant-accountability",
+				"requirement": [
+					"openspec/changes/public-sector-grant-accountability/specs/bookkeeping-single-audit-eu-fondsen :: A declaration bundles eligible expenditure with evidence (REQ-EUF-012)",
+					"openspec/changes/archive/2026-06-14-bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen :: REQ-EUF-007 The system SHALL report irregularities via IMS above the OLAF threshold"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6570,7 +6664,11 @@
 				"evidence": "Built half: four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/. The missing half is change public-sector-council-and-auditor-statements (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "AuditProtocols /bado/protocols (settings gear)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-council-and-auditor-statements"
+				"change": "public-sector-council-and-auditor-statements",
+				"requirement": [
+					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol :: A sample is drawn reproducibly (REQ-011)",
+					"openspec/changes/public-sector-council-and-auditor-statements/specs/bookkeeping-bado-controleprotocol :: The protocol page shows the aggregation (REQ-012)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6901,7 +6999,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "CommitmentsRegister /commitments, Carry open commitments to next year",
 				"evidence": "lib/Service/Commitment/CommitmentCarryOverService.php previews every open line of a year with the next year's shortfall per programme and carries it into a new line of the next year under the same commitment number (carriedFromLine), closing the old one and moving the outstanding amount between the budgets; a second run writes nothing.",
-				"change": "2026-09-29-planning-commitment-year-end"
+				"change": "2026-09-29-planning-commitment-year-end",
+				"requirement": "openspec/specs/bookkeeping-verplichtingenadministratie :: Open commitments carry over to the next year under their number (REQ-PCYE-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7032,7 +7131,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "Interest allocation /overheid/interest-allocation (Calculate, Post), Investments /overheid/investeringen (menu Government)",
 				"evidence": "InterestAllocationRun with calculate and post (lib/Lifecycle/Action/InterestAllocationAction.php over lib/Service/PublicSector/InterestAllocationService.php): the pooled rate over each investment's book value on 1 January charged to its task field, and over reserves marked for interest; one journal entry crediting Treasury task field 0.5 (tests/Unit/PublicSector/PublicSectorReservesAndInterestTest.php, seed figures EUR 54,000 and EUR 9,600).",
-				"change": "2026-09-29-public-sector-reserves-and-interest"
+				"change": "2026-09-29-public-sector-reserves-and-interest",
+				"requirement": "openspec/specs/bookkeeping-programmabegroting :: Interest over asset book values is charged to tasks (REQ-PSRI-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7074,7 +7174,11 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "Reserves /overheid/reserves, Reserve mutations /overheid/reserve-mutations (Realise), Reserves over the years /overheid/reserves/overview (menu Government)",
 				"evidence": "ReserveMutation (planned or realised) in lib/Settings/register.d/public-sector-reserves-and-interest.json; realise posts the journal entry between the reserve account and the result account (lib/Lifecycle/Action/RealiseReserveMutationAction.php over lib/Service/PublicSector/ReserveBalances.php); the multi-year overview GET /api/v1/public-sector/reserves/overview chains opening to closing with floor and ceiling flags (tests/Unit/PublicSector/PublicSectorReservesAndInterestTest.php).",
-				"change": "2026-09-29-public-sector-reserves-and-interest"
+				"change": "2026-09-29-public-sector-reserves-and-interest",
+				"requirement": [
+					"openspec/specs/bookkeeping-programmabegroting :: A reserve's additions and withdrawals are recorded per year (REQ-PSRI-001)",
+					"openspec/specs/bookkeeping-programmabegroting :: Reserves have a multi-year overview (REQ-PSRI-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7117,7 +7221,8 @@
 				"readOn": "2026-09-29",
 				"evidence": "BudgetEditingService::multiYear() shows ledger groups against every fiscal year with an AnnualBudget from this year up to four ahead, and startNextYear() copies a budget's manual lines into a draft budget for the next year raised by a percentage (src/components/MultiYearBudget.vue on the BudgetGrid page); Meerjarenraming and MeerjarenBudget have index and detail pages (src/manifest.d/planning-budget-editing.json).",
 				"reachedOn": "BudgetGrid /begroting/grid, section Multi-year budget; Meerjarenramingen /overheid/meerjarenramingen and MeerjarenBudgetten /overheid/meerjarenbudgetten under Government",
-				"change": "2026-09-29-planning-budget-editing"
+				"change": "2026-09-29-planning-budget-editing",
+				"requirement": "openspec/specs/budget-grid-view :: Several years are budgeted side by side (REQ-PBE-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7159,7 +7264,8 @@
 				"readOn": "2026-09-29",
 				"reachedOn": "Begrotingswijzigingen /overheid/begrotingswijzigingen (menu Government > Budget amendments)",
 				"evidence": "Begrotingswijziging has index and detail pages with its number, reason, amounts, council resolution and status, the vaststellen transition as Determine (BegrotingswijzigingGuard requires the resolution), the OpenRegister files tab for attachments and the audit trail tab for history (src/manifest.d/planning-budget-editing.json).",
-				"change": "2026-09-29-planning-budget-editing"
+				"change": "2026-09-29-planning-budget-editing",
+				"requirement": "openspec/specs/bookkeeping-programmabegroting :: A budget amendment is recorded with status, reason, files and history (REQ-PBE-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7203,7 +7309,11 @@
 				"readOn": "2026-09-30",
 				"reachedOn": "Reporting & Compliance > a report card > Generate > Schedule this report, and Report schedules (/reports/schedules)",
 				"evidence": "ReportSchedule with an active and paused lifecycle (lib/Settings/register.d/reporting-data-delivery.json); ScheduledReportJob runs hourly and ScheduledReportRunner produces each due report as the schedule owner (refused when the owner cannot reach the administration), ScheduledReportDelivery files it in the folder shared with the recipients and notifies them, a failed run records lastError and notifies the owner (tests/Unit/Reporting/Schedule/*, tests/vitest/reportingDataDelivery.spec.js).",
-				"change": "reporting-data-delivery"
+				"change": "reporting-data-delivery",
+				"requirement": [
+					"openspec/changes/reporting-data-delivery/specs/report-delivery :: A controller schedules a report (REQ-RDD-001)",
+					"openspec/changes/reporting-data-delivery/specs/report-delivery :: A due schedule produces and delivers its report (REQ-RDD-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7244,7 +7354,8 @@
 				"readOn": "2026-09-30",
 				"evidence": "OpenRegister's REST object API exposes every shillinq schema to an outside tool that pulls it (see plt-api), and index pages export CSV or Excel; there is no push feed, OData endpoint or BI connector. Built half: lib/Settings/feeds.json declares four read-only datasets (ledger-lines, accounts, periods, relations), each bound to one administration, validated by FeedDeclarationValidator. Missing half: integriq serves the declaration with its own credentials (ADR-091), drafted to integriq, not yet filed.",
 				"reachedOn": "OpenRegister API /apps/openregister/api/objects (machine surface)",
-				"change": "reporting-data-delivery"
+				"change": "reporting-data-delivery",
+				"requirement": "openspec/changes/reporting-data-delivery/specs/report-delivery :: The ledger is declared as a read-only feed (REQ-RDD-003)"
 			},
 			"screen": {
 				"board": null,
@@ -7285,7 +7396,11 @@
 				"readOn": "2026-09-30",
 				"reachedOn": "Reports > Relations both ways (/reports/relations-both-ways); the customer page (Link to a supplier, and both sides of a linked relation); the supplier page (Both sides)",
 				"evidence": "CustomerMaster.payeeId, payeeLink and dismissedPayeeSuggestions (lib/Settings/register.d/reporting-relation-both-sides.json); RelationLinkService suggests pairs with an equal normalised KvK or VAT number and links only on confirmation, one to one; RelationBothSidesService lists ARInvoice, APTransaction and not-yet-booked SupplierInvoice rows with invoiced sales, invoiced purchases, open receivable, open payable and net, credit notes negative, each side only for a role that may read it; RelationController serves both sides, the report and its CSV (tests/Unit/Service/Relation/*, tests/Unit/Controller/RelationControllerTest.php, tests/vitest/reportingRelationBothSides.spec.js).",
-				"change": "2026-09-30-reporting-relation-both-sides"
+				"change": "2026-09-30-reporting-relation-both-sides",
+				"requirement": [
+					"openspec/specs/bookkeeping-reconciliation-reports :: A report lists every relation that is both customer and supplier (REQ-RRBS-003)",
+					"openspec/specs/bookkeeping-reconciliation-reports :: Both detail pages show both sides of a linked relation (REQ-RRBS-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7372,7 +7487,11 @@
 				"readOn": "2026-10-01",
 				"reachedOn": "Fixed Assets > an asset (/fixed-assets/:id): Revise depreciation, Extra depreciation and Post missed depreciation; the depreciation schedule shows each month planned or posted",
 				"evidence": "DepreciationRunJob posts the month that ended last per administration through JournalEntry postDirect and marks each DepreciationSchedule line posted (lib/Service/Asset/DepreciationScheduleService.php); the revise transition replans the unposted months from the book value on its date and refuses a date before a posted month (ReviseDepreciationAction); depreciateExtra posts one extra line at once and replans (ExtraDepreciationAction); straight line, degressive and units of production (tests/Unit/Asset/AssetsMethodChangeAndReserveTest.php).",
-				"change": "assets-method-change-and-reserve"
+				"change": "assets-method-change-and-reserve",
+				"requirement": [
+					"openspec/changes/assets-method-change-and-reserve/specs/bookkeeping-fixed-assets-depreciation :: A change of method or life recalculates future depreciation (REQ-AMCR-002)",
+					"openspec/changes/assets-method-change-and-reserve/specs/bookkeeping-fixed-assets-depreciation :: Extra depreciation is booked at once (REQ-AMCR-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7747,7 +7866,8 @@
 				"readOn": "2026-09-26",
 				"evidence": "The inventory scanner is an offline-first PWA whose queued scans sync through POST /api/inventory/scan (appinfo/routes.php:628, lib/Controller/InventoryScanController.php:189).",
 				"reachedOn": "inventory mobile scanner (src/registry.js:15)",
-				"change": "platform-mobile-pwa"
+				"change": "platform-mobile-pwa",
+				"requirement": "openspec/changes/platform-mobile-pwa/specs/shillinq-mobile :: Work done offline is queued and synced once (REQ-PMP-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7941,7 +8061,11 @@
 				"readOn": "2026-09-26",
 				"evidence": "lib/Settings/register.d/zzz-mcp-tool-surface.json exposes a read-only MCP surface (search and get only) on 12 curated schemas; whether the installed OpenRegister executes x-openregister-mcp is the open question of plt-mcp. Nextcloud app passwords give API access but not a read-only scope.",
 				"reachedOn": "OpenRegister MCP surface (machine)",
-				"change": "mcp-action-tool-surface"
+				"change": "mcp-action-tool-surface",
+				"requirement": [
+					"openspec/specs/shillinq-mcp-tool-surface :: REQ-MCP-001 — Shillinq's MCP tool surface MUST be declared on the schema via the `x-openregister-mcp` dialect and MUST NOT be hand-written in PHP",
+					"openspec/specs/shillinq-mcp-tool-surface :: REQ-MCP-003 — Shillinq MUST NOT expose any MCP write verb, and MUST NOT expose any schema bearing credentials or special-category PII"
+				]
 			},
 			"screen": {
 				"board": null,
@@ -8053,7 +8177,8 @@
 				"readOn": "2026-09-26",
 				"evidence": "lib/Service/SettingsService.php:182 seedRgsTemplate() starts an administration from a shipped RGS template (MKB, ZZP or BBV) in the setup wizard; an office cannot save its own chart as a template.",
 				"reachedOn": "First-run setup wizard, template step",
-				"change": "ledger-multi-administration"
+				"change": "ledger-multi-administration",
+				"requirement": "openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie :: A new administration starts from an office template (REQ-LMA-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8472,7 +8597,11 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "platform-custom-record-types"
+				"change": "platform-custom-record-types",
+				"requirement": [
+					"openspec/changes/platform-custom-record-types/specs/app-administration :: An administrator chooses which own record types show (REQ-CRT-001)",
+					"openspec/changes/platform-custom-record-types/specs/app-administration :: Shown record types have list and detail pages (REQ-CRT-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8620,7 +8749,11 @@
 				"readOn": "2026-10-01",
 				"reachedOn": "Settings > Required fields (/settings/required-fields): the administration's required fields; a required field's page lists every field of its record type as always, in this administration, or no",
 				"evidence": "FieldRequirement records per administration (lib/Settings/register.d/platform-required-fields.json); FieldRequirementListener on ObjectCreatingEvent and ObjectUpdatingEvent refuses a person's save through the object API that leaves an active requirement empty, keyed by field with the reason, skips system writes and other administrations, and refuses a requirement on an unknown or always-required field (tests/Unit/Listener/FieldRequirementListenerTest.php, tests/vitest/platformRequiredFields.spec.js). The form marking the field before the save waits on nextcloud-vue (task 2.2).",
-				"change": "platform-required-fields"
+				"change": "platform-required-fields",
+				"requirement": [
+					"openspec/changes/platform-required-fields/specs/app-administration :: An administrator marks fields as required (REQ-PRF-001)",
+					"openspec/changes/platform-required-fields/specs/app-administration :: A save missing a required field is refused (REQ-PRF-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8733,7 +8866,8 @@
 				"reachedOn": "Aansluitingen and AansluitingResultaten pages",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-07-14-bookkeeping-aansluitingen"
+				"change": "2026-07-14-bookkeeping-aansluitingen",
+				"requirement": "openspec/specs/bookkeeping-aansluitingen :: REQ-AANS-004: `compute()` SHALL persist an `AansluitingResult` and auto-resolve within-tolerance differences"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8941,7 +9075,8 @@
 				"reachedOn": "BookkeepingSigningTrail page",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-shillinq-delegate-signing"
+				"change": "2026-06-14-shillinq-delegate-signing",
+				"requirement": "openspec/specs/shillinq-delegate-signing :: REQ-SIGN-001 — Document e-signature on a shillinq finance document SHALL be delegated to docudesk via IEventDispatcher, request-then-consume-outcome; shillinq stores only the returned reference and mirrored status and NEVER signs on local authority"
 			},
 			"screen": {
 				"canvas": "design-system",
