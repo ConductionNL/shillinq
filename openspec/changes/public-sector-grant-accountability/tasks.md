@@ -1,6 +1,6 @@
 # Tasks: public-sector-grant-accountability
 
-<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 8. -->
+<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 9. -->
 
 ## 1. Grants
 
@@ -16,6 +16,7 @@
 
 - [ ] 3.1 `EuDeclaration` and `EuDeclarationBuilder::propose` (REQ-EUF-012). Verify: PHPUnit red first with the real guard; an expenditure without a certified document is left out with the reason.
 - [ ] 3.2 Submit and the project page action (REQ-EUF-013). Verify: PHPUnit; `check:manifest`; vitest.
+- [ ] 3.3 `IrregularityReport` schema with the threshold check on escalate and the declaration block (REQ-EUF-007). Verify: PHPUnit red first for both scenarios; payload validates against the real schema.
 
 ## 4. Strings and live check
 

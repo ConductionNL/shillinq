@@ -19,7 +19,7 @@ This specification defines the requirements for inventory multi warehouse in the
 @e2e exclude pure backend/schema: multi-warehouse register — not browser-testable
 
 
-### REQ-LOC-001: Location entity SHALL support hierarchical warehouse organization with parent-child FK
+### Requirement: REQ-LOC-001: Location entity SHALL support hierarchical warehouse organization with parent-child FK
 
 Location hierarchy MUST be expressed via the extended `Location` entity in
 `lib/Settings/shillinq_register.json` per ADR-024:
@@ -50,7 +50,7 @@ at warehouse level MUST return aggregated quantities from all bins under that wa
 - **THEN** validation MUST pass; hierarchy persists. Parent location remains editable
   by administration.
 
-### REQ-LOC-002: Location schema SHALL include hierarchy and type fields
+### Requirement: REQ-LOC-002: Location schema SHALL include hierarchy and type fields
 
 The system SHALL satisfy this requirement: Location schema SHALL include hierarchy and type fields.
 
@@ -87,7 +87,7 @@ Schema.org annotation: `schema:Place` (location is a physical/virtual place).
 - **WHEN** another Location with code="W-01" and administrationId="adm-1" is created
 - **THEN** validation MUST fail with "Location code must be unique per administration".
 
-### REQ-LOC-003: Location hierarchy depth SHALL be limited and queryable
+### Requirement: REQ-LOC-003: Location hierarchy depth SHALL be limited and queryable
 
 The system SHALL satisfy this requirement: Location hierarchy depth SHALL be limited and queryable.
 
@@ -114,7 +114,7 @@ Deep hierarchy queries (e.g., "all bins under warehouse W-01") MUST be performan
 - **WHEN** querying all descendants of W-01
 - **THEN** result MUST include all 3 zones + all 30 bins in < 50ms.
 
-### REQ-LOC-004: In-transit location type enables transfer-in-progress inventory tracking
+### Requirement: REQ-LOC-004: In-transit location type enables transfer-in-progress inventory tracking
 
 The system SHALL satisfy this requirement: In-transit location type enables transfer-in-progress inventory tracking.
 
@@ -141,7 +141,7 @@ On inter-warehouse transfer (if `inventory-stock-movement-ledger` is present):
 - **THEN** result MUST show this as "in-transit" separate from received stock in
   both source (W-01) and destination (W-02) warehouses.
 
-### REQ-LOC-005: Stock rollup aggregation: warehouse-level quantity = SUM(bin quantities)
+### Requirement: REQ-LOC-005: Stock rollup aggregation: warehouse-level quantity = SUM(bin quantities)
 
 `InventoryStock.quantity` at warehouse level SHALL be computed as:
 
@@ -168,7 +168,7 @@ stock table.
 - **WHEN** querying zone-level stock
 - **THEN** result MUST return 50 (sum of child bins only, not sibling zones).
 
-### REQ-LOC-006: Inter-location transfer workflow supports moves between any two locations
+### Requirement: REQ-LOC-006: Inter-location transfer workflow supports moves between any two locations
 
 The system SHALL satisfy this requirement: Inter-location transfer workflow supports moves between any two locations.
 
@@ -199,7 +199,7 @@ If move ledger is not present:
 - **WHEN** move transitioned to `posted`
 - **THEN** quantities MUST update atomically. GL entry is null (intra-warehouse is neutral).
 
-### REQ-LOC-007: Location navigation and filters for operators
+### Requirement: REQ-LOC-007: Location navigation and filters for operators
 
 The system SHALL satisfy this requirement: Location navigation and filters for operators.
 
@@ -232,7 +232,7 @@ Manifest entries for warehouse location management:
 - **WHEN** operator opens In-Transit Inventory page
 - **THEN** result MUST group: "W-01 → W-02: 100 units (ETA: 2026-05-23)"; "W-01 → W-03: 50 units (ETA: 2026-05-22)".
 
-### REQ-LOC-008: Location audit trail with administration scope
+### Requirement: REQ-LOC-008: Location audit trail with administration scope
 
 The system SHALL satisfy this requirement: Location audit trail with administration scope.
 
@@ -259,7 +259,7 @@ in their administration).
 - **WHEN** user from administration "adm-2" attempts to edit
 - **THEN** operation MUST fail with 403 Forbidden.
 
-### REQ-LOC-009: Inventory Stock integration: InventoryStock location FK scoped to Location hierarchy
+### Requirement: REQ-LOC-009: Inventory Stock integration: InventoryStock location FK scoped to Location hierarchy
 
 The system SHALL satisfy this requirement: Inventory Stock integration: InventoryStock location FK scoped to Location hierarchy.
 

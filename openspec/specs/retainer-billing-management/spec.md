@@ -25,7 +25,7 @@ bespoke code.
 @e2e exclude unbuilt UI: retainer billing management pages not yet implemented
 
 
-### REQ-RETN-001: Pool Lifecycle and Effective Dates
+### Requirement: REQ-RETN-001: Pool Lifecycle and Effective Dates
 
 A `RetainerPool` MUST define a monthly retainer allocation with effective-date
 windows. A pool MUST specify:
@@ -49,7 +49,7 @@ GIVEN: Gemeente Amsterdam has a 2026-01 consulting engagement
 WHEN: operator creates RetainerPool(period="2026-01-01..2026-01-31", poolAmount=3000 EUR, retainerRate=75 EUR/hour)  
 THEN: pool is created with status=active; no overlapping pool exists for this client in 2026-01  
 
-### REQ-RETN-002: Drawdown Materialization on Time Entry
+### Requirement: REQ-RETN-002: Drawdown Materialization on Time Entry
 
 Each `TimeEntry` booked against a retainer pool MUST trigger a `RetainerDrawdown`
 record. A drawdown MUST specify:
@@ -71,7 +71,7 @@ GIVEN: RetainerPool RETN-2026-01-001 (€3,000, €75/hour) for Gemeente Amsterd
 WHEN: operator logs TimeEntry(hours=20, date=2026-01-10, clientId=Amsterdam)  
 THEN: RetainerDrawdown is created with drawdownAmount=€1,500 (20h × €75/h); pool balance becomes €1,500  
 
-### REQ-RETN-003: Drawdown-Balance Aggregation
+### Requirement: REQ-RETN-003: Drawdown-Balance Aggregation
 
 A drawdown-balance query MUST return the available balance for a given pool
 as of a given date:
@@ -95,7 +95,7 @@ GIVEN: RetainerPool RETN-2026-01-001 (€3,000) with drawdowns totaling €1,800
 WHEN: operator queries available-balance(RETN-2026-01-001, 2026-01-20)  
 THEN: system returns €1,200 available  
 
-### REQ-RETN-004: Rollover Policy Enforcement
+### Requirement: REQ-RETN-004: Rollover Policy Enforcement
 
 At period-end, a `RetainerRollover` record MUST be created that captures
 the unused-balance carryover (or reset). A rollover MUST specify:
@@ -122,7 +122,7 @@ GIVEN: RetainerPool RETN-2026-01-001 (policy: carryover-max=50 hours, rate=€75
 WHEN: period closes on 2026-01-31  
 THEN: RetainerRollover is created with carryoverHours=50, carryoverCapApplied=true; carryover-to-Feb = 50h (€3,750)  
 
-### REQ-RETN-005: Overage Detection and Rate Lookup
+### Requirement: REQ-RETN-005: Overage Detection and Rate Lookup
 
 If actual drawdown exceeds pool-amount, the excess MUST be flagged as
 "overage" and billed at the standard rate resolved from rate-card-engine
@@ -145,7 +145,7 @@ GIVEN: RetainerPool RETN-2026-01-001 (€3,000, €75/hour) with actual drawdown
 WHEN: period closes on 2026-01-31; standard rate for Gemeente = €85/hour  
 THEN: overage-amount = (3375 - 3000) / 75 × 85 = 5 hours × €85 = €425; flagged for billing  
 
-### REQ-RETN-006: Period-End True-Up Trigger and Settlement
+### Requirement: REQ-RETN-006: Period-End True-Up Trigger and Settlement
 
 On period close (calendar-driven), a `RetainerTrueUp` record MUST be
 auto-created for each active pool. True-up MUST:
@@ -175,7 +175,7 @@ GIVEN: RetainerPool RETN-2026-01-001 period ending 2026-01-31 with poolAmount=�
 WHEN: period close is triggered on 2026-02-01  
 THEN: RetainerTrueUp is created with status=generated; overageAmount=€375; awaiting approval before invoice  
 
-### REQ-RETN-007: Manual True-Up Trigger and Override
+### Requirement: REQ-RETN-007: Manual True-Up Trigger and Override
 
 If period-close automation is delayed or skipped, an authorized user MUST be
 able to manually trigger true-up for a given pool + period-date. Manual
@@ -197,7 +197,7 @@ GIVEN: Period 2026-01 ended without auto-trigger; now 2026-02-15
 WHEN: operator manually triggers true-up for RETN-2026-01-001  
 THEN: RetainerTrueUp is created; audit log records "manual trigger by Alice on 2026-02-15"  
 
-### REQ-RETN-008: Adjustment Invoice Generation
+### Requirement: REQ-RETN-008: Adjustment Invoice Generation
 
 The system SHALL satisfy this requirement: Adjustment Invoice Generation.
 
@@ -223,7 +223,7 @@ GIVEN: RetainerTrueUp (status=approved, overageInvoiceAmount=€425)
 WHEN: operator approves invoice generation  
 THEN: Invoice is created (draft, due 2026-02-14); RetainerTrueUp.status = invoiced; RetainerTrueUp.invoiceId = INV-2026-02-001  
 
-### REQ-RETN-009: Rollover to Next Period
+### Requirement: REQ-RETN-009: Rollover to Next Period
 
 After true-up is settled (status=settled or invoiced), the rollover policy MUST be
 applied to create the next-period `RetainerPool`:
@@ -242,7 +242,7 @@ GIVEN: January pool RETN-2026-01-001 settled with carryover=50 hours (€3,750, 
 WHEN: February pool template is created based on rollover  
 THEN: February pool draft is created with starting balance = €3,750 (carried over) + €3,000 (fresh allocation) = €6,750; awaiting activation  
 
-### REQ-RETN-010: Audit Trail and Historical Queryability
+### Requirement: REQ-RETN-010: Audit Trail and Historical Queryability
 
 All retainer mutations (drawdowns, rollovers, true-ups) MUST be queryable by
 period, pool, and entity for audit and dispute resolution.
@@ -265,7 +265,7 @@ GIVEN: Invoice for Gemeente Amsterdam Jan 2026 (overage €425) is disputed
 WHEN: finance team queries TrueUps(client=Gemeente, period=2026-01)  
 THEN: system returns all drawdowns, rollover carryover, true-up calculation, approver, and invoice-date for audit trail  
 
-### REQ-RETN-011: Role-Based Approvals
+### Requirement: REQ-RETN-011: Role-Based Approvals
 
 True-up generation (especially with overage) MUST respect approval workflows
 per ADR-023 (authorization-mandate-management).
@@ -284,7 +284,7 @@ GIVEN: RetainerTrueUp (status=generated, overageAmount=€425)
 WHEN: finance director (role: approver, permission: retainer:approve-true-up) approves  
 THEN: RetainerTrueUp.status = approved; RetainerTrueUp.approvedBy = director-id; RetainerTrueUp.approvalDate = 2026-02-01T14:30:00Z  
 
-### REQ-RETN-012: Manifest Navigation
+### Requirement: REQ-RETN-012: Manifest Navigation
 
 The retainer-billing-management capability MUST register 4 manifest entries:
 1. **Retainer Pools** (type: index) — list all pools, filter by status/client/period

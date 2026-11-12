@@ -12,9 +12,11 @@
 ## 2. State guards
 - [x] 2.1 An approved payment run's lines and amounts are immutable (`PaymentRunLineLockListener`)
 - [ ] 2.2 Releasing a payment block needs a role and a reason, and keeps the block reason: done by the payment-block endpoint (#2070), not here
+  Still open (decision 399, checked 12 Nov 2026): no route or controller releases a payment block, and no commit on development names #2070; `lib/PaymentRun/PaymentBlockChecker.php` only reads the block.
 - [x] 2.3 The payment-run `reconcile` transition only follows a CAMT.053 match (`PaymentRunReconcileGuard`)
 - [x] 2.4 Purchase order `approve` only follows a complete approval chain signed through the approval service (`PurchaseOrderApprovalGuard`, `PurchaseOrderApprovalChainListener`)
 - [x] 2.5 Supplier invoice `approveException` only follows an accepted three-way-match exception, and `pay` only a paid AP transaction (`SupplierInvoiceExceptionApprovalGuard`, `SupplierInvoicePayGuard`)
 - [ ] 2.6 Accepting a three-way-match exception needs the exception approver role: done in #2072, not here
+  Still open (decision 399, checked 12 Nov 2026): `ThreeWayMatchExceptionController::accept()` carries only `#[NoAdminRequired]` and `ExceptionResolutionService::acceptWithMotivation()` checks no approver role; no commit on development names #2072.
 - [x] 2.7 The BBV allocation rules are declared under `x-openregister-validations`, the key OpenRegister reads
 - [x] 2.8 A report schedule's recipients, status and next run are written by its owner only, and delivery skips recipients without access to the administration (`ReportScheduleWriteListener`, `ReportRecipientPolicy`)
