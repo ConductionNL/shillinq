@@ -27,7 +27,7 @@ This specification defines the requirements for bookkeeping audit trail in the S
 @e2e exclude pure backend/data: audit hash chain, immutable log — not browser-testable
 
 
-### REQ-AT-001: Every bookkeeping register SHALL declare `x-openregister-audit: true`
+### Requirement: REQ-AT-001: Every bookkeeping register SHALL declare `x-openregister-audit: true`
 
 The system SHALL satisfy this requirement: Every bookkeeping register SHALL declare `x-openregister-audit: true`.
 
@@ -61,7 +61,7 @@ anti-pattern list).
   routes matching `/audit/purge`
 - **THEN** no such classes or routes SHALL exist.
 
-### REQ-AT-002: Every bookkeeping object's lifecycle transition SHALL produce an audit event
+### Requirement: REQ-AT-002: Every bookkeeping object's lifecycle transition SHALL produce an audit event
 
 The system SHALL satisfy this requirement: Every bookkeeping object's lifecycle transition SHALL produce an audit event.
 
@@ -87,7 +87,7 @@ no additional assertions on the hash chain.
 - **THEN** an audit event MUST exist with `from: "approved"`,
   `to: "posted"`, the actor's UUID, and the `glTransactionId` written.
 
-### REQ-AT-003: The audit trail SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-AT-003: The audit trail SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a `Bookkeeping > Audit Trail`
 navigation entry. This entry MUST open OR's audit-log UI
@@ -118,7 +118,7 @@ entry points to OR's existing audit-log UI surface.
 - **THEN** all lifecycle transition events for `FiscalPeriod` objects
   in that date range MUST be visible.
 
-### REQ-AT-004: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel
+### Requirement: REQ-AT-004: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel
 
 The system SHALL satisfy this requirement: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel.
 
@@ -136,7 +136,7 @@ individual object without navigating away from the detail page.
   be visible, including the `draft → received`, `received → matched`,
   `matched → approved`, and `approved → posted` transitions.
 
-### REQ-AT-005: Audit retention SHALL be governed by OR per ADR-022
+### Requirement: REQ-AT-005: Audit retention SHALL be governed by OR per ADR-022
 
 The system SHALL satisfy this requirement: Audit retention SHALL be governed by OR per ADR-022.
 

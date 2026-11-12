@@ -19,7 +19,7 @@ This specification defines the requirements for inventory cycle count in the Shi
 @e2e exclude pure backend/schema: cycle count register — not browser-testable
 
 
-### REQ-ICC-001: Inventory Cycle Count SHALL be declared as `InventoryCycleCount` + `InventoryCycleCountLine` registers
+### Requirement: REQ-ICC-001: Inventory Cycle Count SHALL be declared as `InventoryCycleCount` + `InventoryCycleCountLine` registers
 
 Inventory cycle count MUST be expressed as two new registers in `lib/Settings/shillinq_register.json`:
 
@@ -49,7 +49,7 @@ method.
 - **THEN** the register MUST compute and display `quantityVariance: -5` and `valueVariance` 
   as a derived field (not manually input).
 
-### REQ-ICC-002: The `InventoryCycleCount` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-ICC-002: The `InventoryCycleCount` schema SHALL declare a fixed minimum field set
 
 The system SHALL satisfy this requirement: The `InventoryCycleCount` schema SHALL declare a fixed minimum field set.
 
@@ -87,7 +87,7 @@ Schema.org annotation: `schema:InventoryCount` (custom extension).
 - **THEN** validation MUST fail with a "partial count requires location or category scope" 
   error.
 
-### REQ-ICC-003: The `InventoryCycleCountLine` schema SHALL declare expected-vs-counted structure
+### Requirement: REQ-ICC-003: The `InventoryCycleCountLine` schema SHALL declare expected-vs-counted structure
 
 The system SHALL satisfy this requirement: The `InventoryCycleCountLine` schema SHALL declare expected-vs-counted structure.
 
@@ -128,7 +128,7 @@ The system SHALL satisfy this requirement: The `InventoryCycleCountLine` schema 
 - **WHEN** attempting to enter `countedQuantity: -5`
 - **THEN** validation MUST fail with a "negative quantity not allowed" error.
 
-### REQ-ICC-004: Variance threshold flagging SHALL categorize lines requiring investigation
+### Requirement: REQ-ICC-004: Variance threshold flagging SHALL categorize lines requiring investigation
 
 The system SHALL satisfy this requirement: Variance threshold flagging SHALL categorize lines requiring investigation.
 
@@ -168,7 +168,7 @@ requiresReason = true IF (|quantityVariance| > expectedQuantity × quantityVaria
   `unitCost: €15`, `valueVariance: -€750`
 - **THEN** `requiresReason` MUST be true despite quantity % being low.
 
-### REQ-ICC-005: The `InventoryVarianceReason` register SHALL provide configurable reason-code taxonomy
+### Requirement: REQ-ICC-005: The `InventoryVarianceReason` register SHALL provide configurable reason-code taxonomy
 
 The system SHALL satisfy this requirement: The `InventoryVarianceReason` register SHALL provide configurable reason-code taxonomy.
 
@@ -207,7 +207,7 @@ System-seed default reason codes (per administration creation):
 - **WHEN** an operator attempts to assign it to a line
 - **THEN** the schema MUST not allow assignment; the UI MUST display only active reason codes.
 
-### REQ-ICC-006: The `InventoryCycleCount` lifecycle SHALL manage state transitions via `x-openregister-lifecycle`
+### Requirement: REQ-ICC-006: The `InventoryCycleCount` lifecycle SHALL manage state transitions via `x-openregister-lifecycle`
 
 `InventoryCycleCount` MUST declare an `x-openregister-lifecycle` block with the following 
 state machine:
@@ -246,7 +246,7 @@ the schema (or guarded by a single-method exception if conditional logic is requ
 - **THEN** count state MUST become `cancelled`; no GL posting occurs; counts can be 
   re-initiated if needed.
 
-### REQ-ICC-007: Variance posting SHALL generate `InventoryAdjustment` records and update `InventoryStock`
+### Requirement: REQ-ICC-007: Variance posting SHALL generate `InventoryAdjustment` records and update `InventoryStock`
 
 On transition to `reconciled`, the system MUST:
 
@@ -279,7 +279,7 @@ reported.
   variance-expense account MUST be debited/credited accordingly (per cost-accounting-
   allocation).
 
-### REQ-ICC-008: Partial (location/zone-scoped) counts SHALL filter expected inventory via standard register queries
+### Requirement: REQ-ICC-008: Partial (location/zone-scoped) counts SHALL filter expected inventory via standard register queries
 
 When `countType: partial`, the system MUST:
 
@@ -305,7 +305,7 @@ No bespoke indexing or custom SQL queries are required; standard OR query filter
 - **WHEN** the count is submitted
 - **THEN** line items MUST cover all SKUs in all locations; no filtering applied.
 
-### REQ-ICC-009: Mobile-scanner integration SHALL be documented as a webhook endpoint (integration deferred to T4)
+### Requirement: REQ-ICC-009: Mobile-scanner integration SHALL be documented as a webhook endpoint (integration deferred to T4)
 
 The system SHALL satisfy this requirement: Mobile-scanner integration SHALL be documented as a webhook endpoint (integration deferred to T4).
 
@@ -344,7 +344,7 @@ Manual count-line entry via the UI is the primary path (REQ-ICC-003, REQ-ICC-006
   point; **AND** no T2 implementation code SHALL exist; **AND** manual entry SHALL be the 
   primary counting method.
 
-### REQ-ICC-010: Manifest navigation SHALL expose three index + detail pages for cycle counts, templates, and variance reports
+### Requirement: REQ-ICC-010: Manifest navigation SHALL expose three index + detail pages for cycle counts, templates, and variance reports
 
 The `src/manifest.json` MUST declare:
 

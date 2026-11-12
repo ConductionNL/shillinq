@@ -123,7 +123,7 @@ engine. Undefined variables are rendered as empty string.
 
 ## Requirements
 
-### REQ-BET-001: Template CRUD operations
+### Requirement: REQ-BET-001: Template CRUD operations
 
 The system SHALL satisfy this requirement: Template CRUD operations.
 
@@ -142,7 +142,7 @@ page,
 **THEN** the template is saved with status `draft` and shows in the
 template list.
 
-### REQ-BET-002: Template lifecycle — draft to published
+### Requirement: REQ-BET-002: Template lifecycle — draft to published
 
 The system SHALL satisfy this requirement: Template lifecycle — draft to published.
 
@@ -154,7 +154,7 @@ The system SHALL satisfy this requirement: Template lifecycle — draft to publi
 `activatedAt` is set to current timestamp. Published templates are
 available for dispatch.
 
-### REQ-BET-003: Template lifecycle — published to archived
+### Requirement: REQ-BET-003: Template lifecycle — published to archived
 
 The system SHALL satisfy this requirement: Template lifecycle — published to archived.
 
@@ -166,7 +166,7 @@ The system SHALL satisfy this requirement: Template lifecycle — published to a
 not dispatched using archived templates; existing instances remain
 visible in history.
 
-### REQ-BET-004: Variable rendering in email subject and body
+### Requirement: REQ-BET-004: Variable rendering in email subject and body
 
 The system SHALL satisfy this requirement: Variable rendering in email subject and body.
 
@@ -185,7 +185,7 @@ The system SHALL satisfy this requirement: Variable rendering in email subject a
 and the body begins:
   `"Hallo Femke Jansen, uw boeking op 22 mei 2026 om 10:00 is geconfirmeerd."`
 
-### REQ-BET-005: Reminder template timing configuration
+### Requirement: REQ-BET-005: Reminder template timing configuration
 
 The system SHALL satisfy this requirement: Reminder template timing configuration.
 
@@ -198,7 +198,7 @@ time is "2026-05-21 14:05",
 (24 hours before). If queued time has already passed, dispatch
 immediately.
 
-### REQ-BET-006: Plain-text fallback for email clients
+### Requirement: REQ-BET-006: Plain-text fallback for email clients
 
 The system SHALL satisfy this requirement: Plain-text fallback for email clients.
 
@@ -211,7 +211,7 @@ The system SHALL satisfy this requirement: Plain-text fallback for email clients
 (or HTML rendering disabled),
 **THEN** the plain-text body is displayed instead.
 
-### REQ-BET-007: Branding customization per template
+### Requirement: REQ-BET-007: Branding customization per template
 
 The system SHALL satisfy this requirement: Branding customization per template.
 
@@ -227,7 +227,7 @@ and the Cancellation template has:
 **THEN** rendered emails show the respective logos and colors without
 requiring three separate organizational branding profiles.
 
-### REQ-BET-008: Template version management (draft vs published)
+### Requirement: REQ-BET-008: Template version management (draft vs published)
 
 The system SHALL satisfy this requirement: Template version management (draft vs published).
 
@@ -240,7 +240,7 @@ modifies text and branding,
 v1 remains active for dispatch until the new version is published.
 At publication, the system uses the new version for future dispatches.
 
-### REQ-BET-009: Cancellation template with optional reason
+### Requirement: REQ-BET-009: Cancellation template with optional reason
 
 The system SHALL satisfy this requirement: Cancellation template with optional reason.
 
@@ -253,7 +253,7 @@ The system SHALL satisfy this requirement: Cancellation template with optional r
 **THEN** the email shows:
 `"Uw boeking BK20260521042 is geannuleerd.\nReden: Customer requested"`
 
-### REQ-BET-010: Integration with OR notification engine
+### Requirement: REQ-BET-010: Integration with OR notification engine
 
 The system SHALL satisfy this requirement: Integration with OR notification engine.
 

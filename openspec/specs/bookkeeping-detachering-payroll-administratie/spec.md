@@ -46,7 +46,7 @@ Annual freelance filing (inkomstenbelasting form 47).
 
 ## Requirements
 
-### REQ-DPA-001: OpdrachtgeversVerklaring register
+### Requirement: REQ-DPA-001: OpdrachtgeversVerklaring register
 
 SHALL declare `OpdrachtgeversVerklaring` register for Wet DBA declarations with RBAC restricting read to bookkeeper/payroll-officer/auditor.
 
@@ -56,7 +56,7 @@ SHALL declare `OpdrachtgeversVerklaring` register for Wet DBA declarations with 
 - **WHEN** a user without bookkeeper/payroll-officer/auditor role attempts to read a declaration
 - **THEN** the read is denied and only authorized roles can access Wet DBA declarations
 
-### REQ-DPA-002: IB47Record register
+### Requirement: REQ-DPA-002: IB47Record register
 
 SHALL declare `IB47Record` register for annual freelance income reporting with RBAC restricting read to authorized roles.
 
@@ -66,7 +66,7 @@ SHALL declare `IB47Record` register for annual freelance income reporting with R
 - **WHEN** a user without an authorized role attempts to read an annual freelance income record
 - **THEN** the read is denied and only authorized roles can access IB47 records
 
-### REQ-DPA-003: Salarisbureau openconnector sources
+### Requirement: REQ-DPA-003: Salarisbureau openconnector sources
 
 SHALL declare openconnector source rows for ADP/Loket/Visma/Nmbrs OAuth2 salary feed imports, materializing as loonkosten journal entries.
 
@@ -76,7 +76,7 @@ GIVEN ADP OAuth configured with credentials
 WHEN monthly salary run syncs  
 THEN journal entries materialize for each employee per period.
 
-### REQ-DPA-004: Opdrachtgeversverklaring docudesk template
+### Requirement: REQ-DPA-004: Opdrachtgeversverklaring docudesk template
 
 SHALL reference standard docudesk template for opdrachtgeversverklaring.
 
@@ -86,7 +86,7 @@ SHALL reference standard docudesk template for opdrachtgeversverklaring.
 - **WHEN** a user generates an opdrachtgeversverklaring document
 - **THEN** the document is produced from the referenced docudesk template
 
-### REQ-DPA-005: IB47-formulier docudesk template
+### Requirement: REQ-DPA-005: IB47-formulier docudesk template
 
 SHALL reference docudesk template for IB47-formulier (Belastingdienst format) with annual batch submission.
 
@@ -96,7 +96,7 @@ GIVEN ZZP workers with income records in 2025
 WHEN annual IB47 batch is prepared  
 THEN each IB47Record generates a Form 47 for submission to Belastingdienst.
 
-### REQ-DPA-006: Manifest navigation entry
+### Requirement: REQ-DPA-006: Manifest navigation entry
 
 SHALL add `featureFlags.mkb-detachering` navigation for payroll/detachering administration.
 
