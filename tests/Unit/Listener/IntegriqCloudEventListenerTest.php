@@ -35,7 +35,7 @@ use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
 use OCA\Shillinq\Service\PaymentReconciliationService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
 use OCP\IAppConfig;
@@ -108,7 +108,7 @@ final class IntegriqCloudEventListenerTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$contract = $this->createStub(ListenerSlugContract::class);
 		$contract->method('isEnabled')->willReturn(false);
@@ -123,7 +123,7 @@ final class IntegriqCloudEventListenerTest extends TestCase {
 		return new IntegriqCloudEventListener(
 			schemaResolver: new ListenerSchemaResolver(
 				container: $container,
-				settingsService: $settings,
+				registerLocation: $settings,
 				contract: $contract,
 				logger: new NullLogger(),
 			),

@@ -83,14 +83,14 @@ class SlotService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ICacheFactory $cacheFactory Distributed cache factory (slot result cache).
 	 * @param ITimeFactory $time Time provider for past-slot filtering.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ICacheFactory $cacheFactory,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
@@ -399,13 +399,13 @@ class SlotService {
 	 * @return array<int,array{startTime:string,endTime:string}>
 	 */
 	private function loadAppointmentsForResourceOnDate(string $resourceId, string $date): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return [];
 		}
 
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			$records = $objectService
 				->setRegister($registerSlug)
 				->setSchema('Appointment')
@@ -467,13 +467,13 @@ class SlotService {
 	 * @return array<string,mixed>|null
 	 */
 	private function findByLogicalKey(string $schema, string $field, string $value): ?array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return null;
 		}
 
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 			$records = $objectService
 				->setRegister($registerSlug)
 				->setSchema($schema)

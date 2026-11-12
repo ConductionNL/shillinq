@@ -36,7 +36,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
@@ -503,7 +503,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 		$appConfig = $this->createStub(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$contract = $this->createStub(ListenerSlugContract::class);
 		$contract->method('isEnabled')->willReturn(false);
@@ -515,7 +515,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 			LoggerInterface::class => ($this->listenerLogger ?? new NullLogger()),
 			ListenerSchemaResolver::class => new ListenerSchemaResolver(
 				container: $container,
-				settingsService: $settings,
+				registerLocation: $settings,
 				contract: $contract,
 				logger: new NullLogger(),
 			),

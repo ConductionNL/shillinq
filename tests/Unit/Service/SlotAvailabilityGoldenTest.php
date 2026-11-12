@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
@@ -110,7 +110,7 @@ final class SlotAvailabilityGoldenTest extends TestCase {
 		);
 		$factory->method('createLocal')->willReturn($cache);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($world['or']);
 		$settings->method('getRegisterSlug')->willReturn('books');
 
@@ -120,7 +120,7 @@ final class SlotAvailabilityGoldenTest extends TestCase {
 		$time = $this->createStub(ITimeFactory::class);
 		$time->method('getTime')->willReturn((int) strtotime('2026-05-22T10:20:00Z'));
 
-		$service = new SlotService(container: $container, settings: $settings, cacheFactory: $factory, time: $time, logger: $logger);
+		$service = new SlotService(container: $container, registerLocation: $settings, cacheFactory: $factory, time: $time, logger: $logger);
 		$result  = $service->getAvailableSlots('svc-1', 'room-1', $world['date']);
 
 		$this->assertGolden(
