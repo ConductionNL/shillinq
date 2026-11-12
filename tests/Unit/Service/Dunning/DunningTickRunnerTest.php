@@ -36,6 +36,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Dunning;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
 use OCA\Shillinq\BackgroundJob\DunningTickJob;
 use OCA\Shillinq\Service\Dunning\DunningStageDefaultTexts;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
@@ -512,7 +514,7 @@ final class DunningTickRunnerTest extends TestCase {
 			$this->addInvoice(id: sprintf('inv-p%03d', $i), number: sprintf('2026-1%03d', $i), dueDate: '2026-10-21');
 		}
 
-		$this->store->deleteObject('inv-0412', schema: 'ARInvoice');
+		$this->store->deleteObject(deletion: new ObjectDeletion(uuid: 'inv-0412', target: new ObjectFindTarget(schema: 'ARInvoice')));
 
 		$reports = $this->runner()->runAll(now: new DateTimeImmutable(self::TODAY));
 

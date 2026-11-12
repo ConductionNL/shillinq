@@ -290,11 +290,12 @@ final class VATReturnServiceEntityReturnTest extends TestCase {
 			/**
 			 * Delete a row by id.
 			 *
-			 * @param string $id Row id.
+			 * @param \OCA\OpenRegister\Service\Object\ObjectDeletion $deletion The uuid to delete.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion): void {
+				$id = $deletion->uuid;
 				$this->data[$this->schema] = array_values(
 					array_filter(
 						($this->data[$this->schema] ?? []),

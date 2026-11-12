@@ -65,6 +65,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IDBConnection;
@@ -190,7 +191,7 @@ class RetireSubsidieSchema implements IRepairStep {
 				$objectService
 					->setRegister($registerSlug)
 					->setSchema(self::SCHEMA)
-					->deleteObject($subsidyId, _rbac: false, _multitenancy: false);
+					->deleteObject(deletion: new ObjectDeletion(uuid: $subsidyId), _rbac: false, _multitenancy: false);
 
 				$deleted++;
 			} catch (\Throwable $e) {

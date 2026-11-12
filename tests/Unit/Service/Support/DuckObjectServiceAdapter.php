@@ -67,6 +67,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use LogicException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use OCP\IUser;
 use RuntimeException;
 
@@ -725,27 +726,23 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	/**
 	 * Delegate a delete when the double models one, refuse otherwise.
 	 *
-	 * @param string          $uuid            The object UUID.
-	 * @param string|int|null $register        Register id, UUID or slug.
-	 * @param string|int|null $schema          Schema id, UUID or slug.
+	 * @param ObjectDeletion $deletion The uuid, the register and schema, the acting user and whether to delete permanently.
 	 * @param bool            $_rbac           Apply register RBAC.
 	 * @param bool            $_multitenancy   Apply organisation scoping.
 	 * @param bool            $_retentionSweep Run as part of a retention sweep.
-	 * @param ?IUser          $currentUser     Explicit acting user.
-	 * @param bool            $permanent       Delete permanently.
 	 *
 	 * @return bool
 	 */
 	public function deleteObject(
-		string $uuid,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_retentionSweep = false,
-		?IUser $currentUser = null,
-		bool $permanent = false
+		bool $_retentionSweep = false
 	): bool {
+		$uuid = $deletion->uuid;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent;
 		if ($schema !== null) {
 			$this->setSchema(schema: $schema);
 		}
