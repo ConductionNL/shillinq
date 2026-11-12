@@ -2842,7 +2842,11 @@
 				"evidence": "lib/Service/Extraction/GlAccountSuggestionClient.php calls docudesk's /api/extraction/{id}/suggest-account; src/modals/BillImportModal.vue:549 and src/views/ReceiptCapture.vue:500 request a suggestion that the operator must accept ('Use suggestion'); zzz-mcp-tool-surface.json exposes read-only MCP search/get only",
 				"reachedOn": "Dashboard / 'Import bill' -> BillImportModal review step (extraction drafts only)",
 				"owner": "ConductionNL/filinq",
-				"change": "filinq/extraction-receipt-photo-and-invoice-agent"
+				"change": "filinq/extraction-receipt-photo-and-invoice-agent",
+				"requirement": [
+					"filinq:openspec/changes/extraction-receipt-photo-and-invoice-agent/specs/financial-document-field-extraction :: Each extraction carries an unattended verdict with its reasons (REQ-ERP-003)",
+					"filinq:openspec/changes/extraction-receipt-photo-and-invoice-agent/specs/financial-document-field-extraction :: The verdict is sent as a sibling event (REQ-ERP-004)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2949,7 +2953,11 @@
 				"evidence": "src/views/ReceiptCapture.vue:3-18 reviews a Receipt draft created by lib/Listener/ExtractionCompletedListener from docudesk's extraction.completed event (ExtractionPrefillService.php:207 mapReceiptFields incl. category); re-request at ReceiptCapture.vue:573 needs an existing sourceDocumentUri; no camera/upload control in shillinq's receipt screens",
 				"reachedOn": "Receipts /inkoop/receipts (menu Purchasing > Receipts); ReceiptDetail /inkoop/receipts/:id (ReceiptCapture)",
 				"owner": "ConductionNL/filinq",
-				"change": "filinq/extraction-receipt-photo-and-invoice-agent"
+				"change": "filinq/extraction-receipt-photo-and-invoice-agent",
+				"requirement": [
+					"filinq:openspec/changes/extraction-receipt-photo-and-invoice-agent/specs/receipt-photo-capture :: One call stores a photo and starts the read (REQ-ERP-001)",
+					"filinq:openspec/changes/extraction-receipt-photo-and-invoice-agent/specs/receipt-photo-capture :: The photo is checked and turned upright before it is read (REQ-ERP-002)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5051,7 +5059,11 @@
 				"owner": "ConductionNL/pipelinq",
 				"change": "2026-06-14-inventory-product-catalog",
 				"spec": "pipelinq/product-catalog",
-				"note": "decision 392 (12 Nov): pipelinq owns products and variants (REQ-SPVP-004 moved the product master there); shillinq reads it read-only and adds stock. Provider row for the pipelinq lane: no pipelinq requirement says variants yet."
+				"note": "decision 392 (12 Nov): pipelinq owns products and variants (REQ-SPVP-004 moved the product master there); shillinq reads it read-only and adds stock. Provider row for the pipelinq lane: no pipelinq requirement says variants yet.",
+				"requirement": [
+					"pipelinq:openspec/changes/specify-capability-rows/specs/product-catalog :: A product keeps attributes and variants with their own code and price",
+					"pipelinq:openspec/specs/product-vendor-master :: REQ-PVM-007 — The system SHALL ingest the shillinq product master-data export without dropping fields"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5898,7 +5910,8 @@
 				"evidence": "the fields every page shows are fixed in src/manifest.json config.fields; an admin could add a property to a schema in OpenRegister, but no shillinq page would show it",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/openregister",
-				"change": "openregister/fields-a-user-adds-and-choices-a-record-narrows"
+				"change": "openregister/fields-a-user-adds-and-choices-a-record-narrows",
+				"requirement": "openregister:openspec/changes/fields-a-user-adds-and-choices-a-record-narrows/specs/runtime-schema-api :: A property may be declared at a scope narrower than the schema (REQ-FUC-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7830,7 +7843,11 @@
 				"readOn": "2026-09-26",
 				"evidence": "Extraction drafts from docudesk fill supplier invoice and receipt fields, and the operator accepts them (src/modals/BillImportModal.vue:549, src/views/ReceiptCapture.vue:500, lib/Service/Extraction/GlAccountSuggestionClient.php).",
 				"reachedOn": "Dashboard Import bill -> BillImportModal; ReceiptCapture",
-				"change": "filinq/extraction-model-filled-fields"
+				"change": "filinq/extraction-model-filled-fields",
+				"requirement": [
+					"filinq:openspec/changes/extraction-model-filled-fields/specs/schema-field-suggestions :: Only declared fields are filled (REQ-EMF-001)",
+					"filinq:openspec/changes/extraction-model-filled-fields/specs/schema-field-suggestions :: A person decides each field before anything is written (REQ-EMF-003)"
+				]
 			},
 			"screen": {
 				"canvas": "design-system",
