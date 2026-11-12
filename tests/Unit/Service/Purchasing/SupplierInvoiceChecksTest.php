@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Purchasing;
 
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -72,7 +72,7 @@ class SupplierInvoiceChecksTest extends TestCase {
 	 * @return SupplierInvoiceChecks
 	 */
 	private function checks(array $records): SupplierInvoiceChecks {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SupplierInvoiceChecks(new InMemoryObjectServiceStub($records), $settings);
@@ -115,7 +115,7 @@ class SupplierInvoiceChecksTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFailedLookupIsAPossibleDuplicate(): void {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willThrowException(new RuntimeException('register gone'));
 		$checks = new SupplierInvoiceChecks(new InMemoryObjectServiceStub([]), $settings);
 

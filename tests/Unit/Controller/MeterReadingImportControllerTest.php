@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\MeterReadingImportController;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
@@ -116,7 +116,7 @@ class MeterReadingImportControllerTest extends TestCase {
 		$container->method('get')->willReturn($this->store);
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $args = []): string => vsprintf($text, $args));

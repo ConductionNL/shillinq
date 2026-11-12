@@ -1100,7 +1100,7 @@ class SettingsService {
 	 * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
 	 */
 	private function templateSeeds(): TemplateSeedService {
-		return new TemplateSeedService(settings: $this, importer: $this->seedImporter(), logger: $this->logger);
+		return new TemplateSeedService(registerLocation: $this->registerLocation, importer: $this->seedImporter(), logger: $this->logger);
 	}//end templateSeeds()
 
 	/**

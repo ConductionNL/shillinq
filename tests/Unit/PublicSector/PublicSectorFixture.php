@@ -33,7 +33,7 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 use OCA\Shillinq\Service\PublicSector\PublicSectorRecords;
 use OCA\Shillinq\Service\PublicSector\ReserveBalances;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -100,7 +100,7 @@ trait PublicSectorFixture {
 	}//end seed()
 
 	private function records(): PublicSectorRecords {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return new PublicSectorRecords($this->store, $this->runner(), $settings);
 

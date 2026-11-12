@@ -38,7 +38,7 @@ use InvalidArgumentException;
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 
 /**
  * Pivots posted result lines on two axes.
@@ -84,11 +84,11 @@ class LedgerPivotService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister object service.
-	 * @param SettingsService        $settings      Resolves the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 	) {
 
 	}//end __construct()
@@ -574,7 +574,7 @@ class LedgerPivotService {
 		$offset = 0;
 		do {
 			$page = $this->objectService
-				->setRegister($this->settings->getRegisterSlug())
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema($schema)
 				->findAll(['limit' => self::PAGE_SIZE, 'offset' => $offset, 'filters' => $filters]);
 			foreach ($page as $row) {

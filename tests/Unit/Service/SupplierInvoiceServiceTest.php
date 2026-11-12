@@ -41,6 +41,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
@@ -129,7 +130,7 @@ final class SupplierInvoiceServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $this->logger,
 			objectService: $stub,
-			checks: new SupplierInvoiceChecks($stub, $settings),
+			checks: new SupplierInvoiceChecks($stub, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 			vatNumberCheck: $this->vatNumberCheck(store: $stub, settings: $settings, answer: $vies),
 		);
 

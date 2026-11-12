@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Usage;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
@@ -79,7 +79,7 @@ class MeterReadingImportGoldenTest extends TestCase {
 				return $entity;
 			}
 		);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$l10n = $this->createStub(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters));

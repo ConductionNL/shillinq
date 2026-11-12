@@ -66,13 +66,13 @@ class BillablePeriodInvoiceService {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param InvoiceGenerationService $invoices The unchanged draftInvoice() machinery.
-	 * @param SettingsService $settings Resolves the register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly InvoiceGenerationService $invoices,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -534,6 +534,6 @@ class BillablePeriodInvoiceService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 	}//end scoped()
 }//end class

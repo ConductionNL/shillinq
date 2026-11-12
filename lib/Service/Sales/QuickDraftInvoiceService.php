@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sales;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use DateTimeImmutable;
 use OCP\Security\ISecureRandom;
@@ -59,12 +59,12 @@ class QuickDraftInvoiceService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param SettingsService        $settings      The register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ISecureRandom          $random        The provisional number's suffix.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ISecureRandom $random,
 	) {
 	}//end __construct()
@@ -410,6 +410,6 @@ class QuickDraftInvoiceService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 	}//end scoped()
 }//end class

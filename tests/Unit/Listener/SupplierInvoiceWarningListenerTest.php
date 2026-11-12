@@ -28,6 +28,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -64,7 +65,7 @@ class SupplierInvoiceWarningListenerTest extends TestCase {
 		$resolver->method('schemaSlug')->willReturn('SupplierInvoice');
 
 		return new SupplierInvoiceWarningListener(
-			new SupplierInvoiceChecks($store, $settings),
+			new SupplierInvoiceChecks($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 			$resolver,
 			$store,
 			$settings,
