@@ -107,4 +107,27 @@ final class SmsPhoneNumberNormalizerTest extends TestCase {
 
 	}//end testStripSeparators()
 
+	/**
+	 * A domestic number for a country other than NL has no E.164 form.
+	 *
+	 * @return void
+	 */
+	public function testADomesticNumberOutsideNlHasNoE164Form(): void {
+		self::assertNull($this->normalizer->toE164('0612345678', 'BE'));
+		self::assertSame('+32470123456', $this->normalizer->toE164('+32470123456', 'BE'));
+
+	}//end testADomesticNumberOutsideNlHasNoE164Form()
+
+	/**
+	 * A number too short to keep both ends shows only its last digit.
+	 *
+	 * @return void
+	 */
+	public function testAShortNumberShowsOnlyItsLastDigit(): void {
+		self::assertSame('*2', $this->normalizer->mask('12'));
+		self::assertSame('****8', $this->normalizer->mask('+3178'));
+		self::assertSame('7', $this->normalizer->mask('7'));
+
+	}//end testAShortNumberShowsOnlyItsLastDigit()
+
 }//end class
