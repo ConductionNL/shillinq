@@ -70,6 +70,22 @@ use RuntimeException;
 class ComplianceExportService {
 
 	/**
+	 * The export's columns, in order.
+	 *
+	 * @var array<int,string>
+	 */
+	private const EXPORT_HEADERS = [
+		'timestamp',
+		'objectType',
+		'objectId',
+		'action',
+		'actor',
+		'fields_changed',
+		'beforeValue',
+		'afterValue',
+	];
+
+	/**
 	 * PII field names that MUST be stripped before rendering per
 	 * REQ-RAP-005 + REQ-RAP-009 — applied recursively to before/after
 	 * snapshots.
@@ -181,6 +197,47 @@ class ComplianceExportService {
 	): array {
 		$this->assertDateRange(from: $from, to: $to);
 
+		$this->assertExportOptions(scope: $scope, format: $format);
+
+		if ($scope === self::SCOPE_SUBJECT && $actorFilter === null) {
+			$actorFilter = $this->currentUserId();
+		}
+
+		$rows = $this->exportRows(
+			events: $this->queryAuditTrail(from: $from, to: $to),
+			scope: $scope,
+			actorFilter: $actorFilter,
+		);
+
+		$generatedAt = date(format: 'c');
+		$generatedBy = $this->currentUserId();
+
+		return [
+			'from' => $from,
+			'to' => $to,
+			'scope' => $scope,
+			'format' => $format,
+			'actorFilter' => $actorFilter,
+			'generatedAt' => $generatedAt,
+			'generatedBy' => $generatedBy,
+			'eventCount' => count($rows),
+			'headers' => self::EXPORT_HEADERS,
+			'rows' => $rows,
+		];
+
+	}//end generateExport()
+
+	/**
+	 * Refuse a scope or format the export does not know.
+	 *
+	 * @param string $scope  The requested scope.
+	 * @param string $format The requested format.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When either is unknown.
+	 */
+	private function assertExportOptions(string $scope, string $format): void {
 		if ($scope !== self::SCOPE_ALL && $scope !== self::SCOPE_SUBJECT) {
 			throw new RuntimeException(message: 'Invalid scope (must be all or subject)');
 		}
@@ -189,14 +246,21 @@ class ComplianceExportService {
 			throw new RuntimeException(message: 'Invalid format (must be csv or json)');
 		}
 
-		if ($scope === self::SCOPE_SUBJECT && $actorFilter === null) {
-			$actorFilter = $this->currentUserId();
-		}
+	}//end assertExportOptions()
 
-		$rawEvents = $this->queryAuditTrail(from: $from, to: $to);
-
+	/**
+	 * Render the events as export rows; a subject export with an actor keeps
+	 * only that actor's events.
+	 *
+	 * @param array<int,mixed> $events      The audit-trail events.
+	 * @param string           $scope       The export scope.
+	 * @param string|null      $actorFilter The actor a subject export is narrowed to.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function exportRows(array $events, string $scope, ?string $actorFilter): array {
 		$rows = [];
-		foreach ($rawEvents as $event) {
+		foreach ($events as $event) {
 			if (is_array($event) === false) {
 				continue;
 			}
@@ -211,32 +275,9 @@ class ComplianceExportService {
 			$rows[] = $this->renderRow(event: $event);
 		}
 
-		$generatedAt = date(format: 'c');
-		$generatedBy = $this->currentUserId();
+		return $rows;
 
-		return [
-			'from' => $from,
-			'to' => $to,
-			'scope' => $scope,
-			'format' => $format,
-			'actorFilter' => $actorFilter,
-			'generatedAt' => $generatedAt,
-			'generatedBy' => $generatedBy,
-			'eventCount' => count($rows),
-			'headers' => [
-				'timestamp',
-				'objectType',
-				'objectId',
-				'action',
-				'actor',
-				'fields_changed',
-				'beforeValue',
-				'afterValue',
-			],
-			'rows' => $rows,
-		];
-
-	}//end generateExport()
+	}//end exportRows()
 
 	/**
 	 * Render the in-memory export as a single CSV blob (RFC 4180).

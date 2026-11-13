@@ -278,9 +278,54 @@ class PaymentReconciliationService {
 
 		$registerSlug = $this->getRegisterSlug();
 
-		// Resolve across both schemas — the shared surface (REQ-APL-004).
-		$record = null;
-		$schema = null;
+		$match = $this->findByIntent(registerSlug: $registerSlug, paymentIntentId: $paymentIntentId);
+		if ($match === null) {
+			return ['result' => self::RESULT_NOT_FOUND, 'schema' => null];
+		}
+
+		$record = $match['record'];
+		$schema = $match['schema'];
+		$currentState = (string)($record['state'] ?? 'pending');
+
+		// Idempotency / no-downgrade guard: a replayed or late webhook on an
+		// already-settled record does nothing (REQ-APL-004 replay safety).
+		if (in_array($currentState, self::ALREADY_SETTLED[$outcome], true) === true) {
+			$this->logger->debug(
+				'Shillinq: payment webhook is an idempotent no-op',
+				['gateway' => $gateway, 'schema' => $schema, 'currentState' => $currentState, 'outcome' => $outcome]
+			);
+			return ['result' => self::RESULT_NOOP, 'schema' => $schema];
+		}
+
+		$record = $this->stampOutcome(record: $record, gateway: $gateway, outcome: $outcome, event: $event);
+
+		$result = self::RESULT_APPLIED;
+		if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
+			$settled = $this->settleCapturedRequest(registerSlug: $registerSlug, request: $record);
+			$record = $settled['request'];
+			$result = $settled['result'];
+		}
+
+		$this->objectService->saveObject(
+			object: $record,
+			register: $registerSlug,
+			schema: $schema,
+			_rbac: false,
+		);
+
+		return ['result' => $result, 'schema' => $schema];
+	}//end reconcile()
+
+	/**
+	 * The record a payment intent belongs to, looked up across both schemas
+	 * in order (REQ-APL-004).
+	 *
+	 * @param string $registerSlug    The register.
+	 * @param string $paymentIntentId The gateway's payment intent id.
+	 *
+	 * @return array{record: array<string, mixed>, schema: string}|null The first match, or null.
+	 */
+	private function findByIntent(string $registerSlug, string $paymentIntentId): ?array {
 		foreach (self::SCHEMAS as $candidateSchema) {
 			$matches = $this->objectService
 				->setRegister($registerSlug)
@@ -295,36 +340,30 @@ class PaymentReconciliationService {
 				);
 
 			if (empty($matches) === false) {
-				$record = $matches[0];
-				$schema = $candidateSchema;
-				break;
+				return ['record' => $matches[0], 'schema' => $candidateSchema];
 			}
 		}
 
-		if ($record === null || $schema === null) {
-			return ['result' => self::RESULT_NOT_FOUND, 'schema' => null];
-		}
+		return null;
+	}//end findByIntent()
 
-		$currentState = (string)($record['state'] ?? 'pending');
-		$targetState = self::TARGET_STATE[$outcome];
-
-		// Idempotency / no-downgrade guard: a replayed or late webhook on an
-		// already-settled record does nothing (REQ-APL-004 replay safety).
-		if (in_array($currentState, self::ALREADY_SETTLED[$outcome], true) === true) {
-			$this->logger->debug(
-				'Shillinq: payment webhook is an idempotent no-op',
-				['gateway' => $gateway, 'schema' => $schema, 'currentState' => $currentState, 'outcome' => $outcome]
-			);
-			return ['result' => self::RESULT_NOOP, 'schema' => $schema];
-		}
-
-		$now = gmdate('Y-m-d\TH:i:s\Z');
-
-		$record['state'] = $targetState;
+	/**
+	 * Stamp an outcome on a record: its target state and gateway, and the
+	 * capture or failure details the event carries.
+	 *
+	 * @param array<string, mixed> $record  The payment record.
+	 * @param string               $gateway The gateway slug.
+	 * @param string               $outcome A known outcome.
+	 * @param array<string, mixed> $event   The normalised event.
+	 *
+	 * @return array<string, mixed> The stamped record.
+	 */
+	private function stampOutcome(array $record, string $gateway, string $outcome, array $event): array {
+		$record['state'] = self::TARGET_STATE[$outcome];
 		$record['paymentGateway'] = $gateway;
 
 		if ($outcome === self::OUTCOME_CAPTURED) {
-			$record['capturedAt'] = $now;
+			$record['capturedAt'] = gmdate('Y-m-d\TH:i:s\Z');
 			if (isset($event['settlementReference']) === true) {
 				$record['settlementReference'] = (string)$event['settlementReference'];
 			}
@@ -338,72 +377,61 @@ class PaymentReconciliationService {
 			$record['failureReason'] = (string)($event['errorMessage'] ?? 'Payment failed at gateway.');
 		}
 
-		// On capture of a PaymentRequest, settle the linked ARInvoice through its
-		// existing lifecycle (AR core owns GL posting). If that is impossible the
-		// request lands in captured_unapplied — surfaced, never silently dropped
-		// (REQ-APL-005). DepositPayment capture handling is unchanged from the
-		// deposits path (its own lifecycle owns AR materialisation).
-		// A request with an invoice behind it settles that invoice, whatever its
-		// subjectKind: a school contribution stands on an object AND on its
-		// invoice, and the invoice already carries the revenue, so booking the
-		// object receipt as well would book the income twice (REQ-SCON-006).
-		$hasInvoice = ((string)($record['invoiceReference'] ?? '') !== '');
-		if ($outcome === self::OUTCOME_CAPTURED
-			&& $schema === self::SCHEMA_PAYMENT_REQUEST
-			&& (string)($record['subjectKind'] ?? 'invoice') === 'object'
-			&& $hasInvoice === false
-		) {
-			// A request on an object has no invoice to settle. Shillinq books the
-			// receipt itself, against the account mapped to the request type, and
-			// the domain app books nothing (ADR-107 / REQ-SOPR-002).
-			$refusal = $this->bookObjectReceipt(registerSlug: $registerSlug, request: $record);
+		return $record;
+	}//end stampOutcome()
+
+	/**
+	 * Settle a captured PaymentRequest.
+	 *
+	 * A request with an invoice behind it settles that invoice through its
+	 * existing lifecycle (AR core owns GL posting), whatever its subjectKind:
+	 * a school contribution stands on an object AND on its invoice, and the
+	 * invoice already carries the revenue, so booking the object receipt as
+	 * well would book the income twice (REQ-SCON-006). A request on an object
+	 * without an invoice has Shillinq book the receipt itself, against the
+	 * account mapped to the request type, and the domain app books nothing
+	 * (ADR-107 / REQ-SOPR-002). If settling is impossible the request lands in
+	 * captured_unapplied — surfaced, never silently dropped (REQ-APL-005).
+	 * DepositPayment capture handling is unchanged from the deposits path (its
+	 * own lifecycle owns AR materialisation), so it never reaches this method.
+	 *
+	 * @param string               $registerSlug The register.
+	 * @param array<string, mixed> $request      The captured request.
+	 *
+	 * @return array{request: array<string, mixed>, result: string} The request to save and the result.
+	 */
+	private function settleCapturedRequest(string $registerSlug, array $request): array {
+		$hasInvoice = ((string)($request['invoiceReference'] ?? '') !== '');
+		if ((string)($request['subjectKind'] ?? 'invoice') === 'object' && $hasInvoice === false) {
+			$refusal = $this->bookObjectReceipt(registerSlug: $registerSlug, request: $request);
 			if ($refusal !== null) {
-				$record['state'] = 'captured_unapplied';
-				$record['failureReason'] = $refusal;
-				$this->objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: $schema,
-					_rbac: false,
-				);
-				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
+				$request['state'] = 'captured_unapplied';
+				$request['failureReason'] = $refusal;
+				return ['request' => $request, 'result' => self::RESULT_UNAPPLIED];
 			}
 
-			$record['confirmationSummary'] = $this->buildObjectConfirmationSummary(request: $record);
-			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
-		} elseif ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
-			$settledInvoice = $this->settleLinkedInvoice(
-				objectService: $this->objectService,
-				registerSlug: $registerSlug,
-				request: $record,
-			);
-			if ($settledInvoice === null) {
-				$record['state'] = 'captured_unapplied';
-				$this->objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: $schema,
-					_rbac: false,
-				);
-				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
-			}
+			$request['confirmationSummary'] = $this->buildObjectConfirmationSummary(request: $request);
+			$request = $this->settlements()->stampSettled(request: $request, settledAt: (string)$request['capturedAt'], via: 'provider');
+			return ['request' => $request, 'result' => self::RESULT_APPLIED];
+		}
 
-			// Write a subject-safe confirmation the debtor reads through the
-			// existing read-only paymentRequests portal collection — no
-			// dedicated inbox schema (portal-payment-initiation REQ-SPPI-005).
-			$record['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $record);
-			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
-		}//end if
-
-		$this->objectService->saveObject(
-			object: $record,
-			register: $registerSlug,
-			schema: $schema,
-			_rbac: false,
+		$settledInvoice = $this->settleLinkedInvoice(
+			objectService: $this->objectService,
+			registerSlug: $registerSlug,
+			request: $request,
 		);
+		if ($settledInvoice === null) {
+			$request['state'] = 'captured_unapplied';
+			return ['request' => $request, 'result' => self::RESULT_UNAPPLIED];
+		}
 
-		return ['result' => self::RESULT_APPLIED, 'schema' => $schema];
-	}//end reconcile()
+		// Write a subject-safe confirmation the debtor reads through the
+		// existing read-only paymentRequests portal collection — no
+		// dedicated inbox schema (portal-payment-initiation REQ-SPPI-005).
+		$request['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $request);
+		$request = $this->settlements()->stampSettled(request: $request, settledAt: (string)$request['capturedAt'], via: 'provider');
+		return ['request' => $request, 'result' => self::RESULT_APPLIED];
+	}//end settleCapturedRequest()
 
 	/**
 	 * Settle the ARInvoice linked to a captured PaymentRequest through the AR
