@@ -447,4 +447,60 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		$this->assertSame([], $logger->calls);
 
 	}//end testNonInnovatieboxSchemaIsIgnored()
+	/**
+	 * An amended NexusCalculation without a readable prior state is still
+	 * recorded as a blocked amendment, every field counted as changed.
+	 *
+	 * @return void
+	 */
+	public function testANexusAmendmentWithoutPriorStateIsRecorded(): void {
+		$trail = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$trail,
+			$this->fakeVsoValidator(false),
+			$this->resolver('NexusCalculation'),
+			$this->recordingLogger()
+		);
+
+		$next = $this->entity('4101', ['administrationId' => 'adm-x', 'financialYear' => 2026, 'own_rd_cost' => 5]);
+		$listener->handle(new ObjectUpdatedEvent($next, null));
+		$listener->handle(new ObjectUpdatedEvent(null, null));
+
+		$this->assertCount(1, $trail->calls);
+		$this->assertSame(InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED, $trail->calls[0]['event_type']);
+		$this->assertSame('immutable_schema_violation', $trail->calls[0]['reason']);
+		$this->assertSame('NexusCalculation', $trail->calls[0]['subject_schema']);
+		$this->assertSame(['administrationId', 'financialYear', 'own_rd_cost'], $trail->calls[0]['details']['changed_keys']);
+	}//end testANexusAmendmentWithoutPriorStateIsRecorded()
+
+	/**
+	 * A failing audit write and a failing handler are logged, never thrown.
+	 *
+	 * @return void
+	 */
+	public function testFailuresAreLoggedNotThrown(): void {
+		$trail = new class extends AuditTrailMapper {
+			/**
+			 * The write fails.
+			 *
+			 * @param ObjectAuditEvent $event The object, action and context.
+			 * @return object
+			 */
+			public function recordObjectEvent(ObjectAuditEvent $event): object {
+				throw new \RuntimeException('audit table locked');
+			}//end recordObjectEvent()
+		};
+		$psr = $this->recordingLogger();
+		$listener = new InnovatieboxAuditTrailListener($trail, $this->fakeVsoValidator(false), $this->resolver('NexusCalculation'), $psr);
+		$listener->handle(new ObjectCreatedEvent($this->entity('4101', ['administrationId' => 'adm-x', 'financialYear' => 2026])));
+
+		$resolver = $this->createStub(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willThrowException(new \RuntimeException('schema table gone'));
+		$broken = new InnovatieboxAuditTrailListener($this->fakeLogger(), $this->fakeVsoValidator(false), $resolver, $psr);
+		$broken->handle(new ObjectCreatedEvent($this->entity('4101', ['administrationId' => 'adm-x'])));
+
+		$messages = array_column($psr->records, 'message');
+		$this->assertContains('InnovatieboxAuditTrailListener: failed to write the audit row', $messages);
+		$this->assertContains('InnovatieboxAuditTrailListener: handler raised — swallowed to protect write path', $messages);
+	}//end testFailuresAreLoggedNotThrown()
 }//end class

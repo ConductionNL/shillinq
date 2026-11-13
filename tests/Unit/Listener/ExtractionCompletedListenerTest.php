@@ -124,6 +124,13 @@ final class ExtractionCompletedListenerTest extends TestCase {
 	private ?\Psr\Log\LoggerInterface $listenerLogger = null;
 
 	/**
+	 * When true, every notify() call throws.
+	 *
+	 * @var bool
+	 */
+	private bool $notifyFails = false;
+
+	/**
 	 * REQ-RXC-001 scenario 1: a supplier-invoice extraction becomes a
 	 * confidence-scored draft.
 	 *
@@ -617,6 +624,10 @@ final class ExtractionCompletedListenerTest extends TestCase {
 		);
 		$manager->method('notify')->willReturnCallback(
 			function (INotification $notification) use (&$notifications): void {
+				if ($this->notifyFails === true) {
+					throw new \RuntimeException('push gateway down');
+				}
+
 				$state = ($this->notificationState[spl_object_id($notification)] ?? null);
 				if ($state !== null) {
 					$notifications[] = ['user' => $state->user, 'subject' => $state->subject, 'reference' => $state->reference];
@@ -714,4 +725,154 @@ final class ExtractionCompletedListenerTest extends TestCase {
 		self::assertCount(0, $notifications);
 
 	}//end testLogRecordsPerOutcome()
+	/**
+	 * A logger that keeps [level, message] of every record.
+	 *
+	 * @return \Psr\Log\LoggerInterface
+	 */
+	private function recordingLogger(): \Psr\Log\LoggerInterface {
+		return new class extends \Psr\Log\AbstractLogger {
+			/**
+			 * The records.
+			 *
+			 * @var array<int,array{0:string,1:string}>
+			 */
+			public array $records = [];
+
+			/**
+			 * Record a log call.
+			 *
+			 * @param mixed $level Level.
+			 * @param \Stringable|string $message Message.
+			 * @param array<string,mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, \Stringable|string $message, array $context = []): void {
+				$this->records[] = [(string)$level, (string)$message];
+			}
+		};
+	}//end recordingLogger()
+
+	/**
+	 * With the draft lookup and the save failing, the extraction is treated as
+	 * new, both failures are logged, and the requester still hears of it.
+	 *
+	 * @return void
+	 */
+	public function testLookupAndSaveFailuresAreLogged(): void {
+		$logger = $this->recordingLogger();
+		$this->listenerLogger = $logger;
+		$store = new class {
+			/**
+			 * @var string
+			 */
+			private string $schema = '';
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				unset($register);
+				return $this;
+			}
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}
+
+			/**
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				unset($params);
+				if ($this->schema === 'AdministrationMembership') {
+					return [['id' => 'm-alice', 'userId' => 'alice', 'administrationId' => 'adm-1']];
+				}
+
+				throw new \RuntimeException('database gone');
+			}
+
+			/**
+			 * @param array<string,mixed> $object Object payload.
+			 *
+			 * @return never
+			 */
+			public function saveObject(array $object): never {
+				unset($object);
+				throw new \RuntimeException('disk full');
+			}
+		};
+		$listener = $this->buildListenerOver(store: $store, notifications: $notifications);
+
+		$listener->handle($this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 5.0], fieldConfidence: [], overallConfidence: 0.5));
+
+		self::assertContains(['info', 'ExtractionCompletedListener: OR query unavailable — treating as new draft'], $logger->records);
+		self::assertContains(['error', 'ExtractionCompletedListener: failed to persist extraction draft'], $logger->records);
+		self::assertCount(1, $notifications);
+		self::assertSame(['alice', 'extraction_draft_created'], [$notifications[0]['user'], $notifications[0]['subject']]);
+		self::assertStringStartsWith('REC-EXTRACT-', $notifications[0]['reference'], 'the unsaved draft is referenced by its derived number');
+
+	}//end testLookupAndSaveFailuresAreLogged()
+
+	/**
+	 * A failing notification is logged; the draft is still saved.
+	 *
+	 * @return void
+	 */
+	public function testANotificationFailureIsLogged(): void {
+		$logger = $this->recordingLogger();
+		$this->listenerLogger = $logger;
+		$this->notifyFails = true;
+		$saved = [];
+		$listener = $this->buildListener(existing: [], saved: $saved, notifications: $notifications);
+
+		$listener->handle($this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 5.0], fieldConfidence: [], overallConfidence: 0.5));
+
+		self::assertCount(1, $saved);
+		self::assertSame([], $notifications);
+		self::assertContains(['warning', 'ExtractionCompletedListener: failed to dispatch extraction-draft notification'], $logger->records);
+
+	}//end testANotificationFailureIsLogged()
+
+	/**
+	 * An event whose payload cannot be read is logged and swallowed; an empty
+	 * document uri or type is ignored.
+	 *
+	 * @return void
+	 */
+	public function testUnreadableOrEmptyEventsWriteNothing(): void {
+		$logger = $this->recordingLogger();
+		$this->listenerLogger = $logger;
+		$saved = [];
+		$listener = $this->buildListener(existing: [], saved: $saved, notifications: $notifications);
+
+		$broken = new class('', 'alice', 'shillinq', 'receipt', [], [], 0.0) extends FinancialExtractionCompletedEvent {
+			/**
+			 * The uri cannot be read.
+			 *
+			 * @return string
+			 */
+			public function getDocumentUri(): string {
+				throw new \RuntimeException('payload gone');
+			}
+		};
+		$listener->handle($broken);
+		$listener->handle(new FinancialExtractionCompletedEvent('  ', 'alice', 'shillinq', 'receipt', [], [], 0.0));
+
+		self::assertSame([], $saved);
+		self::assertSame([], $notifications);
+		self::assertSame([['warning', 'ExtractionCompletedListener: failed to apply extraction-completed event — fail-soft']], $logger->records);
+
+	}//end testUnreadableOrEmptyEventsWriteNothing()
 }//end class
