@@ -34,7 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\FiscalYearContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -72,7 +72,7 @@ class BudgetBBVMappingController extends Controller {
 	 * @param IL10N $l10n Translation service used to
 	 *                    localise response messages
 	 *                    (ADR-007 / slice 10 i18n).
-	 * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+	 * @param AdministrationContextServiceInterface $administrationContext Admin RBAC + accessibility
 	 *                                                            checks (slice 09, ADR-005)
 	 *                                                            — every mapping read is
 	 *                                                            scoped to an administration
@@ -86,7 +86,7 @@ class BudgetBBVMappingController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly FiscalYearContextService $fiscalYearContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

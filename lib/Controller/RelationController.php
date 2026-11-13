@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DomainException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Relation\RelationBothSidesService;
 use OCA\Shillinq\Service\Relation\RelationLinkService;
 use OCP\AppFramework\Controller;
@@ -69,13 +69,13 @@ class RelationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   The caller's administrations.
+	 * @param AdministrationContextServiceInterface $context   The caller's administrations.
 	 * @param RelationLinkService          $links     Suggestions and links.
 	 * @param RelationBothSidesService     $bothSides Both sides of a relation.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly RelationLinkService $links,
 		private readonly RelationBothSidesService $bothSides,
 	) {

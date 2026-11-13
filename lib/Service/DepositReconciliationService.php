@@ -32,39 +32,20 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DepositReconciliationServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Idempotent reconciliation of DepositPayment records against gateway outcomes.
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007)
  */
-class DepositReconciliationService {
-	/**
-	 * Outcome: the payment was authorized by the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_AUTHORIZED = 'authorized';
-
-	/**
-	 * Outcome: the payment was rejected/failed at the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_FAILED = 'failed';
-
-	/**
-	 * Outcome: the payment was voided/refunded at the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_VOIDED = 'voided';
+class DepositReconciliationService implements DepositReconciliationServiceInterface {
 
 	/**
 	 * Result: the outcome was applied (state changed).

@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Pivot\LedgerPivotService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,13 +48,13 @@ class LedgerPivotController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param AdministrationContextService $context The caller's administrations.
+	 * @param AdministrationContextServiceInterface $context The caller's administrations.
 	 * @param LedgerPivotService           $pivot   The pivot.
 	 * @param LoggerInterface              $logger  The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LedgerPivotService $pivot,
 		private readonly LoggerInterface $logger,
 	) {

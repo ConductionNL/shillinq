@@ -44,7 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -68,7 +68,7 @@ class ThreeWayMatchExceptionController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param ExceptionResolutionService $exceptions Slice 08 server-authoritative
 	 *                                               service.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
@@ -77,7 +77,7 @@ class ThreeWayMatchExceptionController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ExceptionResolutionService $exceptions,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

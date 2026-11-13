@@ -27,8 +27,9 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
@@ -41,7 +42,6 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST endpoints for notification trigger configuration and admin monitoring.
@@ -61,7 +61,7 @@ class BookingNotificationController extends Controller {
 	 * @param IGroupManager $groupManager The group manager.
 	 * @param IUserSession $userSession The user session.
 	 * @param LoggerInterface $logger The logger.
-	 * @param AdministrationContextService $administrationContext The administration membership seam.
+	 * @param AdministrationContextServiceInterface $administrationContext The administration membership seam.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
@@ -72,7 +72,7 @@ class BookingNotificationController extends Controller {
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
-		private AdministrationContextService $administrationContext,
+		private AdministrationContextServiceInterface $administrationContext,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

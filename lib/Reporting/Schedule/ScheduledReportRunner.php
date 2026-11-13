@@ -37,9 +37,9 @@ namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Reporting\ReportGenerationService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -59,7 +59,7 @@ class ScheduledReportRunner {
 	 * @param ReportGenerationService      $reports        Produces the report.
 	 * @param ScheduledReportDelivery      $delivery       Files, shares and notifies.
 	 * @param ReportScheduleCalendar       $calendar       Next run and period.
-	 * @param AdministrationContextService $administrations Who may reach an administration.
+	 * @param AdministrationContextServiceInterface $administrations Who may reach an administration.
 	 * @param LoggerInterface              $logger         Logger.
 	 * @param ReportRecipientPolicy|null   $recipientPolicy Who may receive the owner's reports.
 	 */
@@ -69,7 +69,7 @@ class ScheduledReportRunner {
 		private readonly ReportGenerationService $reports,
 		private readonly ScheduledReportDelivery $delivery,
 		private readonly ReportScheduleCalendar $calendar,
-		private readonly AdministrationContextService $administrations,
+		private readonly AdministrationContextServiceInterface $administrations,
 		private readonly LoggerInterface $logger,
 		private readonly ?ReportRecipientPolicy $recipientPolicy = null,
 	) {

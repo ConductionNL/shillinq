@@ -48,7 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\InventoryScanService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -91,7 +91,7 @@ class InventoryScanController extends Controller {
 	 * @param IUserSession $userSession The user session (acting user identity).
 	 * @param IGroupManager $groupManager Group membership for role checks.
 	 * @param InventoryScanService $scanService Server-authoritative scan logic.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
@@ -99,7 +99,7 @@ class InventoryScanController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
 		private readonly InventoryScanService $scanService,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

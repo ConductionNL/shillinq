@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationArchivalServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -59,7 +60,7 @@ use Throwable;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class AdministrationArchivalService {
+class AdministrationArchivalService implements AdministrationArchivalServiceInterface {
 	/**
 	 * Administration lifecycle states that reject all mutations (REQ-MA-007).
 	 *

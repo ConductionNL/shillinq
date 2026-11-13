@@ -41,9 +41,9 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Dunning\DunningStageRenderer;
-use OCA\Shillinq\Service\Dunning\DunningTickRunner;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DunningStageRendererInterface;
+use OCA\Shillinq\Kernel\Contracts\DunningTickRunnerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -76,9 +76,9 @@ class DunningPreviewController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request       The request.
-	 * @param AdministrationContextService $context       The caller's administrations.
-	 * @param DunningTickRunner            $runner        The daily pass: its preview and its reports.
-	 * @param DunningStageRenderer         $renderer      The text a stage's letter uses.
+	 * @param AdministrationContextServiceInterface $context       The caller's administrations.
+	 * @param DunningTickRunnerInterface            $runner        The daily pass: its preview and its reports.
+	 * @param DunningStageRendererInterface         $renderer      The text a stage's letter uses.
 	 * @param ObjectServiceInterface       $objectService OpenRegister's object service.
 	 * @param IAppConfig                   $appConfig     The register slug.
 	 * @param ITimeFactory                 $time          The clock.
@@ -87,9 +87,9 @@ class DunningPreviewController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly DunningTickRunner $runner,
-		private readonly DunningStageRenderer $renderer,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly DunningTickRunnerInterface $runner,
+		private readonly DunningStageRendererInterface $renderer,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly ITimeFactory $time,
@@ -201,7 +201,7 @@ class DunningPreviewController extends Controller {
 			'administrationId' => (string)($administration['administrationCode'] ?? $recordId),
 			'id' => $recordId,
 			'name' => (string)($administration['name'] ?? ''),
-			'enabled' => (($administration[DunningTickRunner::ENABLED_PROPERTY] ?? false) === true),
+			'enabled' => (($administration[DunningTickRunnerInterface::ENABLED_PROPERTY] ?? false) === true),
 			'lastRun' => $this->runner->lastReportFor(administration: $administration),
 			'rows' => $this->runner->previewAdministration(administration: $administration, now: $now),
 		];

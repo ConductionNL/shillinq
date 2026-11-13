@@ -29,19 +29,20 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Evaluates booking notification triggers and dispatches via openconnector.
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-2
  */
-class BookingNotificationService {
+class BookingNotificationService implements BookingNotificationServiceInterface {
 
 	/**
 	 * Openconnector notification endpoint path.

@@ -28,9 +28,9 @@ namespace OCA\Shillinq\Controller;
 
 use DomainException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Asset\AssetRecords;
-use OCA\Shillinq\Service\Asset\DepreciationScheduleService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
+use OCA\Shillinq\Kernel\Contracts\DepreciationScheduleServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,16 +50,16 @@ class FixedAssetDepreciationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   Who may see which administration.
-	 * @param AssetRecords                 $records   The register.
-	 * @param DepreciationScheduleService  $schedules The schedule.
+	 * @param AdministrationContextServiceInterface $context   Who may see which administration.
+	 * @param AssetRecordsInterface                 $records   The register.
+	 * @param DepreciationScheduleServiceInterface  $schedules The schedule.
 	 * @param ITimeFactory                 $time      The clock.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly AssetRecords $records,
-		private readonly DepreciationScheduleService $schedules,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly AssetRecordsInterface $records,
+		private readonly DepreciationScheduleServiceInterface $schedules,
 		private readonly ITimeFactory $time,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -145,7 +145,7 @@ class FixedAssetDepreciationController extends Controller {
 	 */
 	private function assetOrNull(string $id): array|null {
 		try {
-			return $this->records->find(schema: DepreciationScheduleService::ASSET, id: $id);
+			return $this->records->find(schema: DepreciationScheduleServiceInterface::ASSET, id: $id);
 		} catch (Throwable $e) {
 			return null;
 		}

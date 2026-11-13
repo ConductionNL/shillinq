@@ -42,9 +42,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\CogsPosterService;
+use OCA\Shillinq\Kernel\Contracts\CogsPosterServiceInterface;
 use OCA\Shillinq\Service\FifoValuationService;
 use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCP\EventDispatcher\Event;
@@ -52,7 +53,6 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from posted StockMove -> valuation engine + COGS poster.
@@ -74,7 +74,7 @@ class StockMoveTransitionedListener implements IEventListener {
 	 *
 	 * @param FifoValuationService $fifo FIFO engine.
 	 * @param MovingAverageValuationService $average Moving-average engine.
-	 * @param CogsPosterService $cogs COGS poster.
+	 * @param CogsPosterServiceInterface $cogs COGS poster.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -82,7 +82,7 @@ class StockMoveTransitionedListener implements IEventListener {
 	public function __construct(
 		private readonly FifoValuationService $fifo,
 		private readonly MovingAverageValuationService $average,
-		private readonly CogsPosterService $cogs,
+		private readonly CogsPosterServiceInterface $cogs,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

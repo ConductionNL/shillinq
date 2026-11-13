@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Service\Asset;
 
 use DomainException;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ReinvestmentReservesInterface;
 use OCP\IAppConfig;
 
 /**
@@ -40,7 +41,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
-class ReinvestmentReserves {
+class ReinvestmentReserves implements ReinvestmentReservesInterface {
 
 	public const SCHEMA = 'ReinvestmentReserve';
 

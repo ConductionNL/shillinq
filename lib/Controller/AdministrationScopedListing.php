@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Container\ContainerInterface;
@@ -36,7 +36,7 @@ use Psr\Container\ContainerInterface;
  * Requires the using class to hold `$container` and `$context`.
  *
  * @property ContainerInterface $container
- * @property AdministrationContextService $context
+ * @property AdministrationContextServiceInterface $context
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */

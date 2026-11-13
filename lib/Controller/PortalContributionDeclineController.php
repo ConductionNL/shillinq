@@ -32,8 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
-use OCA\Shillinq\Service\ContributionDeclineService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -64,13 +64,13 @@ class PortalContributionDeclineController extends Controller {
 	 *
 	 * @param IRequest $request The request.
 	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
-	 * @param ContributionDeclineService $declineService Closes the guardian's own voluntary contribution.
+	 * @param ContributionDeclineServiceInterface $declineService Closes the guardian's own voluntary contribution.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly PortalAssertionVerifier $verifier,
-		private readonly ContributionDeclineService $declineService,
+		private readonly ContributionDeclineServiceInterface $declineService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -142,8 +142,8 @@ class PortalContributionDeclineController extends Controller {
 		}
 
 		return match ($result) {
-			ContributionDeclineService::DECLINED => new JSONResponse(['status' => 'declined']),
-			ContributionDeclineService::DOWNSTREAM_ERROR => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
+			ContributionDeclineServiceInterface::DECLINED => new JSONResponse(['status' => 'declined']),
+			ContributionDeclineServiceInterface::DOWNSTREAM_ERROR => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
 		};
 	}//end declined()

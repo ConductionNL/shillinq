@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
-use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -52,13 +52,13 @@ class BookingEventListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param BookingNotificationService $notificationService The notification service.
+	 * @param BookingNotificationServiceInterface $notificationService The notification service.
 	 * @param LoggerInterface $logger The logger.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private BookingNotificationService $notificationService,
+		private BookingNotificationServiceInterface $notificationService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

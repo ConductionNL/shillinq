@@ -39,6 +39,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Booking;
 
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Service\IcsService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
@@ -62,7 +63,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-11
  */
-class ConfirmationTokenService {
+class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 
 	/**
 	 * Default confirmation deadline: 48 hours after appointment creation

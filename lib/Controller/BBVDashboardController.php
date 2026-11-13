@@ -38,9 +38,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Dashboard\BBVComplianceWidget;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\FiscalYearContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -94,7 +94,7 @@ class BBVDashboardController extends Controller {
 	 *                                    the slice-02 declarative
 	 *                                    aggregation, cached for 1h
 	 *                                    by ComplianceService.
-	 * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+	 * @param AdministrationContextServiceInterface $administrationContext Admin RBAC + accessibility
 	 *                                                            checks (slice 09, ADR-005)
 	 *                                                            — server-side admin scope
 	 *                                                            so cross-tenant requests
@@ -115,7 +115,7 @@ class BBVDashboardController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly BBVComplianceWidget $widget,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly FiscalYearContextService $fiscalYearContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

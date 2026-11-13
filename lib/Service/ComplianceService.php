@@ -46,6 +46,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Container\ContainerInterface;
@@ -71,7 +72,7 @@ use Throwable;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-final class ComplianceService {
+final class ComplianceService implements ComplianceServiceInterface {
 	/**
 	 * Cache TTL in seconds (REQ-BBVW-006: 1 hour).
 	 */

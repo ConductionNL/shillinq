@@ -44,10 +44,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BudgetScenarioDefaultPromoter;
-use OCA\Shillinq\Service\BudgetScenarioEvaluator;
-use OCA\Shillinq\Service\BudgetScenarioReader;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioDefaultPromoterInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioEvaluatorInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioReaderInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -68,19 +68,19 @@ class BudgetScenarioController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param BudgetScenarioDefaultPromoter $promoter The one-default enforcement service.
-	 * @param BudgetScenarioReader $reader Batched store access for evaluate().
-	 * @param BudgetScenarioEvaluator $evaluator Pure base-vs-scenario evaluator.
-	 * @param AdministrationContextService $context Membership guard (ADR-005, REQ-MA-001).
+	 * @param BudgetScenarioDefaultPromoterInterface $promoter The one-default enforcement service.
+	 * @param BudgetScenarioReaderInterface $reader Batched store access for evaluate().
+	 * @param BudgetScenarioEvaluatorInterface $evaluator Pure base-vs-scenario evaluator.
+	 * @param AdministrationContextServiceInterface $context Membership guard (ADR-005, REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BudgetScenarioDefaultPromoter $promoter,
-		private readonly BudgetScenarioReader $reader,
-		private readonly BudgetScenarioEvaluator $evaluator,
-		private readonly AdministrationContextService $context,
+		private readonly BudgetScenarioDefaultPromoterInterface $promoter,
+		private readonly BudgetScenarioReaderInterface $reader,
+		private readonly BudgetScenarioEvaluatorInterface $evaluator,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

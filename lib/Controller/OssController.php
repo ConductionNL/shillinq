@@ -40,7 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\OssRateResolver;
 use OCA\Shillinq\Service\OssReturnGenerator;
 use OCP\AppFramework\Controller;
@@ -66,7 +66,7 @@ class OssController extends Controller {
 	 * @param OssReturnGenerator $returnGenerator Quarterly return draft generator.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IUserSession $userSession The user session.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 *
 	 * @return void
 	 */
@@ -76,7 +76,7 @@ class OssController extends Controller {
 		private readonly OssReturnGenerator $returnGenerator,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

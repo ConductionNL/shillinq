@@ -56,18 +56,19 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioDefaultPromoterInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Atomically-demoting default-scenario promoter (REQ-BSC-002).
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
  */
-class BudgetScenarioDefaultPromoter {
+class BudgetScenarioDefaultPromoter implements BudgetScenarioDefaultPromoterInterface {
 	/**
 	 * The BudgetScenario schema slug.
 	 *

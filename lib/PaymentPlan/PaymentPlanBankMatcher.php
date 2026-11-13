@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentPlan;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Bank\ManualMatchService;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -59,14 +59,14 @@ class PaymentPlanBankMatcher {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param ManualMatchService     $matches       Writes the confirmed match.
+	 * @param ManualMatchServiceInterface     $matches       Writes the confirmed match.
 	 * @param PaymentPlanService     $plans         Receives the payment.
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly RegisterLocation $registerLocation,
-		private readonly ManualMatchService $matches,
+		private readonly ManualMatchServiceInterface $matches,
 		private readonly PaymentPlanService $plans,
 		private readonly LoggerInterface $logger,
 	) {

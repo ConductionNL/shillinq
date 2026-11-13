@@ -36,9 +36,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BcfClaimServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a quarter-scoped, per-account BCF compensable-VAT claim from the GL.
@@ -52,7 +53,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
-class BcfClaimService {
+class BcfClaimService implements BcfClaimServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

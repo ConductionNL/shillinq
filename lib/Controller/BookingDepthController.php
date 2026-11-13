@@ -43,7 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -72,7 +72,7 @@ class BookingDepthController extends Controller {
 	 * @param \OCP\IRequest $request The request.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
-	 * @param AdministrationContextService $context Auth + per-administration guard.
+	 * @param AdministrationContextServiceInterface $context Auth + per-administration guard.
 	 * @param NoShowFeeCaptureService $noShowFee No-show fee capture seam.
 	 * @param RecurringSeriesService $series Recurring series expander/planner.
 	 * @param LoggerInterface $logger Logger.
@@ -82,7 +82,7 @@ class BookingDepthController extends Controller {
 		\OCP\IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly RegisterLocation $settings,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly NoShowFeeCaptureService $noShowFee,
 		private readonly RecurringSeriesService $series,
 		private readonly LoggerInterface $logger,

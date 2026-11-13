@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Schedule;
 
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\IGroupManager;
 
 /**
@@ -41,11 +41,11 @@ class ReportRecipientPolicy {
 	/**
 	 * Construct the policy.
 	 *
-	 * @param AdministrationContextService $administrations Who may read an administration.
+	 * @param AdministrationContextServiceInterface $administrations Who may read an administration.
 	 * @param IGroupManager|null           $groupManager    Group lookups; without it no group is allowed.
 	 */
 	public function __construct(
-		private readonly AdministrationContextService $administrations,
+		private readonly AdministrationContextServiceInterface $administrations,
 		private readonly ?IGroupManager $groupManager = null,
 	) {
 	}//end __construct()

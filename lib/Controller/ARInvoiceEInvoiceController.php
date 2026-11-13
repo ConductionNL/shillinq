@@ -31,8 +31,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\EInvoice\EInvoiceService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -74,18 +74,18 @@ class ARInvoiceEInvoiceController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param EInvoiceService $eInvoiceService Orchestrator (server-authoritative).
+	 * @param EInvoiceServiceInterface $eInvoiceService Orchestrator (server-authoritative).
 	 * @param IUserSession $userSession User session guard.
-	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
+	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly EInvoiceService $eInvoiceService,
+		private readonly EInvoiceServiceInterface $eInvoiceService,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

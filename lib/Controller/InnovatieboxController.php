@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
+use OCA\Shillinq\Kernel\Contracts\DoorsnijdingsVerbodValidatorInterface;
 use OCA\Shillinq\Service\InnovatieboxAggregationService;
 use OCA\Shillinq\Service\InnovatieboxSbrExportService;
 use OCA\Shillinq\Service\NexusCalculationService;
@@ -64,7 +64,7 @@ class InnovatieboxController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param InnovatieboxAggregationService $aggregation The per-asset Vpb roll-up service.
 	 * @param NexusCalculationService $nexus The nexus arithmetic helper (scenario).
-	 * @param DoorsnijdingsVerbodValidator $doorsnijden The doorsnijdingsverbod validator.
+	 * @param DoorsnijdingsVerbodValidatorInterface $doorsnijden The doorsnijdingsverbod validator.
 	 * @param InnovatieboxSbrExportService $sbrExport The SBR export service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
@@ -75,7 +75,7 @@ class InnovatieboxController extends Controller {
 		IRequest $request,
 		private readonly InnovatieboxAggregationService $aggregation,
 		private readonly NexusCalculationService $nexus,
-		private readonly DoorsnijdingsVerbodValidator $doorsnijden,
+		private readonly DoorsnijdingsVerbodValidatorInterface $doorsnijden,
 		private readonly InnovatieboxSbrExportService $sbrExport,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,

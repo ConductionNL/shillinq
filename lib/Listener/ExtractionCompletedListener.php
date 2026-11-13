@@ -47,9 +47,10 @@ namespace OCA\Shillinq\Listener;
 
 use DateTime;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
 use OCA\Shillinq\Support\FleetAppId;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -57,7 +58,6 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Turns a docudesk extraction-completed event into a confidence-scored
@@ -96,18 +96,18 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @param ContainerInterface $container DI container — OR ObjectService
 	 *                                      pulled lazily.
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param ExtractionPrefillService $prefillService Field-mapping service.
+	 * @param ExtractionPrefillServiceInterface $prefillService Field-mapping service.
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
-	 * @param AdministrationContextService $administrationContext Resolves the requester's administration.
+	 * @param AdministrationContextServiceInterface $administrationContext Resolves the requester's administration.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
-		private readonly ExtractionPrefillService $prefillService,
+		private readonly ExtractionPrefillServiceInterface $prefillService,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 
 	}//end __construct()
@@ -263,7 +263,7 @@ class ExtractionCompletedListener implements IEventListener {
 			return false;
 		}
 
-		if ($schema !== ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE) {
+		if ($schema !== ExtractionPrefillServiceInterface::SCHEMA_SUPPLIER_INVOICE) {
 			return true;
 		}
 

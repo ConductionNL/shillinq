@@ -52,7 +52,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -83,7 +83,7 @@ class VATReturnController extends Controller {
 	 * @param VATReturnService $service The VAT return service.
 	 * @param ContainerInterface $container DI container for OR's ObjectService.
 	 * @param IUserSession $session User session (for actor identity).
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 */
@@ -92,7 +92,7 @@ class VATReturnController extends Controller {
 		private readonly VATReturnService $service,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {

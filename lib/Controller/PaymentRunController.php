@@ -41,11 +41,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
 use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,8 +55,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * HTTP API for exporting + reconciling a PaymentRun.
@@ -76,7 +76,7 @@ class PaymentRunController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param PaymentRunExportService $exportService SEPA export orchestration.
 	 * @param PaymentRunReconciliationService $reconciliationService CAMT.053 reconciliation.
-	 * @param AdministrationContextService $administrationContext Tenant scope (ADR-005 guard).
+	 * @param AdministrationContextServiceInterface $administrationContext Tenant scope (ADR-005 guard).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -86,7 +86,7 @@ class PaymentRunController extends Controller {
 		IRequest $request,
 		private readonly PaymentRunExportService $exportService,
 		private readonly PaymentRunReconciliationService $reconciliationService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

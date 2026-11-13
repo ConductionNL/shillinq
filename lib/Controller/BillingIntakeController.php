@@ -38,7 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\TimeIntakeService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -61,7 +61,7 @@ class BillingIntakeController extends Controller {
 	 *
 	 * @param IRequest $request Request.
 	 * @param TimeIntakeService $service Validates/materialises/delegates the batch.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
@@ -69,7 +69,7 @@ class BillingIntakeController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly TimeIntakeService $service,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,

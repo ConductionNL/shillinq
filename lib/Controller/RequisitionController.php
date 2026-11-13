@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\RequisitionConversionService;
 use OCA\Shillinq\Service\RequisitionService;
 use OCP\AppFramework\Controller;
@@ -64,7 +64,7 @@ class RequisitionController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param RequisitionService $requisitionService Create/submit/approve/reject.
 	 * @param RequisitionConversionService $conversionService Convert-to-PO.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
@@ -75,7 +75,7 @@ class RequisitionController extends Controller {
 		IRequest $request,
 		private readonly RequisitionService $requisitionService,
 		private readonly RequisitionConversionService $conversionService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,

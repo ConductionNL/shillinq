@@ -35,13 +35,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Guard\DBAOpdrachtGuard;
 use OCA\Shillinq\Guard\DBAScoreCalculator;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\DBAVbarMonitorService;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -55,7 +56,6 @@ use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * DBA Compliance Marker endpoint façade.
@@ -96,9 +96,9 @@ class DBAController extends Controller {
 	 * @param IUserSession $userSession User session.
 	 * @param DBAScoreCalculator $scoreCalc Score calculator guard.
 	 * @param DBAOpdrachtGuard $assignmentGuard Save-precondition guard.
-	 * @param DBAVbarMonitorService $vbarMonitor VBAR monitor service.
+	 * @param DBAVbarMonitorServiceInterface $vbarMonitor VBAR monitor service.
 	 * @param LoggerInterface $logger Logger.
-	 * @param AdministrationContextService $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
+	 * @param AdministrationContextServiceInterface $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
 	 * @param IGroupManager $groupManager Nextcloud admin bypass for the administration guard.
 	 */
 	public function __construct(
@@ -108,9 +108,9 @@ class DBAController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly DBAScoreCalculator $scoreCalc,
 		private readonly DBAOpdrachtGuard $assignmentGuard,
-		private readonly DBAVbarMonitorService $vbarMonitor,
+		private readonly DBAVbarMonitorServiceInterface $vbarMonitor,
 		private readonly LoggerInterface $logger,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -230,7 +230,7 @@ class DBAController extends Controller {
 
 		$result = $this->vbarMonitor->assess(amountCents: $amountCents, hours: $hours, administrationId: $administrationId);
 
-		if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
+		if ($result['result'] !== DBAVbarMonitorServiceInterface::RESULT_OK
 			&& $assignmentId !== ''
 			&& $invoiceId !== ''
 		) {

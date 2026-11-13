@@ -46,9 +46,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\TenderNedStatusSync;
-use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Service\TenderNedStatusSync;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -66,13 +66,13 @@ class OrderFulfilmentTransitionListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param BudgetImpactEmitter $emitter Shared cross-app CloudEvent emitter.
+	 * @param BudgetImpactEmitterInterface $emitter Shared cross-app CloudEvent emitter.
 	 * @param TenderNedStatusSync $sync Outbound status-sync integration (REQ-006).
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly BudgetImpactEmitter $emitter,
+		private readonly BudgetImpactEmitterInterface $emitter,
 		private readonly TenderNedStatusSync $sync,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,

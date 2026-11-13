@@ -42,7 +42,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -64,7 +64,7 @@ class PurchaseOrderApprovalController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param PurchaseOrderApprovalService $approvalService The approval service.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to
 	 *                                client).
@@ -74,7 +74,7 @@ class PurchaseOrderApprovalController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly PurchaseOrderApprovalService $approvalService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

@@ -34,7 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\DepositReconciliationService;
+use OCA\Shillinq\Kernel\Contracts\DepositReconciliationServiceInterface;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -60,10 +60,10 @@ class DepositWebhookController extends PaymentWebhookReceiver {
 	 * @var array<string,string>
 	 */
 	protected const STRIPE_OUTCOMES = [
-		'payment_intent.succeeded' => DepositReconciliationService::OUTCOME_AUTHORIZED,
-		'payment_intent.payment_failed' => DepositReconciliationService::OUTCOME_FAILED,
-		'charge.refunded' => DepositReconciliationService::OUTCOME_VOIDED,
-		'payment_intent.canceled' => DepositReconciliationService::OUTCOME_VOIDED,
+		'payment_intent.succeeded' => DepositReconciliationServiceInterface::OUTCOME_AUTHORIZED,
+		'payment_intent.payment_failed' => DepositReconciliationServiceInterface::OUTCOME_FAILED,
+		'charge.refunded' => DepositReconciliationServiceInterface::OUTCOME_VOIDED,
+		'payment_intent.canceled' => DepositReconciliationServiceInterface::OUTCOME_VOIDED,
 	];
 
 	/**
@@ -72,10 +72,10 @@ class DepositWebhookController extends PaymentWebhookReceiver {
 	 * @var array<string,string>
 	 */
 	protected const MOLLIE_OUTCOMES = [
-		'paid' => DepositReconciliationService::OUTCOME_AUTHORIZED,
-		'failed' => DepositReconciliationService::OUTCOME_FAILED,
-		'expired' => DepositReconciliationService::OUTCOME_FAILED,
-		'canceled' => DepositReconciliationService::OUTCOME_VOIDED,
+		'paid' => DepositReconciliationServiceInterface::OUTCOME_AUTHORIZED,
+		'failed' => DepositReconciliationServiceInterface::OUTCOME_FAILED,
+		'expired' => DepositReconciliationServiceInterface::OUTCOME_FAILED,
+		'canceled' => DepositReconciliationServiceInterface::OUTCOME_VOIDED,
 	];
 
 	/**
@@ -83,7 +83,7 @@ class DepositWebhookController extends PaymentWebhookReceiver {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param IAppConfig $appConfig App config for the per-gateway shared secrets.
-	 * @param DepositReconciliationService $reconciliation Idempotent deposit reconciliation service.
+	 * @param DepositReconciliationServiceInterface $reconciliation Idempotent deposit reconciliation service.
 	 * @param LoggerInterface $logger Logger (never receives raw payment data).
 	 *
 	 * @return void
@@ -91,7 +91,7 @@ class DepositWebhookController extends PaymentWebhookReceiver {
 	public function __construct(
 		IRequest $request,
 		private IAppConfig $appConfig,
-		private DepositReconciliationService $reconciliation,
+		private DepositReconciliationServiceInterface $reconciliation,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

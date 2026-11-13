@@ -27,8 +27,8 @@ namespace OCA\Shillinq\Controller;
 
 use DomainException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Asset\AssetRecords;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -46,16 +46,16 @@ class VatNumberCheckController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param AdministrationContextService $context The caller's administrations.
-	 * @param AssetRecords                 $records Reads a record from the register.
+	 * @param AdministrationContextServiceInterface $context The caller's administrations.
+	 * @param AssetRecordsInterface                 $records Reads a record from the register.
 	 * @param VatNumberCheck               $check   The VIES check.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly AssetRecords $records,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly AssetRecordsInterface $records,
 		private readonly VatNumberCheck $check,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

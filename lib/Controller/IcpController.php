@@ -32,9 +32,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
 use OCA\Shillinq\Service\ViesService;
@@ -46,7 +47,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * GET ICP ledger / reconciliation / periodicity endpoints.
@@ -68,11 +68,11 @@ class IcpController extends Controller {
 	 * @param IcpService $icpService The ICP read-side computation service.
 	 * @param IcpFilingService $filingService The ICP filing write service (correction + export).
 	 * @param ViesService $viesService The VIES validation service.
-	 * @param ArInvoiceIcpPdfRenderer $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
+	 * @param ArInvoiceIcpPdfRendererInterface $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param AdministrationContextService $administrations The caller's administration memberships (REQ-ICP-001).
+	 * @param AdministrationContextServiceInterface $administrations The caller's administration memberships (REQ-ICP-001).
 	 *
 	 * @return void
 	 */
@@ -81,11 +81,11 @@ class IcpController extends Controller {
 		private readonly IcpService $icpService,
 		private readonly IcpFilingService $filingService,
 		private readonly ViesService $viesService,
-		private readonly ArInvoiceIcpPdfRenderer $pdfRenderer,
+		private readonly ArInvoiceIcpPdfRendererInterface $pdfRenderer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly AdministrationContextService $administrations,
+		private readonly AdministrationContextServiceInterface $administrations,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -577,7 +577,7 @@ class IcpController extends Controller {
 	 */
 	private static function renderRefusal(\InvalidArgumentException $failure): JSONResponse {
 		$message = $failure->getMessage();
-		$code = ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING;
+		$code = ArInvoiceIcpPdfRendererInterface::ERROR_VATID_MISSING;
 		if (str_starts_with($message, $code) === true) {
 			return new JSONResponse(
 				['error' => $code, 'message' => $message],

@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\FluxService;
 use OCA\Shillinq\Service\SoftCloseExecutor;
 use OCP\AppFramework\Controller;
@@ -74,7 +74,7 @@ class SoftCloseController extends Controller {
 	 * @param IRequest $request Request object.
 	 * @param SoftCloseExecutor $softCloseExecutor Orchestration service.
 	 * @param FluxService $fluxService Flux analysis service.
-	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
+	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
@@ -82,7 +82,7 @@ class SoftCloseController extends Controller {
 		IRequest $request,
 		private readonly SoftCloseExecutor $softCloseExecutor,
 		private readonly FluxService $fluxService,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

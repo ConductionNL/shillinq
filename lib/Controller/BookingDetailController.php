@@ -41,7 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
@@ -100,7 +100,7 @@ class BookingDetailController extends Controller {
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param AdministrationContextService $context Per-administration IDOR guard (ADR-005).
+	 * @param AdministrationContextServiceInterface $context Per-administration IDOR guard (ADR-005).
 	 * @param PipelinqContactAdapter $pipelinq Slice 02-04 adapter (getContact + fetchKlantbeeld).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
@@ -108,7 +108,7 @@ class BookingDetailController extends Controller {
 		IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly RegisterLocation $registerLocation,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly PipelinqContactAdapter $pipelinq,
 		private readonly LoggerInterface $logger,
 	) {

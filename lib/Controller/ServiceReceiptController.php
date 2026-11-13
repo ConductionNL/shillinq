@@ -37,7 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\ServiceReceiptService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -78,7 +78,7 @@ class ServiceReceiptController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param ServiceReceiptService $serviceReceiptService The service-receipt service (server-authoritative).
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
@@ -87,7 +87,7 @@ class ServiceReceiptController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ServiceReceiptService $serviceReceiptService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

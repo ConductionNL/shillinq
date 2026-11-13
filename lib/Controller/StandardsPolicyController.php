@@ -28,8 +28,8 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\AdministrationManagementAccess;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
 use OCA\Shillinq\Service\StandardsPolicyService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -51,8 +51,8 @@ class StandardsPolicyController extends Controller {
 	 *
 	 * @param IRequest $request The request.
 	 * @param StandardsPolicyService $policies Policy read and write.
-	 * @param AdministrationContextService $administrationContext Membership check.
-	 * @param AdministrationManagementAccess $managementAccess Owner or admin check.
+	 * @param AdministrationContextServiceInterface $administrationContext Membership check.
+	 * @param AdministrationManagementAccessInterface $managementAccess Owner or admin check.
 	 * @param IL10N $l10n Translated refusals.
 	 * @param LoggerInterface $logger Logger.
 	 *
@@ -61,8 +61,8 @@ class StandardsPolicyController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly StandardsPolicyService $policies,
-		private readonly AdministrationContextService $administrationContext,
-		private readonly AdministrationManagementAccess $managementAccess,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly AdministrationManagementAccessInterface $managementAccess,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {

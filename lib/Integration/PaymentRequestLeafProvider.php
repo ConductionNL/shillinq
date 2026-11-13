@@ -38,14 +38,14 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
-use OCA\Shillinq\Service\DebtorCreditService;
+use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\ObjectRequestInvoiceService;
-use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentRequestFinder;
+use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -90,7 +90,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
 	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
 	 * @param ?ObjectRequestInvoiceService $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
-	 * @param ?DebtorCreditService $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
+	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
 	 *
 	 * @return void
 	 */
@@ -105,7 +105,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly ?PaymentRequestFinder $finder = null,
 		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
 		private readonly ?ObjectRequestInvoiceService $invoices = null,
-		private readonly ?DebtorCreditService $credits = null,
+		private readonly ?DebtorCreditServiceInterface $credits = null,
 	) {
 	}//end __construct()
 

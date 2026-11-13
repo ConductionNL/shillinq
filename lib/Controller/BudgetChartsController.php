@@ -44,8 +44,8 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BudgetChartSeriesService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetChartSeriesServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,16 +64,16 @@ class BudgetChartsController extends Controller {
 	 * Constructor for the BudgetChartsController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param BudgetChartSeriesService $service The chart-series composition service.
-	 * @param AdministrationContextService $context Authenticated-user context (ADR-005).
+	 * @param BudgetChartSeriesServiceInterface $service The chart-series composition service.
+	 * @param AdministrationContextServiceInterface $context Authenticated-user context (ADR-005).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BudgetChartSeriesService $service,
-		private readonly AdministrationContextService $context,
+		private readonly BudgetChartSeriesServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

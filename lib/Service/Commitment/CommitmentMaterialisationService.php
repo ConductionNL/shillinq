@@ -62,7 +62,9 @@ namespace OCA\Shillinq\Service\Commitment;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CommitmentMaterialisationServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\EventDispatcher\GenericEvent;
@@ -70,7 +72,6 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Assembles a Commitment + CommitmentLines from an approved
@@ -79,7 +80,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentMaterialisationService {
+class CommitmentMaterialisationService implements CommitmentMaterialisationServiceInterface {
 	/**
 	 * CloudEvent name for the rechtmatigheid commitment-stage trigger (REQ-VPL-012).
 	 *

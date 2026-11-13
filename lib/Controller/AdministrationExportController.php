@@ -43,9 +43,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
-use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -68,7 +68,7 @@ class AdministrationExportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param mixed $request The request object (IRequest).
-	 * @param AdministrationContextService $context Administratie-aware RBAC context service.
+	 * @param AdministrationContextServiceInterface $context Administratie-aware RBAC context service.
 	 * @param ContainerInterface $container DI container — resolves the XAF generator.
 	 * @param IRootFolder $rootFolder Nextcloud Files root (attachment bundle).
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
@@ -77,7 +77,7 @@ class AdministrationExportController extends Controller {
 	 */
 	public function __construct(
 		$request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly ContainerInterface $container,
 		private readonly IRootFolder $rootFolder,
 		private readonly LoggerInterface $logger,

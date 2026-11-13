@@ -59,9 +59,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGenerationService;
-use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -98,7 +98,7 @@ class ReportingController extends Controller {
 	 * @param IRequest $request The current request.
 	 * @param IUserSession $userSession Anonymous-rejection guard (ADR-005).
 	 * @param ReportGenerationService $service The generation/orchestration service.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 *
 	 * @return void
 	 */
@@ -106,7 +106,7 @@ class ReportingController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly ReportGenerationService $service,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
