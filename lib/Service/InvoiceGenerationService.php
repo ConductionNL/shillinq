@@ -97,6 +97,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 
 		$draft = new InvoiceDraft();
 		$draft->request       = $request;
+		$draft->currency      = $this->invoiceCurrency(request: $request);
 		$draft->lineDrafts    = $this->records()->withStatutoryVatRates(lineDrafts: $this->lineDraftsFor(draft: $draft));
 		$draft->totals        = $this->vat->calculateVAT($draft->lineDrafts);
 		$draft->invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
@@ -156,7 +157,8 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		$draft->timeEntries = $this->loadTimeEntries(
 			ids: $request->timeEntryIds,
 			rateCardId: $request->rateCardId,
-			administrationId: $request->administrationId
+			administrationId: $request->administrationId,
+			currency: $draft->currency
 		);
 		$draft->expenses    = $this->loadExpenses(ids: $request->expenseIds, administrationId: $request->administrationId);
 		$draft->hoursLogged = array_sum(array_column($draft->timeEntries, 'hours'));
@@ -555,12 +557,14 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @param array<int,string> $ids UrenRegistratie ids.
 	 * @param string|null $rateCardId Rate card to resolve against.
 	 * @param string $administrationId Caller's server-resolved administration scope.
+	 * @param string $currency The invoice currency, for an override rate.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
 	 */
-	private function loadTimeEntries(array $ids, ?string $rateCardId, string $administrationId): array {
+	private function loadTimeEntries(array $ids, ?string $rateCardId, string $administrationId, string $currency = 'EUR'): array {
 		if (count($ids) === 0) {
 			return [];
 		}
@@ -586,7 +590,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			} else {
 				$rate = [
 					'rateCents' => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
-					'currency' => 'EUR',
+					'currency' => $currency,
 					'rateCardVersion' => 'override',
 					'effectiveDate' => $date,
 				];
@@ -797,6 +801,36 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 
 		return [];
 	}//end fetchInvoice()
+
+	/**
+	 * The invoice currency: the customer's `currency`, else the administration's
+	 * `functionalCurrency`, else EUR (REQ-SID-004).
+	 *
+	 * Both lookups are scoped to the request's administration, so another
+	 * administration's customer never sets it.
+	 *
+	 * @param InvoiceGenerationRequest $request The request.
+	 *
+	 * @return string ISO 4217 code, upper case.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function invoiceCurrency(InvoiceGenerationRequest $request): string {
+		$customer = $this->findScoped(schema: 'CustomerMaster', id: $request->customerId, administrationId: $request->administrationId);
+		$currency = strtoupper(trim((string)($customer['currency'] ?? '')));
+		if ($currency !== '') {
+			return $currency;
+		}
+
+		$administration = $this->find(schema: 'Administration', id: $request->administrationId);
+		$currency       = strtoupper(trim((string)($administration['functionalCurrency'] ?? '')));
+		if ($currency !== '') {
+			return $currency;
+		}
+
+		return 'EUR';
+
+	}//end invoiceCurrency()
 
 	/**
 	 * Find a single record via the real OR ObjectService API.
