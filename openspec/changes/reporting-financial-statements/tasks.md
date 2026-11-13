@@ -4,8 +4,8 @@
 
 ## 1. Calculator
 
-- [ ] 1.1 `lib/Reporting/StatementCalculator.php` with `balancesAsOf` and `resultsBetween`, including the running result line (REQ-RFS-001, REQ-RFS-002). Verify: PHPUnit with the seed, including a posting after the date and a closed year.
-- [ ] 1.2 Two read endpoints with route auth and administration checks (REQ-RFS-001, REQ-RFS-002). Verify: PHPUnit; route-auth and IDOR gates.
+- [x] 1.1 `lib/Reporting/StatementCalculator.php` with `balancesAsOf` and `resultsBetween`, including the running result line (REQ-RFS-001, REQ-RFS-002). Verify: PHPUnit with the seed, including a posting after the date and a closed year.
+- [x] 1.2 Two read endpoints with route auth and administration checks (REQ-RFS-001, REQ-RFS-002). Verify: PHPUnit; route-auth and IDOR gates.
 
 ## 2. Pages
 
@@ -15,7 +15,7 @@
 
 ## 3. Documents
 
-- [ ] 3.1 Point `ProfitLossReportGenerator` and `BalanceSheetReportGenerator` at the calculator (REQ-RFS-004). Verify: PHPUnit comparing document totals with endpoint totals.
+- [x] 3.1 Point `ProfitLossReportGenerator` and `BalanceSheetReportGenerator` at the calculator (REQ-RFS-004). Verify: PHPUnit comparing document totals with endpoint totals.
 
 ## 4. End to end and strings
 
