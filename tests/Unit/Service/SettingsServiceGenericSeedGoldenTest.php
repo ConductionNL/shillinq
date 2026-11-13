@@ -46,6 +46,7 @@ use Stringable;
  * @covers \OCA\Shillinq\Service\Seed\SeedImporter
  * @uses   \OCA\Shillinq\Service\Seed\SeedImport
  * @uses   \OCA\Shillinq\Service\Seed\SeedMessages
+ * @uses   \OCA\Shillinq\Service\RegisterLocation
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
