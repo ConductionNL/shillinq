@@ -68,6 +68,10 @@
         {
             "appVersion": "0.5.7-unstable.20261111150000",
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261113190000",
+            "versionsSha256": "fd71bb94f7c752e8830761ffe0a0888ee2a97be685d60614b58833fd08895eca"
         }
     ],
     "versions": {
@@ -295,6 +299,7 @@
         "schema:Grant": "0.1.0",
         "schema:GroupEntity": "0.1.1",
         "schema:GroupEntityRegistry": "0.1.0",
+        "schema:GroupScopeAssessment": "0.1.0",
         "schema:HerstructureringsvoorzieningDetail": "0.1.0",
         "schema:IB47Record": "0.1.0",
         "schema:IBAangifte": "0.1.0",

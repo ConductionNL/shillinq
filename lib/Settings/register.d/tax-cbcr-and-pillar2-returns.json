@@ -1,0 +1,175 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-cbcr-and-pillar2-returns",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "The stored scope assessment per group and fiscal year (design D1, REQ-CBC-001), and the link from a group entity to its administration that the assessment reads the consolidated revenue through."
+  },
+  "components": {
+    "schemas": {
+      "GroupEntityRegistry": {
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The Shillinq administration that keeps this entity's books. On the ultimate parent it names the parentAdministrationId of the group's ConsolidationGroup, through which the scope assessment reads the consolidated revenue."
+          }
+        }
+      },
+      "GroupScopeAssessment": {
+        "slug": "GroupScopeAssessment",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Group scope assessment",
+        "description": "Whether a group is in scope for country-by-country reporting and for the minimum tax (Pillar Two) in one fiscal year, with the revenue each year it rests on and the filing deadlines it gives. Stored so the outcome relied on stays readable after the books change (REQ-CBC-001).",
+        "x-spec": "openspec/changes/tax-cbcr-and-pillar2-returns/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "type": "object",
+        "required": [
+          "ultimateParentEntity",
+          "fiscalYear",
+          "cbcrInScope",
+          "pillar2InScope"
+        ],
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "A scope assessment decides which returns the group files; every change is kept for the tax director and the auditor."
+        },
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group's ultimate parent."
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "title": "Fiscal year",
+            "description": "The fiscal year assessed, named by the calendar year it ends in."
+          },
+          "fiscalYearStart": {
+            "type": "string",
+            "title": "Fiscal year start",
+            "description": "The first day of the fiscal year.",
+            "format": "date"
+          },
+          "fiscalYearEnd": {
+            "type": "string",
+            "title": "Fiscal year end",
+            "description": "The last day of the fiscal year.",
+            "format": "date"
+          },
+          "revenueByYear": {
+            "type": "array",
+            "title": "Revenue by year",
+            "description": "Consolidated revenue in EUR of the five years before the assessed year and of the year itself, each with where it came from.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "integer",
+                  "title": "Year",
+                  "description": "The fiscal year."
+                },
+                "amount": {
+                  "type": "number",
+                  "title": "Amount",
+                  "description": "Consolidated revenue in EUR; empty when not known.",
+                  "nullable": true
+                },
+                "source": {
+                  "type": "string",
+                  "title": "Source",
+                  "description": "Where the amount came from.",
+                  "enum": [
+                    "consolidated-statements",
+                    "entered",
+                    "none"
+                  ]
+                }
+              }
+            }
+          },
+          "cbcrInScope": {
+            "type": "boolean",
+            "title": "Country-by-country report in scope",
+            "description": "True when the consolidated revenue of the year before was EUR 750,000,000 or more."
+          },
+          "pillar2InScope": {
+            "type": "boolean",
+            "title": "Minimum tax in scope",
+            "description": "True when the consolidated revenue was EUR 750,000,000 or more in at least two of the four years before."
+          },
+          "firstCbcrYear": {
+            "type": "integer",
+            "title": "First country-by-country year",
+            "description": "The first fiscal year of the current run of years in scope for country-by-country reporting.",
+            "nullable": true
+          },
+          "firstPillar2Year": {
+            "type": "integer",
+            "title": "First minimum tax year",
+            "description": "The first fiscal year of the current run of years in scope for the minimum tax.",
+            "nullable": true
+          },
+          "cbcrFilingDeadline": {
+            "type": "string",
+            "title": "Country-by-country filing deadline",
+            "description": "12 months after the end of the fiscal year; empty when not in scope.",
+            "format": "date",
+            "nullable": true
+          },
+          "girFilingDeadline": {
+            "type": "string",
+            "title": "GloBE information return deadline",
+            "description": "15 months after the end of the fiscal year, 18 in the first minimum tax year; empty when not in scope.",
+            "format": "date",
+            "nullable": true
+          },
+          "bijheffingReturnDeadline": {
+            "type": "string",
+            "title": "Top-up tax return deadline",
+            "description": "17 months after the end of the fiscal year, 20 in the first minimum tax year; empty when not in scope.",
+            "format": "date",
+            "nullable": true
+          },
+          "fxRates": {
+            "type": "object",
+            "title": "Exchange rates",
+            "description": "The average and closing rate per currency for the year, used to convert the entity figures (design D2).",
+            "nullable": true
+          },
+          "assessedAt": {
+            "type": "string",
+            "title": "Assessed at",
+            "description": "When the assessment was made.",
+            "format": "date-time"
+          },
+          "assessedBy": {
+            "type": "string",
+            "title": "Assessed by",
+            "description": "The user who pressed Assess scope, or system for the weekly job."
+          }
+        }
+      }
+    }
+  }
+}
