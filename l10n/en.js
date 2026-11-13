@@ -4677,7 +4677,9 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "VAT reverse-charged": "VAT reverse-charged",
+        "The buyer's VAT number is required for reverse charge.": "The buyer's VAT number is required for reverse charge."
     },
     "nplurals=2; plural=(n != 1);"
 )

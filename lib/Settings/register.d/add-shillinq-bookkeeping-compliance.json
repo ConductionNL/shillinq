@@ -553,6 +553,11 @@
                 },
                 {
                   "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\ReverseChargeIssueGuard",
+                  "description": "Before anything is booked: refuse a reverse-charged invoice (a line in VAT category K or AE) that names no buyer VAT number, saying the number is required for reverse charge (tax-icp-and-reverse-charge REQ-ICR-001)."
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Book the issued invoice: debit the receivables control account for grossAmount, credit revenue per invoice line and output VAT for vatAmount, in one balanced GLTransaction, and write glTransactionId (REQ-LPP-007). A down payment credits the advances account instead of revenue, and a deduction line debits it (REQ-SDP-002, REQ-SDP-003).",
                   "actionParameters": {

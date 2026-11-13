@@ -51,6 +51,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
+
 /**
  * Dutch-formatted invoice HTML / PDF builder.
  *
@@ -413,6 +415,7 @@ class InvoicePdfGenerator {
 			. '<strong>Te betalen:</strong> € %s</p>'
 			. '<p>Betalingscondities: %s</p>'
 			. '<p>%s</p>'
+			. '%s'
 			. '<div class="footer">Gegenereerd op %s — Shillinq invoice-from-time-and-expense</div>'
 			. '</body></html>',
 			htmlspecialchars((string)($invoice['invoiceNumber'] ?? ''), ENT_QUOTES),
@@ -432,10 +435,36 @@ class InvoicePdfGenerator {
 			$this->fmtMoney(value: (float)($invoice['grossAmount'] ?? 0)),
 			htmlspecialchars((string)($invoice['paymentTerms'] ?? 'net 30'), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['notes'] ?? ''), ENT_QUOTES),
+			$this->reverseChargeHtml(invoice: $invoice, recipient: $recipient),
 			date('Y-m-d H:i')
 		);
 
 	}//end renderHtml()
+
+	/**
+	 * The reverse-charge notice with the buyer's VAT number, or '' when no
+	 * line is reverse-charged (tax-icp-and-reverse-charge REQ-ICR-001).
+	 *
+	 * @param array<string,mixed> $invoice   Invoice.
+	 * @param array<string,mixed> $recipient Recipient.
+	 *
+	 * @return string The paragraph, or ''.
+	 *
+	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#1-reverse-charge-on-the-invoice
+	 */
+	private function reverseChargeHtml(array $invoice, array $recipient): string {
+		$notice = (new ReverseChargeNotice())->forInvoice(invoice: $invoice, customer: $recipient);
+		if ($notice === null) {
+			return '';
+		}
+
+		return sprintf(
+			'<p class="reverse-charge"><strong>%s</strong> &nbsp; BTW-nummer afnemer: %s</p>',
+			htmlspecialchars($notice['noticeNl'], ENT_QUOTES),
+			htmlspecialchars($notice['buyerVatNumber'], ENT_QUOTES)
+		);
+
+	}//end reverseChargeHtml()
 
 	/**
 	 * Format a 2-decimal float with Dutch locale.

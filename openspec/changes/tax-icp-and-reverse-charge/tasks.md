@@ -4,8 +4,8 @@
 
 ## 1. Reverse charge on the invoice
 
-- [ ] 1.1 `ReverseChargeNotice` and its use in `InvoicePdfGenerator` and `ArInvoiceUblMapper` (REQ-ICR-001). Verify: PHPUnit red first; the UBL of an EU reverse-charge invoice carries category K and the buyer VAT number.
-- [ ] 1.2 Issue guard for a reverse-charged invoice without a buyer VAT number (REQ-ICR-001). Verify: PHPUnit with the declared-lifecycle engine.
+- [x] 1.1 `ReverseChargeNotice` and its use in `InvoicePdfGenerator` and `ArInvoiceUblMapper` (REQ-ICR-001). Verify: PHPUnit red first; the UBL of an EU reverse-charge invoice carries category K and the buyer VAT number.
+- [x] 1.2 Issue guard for a reverse-charged invoice without a buyer VAT number (REQ-ICR-001). Verify: PHPUnit with the declared-lifecycle engine.
 
 ## 2. ICP statement
 
