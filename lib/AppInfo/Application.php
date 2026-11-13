@@ -194,6 +194,7 @@ class Application extends App implements IBootstrap {
 		$context->registerMiddleware(class: ApiContractMiddleware::class);
 
 		$this->registerOpenRegisterContracts(context: $context);
+		$this->registerMcpToolProvider(context: $context);
 		// OpenRegister AppHost adoption (adopt-apphost) — the mechanical
 		// controllers/settings that are byte-for-byte the fleet skeleton are
 		// re-pointed at the engine's generics, and observability is served by
@@ -1111,6 +1112,28 @@ class Application extends App implements IBootstrap {
 		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
+
+	/**
+	 * Register the action-tool provider under OpenRegister's per-app discovery key.
+	 *
+	 * OpenRegister looks providers up as `IMcpToolProvider::<appId>`, so the
+	 * suffix must be this app's id or the tools silently never appear. Both
+	 * names are strings, so nothing is autoloaded on an instance without
+	 * OpenRegister (ADR-083): the provider class is only built when
+	 * OpenRegister itself asks for it.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/mcp-action-tool-surface/tasks.md
+	 */
+	private function registerMcpToolProvider(IRegistrationContext $context): void {
+		$context->registerServiceAlias(
+			'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::' . AppIdentity::APP_ID,
+			'OCA\\Shillinq\\Mcp\\ShillinqToolProvider'
+		);
+	}//end registerMcpToolProvider()
 
 	/**
 	 * Bind the OpenRegister interfaces this app's services type-hint to their implementations.
