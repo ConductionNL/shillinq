@@ -519,53 +519,8 @@ class DBAController extends Controller {
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
-		$intake = null;
-		try {
-			$intakeRows = $os->setRegister($register)->setSchema('DBAIntake')->findAll(
-				[
-					'filters' => ['assignmentId' => $assignmentId],
-					'limit' => 1,
-				]
-			);
-			foreach ($intakeRows as $row) {
-				if (is_array($row) === true) {
-					$intake = $row;
-				} elseif (method_exists($row, 'getObject') === true) {
-					$intake = $row->getObject();
-				} else {
-					$intake = null;
-				}
-
-				break;
-			}
-		} catch (Throwable $e) {
-			$this->logger->warning('Audit-report intake fetch failed', ['exception' => $e->getMessage()]);
-		}//end try
-
-		$flags = [];
-		try {
-			$flagRows = $os->setRegister($register)->setSchema('DBARisicoflag')->findAll(
-				[
-					'filters' => ['assignmentId' => $assignmentId],
-					'limit' => 500,
-				]
-			);
-			foreach ($flagRows as $row) {
-				if (is_array($row) === true) {
-					$arr = $row;
-				} elseif (method_exists($row, 'getObject') === true) {
-					$arr = $row->getObject();
-				} else {
-					$arr = null;
-				}
-
-				if (is_array($arr) === true) {
-					$flags[] = $arr;
-				}
-			}
-		} catch (Throwable $e) {
-			$this->logger->warning('Audit-report flags fetch failed', ['exception' => $e->getMessage()]);
-		}//end try
+		$intake = $this->auditIntake(objectService: $os, register: $register, assignmentId: $assignmentId);
+		$flags = $this->auditFlags(objectService: $os, register: $register, assignmentId: $assignmentId);
 
 		$dossier = null;
 		$dossierId = (string)($assignment['evidenceDossierId'] ?? '');
@@ -602,6 +557,88 @@ class DBAController extends Controller {
 
 		return new JSONResponse($payload);
 	}//end auditReport()
+
+	/**
+	 * Helper: the first intake of an opdracht for the audit-rapport.
+	 *
+	 * A failing read is logged and gives no intake.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $register      Register slug.
+	 * @param string $assignmentId  The opdracht.
+	 *
+	 * @return mixed The intake data, or null.
+	 */
+	private function auditIntake(object $objectService, string $register, string $assignmentId): mixed {
+		try {
+			$intakeRows = $objectService->setRegister($register)->setSchema('DBAIntake')->findAll(
+				[
+					'filters' => ['assignmentId' => $assignmentId],
+					'limit' => 1,
+				]
+			);
+			foreach ($intakeRows as $row) {
+				return $this->auditRowData(row: $row);
+			}
+		} catch (Throwable $e) {
+			$this->logger->warning('Audit-report intake fetch failed', ['exception' => $e->getMessage()]);
+		}
+
+		return null;
+	}//end auditIntake()
+
+	/**
+	 * Helper: the risk flags of an opdracht for the audit-rapport.
+	 *
+	 * Rows that do not read as an array are left out; a failing read is
+	 * logged and keeps the flags read so far.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $register      Register slug.
+	 * @param string $assignmentId  The opdracht.
+	 *
+	 * @return list<array<string,mixed>> The flags.
+	 */
+	private function auditFlags(object $objectService, string $register, string $assignmentId): array {
+		$flags = [];
+		try {
+			$flagRows = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
+				[
+					'filters' => ['assignmentId' => $assignmentId],
+					'limit' => 500,
+				]
+			);
+			foreach ($flagRows as $row) {
+				$arr = $this->auditRowData(row: $row);
+				if (is_array($arr) === true) {
+					$flags[] = $arr;
+				}
+			}
+		} catch (Throwable $e) {
+			$this->logger->warning('Audit-report flags fetch failed', ['exception' => $e->getMessage()]);
+		}
+
+		return $flags;
+	}//end auditFlags()
+
+	/**
+	 * Helper: a findAll() row as data: the array itself, an entity's object, else null.
+	 *
+	 * @param mixed $row The row.
+	 *
+	 * @return mixed
+	 */
+	private function auditRowData(mixed $row): mixed {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (method_exists($row, 'getObject') === true) {
+			return $row->getObject();
+		}
+
+		return null;
+	}//end auditRowData()
 
 	/**
 	 * Helper: parse JSON request body.
