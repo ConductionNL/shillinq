@@ -35,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Service\Jurisdiction\LegislationPackSeeder;
 use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Settings\AdminSettings;
@@ -382,7 +383,8 @@ class SetupController extends Controller {
 
 	/**
 	 * Seed the RGS template for the administration, then the BTW tariffs, BBV
-	 * taakvelden and selectielijst, and mark the seed step done.
+	 * taakvelden and selectielijst, and mark the seed step done; or, for a
+	 * legislation pack template, the pack's chart and VAT rates.
 	 *
 	 * @param string $template The RGS template variant.
 	 * @param string $adminId  The administration.
@@ -392,6 +394,22 @@ class SetupController extends Controller {
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
 	 */
 	private function seedFor(string $template, string $adminId): DataResponse {
+		// A legislation pack template (`legislation-be`) seeds another country's
+		// chart and VAT rates instead of the Dutch RGS, BTW and BBV data.
+		$country = LegislationPackSeeder::countryOfTemplate(template: $template);
+		if ($country !== null) {
+			$result = $this->settingsService->seedLegislationPack(country: $country, administrationId: $adminId);
+			if (($result['success'] ?? false) !== true) {
+				return new DataResponse(
+					['success' => false, 'message' => (string)($result['message'] ?? 'Seeding the legislation pack failed.')],
+					Http::STATUS_UNPROCESSABLE_ENTITY,
+				);
+			}
+
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_seed_done', '1');
+			return new DataResponse(['success' => true, 'message' => 'Chart of accounts and VAT rates seeded from the ' . $country . ' legislation pack.']);
+		}
+
 		$this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
 		$this->settingsService->seedBtwTariffs();
 		$this->settingsService->seedBbvTaakvelden();

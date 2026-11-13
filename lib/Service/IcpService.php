@@ -38,6 +38,8 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
+use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -56,11 +58,13 @@ class IcpService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IcpCalculator $calculator Pure-logic ICP helper.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AdministrationJurisdiction|null $jurisdiction The administration's jurisdiction; built from the object service when absent.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly IcpCalculator $calculator,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?AdministrationJurisdiction $jurisdiction=null,
 	) {
 	}//end __construct()
 
@@ -173,8 +177,12 @@ class IcpService {
 	 * @param string $period Filing period (YYYY-Qn or YYYY-MM).
 	 *
 	 * @return array<int,array<string,mixed>> In-period IcpSupply records.
+	 *
+	 * @throws JurisdictionRefusedException When the administration is not under Dutch rules.
 	 */
 	private function suppliesForPeriod(string $administrationId, string $period): array {
+		// The ICP return is a Dutch filing: refuse an administration kept under other rules (REQ-LFL-004).
+		$this->jurisdiction()->assertIs(administrationId: $administrationId, output: 'Dutch ICP return');
 		$supplies = $this->objectService
 			->setRegister($this->register())
 			->setSchema('IcpSupply')
@@ -316,6 +324,15 @@ class IcpService {
 
 		return $labels;
 	}//end periodLabels()
+
+	/**
+	 * The administration jurisdiction lookup.
+	 *
+	 * @return AdministrationJurisdiction
+	 */
+	private function jurisdiction(): AdministrationJurisdiction {
+		return ($this->jurisdiction ?? new AdministrationJurisdiction(objectService: $this->objectService, appConfig: $this->appConfig));
+	}//end jurisdiction()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

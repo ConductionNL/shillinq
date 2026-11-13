@@ -281,6 +281,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <!-- tax-vat-number-check D3: a customer's VAT number lives in vatId only;
                  copies the retired vatID where vatId is empty. Idempotent. -->
             <step>OCA\Shillinq\Repair\FoldCustomerVatId</step>
+            <!-- ledger-foreign-legislation D1: administrations saved before jurisdictions
+                 existed are Dutch; sets jurisdiction NL where it is empty. Idempotent. -->
+            <step>OCA\Shillinq\Repair\BackfillAdministrationJurisdiction</step>
             <!-- arinvoice-field-backfill-and-bt10 (REQ-RIN-011, REQ-IQD-008).
                  Fills recurringProfileId, billingPeriod, customerReference and
                  line glAccount on invoices saved before ARInvoice 0.16.0, where

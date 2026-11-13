@@ -563,6 +563,13 @@
             "nullable": true,
             "description": "Citation, e.g. Wet OB 1968 art. 9.",
             "title": "Legal Basis"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.",
+            "title": "Jurisdiction"
           }
         }
       },

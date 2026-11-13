@@ -161,6 +161,14 @@
             "example": "EUR",
             "title": "Presentation Currency"
           },
+          "jurisdiction": {
+            "type": "string",
+            "description": "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.",
+            "pattern": "^[A-Z]{2}$",
+            "default": "NL",
+            "example": "BE",
+            "title": "Jurisdiction"
+          },
           "functionalCurrency": {
             "type": "string",
             "description": "ISO-4217 functionele valuta for measurement.",

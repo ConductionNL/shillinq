@@ -26,6 +26,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
+use OCA\Shillinq\Service\Jurisdiction\LegislationPackSeeder;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
@@ -276,6 +278,65 @@ class SettingsService {
 			)
 		);
 	}//end seedRgsTemplate()
+
+	/**
+	 * Seed an administration from the legislation pack of a country: its chart
+	 * of accounts and VAT rates, and the administration's jurisdiction.
+	 *
+	 * @param string $country          ISO 3166 alpha-2, e.g. `BE`.
+	 * @param string $administrationId The administration (its administrationCode or uuid).
+	 *
+	 * @return array<string,mixed> Result with success flag and message.
+	 *
+	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 */
+	public function seedLegislationPack(string $country, string $administrationId): array {
+		if ($this->isOpenRegisterAvailable() === false) {
+			return [
+				'success' => false,
+				'message' => 'OpenRegister is not installed or enabled.',
+			];
+		}
+
+		$result = (new LegislationPackSeeder(importer: $this->seedImporter()))->seed(country: $country, administrationId: $administrationId);
+		if (($result['success'] ?? false) === true) {
+			$this->stampJurisdiction(administrationId: $administrationId, country: (string)$result['country']);
+		}
+
+		return $result;
+	}//end seedLegislationPack()
+
+	/**
+	 * Set an administration's jurisdiction to the pack's country. A failure is
+	 * logged: the chart and rates are seeded either way.
+	 *
+	 * @param string $administrationId The administration (its administrationCode or uuid).
+	 * @param string $country          ISO 3166 alpha-2.
+	 *
+	 * @return void
+	 */
+	private function stampJurisdiction(string $administrationId, string $country): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->getRegisterSlug();
+			$administration = ObjectIdentifier::findOne(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('Administration'),
+				id: $administrationId,
+				fallbackProperty: 'administrationCode'
+			);
+			$id = (string)($administration['id'] ?? ($administration['@self']['id'] ?? ''));
+			if ($id === '' || AdministrationJurisdiction::normalise(value: ($administration['jurisdiction'] ?? null)) === $country) {
+				return;
+			}
+
+			$objectService->patchObject(objectId: $id, data: ['jurisdiction' => $country], register: $registerSlug, schema: 'Administration');
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: could not set the administration\'s jurisdiction after seeding its legislation pack',
+				['administrationId' => $administrationId, 'country' => $country, 'exception' => $e->getMessage()]
+			);
+		}//end try
+	}//end stampJurisdiction()
 
 	/**
 	 * Load and validate accounts from a seed file for the given template variant.

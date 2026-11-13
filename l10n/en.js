@@ -4677,7 +4677,11 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "Jurisdiction": "Jurisdiction",
+        "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.": "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.",
+        "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.": "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.",
+        "Belgian minimum chart (MAR/PCMN)": "Belgian minimum chart (MAR/PCMN)"
     },
     "nplurals=2; plural=(n != 1);"
 )
