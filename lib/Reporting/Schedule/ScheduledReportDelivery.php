@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\Constants;
 use OCP\Files\File;
 use OCP\Files\Folder;

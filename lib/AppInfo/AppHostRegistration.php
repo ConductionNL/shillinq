@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\OpenRegister\AppHost\Bootstrap;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Container\ContainerInterface;

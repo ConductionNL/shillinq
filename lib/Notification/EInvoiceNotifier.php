@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Notification;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;

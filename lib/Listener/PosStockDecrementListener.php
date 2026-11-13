@@ -70,7 +70,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;

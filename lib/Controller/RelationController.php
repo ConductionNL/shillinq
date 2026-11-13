@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DomainException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Relation\RelationBothSidesService;
 use OCA\Shillinq\Service\Relation\RelationLinkService;

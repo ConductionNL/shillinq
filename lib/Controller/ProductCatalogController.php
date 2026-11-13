@@ -45,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\ProductCatalogService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;

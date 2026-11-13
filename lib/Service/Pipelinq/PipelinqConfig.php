@@ -30,7 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\StoredSecret;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;

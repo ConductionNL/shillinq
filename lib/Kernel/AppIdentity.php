@@ -6,8 +6,8 @@
  * The app id on its own, so classes that only need the id do not depend on
  * the bootstrap class.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Kernel
+ * @package  OCA\Shillinq\Kernel
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Kernel;
 
 /**
  * Holds the app id.

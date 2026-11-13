@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Dashboard;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FinancialDashboardService;
 use OCP\Dashboard\IAPIWidgetV2;

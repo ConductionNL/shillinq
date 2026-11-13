@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Controller;
 
 use DomainException;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\AdministrationManagementAccess;
 use OCA\Shillinq\Service\AdministrationMembershipService;
