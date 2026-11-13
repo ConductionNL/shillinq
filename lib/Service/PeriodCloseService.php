@@ -88,6 +88,7 @@ class PeriodCloseService {
 	 * @param SuspenseAgeingService $suspenseAgeing Suspense worklist ageing (close blocker, REQ-PCG-003).
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param LeaseDisclosureService|null $leaseDisclosures Stores the period's IFRS 16 disclosure table on close (REQ-LD-008).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -95,6 +96,7 @@ class PeriodCloseService {
 		private readonly SuspenseAgeingService $suspenseAgeing,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?LeaseDisclosureService $leaseDisclosures = null,
 	) {
 	}//end __construct()
 
@@ -218,8 +220,43 @@ class PeriodCloseService {
 			['periodId' => ($record['periodId'] ?? $periodId), 'closedBy' => $userId]
 		);
 
-		return $this->persist(record: $record);
+		$closed = $this->persist(record: $record);
+		$this->storeLeaseDisclosures(record: $closed, administrationId: $administrationId, periodId: $periodId);
+
+		return $closed;
 	}//end closePeriod()
+
+	/**
+	 * Store the closed period's IFRS 16 disclosure table (REQ-LD-008).
+	 *
+	 * The close itself is already saved: a disclosure that cannot be written is
+	 * logged, not allowed to report the close as failed. Closing the period again
+	 * after a reopen writes the table again.
+	 *
+	 * @param array<string,mixed> $record           The closed period.
+	 * @param string              $administrationId The caller's administration scope.
+	 * @param string              $periodId         The id the close was asked for.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
+	 */
+	private function storeLeaseDisclosures(array $record, string $administrationId, string $periodId): void {
+		if ($this->leaseDisclosures === null) {
+			return;
+		}
+
+		$administration = (string)($record['administrationId'] ?? $administrationId);
+		$period = (string)($record['periodId'] ?? $periodId);
+		try {
+			$this->leaseDisclosures->materialiseForPeriod(administrationId: $administration, fiscalPeriod: $period);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PeriodCloseService: the lease disclosure table could not be stored for the closed period',
+				['administrationId' => $administration, 'periodId' => $period, 'exception' => $e->getMessage()]
+			);
+		}
+	}//end storeLeaseDisclosures()
 
 	/**
 	 * Reopen a closed period: closed → open (REQ-PC-006, REQ-PC-008).
