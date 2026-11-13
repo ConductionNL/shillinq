@@ -28,19 +28,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconcileGuardInterface;
+
 /**
  * Lets a payment run become reconciled only through a CAMT.053 match.
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.3
  */
-final class PaymentRunReconcileGuard extends ServerWriteGrantGuard {
-
-	/**
-	 * The grant PaymentRunReconciliationService holds while it saves a full match.
-	 *
-	 * @var string
-	 */
-	public const PURPOSE = 'payment-run-camt-reconcile';
+final class PaymentRunReconcileGuard extends ServerWriteGrantGuard implements PaymentRunReconcileGuardInterface {
 
 	/**
 	 * Refusal shown to the caller.

@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalGuardInterface;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use OCP\EventDispatcher\Event;
@@ -98,7 +98,7 @@ class PurchaseOrderDecisionLockListener implements IEventListener {
 				$after  = ($new->getObject()['approvalChain'] ?? []);
 				$id     = (string)($new->getUuid() ?? '');
 				$refuse = json_encode($before) !== json_encode($after)
-					&& $this->authority->holds(purpose: PurchaseOrderApprovalGuard::PURPOSE, objectId: $id) === false;
+					&& $this->authority->holds(purpose: PurchaseOrderApprovalGuardInterface::PURPOSE, objectId: $id) === false;
 			}
 		}
 

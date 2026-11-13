@@ -29,19 +29,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceExceptionApprovalGuardInterface;
+
 /**
  * Lets an invoice leave `exception` only through an accepted three-way-match exception.
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.5
  */
-final class SupplierInvoiceExceptionApprovalGuard extends ServerWriteGrantGuard {
-
-	/**
-	 * The grant ExceptionResolutionService holds while it releases the invoice.
-	 *
-	 * @var string
-	 */
-	public const PURPOSE = 'three-way-match-acceptance';
+final class SupplierInvoiceExceptionApprovalGuard extends ServerWriteGrantGuard implements SupplierInvoiceExceptionApprovalGuardInterface {
 
 	/**
 	 * Refusal shown to the caller.

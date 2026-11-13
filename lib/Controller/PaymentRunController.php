@@ -44,9 +44,9 @@ namespace OCA\Shillinq\Controller;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\PaymentRun\PaymentRunExportService;
-use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
-use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunExportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunProposalServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -74,23 +74,23 @@ class PaymentRunController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param PaymentRunExportService $exportService SEPA export orchestration.
-	 * @param PaymentRunReconciliationService $reconciliationService CAMT.053 reconciliation.
+	 * @param PaymentRunExportServiceInterface $exportService SEPA export orchestration.
+	 * @param PaymentRunReconciliationServiceInterface $reconciliationService CAMT.053 reconciliation.
 	 * @param AdministrationContextServiceInterface $administrationContext Tenant scope (ADR-005 guard).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param PaymentRunProposalService $proposalService Drafts a run from the invoices due (banking-payment-run REQ-BPR-002).
+	 * @param PaymentRunProposalServiceInterface $proposalService Drafts a run from the invoices due (banking-payment-run REQ-BPR-002).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PaymentRunExportService $exportService,
-		private readonly PaymentRunReconciliationService $reconciliationService,
+		private readonly PaymentRunExportServiceInterface $exportService,
+		private readonly PaymentRunReconciliationServiceInterface $reconciliationService,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly PaymentRunProposalService $proposalService,
+		private readonly PaymentRunProposalServiceInterface $proposalService,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -265,10 +265,10 @@ class PaymentRunController extends Controller {
 	 */
 	private function lineDates(): string {
 		if (filter_var($this->request->getParam('payOnDueDate', false), FILTER_VALIDATE_BOOLEAN) === true) {
-			return PaymentRunProposalService::DATES_DUE;
+			return PaymentRunProposalServiceInterface::DATES_DUE;
 		}
 
-		return PaymentRunProposalService::DATES_RUN;
+		return PaymentRunProposalServiceInterface::DATES_RUN;
 
 	}//end lineDates()
 

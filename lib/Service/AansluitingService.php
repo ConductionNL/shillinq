@@ -62,8 +62,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AansluitingResolutionGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\AansluitingServiceInterface;
-use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -113,7 +113,7 @@ class AansluitingService implements AansluitingServiceInterface {
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.
 	 * @param VATReturnService $vatReturnService The BTW ledger-derivation engine this service diffs against.
-	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+	 * @param AansluitingResolutionGuardInterface $resolutionGuard The ADR-031 exception guard for explained -> resolved.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
@@ -121,7 +121,7 @@ class AansluitingService implements AansluitingServiceInterface {
 		private readonly LoggerInterface $logger,
 		private readonly AansluitingCalculator $calculator,
 		private readonly VATReturnService $vatReturnService,
-		private readonly AansluitingResolutionGuard $resolutionGuard,
+		private readonly AansluitingResolutionGuardInterface $resolutionGuard,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()

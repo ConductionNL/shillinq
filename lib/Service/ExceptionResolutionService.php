@@ -63,7 +63,7 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ExceptionResolutionServiceInterface;
-use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceExceptionApprovalGuardInterface;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
 use OCP\IAppConfig;
@@ -894,7 +894,7 @@ class ExceptionResolutionService implements ExceptionResolutionServiceInterface 
 	 */
 	private function saveReleasedInvoice(array $invoice): void {
 		$this->writeAuthority->during(
-			purpose: SupplierInvoiceExceptionApprovalGuard::PURPOSE,
+			purpose: SupplierInvoiceExceptionApprovalGuardInterface::PURPOSE,
 			objectId: $this->idOf(record: $invoice),
 			work: fn (): array => $this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice)
 		);

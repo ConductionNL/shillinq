@@ -46,8 +46,9 @@ namespace OCA\Shillinq\Service\Pipelinq;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqTimelineRetryJobInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -185,7 +186,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 				'timestampIso' => $timestampIso,
 				'metadata' => $event->metadata(),
 				'retryCount' => 0,
-				'maxRetries' => PipelinqTimelineRetryJob::DEFAULT_MAX_RETRIES,
+				'maxRetries' => PipelinqTimelineRetryJobInterface::DEFAULT_MAX_RETRIES,
 				'nextRetryAt' => $nowIso,
 				'lastError' => null,
 				'lastAttemptAt' => null,

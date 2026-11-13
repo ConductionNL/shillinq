@@ -42,7 +42,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
-use OCA\Shillinq\Lifecycle\PaymentRunReconcileGuard;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconcileGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -50,7 +51,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Matches CAMT.053 booked entries to a PaymentRun and drives exported → reconciled.
  */
-class PaymentRunReconciliationService {
+class PaymentRunReconciliationService implements PaymentRunReconciliationServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.
@@ -221,7 +222,7 @@ class PaymentRunReconciliationService {
 		);
 
 		return (new ServerWriteAuthority())->during(
-			purpose: PaymentRunReconcileGuard::PURPOSE,
+			purpose: PaymentRunReconcileGuardInterface::PURPOSE,
 			objectId: (string)($paymentRun['id'] ?? ($paymentRun['@self']['id'] ?? '')),
 			work: fn (): array => $this->saveRun(run: $update)
 		);

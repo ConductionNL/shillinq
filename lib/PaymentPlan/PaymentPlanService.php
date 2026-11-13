@@ -42,6 +42,7 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -53,7 +54,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
-class PaymentPlanService {
+class PaymentPlanService implements PaymentPlanServiceInterface {
 	/**
 	 * The dunning pause reason a plan writes.
 	 *

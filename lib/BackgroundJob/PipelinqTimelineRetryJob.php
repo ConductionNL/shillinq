@@ -51,6 +51,7 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqTimelineRetryJobInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
@@ -69,15 +70,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
  */
-class PipelinqTimelineRetryJob extends QueuedJob {
-
-	/**
-	 * Default maximum number of retry attempts before dead-lettering.
-	 *
-	 * Three retries with 1m / 5m / 30m backoff gives ~36 minutes of grace
-	 * before an admin has to look at the event manually.
-	 */
-	public const DEFAULT_MAX_RETRIES = 3;
+class PipelinqTimelineRetryJob extends QueuedJob implements PipelinqTimelineRetryJobInterface {
 
 	/**
 	 * Exponential backoff schedule in seconds, indexed by 0-based retry

@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalGuardInterface;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 
 /**
@@ -37,14 +38,7 @@ use OCA\Shillinq\Service\PurchaseOrderApprovalService;
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
  */
-final class PurchaseOrderApprovalGuard extends ServerWriteGrantGuard {
-
-	/**
-	 * The grant PurchaseOrderApprovalService holds while it saves a decision.
-	 *
-	 * @var string
-	 */
-	public const PURPOSE = 'purchase-order-approval';
+final class PurchaseOrderApprovalGuard extends ServerWriteGrantGuard implements PurchaseOrderApprovalGuardInterface {
 
 	/**
 	 * Refusal for an approval that did not come from the approval chain.

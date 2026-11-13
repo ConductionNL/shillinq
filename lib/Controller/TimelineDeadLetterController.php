@@ -44,6 +44,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqTimelineRetryJobInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
@@ -209,7 +210,7 @@ class TimelineDeadLetterController extends Controller {
 				'timestampIso' => (string)($dead['timestampIso'] ?? ''),
 				'metadata' => ($dead['metadata'] ?? null),
 				'retryCount' => 0,
-				'maxRetries' => PipelinqTimelineRetryJob::DEFAULT_MAX_RETRIES,
+				'maxRetries' => PipelinqTimelineRetryJobInterface::DEFAULT_MAX_RETRIES,
 				'nextRetryAt' => $nowIso,
 				'lastError' => null,
 				'lastAttemptAt' => null,

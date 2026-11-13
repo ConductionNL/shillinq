@@ -33,10 +33,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\MandateStore;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Lifecycle\MandateGuard;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\MandateGuardInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -62,14 +62,14 @@ class MandateDormancyExpiryJob extends TimedJob {
 	 * @param ITimeFactory $time Time factory for TimedJob scheduling.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param MandateGuard $guard Dormancy decision guard.
+	 * @param MandateGuardInterface $guard Dormancy decision guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
-		private readonly MandateGuard $guard,
+		private readonly MandateGuardInterface $guard,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

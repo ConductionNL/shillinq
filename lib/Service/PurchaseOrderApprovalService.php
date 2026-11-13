@@ -48,13 +48,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalGuardInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 11 — records approver identity + decidedAt on the next pending
@@ -218,7 +218,7 @@ class PurchaseOrderApprovalService {
 		$purchaseOrder       = $this->applyDecision(purchaseOrder: $purchaseOrder, approval: $approval);
 
 		$saved = $this->writeAuthority->during(
-			purpose: PurchaseOrderApprovalGuard::PURPOSE,
+			purpose: PurchaseOrderApprovalGuardInterface::PURPOSE,
 			objectId: $approval->purchaseOrderId,
 			work: fn (): array => $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder)
 		);

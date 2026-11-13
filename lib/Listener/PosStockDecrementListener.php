@@ -72,6 +72,7 @@ namespace OCA\Shillinq\Listener;
 use DateTime;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
 use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -90,7 +91,7 @@ use Throwable;
  *
  * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
-class PosStockDecrementListener implements IEventListener {
+class PosStockDecrementListener implements IEventListener, PosStockDecrementListenerInterface {
 	/**
 	 * Prefix distinguishing a synthetic POS-sale "delivery" id (built from
 	 * the pipelinq posTxnId) from a real shillinq Delivery id in the
@@ -99,14 +100,6 @@ class PosStockDecrementListener implements IEventListener {
 	 * @var string
 	 */
 	private const POS_DELIVERY_ID_PREFIX = 'pos-';
-
-	/**
-	 * Notification subject for an unmatched POS stock line, prepared for
-	 * display by {@see \OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier}.
-	 *
-	 * @var string
-	 */
-	public const NOTIFICATION_SUBJECT_UNMATCHED = 'pos_stock_unmatched_line';
 
 	/**
 	 * Construct the listener with DI dependencies.
