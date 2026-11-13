@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Service\Booking\AvailabilityWindows;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -87,6 +88,7 @@ class SlotService {
 	 * @param ICacheFactory $cacheFactory Distributed cache factory (slot result cache).
 	 * @param ITimeFactory $time Time provider for past-slot filtering.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param AvailabilityWindows $windows The availability rules, breaks and constraints policy.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -94,6 +96,7 @@ class SlotService {
 		private readonly ICacheFactory $cacheFactory,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
+		private readonly AvailabilityWindows $windows = new AvailabilityWindows(),
 	) {
 	}//end __construct()
 
@@ -190,12 +193,28 @@ class SlotService {
 	/**
 	 * Enumerate a resource's slots of the requested duration on the requested date.
 	 *
+	 * With an active availability rule the slots follow the rules, the breaks
+	 * and the booking constraints (REQ-BAR-011); without one, the resource's
+	 * own opening and closing time. When the rules, breaks or constraints
+	 * cannot be read, nothing is offered rather than slots they may forbid.
+	 *
 	 * @param array{serviceId: string, resourceId: string, date: string, duration: int} $request The slot request.
 	 * @param array<string,mixed> $resource The Resource row.
 	 *
 	 * @return array<int,array<string,string>> The slots.
+	 *
+	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.1
 	 */
 	private function slotsOfResource(array $request, array $resource): array {
+		$rules = $this->rowsOf(schema: 'AvailabilityRule', filters: ['resource' => $request['resourceId']]);
+		if ($rules === null) {
+			return [];
+		}
+
+		if ($this->windows->hasActiveRule(rules: $rules) === true) {
+			return $this->ruledSlots(request: $request, resource: $resource, rules: $rules);
+		}
+
 		return $this->enumerateSlots(
 			date: $request['date'],
 			openingTime: $this->resourceTime(resource: $resource, field: 'openingTime'),
@@ -205,6 +224,114 @@ class SlotService {
 			allowOverlap: (bool)($resource['allowOverlap'] ?? false),
 		);
 	}//end slotsOfResource()
+
+	/**
+	 * The slots inside the windows of the applying rules, outside the breaks and inside the notice limits.
+	 *
+	 * @param array{serviceId: string, resourceId: string, date: string, duration: int} $request The slot request.
+	 * @param array<string,mixed> $resource The Resource row.
+	 * @param array<int,array<string,mixed>> $rules The resource's AvailabilityRule rows.
+	 *
+	 * @return array<int,array<string,string>> The slots, by start time.
+	 *
+	 * @spec openspec/changes/bookings-slots-follow-availability/tasks.md#task-1.2
+	 */
+	private function ruledSlots(array $request, array $resource, array $rules): array {
+		$linked = $this->rowsLinkedTo(rules: $rules);
+		if ($linked === null) {
+			return [];
+		}
+
+		$breaks = $this->windows->breaksOn(breaks: $linked['ResourceBreak'], date: $request['date']);
+		$limits = $this->windows->noticeLimits(constraints: $linked['BookingConstraint']);
+		$now = (new DateTimeImmutable('@' . $this->time->getTime()))->setTimezone(new DateTimeZone('UTC'));
+		$appointments = $this->loadAppointmentsForResourceOnDate(resourceId: $request['resourceId'], date: $request['date']);
+
+		$slots = [];
+		foreach ($this->windows->windowsOn(rules: $rules, date: $request['date']) as [$open, $close]) {
+			$candidates = $this->enumerateSlots(
+				date: $request['date'],
+				openingTime: $open,
+				closingTime: $close,
+				durationMinutes: $request['duration'],
+				existingAppointments: $appointments,
+				allowOverlap: (bool)($resource['allowOverlap'] ?? false),
+			);
+			foreach ($candidates as $slot) {
+				$start = new DateTimeImmutable($slot['startTime']);
+				$end = new DateTimeImmutable($slot['endTime']);
+				if ($this->windows->admits(start: $start, end: $end, breaks: $breaks, limits: $limits, now: $now) === true) {
+					$slots[$slot['startTime']] = $slot;
+				}
+			}
+		}
+
+		ksort($slots);
+
+		return array_values($slots);
+	}//end ruledSlots()
+
+	/**
+	 * The breaks and the booking constraints of the active rules, or null when a read failed.
+	 *
+	 * @param array<int,array<string,mixed>> $rules The resource's AvailabilityRule rows.
+	 *
+	 * @return array{ResourceBreak: array<int,array<string,mixed>>, BookingConstraint: array<int,array<string,mixed>>}|null
+	 */
+	private function rowsLinkedTo(array $rules): ?array {
+		$linked = ['ResourceBreak' => [], 'BookingConstraint' => []];
+		foreach ($rules as $rule) {
+			$ruleId = (string)($rule['availabilityRuleId'] ?? '');
+			if (($rule['status'] ?? '') !== 'active' || $ruleId === '') {
+				continue;
+			}
+
+			foreach (array_keys($linked) as $schema) {
+				$rows = $this->rowsOf(schema: $schema, filters: ['availabilityRule' => $ruleId]);
+				if ($rows === null) {
+					return null;
+				}
+
+				$linked[$schema] = array_merge($linked[$schema], $rows);
+			}
+		}
+
+		return $linked;
+	}//end rowsLinkedTo()
+
+	/**
+	 * The rows of a schema matching filters, read without RBAC; null when the read failed.
+	 *
+	 * @param string               $schema  OR schema slug.
+	 * @param array<string,string> $filters The filters.
+	 *
+	 * @return array<int,array<string,mixed>>|null The rows.
+	 */
+	private function rowsOf(string $schema, array $filters): ?array {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
+			return [];
+		}
+
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$records = $objectService
+				->setRegister($this->registerLocation->getRegisterSlug())
+				->setSchema($schema)
+				->findAll(
+					config: ['filters' => $filters, 'limit' => 500],
+					// Availability must follow every rule of the resource, not only those the caller may read.
+					_rbac: false,
+				);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq slot service: availability lookup failed',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		return array_map(fn ($record): array => $this->toArray(object: $record), array_values((array)$records));
+	}//end rowsOf()
 
 	/**
 	 * A resource's opening or closing time, the default when absent or empty.

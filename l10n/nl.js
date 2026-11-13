@@ -6866,7 +6866,15 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Days Of Week": "Weekdagen",
+        "Weekdays the rule opens the resource on. daily = every day. When several active rules apply to a date, the one naming the fewest weekdays wins, so a Wednesday-only rule replaces a Monday-to-Friday one on Wednesdays.": "Weekdagen waarop de regel de resource openstelt. daily = elke dag. Gelden er op een datum meerdere actieve regels, dan wint de regel met de minste weekdagen: een regel voor alleen woensdag vervangt op woensdag een regel voor maandag tot en met vrijdag.",
+        "Start Time": "Begintijd",
+        "Opening time on those days (HH:MM, 24-hour). Slots are offered from here.": "Openingstijd op die dagen (HH:MM, 24-uurs). Vanaf dit tijdstip worden tijdsloten aangeboden.",
+        "End Time": "Eindtijd",
+        "Closing time on those days (HH:MM, 24-hour). The last slot ends at or before it; MUST be greater than startTime.": "Sluitingstijd op die dagen (HH:MM, 24-uurs). Het laatste tijdslot eindigt uiterlijk op dit tijdstip; MOET later zijn dan de begintijd.",
+        "Min Advance Notice Hours": "Minimale aanmeldtermijn (uren)",
+        "Minimum hours between now and the start of a bookable slot. 0 = no hour limit; applies together with minAdvanceNoticeDays.": "Minimaal aantal uren tussen nu en het begin van een boekbaar tijdslot. 0 = geen urengrens; geldt naast de minimale aanmeldtermijn in dagen."
     },
     "nplurals=2; plural=(n != 1);"
 )
