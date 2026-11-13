@@ -4735,6 +4735,55 @@
 		{
 			"menu": [
 				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "OpenItems",
+							"label": "Open items",
+							"icon": "LinkVariant",
+							"route": "OpenItems",
+							"order": 23
+						},
+						{
+							"id": "LinesToClear",
+							"label": "Lines to clear",
+							"icon": "FormatListChecks",
+							"route": "LinesToClear",
+							"order": 24
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-open-item-clearing",
+					"id": "OpenItems",
+					"route": "/bookkeeping/open-items",
+					"type": "index",
+					"title": "Open items"
+				},
+				{
+					"_fragment": "ledger-open-item-clearing",
+					"id": "OpenItemAccount",
+					"route": "/bookkeeping/open-items/:id",
+					"type": "detail",
+					"title": "Open items"
+				},
+				{
+					"_fragment": "ledger-open-item-clearing",
+					"id": "LinesToClear",
+					"route": "/bookkeeping/open-items/lines",
+					"type": "index",
+					"title": "Lines to clear"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "NavSalesCaption",
 					"label": "Sales",
 					"type": "caption",

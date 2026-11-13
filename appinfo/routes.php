@@ -878,6 +878,13 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // with open invoices, or book it to a ledger account, by hand.
             ['name' => 'manualMatch#match', 'url' => '/api/v1/bank-lines/{lineId}/match', 'verb' => 'POST'],
 
+            // ledger-open-item-clearing (REQ-LOIC-001..004): what is open on a
+            // balance account kept by open item, clearing selected posted lines
+            // into a group and undoing a clearing.
+            ['name' => 'openItemClearing#overview', 'url' => '/api/v1/open-items/accounts/{accountId}', 'verb' => 'GET'],
+            ['name' => 'openItemClearing#clear', 'url' => '/api/v1/open-items/clear', 'verb' => 'POST'],
+            ['name' => 'openItemClearing#undo', 'url' => '/api/v1/open-items/groups/{groupId}/undo', 'verb' => 'POST'],
+
             // receivables-payment-plans (REQ-RPPL-001, REQ-RPPL-003): draw up,
             // activate, settle by hand and cancel a payment plan; the plans a
             // bank line can pay and paying one from a line. Static URLs first.

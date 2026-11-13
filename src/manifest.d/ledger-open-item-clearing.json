@@ -1,0 +1,174 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "ledger-open-item-clearing",
+    "adr": "ADR-037 modular manifest fragment",
+    "description": "Open items (afletteren, board ShGrootboek): the balance accounts kept by open item, and per account its uncleared posted lines, the groups that do not net to zero or were reopened by a reversal, and the suggested exact pairs to clear. Lines to clear lists every line not in a group, to select several and clear them together. Clearing and undoing go through OpenItemClearingController; the suggestions are never cleared without a person pressing Clear."
+  },
+  "menu": [
+    {
+      "id": "Bookkeeping",
+      "label": "Bookkeeping",
+      "icon": "NotebookOutline",
+      "order": 20,
+      "children": [
+        {
+          "id": "OpenItems",
+          "label": "Open items",
+          "icon": "LinkVariant",
+          "route": "OpenItems",
+          "order": 23
+        },
+        {
+          "id": "LinesToClear",
+          "label": "Lines to clear",
+          "icon": "FormatListChecks",
+          "route": "LinesToClear",
+          "order": 24
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "OpenItems",
+      "route": "/bookkeeping/open-items",
+      "type": "index",
+      "title": "Open items",
+      "config": {
+        "register": "shillinq",
+        "schema": "Account",
+        "filter": {
+          "openItemManaged": true
+        },
+        "columns": [
+          { "key": "accountNumber", "label": "Account", "sortable": true },
+          { "key": "name", "label": "Name", "sortable": true },
+          { "key": "accountType", "label": "Type", "sortable": true },
+          { "key": "administrationId", "label": "Administration", "sortable": true }
+        ],
+        "defaultSort": "accountNumber",
+        "rowRoute": "OpenItemAccount",
+        "description": "Balance accounts kept by open item, such as kruisposten or a tussenrekening. Open one to clear its lines and see what does not net to zero.",
+        "emptyText": "No account is kept by open item yet. Switch on Kept by open item on a balance account in the chart of accounts."
+      }
+    },
+    {
+      "id": "OpenItemAccount",
+      "route": "/bookkeeping/open-items/:id",
+      "type": "detail",
+      "title": "Open items",
+      "config": {
+        "register": "shillinq",
+        "schema": "Account",
+        "indexRoute": "OpenItems",
+        "breadcrumb": { "label": "Open items", "route": "OpenItems" },
+        "identifierField": "accountNumber",
+        "widgets": [
+          {
+            "id": "open-items-suggestions",
+            "title": "Suggested pairs",
+            "type": "object-table",
+            "content": {
+              "endpointSource": { "url": "/apps/shillinq/api/v1/open-items/accounts/@objectId", "responsePath": "suggestions" },
+              "columns": [
+                { "key": "reference", "label": "Reference" },
+                { "key": "debitDate", "label": "Debit on" },
+                { "key": "creditDate", "label": "Credit on" },
+                { "key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } }
+              ],
+              "actions": [
+                {
+                  "id": "clear-suggestion",
+                  "label": "Clear",
+                  "icon": "LinkVariant",
+                  "handler": "clearOpenItemSuggestion",
+                  "description": "Clear the two lines against each other."
+                }
+              ],
+              "emptyText": "No uncleared lines with the same amount on opposite sides and the same reference."
+            }
+          },
+          {
+            "id": "open-items-uncleared",
+            "title": "Uncleared lines",
+            "type": "object-table",
+            "content": {
+              "endpointSource": { "url": "/apps/shillinq/api/v1/open-items/accounts/@objectId", "responsePath": "uncleared" },
+              "columns": [
+                { "key": "date", "label": "Date" },
+                { "key": "description", "label": "Description" },
+                { "key": "reference", "label": "Reference" },
+                { "key": "side", "label": "Side" },
+                { "key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } }
+              ],
+              "emptyText": "Every posted line on this account is cleared."
+            }
+          },
+          {
+            "id": "open-items-groups",
+            "title": "Groups that do not net to zero",
+            "type": "object-table",
+            "content": {
+              "endpointSource": { "url": "/apps/shillinq/api/v1/open-items/accounts/@objectId", "responsePath": "openGroups" },
+              "columns": [
+                { "key": "clearedAt", "label": "Cleared at" },
+                { "key": "clearedBy", "label": "Cleared by" },
+                { "key": "reason", "label": "Reason" },
+                { "key": "state", "label": "State" },
+                { "key": "balance", "label": "Balance", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } }
+              ],
+              "actions": [
+                {
+                  "id": "undo-clearing",
+                  "label": "Undo clearing",
+                  "icon": "LinkVariantOff",
+                  "handler": "undoOpenItemClearing",
+                  "description": "Open the lines of this group again."
+                }
+              ],
+              "emptyText": "Every group on this account nets to zero."
+            }
+          }
+        ],
+        "layout": [
+          { "id": "1", "widgetId": "open-items-suggestions", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 4 },
+          { "id": "2", "widgetId": "open-items-uncleared", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 6 },
+          { "id": "3", "widgetId": "open-items-groups", "gridX": 0, "gridY": 10, "gridWidth": 12, "gridHeight": 4 }
+        ]
+      }
+    },
+    {
+      "id": "LinesToClear",
+      "route": "/bookkeeping/open-items/lines",
+      "type": "index",
+      "title": "Lines to clear",
+      "config": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "filter": {
+          "clearingGroupId": null
+        },
+        "columns": [
+          { "key": "accountNumber", "label": "Account", "sortable": true },
+          { "key": "description", "label": "Description", "sortable": true },
+          { "key": "side", "label": "Side", "sortable": true },
+          { "key": "amount", "label": "Amount (EUR)", "sortable": true },
+          { "key": "periodId", "label": "Period", "sortable": true }
+        ],
+        "defaultSort": "accountNumber",
+        "bulkActions": [
+          {
+            "id": "clear-selected",
+            "label": "Clear selected",
+            "icon": "LinkVariant",
+            "handler": "clearSelectedOpenItems",
+            "description": "Clear the selected posted lines of one account kept by open item against each other."
+          }
+        ],
+        "description": "Ledger lines not in a clearing group. Select the posted lines of one account kept by open item and clear them together."
+      }
+    }
+  ]
+}
