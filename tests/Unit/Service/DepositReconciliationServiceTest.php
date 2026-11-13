@@ -527,4 +527,29 @@ final class DepositReconciliationServiceTest extends TestCase {
 		self::assertSame(1, $counters['reconciled']);
 		self::assertSame('failed', $saved[0]['state']);
 	}//end testPollPendingViaAdapterProjectsFailedLifecycleOntoFailedOutcome()
+
+	/**
+	 * An unknown outcome is a no-op that reads nothing; a void stamps voidedAt
+	 * and the webhook time; a failure without details records the defaults.
+	 *
+	 * @return void
+	 */
+	public function testUnknownOutcomeVoidAndDefaultFailureDetails(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub([['paymentIntentId' => 'tr_1', 'state' => 'pending']], $saved);
+		$service = $this->makeService($stub);
+
+		self::assertSame(DepositReconciliationService::RESULT_NOOP, $service->reconcile(paymentIntentId: 'tr_1', outcome: 'refunded', gateway: 'mollie'));
+		self::assertSame([], $stub->rbacFlags);
+
+		self::assertSame(DepositReconciliationService::RESULT_APPLIED, $service->reconcile(paymentIntentId: 'tr_1', outcome: DepositReconciliationService::OUTCOME_VOIDED, gateway: 'mollie'));
+		self::assertSame(['voided', 'mollie'], [$saved[0]['state'], $saved[0]['paymentGateway']]);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $saved[0]['voidedAt']);
+		self::assertMatchesRegularExpression('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$/', $saved[0]['lastWebhookAttempt']);
+		self::assertArrayNotHasKey('authorizedAt', $saved[0]);
+
+		self::assertSame(DepositReconciliationService::RESULT_APPLIED, $service->reconcile(paymentIntentId: 'tr_1', outcome: DepositReconciliationService::OUTCOME_FAILED, gateway: 'stripe'));
+		self::assertSame(['failed', 'payment_failed', 'Payment failed at gateway.'], [$saved[1]['state'], $saved[1]['lastErrorCode'], $saved[1]['lastErrorMessage']]);
+		self::assertArrayNotHasKey('voidedAt', $saved[1]);
+	}//end testUnknownOutcomeVoidAndDefaultFailureDetails()
 }//end class

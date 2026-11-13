@@ -278,9 +278,51 @@ class PaymentReconciliationService {
 
 		$registerSlug = $this->getRegisterSlug();
 
-		// Resolve across both schemas — the shared surface (REQ-APL-004).
-		$record = null;
-		$schema = null;
+		[$record, $schema] = $this->findRecordByIntent(registerSlug: $registerSlug, paymentIntentId: $paymentIntentId);
+		if ($record === null || $schema === null) {
+			return ['result' => self::RESULT_NOT_FOUND, 'schema' => null];
+		}
+
+		$currentState = (string)($record['state'] ?? 'pending');
+
+		// Idempotency / no-downgrade guard: a replayed or late webhook on an
+		// already-settled record does nothing (REQ-APL-004 replay safety).
+		if (in_array($currentState, self::ALREADY_SETTLED[$outcome], true) === true) {
+			$this->logger->debug(
+				'Shillinq: payment webhook is an idempotent no-op',
+				['gateway' => $gateway, 'schema' => $schema, 'currentState' => $currentState, 'outcome' => $outcome]
+			);
+			return ['result' => self::RESULT_NOOP, 'schema' => $schema];
+		}
+
+		$record = $this->applyOutcome(record: $record, gateway: $gateway, outcome: $outcome, event: $event);
+
+		$result = self::RESULT_APPLIED;
+		if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
+			[$record, $result] = $this->settleCapturedRequest(registerSlug: $registerSlug, record: $record);
+		}
+
+		$this->objectService->saveObject(
+			object: $record,
+			register: $registerSlug,
+			schema: $schema,
+			_rbac: false,
+		);
+
+		return ['result' => $result, 'schema' => $schema];
+	}//end reconcile()
+
+	/**
+	 * Find the payment record carrying this paymentIntentId, PaymentRequest
+	 * first, then DepositPayment (REQ-APL-004). The lookup is by intent id only,
+	 * so the write is scoped to exactly the matched record.
+	 *
+	 * @param string $registerSlug    The register slug.
+	 * @param string $paymentIntentId The gateway's payment intent id.
+	 *
+	 * @return array{0: ?array<string, mixed>, 1: ?string} The record and its schema, or two nulls.
+	 */
+	private function findRecordByIntent(string $registerSlug, string $paymentIntentId): array {
 		foreach (self::SCHEMAS as $candidateSchema) {
 			$matches = $this->objectService
 				->setRegister($registerSlug)
@@ -295,36 +337,31 @@ class PaymentReconciliationService {
 				);
 
 			if (empty($matches) === false) {
-				$record = $matches[0];
-				$schema = $candidateSchema;
-				break;
+				return [$matches[0], $candidateSchema];
 			}
 		}
 
-		if ($record === null || $schema === null) {
-			return ['result' => self::RESULT_NOT_FOUND, 'schema' => null];
-		}
+		return [null, null];
+	}//end findRecordByIntent()
 
-		$currentState = (string)($record['state'] ?? 'pending');
-		$targetState = self::TARGET_STATE[$outcome];
-
-		// Idempotency / no-downgrade guard: a replayed or late webhook on an
-		// already-settled record does nothing (REQ-APL-004 replay safety).
-		if (in_array($currentState, self::ALREADY_SETTLED[$outcome], true) === true) {
-			$this->logger->debug(
-				'Shillinq: payment webhook is an idempotent no-op',
-				['gateway' => $gateway, 'schema' => $schema, 'currentState' => $currentState, 'outcome' => $outcome]
-			);
-			return ['result' => self::RESULT_NOOP, 'schema' => $schema];
-		}
-
-		$now = gmdate('Y-m-d\TH:i:s\Z');
-
-		$record['state'] = $targetState;
+	/**
+	 * Stamp the reported outcome on the record: the target state, the gateway,
+	 * and per outcome the capture time, settlement reference and fee, or the
+	 * operator-readable failure reason (never raw card data, REQ-APL-001).
+	 *
+	 * @param array<string, mixed> $record  The payment record.
+	 * @param string               $gateway The gateway slug.
+	 * @param string               $outcome The reported outcome.
+	 * @param array<string, mixed> $event   The normalised event.
+	 *
+	 * @return array<string, mixed> The stamped record.
+	 */
+	private function applyOutcome(array $record, string $gateway, string $outcome, array $event): array {
+		$record['state'] = self::TARGET_STATE[$outcome];
 		$record['paymentGateway'] = $gateway;
 
 		if ($outcome === self::OUTCOME_CAPTURED) {
-			$record['capturedAt'] = $now;
+			$record['capturedAt'] = gmdate('Y-m-d\TH:i:s\Z');
 			if (isset($event['settlementReference']) === true) {
 				$record['settlementReference'] = (string)$event['settlementReference'];
 			}
@@ -333,77 +370,64 @@ class PaymentReconciliationService {
 				$record['gatewayFeeAmount'] = (float)$event['gatewayFeeAmount'];
 			}
 		} elseif ($outcome === self::OUTCOME_FAILED) {
-			// Persist the operator-readable failure reason — never raw card data
-			// (REQ-APL-001 / mirrors REQ-DP-011).
 			$record['failureReason'] = (string)($event['errorMessage'] ?? 'Payment failed at gateway.');
 		}
 
-		// On capture of a PaymentRequest, settle the linked ARInvoice through its
-		// existing lifecycle (AR core owns GL posting). If that is impossible the
-		// request lands in captured_unapplied — surfaced, never silently dropped
-		// (REQ-APL-005). DepositPayment capture handling is unchanged from the
-		// deposits path (its own lifecycle owns AR materialisation).
-		// A request with an invoice behind it settles that invoice, whatever its
-		// subjectKind: a school contribution stands on an object AND on its
-		// invoice, and the invoice already carries the revenue, so booking the
-		// object receipt as well would book the income twice (REQ-SCON-006).
+		return $record;
+	}//end applyOutcome()
+
+	/**
+	 * Settle a captured PaymentRequest.
+	 *
+	 * A request with an invoice behind it settles that invoice through its
+	 * existing lifecycle, whatever its subjectKind: a school contribution stands
+	 * on an object AND on its invoice, and the invoice already carries the
+	 * revenue, so booking the object receipt as well would book the income twice
+	 * (REQ-SCON-006). A request on an object without an invoice has its receipt
+	 * booked by Shillinq against the account mapped to the request type (ADR-107
+	 * / REQ-SOPR-002). When either is impossible the request lands in
+	 * captured_unapplied — surfaced, never silently dropped (REQ-APL-005).
+	 * DepositPayment capture is not handled here: its own lifecycle owns AR
+	 * materialisation.
+	 *
+	 * @param string               $registerSlug The register slug.
+	 * @param array<string, mixed> $record       The captured PaymentRequest.
+	 *
+	 * @return array{0: array<string, mixed>, 1: string} The request to save and the reconcile result.
+	 */
+	private function settleCapturedRequest(string $registerSlug, array $record): array {
 		$hasInvoice = ((string)($record['invoiceReference'] ?? '') !== '');
-		if ($outcome === self::OUTCOME_CAPTURED
-			&& $schema === self::SCHEMA_PAYMENT_REQUEST
-			&& (string)($record['subjectKind'] ?? 'invoice') === 'object'
-			&& $hasInvoice === false
-		) {
-			// A request on an object has no invoice to settle. Shillinq books the
-			// receipt itself, against the account mapped to the request type, and
-			// the domain app books nothing (ADR-107 / REQ-SOPR-002).
+		if ((string)($record['subjectKind'] ?? 'invoice') === 'object' && $hasInvoice === false) {
 			$refusal = $this->bookObjectReceipt(registerSlug: $registerSlug, request: $record);
 			if ($refusal !== null) {
 				$record['state'] = 'captured_unapplied';
 				$record['failureReason'] = $refusal;
-				$this->objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: $schema,
-					_rbac: false,
-				);
-				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
+				return [$record, self::RESULT_UNAPPLIED];
 			}
 
 			$record['confirmationSummary'] = $this->buildObjectConfirmationSummary(request: $record);
 			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
-		} elseif ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
-			$settledInvoice = $this->settleLinkedInvoice(
-				objectService: $this->objectService,
-				registerSlug: $registerSlug,
-				request: $record,
-			);
-			if ($settledInvoice === null) {
-				$record['state'] = 'captured_unapplied';
-				$this->objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: $schema,
-					_rbac: false,
-				);
-				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
-			}
+			return [$record, self::RESULT_APPLIED];
+		}
 
-			// Write a subject-safe confirmation the debtor reads through the
-			// existing read-only paymentRequests portal collection — no
-			// dedicated inbox schema (portal-payment-initiation REQ-SPPI-005).
-			$record['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $record);
-			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
-		}//end if
-
-		$this->objectService->saveObject(
-			object: $record,
-			register: $registerSlug,
-			schema: $schema,
-			_rbac: false,
+		$settledInvoice = $this->settleLinkedInvoice(
+			objectService: $this->objectService,
+			registerSlug: $registerSlug,
+			request: $record,
 		);
+		if ($settledInvoice === null) {
+			$record['state'] = 'captured_unapplied';
+			return [$record, self::RESULT_UNAPPLIED];
+		}
 
-		return ['result' => self::RESULT_APPLIED, 'schema' => $schema];
-	}//end reconcile()
+		// Write a subject-safe confirmation the debtor reads through the
+		// existing read-only paymentRequests portal collection — no
+		// dedicated inbox schema (portal-payment-initiation REQ-SPPI-005).
+		$record['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $record);
+		$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
+
+		return [$record, self::RESULT_APPLIED];
+	}//end settleCapturedRequest()
 
 	/**
 	 * Settle the ARInvoice linked to a captured PaymentRequest through the AR
@@ -770,70 +794,104 @@ class PaymentReconciliationService {
 	public function pollPending(callable $statusProvider): array {
 		$registerSlug = $this->getRegisterSlug();
 
-		$pageSize = 200;
 		$scanned = 0;
 		$reconciled = 0;
 
 		foreach (self::SCHEMAS as $schema) {
-			$page = 1;
-			$batchSize = 0;
-
-			do {
-				$batch = $this->objectService
-					->setRegister($registerSlug)
-					->setSchema($schema)
-					->findAll(
-						config: [
-							'filters' => ['state' => 'pending'],
-							'limit' => $pageSize,
-							'offset' => (($page - 1) * $pageSize),
-						],
-						_rbac: false,
-					);
-				$batchSize = count($batch);
-
-				foreach ($batch as $record) {
-					$scanned++;
-					$intentId = (string)($record['paymentIntentId'] ?? '');
-					if ($intentId === '') {
-						continue;
-					}
-
-					try {
-						$outcome = $statusProvider($intentId);
-					} catch (\Throwable $e) {
-						$this->logger->warning(
-							'Shillinq: payment polling status lookup failed',
-							['exception' => $e->getMessage()]
-						);
-						continue;
-					}
-
-					if ($outcome === null || $outcome === '') {
-						continue;
-					}
-
-					$result = $this->reconcile(
-						gateway: (string)($record['paymentGateway'] ?? 'mollie'),
-						event: [
-							'paymentIntentId' => $intentId,
-							'outcome' => $outcome,
-						],
-					);
-					if ($result['result'] === self::RESULT_APPLIED || $result['result'] === self::RESULT_UNAPPLIED) {
-						$reconciled++;
-					}
-				}//end foreach
-
-				$page++;
-			} while ($batchSize === $pageSize);
-		}//end foreach
+			$counters = $this->pollSchema(registerSlug: $registerSlug, schema: $schema, statusProvider: $statusProvider);
+			$scanned += $counters['scanned'];
+			$reconciled += $counters['reconciled'];
+		}
 
 		return [
 			'scanned' => $scanned,
 			'reconciled' => $reconciled,
 		];
 	}//end pollPending()
+
+	/**
+	 * Page through one schema's pending records and reconcile each.
+	 *
+	 * @param string   $registerSlug   The register slug.
+	 * @param string   $schema         The schema to poll.
+	 * @param callable $statusProvider Maps a paymentIntentId to an OUTCOME_* or null.
+	 *
+	 * @return array{scanned: int, reconciled: int} The counters for this schema.
+	 */
+	private function pollSchema(string $registerSlug, string $schema, callable $statusProvider): array {
+		$pageSize = 200;
+		$page = 1;
+		$scanned = 0;
+		$reconciled = 0;
+
+		do {
+			$batch = $this->objectService
+				->setRegister($registerSlug)
+				->setSchema($schema)
+				->findAll(
+					config: [
+						'filters' => ['state' => 'pending'],
+						'limit' => $pageSize,
+						'offset' => (($page - 1) * $pageSize),
+					],
+					_rbac: false,
+				);
+			$batchSize = count($batch);
+
+			foreach ($batch as $record) {
+				$scanned++;
+				if ($this->pollRecord(record: $record, statusProvider: $statusProvider) === true) {
+					$reconciled++;
+				}
+			}
+
+			$page++;
+		} while ($batchSize === $pageSize);
+
+		return ['scanned' => $scanned, 'reconciled' => $reconciled];
+	}//end pollSchema()
+
+	/**
+	 * Ask the gateway for one pending record's status and reconcile it.
+	 *
+	 * A record without an intent id, a failing status lookup (logged) or an
+	 * empty outcome leaves the record pending.
+	 *
+	 * @param array<string, mixed> $record         The pending record.
+	 * @param callable             $statusProvider Maps a paymentIntentId to an OUTCOME_* or null.
+	 *
+	 * @return bool Whether the record was applied or became unapplied.
+	 */
+	private function pollRecord(array $record, callable $statusProvider): bool {
+		$intentId = (string)($record['paymentIntentId'] ?? '');
+		if ($intentId === '') {
+			return false;
+		}
+
+		try {
+			$outcome = $statusProvider($intentId);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: payment polling status lookup failed',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}
+
+		if ($outcome === null || $outcome === '') {
+			return false;
+		}
+
+		$result = $this->reconcile(
+			gateway: (string)($record['paymentGateway'] ?? 'mollie'),
+			event: [
+				'paymentIntentId' => $intentId,
+				'outcome' => $outcome,
+			],
+		);
+
+		return ($result['result'] === self::RESULT_APPLIED || $result['result'] === self::RESULT_UNAPPLIED);
+	}//end pollRecord()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config.

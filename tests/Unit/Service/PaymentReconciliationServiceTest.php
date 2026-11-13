@@ -890,4 +890,62 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		self::assertSame('captured_unapplied', $request['state']);
 		self::assertStringContainsString('period 2026-10 is closed', (string)($request['failureReason'] ?? ''));
 	}//end testARefusedPostingLeavesTheCaptureUnapplied()
+
+	/**
+	 * A captured deposit stores the gateway, the settlement reference and the
+	 * gateway fee as a number, and settles no invoice.
+	 *
+	 * @return void
+	 */
+	public function testACapturedDepositRecordsGatewayReferenceAndFee(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(['DepositPayment' => [['paymentIntentId' => 'tr_dep', 'state' => 'pending']]], $saved);
+		$service = $this->makeService($stub);
+
+		$out = $service->reconcile('stripe', ['paymentIntentId' => 'tr_dep', 'outcome' => 'captured', 'settlementReference' => 'po_9', 'gatewayFeeAmount' => '0.29']);
+
+		self::assertSame(['result' => PaymentReconciliationService::RESULT_APPLIED, 'schema' => 'DepositPayment'], $out);
+		self::assertSame(['DepositPayment'], array_map(static fn (array $s): string => $s['schema'], $saved));
+		$deposit = $saved[0]['object'];
+		self::assertSame(['captured', 'stripe', 'po_9', 0.29], [$deposit['state'], $deposit['paymentGateway'], $deposit['settlementReference'], $deposit['gatewayFeeAmount']]);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $deposit['capturedAt']);
+		self::assertArrayNotHasKey('failureReason', $deposit);
+	}//end testACapturedDepositRecordsGatewayReferenceAndFee()
+
+	/**
+	 * Polling scans every pending record, skips one without an intent id or
+	 * without a reported outcome, and reconciles the rest with the record's
+	 * gateway (mollie when none is stored).
+	 *
+	 * @return void
+	 */
+	public function testPollPendingSkipsRecordsWithoutIntentOrOutcome(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [
+					['state' => 'pending'],
+					['paymentIntentId' => 'tr_null', 'state' => 'pending'],
+					['paymentIntentId' => 'tr_empty', 'state' => 'pending'],
+				],
+				'DepositPayment' => [['paymentIntentId' => 'tr_dep', 'state' => 'pending']],
+			],
+			$saved
+		);
+		$service = $this->makeService($stub);
+		$asked = [];
+		$provider = static function (string $intentId) use (&$asked): ?string {
+			$asked[] = $intentId;
+			return ['tr_null' => null, 'tr_empty' => '', 'tr_dep' => 'failed'][$intentId];
+		};
+
+		$counters = $service->pollPending($provider);
+
+		self::assertSame(['scanned' => 4, 'reconciled' => 1], $counters);
+		self::assertSame(['tr_null', 'tr_empty', 'tr_dep'], $asked);
+		// The double answers every findAll with all rows of the schema, so the one
+		// reconcile writes is counted, not located.
+		self::assertCount(1, $saved);
+		self::assertSame(['failed', 'mollie', 'Payment failed at gateway.'], [$saved[0]['object']['state'], $saved[0]['object']['paymentGateway'], $saved[0]['object']['failureReason']]);
+	}//end testPollPendingSkipsRecordsWithoutIntentOrOutcome()
 }//end class

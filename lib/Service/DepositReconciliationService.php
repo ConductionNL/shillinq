@@ -171,25 +171,12 @@ class DepositReconciliationService {
 
 		$registerSlug = $this->getRegisterSlug();
 
-		$matches = $this->objectService
-			->setRegister($registerSlug)
-			->setSchema('DepositPayment')
-			->findAll(
-				config: [
-					'filters' => ['paymentIntentId' => $paymentIntentId],
-					'limit' => 1,
-				],
-				// Gateway webhooks are authenticated by signature, not by a Nextcloud session.
-				_rbac: false,
-			);
-
-		if (empty($matches) === true) {
+		$deposit = $this->findDepositByIntent(registerSlug: $registerSlug, paymentIntentId: $paymentIntentId);
+		if ($deposit === null) {
 			return self::RESULT_NOT_FOUND;
 		}
 
-		$deposit = $matches[0];
 		$currentState = (string)($deposit['state'] ?? 'draft');
-		$targetState = self::TARGET_STATE[$outcome];
 
 		// Idempotency / no-downgrade guard: if the deposit is already settled in a
 		// way that supersedes this outcome, do nothing (REQ-DP-006).
@@ -201,20 +188,13 @@ class DepositReconciliationService {
 			return self::RESULT_NOOP;
 		}
 
-		$deposit['state'] = $targetState;
-		$deposit['paymentGateway'] = $gateway;
-		$deposit['lastWebhookAttempt'] = gmdate('Y-m-d\TH:i:s\Z');
-
-		if ($outcome === self::OUTCOME_AUTHORIZED) {
-			$deposit['authorizedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		} elseif ($outcome === self::OUTCOME_VOIDED) {
-			$deposit['voidedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		} elseif ($outcome === self::OUTCOME_FAILED) {
-			// REQ-DP-011: persist the failure reason for the operator UI. Never the
-			// raw card data — the gateway error code/message only.
-			$deposit['lastErrorCode'] = ($errorCode ?? 'payment_failed');
-			$deposit['lastErrorMessage'] = ($errorMessage ?? 'Payment failed at gateway.');
-		}
+		$deposit = $this->applyOutcome(
+			deposit: $deposit,
+			outcome: $outcome,
+			gateway: $gateway,
+			errorCode: $errorCode,
+			errorMessage: $errorMessage
+		);
 
 		$this->objectService->saveObject(
 			object: $deposit,
@@ -225,6 +205,64 @@ class DepositReconciliationService {
 
 		return self::RESULT_APPLIED;
 	}//end reconcile()
+
+	/**
+	 * The DepositPayment carrying this paymentIntentId, looked up without RBAC:
+	 * gateway webhooks are authenticated by signature, not by a Nextcloud session.
+	 *
+	 * @param string $registerSlug    The register slug.
+	 * @param string $paymentIntentId The gateway's payment intent id.
+	 *
+	 * @return array<string, mixed>|null The deposit, or null when none matches.
+	 */
+	private function findDepositByIntent(string $registerSlug, string $paymentIntentId): ?array {
+		$matches = $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('DepositPayment')
+			->findAll(
+				config: [
+					'filters' => ['paymentIntentId' => $paymentIntentId],
+					'limit' => 1,
+				],
+				_rbac: false,
+			);
+
+		if (empty($matches) === true) {
+			return null;
+		}
+
+		return $matches[0];
+	}//end findDepositByIntent()
+
+	/**
+	 * Stamp the reported outcome on the deposit: the target state, the gateway,
+	 * the webhook time, and per outcome the authorized or voided time, or the
+	 * failure code and message (REQ-DP-011: never raw card data).
+	 *
+	 * @param array<string, mixed> $deposit      The deposit.
+	 * @param string               $outcome      The reported outcome.
+	 * @param string               $gateway      The gateway slug.
+	 * @param string|null          $errorCode    Machine error code on failure.
+	 * @param string|null          $errorMessage Human-readable error on failure.
+	 *
+	 * @return array<string, mixed> The stamped deposit.
+	 */
+	private function applyOutcome(array $deposit, string $outcome, string $gateway, ?string $errorCode, ?string $errorMessage): array {
+		$deposit['state'] = self::TARGET_STATE[$outcome];
+		$deposit['paymentGateway'] = $gateway;
+		$deposit['lastWebhookAttempt'] = gmdate('Y-m-d\TH:i:s\Z');
+
+		if ($outcome === self::OUTCOME_AUTHORIZED) {
+			$deposit['authorizedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		} elseif ($outcome === self::OUTCOME_VOIDED) {
+			$deposit['voidedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		} elseif ($outcome === self::OUTCOME_FAILED) {
+			$deposit['lastErrorCode'] = ($errorCode ?? 'payment_failed');
+			$deposit['lastErrorMessage'] = ($errorMessage ?? 'Payment failed at gateway.');
+		}
+
+		return $deposit;
+	}//end applyOutcome()
 
 	/**
 	 * Polling fallback for missed webhooks (REQ-DP-007).
