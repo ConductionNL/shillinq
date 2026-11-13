@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanScheduleInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\PaymentPlan\PaymentPlanSchedule;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -63,13 +63,13 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param PaymentPlanSchedule    $schedule      The cent-exact sum check.
+	 * @param PaymentPlanScheduleInterface    $schedule      The cent-exact sum check.
 	 * @param LoggerInterface        $logger        Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly RegisterLocationInterface $registerLocation,
-		private readonly PaymentPlanSchedule $schedule,
+		private readonly PaymentPlanScheduleInterface $schedule,
 		private readonly LoggerInterface $logger,
 	) {
 

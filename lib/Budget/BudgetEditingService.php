@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Budget;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetEditingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
@@ -49,7 +50,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/budget-grid-view/spec.md
  */
-class BudgetEditingService {
+class BudgetEditingService implements BudgetEditingServiceInterface {
 	/**
 	 * The only source a person types.
 	 *

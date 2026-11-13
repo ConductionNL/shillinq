@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTime;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportDeliveryInterface;
 use OCP\Constants;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -49,11 +50,7 @@ use Throwable;
 /**
  * Files, shares and announces a scheduled report.
  */
-class ScheduledReportDelivery {
-
-	public const SUBJECT_READY = 'scheduled_report_ready';
-
-	public const SUBJECT_FAILED = 'scheduled_report_failed';
+class ScheduledReportDelivery implements ScheduledReportDeliveryInterface {
 
 	/**
 	 * Constructor.

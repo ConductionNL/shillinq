@@ -41,7 +41,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
-use OCA\Shillinq\Lifecycle\StatementParser;
+use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,7 +62,7 @@ class BankStatementImportController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param StatementParser $parser Deterministic CAMT.053/MT940/CSV parser.
+	 * @param StatementParserInterface $parser Deterministic CAMT.053/MT940/CSV parser.
 	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope.
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
@@ -71,7 +71,7 @@ class BankStatementImportController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly StatementParser $parser,
+		private readonly StatementParserInterface $parser,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,

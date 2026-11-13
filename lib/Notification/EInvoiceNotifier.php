@@ -34,7 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Notification;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
+use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
@@ -58,7 +58,7 @@ class EInvoiceNotifier extends AppNotifier {
 	 *
 	 * @var string
 	 */
-	protected const SUBJECT = PeppolDeliveryStatusListener::NOTIFICATION_SUBJECT_REJECTED;
+	protected const SUBJECT = PeppolDeliveryStatusListenerInterface::NOTIFICATION_SUBJECT_REJECTED;
 
 	/**
 	 * Construct the notifier.

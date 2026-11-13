@@ -38,9 +38,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Dashboard\BBVComplianceWidget;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
 use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -90,7 +90,7 @@ class BBVDashboardController extends Controller {
 	 *                    to localise response
 	 *                    messages (ADR-007 / slice
 	 *                    10 i18n).
-	 * @param BBVComplianceWidget $widget Envelope assembler — reads
+	 * @param BBVComplianceWidgetInterface $widget Envelope assembler — reads
 	 *                                    the slice-02 declarative
 	 *                                    aggregation, cached for 1h
 	 *                                    by ComplianceService.
@@ -114,7 +114,7 @@ class BBVDashboardController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly BBVComplianceWidget $widget,
+		private readonly BBVComplianceWidgetInterface $widget,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
 	) {

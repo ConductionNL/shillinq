@@ -32,9 +32,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -69,7 +69,7 @@ class PaymentRequestActionController extends Controller {
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param LoggerInterface $logger Logger.
 	 * @param FeeScheduleServiceInterface $feeSchedules The published fees.
-	 * @param PaymentRequestLeafProvider $leaf The leaf that appends the request.
+	 * @param PaymentRequestLeafProviderInterface $leaf The leaf that appends the request.
 	 * @param PaymentSettlementServiceInterface $settlements Money that arrived another way.
 	 *
 	 * @return void
@@ -83,7 +83,7 @@ class PaymentRequestActionController extends Controller {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly FeeScheduleServiceInterface $feeSchedules,
-		private readonly PaymentRequestLeafProvider $leaf,
+		private readonly PaymentRequestLeafProviderInterface $leaf,
 		private readonly PaymentSettlementServiceInterface $settlements,
 	) {
 		parent::__construct(appName: $appName, request: $request);

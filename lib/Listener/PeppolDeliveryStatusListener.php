@@ -52,6 +52,7 @@ use DateTime;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -68,7 +69,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-class PeppolDeliveryStatusListener implements IEventListener {
+class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStatusListenerInterface {
 	/**
 	 * CloudEvent `type` this listener consumes (integriq
 	 * `PeppolTransmissionService::EVENT_TYPE_DELIVERY_STATUS`).
@@ -83,14 +84,6 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @var string
 	 */
 	private const NOTIFICATION_OBJECT_TYPE = 'ar_invoice';
-
-	/**
-	 * Notification subject identifier for a rejected e-invoice, rendered by
-	 * {@see \OCA\Shillinq\Notification\EInvoiceNotifier}.
-	 *
-	 * @var string
-	 */
-	public const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
 
 	/**
 	 * The AdministrationMembership roles told about a rejected e-invoice (#1754).

@@ -36,6 +36,7 @@ use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentFinderInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentRowsInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use RuntimeException;
@@ -45,13 +46,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
-final class FinancialDocumentLeafProvider implements IntegrationProvider {
-	/**
-	 * The leaf id, equal on both halves so gate-24 can pair them.
-	 *
-	 * @var string
-	 */
-	public const LEAF_ID = 'shillinq-financial-documents';
+final class FinancialDocumentLeafProvider implements IntegrationProvider, FinancialDocumentLeafProviderInterface {
 
 	/**
 	 * Constructor.
