@@ -175,22 +175,8 @@
     [
         "registerServiceAlias",
         [
-            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\TimelineRetryQueue'",
-            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\PersistentTimelineRetryQueue'"
-        ]
-    ],
-    [
-        "registerServiceAlias",
-        [
             "'OCA\\\\Shillinq\\\\Repair\\\\ValueMigrationPort'",
             "'OCA\\\\Shillinq\\\\Repair\\\\DbValueMigrationPort'"
-        ]
-    ],
-    [
-        "registerServiceAlias",
-        [
-            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\PipelinqAdminNotifier'",
-            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\LoggingPipelinqAdminNotifier'"
         ]
     ],
     [
@@ -207,6 +193,20 @@
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\ReconciliationMatchToReportListener'",
             "0"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\TimelineRetryQueue'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\PersistentTimelineRetryQueue'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\PipelinqAdminNotifier'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\LoggingPipelinqAdminNotifier'"
         ]
     ],
     [
@@ -949,6 +949,54 @@
     [
         "registerService",
         [
+            "'OCA\\\\Shillinq\\\\Guard\\\\VatSubmissionGuard::requireApproval'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\BcfSubmissionGuard::requireApproval'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\SubsidieRepaymentGuard::requireZeroRepaymentBalance'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\RateScheduleOverlapGuard::requireNonOverlappingWindow'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\OssPaymentReconciliation::canMarkPaid'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\IntercompanyEliminationGuard::requireReconciledPair'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\FiscalYearGuard::requireAllPeriodsClosedForYear'",
             "Closure",
             "true"
@@ -966,22 +1014,6 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\WriteOffReasonGuard::requireReason'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
-            "'OCA\\\\Shillinq\\\\Guard\\\\VatSubmissionGuard::requireApproval'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
-            "'OCA\\\\Shillinq\\\\Guard\\\\BcfSubmissionGuard::requireApproval'",
             "Closure",
             "true"
         ]
@@ -1013,39 +1045,7 @@
     [
         "registerService",
         [
-            "'OCA\\\\Shillinq\\\\Guard\\\\SubsidieRepaymentGuard::requireZeroRepaymentBalance'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
-            "'OCA\\\\Shillinq\\\\Guard\\\\RateScheduleOverlapGuard::requireNonOverlappingWindow'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\PeriodCloseGuard::trialBalanceVerifies'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
-            "'OCA\\\\Shillinq\\\\Service\\\\OssPaymentReconciliation::canMarkPaid'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
-            "'OCA\\\\Shillinq\\\\Guard\\\\IntercompanyEliminationGuard::requireReconciledPair'",
             "Closure",
             "true"
         ]
