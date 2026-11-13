@@ -47,6 +47,7 @@ use Psr\Log\LoggerInterface;
  * Signature-verified deposit-payment webhook endpoint (REQ-DP-006).
  *
  * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class DepositWebhookController extends PaymentWebhookReceiver {
 	/**

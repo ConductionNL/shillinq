@@ -70,6 +70,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class ConfirmationApiController extends Controller {
 

@@ -50,6 +50,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Receives signed external-payroll CloudEvents and reflects deductions onto Payroll.
  *
  * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PayrollWebhookController extends Controller {
 	/**

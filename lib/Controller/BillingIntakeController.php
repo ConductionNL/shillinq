@@ -54,6 +54,7 @@ use Psr\Log\LoggerInterface;
  * HTTP API for the pipelinq time-billing handoff ingress.
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class BillingIntakeController extends Controller {
 	/**

@@ -56,6 +56,7 @@ use Throwable;
  * session for the asserted subject's own invoice.
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PortalPaymentInitiationController extends Controller {
 	/**

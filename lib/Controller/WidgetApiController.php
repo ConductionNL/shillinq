@@ -61,6 +61,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ShortVariable)
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; variable renames deferred pending a dedicated pass.
+ *
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class WidgetApiController extends Controller {
 	/**
