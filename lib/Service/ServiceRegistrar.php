@@ -99,6 +99,8 @@ final class ServiceRegistrar {
 	 * @spec exclude Structural composition root, no functional requirement.
 	 */
 	public function register(IRegistrationContext $context): void {
+		(new ContractRegistrar())->register(context: $context);
+
 		// Bookings-pipelinq-customer-bridge slice 07 — when a new
 		// Appointment carries a non-empty `pipelinqContactId`, publish a
 		// `booking.created` event to pipelinq's klantbeeld-360 timeline.

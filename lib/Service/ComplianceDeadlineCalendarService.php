@@ -78,7 +78,9 @@ namespace OCA\Shillinq\Service;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -87,7 +89,6 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Publishes compliance deadlines as calendar VEVENTs + NC notifications.
@@ -109,44 +110,12 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain's regulatory surface; splitting is out of scope for a mechanical
  * phpcs/phpmd cleanup. Deferred to a follow-up.
  */
-class ComplianceDeadlineCalendarService {
+class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarServiceInterface {
 
 	/**
 	 * The dedicated app-calendar URI looked up on the user's principal.
 	 */
 	public const CALENDAR_URI = 'shillinq-deadlines';
-
-	/**
-	 * Deadline category: BTW / ICP / VPB filing deadlines (REQ-CDC-002).
-	 */
-	public const CATEGORY_FILING = 'filing';
-
-	/**
-	 * Deadline category: payment-run execution dates (REQ-CDC-003).
-	 */
-	public const CATEGORY_PAYMENT_RUN = 'payment-run';
-
-	/**
-	 * Deadline category: AR invoice due dates — per-user opt-in (REQ-CDC-004).
-	 */
-	public const CATEGORY_AR_DUE = 'ar-due';
-
-	/**
-	 * Deadline category: contract renewal / opzegtermijn (REQ-CDC-005).
-	 */
-	public const CATEGORY_CONTRACT = 'contract';
-
-	/**
-	 * All known categories in publication order.
-	 *
-	 * @var array<int,string>
-	 */
-	public const CATEGORIES = [
-		self::CATEGORY_FILING,
-		self::CATEGORY_PAYMENT_RUN,
-		self::CATEGORY_AR_DUE,
-		self::CATEGORY_CONTRACT,
-	];
 
 	/**
 	 * Per-user preference defaults: filing / payment-run / contract ON,

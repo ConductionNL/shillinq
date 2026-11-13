@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\ThreeWayMatchingEngine;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -64,7 +64,7 @@ class ThreeWayMatchController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param ThreeWayMatchingEngine $matchingEngine The matching engine (server-authoritative).
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
@@ -73,7 +73,7 @@ class ThreeWayMatchController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ThreeWayMatchingEngine $matchingEngine,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

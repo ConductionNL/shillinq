@@ -47,7 +47,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
 use OCA\Shillinq\Service\Dunning\DunningStageChoice;
@@ -62,7 +64,6 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates DunningRun execution, pause/resume, write-off, and
@@ -81,7 +82,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * ladder/pause/channel-dispatch surface; early-return refactor and
  * variable renames deferred pending a dedicated pass.
  */
-class DunningRunService {
+class DunningRunService implements DunningRunServiceInterface {
 	/**
 	 * App-config key for the dispute pause hard deadline (days).
 	 */

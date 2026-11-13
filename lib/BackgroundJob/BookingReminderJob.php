@@ -28,13 +28,13 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Hourly cron job that evaluates reminder triggers for upcoming bookings.
@@ -70,7 +70,7 @@ class BookingReminderJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time The time factory.
-	 * @param BookingNotificationService $notificationService The notification service.
+	 * @param BookingNotificationServiceInterface $notificationService The notification service.
 	 * @param IAppConfig $appConfig The app config.
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -79,7 +79,7 @@ class BookingReminderJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private BookingNotificationService $notificationService,
+		private BookingNotificationServiceInterface $notificationService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

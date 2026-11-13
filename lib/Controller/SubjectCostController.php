@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\SubjectCostService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -55,7 +55,7 @@ class SubjectCostController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param SubjectCostService $costs Hours-to-cost composition for one subject.
-	 * @param AdministrationContextService $context Authenticated-user context (ADR-005).
+	 * @param AdministrationContextServiceInterface $context Authenticated-user context (ADR-005).
 	 * @param IUserSession $userSession Session, for the Nextcloud-admin bypass.
 	 * @param IGroupManager $groupManager Nextcloud admin bypass for the administration guard.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
@@ -65,7 +65,7 @@ class SubjectCostController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly SubjectCostService $costs,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
 		private readonly LoggerInterface $logger,

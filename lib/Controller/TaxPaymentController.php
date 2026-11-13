@@ -38,7 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\TaxPaymentReconciliationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -60,7 +60,7 @@ class TaxPaymentController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param TaxPaymentReconciliationService $reconciliation The reconciliation service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
 	 * @return void
@@ -69,7 +69,7 @@ class TaxPaymentController extends Controller {
 		IRequest $request,
 		private readonly TaxPaymentReconciliationService $reconciliation,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

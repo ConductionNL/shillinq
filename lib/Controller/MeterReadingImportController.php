@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -50,14 +50,14 @@ class MeterReadingImportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request  The request.
-	 * @param AdministrationContextService $context  The caller's administrations.
+	 * @param AdministrationContextServiceInterface $context  The caller's administrations.
 	 * @param MeterReadingImportService    $importer Creates the readings.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly MeterReadingImportService $importer,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

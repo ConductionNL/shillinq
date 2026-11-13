@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -49,12 +49,12 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param InvoiceSettlementService $settlement The settlement service.
+	 * @param InvoiceSettlementServiceInterface $settlement The settlement service.
 	 * @param ListenerSchemaResolver   $schemas    Matches the event's schema id against the slug.
 	 * @param LoggerInterface          $logger     Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly InvoiceSettlementService $settlement,
+		private readonly InvoiceSettlementServiceInterface $settlement,
 		private readonly ListenerSchemaResolver $schemas,
 		private readonly LoggerInterface $logger,
 	) {

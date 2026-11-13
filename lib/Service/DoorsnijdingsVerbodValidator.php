@@ -35,9 +35,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DoorsnijdingsVerbodValidatorInterface;
+use OCP\IAppConfig;
 
 /**
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
@@ -48,7 +49,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class DoorsnijdingsVerbodValidator {
+class DoorsnijdingsVerbodValidator implements DoorsnijdingsVerbodValidatorInterface {
 
 	/**
 	 * The message of a duplication finding: amount, account, kostenplaats.

@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Dashboard;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\Service\ComplianceService;
+use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -74,13 +74,13 @@ final class BBVComplianceWidget {
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param ComplianceService $compliance Compliance envelope source.
+	 * @param ComplianceServiceInterface $compliance Compliance envelope source.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly RegisterLocation $registerLocation,
-		private readonly ComplianceService $compliance,
+		private readonly ComplianceServiceInterface $compliance,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

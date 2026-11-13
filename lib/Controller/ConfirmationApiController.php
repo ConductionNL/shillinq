@@ -45,8 +45,8 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeZone;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
@@ -114,9 +114,9 @@ class ConfirmationApiController extends Controller {
 	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  (register slug, OR
 	 *                                  availability).
-	 * @param AdministrationContextService $context Per-administration
+	 * @param AdministrationContextServiceInterface $context Per-administration
 	 *                                              IDOR guard (ADR-005).
-	 * @param ConfirmationTokenService $tokens Token lifecycle +
+	 * @param ConfirmationTokenServiceInterface $tokens Token lifecycle +
 	 *                                         email dispatcher.
 	 * @param ITimeFactory $time Server clock.
 	 * @param IThrottler $throttler Brute-force throttler for
@@ -130,8 +130,8 @@ class ConfirmationApiController extends Controller {
 		IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly RegisterLocation $registerLocation,
-		private readonly AdministrationContextService $context,
-		private readonly ConfirmationTokenService $tokens,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly ConfirmationTokenServiceInterface $tokens,
 		private readonly ITimeFactory $time,
 		private readonly IThrottler $throttler,
 		private readonly ObjectTransitionRunner $transitions,

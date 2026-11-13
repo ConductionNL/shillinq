@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One service writes the match, the journal and the line.
  */
-class ManualMatchService {
+class ManualMatchService implements ManualMatchServiceInterface {
 	/**
 	 * Amounts closer than this are equal (half a cent).
 	 *

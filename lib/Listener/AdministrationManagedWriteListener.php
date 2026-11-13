@@ -27,8 +27,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\AdministrationManagementAccess;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -65,16 +65,16 @@ class AdministrationManagedWriteListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param AdministrationContextService $administrationContext The session user.
-	 * @param AdministrationManagementAccess $managementAccess Owner or admin check.
+	 * @param AdministrationContextServiceInterface $administrationContext The session user.
+	 * @param AdministrationManagementAccessInterface $managementAccess Owner or admin check.
 	 * @param ListenerSchemaResolver $schemaResolver Schema matching for the written entity.
 	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly AdministrationContextService $administrationContext,
-		private readonly AdministrationManagementAccess $managementAccess,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly AdministrationManagementAccessInterface $managementAccess,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {

@@ -44,7 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -70,7 +70,7 @@ class MultiPoConsolidationController extends Controller {
 	 * @param ContainerInterface $container DI container — OR's ObjectService for
 	 *                                      the candidate-list endpoint that loads
 	 *                                      the invoice header.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
@@ -80,7 +80,7 @@ class MultiPoConsolidationController extends Controller {
 		IRequest $request,
 		private readonly MultiPoConsolidationService $consolidation,
 		private readonly ContainerInterface $container,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

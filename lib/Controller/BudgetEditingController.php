@@ -28,10 +28,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Budget\BudgetEditingService;
 use OCA\Shillinq\Budget\BudgetEditRefusedException;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,7 +53,7 @@ class BudgetEditingController extends Controller {
 	 *
 	 * @param IRequest                     $request The request.
 	 * @param BudgetEditingService         $budgets Budget entry.
-	 * @param AdministrationContextService $context Administration access check.
+	 * @param AdministrationContextServiceInterface $context Administration access check.
 	 * @param IUserSession                 $session The signed-in user.
 	 * @param IL10N                        $l10n    Translations for refusals.
 	 * @param LoggerInterface              $logger  Logger.
@@ -61,7 +61,7 @@ class BudgetEditingController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly BudgetEditingService $budgets,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $session,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

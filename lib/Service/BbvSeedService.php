@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -38,7 +39,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
-class BbvSeedService {
+class BbvSeedService implements BbvSeedServiceInterface {
 	/**
 	 * Catalogue descriptors mapping each seed file to its root array key, target
 	 * schema, and deduplication field.

@@ -34,9 +34,9 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Bank\ManualMatchService;
-use OCA\Shillinq\Service\Bank\ObjectRequestBankMatcher;
-use OCA\Shillinq\Service\Bank\ObjectRequestBankSettlement;
+use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankMatcherInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -54,16 +54,16 @@ class BankLineObjectRequestListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ObjectRequestBankMatcher $matcher Decides what a line is to the requests.
-	 * @param ManualMatchService $manualMatch Writes the match.
-	 * @param ObjectRequestBankSettlement $settlement Settles a request on a confirmed match.
+	 * @param ObjectRequestBankMatcherInterface $matcher Decides what a line is to the requests.
+	 * @param ManualMatchServiceInterface $manualMatch Writes the match.
+	 * @param ObjectRequestBankSettlementInterface $settlement Settles a request on a confirmed match.
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema slug.
 	 * @param LoggerInterface $logger Fail-soft log.
 	 */
 	public function __construct(
-		private readonly ObjectRequestBankMatcher $matcher,
-		private readonly ManualMatchService $manualMatch,
-		private readonly ObjectRequestBankSettlement $settlement,
+		private readonly ObjectRequestBankMatcherInterface $matcher,
+		private readonly ManualMatchServiceInterface $manualMatch,
+		private readonly ObjectRequestBankSettlementInterface $settlement,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
@@ -112,12 +112,12 @@ class BankLineObjectRequestListener implements IEventListener {
 		}
 
 		$found = $this->matcher->match(line: $line);
-		if ($found['decision'] === ObjectRequestBankMatcher::DECISION_CONFIRM) {
-			$this->manualMatch->matchPaymentRequest(line: $line, request: $found['requests'][0], actor: ObjectRequestBankSettlement::ACTOR);
+		if ($found['decision'] === ObjectRequestBankMatcherInterface::DECISION_CONFIRM) {
+			$this->manualMatch->matchPaymentRequest(line: $line, request: $found['requests'][0], actor: ObjectRequestBankSettlementInterface::ACTOR);
 			return;
 		}
 
-		if ($found['decision'] === ObjectRequestBankMatcher::DECISION_CANDIDATE) {
+		if ($found['decision'] === ObjectRequestBankMatcherInterface::DECISION_CANDIDATE) {
 			foreach ($found['requests'] as $request) {
 				$this->manualMatch->proposePaymentRequest(line: $line, request: $request);
 			}

@@ -50,7 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
@@ -78,7 +78,7 @@ class NotificationController extends Controller {
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IUserSession $userSession Logged-in user — the 401 anonymous-rejection guard only.
-	 * @param AdministrationContextService $context RBAC guard — the per-booking authorization gate (ADR-005).
+	 * @param AdministrationContextServiceInterface $context RBAC guard — the per-booking authorization gate (ADR-005).
 	 * @param LoggerInterface $logger Logger for failure paths.
 	 */
 	public function __construct(
@@ -86,7 +86,7 @@ class NotificationController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly RegisterLocation $registerLocation,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

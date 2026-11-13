@@ -41,9 +41,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\CBSExportService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,8 +55,6 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * CBS Submission CRUD + lifecycle controller.
@@ -73,24 +73,24 @@ class CBSSubmissionController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param CBSExportService $exportService The CBS export pipeline.
+	 * @param CBSExportServiceInterface $exportService The CBS export pipeline.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param AdministrationContextService $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
+	 * @param AdministrationContextServiceInterface $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
 	 * @param IGroupManager $groupManager Nextcloud admin bypass for the administration guard.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly CBSExportService $exportService,
+		private readonly CBSExportServiceInterface $exportService,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\ContributionRaiseService;
+use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -52,7 +52,7 @@ class ContributionController extends Controller {
 	 *
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
-	 * @param ContributionRaiseService $raiser The raise.
+	 * @param ContributionRaiseServiceInterface $raiser The raise.
 	 * @param PaymentActionAuthorizer $authorizer The payment action matrix.
 	 * @param IUserSession $userSession The calling user.
 	 * @param LoggerInterface $logger Logger.
@@ -62,7 +62,7 @@ class ContributionController extends Controller {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly ContributionRaiseService $raiser,
+		private readonly ContributionRaiseServiceInterface $raiser,
 		private readonly PaymentActionAuthorizer $authorizer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,

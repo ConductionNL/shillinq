@@ -56,6 +56,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AccountantDashboardServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -65,7 +66,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/accountant-portal/spec.md
  */
-class AccountantDashboardService {
+class AccountantDashboardService implements AccountantDashboardServiceInterface {
 
 	/**
 	 * Statutory BTW filing term: aangifte + betaling due one month after the

@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\PeriodCloseAssistantService;
 use OCA\Shillinq\Service\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
@@ -72,7 +72,7 @@ class PeriodCloseController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param PeriodCloseService $periodCloseService Lifecycle orchestration service.
 	 * @param PeriodCloseAssistantService $assistantService Close-assistant detection service.
-	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
+	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
@@ -80,7 +80,7 @@ class PeriodCloseController extends Controller {
 		IRequest $request,
 		private readonly PeriodCloseService $periodCloseService,
 		private readonly PeriodCloseAssistantService $assistantService,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

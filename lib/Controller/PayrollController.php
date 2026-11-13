@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\PayrollService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -69,7 +69,7 @@ class PayrollController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param PayrollService $payrollService The payroll computation service.
 	 * @param IUserSession $userSession User session for authentication guard.
-	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
+	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param LoggerInterface $logger Logger (no stack traces to client, no raw BSN).
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 *
@@ -79,7 +79,7 @@ class PayrollController extends Controller {
 		IRequest $request,
 		private readonly PayrollService $payrollService,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {

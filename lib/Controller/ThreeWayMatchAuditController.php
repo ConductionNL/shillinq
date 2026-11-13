@@ -45,8 +45,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\AuditExportService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AuditExportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -103,8 +103,8 @@ class ThreeWayMatchAuditController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param AuditExportService $auditExportService The audit export service.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param AuditExportServiceInterface $auditExportService The audit export service.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User-session guard.
 	 * @param ContainerInterface $container DI container — OR's
 	 *                                      ObjectService is fetched
@@ -117,8 +117,8 @@ class ThreeWayMatchAuditController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AuditExportService $auditExportService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AuditExportServiceInterface $auditExportService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,

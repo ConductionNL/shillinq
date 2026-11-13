@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\LandedCostAllocationService;
 use OCA\Shillinq\Service\NrvWriteDownService;
 use OCP\AppFramework\Controller;
@@ -55,14 +55,14 @@ class InventoryAdjustmentController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param LandedCostAllocationService $landedCost The landed-cost allocation service.
 	 * @param NrvWriteDownService $nrv The NRV write-down service.
-	 * @param AdministrationContextService $context Admin-membership / IDOR context.
+	 * @param AdministrationContextServiceInterface $context Admin-membership / IDOR context.
 	 * @param LoggerInterface $logger Logger; never leaks stack traces.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly LandedCostAllocationService $landedCost,
 		private readonly NrvWriteDownService $nrv,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

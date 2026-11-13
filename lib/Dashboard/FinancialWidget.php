@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Dashboard;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\FinancialDashboardService;
 use OCP\Dashboard\IAPIWidgetV2;
 use OCP\Dashboard\Model\WidgetItem;
@@ -52,13 +52,13 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @param IL10N                        $l10n      Translations.
 	 * @param IURLGenerator                $urls      Links into shillinq.
-	 * @param AdministrationContextService $context   The user's administrations.
+	 * @param AdministrationContextServiceInterface $context   The user's administrations.
 	 * @param FinancialDashboardService    $dashboard The figures.
 	 */
 	public function __construct(
 		protected readonly IL10N $l10n,
 		protected readonly IURLGenerator $urls,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly FinancialDashboardService $dashboard,
 	) {
 

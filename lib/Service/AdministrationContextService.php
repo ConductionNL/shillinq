@@ -37,18 +37,19 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Resolves the administratie-aware RBAC context and enforces tenant isolation.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
  */
-class AdministrationContextService {
+class AdministrationContextService implements AdministrationContextServiceInterface {
 	/**
 	 * Roles permitted to post journal entries when the membership does not
 	 * explicitly set mayPostJournalEntries (REQ-MA-003). Read-only roles

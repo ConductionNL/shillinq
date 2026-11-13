@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\WbsoAccountService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCP\AppFramework\Controller;
@@ -102,7 +102,7 @@ class WbsoAccountApiController extends Controller {
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
-	 * @param AdministrationContextService $administrationContext Membership check on the requested administration.
+	 * @param AdministrationContextServiceInterface $administrationContext Membership check on the requested administration.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -111,7 +111,7 @@ class WbsoAccountApiController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

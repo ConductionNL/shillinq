@@ -43,9 +43,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BudgetGridCalculator;
-use OCA\Shillinq\Service\BudgetGridReader;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetGridReaderInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -120,18 +120,18 @@ class BudgetGridController extends Controller {
 	 * @param IRequest $request Request.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 * @param LoggerInterface $logger Logger — never receives a record body.
-	 * @param BudgetGridReader $reader Resolves rows/columns/past-boundary.
-	 * @param BudgetGridCalculator $calculator Pure arithmetic over the reader's bundle.
-	 * @param AdministrationContextService $administrationContext IDOR guard (REQ-MA-001).
+	 * @param BudgetGridReaderInterface $reader Resolves rows/columns/past-boundary.
+	 * @param BudgetGridCalculatorInterface $calculator Pure arithmetic over the reader's bundle.
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly BudgetGridReader $reader,
-		private readonly BudgetGridCalculator $calculator,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly BudgetGridReaderInterface $reader,
+		private readonly BudgetGridCalculatorInterface $calculator,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -30,6 +30,7 @@ use DomainException;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -37,7 +38,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
  */
-class AdministrationMembershipService {
+class AdministrationMembershipService implements AdministrationMembershipServiceInterface {
 
 	/**
 	 * The membership roles, as the AdministrationMembership schema declares them.

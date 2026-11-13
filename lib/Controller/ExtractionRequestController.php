@@ -56,12 +56,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DocudeskExtractionClientInterface;
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\GlAccountSuggestionClientInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
-use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
-use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
-use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -101,19 +101,19 @@ class ExtractionRequestController extends Controller {
 	 * @var array<string>
 	 */
 	private const ALLOWED_SCHEMAS = [
-		ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE,
-		ExtractionPrefillService::SCHEMA_RECEIPT,
+		ExtractionPrefillServiceInterface::SCHEMA_SUPPLIER_INVOICE,
+		ExtractionPrefillServiceInterface::SCHEMA_RECEIPT,
 	];
 
 	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param DocudeskExtractionClient $extractionClient Outbound docudesk request client.
-	 * @param GlAccountSuggestionClient $suggestionClient Outbound docudesk suggestion/correction client.
-	 * @param ChartOfAccountsCandidateService $candidateService Shillinq's own chart-of-accounts candidates.
-	 * @param ExtractionPrefillService $prefillService Correction-recording service.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param DocudeskExtractionClientInterface $extractionClient Outbound docudesk request client.
+	 * @param GlAccountSuggestionClientInterface $suggestionClient Outbound docudesk suggestion/correction client.
+	 * @param ChartOfAccountsCandidateServiceInterface $candidateService Shillinq's own chart-of-accounts candidates.
+	 * @param ExtractionPrefillServiceInterface $prefillService Correction-recording service.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param ContainerInterface $container DI container (OR ObjectService).
 	 * @param LoggerInterface $logger Logger.
@@ -122,11 +122,11 @@ class ExtractionRequestController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly DocudeskExtractionClient $extractionClient,
-		private readonly GlAccountSuggestionClient $suggestionClient,
-		private readonly ChartOfAccountsCandidateService $candidateService,
-		private readonly ExtractionPrefillService $prefillService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly DocudeskExtractionClientInterface $extractionClient,
+		private readonly GlAccountSuggestionClientInterface $suggestionClient,
+		private readonly ChartOfAccountsCandidateServiceInterface $candidateService,
+		private readonly ExtractionPrefillServiceInterface $prefillService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,

@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Throwable;
@@ -37,7 +38,7 @@ use Throwable;
  *
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
  */
-class BillableLinesService {
+class BillableLinesService implements BillableLinesServiceInterface {
 
 	/**
 	 * The most rows read per schema.

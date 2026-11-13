@@ -43,9 +43,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AccountantsdossierExportService;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BadoControleprotocolService;
+use OCA\Shillinq\Kernel\Contracts\AccountantsdossierExportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BadoControleprotocolServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,21 +64,21 @@ class BadoControleprotocolController extends Controller {
 	 * Constructor for the BadoControleprotocolController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param BadoControleprotocolService $service The BADO aggregation + opinion service.
+	 * @param BadoControleprotocolServiceInterface $service The BADO aggregation + opinion service.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param IUserSession $userSession The user session for authentication guard.
-	 * @param AccountantsdossierExportService $exporter The accountantsdossier PDF/A exporter (Task 16).
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AccountantsdossierExportServiceInterface $exporter The accountantsdossier PDF/A exporter (Task 16).
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BadoControleprotocolService $service,
+		private readonly BadoControleprotocolServiceInterface $service,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
-		private readonly AccountantsdossierExportService $exporter,
-		private readonly AdministrationContextService $context,
+		private readonly AccountantsdossierExportServiceInterface $exporter,
+		private readonly AdministrationContextServiceInterface $context,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

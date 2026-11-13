@@ -43,7 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Service\LeaseReassessmentService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -72,7 +72,7 @@ class LeaseReassessmentController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param LeaseReassessmentService $reassessmentService The remeasurement service.
-	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
+	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to the client).
 	 *
@@ -83,7 +83,7 @@ class LeaseReassessmentController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly LeaseReassessmentService $reassessmentService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
