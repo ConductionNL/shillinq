@@ -35,7 +35,7 @@ use RuntimeException;
  * @covers \OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator
  * @uses   \OCA\Shillinq\Reporting\GeneratedFile
  */
-final class Iv3ReportGeneratorTest extends TestCase {
+final class Iv3ReportGeneratorTotalsTest extends TestCase {
 
 	/**
 	 * The ledger: two administrations, two periods.
