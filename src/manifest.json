@@ -7820,7 +7820,7 @@
 						"id": "customer-finance",
 						"type": "data",
 						"title": "Agreements",
-						"content": {"columns": 2, "include": ["iban", "creditLimit", "dunningPolicyRef", "defaultGlAccount", "lifecycleState", "administrationId", "ublDebtorRef"]}
+						"content": {"columns": 2, "include": ["iban", "creditLimit", "dunningPolicyRef", "defaultGlAccount", "lifecycleState", "administrationId", "ublDebtorRef", "selfBillingAgreement"]}
 					},
 					{
 						"id": "customer-related",
@@ -8074,6 +8074,13 @@
 						"label": "Overdue",
 						"filter": {
 							"lifecycleState": "overdue"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Rejected e-invoices",
+						"filter": {
+							"deliveryStatus": "rejected"
 						},
 						"showCount": true
 					}

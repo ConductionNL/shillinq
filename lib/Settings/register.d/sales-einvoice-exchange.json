@@ -1,0 +1,223 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-einvoice-exchange",
+    "adr": "ADR-037 modular register fragment; never edit shillinq_register.json",
+    "description": "Self-billing (REQ-SEIX-005): ARInvoice declares selfBilled and selfBillingMention, which the vatdir-art226-10a check already reads, plus a selfBilling group carrying what a received self-billed invoice brought with it. CustomerMaster carries the self-billing agreement article 224 of the VAT Directive requires. SelfBilledInvoiceRefusal records a received self-billed invoice that was not turned into a sales invoice, with the reason, so nothing received disappears."
+  },
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "properties": {
+          "selfBilled": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when the customer drew up this invoice on the seller's behalf under a self-billing agreement (article 224 VAT Directive). A self-billed invoice arrives as a draft and is booked only when a user issues it.",
+            "title": "Self-billed"
+          },
+          "selfBillingMention": {
+            "type": "string",
+            "nullable": true,
+            "description": "The mention article 226(10a) of the VAT Directive requires on a self-billed invoice, for example \"Factuur uitgereikt door afnemer\".",
+            "example": "Factuur uitgereikt door afnemer",
+            "title": "Self-billing mention"
+          },
+          "selfBilling": {
+            "type": "object",
+            "nullable": true,
+            "description": "What a received self-billed invoice brought with it. The customer's own number is kept here, so the invoice never takes a number from the own sequence.",
+            "properties": {
+              "buyerInvoiceNumber": {
+                "type": "string",
+                "description": "The invoice number the customer gave the self-billed invoice.",
+                "example": "SB-2026-00042",
+                "title": "Customer's invoice number"
+              },
+              "receivedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the self-billed invoice was received.",
+                "title": "Received at"
+              },
+              "payloadFileUri": {
+                "type": "string",
+                "nullable": true,
+                "description": "Reference to the received UBL document.",
+                "title": "Received document"
+              },
+              "senderPeppolId": {
+                "type": "string",
+                "nullable": true,
+                "description": "Peppol participant id of the customer that sent it.",
+                "example": "9944:nl000099998b57",
+                "title": "Sender Peppol ID"
+              },
+              "rejectionReason": {
+                "type": "string",
+                "nullable": true,
+                "description": "Why the bookkeeper rejected the self-billed invoice instead of issuing it.",
+                "title": "Rejection reason"
+              }
+            },
+            "title": "Self-billing"
+          }
+        }
+      },
+      "CustomerMaster": {
+        "properties": {
+          "selfBillingAgreement": {
+            "type": "object",
+            "nullable": true,
+            "description": "The agreement under which this customer draws up invoices on the seller's behalf (article 224 VAT Directive). Without a current agreement a self-billed invoice from this customer is refused.",
+            "properties": {
+              "agreedOn": {
+                "type": "string",
+                "format": "date",
+                "description": "The date the agreement was made.",
+                "example": "2026-01-05",
+                "title": "Agreed on"
+              },
+              "validUntil": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "The last day the agreement applies; empty for an agreement without an end date.",
+                "example": "2026-12-31",
+                "title": "Valid until"
+              },
+              "documentUri": {
+                "type": "string",
+                "nullable": true,
+                "description": "Reference to the signed agreement.",
+                "title": "Agreement document"
+              }
+            },
+            "title": "Self-billing agreement"
+          }
+        }
+      },
+      "SelfBilledInvoiceRefusal": {
+        "slug": "SelfBilledInvoiceRefusal",
+        "icon": "FileCancelOutline",
+        "version": "0.1.0",
+        "title": "Self-billed invoice refusal",
+        "description": "A self-billed invoice received over Peppol that was not turned into a sales invoice: no administration or customer matched, or the customer has no current self-billing agreement. Listed for the bookkeeper with the reason (REQ-SEIX-006).",
+        "x-openregister-audit-trail": {
+          "enabled": true
+        },
+        "x-spec": "openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md",
+        "type": "object",
+        "required": [
+          "receivedAt",
+          "reason"
+        ],
+        "properties": {
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the self-billed invoice was received.",
+            "title": "Received at"
+          },
+          "senderPeppolId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Peppol participant id of the sender.",
+            "example": "9944:nl000099998b57",
+            "title": "Sender Peppol ID"
+          },
+          "buyerInvoiceNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "The invoice number the sender gave the document.",
+            "example": "SB-2026-00042",
+            "title": "Sender's invoice number"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why no sales invoice was written.",
+            "example": "No customer with this VAT id",
+            "title": "Reason"
+          },
+          "payloadFileUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference to the received UBL document.",
+            "title": "Received document"
+          },
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration the document was addressed to, when one matched.",
+            "title": "Administration"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CustomerMaster",
+          "slug": "customer-master-de-kuil"
+        },
+        "customerId": "DEB-0042",
+        "legalName": "Aardappelverwerking De Kuil B.V.",
+        "kvkNumber": "12340042",
+        "vatId": "NL000099998B57",
+        "email": "facturatie@de-kuil-demo.nl",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active",
+        "peppolParticipantId": "9944:nl000099998b57",
+        "selfBillingAgreement": {
+          "agreedOn": "2026-01-05",
+          "validUntil": "2026-12-31"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ARInvoice",
+          "slug": "ar-invoice-sb-2026-00042"
+        },
+        "invoiceNumber": "SB-2026-00042",
+        "customerId": "DEB-0042",
+        "administrationId": "adm-shillinq-demo",
+        "invoiceDate": "2026-09-20",
+        "dueDate": "2026-10-20",
+        "netAmount": 6000.0,
+        "vatAmount": 540.0,
+        "grossAmount": 6540.0,
+        "currency": "EUR",
+        "periodId": "2026-09",
+        "lifecycleState": "draft",
+        "sellerName": "Shillinq Consultancy B.V.",
+        "sellerVatId": "NL809876543B01",
+        "sellerCountryCode": "NL",
+        "buyerVatId": "NL000099998B57",
+        "buyerLegalRegId": "12340042",
+        "deliveryStatus": "not-sent",
+        "selfBilled": true,
+        "selfBillingMention": "Factuur uitgereikt door afnemer",
+        "selfBilling": {
+          "buyerInvoiceNumber": "SB-2026-00042",
+          "receivedAt": "2026-09-20T08:15:00Z",
+          "senderPeppolId": "9944:nl000099998b57"
+        },
+        "description": "Levering consumptieaardappelen week 38, 30.000 kg"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SelfBilledInvoiceRefusal",
+          "slug": "self-billed-invoice-refusal-unknown-buyer"
+        },
+        "receivedAt": "2026-09-22T10:02:00Z",
+        "senderPeppolId": "9944:nl000011112b01",
+        "buyerInvoiceNumber": "AF-2026-118",
+        "reason": "No customer with this VAT id",
+        "administrationId": "adm-shillinq-demo"
+      }
+    ]
+  }
+}

@@ -43,14 +43,15 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\ARInvoiceEInvoiceController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
+use OCA\Shillinq\Service\EInvoice\EInvoiceArtefactStore;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCA\Shillinq\Service\EInvoice\EInvoiceValidationService;
+use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\ViesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IUser;
@@ -273,16 +274,23 @@ final class ARInvoiceEInvoiceControllerTest extends TestCase {
 			}
 		};
 
+		$artefacts = $this->createMock(EInvoiceArtefactStore::class);
+		$artefacts->method('store')->willReturn('/alice/files/Shillinq/adm-1/e-invoices/2026/invoice-2026-0042.xml');
+
+		$publisher = $this->createMock(IntegriqCloudEventPublisher::class);
+		$publisher->method('isAvailable')->willReturn(true);
+		$publisher->method('publish')->willReturn(true);
+
 		return new EInvoiceService(
 			appConfig: $appConfig,
 			administrationContext: $context,
 			logger: new NullLogger(),
-			eventDispatcher: $this->createMock(IEventDispatcher::class),
 			ublMapper: new ArInvoiceUblMapper(),
 			pdfGenerator: new InvoicePdfGenerator(),
 			validationService: new EInvoiceValidationService(vies: $vies, peppolPort: $port),
-			peppolPort: $port,
 			objectService: new DuckObjectServiceAdapter($store),
+			artefactStore: $artefacts,
+			publisher: $publisher,
 		);
 
 	}//end buildRealService()
@@ -336,7 +344,7 @@ final class ARInvoiceEInvoiceControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$data = $response->getData();
 		$this->assertSame('queued', $data['deliveryStatus']);
-		$this->assertNotNull($data['transmissionId']);
+		$this->assertSame('/alice/files/Shillinq/adm-1/e-invoices/2026/invoice-2026-0042.xml', $data['payloadFileUri']);
 		$this->assertNotSame([], $this->saved, 'The invoice must be persisted with its new deliveryStatus');
 
 	}//end testSendSucceedsForAdministrationMember()
