@@ -4,7 +4,7 @@
 
 ## 1. Instances
 
-- [ ] 1.1 Add `filingType` and `sourceReturnId` to `XbrlInstance`, `xbrlInstanceId` to `BtwAangifte`, and a seed `XBRLTaxonomy` record with the OB and KvK entry points (REQ-TDF-001, REQ-TDF-002). Verify: `npm run check:registers`; re-import with no failed schemas.
+- [ ] 1.1 Add `filingType` and `sourceReturnId` to `XbrlInstance`, `xbrlInstanceId` to `BtwAangifte`, and a seed `XBRLTaxonomy` record with the OB and KvK entry points (REQ-TDF-001, REQ-TDF-002). Verify: `npm run check:registers`; re-import with no failed schemas. — partial: `lib/Settings/register.d/tax-digipoort-filing.json` adds `filingType` and `sourceReturnId` to `XbrlInstance`, appends `belastingdienst-ob` to its entry points, adds `xbrlInstanceId` to `BtwAangifte` and `entryPoints` to `XBRLTaxonomy` (`TaxDigipoortFilingFragmentTest`, `check:registers` passes). Left: the seed `XBRLTaxonomy` record, whose publication and effective dates should come from the published taxonomy, and the live re-import.
 - [ ] 1.2 Add `lib/Service/Sbr/VatReturnXbrlBuilder.php` from the return's declarations (REQ-TDF-001). Verify: PHPUnit validates the output against the OB entry point schema kept in the repository.
 - [ ] 1.3 Add `lib/Service/Sbr/AnnualAccountsXbrlBuilder.php` and `lib/Reporting/Generator/SbrXbrlReportGenerator.php` answering `sbr-xbrl` (REQ-TDF-002). Verify: PHPUnit on the seed statement; `ReportGenerationService` no longer logs "no generator" for `sbr-xbrl`.
 
