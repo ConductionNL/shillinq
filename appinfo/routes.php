@@ -909,6 +909,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // URLs declared before the SPA catch-all per ADR-016.
             ['name' => 'deadlineCalendarSettings#index', 'url' => '/api/deadline-calendar/settings', 'verb' => 'GET'],
             ['name' => 'deadlineCalendarSettings#update', 'url' => '/api/deadline-calendar/settings', 'verb' => 'POST'],
+            // platform-custom-record-types (REQ-CRT-001..003): the shown own
+            // record types for any user, and the admin listing and switch.
+            ['name' => 'customRecordType#index', 'url' => '/api/custom-record-types', 'verb' => 'GET'],
+            ['name' => 'customRecordType#available', 'url' => '/api/custom-record-types/available', 'verb' => 'GET'],
+            ['name' => 'customRecordType#update', 'url' => '/api/custom-record-types', 'verb' => 'PUT'],
+            ['name' => 'customRecordType#toggle', 'url' => '/api/custom-record-types', 'verb' => 'PATCH'],
 
             // Accountant portal (accountant-portal, REQ-ACP-001/002/004).
             // These two were MISSING from this table entirely while every other

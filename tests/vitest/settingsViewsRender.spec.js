@@ -255,12 +255,13 @@ describe('AdminRoot', () => {
 	it('opens on the tab the address names and draws a section per tab with its link', async () => {
 		const html = await render(AdminRoot)
 
-		expect(html).toMatch(/<span data-tab="general">General<\/span><span data-tab="required-fields">Required fields<\/span><span data-tab="connections">Connections<\/span><span data-tab="appointments">Appointments<\/span>/)
+		expect(html).toMatch(/<span data-tab="general">General<\/span><span data-tab="required-fields">Required fields<\/span><span data-tab="custom-record-types">Own records<\/span><span data-tab="connections">Connections<\/span><span data-tab="appointments">Appointments<\/span>/)
 		expect(html).toMatch(/<ol><li>Administration settings<\/li><li>Shillinq<\/li><li>Connections<\/li><\/ol>/)
 		expect(html).toContain('only for administrators, each section saves on its own')
 		expect(html).toMatch(/data-slot="tab-required-fields"[\s\S]*?data-stub="CnToggleTableWidget"[\s\S]*?href="\/index.php\/apps\/shillinq\/settings\/required-fields"[^>]*>\s*Manage required fields/)
 		expect(html).toMatch(/data-slot="tab-connections"[\s\S]*?href="\/index.php\/apps\/shillinq\/external-adapters"[^>]*>\s*Open the connections/)
-		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(1)
+		expect(html).toMatch(/data-slot="tab-custom-record-types"[\s\S]*?data-stub="CnToggleTableWidget"[\s\S]*?href="\/index.php\/apps\/shillinq\/records"[^>]*>\s*Open own records/)
+		expect(html.match(/data-stub="CnToggleTableWidget"/g)).toHaveLength(2)
 	})
 
 	it('shows the settings forms only once the stores are up, and starts them on creation', async () => {

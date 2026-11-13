@@ -85,6 +85,12 @@ import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappi
 // switch the BudgetBBVMappings page from type=index to
 // type=custom + component=BudgetBBVMappingIndex.
 import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
+// platform-custom-record-types (REQ-CRT-002/003): the own records page, one
+// card per own record type an administrator chose to show. Custom because its
+// cards come from a server list (GET /api/custom-record-types), not from fixed
+// menu children; the list and detail pages themselves stay built-in
+// `index` / `detail` pages over `@route.schema`.
+import CustomRecordTypes from './components/custom-records/CustomRecordTypes.vue'
 // bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
 // REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
 // widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
@@ -578,6 +584,7 @@ export default {
 
 	// nav-six-clusters: the 5 new cluster landing pages (design.md §3).
 	BookkeepingOverview: { kind: 'page', component: BookkeepingOverview },
+	CustomRecordTypes: { kind: 'page', component: CustomRecordTypes },
 	SalesOverview: { kind: 'page', component: SalesOverview },
 	PurchasingOverview: { kind: 'page', component: PurchasingOverview },
 	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
