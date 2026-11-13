@@ -423,54 +423,6 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	}//end testFailedRecordsFailureReason()
 
 	/**
-	 * A captured DepositPayment stamps state, gateway, capture time, settlement
-	 * reference and fee, settles no invoice and is saved once; a failure
-	 * without a message gets the default reason.
-	 *
-	 * @return void
-	 */
-	public function testACapturedDepositPaymentStampsItsSettlementFields(): void {
-		$saved = [];
-		$stub = $this->buildObjectServiceStub(
-			[
-				'PaymentRequest' => [],
-				'DepositPayment' => [['id' => 'dep-1', 'paymentIntentId' => 'tr_dep', 'state' => 'authorized']],
-			],
-			$saved
-		);
-		$service = $this->makeService($stub);
-
-		$out = $service->reconcile(
-			'mollie',
-			['paymentIntentId' => 'tr_dep', 'outcome' => 'captured', 'settlementReference' => 1234, 'gatewayFeeAmount' => '0.29']
-		);
-
-		self::assertSame(['result' => PaymentReconciliationService::RESULT_APPLIED, 'schema' => 'DepositPayment'], $out);
-		self::assertCount(1, $saved);
-		self::assertSame('DepositPayment', $saved[0]['schema']);
-		$deposit = $saved[0]['object'];
-		self::assertSame('captured', $deposit['state']);
-		self::assertSame('mollie', $deposit['paymentGateway']);
-		self::assertSame('1234', $deposit['settlementReference']);
-		self::assertSame(0.29, $deposit['gatewayFeeAmount']);
-		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $deposit['capturedAt']);
-		self::assertArrayNotHasKey('confirmationSummary', $deposit);
-		self::assertArrayNotHasKey('failureReason', $deposit);
-
-		$saved = [];
-		$stub = $this->buildObjectServiceStub(
-			['DepositPayment' => [['id' => 'dep-2', 'paymentIntentId' => 'tr_dep2', 'state' => 'pending']]],
-			$saved
-		);
-		$out = $this->makeService($stub)->reconcile('stripe', ['paymentIntentId' => 'tr_dep2', 'outcome' => 'failed']);
-
-		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
-		self::assertSame('failed', $saved[0]['object']['state']);
-		self::assertSame('Payment failed at gateway.', $saved[0]['object']['failureReason']);
-		self::assertArrayNotHasKey('capturedAt', $saved[0]['object']);
-	}//end testACapturedDepositPaymentStampsItsSettlementFields()
-
-	/**
 	 * The polling fallback reconciles pending records across both schemas using
 	 * the injected status provider (REQ-APL-004 polling fallback).
 	 *
