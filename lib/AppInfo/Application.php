@@ -163,6 +163,9 @@ use Psr\Log\LoggerInterface;
  * guard the app defines, so its length and the class's coupling count scale
  * with the app's feature surface; splitting is out of scope for a mechanical
  * phpcs/phpmd cleanup. Deferred to a follow-up.
+ *
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-002
  */
 class Application extends App implements IBootstrap {
 	use FilteredObjectListenerTrait;

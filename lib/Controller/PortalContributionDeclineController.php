@@ -49,6 +49,7 @@ use Throwable;
  * contribution.
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PortalContributionDeclineController extends Controller {
 	/**

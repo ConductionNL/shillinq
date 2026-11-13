@@ -44,6 +44,7 @@ use stdClass;
  * @link     https://conduction.nl
  *
  * @spec openspec/specs/api-contract/spec.md
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class OpenApiController extends Controller {
 

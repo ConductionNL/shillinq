@@ -60,6 +60,7 @@ use Psr\Log\LoggerInterface;
  * Signature-verified shared payment webhook endpoint (REQ-APL-004).
  *
  * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	/**
