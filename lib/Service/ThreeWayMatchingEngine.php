@@ -461,7 +461,7 @@ class ThreeWayMatchingEngine {
 	private function recordLineMatch(ThreeWayMatchRun $run): array {
 		$tuples = $this->matchLineItems(
 			invoiceLines: (array)($run->invoice['lines'] ?? []),
-			poLines: $run->poLines,
+			poLines: self::withOrderDeliveryDate(poLines: $run->poLines, po: $run->po),
 			grnLines: $this->receiptLines(run: $run)
 		);
 		$scored = $this->scoreTuples(tuples: $tuples, profile: $this->profileFor(run: $run));
@@ -584,19 +584,72 @@ class ThreeWayMatchingEngine {
 				$receiptId = $this->idOf(row: $row);
 				$accepted = in_array((string)($row['statusCode'] ?? ''), self::ACCEPTED_RECEIPT_STATUSES[$schema], true);
 				if ($receiptId !== '' && $accepted === true) {
-					array_push(
-						$lines,
-						...$this->findAll(
-							schema: $lineSchema,
-							filters: [$receiptKey => $receiptId, 'administrationId' => $run->administrationId]
-						)
+					$found = $this->findAll(
+						schema: $lineSchema,
+						filters: [$receiptKey => $receiptId, 'administrationId' => $run->administrationId]
 					);
+					// A goods receipt line is dated by its receipt; a service
+					// receipt is not date checked (REQ-TWM-003).
+					if ($schema === self::SCHEMA_GRN) {
+						$found = self::withReceivedAt(lines: $found, receivedAt: trim((string)($row['receivedAt'] ?? '')));
+					}
+
+					array_push($lines, ...$found);
 				}
 			}
 		}
 
 		return $lines;
 	}//end receiptLines()
+
+	/**
+	 * Goods receipt lines stamped with their receipt's `receivedAt` as
+	 * `_receivedAt`, the actual date the delivery-date check reads.
+	 *
+	 * @param array<int, array<string, mixed>> $lines      The receipt's lines.
+	 * @param string                           $receivedAt The receipt's receivedAt; '' leaves the lines undated.
+	 *
+	 * @return array<int, array<string, mixed>> The lines.
+	 *
+	 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md#requirement-a-delivery-outside-the-date-tolerance-is-an-exception-req-twm-003
+	 */
+	private static function withReceivedAt(array $lines, string $receivedAt): array {
+		if ($receivedAt === '') {
+			return $lines;
+		}
+
+		foreach ($lines as $index => $line) {
+			$lines[$index]['_receivedAt'] = $receivedAt;
+		}
+
+		return $lines;
+	}//end withReceivedAt()
+
+	/**
+	 * Order lines with the order's `expectedDeliveryDate` where a line names
+	 * none, so the line's own date wins and the order's is the fallback.
+	 *
+	 * @param array<int, array<string, mixed>> $poLines The order's lines.
+	 * @param array<string, mixed>|null        $po      The order.
+	 *
+	 * @return array<int, array<string, mixed>> The lines.
+	 *
+	 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md#requirement-a-delivery-outside-the-date-tolerance-is-an-exception-req-twm-003
+	 */
+	private static function withOrderDeliveryDate(array $poLines, ?array $po): array {
+		$orderDate = trim((string)($po['expectedDeliveryDate'] ?? ''));
+		if ($orderDate === '') {
+			return $poLines;
+		}
+
+		foreach ($poLines as $index => $poLine) {
+			if (is_array($poLine) === true && trim((string)($poLine['expectedDeliveryDate'] ?? '')) === '') {
+				$poLines[$index]['expectedDeliveryDate'] = $orderDate;
+			}
+		}
+
+		return $poLines;
+	}//end withOrderDeliveryDate()
 
 	/**
 	 * Resolve the most-specific applicable ToleranceProfile.
