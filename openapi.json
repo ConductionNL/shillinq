@@ -60,6 +60,10 @@
             "description": "The owner's path for adding members to an administration."
         },
         {
+            "name": "administration-template",
+            "description": "Office templates of a chart of accounts: save, list and seed from."
+        },
+        {
             "name": "b-bv-dashboard",
             "description": "Thin page controller for the waterschappen BBV compliance dashboard."
         },
@@ -1326,6 +1330,162 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/administration-templates": {
+            "get": {
+                "operationId": "administration-template-index",
+                "summary": "The active office templates, for the setup wizard's template step",
+                "description": "The active office templates, for the setup wizard's template step: id, name, version and the number of accounts and dimensions each carries. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-template"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/administrations/{id}/template": {
+            "post": {
+                "operationId": "administration-template-save-as",
+                "summary": "Save the administration's chart of accounts and dimensions as a template",
+                "description": "Save the administration's chart of accounts and dimensions as an office template at version 1, without postings, relations or balances (REQ-LMA-003). A non-member receives a masked 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-template"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "The template's name, at most 200 characters."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The record was created.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/administrations/{id}/seed-template": {
+            "post": {
+                "operationId": "administration-template-seed",
+                "summary": "Seed the administration from an office template",
+                "description": "Add every account and dimension of the template the administration does not have yet (REQ-LMA-004). Needs the right to post in the administration; anyone else receives a masked 404, as does an unknown template. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "administration-template"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "templateId": {
+                                        "description": "The template to seed from."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
