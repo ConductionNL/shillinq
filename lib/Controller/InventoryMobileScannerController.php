@@ -51,7 +51,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -95,7 +95,7 @@ class InventoryMobileScannerController extends Controller {
 	 * @param IRequest $request The HTTP request.
 	 * @param IUserSession $userSession Authenticated user session.
 	 * @param IGroupManager $groupManager Group membership lookups.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param AdministrationContextServiceInterface $admin Per-user administration scope.
 	 * @param InventoryMobileScannerServiceInterface $scanner Sync core.
 	 * @param ContainerInterface $container DI container (locations lookup).
@@ -105,7 +105,7 @@ class InventoryMobileScannerController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly AdministrationContextServiceInterface $admin,
 		private readonly InventoryMobileScannerServiceInterface $scanner,
 		private readonly ContainerInterface $container,

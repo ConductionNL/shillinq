@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  * the app's configuration surface; splitting is out of scope for a
  * mechanical phpcs/phpmd cleanup. Deferred to a follow-up.
  */
-class SettingsService {
+class SettingsService implements SettingsServiceInterface {
 
 	/**
 	 * Configuration keys managed by this service.

@@ -38,8 +38,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
+use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
 use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
-use OCA\Shillinq\Service\Sales\DownPaymentService;
 use RuntimeException;
 
 /**
@@ -51,10 +51,10 @@ class DownPaymentGuard implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param DownPaymentService $downPayments The down-payment rules.
+	 * @param DownPaymentServiceInterface $downPayments The down-payment rules.
 	 */
 	public function __construct(
-		private readonly DownPaymentService $downPayments,
+		private readonly DownPaymentServiceInterface $downPayments,
 	) {
 
 	}//end __construct()

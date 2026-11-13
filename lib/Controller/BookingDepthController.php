@@ -44,9 +44,9 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RecurringSeriesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
-use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -71,20 +71,20 @@ class BookingDepthController extends Controller {
 	 *
 	 * @param \OCP\IRequest $request The request.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
 	 * @param AdministrationContextServiceInterface $context Auth + per-administration guard.
 	 * @param NoShowFeeCaptureService $noShowFee No-show fee capture seam.
-	 * @param RecurringSeriesService $series Recurring series expander/planner.
+	 * @param RecurringSeriesServiceInterface $series Recurring series expander/planner.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translation service for ADR-050 error-response messages.
 	 */
 	public function __construct(
 		\OCP\IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly NoShowFeeCaptureService $noShowFee,
-		private readonly RecurringSeriesService $series,
+		private readonly RecurringSeriesServiceInterface $series,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {

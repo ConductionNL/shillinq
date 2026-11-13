@@ -63,9 +63,9 @@ namespace OCA\Shillinq\Repair;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\GlLineAdministrationBackfillMigratorInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -84,7 +84,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param GlLineAdministrationBackfillMigratorInterface $migrator The pure migration core.
 	 * @param IAppConfig $appConfig App config — holds the completeness gate.
 	 * @param LoggerInterface $logger The logger interface.
@@ -93,7 +93,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function __construct(
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly GlLineAdministrationBackfillMigratorInterface $migrator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,

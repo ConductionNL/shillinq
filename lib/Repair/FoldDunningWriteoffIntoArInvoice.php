@@ -51,15 +51,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Repair step that folds DunningRun + OninbaarAfschrijving onto ARInvoice.
@@ -72,13 +72,13 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param IGroupManager $groupManager The group manager (admin IUser resolution).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private RegisterLocation $settingsService,
+		private RegisterLocationInterface $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

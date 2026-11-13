@@ -35,9 +35,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a per-beschikking realisatie summary from the S&O hour administration.
@@ -46,7 +47,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class WbsoAdministratieService {
+class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

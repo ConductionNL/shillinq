@@ -42,7 +42,7 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Log\LoggerInterface;
@@ -65,7 +65,7 @@ class PaymentPlanService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentPlanSchedule    $schedule      Draws up the instalments.
 	 * @param PaymentPlanAllocator   $allocator     Allocates payments.
 	 * @param DunningRunServiceInterface      $dunning       Pauses and resumes dunning.
@@ -76,7 +76,7 @@ class PaymentPlanService {
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly PaymentPlanSchedule $schedule,
 		private readonly PaymentPlanAllocator $allocator,
 		private readonly DunningRunServiceInterface $dunning,

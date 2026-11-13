@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\Usage\MeterReadingImportService;
+use OCA\Shillinq\Kernel\Contracts\MeterReadingImportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,14 +51,14 @@ class MeterReadingImportController extends Controller {
 	 *
 	 * @param IRequest                     $request  The request.
 	 * @param AdministrationContextServiceInterface $context  The caller's administrations.
-	 * @param MeterReadingImportService    $importer Creates the readings.
+	 * @param MeterReadingImportServiceInterface    $importer Creates the readings.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly AdministrationContextServiceInterface $context,
-		private readonly MeterReadingImportService $importer,
+		private readonly MeterReadingImportServiceInterface $importer,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

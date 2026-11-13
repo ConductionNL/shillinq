@@ -40,9 +40,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RevenueCutoffServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes per-contract revenue cut-off balances and waterfall rows.
@@ -56,7 +57,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
  */
-class RevenueCutoffService {
+class RevenueCutoffService implements RevenueCutoffServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

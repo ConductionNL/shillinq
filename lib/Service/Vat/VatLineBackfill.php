@@ -42,6 +42,7 @@ namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -54,7 +55,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
  */
-class VatLineBackfill {
+class VatLineBackfill implements VatLineBackfillInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**

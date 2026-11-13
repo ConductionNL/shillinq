@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sales;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
@@ -46,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Raise, deduct, check and stamp share one set of amount rules.
  */
-class DownPaymentService {
+class DownPaymentService implements DownPaymentServiceInterface {
 	/**
 	 * UNTDID 1001 code of a prepayment invoice.
 	 *

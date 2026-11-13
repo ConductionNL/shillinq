@@ -34,13 +34,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RuleTestDataSeederInterface;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Makes the local test data compliant with the enforced rules (idempotent).
@@ -53,7 +54,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): this seeder enumerates every rule
  * family's test fixtures; inherent complexity. Deferred to a follow-up.
  */
-class RuleTestDataSeeder {
+class RuleTestDataSeeder implements RuleTestDataSeederInterface {
 	/**
 	 * Construct the rule test-data seeder.
 	 *

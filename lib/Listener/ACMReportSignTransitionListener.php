@@ -55,8 +55,8 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\Signing\SigningDelegationService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SigningDelegationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -96,8 +96,8 @@ class ACMReportSignTransitionListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param SigningDelegationService $signingService The document-signing request service.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param SigningDelegationServiceInterface $signingService The document-signing request service.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's published object
@@ -107,8 +107,8 @@ class ACMReportSignTransitionListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly RegisterLocation $registerLocation,
-		private readonly SigningDelegationService $signingService,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly SigningDelegationServiceInterface $signingService,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

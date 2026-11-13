@@ -50,6 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TenderNedStatusSyncInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -63,7 +64,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
  */
-class TenderNedStatusSync {
+class TenderNedStatusSync implements TenderNedStatusSyncInterface {
 
 	/**
 	 * Openconnector outbound source binding name. Resolved lazily so the
