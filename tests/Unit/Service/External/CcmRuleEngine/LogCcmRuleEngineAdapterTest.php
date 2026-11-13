@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\Shillinq\Service\External\CcmRuleEngine\LogCcmRuleEngineAdapter
- * @uses \OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineResult
+ * @covers \OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineResult
  */
 final class LogCcmRuleEngineAdapterTest extends TestCase {
 
@@ -68,6 +68,8 @@ final class LogCcmRuleEngineAdapterTest extends TestCase {
 		$this->assertMatchesRegularExpression('/^ccm_ast_log_[0-9a-f]{14}$/', $result->evaluationId);
 		$this->assertFalse($result->fired);
 		$this->assertTrue($result->dormant);
+		$this->assertSame('no-outbound-connector-bound', $result->extras['reason']);
+		$this->assertStringStartsWith('compile deferred;', $result->diagnostics['note']);
 		$this->assertSame(['astHandle' => $result->evaluationId, 'ruleCode' => 'CCM-01', 'ruleLogic' => ['gt' => ['amount', 10000]]], $this->logged[0][1]);
 	}//end testCompilingIsDeferred()
 
@@ -82,6 +84,8 @@ final class LogCcmRuleEngineAdapterTest extends TestCase {
 		$this->assertSame('DEFERRED', $result->status);
 		$this->assertFalse($result->fired);
 		$this->assertTrue($result->diagnostics['failSoft']);
+		$this->assertTrue($result->dormant);
+		$this->assertSame('no-outbound-connector-bound', $result->extras['reason']);
 		$this->assertMatchesRegularExpression('/^ccm_eval_log_[0-9a-f]{14}$/', $result->evaluationId);
 		$this->assertSame(['evaluationId' => $result->evaluationId, 'astHandle' => 'ccm_ast_1', 'transactionContext' => ['amount' => 25000]], $this->logged[0][1]);
 	}//end testAnEvaluationFailsSoft()
