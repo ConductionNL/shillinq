@@ -5037,6 +5037,26 @@
 		{
 			"menu": [
 				{
+					"id": "Integrations",
+					"label": "Integrations",
+					"icon": "StoreOutline",
+					"route": "IntegrationCatalogue",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-integration-catalogue",
+					"id": "IntegrationCatalogue",
+					"route": "/integrations",
+					"type": "index",
+					"title": "Integrations"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RequiredFields",
 					"label": "Required fields",
 					"icon": "TextBoxCheckOutline",

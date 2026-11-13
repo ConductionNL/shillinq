@@ -1,0 +1,81 @@
+{
+	"$comment": "Shillinq Integrations (platform-integration-catalogue, REQ-PIC-001, REQ-PIC-003). The cards are integriq's `catalog_item` objects, the catalogue integriq's own Store page reads; shillinq opens on the bookkeeping categories and leaves switching an item on to integriq (ADR-023). The menu entry is not gated on integriq: on an instance without it the page shows the missing-dependency screen naming Integriq, which is what REQ-PIC-003 asks for.",
+	"menu": [
+		{
+			"id": "Integrations",
+			"label": "Integrations",
+			"icon": "StoreOutline",
+			"route": "IntegrationCatalogue",
+			"order": 47
+		}
+	],
+	"pages": [
+		{
+			"id": "IntegrationCatalogue",
+			"route": "/integrations",
+			"type": "index",
+			"title": "Integrations",
+			"requiresApp": {
+				"id": "integriq",
+				"name": "Integriq"
+			},
+			"config": {
+				"register": "integriq",
+				"schema": "catalog_item",
+				"viewMode": "cards",
+				"showAdd": false,
+				"showViewAction": false,
+				"selectable": false,
+				"description": "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.",
+				"_filterNote": "The bookkeeping categories (design D1). Removable like any default filter, so the whole catalogue is one click away; when integriq renames a category, this list is the one edit.",
+				"defaultFilters": {
+					"category": [
+						"Bank",
+						"Payments",
+						"E-invoicing",
+						"Tax filing",
+						"Commerce",
+						"Payroll"
+					]
+				},
+				"defaultSort": {
+					"field": "name",
+					"direction": "asc"
+				},
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": false
+					},
+					{
+						"key": "category",
+						"label": "Category"
+					},
+					{
+						"key": "status",
+						"label": "Status"
+					}
+				],
+				"cardFields": [
+					"description",
+					"category",
+					"status"
+				],
+				"actions": [
+					{
+						"id": "open-in-integriq",
+						"label": "Open in Integriq",
+						"icon": "StoreOutline",
+						"handler": "openIntegriqStore",
+						"description": "Open integriq's catalogue, where this integration is switched on."
+					}
+				]
+			}
+		}
+	]
+}

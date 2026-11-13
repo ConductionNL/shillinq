@@ -19,7 +19,10 @@ import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
-import { openIntegriqConnections } from './utils/integriqConnections.js'
+import {
+	openIntegriqConnections,
+	openIntegriqStore,
+} from './utils/integriqConnections.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
@@ -43,6 +46,9 @@ export const manifestActions = Object.freeze({
 	// The External Connections page's Add integration action leaves for
 	// integriq (adopt-connection-registry).
 	openIntegriqConnections,
+	// The Integrations page's Open in Integriq row action
+	// (platform-integration-catalogue).
+	openIntegriqStore,
 	// banking-manual-match: the "Match by hand" row action and the
 	// unmatched items bulk classification.
 	openBankLineMatch,

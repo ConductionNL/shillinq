@@ -6877,7 +6877,11 @@
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Integrations": "Koppelingen",
+        "Open in Integriq": "Openen in Integriq",
+        "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.": "Kant-en-klare koppelingen voor de boekhouding uit de catalogus van integriq. Zet er een aan in integriq.",
+        "Open integriq's catalogue, where this integration is switched on.": "Open de catalogus van integriq, waar u deze koppeling aanzet."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
