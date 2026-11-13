@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 

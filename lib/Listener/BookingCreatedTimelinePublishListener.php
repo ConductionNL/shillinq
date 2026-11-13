@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;

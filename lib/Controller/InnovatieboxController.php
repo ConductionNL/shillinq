@@ -32,7 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\InnovatieboxAggregationService;
 use OCA\Shillinq\Service\InnovatieboxSbrExportService;

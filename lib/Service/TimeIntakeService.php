@@ -65,7 +65,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;

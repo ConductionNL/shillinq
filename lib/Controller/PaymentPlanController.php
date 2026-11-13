@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
 use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;

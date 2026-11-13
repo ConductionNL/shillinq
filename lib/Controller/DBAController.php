@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Guard\DBAOpdrachtGuard;
 use OCA\Shillinq\Guard\DBAScoreCalculator;

@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\ContributionDeclineService;
 use OCP\AppFramework\Controller;

@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Dunning\DunningStageRenderer;
 use OCA\Shillinq\Service\Dunning\DunningTickRunner;

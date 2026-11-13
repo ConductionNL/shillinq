@@ -42,7 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
 use OCA\Shillinq\Service\AdministrationContextService;

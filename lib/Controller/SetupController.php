@@ -34,7 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Settings\AdminSettings;

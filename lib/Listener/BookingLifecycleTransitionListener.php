@@ -46,7 +46,7 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;

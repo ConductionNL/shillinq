@@ -72,7 +72,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCP\IAppConfig;

@@ -62,7 +62,7 @@ namespace OCA\Shillinq\Service\Commitment;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\EventDispatcher\GenericEvent;

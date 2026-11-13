@@ -53,7 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Payment;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Db\DoesNotExistException;

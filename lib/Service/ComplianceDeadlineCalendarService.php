@@ -78,7 +78,7 @@ namespace OCA\Shillinq\Service;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;

@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use DomainException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 
 /**

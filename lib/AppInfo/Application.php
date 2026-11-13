@@ -30,6 +30,7 @@ use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Middleware\ApiContractMiddleware;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
