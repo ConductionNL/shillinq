@@ -75,6 +75,7 @@ use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Lifecycle\PostingStamps;
+use OCA\Shillinq\Service\Treasury\FxAtBookingResolver;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -173,18 +174,35 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	private ?VatLineStamper $vatStamper = null;
 
 	/**
+	 * The snapshot fields a foreign-currency line carries onto its GL line.
+	 *
+	 * @var array<int,string>
+	 */
+	private const FX_FIELDS = [
+		'transactionAmount',
+		'transactionCurrency',
+		'baseCurrencyAmount',
+		'baseCurrency',
+		'fxRate',
+		'fxRateSource',
+		'fxRateDate',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param IAppConfig $appConfig Register slug and account numbers.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param IUserSession|null $userSession The posting user, for the audit trail; none outside a session.
+	 * @param FxAtBookingResolver|null $fxResolver The booking-date rate lookup; built on first use when not injected.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ?IUserSession $userSession = null,
+		private ?FxAtBookingResolver $fxResolver = null,
 	) {
 	}//end __construct()
 
@@ -238,7 +256,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			default => $this->mapApInvoice(invoice: $objectData, sourceId: $sourceId),
 		};
 		$lines = $this->normaliseLines(lines: $posting['lines']);
-		if (($parameters['keepBalanced'] ?? true) !== false) {
+		$keepBalanced = (($parameters['keepBalanced'] ?? true) !== false);
+		if ($keepBalanced === true) {
 			$this->assertBalanced(lines: $lines, label: $posting['header']['description']);
 		}
 
@@ -250,6 +269,15 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		if ($header['administrationId'] === '') {
 			throw new RuntimeException(sprintf('Cannot post %s: it has no administrationId.', $sourceReference));
 		}
+
+		$booked = $this->bookAtRate(
+			lines: $lines,
+			header: $header,
+			currency: strtoupper(trim((string)($objectData['currency'] ?? ''))),
+			keepBalanced: $keepBalanced
+		);
+		$lines  = $booked['lines'];
+		$header = $booked['header'];
 
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
 		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
@@ -285,6 +313,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				if ((string)($line[$dimension] ?? '') !== '') {
 					$mapped[$dimension] = (string)$line[$dimension];
 				}
+			}
+
+			// A rate typed on the line wins over the booking-date rate (REQ-BFX-003).
+			if (($line['fxRate'] ?? null) !== null && $line['fxRate'] !== '') {
+				$mapped['typedFxRate']  = $line['fxRate'];
+				$mapped['fxRateReason'] = (string)($line['fxRateReason'] ?? '');
 			}
 
 			$lines[] = $mapped;
@@ -472,6 +506,158 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * Book a foreign-currency posting at its rate: each line's amount becomes
+	 * the base amount and carries the rate snapshot (REQ-BFX-001..003).
+	 *
+	 * Lines of a posting in the administration's base currency, or with no
+	 * currency, are returned untouched. A line with a typed rate is booked at
+	 * it as source manual and needs a reason; the others at the booking-date
+	 * rate the resolver picks, which refuses when there is none.
+	 *
+	 * @param array<int,array<string,mixed>> $lines        The normalised lines, in transaction cents.
+	 * @param array<string,mixed>            $header       The transaction header.
+	 * @param string                         $currency     The posting's ISO 4217 currency, upper case.
+	 * @param bool                           $keepBalanced Whether the base amounts must balance.
+	 *
+	 * @return array{lines:array<int,array<string,mixed>>,header:array<string,mixed>}
+	 *
+	 * @throws RuntimeException When a rate is missing, a typed rate is invalid or has no reason, or rounding unbalances the entry.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function bookAtRate(array $lines, array $header, string $currency, bool $keepBalanced): array {
+		if ($currency === '') {
+			return ['lines' => $lines, 'header' => $header];
+		}
+
+		$base = $this->fxResolver()->baseCurrencyFor(administrationId: (string)$header['administrationId']);
+		if ($currency === $base) {
+			return ['lines' => $lines, 'header' => $header];
+		}
+
+		$date     = substr((string)$header['postingDate'], 0, 10);
+		$resolved = null;
+		foreach ($lines as $index => $line) {
+			$snapshot = $this->typedRate(line: $line, number: ($index + 1), date: $date);
+			if ($snapshot === null) {
+				$resolved ??= $this->fxResolver()->resolve(
+					transactionCurrency: $currency,
+					baseCurrency: $base,
+					date: $date,
+					administrationId: (string)$header['administrationId']
+				);
+				$snapshot   = $resolved;
+			}
+
+			$baseCents = FxAtBookingResolver::toBaseCents(cents: (int)$line['cents'], rate: $snapshot['rate']);
+			$lines[$index]['fx'] = [
+				'transactionAmount' => (int)$line['cents'],
+				'transactionCurrency' => $currency,
+				'baseCurrencyAmount' => $baseCents,
+				'baseCurrency' => $base,
+				'fxRate' => $snapshot['rate'],
+				'fxRateSource' => $snapshot['source'],
+				'fxRateDate' => $snapshot['date'],
+			];
+			$lines[$index]['cents'] = $baseCents;
+			unset($lines[$index]['typedFxRate'], $lines[$index]['fxRateReason']);
+		}//end foreach
+
+		if ($keepBalanced === true) {
+			$this->assertBalancedInBase(lines: $lines, label: (string)$header['description'], base: $base);
+		}
+
+		$header['currency'] = $base;
+		return ['lines' => $lines, 'header' => $header];
+
+	}//end bookAtRate()
+
+	/**
+	 * The snapshot of a rate typed on the line, or null when none is typed.
+	 *
+	 * @param array<string,mixed> $line   The line.
+	 * @param int                 $number Its 1-based position, for the message.
+	 * @param string              $date   The booking date.
+	 *
+	 * @return array{rate:float,source:string,date:string}|null
+	 *
+	 * @throws RuntimeException When the typed rate is not positive or has no reason.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.2
+	 */
+	private function typedRate(array $line, int $number, string $date): ?array {
+		if (array_key_exists('typedFxRate', $line) === false) {
+			return null;
+		}
+
+		if (is_numeric($line['typedFxRate']) === false || (float)$line['typedFxRate'] <= 0.0) {
+			throw new RuntimeException(sprintf('The exchange rate typed on line %d must be a positive number.', $number));
+		}
+
+		if (trim((string)($line['fxRateReason'] ?? '')) === '') {
+			throw new RuntimeException(sprintf('The exchange rate typed on line %d needs a reason.', $number));
+		}
+
+		return ['rate' => (float)$line['typedFxRate'], 'source' => 'manual', 'date' => $date];
+
+	}//end typedRate()
+
+	/**
+	 * Refuse when the base amounts no longer balance after rounding, naming the difference.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The lines in base cents.
+	 * @param string                         $label The posting's description.
+	 * @param string                         $base  The base currency.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When debit and credit differ.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-2.1
+	 */
+	private function assertBalancedInBase(array $lines, string $label, string $base): void {
+		$debit  = 0;
+		$credit = 0;
+		foreach ($lines as $line) {
+			if ($line['side'] === 'debit') {
+				$debit += (int)$line['cents'];
+				continue;
+			}
+
+			$credit += (int)$line['cents'];
+		}
+
+		if ($debit !== $credit) {
+			throw new RuntimeException(
+				sprintf(
+					'%s does not balance in %s after booking at the exchange rate: debit %.2f, credit %.2f, difference %.2f. '
+					. 'Type the rate on the lines or correct the amounts.',
+					$label,
+					$base,
+					($debit / 100),
+					($credit / 100),
+					(abs($debit - $credit) / 100)
+				)
+			);
+		}
+
+	}//end assertBalancedInBase()
+
+	/**
+	 * The booking-date rate resolver, built on first use when not injected.
+	 *
+	 * @return FxAtBookingResolver
+	 */
+	private function fxResolver(): FxAtBookingResolver {
+		if ($this->fxResolver === null) {
+			$this->fxResolver = new FxAtBookingResolver(objectService: $this->objectService, appConfig: $this->appConfig);
+		}
+
+		return $this->fxResolver;
+
+	}//end fxResolver()
 
 	/**
 	 * The tariff, box and VAT split for this posting.
@@ -670,6 +856,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind'] as $vatField) {
 					if (isset($line[$vatField]) === true) {
 						$row[$vatField] = (string)$line[$vatField];
+					}
+				}
+
+				foreach (self::FX_FIELDS as $fxField) {
+					if (isset($line['fx'][$fxField]) === true) {
+						$row[$fxField] = $line['fx'][$fxField];
 					}
 				}
 

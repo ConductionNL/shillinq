@@ -79,6 +79,21 @@
                   "description": "Optional line-level description.",
                   "nullable": true,
                   "title": "Description"
+                },
+                "fxRate": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "nullable": true,
+                  "title": "Exchange Rate",
+                  "description": "Optional exchange rate typed for this line, transaction currency to base currency. When set the line is booked at it with source manual instead of the booking-date FxRate, and fxRateReason is required (banking-fx-at-booking REQ-BFX-003).",
+                  "example": 0.9102
+                },
+                "fxRateReason": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Exchange Rate Reason",
+                  "description": "Why the typed exchange rate applies (e.g. a forward contract). Required when fxRate is set.",
+                  "example": "Termijncontract ING 2026-114"
                 }
               }
             },
