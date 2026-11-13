@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\Service\PeriodCloseException;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 
 /**
  * Contract of PeriodCloseService.

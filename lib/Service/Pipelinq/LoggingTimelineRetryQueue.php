@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
 /**
  * Logs the deferred publish; slice 09 swaps this binding for a real queue.

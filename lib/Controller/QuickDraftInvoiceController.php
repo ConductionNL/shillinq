@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
-use OCA\Shillinq\Service\Sales\QuickDraftRefusedException;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

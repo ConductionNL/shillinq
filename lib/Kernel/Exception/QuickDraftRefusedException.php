@@ -4,7 +4,7 @@
  * Quick Draft Refused Exception
  *
  * @category Service
- * @package  OCA\Shillinq\Service\Sales
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Sales;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use DomainException;
 

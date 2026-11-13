@@ -1401,7 +1401,7 @@
         "registerServiceAlias",
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\KlantbeeldResultInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\KlantbeeldResult'"
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Model\\\\KlantbeeldResult'"
         ]
     ],
     [

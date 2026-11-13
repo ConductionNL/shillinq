@@ -64,6 +64,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
+use OCA\Shillinq\Kernel\Model\PortalPaymentSessionResult;
 
 /**
  * Resolves ownership + mints an iDEAL payment session for a verified portal

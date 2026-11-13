@@ -41,6 +41,7 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 
 /**
  * Plan candidates for bank lines, and booking a line to a plan.

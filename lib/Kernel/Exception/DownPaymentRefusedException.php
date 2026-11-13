@@ -7,7 +7,7 @@
  * form Nextcloud's IL10N::t() fills; the controller translates it, so the refusal reaches the user in their language.
  *
  * @category Service
- * @package  OCA\Shillinq\Service\Sales
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Sales;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use DomainException;
 

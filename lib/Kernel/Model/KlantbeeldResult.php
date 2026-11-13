@@ -24,7 +24,7 @@
  * the same as a backend outage.
  *
  * @category Service
- * @package  OCA\Shillinq\Service\Pipelinq
+ * @package  OCA\Shillinq\Kernel\Model
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -37,9 +37,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Pipelinq;
+namespace OCA\Shillinq\Kernel\Model;
 
 use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
+use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
 
 /**
  * Immutable envelope: page of {@see KlantbeeldTransaction} + meta.

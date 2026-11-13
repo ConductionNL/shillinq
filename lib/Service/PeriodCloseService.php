@@ -46,6 +46,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 
 /**
  * Orchestrates the PeriodClose lifecycle with server-side role enforcement.

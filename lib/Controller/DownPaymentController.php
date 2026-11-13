@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

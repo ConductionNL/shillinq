@@ -11,7 +11,7 @@
  * than silently reserving nothing (fail-closed, CWE-863).
  *
  * @category Exception
- * @package  OCA\Shillinq\Service\Commitment
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Commitment;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use RuntimeException;
 

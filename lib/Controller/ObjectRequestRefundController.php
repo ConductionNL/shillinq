@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Controller;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestRefundServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
-use OCA\Shillinq\Service\RefundStepForbiddenException;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

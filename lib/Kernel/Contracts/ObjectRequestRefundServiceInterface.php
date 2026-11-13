@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Kernel\Contracts;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\RefundStepForbiddenException;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 use RuntimeException;
 
 /**

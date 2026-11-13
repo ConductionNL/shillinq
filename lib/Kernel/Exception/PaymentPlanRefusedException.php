@@ -1,13 +1,13 @@
 <?php
 
 /**
- * A manual match the service refuses, with a message a person can act on.
+ * Payment Plan Refused Exception
  *
- * The message is an English source string with `%1$s` placeholders, the
- * form Nextcloud's IL10N::t() fills; the controller translates it, so the refusal reaches the user in their language.
+ * A payment plan request that cannot be carried out, with an English source
+ * string and its parameters so the controller can translate the reason.
  *
- * @category Service
- * @package  OCA\Shillinq\Service\Bank
+ * @category PaymentPlan
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,16 +23,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Bank;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use DomainException;
 
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
-class ManualMatchRefusedException extends DomainException {
+class PaymentPlanRefusedException extends DomainException {
 	/**
 	 * Constructor.
 	 *
@@ -43,7 +43,7 @@ class ManualMatchRefusedException extends DomainException {
 		private readonly string $template,
 		private readonly array $parameters = [],
 	) {
-		parent::__construct(message: self::render(template: $template, parameters: $parameters));
+		parent::__construct(message: vsprintf($template, $parameters));
 
 	}//end __construct()
 
@@ -52,7 +52,7 @@ class ManualMatchRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -64,23 +64,10 @@ class ManualMatchRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
 	public function getParameters(): array {
 		return $this->parameters;
 
 	}//end getParameters()
-
-	/**
-	 * Fill the placeholders.
-	 *
-	 * @param string            $template   The template.
-	 * @param array<int,string> $parameters The values.
-	 *
-	 * @return string
-	 */
-	private static function render(string $template, array $parameters): string {
-		return vsprintf($template, $parameters);
-
-	}//end render()
 }//end class

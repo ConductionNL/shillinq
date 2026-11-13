@@ -72,6 +72,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 
 /**
  * Assembles a Commitment + CommitmentLines from an approved
@@ -321,7 +322,7 @@ class CommitmentMaterialisationService implements CommitmentMaterialisationServi
 	private function refuseUnfunded(CommitmentSource $source): void {
 		if ($source->failClosed === true) {
 			throw new InsufficientCommitmentBudgetException(
-				sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
+				message: sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
 			);
 		}
 

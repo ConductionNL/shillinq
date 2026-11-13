@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Payment Plan Refused Exception
+ * Budget Edit Refused Exception
  *
- * A payment plan request that cannot be carried out, with an English source
+ * A budget edit that cannot be carried out, with an English source
  * string and its parameters so the controller can translate the reason.
  *
- * @category PaymentPlan
- * @package  OCA\Shillinq\PaymentPlan
+ * @category Budget
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+ * @spec openspec/specs/budget-grid-view/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,16 +23,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\PaymentPlan;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use DomainException;
 
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+ * @spec openspec/specs/budget-grid-view/spec.md
  */
-class PaymentPlanRefusedException extends DomainException {
+class BudgetEditRefusedException extends DomainException {
 	/**
 	 * Constructor.
 	 *
@@ -52,7 +52,7 @@ class PaymentPlanRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -64,7 +64,7 @@ class PaymentPlanRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	public function getParameters(): array {
 		return $this->parameters;

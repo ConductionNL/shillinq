@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 
 /**
  * Contract of PaymentPlanService.

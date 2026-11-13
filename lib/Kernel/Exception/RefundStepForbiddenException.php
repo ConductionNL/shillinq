@@ -7,7 +7,7 @@
  * request's administration, or they approved the refund they now try to pay.
  *
  * @category Service
- * @package  OCA\Shillinq\Service
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use DomainException;
 

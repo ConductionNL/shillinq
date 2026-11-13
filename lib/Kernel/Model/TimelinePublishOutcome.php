@@ -28,7 +28,7 @@
  * {@see PipelinqContactAdapter::publishTimelineEvent()} wrapper.
  *
  * @category Service
- * @package  OCA\Shillinq\Service\Pipelinq
+ * @package  OCA\Shillinq\Kernel\Model
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -41,7 +41,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Pipelinq;
+namespace OCA\Shillinq\Kernel\Model;
 
 /**
  * Terminal outcome of a single pipelinq timeline publish.

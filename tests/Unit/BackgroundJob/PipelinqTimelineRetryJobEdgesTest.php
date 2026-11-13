@@ -31,7 +31,7 @@ use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -46,7 +46,7 @@ use RuntimeException;
  * Guards, entry shapes and failing side effects of one retry tick.
  *
  * @covers \OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob
- * @uses   \OCA\Shillinq\Service\Pipelinq\TimelineEventDto
+ * @uses   \OCA\Shillinq\Kernel\Model\TimelineEventDto
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  */
 final class PipelinqTimelineRetryJobEdgesTest extends TestCase {

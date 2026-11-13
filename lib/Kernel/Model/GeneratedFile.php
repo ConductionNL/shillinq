@@ -11,7 +11,7 @@
  * Nextcloud Files and records a GeneratedReport object pointing at it.
  *
  * @category Reporting
- * @package  OCA\Shillinq\Reporting
+ * @package  OCA\Shillinq\Kernel\Model
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -40,7 +40,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Reporting;
+namespace OCA\Shillinq\Kernel\Model;
 
 /**
  * Immutable rendered-report payload.
