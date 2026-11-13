@@ -166,6 +166,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
 
 	/**
+	 * The dimension codes a source line hands on to its GL line, under the GL line's own names.
+	 *
+	 * @var list<string>
+	 */
+	private const LINE_DIMENSIONS = ['costCenterCode', 'costCarrierCode', 'projectCode'];
+
+	/**
 	 * The tariff, box and VAT split, built on first use.
 	 *
 	 * @var VatLineStamper|null
@@ -279,9 +286,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				'cents' => $this->cents(amount: ($line['amount'] ?? 0)),
 				'description' => (string)($line['description'] ?? ($entry['description'] ?? '')),
 			];
-			// The line's cost centre and project reach the GL line
-			// (ledger-booking-rules: restrictions and segment reports read them).
-			foreach (['costCenterCode', 'projectCode'] as $dimension) {
+			// The line's cost centre, cost carrier and project reach the GL
+			// line (ledger-booking-rules: restrictions and segment reports read
+			// them; ledger-journal-line-dimensions REQ-LJD-001).
+			foreach (self::LINE_DIMENSIONS as $dimension) {
 				if ((string)($line[$dimension] ?? '') !== '') {
 					$mapped[$dimension] = (string)$line[$dimension];
 				}
@@ -661,7 +669,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 					'administrationId' => (string)$header['administrationId'],
 					'description' => (string)($line['description'] ?? ''),
 				];
-				foreach (['costCenterCode', 'projectCode'] as $dimension) {
+				foreach (self::LINE_DIMENSIONS as $dimension) {
 					if (isset($line[$dimension]) === true) {
 						$row[$dimension] = (string)$line[$dimension];
 					}

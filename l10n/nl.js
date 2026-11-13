@@ -691,7 +691,7 @@ OC.L10N.register(
         "Corrects period": "Corrigeert periode",
         "Cost": "Bedrag",
         "Cost Center": "Kostenplaats",
-        "Cost Center Code": "Kosten Drager Code",
+        "Cost Center Code": "Kostenplaatscode",
         "Cost Centers": "Kostenplaatsen",
         "Cost Centre": "Kostenplaats",
         "Cost Compliance": "Kostendekking",
@@ -6866,7 +6866,16 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Cost Carrier Code": "Kostendragercode",
+        "FK to AnalyticalDimension.code (dimensionType=cost-center). Copied onto the ledger line on post; posting refuses a code that is not an active cost centre of the administration on the entry date.": "FK naar AnalyticalDimension.code (dimensionType=cost-center). Gaat bij het boeken mee naar de grootboekregel; boeken weigert een code die op de boekdatum geen actieve kostenplaats van de administratie is.",
+        "FK to AnalyticalDimension.code (dimensionType=cost-object). Copied onto the ledger line on post; posting refuses a code that is not an active cost carrier of the administration on the entry date.": "FK naar AnalyticalDimension.code (dimensionType=cost-object). Gaat bij het boeken mee naar de grootboekregel; boeken weigert een code die op de boekdatum geen actieve kostendrager van de administratie is.",
+        "FK to AnalyticalDimension.code (dimensionType=project). Copied onto the ledger line on post; posting refuses a code that is not an active project of the administration on the entry date.": "FK naar AnalyticalDimension.code (dimensionType=project). Gaat bij het boeken mee naar de grootboekregel; boeken weigert een code die op de boekdatum geen actief project van de administratie is.",
+        "Line %1$d: %2$s %3$s does not exist or is not active in this administration": "Regel %1$d: %2$s %3$s bestaat niet of is niet actief in deze administratie",
+        "cost centre": "kostenplaats",
+        "cost carrier": "kostendrager",
+        "project": "project",
+        "Project Code": "Projectcode"
     },
     "nplurals=2; plural=(n != 1);"
 )
