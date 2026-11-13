@@ -316,15 +316,19 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 	}//end claims()
 
 	/**
+	 * @param string $redirectUrl The configured payer return URL, empty for none.
+	 *
 	 * @return PortalPaymentSessionService
 	 */
-	private function makeService(): PortalPaymentSessionService {
+	private function makeService(string $redirectUrl = ''): PortalPaymentSessionService {
 		$urlGenerator = $this->createMock(IURLGenerator::class);
 		$urlGenerator->method('linkToRouteAbsolute')->willReturn('https://instance.example/webhook');
 		$urlGenerator->method('getAbsoluteURL')->willReturn('https://instance.example/');
 
 		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('');
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($key === 'portal_payment_redirect_url' ? $redirectUrl : $default)
+		);
 
 		return new PortalPaymentSessionService(
 			container: $this->container,
@@ -372,6 +376,27 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 		$last = end($paymentRequestSaves);
 		self::assertSame('tr_1', $last['object']['paymentIntentId']);
 	}//end testHappyPathReturnsCheckoutUrl()
+
+	/**
+	 * A configured payer return URL is sent to the PSP instead of the instance root.
+	 *
+	 * @return void
+	 */
+	public function testAConfiguredReturnUrlIsSentToThePsp(): void {
+		$captured = null;
+		$this->provider->method('createSession')
+			->willReturnCallback(
+				function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+					$captured = $request;
+					return new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/x', paymentIntentId: 'tr_9');
+				}
+			);
+
+		$this->makeService(redirectUrl: 'https://portal.example/betaald')->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		self::assertNotNull($captured);
+		self::assertSame('https://portal.example/betaald', $captured->redirectUrl);
+	}//end testAConfiguredReturnUrlIsSentToThePsp()
 
 	/**
 	 * A client-supplied amount is ignored entirely — the charged amount is

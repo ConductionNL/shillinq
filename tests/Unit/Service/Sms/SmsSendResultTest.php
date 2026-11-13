@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Sms;
 
-use OCA\Shillinq\Service\Sms\SmsOptOutPolicy;
 use OCA\Shillinq\Service\Sms\SmsSendResult;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -47,6 +46,7 @@ final class SmsSendResultTest extends TestCase {
 			'failed' => [SmsSendResult::STATUS_FAILED, false],
 			'skipped' => [SmsSendResult::STATUS_SKIPPED, false],
 			'unknown' => ['queued', false],
+			'case-sensitive' => ['SENT', false],
 		];
 
 	}//end statuses()
