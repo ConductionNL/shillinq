@@ -48,6 +48,8 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use LogicException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\LockRequest;
+use OCA\OpenRegister\Service\Object\UnlockRequest;
 use OCP\IUser;
 use RuntimeException;
 
@@ -634,12 +636,11 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	/**
 	 * Not modelled.
 	 *
-	 * @param string|int $identifier The object id or UUID.
-	 * @param bool $advisory Take an advisory lock.
+	 * @param UnlockRequest $request The identifier, advisory flag, run uuid and whether to break the lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(UnlockRequest $request): bool {
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -647,19 +648,12 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	/**
 	 * Not modelled.
 	 *
-	 * @param string $identifier The object id or UUID.
-	 * @param ?string $process A label for the holding process.
-	 * @param ?int $duration Lock duration in seconds.
+	 * @param LockRequest $request The identifier, process, duration and run step.
 	 * @param bool $advisory Take an advisory lock.
 	 *
 	 * @return array
 	 */
-	public function lockObject(
-		string $identifier,
-		?string $process = null,
-		?int $duration = null,
-		bool $advisory = false
-	): array {
+	public function lockObject(LockRequest $request, bool $advisory = false): array {
 		$this->unsupported(method: 'lockObject');
 
 	}//end lockObject()
