@@ -48,13 +48,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalServiceInterface;
 use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\PurchaseOrderApprovalEntry;
 
 /**
  * Slice 11 — records approver identity + decidedAt on the next pending
@@ -69,35 +71,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
  */
-class PurchaseOrderApprovalService {
-
-	/**
-	 * Decision enum values mirror the slice-01 PurchaseOrder.approvalChain.decision enum.
-	 *
-	 * @var string
-	 */
-	public const DECISION_APPROVED = 'approved';
-
-	/**
-	 * Decision rejected — terminal: the PO advances to statusCode=cancelled.
-	 *
-	 * @var string
-	 */
-	public const DECISION_REJECTED = 'rejected';
-
-	/**
-	 * Decision delegated — chains the slot to another role; not advanced here.
-	 *
-	 * @var string
-	 */
-	public const DECISION_DELEGATED = 'delegated';
-
-	/**
-	 * Decision pending: the slot waits for its approver.
-	 *
-	 * @var string
-	 */
-	public const DECISION_PENDING = 'pending';
+class PurchaseOrderApprovalService implements PurchaseOrderApprovalServiceInterface {
 
 	/**
 	 * Schema slug for PurchaseOrder records (slice 01).
@@ -465,12 +439,7 @@ class PurchaseOrderApprovalService {
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public static function isApprovedEntry(mixed $entry): bool {
-		if (is_array($entry) === false) {
-			return false;
-		}
-
-		return (string)($entry['decision'] ?? '') === self::DECISION_APPROVED
-			&& trim((string)($entry['decidedAt'] ?? '')) !== '';
+		return PurchaseOrderApprovalEntry::isApproved(entry: $entry);
 	}//end isApprovedEntry()
 
 	/**

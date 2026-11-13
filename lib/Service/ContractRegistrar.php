@@ -172,6 +172,7 @@ use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ProgrammabegrotingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
@@ -467,6 +468,7 @@ final class ContractRegistrar {
 		$context->registerServiceAlias(PortalPaymentSessionServiceInterface::class, PortalPaymentSessionService::class);
 		$context->registerServiceAlias(ProductCatalogServiceInterface::class, ProductCatalogService::class);
 		$context->registerServiceAlias(ProgrammabegrotingServiceInterface::class, ProgrammabegrotingService::class);
+		$context->registerServiceAlias(PurchaseOrderApprovalServiceInterface::class, PurchaseOrderApprovalService::class);
 		$context->registerServiceAlias(PurchaseOrderServiceInterface::class, PurchaseOrderService::class);
 		$context->registerServiceAlias(QuickDraftInvoiceServiceInterface::class, QuickDraftInvoiceService::class);
 		$context->registerServiceAlias(ReconciliationResolutionServiceInterface::class, ReconciliationResolutionService::class);
