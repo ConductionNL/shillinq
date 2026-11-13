@@ -12,7 +12,7 @@
       "ProviderPayout": {
         "slug": "ProviderPayout",
         "icon": "BankTransferIn",
-        "version": "0.1.1",
+        "version": "0.2.0",
         "title": "Provider payout",
         "description": "A settlement of a payment provider to the bank account: the amounts paid out and kept, and the payments in it, each matched to what it paid or still open.",
         "x-schema-org": "schema:MoneyTransfer",
@@ -167,6 +167,28 @@
                   "title": "Matched to",
                   "description": "The payment request, deposit or invoice the line paid.",
                   "example": "pr-2026-0412"
+                },
+                "matchedObjectType": {
+                  "type": "string",
+                  "enum": [
+                    "payment-request",
+                    "deposit",
+                    "invoice"
+                  ],
+                  "x-enum-labels": {
+                    "payment-request": "Payment request",
+                    "deposit": "Deposit",
+                    "invoice": "Invoice"
+                  },
+                  "title": "Matched to",
+                  "description": "Whether the line matched a payment request, a booking deposit or an invoice.",
+                  "example": "payment-request"
+                },
+                "originalPaymentId": {
+                  "type": "string",
+                  "title": "Original payment ID",
+                  "description": "For a refund or chargeback: the provider's id of the payment it returns, which names the invoice it is booked against.",
+                  "example": "tr_8Kq2"
                 }
               }
             },

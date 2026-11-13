@@ -4677,7 +4677,11 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "Deposit": "Deposit",
+        "For a refund or chargeback: the provider's id of the payment it returns, which names the invoice it is booked against.": "For a refund or chargeback: the provider's id of the payment it returns, which names the invoice it is booked against.",
+        "Original payment ID": "Original payment ID",
+        "Whether the line matched a payment request, a booking deposit or an invoice.": "Whether the line matched a payment request, a booking deposit or an invoice."
     },
     "nplurals=2; plural=(n != 1);"
 )
