@@ -4,7 +4,7 @@
       "JournalEntry": {
         "slug": "JournalEntry",
         "icon": "BookEditOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Journal Entry",
         "description": "A human-authored bookkeeping construct (memoriaalboeking / recurring template / reversing accrual). Posting one materialises exactly one balanced GLTransaction with its GLLine children. Distinct from the GLTransaction it produces.",
         "x-schema-org": "schema:AccountingTransaction",
@@ -79,6 +79,27 @@
                   "description": "Optional line-level description.",
                   "nullable": true,
                   "title": "Description"
+                },
+                "costCenterCode": {
+                  "type": "string",
+                  "description": "FK to AnalyticalDimension.code (dimensionType=cost-center). Copied onto the ledger line on post; posting refuses a code that is not an active cost centre of the administration on the entry date.",
+                  "nullable": true,
+                  "example": "KC-100",
+                  "title": "Cost Center Code"
+                },
+                "costCarrierCode": {
+                  "type": "string",
+                  "description": "FK to AnalyticalDimension.code (dimensionType=cost-object). Copied onto the ledger line on post; posting refuses a code that is not an active cost carrier of the administration on the entry date.",
+                  "nullable": true,
+                  "example": "KD-200",
+                  "title": "Cost Carrier Code"
+                },
+                "projectCode": {
+                  "type": "string",
+                  "description": "FK to AnalyticalDimension.code (dimensionType=project). Copied onto the ledger line on post; posting refuses a code that is not an active project of the administration on the entry date.",
+                  "nullable": true,
+                  "example": "PRJ-2026-001",
+                  "title": "Project Code"
                 }
               }
             },

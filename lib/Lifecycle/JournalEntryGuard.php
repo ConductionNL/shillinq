@@ -65,12 +65,14 @@ class JournalEntryGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
+	 * @param LineDimensionCheck $dimensions The lines' cost centre, cost carrier and project codes (ledger-journal-line-dimensions).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly PostingRestrictionGuard $restrictions,
+		private readonly LineDimensionCheck $dimensions,
 	) {
 	}//end __construct()
 
@@ -164,14 +166,17 @@ class JournalEntryGuard {
 	}//end lineCents()
 
 	/**
-	 * A person may not post on a control account or a blocked combination;
-	 * the refusal names which (ledger-booking-rules).
+	 * A person may not post on a control account or a blocked combination,
+	 * nor name an unknown or inactive dimension on a line; the refusal names
+	 * which (ledger-booking-rules, ledger-journal-line-dimensions).
 	 *
 	 * @param array<int,mixed>         $lines  The balanced line rows.
 	 * @param array<string,mixed>|null $object The JournalEntry being posted.
 	 *
 	 * @return true
-	 * @throws PostingRefusedException When a line breaks a booking rule.
+	 * @throws PostingRefusedException When a line breaks a booking rule or names an unknown dimension.
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	private function bookable(array $lines, array|null $object): bool {
 		$this->restrictions->assertAllowed(
@@ -179,6 +184,14 @@ class JournalEntryGuard {
 			administrationId: (string)($object['administrationId'] ?? ''),
 			postingDate: (string)($object['entryDate'] ?? ''),
 			sourceApp: (string)($object['sourceApp'] ?? '')
+		);
+		// A line's cost centre, cost carrier and project must be active
+		// dimensions of the administration (ledger-journal-line-dimensions
+		// REQ-LJD-002); the refusal names the line and the code.
+		$this->dimensions->assertKnown(
+			lines: array_values($lines),
+			administrationId: (string)($object['administrationId'] ?? ''),
+			postingDate: (string)($object['entryDate'] ?? '')
 		);
 		return true;
 	}//end bookable()

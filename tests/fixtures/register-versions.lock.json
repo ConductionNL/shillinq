@@ -71,7 +71,11 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261113190000",
-            "versionsSha256": "b861a4d7f0ce6de6d0d4aae97f9c39005062ca895ff2e07ec903ad998b23a10e"
+            "versionsSha256": "dbc320d2b1dc2becd57ada6e947443ceb42bbd928f5133cc9b01d1e18c5cc042"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261113191000",
+            "versionsSha256": "e9d4da3ea6b5776f3f765e18abd913bad8a7461efce9aef67629b62fd5966222"
         }
     ],
     "versions": {
@@ -356,7 +360,7 @@
         "schema:IroRecord": "0.1.0",
         "schema:IrregularityReport": "0.1.0",
         "schema:Iv3Export": "0.1.0",
-        "schema:JournalEntry": "0.1.0",
+        "schema:JournalEntry": "0.2.0",
         "schema:JubileumvoorzieningDetail": "0.1.0",
         "schema:KIATier": "0.1.0",
         "schema:KORAnnualTurnover": "0.1.0",
