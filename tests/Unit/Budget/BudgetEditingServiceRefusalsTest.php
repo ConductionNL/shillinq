@@ -252,4 +252,30 @@ final class BudgetEditingServiceRefusalsTest extends TestCase {
 		$this->assertSame(['2026' => 240000000, '2028' => 0, '2030' => 0], $view['rows'][1]['amounts']);
 		$this->assertSame(['2026' => 0, '2028' => 0, '2030' => 0], $view['rows'][0]['amounts']);
 	}//end testTheMultiYearWindowAndDefaults()
+
+	/**
+	 * A year's default budget stays chosen when a non-default budget of that
+	 * year is found after it; between two non-default budgets the first found wins.
+	 *
+	 * @return void
+	 */
+	public function testALaterNonDefaultBudgetDoesNotReplaceTheChosenOne(): void {
+		$budgets = $this->store->setSchema('AnnualBudget');
+		$budgets->saveObject(
+			['id' => 'b-2026-alt', 'administrationId' => 'adm-voorbeeld', 'fiscalYear' => 2026, 'name' => 'Alternatief 2026', 'isDefault' => false]
+		);
+		$budgets->saveObject(
+			['id' => 'b-2027-a', 'administrationId' => 'adm-voorbeeld', 'fiscalYear' => 2027, 'name' => 'Eerste 2027', 'isDefault' => false]
+		);
+		$budgets->saveObject(
+			['id' => 'b-2027-b', 'administrationId' => 'adm-voorbeeld', 'fiscalYear' => 2027, 'name' => 'Tweede 2027', 'isDefault' => false]
+		);
+
+		$years = $this->service()->multiYear('adm-voorbeeld', 2026)['years'];
+
+		$this->assertSame([2026, 2027], array_column($years, 'fiscalYear'));
+		$this->assertSame($this->ids['budget-2026'], $years[0]['annualBudgetId']);
+		$this->assertSame('Begroting 2026', $years[0]['name']);
+		$this->assertSame('Eerste 2027', $years[1]['name']);
+	}//end testALaterNonDefaultBudgetDoesNotReplaceTheChosenOne()
 }//end class
