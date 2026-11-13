@@ -5037,6 +5037,45 @@
 		{
 			"menu": [
 				{
+					"id": "Sales",
+					"children": [
+						{
+							"id": "MobileHome",
+							"label": "Shillinq Mobile",
+							"icon": "ReceiptOutline",
+							"route": "MobileHome",
+							"order": 90
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileHome",
+					"route": "/mobile",
+					"type": "custom",
+					"title": "Shillinq Mobile"
+				},
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileReceipt",
+					"route": "/mobile/receipt",
+					"type": "custom",
+					"title": "Capture a receipt"
+				},
+				{
+					"_fragment": "platform-mobile-pwa",
+					"id": "MobileInvoice",
+					"route": "/mobile/invoice",
+					"type": "custom",
+					"title": "Draft an invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RequiredFields",
 					"label": "Required fields",
 					"icon": "TextBoxCheckOutline",

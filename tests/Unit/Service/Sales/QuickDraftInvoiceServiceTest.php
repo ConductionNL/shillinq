@@ -225,4 +225,49 @@ final class QuickDraftInvoiceServiceTest extends TestCase {
 			}
 		}
 	}//end testInvalidRequestsAreRefused()
+
+	/**
+	 * A draft sent with a client id stores it; the same client id sent again
+	 * is answered with that draft and nothing new is saved (REQ-PMP-003).
+	 *
+	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 *
+	 * @return void
+	 */
+	public function testARepeatedClientIdReturnsTheExistingDraft(): void {
+		$clientId = '3f1c9a52-7d4e-4b8a-9c21-5e6f7a8b9c0d';
+		$this->service()->draft(administrationId: 'adm-1', request: self::request(['clientId' => strtoupper($clientId)]));
+		$first = $this->store->saved[0]['object'];
+		$this->assertSame($clientId, $first['clientId']);
+
+		$existing = array_merge($first, ['id' => 'inv-1']);
+		$again = $this->service(invoices: [$existing])->draft(
+			administrationId: 'adm-1',
+			request: self::request(['clientId' => $clientId, 'reference' => 'changed'])
+		);
+
+		$this->assertSame('inv-1', $again['id']);
+		$this->assertSame('PO-7', $again['customerReference']);
+		$this->assertSame([], $this->store->saved);
+	}//end testARepeatedClientIdReturnsTheExistingDraft()
+
+	/**
+	 * The same client id in another administration is a new draft there, and a
+	 * value that is not a client id is ignored, as on a desktop draft.
+	 *
+	 * @spec openspec/changes/platform-mobile-pwa/specs/shillinq-mobile/spec.md#requirement-work-done-offline-is-queued-and-synced-once-req-pmp-003
+	 *
+	 * @return void
+	 */
+	public function testOnlyAWellFormedClientIdOfTheSameAdministrationMatches(): void {
+		$clientId = '3f1c9a52-7d4e-4b8a-9c21-5e6f7a8b9c0d';
+		$elsewhere = ['id' => 'inv-9', 'administrationId' => 'adm-2', 'clientId' => $clientId];
+		$drafted = $this->service(invoices: [$elsewhere])->draft(administrationId: 'adm-1', request: self::request(['clientId' => $clientId]));
+		$this->assertNotSame('inv-9', $drafted['id']);
+		$this->assertSame($clientId, $this->store->saved[0]['object']['clientId']);
+
+		$this->suffixes = ['e5f6a7b8'];
+		$this->service()->draft(administrationId: 'adm-1', request: self::request(['clientId' => 'not-a-uuid']));
+		$this->assertArrayNotHasKey('clientId', $this->store->saved[0]['object']);
+	}//end testOnlyAWellFormedClientIdOfTheSameAdministrationMatches()
 }//end class
