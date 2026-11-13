@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261111150000</version>
+    <version>0.5.7-unstable.20261113190000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -390,6 +390,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Audit the register's bookkeeping objects against the machine-checkable
              rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
         <command>OCA\Shillinq\Command\RulesAuditCommand</command>
+        <!-- Ledger-sealed-entries: check and genesis-seal the posted-transaction seal chain. -->
+        <command>OCA\Shillinq\Command\LedgerVerifySealCommand</command>
+        <command>OCA\Shillinq\Command\LedgerSealExistingCommand</command>
         <!-- Idempotently backfill local TEST data to satisfy the enforced rules
              (sourceReference + balanced lines on every GL transaction). Test/dev. -->
         <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>

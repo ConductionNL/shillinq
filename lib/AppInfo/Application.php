@@ -44,6 +44,7 @@ use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
+use OCA\Shillinq\Listener\GLTransactionSealListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\APTransactionSettlementGuard;
@@ -289,6 +290,13 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: ReconciliationMatchSettlementListener::class
+		);
+
+		// Ledger-sealed-entries REQ-LSE-001: a posted GLTransaction is sealed
+		// into its administration's chain, under a lock per administration.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: GLTransactionSealListener::class
 		);
 
 		// Planning-commitment-year-end REQ-PCYE-002/003: an approved supplier
