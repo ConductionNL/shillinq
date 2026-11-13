@@ -80,6 +80,8 @@ interface ComplianceExportServiceInterface {
 	 * }
 	 *
 	 * @throws RuntimeException When [from, to] is invalid.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function generateExport(
 		string $from,
@@ -95,6 +97,8 @@ interface ComplianceExportServiceInterface {
 	 * @param array{headers:array<int,string>,rows:array<int,array<string,mixed>>} $envelope The envelope from generateExport().
 	 *
 	 * @return string The CSV blob.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function renderCsv(array $envelope): string;
 }//end interface

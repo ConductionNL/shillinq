@@ -53,6 +53,8 @@ interface ConfirmationTokenServiceInterface {
 	 * @return array{tokenId:string,sent:bool} Outcome — `sent` is FALSE
 	 *                                         when openconnector is unavailable (email is logged for
 	 *                                         operator review).
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function issueAndSend(array $appointment, array $customer): array;
 
@@ -62,6 +64,8 @@ interface ConfirmationTokenServiceInterface {
 	 * @param array<string, mixed> $token OR record for the token to redeem.
 	 *
 	 * @return array<string, mixed> The updated record.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function markRedeemed(array $token): array;
 
@@ -76,6 +80,8 @@ interface ConfirmationTokenServiceInterface {
 	 *
 	 * @return array{tokenId:string,sent:bool} Outcome — same shape as
 	 *                                         {@see ConfirmationTokenService::issueAndSend()}.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function resend(array $appointment, array $customer, string $actor = 'system'): array;
 
@@ -90,6 +96,8 @@ interface ConfirmationTokenServiceInterface {
 	 *                                                                 TRUE iff the token verifies, is active and not expired. `reason`
 	 *                                                                 encodes the failure mode for the controller to map onto an HTTP
 	 *                                                                 status (REQ-BCF-004 scenarios).
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function validate(string $appointmentId, string $plaintext): array;
 }//end interface

@@ -42,6 +42,8 @@ interface AppointmentConfirmationServiceInterface {
 	 * (REQ-BCF-005). Returns the number cancelled.
 	 *
 	 * @return int The count of appointments cancelled.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function cancelExpired(): int;
 }//end interface

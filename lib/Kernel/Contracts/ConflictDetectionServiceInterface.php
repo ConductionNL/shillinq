@@ -85,6 +85,8 @@ interface ConflictDetectionServiceInterface {
 	 * @param string $resourceId Resource identifier (logical key).
 	 *
 	 * @return bool True when a row was locked, false when the resource is unknown.
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function lockResource(string $resourceId): bool;
 }//end interface

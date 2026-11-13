@@ -41,6 +41,8 @@ interface TransactionalGuardInterface {
 	 * Begin a transaction. Idempotent — calling twice is a no-op.
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function beginTransaction(): void;
 
@@ -48,6 +50,8 @@ interface TransactionalGuardInterface {
 	 * Commit the outer transaction. Idempotent when no transaction is open.
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function commit(): void;
 
@@ -55,6 +59,8 @@ interface TransactionalGuardInterface {
 	 * Is the guard currently inside a transaction?
 	 *
 	 * @return bool
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function inTransaction(): bool;
 
@@ -62,6 +68,8 @@ interface TransactionalGuardInterface {
 	 * Roll back the outer transaction. Idempotent when no transaction is open.
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Structural contract, no functional requirement.
 	 */
 	public function rollBack(): void;
 }//end interface
