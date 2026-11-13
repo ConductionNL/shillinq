@@ -42,10 +42,10 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Service\IcsService;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Support\FleetAppId;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IURLGenerator;
+use OCP\Mail\IMailer;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -84,6 +84,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	 * @param IURLGenerator $urls Absolute URL builder for the web
 	 *                            confirmation portal.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param IMailer $mailer Nextcloud's mailer, which sends the confirmation request.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -92,6 +93,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 		private readonly ITimeFactory $time,
 		private readonly IURLGenerator $urls,
 		private readonly LoggerInterface $logger,
+		private readonly IMailer $mailer,
 	) {
 	}//end __construct()
 
@@ -431,74 +433,104 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 	}//end saveToken()
 
 	/**
-	 * Dispatch the confirmation email through openconnector when available
-	 * — fall back to logging the prepared payload otherwise so the
-	 * confirmation flow remains observable.
+	 * Send the confirmation request through Nextcloud's mailer: the confirm
+	 * link in the body and the appointment as an ICS attachment.
+	 *
+	 * Best-effort: a failure is logged, never thrown, because the token
+	 * already exists and the customer or an operator can ask for a resend.
 	 *
 	 * @param array<string, mixed> $customer Customer descriptor.
 	 * @param array<string, mixed> $appointment Appointment record.
 	 * @param string $confirmUrl Absolute web-portal URL.
 	 * @param string $ics ICS payload (may be empty).
 	 *
-	 * @return bool TRUE when the email was handed off to openconnector,
-	 *              FALSE when only logged.
+	 * @return bool TRUE when the mailer accepted the email, FALSE when nothing was sent.
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.1
 	 */
 	private function dispatchEmail(array $customer, array $appointment, string $confirmUrl, string $ics): bool {
 		$email = (string)($customer['email'] ?? '');
+		$appointmentId = (string)($appointment['appointmentId'] ?? '');
 		if ($email === '') {
 			$this->logger->warning(
 				'ConfirmationTokenService: no customer email; skipping dispatch.',
-				['appointmentId' => (string)($appointment['appointmentId'] ?? '')]
+				['appointmentId' => $appointmentId]
 			);
 			return false;
 		}
 
-		$payload = [
-			'to' => $email,
-			'subject' => 'Confirmation needed: ' . ((string)($appointment['serviceName'] ?? 'your appointment'))
-							. ' on ' . ((string)($appointment['startTime'] ?? '')),
-			'template' => 'BookingConfirmationTemplate',
-			'variables' => [
-				'customerName' => (string)($customer['name'] ?? ''),
-				'appointmentDate' => (string)($appointment['startTime'] ?? ''),
-				'confirmUrl' => $confirmUrl,
-				'serviceName' => (string)($appointment['serviceName'] ?? ''),
-				'location' => (string)($appointment['location'] ?? ''),
-			],
-			'attachments' => [
-				[
-					'filename' => 'appointment.ics',
-					'contentType' => 'text/calendar; charset=utf-8',
-					'content' => $ics,
-				],
-			],
-		];
-
-		try {
-			// Resolved across every namespace integriq has shipped under. The
-			// old name alone made has() false on any current instance, so the
-			// appointment confirmation was never dispatched — only logged.
-			$dispatcher = FleetAppId::getService($this->container, 'integriq', 'Service\\NotificationDispatcher');
-			if ($dispatcher !== null && method_exists($dispatcher, 'dispatch') === true) {
-				$dispatcher->dispatch($payload);
-				return true;
-			}
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'ConfirmationTokenService: openconnector dispatch failed',
-				['exception' => $e->getMessage()]
-			);
+		$serviceName = (string)($appointment['serviceName'] ?? '');
+		$startTime = (string)($appointment['startTime'] ?? '');
+		if ($serviceName === '') {
+			$serviceName = 'your appointment';
 		}
 
-		$this->logger->info(
-			'ConfirmationTokenService: openconnector unavailable; prepared email payload only.',
-			[
-				'to' => $email,
-				'subject' => $payload['subject'],
-			]
-		);
-		return false;
+		$subject = 'Confirmation needed: ' . $serviceName . ' on ' . $startTime;
+
+		try {
+			$message = $this->mailer->createMessage();
+			$message->setTo([$email => (string)($customer['name'] ?? $email)]);
+			$message->setSubject($subject);
+			$message->setPlainBody($this->requestBody(customer: $customer, appointment: $appointment, confirmUrl: $confirmUrl));
+			if ($ics !== '') {
+				$message->attach($this->mailer->createAttachment($ics, 'appointment.ics', 'text/calendar; charset=utf-8'));
+			}
+
+			$failed = $this->mailer->send($message);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'ConfirmationTokenService: the confirmation request could not be sent',
+				['appointmentId' => $appointmentId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}
+
+		if ($failed !== []) {
+			$this->logger->warning(
+				'ConfirmationTokenService: the mail server refused the confirmation request',
+				['appointmentId' => $appointmentId]
+			);
+			return false;
+		}
+
+		return true;
 	}//end dispatchEmail()
+
+	/**
+	 * The plain-text body of the confirmation request.
+	 *
+	 * @param array<string, mixed> $customer Customer descriptor.
+	 * @param array<string, mixed> $appointment Appointment record.
+	 * @param string $confirmUrl Absolute web-portal URL.
+	 *
+	 * @return string The body.
+	 */
+	private function requestBody(array $customer, array $appointment, string $confirmUrl): string {
+		$greeting = 'Hello,';
+		$name = (string)($customer['name'] ?? '');
+		if ($name !== '') {
+			$greeting = 'Hello ' . $name . ',';
+		}
+
+		$lines = [
+			$greeting,
+			'',
+			'Please confirm your appointment:',
+			'Service: ' . (string)($appointment['serviceName'] ?? ''),
+			'When: ' . (string)($appointment['startTime'] ?? ''),
+		];
+		$location = (string)($appointment['location'] ?? '');
+		if ($location !== '') {
+			$lines[] = 'Where: ' . $location;
+		}
+
+		$lines[] = '';
+		$lines[] = 'Confirm here: ' . $confirmUrl;
+		$lines[] = '';
+		$lines[] = 'The attached calendar file adds the appointment to your calendar.';
+
+		return implode("\n", $lines);
+	}//end requestBody()
 
 	/**
 	 * Generate a sortable token id (tok-YYYYMMDDHHMMSS-rrrr).
