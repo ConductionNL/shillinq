@@ -42,6 +42,7 @@ use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Dashboard\BBVComplianceWidget;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -107,6 +108,7 @@ class BBVDashboardController extends Controller {
 	 *                                                    the active window
 	 *                                                    inherited from the
 	 *                                                    Administration context.
+	 * @param TaskFieldRealisation|null $realisation The year per task field (public-sector-task-field-allocation REQ-BBV-012).
 	 *
 	 * @return void
 	 */
@@ -117,6 +119,7 @@ class BBVDashboardController extends Controller {
 		private readonly BBVComplianceWidget $widget,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly ?TaskFieldRealisation $realisation = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -250,6 +253,16 @@ class BBVDashboardController extends Controller {
 			'startDate' => $window['startDate'],
 			'endDate' => $window['endDate'],
 		];
+		if ($this->realisation !== null) {
+			// The year per task field from posted lines, and the accounts with
+			// postings but no mapping (public-sector-task-field-allocation REQ-BBV-012).
+			$envelope['taskFieldRealisation'] = $this->realisation->forYear(
+				administrationId: $administrationId,
+				fiscalYear: (string)$window['fiscalYear'],
+				startDate: (string)$window['startDate'],
+				endDate: (string)$window['endDate']
+			);
+		}
 
 		return $envelope;
 	}//end scopedEnvelope()
