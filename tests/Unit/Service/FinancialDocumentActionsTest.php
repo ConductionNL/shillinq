@@ -27,8 +27,10 @@ use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentActions;
 use OCA\Shillinq\Service\FinancialDocumentGuard;
 use OCA\Shillinq\Service\ObjectRequestInvoiceService;
+use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -128,7 +130,7 @@ final class FinancialDocumentActionsTest extends TestCase {
 	 *
 	 * @return FinancialDocumentActions
 	 */
-	private function actions(array $actions, ActionDocumentStore $store, ?ObjectRequestInvoiceService $invoices = null, bool $memberOfAdministration = true): FinancialDocumentActions {
+	private function actions(array $actions, ActionDocumentStore $store, ?ObjectRequestInvoiceService $invoices = null, bool $memberOfAdministration = true, array $apps = []): FinancialDocumentActions {
 		$this->store = $store;
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('handler');
@@ -139,9 +141,13 @@ final class FinancialDocumentActionsTest extends TestCase {
 		$groups->method('isInGroup')->willReturn(true);
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use ($actions): string {
+			static function (string $app, string $key, string $default = '') use ($actions, $apps): string {
 				if ($key === PaymentActionAuthorizer::CONFIG_ACTION_GROUPS) {
 					return (string)json_encode(array_fill_keys($actions, ['finance']));
+				}
+
+				if ($key === PaymentActionAppGrant::CONFIG_ACTION_APPS) {
+					return (string)json_encode($apps);
 				}
 
 				return ($key === 'register') ? 'shillinq' : $default;
@@ -151,6 +157,9 @@ final class FinancialDocumentActionsTest extends TestCase {
 		$administrations->method('canAccess')->willReturn($memberOfAdministration);
 		$administrations->method('defaultAdministrationIdForUser')->willReturn('adm-1');
 
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->willReturnCallback(static fn (string $appId): bool => $appId !== 'disabledapp');
+
 		$objects = new DuckObjectServiceAdapter(inner: $store);
 		$authorizer = new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups);
 
@@ -158,7 +167,7 @@ final class FinancialDocumentActionsTest extends TestCase {
 			objectService: $objects,
 			appConfig: $appConfig,
 			invoices: ($invoices ?? $this->createMock(ObjectRequestInvoiceService::class)),
-			guard: new FinancialDocumentGuard(objectService: $objects, appConfig: $appConfig, authorizer: $authorizer, administrations: $administrations),
+			guard: new FinancialDocumentGuard(objectService: $objects, appConfig: $appConfig, authorizer: $authorizer, administrations: $administrations, appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $appManager)),
 		);
 	}//end actions()
 
@@ -278,4 +287,44 @@ final class FinancialDocumentActionsTest extends TestCase {
 			self::assertSame($status, self::refusal(static fn () => $service->issueInvoice(register: 'dossiq', schema: 'case', objectId: self::CASE_ID, payload: $payload)), $label);
 		}
 	}//end testIssueInvoiceIsRefusedBeforeAnythingIsIssued()
+
+	public function testAnAppRequestsPaymentAsItselfReadingPastTheUsersRights(): void {
+		// The invoice is hidden from any user read: an app has no user, so it reads as the system.
+		$store = new ActionDocumentStore(['ARInvoice' => [self::invoice()], 'PaymentRequest' => []], ['i-1']);
+
+		$created = $this->actions([], $store, memberOfAdministration: false, apps: ['payment.request' => ['dossiq']])
+			->requestPayment(invoiceId: 'i-1', appId: 'dossiq');
+
+		self::assertCount(1, $store->saved);
+		self::assertSame('app:dossiq', $store->saved[0]['object']['requestedBy']);
+		self::assertSame('i-1', $store->saved[0]['object']['invoiceReference']);
+		self::assertSame('new-1', $created['id']);
+	}//end testAnAppRequestsPaymentAsItselfReadingPastTheUsersRights()
+
+	public function testAnAppWithoutTheGrantIsRefusedBeforeAnythingIsWritten(): void {
+		$cases = [
+			'no mapping' => [[], 'dossiq'],
+			'another app named' => [['payment.request' => ['larpinq']], 'dossiq'],
+			'another action granted' => [['invoice.issue' => ['dossiq']], 'dossiq'],
+			'app disabled' => [['payment.request' => ['disabledapp']], 'disabledapp'],
+		];
+		foreach ($cases as $label => [$apps, $appId]) {
+			// The signed-in user carries the action and works in the administration: an app does not borrow that.
+			$store = new ActionDocumentStore(['ARInvoice' => [self::invoice()], 'PaymentRequest' => []]);
+			$service = $this->actions(['payment.request'], $store, apps: $apps);
+
+			self::assertSame(403, self::refusal(static fn () => $service->requestPayment(invoiceId: 'i-1', appId: $appId)), $label);
+			self::assertSame([], $store->saved, $label . ' wrote something');
+		}
+	}//end testAnAppWithoutTheGrantIsRefusedBeforeAnythingIsWritten()
+
+	public function testAnAppIssuesAnInvoiceOnlyInTheAdministrationItNames(): void {
+		$invoices = $this->createMock(ObjectRequestInvoiceService::class);
+		$invoices->expects(self::once())->method('issue')->with(self::isType('array'), 'adm-7', self::isType('string'))->willReturn('inv-7');
+		$service = $this->actions([], new ActionDocumentStore([]), $invoices, false, ['invoice.issue' => ['dossiq']]);
+		$payload = ['amount' => 10, 'debtor' => ['name' => 'X', 'email' => 'x@example.nl']];
+
+		self::assertSame(400, self::refusal(static fn () => $service->issueInvoice(register: 'dossiq', schema: 'case', objectId: self::CASE_ID, payload: $payload, appId: 'dossiq')), 'no administration named');
+		self::assertSame(['id' => 'inv-7'], $service->issueInvoice(register: 'dossiq', schema: 'case', objectId: self::CASE_ID, payload: $payload + ['administrationId' => ' adm-7 '], appId: 'dossiq'));
+	}//end testAnAppIssuesAnInvoiceOnlyInTheAdministrationItNames()
 }//end class

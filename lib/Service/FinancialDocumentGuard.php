@@ -8,6 +8,10 @@
  * Also reads an invoice as the caller, so an act never touches an invoice the
  * caller could not open.
  *
+ * An app acting with nobody signed in (`createAsApp` on the leaf) is checked
+ * against `paymentActionApps` instead of the user's groups, names the
+ * administration itself, and is recorded as `app:<appId>`.
+ *
  * @category Service
  * @package  OCA\Shillinq\Service
  *
@@ -44,6 +48,7 @@ class FinancialDocumentGuard {
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries an action.
 	 * @param AdministrationContextService $administrations Which administrations the caller works in.
+	 * @param PaymentActionAppGrant $appGrant Whether a named app carries an action.
 	 *
 	 * @return void
 	 */
@@ -52,6 +57,7 @@ class FinancialDocumentGuard {
 		private readonly IAppConfig $appConfig,
 		private readonly PaymentActionAuthorizer $authorizer,
 		private readonly AdministrationContextService $administrations,
+		private readonly PaymentActionAppGrant $appGrant,
 	) {
 	}//end __construct()
 
@@ -141,6 +147,113 @@ class FinancialDocumentGuard {
 	public function callerId(): string {
 		return $this->authorizer->callerId();
 	}//end callerId()
+
+	/**
+	 * Refuse a caller, or an app acting with nobody signed in, that does not carry the action.
+	 *
+	 * @param string $action The action.
+	 * @param string $appId  The acting app's id, or '' for the signed-in caller.
+	 *
+	 * @return void
+	 *
+	 * @throws FinancialDocumentActionRefusedException When the caller or the app lacks it.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	public function assertActorMay(string $action, string $appId): void {
+		if ($appId === '') {
+			$this->assertMay(action: $action);
+			return;
+		}
+
+		if ($this->appGrant->allows(appId: $appId, action: $action) === false) {
+			throw new FinancialDocumentActionRefusedException(
+				message: sprintf('This app is not granted the %s action (paymentActionApps).', $action),
+				status: 403
+			);
+		}
+	}//end assertActorMay()
+
+	/**
+	 * The administration an act writes into, refused when the actor may not use it.
+	 *
+	 * A signed-in caller falls back to their default administration and must
+	 * work in it. An app has no default and no membership, so it must name one.
+	 *
+	 * @param string $given The administration the payload names, or ''.
+	 * @param string $appId The acting app's id, or '' for the signed-in caller.
+	 *
+	 * @return string The administration id.
+	 *
+	 * @throws FinancialDocumentActionRefusedException When none is named by an app (400) or the caller does not work in it (403).
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 */
+	public function administrationFor(string $given, string $appId): string {
+		if ($appId === '') {
+			$administrationId = $this->administrationOr(given: $given);
+			$this->assertAdministration(administrationId: $administrationId);
+			return $administrationId;
+		}
+
+		if (trim($given) === '') {
+			throw new FinancialDocumentActionRefusedException(message: 'An app names the administration the money belongs to.', status: 400);
+		}
+
+		return trim($given);
+	}//end administrationFor()
+
+	/**
+	 * An invoice the actor may act on, refused when the actor may not use its administration.
+	 *
+	 * The signed-in caller reads as themselves; an app has no user to read as,
+	 * so it reads as the system.
+	 *
+	 * @param string $invoiceId The invoice id.
+	 * @param string $appId     The acting app's id, or '' for the signed-in caller.
+	 *
+	 * @return array<string, mixed> The invoice.
+	 *
+	 * @throws FinancialDocumentActionRefusedException When it is not readable (404) or not the caller's administration (403).
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
+	 */
+	public function invoiceFor(string $invoiceId, string $appId): array {
+		if ($appId === '') {
+			$invoice = $this->readableInvoice(invoiceId: $invoiceId);
+			$this->assertAdministration(administrationId: (string)($invoice['administrationId'] ?? ''));
+			return $invoice;
+		}
+
+		$rows = $this->objectService
+			->setRegister($this->registerSlug())
+			->setSchema('ARInvoice')
+			->findAll(['filters' => ['id' => $invoiceId], 'limit' => 1], _rbac: false, _multitenancy: false);
+
+		$invoice = ObjectIdentifier::recordWithId(candidate: ($rows[0] ?? null));
+		if ($invoice === null) {
+			throw new FinancialDocumentActionRefusedException(message: 'No invoice with that id is readable.', status: 404);
+		}
+
+		return $invoice;
+	}//end invoiceFor()
+
+	/**
+	 * Who an act is recorded as.
+	 *
+	 * @param string $appId The acting app's id, or '' for the signed-in caller.
+	 *
+	 * @return string The caller's uid, or `app:<appId>`.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	public function actorId(string $appId): string {
+		if ($appId === '') {
+			return $this->callerId();
+		}
+
+		return 'app:'.$appId;
+	}//end actorId()
 
 	/**
 	 * The register slug shillinq's documents live in.

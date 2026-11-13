@@ -28,8 +28,10 @@ use OCA\Shillinq\Service\ContributionDebtorResolver;
 use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCA\Shillinq\Service\FinancialDocumentGuard;
+use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -64,7 +66,7 @@ final class FinancialDocumentAuthoringTest extends TestCase {
 	 *
 	 * @return FinancialDocumentAuthoring
 	 */
-	private function authoring(array $actions, bool $member = true, ?string $payoutRefusal = null): FinancialDocumentAuthoring {
+	private function authoring(array $actions, bool $member = true, ?string $payoutRefusal = null, array $apps = []): FinancialDocumentAuthoring {
 		$this->store = new InMemoryObjectServiceStub(data: [
 			'ARInvoice' => [
 				['id' => 'i-1', 'invoiceNumber' => 'F-1', 'invoiceType' => 'standard', 'lifecycleState' => 'issued', 'customerId' => 'cm-1', 'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 121.0, 'netAmount' => 100.0, 'vatAmount' => 21.0, 'linkedObjects' => [self::LINK],
@@ -82,9 +84,13 @@ final class FinancialDocumentAuthoringTest extends TestCase {
 		$groups->method('isInGroup')->willReturn(true);
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use ($actions): string {
+			static function (string $app, string $key, string $default = '') use ($actions, $apps): string {
 				if ($key === PaymentActionAuthorizer::CONFIG_ACTION_GROUPS) {
 					return (string)json_encode(array_fill_keys($actions, ['finance']));
+				}
+
+				if ($key === PaymentActionAppGrant::CONFIG_ACTION_APPS) {
+					return (string)json_encode($apps);
 				}
 
 				return ($key === 'register') ? 'shillinq' : $default;
@@ -93,6 +99,8 @@ final class FinancialDocumentAuthoringTest extends TestCase {
 		$administrations = $this->createMock(AdministrationContextService::class);
 		$administrations->method('canAccess')->willReturn($member);
 		$administrations->method('defaultAdministrationIdForUser')->willReturn('adm-1');
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->willReturn(true);
 		$dispatcher = $this->createMock(IEventDispatcher::class);
 		$dispatcher->method('dispatchTyped')->willReturnCallback(
 			function (object $event) use ($payoutRefusal): void {
@@ -114,6 +122,7 @@ final class FinancialDocumentAuthoringTest extends TestCase {
 				appConfig: $appConfig,
 				authorizer: new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups),
 				administrations: $administrations,
+				appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $appManager),
 			),
 			debtors: new ContributionDebtorResolver(objectService: $this->store, dispatcher: $this->createMock(IEventDispatcher::class), appConfig: $appConfig, logger: $this->createMock(LoggerInterface::class)),
 			dispatcher: $dispatcher,
@@ -224,4 +233,48 @@ final class FinancialDocumentAuthoringTest extends TestCase {
 
 		self::assertSame(400, self::refusal(static fn () => $authoring->raisePayout('dossiq', 'case', self::CASE_ID, ['amount' => 10, 'payeeName' => 'X', 'iban' => 'NL00'])));
 	}//end testAPayoutFinanceRefusesIsARefusal()
+
+	public function testAnAppRaisesAPayoutUnderItsOwnNameInTheAdministrationItNames(): void {
+		// Nobody signed in may raise payouts or works in adm-1: the app's grant is what lets it through.
+		$payout = $this->authoring([], false, apps: ['payable.raise' => ['dossiq']])
+			->raisePayout('dossiq', 'case', self::CASE_ID, ['amount' => 357, 'payeeName' => 'J. Burger', 'iban' => 'NL91ABNA0417164300', 'administrationId' => 'adm-1'], appId: 'dossiq');
+
+		self::assertCount(1, $this->raised);
+		$command = $this->raised[0]->toArray();
+		self::assertSame('dossiq', $command['sourceApp'], 'the raising app reads its own payouts back by source app');
+		self::assertSame('adm-1', $command['administrationId']);
+		self::assertSame([['register' => 'dossiq', 'schema' => 'case', 'id' => self::CASE_ID]], $command['linkedObjects']);
+		self::assertSame(['payableId' => 'payable-1', 'state' => 'requested'], $payout);
+	}//end testAnAppRaisesAPayoutUnderItsOwnNameInTheAdministrationItNames()
+
+	public function testAnAppCreditsAnInvoiceItIsGrantedTo(): void {
+		$credit = $this->authoring([], false, apps: ['invoice.credit' => ['dossiq']])->creditInvoice(invoiceId: 'i-1', appId: 'dossiq');
+
+		$saved = $this->savedIn('ARInvoice');
+		self::assertCount(1, $saved);
+		self::assertSame('credit-note', $saved[0]['invoiceType']);
+		self::assertSame(-121.0, $saved[0]['grossAmount']);
+		self::assertNotSame('', $credit['id']);
+	}//end testAnAppCreditsAnInvoiceItIsGrantedTo()
+
+	public function testAnAppIsRefusedBeforeItWrites(): void {
+		$quote = ['description' => 'x', 'amount' => 10, 'debtor' => ['customerMasterId' => 'cm-1'], 'administrationId' => 'adm-1'];
+		$payout = ['amount' => 10, 'payeeName' => 'X', 'iban' => 'NL91ABNA0417164300', 'administrationId' => 'adm-1'];
+		$cases = [
+			'quote by an app without the grant' => [['payable.raise' => ['dossiq']], static fn ($a) => $a->createQuote('dossiq', 'case', self::CASE_ID, $quote, appId: 'dossiq'), 403],
+			'credit by an app without the grant' => [['quote.create' => ['dossiq']], static fn ($a) => $a->creditInvoice(invoiceId: 'i-1', appId: 'dossiq'), 403],
+			'payout by an app not named' => [['payable.raise' => ['larpinq']], static fn ($a) => $a->raisePayout('dossiq', 'case', self::CASE_ID, $payout, appId: 'dossiq'), 403],
+			'payout by an app naming no administration' => [['payable.raise' => ['dossiq']], static fn ($a) => $a->raisePayout('dossiq', 'case', self::CASE_ID, ['administrationId' => ''] + $payout, appId: 'dossiq'), 400],
+			'quote by an app naming no administration' => [['quote.create' => ['dossiq']], static fn ($a) => $a->createQuote('dossiq', 'case', self::CASE_ID, ['administrationId' => ''] + $quote, appId: 'dossiq'), 400],
+			'credit of an unknown invoice by an app' => [['invoice.credit' => ['dossiq']], static fn ($a) => $a->creditInvoice(invoiceId: 'nope', appId: 'dossiq'), 404],
+		];
+		foreach ($cases as $label => [$apps, $act, $status]) {
+			$this->raised = [];
+			// The signed-in user holds every action: an app never borrows it.
+			$authoring = $this->authoring(['quote.create', 'invoice.credit', 'payable.raise'], true, apps: $apps);
+			self::assertSame($status, self::refusal(static fn () => $act($authoring)), $label);
+			self::assertSame([], $this->store->saved, $label . ' wrote something');
+			self::assertSame([], $this->raised, $label . ' raised something');
+		}
+	}//end testAnAppIsRefusedBeforeItWrites()
 }//end class

@@ -128,7 +128,7 @@ final class LeafProviderDescriptorTest extends TestCase {
 			'contract create'           => [ContractLeafProvider::class, 'create', 'A contract is administered in shillinq; the leaf reads it and does not create one.'],
 			'contract update'           => [ContractLeafProvider::class, 'update', 'A contract is edited in shillinq, where its lifecycle and its audit trail are.'],
 			'contract delete'           => [ContractLeafProvider::class, 'delete', 'A contract is an agreement and is terminated, never deleted from a case.'],
-			'financial document create' => [FinancialDocumentLeafProvider::class, 'create', 'The financial documents leaf reads. A document is created through its own act in shillinq.'],
+			'financial document create' => [FinancialDocumentLeafProvider::class, 'create', '400 Name the act: issueInvoice, requestPayment, createQuote, creditInvoice or raisePayout.'],
 			'financial document update' => [FinancialDocumentLeafProvider::class, 'update', 'A financial document is changed in shillinq, where its lifecycle and its audit trail are.'],
 			'financial document delete' => [FinancialDocumentLeafProvider::class, 'delete', 'A financial document is credited or voided, never deleted from an object.'],
 			'payment request update'    => [PaymentRequestLeafProvider::class, 'update', 'A payment request changes state through its lifecycle, not through the leaf.'],

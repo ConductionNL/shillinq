@@ -105,17 +105,18 @@ class FinancialDocumentAuthoring {
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $payload The quote.
+	 * @param string $appId The app acting with nobody signed in (`createAsApp`), or '' for the signed-in caller.
 	 *
 	 * @return array{id: string} The quote.
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	public function createQuote(string $register, string $schema, string $objectId, array $payload): array {
-		$this->guard->assertMay(action: self::ACTION_CREATE_QUOTE);
-		$administrationId = $this->guard->administrationOr(given: (string)($payload['administrationId'] ?? ''));
-		$this->guard->assertAdministration(administrationId: $administrationId);
+	public function createQuote(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
+		$this->guard->assertActorMay(action: self::ACTION_CREATE_QUOTE, appId: $appId);
+		$administrationId = $this->guard->administrationFor(given: (string)($payload['administrationId'] ?? ''), appId: $appId);
 		$amount = $this->amountOf(payload: $payload);
 		$debtor = $payload['debtor'] ?? null;
 		if (is_array($debtor) === false || ((string)($debtor['customerMasterId'] ?? '') === '' && (string)($debtor['email'] ?? '') === '')) {
@@ -148,17 +149,18 @@ class FinancialDocumentAuthoring {
 	 * Issue a credit note for the whole of an invoice, on the same objects.
 	 *
 	 * @param string $invoiceId The invoice.
+	 * @param string $appId The app acting with nobody signed in (`createAsApp`), or '' for the signed-in caller.
 	 *
 	 * @return array{id: string} The credit note.
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the invoice refuses it.
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	public function creditInvoice(string $invoiceId): array {
-		$this->guard->assertMay(action: self::ACTION_CREDIT_INVOICE);
-		$invoice = $this->guard->readableInvoice(invoiceId: $invoiceId);
-		$this->guard->assertAdministration(administrationId: (string)($invoice['administrationId'] ?? ''));
+	public function creditInvoice(string $invoiceId, string $appId = ''): array {
+		$this->guard->assertActorMay(action: self::ACTION_CREDIT_INVOICE, appId: $appId);
+		$invoice = $this->guard->invoiceFor(invoiceId: $invoiceId, appId: $appId);
 		if ((string)($invoice['invoiceType'] ?? 'standard') === 'credit-note'
 			|| in_array((string)($invoice['lifecycleState'] ?? ''), self::CREDITABLE_STATES, true) === false
 		) {
@@ -198,20 +200,27 @@ class FinancialDocumentAuthoring {
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $payload The payout.
+	 * @param string $appId The app acting with nobody signed in (`createAsApp`), or '' for the signed-in caller.
 	 *
 	 * @return array{payableId: string, state: string} The payout.
 	 *
 	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or finance refuses it.
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
-	public function raisePayout(string $register, string $schema, string $objectId, array $payload): array {
-		$this->guard->assertMay(action: self::ACTION_RAISE_PAYOUT);
-		$administrationId = $this->guard->administrationOr(given: (string)($payload['administrationId'] ?? ''));
-		$this->guard->assertAdministration(administrationId: $administrationId);
+	public function raisePayout(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
+		$this->guard->assertActorMay(action: self::ACTION_RAISE_PAYOUT, appId: $appId);
+		$administrationId = $this->guard->administrationFor(given: (string)($payload['administrationId'] ?? ''), appId: $appId);
+
+		// A payout raised by an app is that app's: it reads its payouts back by source app.
+		$sourceApp = 'shillinq';
+		if ($appId !== '') {
+			$sourceApp = $appId;
+		}
 
 		$event = new PayableRaisedEvent(
-			sourceApp: 'shillinq',
+			sourceApp: $sourceApp,
 			amount: $this->amountOf(payload: $payload),
 			payeeName: trim((string)($payload['payeeName'] ?? '')),
 			payeeIban: trim((string)($payload['iban'] ?? '')),
