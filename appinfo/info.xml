@@ -266,6 +266,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  imports PaymentRequest 0.5.0. Idempotent; a fresh install has
                  no such requests, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- purchasing-order-dispatch-and-receipt (REQ-PODR-003). An order
+                 marked sent under the undeclared lifecycleState field gets
+                 statusCode sent where it is still approved. Idempotent. -->
+            <step>OCA\Shillinq\Repair\AlignPurchaseOrderStatusCode</step>
             <step>OCA\Shillinq\Repair\BackfillLinkedObjects</step>
             <!-- reporting-segment-results (REQ-RSR-002, design Migration Plan).
                  Stamps accountClass and countsInResult on the lines of

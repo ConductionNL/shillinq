@@ -186,6 +186,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @param string $participantId The recipient Peppol participant identifier.
 	 * @param string $ublOrderXml The UBL order XML payload.
+	 * @param array<string,mixed> $purchaseOrder The order being sent; not used by the log adapter.
 	 *
 	 * @return string The transmission identifier.
 	 *
@@ -193,7 +194,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @inheritDoc
 	 */
-	public function submitOrder(string $participantId, string $ublOrderXml): string {
+	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string {
 		// Length only — never log the UBL body (may contain supplier PII).
 		$this->logger->info(
 			'shillinq.peppol.submit',

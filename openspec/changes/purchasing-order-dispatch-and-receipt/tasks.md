@@ -8,13 +8,13 @@
 
 ## 2. Peppol
 
-- [ ] 2.1 Add `dispatchChannel`, `dispatchStatus` and `dispatchError` to `PurchaseOrder` (REQ-PODR-001, REQ-PODR-002). Verify: `npm run check:registers` and a re-import with no failed schemas.
-- [ ] 2.2 Add `IntegriqPeppolOrderAdapter` (participant lookup, file store, outbound event) and bind `PeppolTransmissionAdapterInterface` to it when integriq is installed (REQ-PODR-001). Verify: PHPUnit with a fake integriq endpoint for participant, non-participant and error.
-- [ ] 2.3 Add `PeppolDeliveryStatusListener` for `nl.conduction.peppol.delivery.status` requesting `send` or recording the failure (REQ-PODR-001). Verify: PHPUnit with the real event payload shape for sent and failed.
+- [x] 2.1 Add `dispatchChannel`, `dispatchStatus` and `dispatchError` to `PurchaseOrder` (REQ-PODR-001, REQ-PODR-002). Verify: `npm run check:registers` and a re-import with no failed schemas.
+- [x] 2.2 Add `IntegriqPeppolOrderAdapter` (participant lookup, file store, outbound event) and bind `PeppolTransmissionAdapterInterface` to it when integriq is installed (REQ-PODR-001). Verify: PHPUnit with a fake integriq endpoint for participant, non-participant and error.
+- [x] 2.3 Add `PeppolDeliveryStatusListener` for `nl.conduction.peppol.delivery.status` requesting `send` or recording the failure (REQ-PODR-001). Verify: PHPUnit with the real event payload shape for sent and failed.
 
 ## 3. Email
 
-- [ ] 3.1 Add `IntegriqPurchaseOrderMailer` (PDF, payload, hand-off through the integriq email channel) and bind `PurchaseOrderMailerInterface` to it (REQ-PODR-002). Verify: PHPUnit for accepted, refused and integriq absent.
+- [x] 3.1 Add `IntegriqPurchaseOrderMailer` (PDF, payload, hand-off through the integriq email channel) and bind `PurchaseOrderMailerInterface` to it (REQ-PODR-002). Verify: PHPUnit for accepted, refused and integriq absent.
 - [ ] 3.2 Show the dispatch channel, status and error on `PurchaseOrderDetail.vue`, and disable a channel that is unavailable with its reason (REQ-PODR-001, REQ-PODR-002). Verify: Playwright on the two seed orders with integriq's log providers.
 
 ## 4. Service receipts
