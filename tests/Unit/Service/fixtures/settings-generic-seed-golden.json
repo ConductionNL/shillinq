@@ -68,7 +68,8 @@
                         "effectiveFrom": "2019-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
-                        "section": "1b"
+                        "section": "1b",
+                        "statutory": true
                     },
                     "register": "shillinq",
                     "schema": "VatTariff"
@@ -115,7 +116,8 @@
                         "reverseCharge": false,
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
-                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"
+                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)",
+                        "statutory": true
                     },
                     "register": "shillinq",
                     "schema": "VatTariff"
@@ -163,7 +165,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 2",
-                        "section": "1e"
+                        "section": "1e",
+                        "statutory": true
                     },
                     "register": "shillinq",
                     "schema": "VatTariff"
@@ -211,7 +214,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.2",
-                        "section": "3a"
+                        "section": "3a",
+                        "statutory": true
                     },
                     "register": "shillinq",
                     "schema": "VatTariff"
@@ -259,7 +263,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 3 en art. 23",
-                        "section": "4a"
+                        "section": "4a",
+                        "statutory": true
                     },
                     "register": "shillinq",
                     "schema": "VatTariff"
@@ -319,7 +324,8 @@
                         "effectiveFrom": "2012-10-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 1",
-                        "section": "1a"
+                        "section": "1a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -353,7 +359,8 @@
                         "effectiveFrom": "2019-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
-                        "section": "1b"
+                        "section": "1b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -387,7 +394,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II",
-                        "section": "1e"
+                        "section": "1e",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -420,7 +428,8 @@
                         "reverseCharge": false,
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
-                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"
+                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -454,7 +463,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 5 (verleggingsregeling)",
-                        "section": "2a"
+                        "section": "2a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -488,7 +498,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 2",
-                        "section": "1e"
+                        "section": "1e",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -522,7 +533,8 @@
                         "effectiveFrom": "1993-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.6",
-                        "section": "3b"
+                        "section": "3b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -556,7 +568,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.2",
-                        "section": "3a"
+                        "section": "3a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -590,7 +603,8 @@
                         "effectiveFrom": "1993-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 17a en art. 12 lid 3",
-                        "section": "4b"
+                        "section": "4b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -624,7 +638,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 3 en art. 23",
-                        "section": "4a"
+                        "section": "4a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -681,7 +696,8 @@
                         "effectiveFrom": "2012-10-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 1",
-                        "section": "1a"
+                        "section": "1a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -715,7 +731,8 @@
                         "effectiveFrom": "2019-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
-                        "section": "1b"
+                        "section": "1b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -749,7 +766,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II",
-                        "section": "1e"
+                        "section": "1e",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -782,7 +800,8 @@
                         "reverseCharge": false,
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
-                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"
+                        "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -816,7 +835,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 5 (verleggingsregeling)",
-                        "section": "2a"
+                        "section": "2a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -850,7 +870,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 2",
-                        "section": "1e"
+                        "section": "1e",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -884,7 +905,8 @@
                         "effectiveFrom": "1993-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.6",
-                        "section": "3b"
+                        "section": "3b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -918,7 +940,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II post a.2",
-                        "section": "3a"
+                        "section": "3a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -952,7 +975,8 @@
                         "effectiveFrom": "1993-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 17a en art. 12 lid 3",
-                        "section": "4b"
+                        "section": "4b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -986,7 +1010,8 @@
                         "effectiveFrom": "1969-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 12 lid 3 en art. 23",
-                        "section": "4a"
+                        "section": "4a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -1041,7 +1066,8 @@
                         "effectiveFrom": "2012-10-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 1",
-                        "section": "1a"
+                        "section": "1a",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"
@@ -1075,7 +1101,8 @@
                         "effectiveFrom": "2019-01-01",
                         "effectiveTo": null,
                         "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
-                        "section": "1b"
+                        "section": "1b",
+                        "statutory": true
                     },
                     "register": "books",
                     "schema": "VatTariff"

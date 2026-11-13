@@ -503,13 +503,20 @@
       "VatTariff": {
         "slug": "VatTariff",
         "icon": "PercentOutline",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "title": "BTW-tarief",
         "description": "VAT rate definition. Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
         "x-schema-org": "schema:DefinedTerm",
+        "configuration": {
+          "x-openregister-shareable": true
+        },
         "type": "object",
         "required": [
           "code",
+          "rate",
+          "description",
+          "category",
+          "effectiveFrom",
           "ratePercentage"
         ],
         "properties": {
@@ -518,6 +525,65 @@
             "description": "Tariff code (e.g. high, low, zero, exempt, reverse-charge).",
             "example": "high",
             "title": "Code"
+          },
+          "rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Rate as decimal (e.g. 0.21 for 21%).",
+            "example": 0.21,
+            "title": "Rate"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of this tariff.",
+            "example": "Standaardtarief 21%",
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "verlaagd",
+              "nul",
+              "exempt",
+              "verleggingsregeling"
+            ],
+            "description": "Tariff category per Wet OB 1968.",
+            "example": "standard",
+            "title": "Category"
+          },
+          "section": {
+            "type": "string",
+            "description": "The BTW rubriek code on the aangifteformulier this tariff maps to (e.g. 1a, 2a, 4b).",
+            "example": "1a",
+            "title": "Section"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "First date this rate is statutory.",
+            "example": "2026-01-01",
+            "title": "Effective From",
+            "nullable": true
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Last date this rate is statutory (null = current).",
+            "nullable": true,
+            "example": null,
+            "title": "Effective To"
+          },
+          "defaultAccounts": {
+            "type": "object",
+            "description": "RGS account hints for this tariff (operator may override). Key = account purpose (e.g. vatPayable, vatReceivable), value = accountNumber.",
+            "nullable": true,
+            "example": {
+              "vatPayable": "1512",
+              "vatReceivable": "1520"
+            },
+            "title": "Default Accounts"
           },
           "label": {
             "type": "string",
@@ -544,26 +610,33 @@
             "description": "True for verleggingsregeling rates.",
             "title": "Reverse Charge"
           },
-          "effectiveFrom": {
-            "type": "string",
-            "format": "date",
-            "nullable": true,
-            "description": "First date this rate is statutory.",
-            "title": "Effective From"
-          },
-          "effectiveTo": {
-            "type": "string",
-            "format": "date",
-            "nullable": true,
-            "description": "Last date this rate is statutory (null = current).",
-            "title": "Effective To"
-          },
           "legalBasis": {
             "type": "string",
             "nullable": true,
             "description": "Citation, e.g. Wet OB 1968 art. 9.",
             "title": "Legal Basis"
+          },
+          "statutory": {
+            "type": "boolean",
+            "default": false,
+            "readOnly": true,
+            "description": "Whether this tariff is one of the statutory Dutch rates seeded from btw-tariffs-2026.json. A statutory tariff is not changed or deleted; an operator-added tariff is not statutory (tax-vat-rates-and-deductibility REQ-TVRD-001).",
+            "example": true,
+            "title": "Statutory"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator"
+          ]
         }
       },
       "BbvAccountMapping": {

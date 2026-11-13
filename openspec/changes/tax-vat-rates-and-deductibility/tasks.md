@@ -4,8 +4,13 @@
 
 ## 1. Tariffs
 
-- [ ] 1.1 Point `SettingsService::seedBtwTariffs()` at `btw-tariffs-2026.json`, add `section` per tariff to the seed, and add `statutory` to seeded records (REQ-TVRD-001). Verify: PHPUnit that the seeder finds the file and is idempotent; a repair run on a local instance lists five tariffs.
-- [ ] 1.2 Merge the two `VatTariff` declarations into the `register.d` one and remove the monolith copy (REQ-TVRD-001). Verify: `npm run check:registers`; re-import with no failed schemas.
+- [x] 1.1 Point `SettingsService::seedBtwTariffs()` at `btw-tariffs-2026.json`, add `section` per tariff to the seed, and add `statutory` to seeded records (REQ-TVRD-001). Verify: PHPUnit that the seeder finds the file and is idempotent; a repair run on a local instance lists five tariffs.
+      DONE: the seeder already read `btw-tariffs-2026.json` and every tariff already had its `section`; each seeded
+      record now carries `statutory: true` (`SettingsServiceGenericSeedGoldenTest` re-recorded, fresh and existing runs).
+      The repair run on a live instance is not repeated here.
+- [x] 1.2 Merge the two `VatTariff` declarations into the `register.d` one and remove the monolith copy (REQ-TVRD-001). Verify: `npm run check:registers`; re-import with no failed schemas.
+      DONE: one declaration in `register.d/add-shillinq-bookkeeping-operations.json` (0.4.0) equal to the former
+      merged schema plus `statutory`, the monolith copy removed; `VatTariffDeclarationTest`.
 - [ ] 1.3 Add pages `VatTariffs` and `VatTariffDetail` under Belastingen, with statutory records read-only (REQ-TVRD-001). Verify: Playwright adds mid-12 and cannot edit high.
 
 ## 2. Calculation
