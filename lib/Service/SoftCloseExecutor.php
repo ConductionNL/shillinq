@@ -43,11 +43,12 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates the nightly soft-close execution per administratie (ADR-031 exception).
@@ -67,7 +68,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
  */
-class SoftCloseExecutor {
+class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	/**
 	 * Marker used for the postedBy field on auto-postings (REQ-CLS-010).
 	 *

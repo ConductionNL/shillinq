@@ -48,6 +48,7 @@ use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Contracts\TimelineEventDtoInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelinePublishOutcome;
@@ -77,9 +78,9 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * @var array<string, string>
 	 */
 	private const TRANSITION_TYPE_MAP = [
-		'confirmed' => TimelineEventDto::TYPE_BOOKING_CONFIRMED,
-		'cancelled' => TimelineEventDto::TYPE_BOOKING_CANCELLED,
-		'completed' => TimelineEventDto::TYPE_BOOKING_COMPLETED,
+		'confirmed' => TimelineEventDtoInterface::TYPE_BOOKING_CONFIRMED,
+		'cancelled' => TimelineEventDtoInterface::TYPE_BOOKING_CANCELLED,
+		'completed' => TimelineEventDtoInterface::TYPE_BOOKING_COMPLETED,
 	];
 
 	/**
@@ -203,11 +204,11 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * - Transient    → hand off to the retry queue (slice 09).
 	 *
 	 * @param TimelinePublishOutcome $outcome Outcome of the publish.
-	 * @param TimelineEventDto $dto Event that was published.
+	 * @param TimelineEventDtoInterface $dto Event that was published.
 	 *
 	 * @return void
 	 */
-	private function dispatchOutcome(TimelinePublishOutcome $outcome, TimelineEventDto $dto): void {
+	private function dispatchOutcome(TimelinePublishOutcome $outcome, TimelineEventDtoInterface $dto): void {
 		if ($outcome === TimelinePublishOutcome::Success) {
 			$this->logger->debug(
 				'BookingLifecycleTransitionListener: published',
@@ -244,14 +245,14 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * @param string               $eventType   CloudEvents `type`.
 	 * @param array<string, mixed> $appointment Persisted appointment row.
 	 *
-	 * @return TimelineEventDto
+	 * @return TimelineEventDtoInterface
 	 */
-	private function buildEvent(string $eventType, array $appointment): TimelineEventDto {
+	private function buildEvent(string $eventType, array $appointment): TimelineEventDtoInterface {
 		$timestamp = $this->resolveTimestamp(appointment: $appointment);
 
 		$metadata = $this->fields()->metadata(appointment: $appointment);
 		$reason = trim((string)($appointment['cancellationReason'] ?? ''));
-		if ($eventType === TimelineEventDto::TYPE_BOOKING_CANCELLED && $reason !== '') {
+		if ($eventType === TimelineEventDtoInterface::TYPE_BOOKING_CANCELLED && $reason !== '') {
 			$metadata['cancellationReason'] = $reason;
 		}
 

@@ -48,13 +48,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderApprovalServiceInterface;
 use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 11 — records approver identity + decidedAt on the next pending
@@ -69,7 +70,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
  */
-class PurchaseOrderApprovalService {
+class PurchaseOrderApprovalService implements PurchaseOrderApprovalServiceInterface {
 
 	/**
 	 * Decision enum values mirror the slice-01 PurchaseOrder.approvalChain.decision enum.
@@ -91,13 +92,6 @@ class PurchaseOrderApprovalService {
 	 * @var string
 	 */
 	public const DECISION_DELEGATED = 'delegated';
-
-	/**
-	 * Decision pending: the slot waits for its approver.
-	 *
-	 * @var string
-	 */
-	public const DECISION_PENDING = 'pending';
 
 	/**
 	 * Schema slug for PurchaseOrder records (slice 01).

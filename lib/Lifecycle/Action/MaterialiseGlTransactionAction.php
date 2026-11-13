@@ -69,12 +69,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use DateTimeImmutable;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Kernel\Contracts\VatLineStamperInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
+use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -168,9 +169,9 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	/**
 	 * The tariff, box and VAT split, built on first use.
 	 *
-	 * @var VatLineStamper|null
+	 * @var VatLineStamperInterface|null
 	 */
-	private ?VatLineStamper $vatStamper = null;
+	private ?VatLineStamperInterface $vatStamper = null;
 
 	/**
 	 * Constructor.
@@ -476,9 +477,9 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	/**
 	 * The tariff, box and VAT split for this posting.
 	 *
-	 * @return VatLineStamper
+	 * @return VatLineStamperInterface
 	 */
-	private function vatStamper(): VatLineStamper {
+	private function vatStamper(): VatLineStamperInterface {
 		if ($this->vatStamper === null) {
 			$this->vatStamper = new VatLineStamper(objectService: $this->objectService, register: $this->register());
 		}

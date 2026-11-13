@@ -47,14 +47,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Service\Vat\VatReturnBox;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Composes VAT returns from GL transactions using the real OpenRegister API.
@@ -70,7 +71,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class VATReturnService {
+class VATReturnService implements VATReturnServiceInterface {
 	/**
 	 * The totals a KOR return carries: KOR exempts both collected and paid VAT (REQ-VAT-004).
 	 *

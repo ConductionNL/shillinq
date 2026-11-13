@@ -34,17 +34,18 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RuleAuditServiceInterface;
 use OCA\Shillinq\Standards\RuleCatalogue;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Read-only compliance auditor over the register's bookkeeping objects.
  */
-class RuleAuditService {
+class RuleAuditService implements RuleAuditServiceInterface {
 
 	/**
 	 * Max objects loaded per type for the audit.

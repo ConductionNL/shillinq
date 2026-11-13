@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VatLineStamperInterface;
 use Throwable;
 
 /**
@@ -41,7 +42,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md#requirement-req-vbtw-004-the-btw-journal-shall-be-derived-from-period-filtered-gl-aggregations
  */
-class VatLineStamper {
+class VatLineStamper implements VatLineStamperInterface {
 
 	/**
 	 * The box input VAT counts in.

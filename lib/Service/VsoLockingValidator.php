@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VsoLockingValidatorInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -51,7 +52,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
-class VsoLockingValidator {
+class VsoLockingValidator implements VsoLockingValidatorInterface {
 	/**
 	 * Construct the validator.
 	 *

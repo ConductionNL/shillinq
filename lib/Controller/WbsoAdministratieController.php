@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\WbsoAdministratieService;
+use OCA\Shillinq\Kernel\Contracts\WbsoAdministratieServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -56,7 +56,7 @@ class WbsoAdministratieController extends Controller {
 	 * Constructor for the WbsoAdministratieController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param WbsoAdministratieService $service The realisatie computation service.
+	 * @param WbsoAdministratieServiceInterface $service The realisatie computation service.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param AdministrationContextServiceInterface $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
 	 *
@@ -64,7 +64,7 @@ class WbsoAdministratieController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WbsoAdministratieService $service,
+		private readonly WbsoAdministratieServiceInterface $service,
 		private readonly LoggerInterface $logger,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {

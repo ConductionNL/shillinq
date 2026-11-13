@@ -27,10 +27,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sales;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use DateTimeImmutable;
 use OCP\Security\ISecureRandom;
 use Throwable;
 
@@ -39,7 +40,7 @@ use Throwable;
  *
  * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  */
-class QuickDraftInvoiceService {
+class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 
 	/**
 	 * How often a provisional number is drawn before giving up.

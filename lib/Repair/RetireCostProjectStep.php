@@ -68,9 +68,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -97,12 +97,12 @@ class RetireCostProjectStep implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger.
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private RegisterLocation $registerLocation,
+		private RegisterLocationInterface $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 	) {

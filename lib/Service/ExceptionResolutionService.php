@@ -60,7 +60,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ExceptionResolutionServiceInterface;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
@@ -69,7 +71,6 @@ use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 08 — resolution-side workflow for out-of-tolerance ThreeWayMatch
@@ -94,7 +95,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
-class ExceptionResolutionService {
+class ExceptionResolutionService implements ExceptionResolutionServiceInterface {
 
 	/**
 	 * Resolution action recorded for accept-with-motivation. The enum value

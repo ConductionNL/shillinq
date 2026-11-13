@@ -28,6 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ServerWriteAuthorityInterface;
+
 /**
  * Holds the purposes granted for the duration of one save.
  *
@@ -37,7 +39,7 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
  */
-class ServerWriteAuthority {
+class ServerWriteAuthority implements ServerWriteAuthorityInterface {
 
 	/**
 	 * Purpose => object id => grant depth.

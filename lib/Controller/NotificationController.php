@@ -51,7 +51,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -76,7 +76,7 @@ class NotificationController extends Controller {
 	 *
 	 * @param IRequest $request Request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IUserSession $userSession Logged-in user — the 401 anonymous-rejection guard only.
 	 * @param AdministrationContextServiceInterface $context RBAC guard — the per-booking authorization gate (ADR-005).
 	 * @param LoggerInterface $logger Logger for failure paths.
@@ -84,7 +84,7 @@ class NotificationController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,

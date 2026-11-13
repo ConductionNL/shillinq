@@ -46,6 +46,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Contracts\TimelineEventDtoInterface;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCP\EventDispatcher\Event;
@@ -182,11 +183,11 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 	 * Publish synchronously; on failure hand off to the async retry queue so
 	 * the booking commit can proceed regardless (D3).
 	 *
-	 * @param TimelineEventDto $dto The event.
+	 * @param TimelineEventDtoInterface $dto The event.
 	 *
 	 * @return void
 	 */
-	private function publish(TimelineEventDto $dto): void {
+	private function publish(TimelineEventDtoInterface $dto): void {
 		if ($this->pipelinq->publishTimelineEvent(event: $dto) === true) {
 			$this->logger->debug(
 				'BookingCreatedTimelinePublishListener: published',
@@ -210,11 +211,11 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 	 *
 	 * @param array<string, mixed> $appointment Persisted appointment row.
 	 *
-	 * @return TimelineEventDto
+	 * @return TimelineEventDtoInterface
 	 */
-	private function buildEvent(array $appointment): TimelineEventDto {
+	private function buildEvent(array $appointment): TimelineEventDtoInterface {
 		return new TimelineEventDto(
-			type: TimelineEventDto::TYPE_BOOKING_CREATED,
+			type: TimelineEventDtoInterface::TYPE_BOOKING_CREATED,
 			externalId: $this->fields()->externalId(appointment: $appointment),
 			timestamp: $this->resolveTimestamp(appointment: $appointment),
 			contactId: $this->fields()->contactId(appointment: $appointment),

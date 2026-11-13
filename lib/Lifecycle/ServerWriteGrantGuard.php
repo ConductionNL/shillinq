@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\ServerWriteAuthority;
+use OCA\Shillinq\Kernel\Contracts\ServerWriteAuthorityInterface;
 
 /**
  * Allows a transition only under the guard's own write grant on the object.
@@ -58,10 +58,10 @@ abstract class ServerWriteGrantGuard implements LifecycleGuardInterface {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param ServerWriteAuthority $authority The request-scoped write grants.
+	 * @param ServerWriteAuthorityInterface $authority The request-scoped write grants.
 	 */
 	public function __construct(
-		protected readonly ServerWriteAuthority $authority,
+		protected readonly ServerWriteAuthorityInterface $authority,
 	) {
 	}//end __construct()
 

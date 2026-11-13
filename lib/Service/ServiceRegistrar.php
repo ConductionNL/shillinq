@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ServiceRegistrarInterface;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
@@ -87,7 +88,7 @@ use Psr\Container\ContainerInterface;
  *
  * @spec exclude Structural composition root, no functional requirement.
  */
-final class ServiceRegistrar {
+final class ServiceRegistrar implements ServiceRegistrarInterface {
 
 	/**
 	 * Register the Service component's services.
