@@ -122,7 +122,69 @@ class SubjectCostService {
 		?array $administrationIds,
 		string $period = '',
 	): array {
-		$rows = $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId);
+		return $this->costOfNormalisedRows(
+			subjectApp: $subjectApp,
+			subjectId: $subjectId,
+			rows: $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId),
+			administrationIds: $administrationIds,
+			period: $period
+		);
+	}//end costFor()
+
+	/**
+	 * The employer cost of a given set of one domain object's hour rows.
+	 *
+	 * For a caller that already read the hours, for example the hours of one
+	 * period: costFor() reads every hour ever booked on the object, so a report
+	 * over a quarter hands in that quarter's rows. The rows are humaniq
+	 * `TimeEntry` rows as stored; rows of another app are dropped and the
+	 * administration scoping and aggregation are costFor()'s own.
+	 *
+	 * @param string $subjectApp The owning app, as written on the hour row.
+	 * @param string $subjectId The domain object id, as written on the hour row.
+	 * @param array<int, mixed> $timeEntries The hour rows, as stored.
+	 * @param array<int, string>|null $administrationIds Administrations the caller
+	 *     may read, or null for an unrestricted (Nextcloud admin) read.
+	 * @param string $period Costing period `YYYY-MM`, or '' for the current rate.
+	 *
+	 * @return array<string, mixed> The aggregate, shaped as costFor() returns it.
+	 *
+	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-iv3-report-shows-case-costs-per-taakveld-from-the-case-type-classification-req-iv3-010
+	 */
+	public function costForHours(
+		string $subjectApp,
+		string $subjectId,
+		array $timeEntries,
+		?array $administrationIds,
+		string $period = '',
+	): array {
+		return $this->costOfNormalisedRows(
+			subjectApp: $subjectApp,
+			subjectId: $subjectId,
+			rows: $this->appHourRows(rows: $timeEntries, subjectApp: $subjectApp),
+			administrationIds: $administrationIds,
+			period: $period
+		);
+	}//end costForHours()
+
+	/**
+	 * Scope normalised hour rows to the caller and aggregate them.
+	 *
+	 * @param string $subjectApp The owning app.
+	 * @param string $subjectId The domain object id.
+	 * @param array<int, array<string, mixed>> $rows The normalised hour rows.
+	 * @param array<int, string>|null $administrationIds Administrations the caller may read.
+	 * @param string $period Costing period.
+	 *
+	 * @return array<string, mixed> The aggregate, echoing the subject it describes.
+	 */
+	private function costOfNormalisedRows(
+		string $subjectApp,
+		string $subjectId,
+		array $rows,
+		?array $administrationIds,
+		string $period,
+	): array {
 		$scoped = $this->scopedRows(rows: $rows, administrationIds: $administrationIds);
 
 		$aggregate = $this->aggregator->aggregate(
@@ -138,7 +200,7 @@ class SubjectCostService {
 			],
 			$aggregate
 		);
-	}//end costFor()
+	}//end costOfNormalisedRows()
 
 	/**
 	 * The rows the caller may see, and the count of rows without an administration.

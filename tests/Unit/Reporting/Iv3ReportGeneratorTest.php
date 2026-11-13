@@ -24,8 +24,19 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
+use OCA\Shillinq\Reporting\CostSource\ClassifiedSubjectCostSource;
+use OCA\Shillinq\Reporting\CostSource\ReportPeriod;
+use OCA\Shillinq\Reporting\CostSource\SubjectCostGrouping;
+use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
+use OCA\Shillinq\Reporting\CostSource\SubjectCostSourceConfiguration;
+use OCA\Shillinq\Reporting\CostSource\TaskFieldRollup;
 use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator;
+use OCA\Shillinq\Service\SubjectCostAggregator;
+use OCA\Shillinq\Service\SubjectCostService;
+use OCA\Shillinq\Support\FleetAppId;
+use OCA\Shillinq\Util\ObjectIdentifier;
+use OCA\Shillinq\Tests\Unit\Reporting\CostSource\CostSourceWorld;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -40,6 +51,16 @@ use RuntimeException;
  */
 #[CoversClass(Iv3ReportGenerator::class)]
 #[UsesClass(GeneratedFile::class)]
+#[UsesClass(SubjectCostReport::class)]
+#[UsesClass(ClassifiedSubjectCostSource::class)]
+#[UsesClass(SubjectCostGrouping::class)]
+#[UsesClass(TaskFieldRollup::class)]
+#[UsesClass(SubjectCostSourceConfiguration::class)]
+#[UsesClass(ReportPeriod::class)]
+#[UsesClass(SubjectCostService::class)]
+#[UsesClass(SubjectCostAggregator::class)]
+#[UsesClass(FleetAppId::class)]
+#[UsesClass(ObjectIdentifier::class)]
 final class Iv3ReportGeneratorTest extends TestCase {
 
 	/**
@@ -208,4 +229,31 @@ final class Iv3ReportGeneratorTest extends TestCase {
 		self::assertSame("taskField,expenses,revenue,saldo\n", $file->content);
 		self::assertSame('iv3-Q1.csv', $file->fileName);
 	}//end testAFailingStoreGivesAnEmptyReport()
+	/**
+	 * Case costs are a section of their own: the GL lasten and baten per
+	 * taakveld are identical with and without the cost source.
+	 *
+	 * @return void
+	 */
+	public function testCaseCostsDoNotChangeTheLedgerTotals(): void {
+		$world = new CostSourceWorld($this);
+		$world->rates = ['ann' => 10000];
+		$world->caseType('t', 'Omgevingsvergunning', '0.4');
+		$world->caseWithHours('c1', 't', [['ann', 5.0, '2026-02-01']]);
+		$context = ['period' => '2026-Q1', 'administrationId' => 'adm-1'];
+
+		$without = new Iv3ReportGenerator($this->container(), $this->createMock(LoggerInterface::class));
+		$with = new Iv3ReportGenerator($this->container(), $this->createMock(LoggerInterface::class), $world->report());
+
+		$plainCsv = $without->generate($context, 'csv')->content;
+		self::assertSame(
+			$plainCsv . "\nsubjectCostsPerTaskField,objects,hours,cost,incomplete,types\n0.4,1,5.00,500.00,0,\n",
+			$with->generate($context, 'csv')->content
+		);
+
+		$stamp = static fn (string $xml): string => (string)preg_replace('/opgesteld="[^"]*"/', '', $xml);
+		self::assertSame($stamp($without->generate($context, 'xml')->content), $stamp($with->generate($context, 'xml')->content));
+		self::assertSame([], $without->subjectCostsPerTaskField($context));
+		self::assertSame(50000, $with->subjectCostsPerTaskField($context)[0]['totals']['costCents']);
+	}//end testCaseCostsDoNotChangeTheLedgerTotals()
 }//end class

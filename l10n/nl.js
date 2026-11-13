@@ -6866,7 +6866,16 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Case costs per task field come from Dossiq. Dossiq is not installed.": "Zaakkosten per taakveld komen uit Dossiq. Dossiq is niet geïnstalleerd.",
+        "Case costs per case type come from Dossiq. Dossiq is not installed.": "Zaakkosten per zaaktype komen uit Dossiq. Dossiq is niet geïnstalleerd.",
+        "Hours come from Humaniq. Humaniq is not installed.": "Uren komen uit Humaniq. Humaniq is niet geïnstalleerd.",
+        "No task field": "Geen taakveld",
+        "No type": "Geen type",
+        "Aggregates Under": "Valt onder",
+        "Deprecated": "Vervallen",
+        "The code in the same catalogue this taakveld is reported under. Set on the 2023 refinement codes, which roll up to their pre-2023 parent; absent on every other code.": "De code in dezelfde catalogus waaronder dit taakveld wordt gerapporteerd. Gezet bij de verfijningscodes van 2023, die optellen onder hun taakveld van vóór 2023; afwezig bij elke andere code.",
+        "True for a code that is superseded by refinement codes but stays readable, so older classifications keep reporting.": "Waar voor een code die door verfijningscodes is vervangen maar leesbaar blijft, zodat oudere classificaties blijven rapporteren."
     },
     "nplurals=2; plural=(n != 1);"
 )

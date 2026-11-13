@@ -168,6 +168,36 @@ class SubjectCostServiceTest extends TestCase {
 	}
 
 	/**
+	 * Hours handed in are costed without a read, dropping another app's rows
+	 * and rows outside the caller's administrations.
+	 *
+	 * @return void
+	 */
+	public function testHandedInHoursAreCostedWithoutARead(): void {
+		$service = $this->service([], ['p1' => 5000], readThrows: true);
+
+		$result = $service->costForHours(
+			'dossiq',
+			'case-1',
+			[
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1', 'domainObjectType' => 'dossiq:case'],
+				['employeeId' => 'p1', 'hours' => 9.0, 'administrationId' => 'adm-1', 'domainObjectType' => 'pipelinq:lead'],
+				['employeeId' => 'p1', 'hours' => 4.0, 'administrationId' => 'adm-2', 'domainObjectType' => 'dossiq:case'],
+				['employeeId' => 'p1', 'hours' => 1.0, 'domainObjectType' => 'dossiq:case'],
+				'junk',
+			],
+			['adm-1']
+		);
+
+		self::assertSame(2.0, $result['hours']);
+		self::assertSame(10000, $result['costCents']);
+		self::assertTrue($result['complete']);
+		self::assertSame(1, $result['unscopedRowsExcluded']);
+		self::assertSame('case-1', $result['subjectId']);
+		self::assertSame([], $this->lastFilters);
+	}
+
+	/**
 	 * The read is narrowed to the subject, not scanned and matched in PHP.
 	 *
 	 * @return void
