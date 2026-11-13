@@ -237,6 +237,30 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	}//end testPurchaseLifecycleVocabularyIdenticalToPurchaseOrderSchema()
 
 	/**
+	 * A sales order has the states draft, confirmed, partly invoiced, invoiced
+	 * and cancelled, starts as draft, and names its source quote
+	 * (sales-quote-and-order-to-invoice REQ-QTI-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-quote-and-order-to-invoice/specs/sales-quote-order-invoice/spec.md#requirement-a-sales-order-has-its-own-states-req-qti-002
+	 */
+	public function testSalesLifecycleVocabulary(): void {
+		$order = $this->orderSchema();
+		$lifecycle = $order['x-openregister-lifecycle'];
+
+		self::assertSame(
+			['draft', 'invoiced', 'cancelled', 'confirmed', 'partly-invoiced'],
+			$this->statesForType($lifecycle, 'sales')
+		);
+		self::assertSame('draft', $lifecycle['initialStateByType']['sales']);
+		self::assertContains('confirmed', $order['properties']['state']['enum']);
+		self::assertContains('partly-invoiced', $order['properties']['state']['enum']);
+		self::assertSame('uuid', $order['properties']['sourceQuote']['format']);
+
+	}//end testSalesLifecycleVocabulary()
+
+	/**
 	 * The engagement lifecycle vocabulary is identical to DBAOpdracht's
 	 * intakeStatus vocabulary.
 	 *
@@ -270,6 +294,7 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 			'subsidy' => $this->statesForType($lifecycle, 'subsidy'),
 			'purchase' => $this->statesForType($lifecycle, 'purchase'),
 			'engagement' => $this->statesForType($lifecycle, 'engagement'),
+			'sales' => $this->statesForType($lifecycle, 'sales'),
 		];
 
 		foreach ($lifecycle['transitions'] as $action => $spec) {
@@ -337,7 +362,9 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	private function statesForType(array $lifecycle, string $orderType): array {
 		$names = [];
 		foreach ($lifecycle['states'] as $name => $def) {
-			if (($def['orderType'] ?? null) === $orderType) {
+			// A state shared by several order types (draft, invoiced, cancelled) lists them.
+			$types = (array)($def['orderType'] ?? []);
+			if (in_array($orderType, $types, true) === true) {
 				$names[] = (string)$name;
 			}
 		}
