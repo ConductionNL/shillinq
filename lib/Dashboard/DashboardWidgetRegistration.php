@@ -7,8 +7,8 @@
  * (reporting-custom-analysis REQ-RCA-001), so a user can put them on the
  * Nextcloud dashboard or on a launchpad dashboard of their own.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Dashboard
+ * @package  OCA\Shillinq\Dashboard
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -24,13 +24,8 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Dashboard;
 
-use OCA\Shillinq\Dashboard\CashPositionWidget;
-use OCA\Shillinq\Dashboard\OpenReceivablesWidget;
-use OCA\Shillinq\Dashboard\ResultByMonthWidget;
-use OCA\Shillinq\Dashboard\RevenueThisMonthWidget;
-use OCA\Shillinq\Dashboard\TopCustomersWidget;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**

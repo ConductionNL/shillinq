@@ -7,8 +7,8 @@
  * (people-hours-budget): hour records created, changed or deleted, and a
  * changed estimate on an assignment.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Listener
+ * @package  OCA\Shillinq\Listener\Registration
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Listener\Registration;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;

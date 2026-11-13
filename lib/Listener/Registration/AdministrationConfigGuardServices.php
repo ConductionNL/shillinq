@@ -5,8 +5,8 @@
  *
  * Registers the pre-save check on per-administration configuration.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Listener
+ * @package  OCA\Shillinq\Listener\Registration
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Listener\Registration;
 
 use OCA\Shillinq\Listener\AdministrationManagedWriteListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;

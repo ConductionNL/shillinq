@@ -5,8 +5,8 @@
  *
  * One entry point for the groups of lifecycle guard tags registered outside Application.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Listener
+ * @package  OCA\Shillinq\Listener\Registration
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Listener\Registration;
 
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 

@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\AppInfo\GuardTagServices;
+use OCA\Shillinq\Listener\Registration\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;

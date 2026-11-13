@@ -54,7 +54,7 @@ final class BillablePeriodClosedListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testIsRegistered(): void {
-		$registration = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/ObjectRequestSettlementRegistration.php');
+		$registration = (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ObjectRequestSettlementRegistration.php');
 
 		$this->assertMatchesRegularExpression(
 			'/event: BillablePeriodClosedEvent::class,\s*listener: BillablePeriodClosedListener::class/',

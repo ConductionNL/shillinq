@@ -28,8 +28,8 @@
  * OrderFulfilmentGateRegistration: Application sits at PHPMD's class-length
  * threshold.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Lifecycle
+ * @package  OCA\Shillinq\Lifecycle
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -42,13 +42,8 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\BalanceGuard;
-use OCA\Shillinq\Lifecycle\JournalEntryGuard;
-use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
-use OCA\Shillinq\Lifecycle\RuleComplianceGuard;
-use OCA\Shillinq\Lifecycle\ThreeWayMatchGuard;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Log\LoggerInterface;
 
