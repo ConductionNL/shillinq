@@ -1,5 +1,12 @@
 [
     [
+        "registerMiddleware",
+        [
+            "'OCA\\\\Shillinq\\\\Middleware\\\\ApiContractMiddleware'",
+            "false"
+        ]
+    ],
+    [
         "registerServiceAlias",
         [
             "'OCA\\\\OpenRegister\\\\Contract\\\\ObjectServiceInterface'",
