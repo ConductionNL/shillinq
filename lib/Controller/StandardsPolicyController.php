@@ -30,7 +30,7 @@ use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
-use OCA\Shillinq\Service\StandardsPolicyService;
+use OCA\Shillinq\Kernel\Contracts\StandardsPolicyServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,7 +50,7 @@ class StandardsPolicyController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request.
-	 * @param StandardsPolicyService $policies Policy read and write.
+	 * @param StandardsPolicyServiceInterface $policies Policy read and write.
 	 * @param AdministrationContextServiceInterface $administrationContext Membership check.
 	 * @param AdministrationManagementAccessInterface $managementAccess Owner or admin check.
 	 * @param IL10N $l10n Translated refusals.
@@ -60,7 +60,7 @@ class StandardsPolicyController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly StandardsPolicyService $policies,
+		private readonly StandardsPolicyServiceInterface $policies,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly AdministrationManagementAccessInterface $managementAccess,
 		private readonly IL10N $l10n,

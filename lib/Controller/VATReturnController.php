@@ -53,7 +53,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\VATReturnService;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -80,7 +80,7 @@ class VATReturnController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param VATReturnService $service The VAT return service.
+	 * @param VATReturnServiceInterface $service The VAT return service.
 	 * @param ContainerInterface $container DI container for OR's ObjectService.
 	 * @param IUserSession $session User session (for actor identity).
 	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
@@ -89,7 +89,7 @@ class VATReturnController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly VATReturnService $service,
+		private readonly VATReturnServiceInterface $service,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
 		private readonly AdministrationContextServiceInterface $context,

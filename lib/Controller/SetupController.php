@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\DemoDataServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -87,14 +87,14 @@ class SetupController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App-config reader/writer.
 	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
-	 * @param SettingsService $settingsService OR availability + config import + seeders.
+	 * @param SettingsServiceInterface $settingsService OR availability + config import + seeders.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
 		private readonly IAppConfig $appConfig,
 		private readonly DemoDataServiceInterface $demoDataService,
-		private readonly SettingsService $settingsService,
+		private readonly SettingsServiceInterface $settingsService,
 	) {
 		parent::__construct($appName, $request);
 	}//end __construct()

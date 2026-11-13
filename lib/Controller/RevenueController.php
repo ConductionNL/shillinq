@@ -41,7 +41,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\RevenueCutoffService;
+use OCA\Shillinq\Kernel\Contracts\RevenueCutoffServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -60,7 +60,7 @@ class RevenueController extends Controller {
 	 * Constructor for the RevenueController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param RevenueCutoffService $cutoffService The revenue cut-off computation service.
+	 * @param RevenueCutoffServiceInterface $cutoffService The revenue cut-off computation service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
@@ -69,7 +69,7 @@ class RevenueController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly RevenueCutoffService $cutoffService,
+		private readonly RevenueCutoffServiceInterface $cutoffService,
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,

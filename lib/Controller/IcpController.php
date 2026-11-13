@@ -38,7 +38,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
-use OCA\Shillinq\Service\ViesService;
+use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -67,7 +67,7 @@ class IcpController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param IcpServiceInterface $icpService The ICP read-side computation service.
 	 * @param IcpFilingServiceInterface $filingService The ICP filing write service (correction + export).
-	 * @param ViesService $viesService The VIES validation service.
+	 * @param ViesServiceInterface $viesService The VIES validation service.
 	 * @param ArInvoiceIcpPdfRendererInterface $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
@@ -80,7 +80,7 @@ class IcpController extends Controller {
 		IRequest $request,
 		private readonly IcpServiceInterface $icpService,
 		private readonly IcpFilingServiceInterface $filingService,
-		private readonly ViesService $viesService,
+		private readonly ViesServiceInterface $viesService,
 		private readonly ArInvoiceIcpPdfRendererInterface $pdfRenderer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,

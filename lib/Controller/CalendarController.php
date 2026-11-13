@@ -39,9 +39,9 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\TransactionalGuardInterface;
 use OCA\Shillinq\Service\Booking\CalendarRows;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -69,7 +69,7 @@ class CalendarController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ConflictDetectionServiceInterface $conflicts Conflict detection service (REQ-004).
 	 * @param AdministrationContextServiceInterface $context Per-administration IDOR guard (ADR-005).
 	 * @param TransactionalGuardInterface $guard Transaction + row-lock facade (production-wired with IDBConnection).
@@ -81,7 +81,7 @@ class CalendarController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly ConflictDetectionServiceInterface $conflicts,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly TransactionalGuardInterface $guard,

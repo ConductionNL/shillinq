@@ -40,19 +40,20 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Requisition create / submit / approve / reject (REQ-REQ-001..004).
  *
  * @spec openspec/specs/purchase-requisition/spec.md
  */
-class RequisitionService {
+class RequisitionService implements RequisitionServiceInterface {
 
 	/**
 	 * How a creation refusal names a required field that is not called by

@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\RequisitionConversionService;
-use OCA\Shillinq\Service\RequisitionService;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,8 +62,8 @@ class RequisitionController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param RequisitionService $requisitionService Create/submit/approve/reject.
-	 * @param RequisitionConversionService $conversionService Convert-to-PO.
+	 * @param RequisitionServiceInterface $requisitionService Create/submit/approve/reject.
+	 * @param RequisitionConversionServiceInterface $conversionService Convert-to-PO.
 	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
@@ -73,8 +73,8 @@ class RequisitionController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly RequisitionService $requisitionService,
-		private readonly RequisitionConversionService $conversionService,
+		private readonly RequisitionServiceInterface $requisitionService,
+		private readonly RequisitionConversionServiceInterface $conversionService,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,

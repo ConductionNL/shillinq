@@ -48,7 +48,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -111,7 +111,7 @@ class ConfirmationApiController extends Controller {
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy
 	 *                                      OR resolution.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  (register slug, OR
 	 *                                  availability).
 	 * @param AdministrationContextServiceInterface $context Per-administration
@@ -129,7 +129,7 @@ class ConfirmationApiController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly ConfirmationTokenServiceInterface $tokens,
 		private readonly ITimeFactory $time,

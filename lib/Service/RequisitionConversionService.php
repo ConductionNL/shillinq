@@ -38,19 +38,20 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
 use OCA\Shillinq\Lifecycle\RequisitionConversionGuard;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Materialises an approved Requisition into a PurchaseOrder (REQ-REQ-005).
  *
  * @spec openspec/specs/purchase-requisition/spec.md
  */
-class RequisitionConversionService {
+class RequisitionConversionService implements RequisitionConversionServiceInterface {
 	/**
 	 * Constructor.
 	 *

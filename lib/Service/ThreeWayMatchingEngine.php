@@ -68,11 +68,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ThreeWayMatchingEngineInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Slice 06 — single-PO 3-way matching engine.
@@ -105,7 +106,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain logic (multi-axis match decision); deferred pending a dedicated
  * refactor.
  */
-class ThreeWayMatchingEngine {
+class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 
 	/**
 	 * Match outcome — exact 3-way match, zero divergence.

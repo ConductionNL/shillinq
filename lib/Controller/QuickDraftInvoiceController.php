@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
+use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Service\Sales\QuickDraftRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -62,14 +62,14 @@ class QuickDraftInvoiceController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param QuickDraftInvoiceService     $service The quick-draft rules.
+	 * @param QuickDraftInvoiceServiceInterface     $service The quick-draft rules.
 	 * @param AdministrationContextServiceInterface $context The caller's administrations.
 	 * @param IL10N                        $l10n    Translations for refusals.
 	 * @param LoggerInterface              $logger  Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly QuickDraftInvoiceService $service,
+		private readonly QuickDraftInvoiceServiceInterface $service,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

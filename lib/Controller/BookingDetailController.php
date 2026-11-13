@@ -44,10 +44,10 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
 use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -100,7 +100,7 @@ class BookingDetailController extends Controller {
 	 *
 	 * @param IRequest $request Inbound request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param AdministrationContextServiceInterface $context Per-administration IDOR guard (ADR-005).
 	 * @param PipelinqContactAdapterInterface $pipelinq Slice 02-04 adapter (getContact + fetchKlantbeeld).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
@@ -108,7 +108,7 @@ class BookingDetailController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly PipelinqContactAdapterInterface $pipelinq,
 		private readonly LoggerInterface $logger,

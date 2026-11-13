@@ -58,7 +58,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\InnovatieboxAuditEventLoggerInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\VsoLockingValidator;
+use OCA\Shillinq\Kernel\Contracts\VsoLockingValidatorInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -130,13 +130,13 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 * @param AuditTrailMapper $auditTrail OpenRegister's hash-chained audit trail: every
 	 *                                     innovatiebox transition is recorded on the subject
 	 *                                     object's own trail (REQ-IBA-008, ADR-022).
-	 * @param VsoLockingValidator $vsoValidator VSO year-lock checker (task 4.3).
+	 * @param VsoLockingValidatorInterface $vsoValidator VSO year-lock checker (task 4.3).
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $psrLogger Psr logger for fail-soft.
 	 */
 	public function __construct(
 		private readonly AuditTrailMapper $auditTrail,
-		private readonly VsoLockingValidator $vsoValidator,
+		private readonly VsoLockingValidatorInterface $vsoValidator,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $psrLogger,
 	) {

@@ -43,6 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RevenueRecognitionServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -59,7 +60,7 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class RevenueRecognitionService {
+class RevenueRecognitionService implements RevenueRecognitionServiceInterface {
 
 	/**
 	 * Per-month normalization factors keyed by frequentie enum.

@@ -32,7 +32,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestReceiptMailerInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -52,14 +52,14 @@ class ObjectRequestSettledListener implements IEventListener {
 	 * @param ObjectRequestReceiptMailerInterface $receiptMailer Sends the mail.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema slug.
 	 * @param ObjectServiceInterface $objectService Writes receiptSentAt back.
-	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Fail-soft log.
 	 */
 	public function __construct(
 		private readonly ObjectRequestReceiptMailerInterface $receiptMailer,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
