@@ -539,7 +539,7 @@
       "CloseChecklistTemplate": {
         "slug": "CloseChecklistTemplate",
         "icon": "FormatListChecks",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Close Checklist Template",
         "description": "Reusable list of close tasks per administratie type (BV, NV, eenmanszaak); instantiated per period as a CloseChecklistInstance. Each task carries owner, dueBefore, dependsOn (task-dependency graph), and evidenceRequired flag.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
@@ -608,6 +608,20 @@
                   "default": false,
                   "title": "Evidence Required",
                   "description": "Indicates whether evidence required applies."
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "ap",
+                    "ar",
+                    "bank",
+                    "expense-claims",
+                    "vat",
+                    "accruals",
+                    "other"
+                  ],
+                  "title": "Category",
+                  "description": "The checklist category a period's item for this task gets; `other` when absent."
                 }
               }
             },
@@ -641,9 +655,9 @@
       "CloseChecklistInstance": {
         "slug": "CloseChecklistInstance",
         "icon": "FormatListChecks",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Close Checklist Instance",
-        "description": "Per-period instantiation of a CloseChecklistTemplate. Carries per-task status (pending | in-progress | completed | overdue), owner override, completedAt, evidence attachment, and slaBreach flag. Lifecycle: pending → in-progress → completed with SLA escalation on overdue.",
+        "description": "Deprecated (ledger-period-end D1): a period's close checklist lives on FiscalPeriod.taskChecklistItems, copied from the template on startClose. Per-period instantiation of a CloseChecklistTemplate. Carries per-task status (pending | in-progress | completed | overdue), owner override, completedAt, evidence attachment, and slaBreach flag. Lifecycle: pending → in-progress → completed with SLA escalation on overdue.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [

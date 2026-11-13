@@ -68,6 +68,10 @@
         {
             "appVersion": "0.5.7-unstable.20261111150000",
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261113200000",
+            "versionsSha256": "19940c57f69caaee1d4d4cb71cedc7dee29204d690f434a19a79ae01b8410260"
         }
     ],
     "versions": {
@@ -178,8 +182,8 @@
         "schema:CddRecord": "0.1.0",
         "schema:ChartOfAccountsMapping": "0.1.0",
         "schema:ClaimsVoorzieningDetail": "0.1.0",
-        "schema:CloseChecklistInstance": "0.1.0",
-        "schema:CloseChecklistTemplate": "0.1.0",
+        "schema:CloseChecklistInstance": "0.2.0",
+        "schema:CloseChecklistTemplate": "0.2.0",
         "schema:CloseMetrics": "0.1.0",
         "schema:ClosingAccount": "0.1.0",
         "schema:ClosingEntry": "0.1.0",
@@ -267,7 +271,7 @@
         "schema:FeeSchedule": "0.3.0",
         "schema:FieldRequirement": "0.2.0",
         "schema:FinancialStatement": "0.1.0",
-        "schema:FiscalPeriod": "0.3.0",
+        "schema:FiscalPeriod": "0.4.0",
         "schema:FiscalYear": "0.1.0",
         "schema:FiscaleCorrectie": "0.1.0",
         "schema:FiscaleEenheid": "0.1.0",
