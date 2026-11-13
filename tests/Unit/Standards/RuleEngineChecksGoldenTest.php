@@ -42,6 +42,9 @@ use ReflectionMethod;
  * @uses \OCA\Shillinq\Standards\Checks\SustainabilityChecks
  * @uses \OCA\Shillinq\Standards\Checks\VatBbvLedgerTailChecks
  * @uses \OCA\Shillinq\Standards\Checks\VatChecks
+ * @uses \OCA\Shillinq\Standards\Checks\CheckFields
+ * @uses \OCA\Shillinq\Standards\Checks\GlTransactionLines
+ * @uses \OCA\Shillinq\Standards\Checks\InvoiceParts
  *
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */
