@@ -58,7 +58,7 @@ namespace OCA\Shillinq\Repair;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GlLineFiscalYearBackfillMigratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;

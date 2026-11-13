@@ -66,7 +66,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\IUser;

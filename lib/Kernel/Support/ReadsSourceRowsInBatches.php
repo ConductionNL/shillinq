@@ -18,7 +18,7 @@
  * see every tenant's rows regardless of the (session-less) repair context.
  *
  * @category Repair
- * @package  OCA\Shillinq\Repair\Support
+ * @package  OCA\Shillinq\Kernel\Support
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -32,7 +32,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Repair\Support;
+namespace OCA\Shillinq\Kernel\Support;
 
 /**
  * Provides a batched, unscoped "read every source row" helper for repair steps.

@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 
 /**
  * A klantbeeld page window for one contact.

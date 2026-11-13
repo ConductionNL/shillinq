@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\BookingDetailController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;

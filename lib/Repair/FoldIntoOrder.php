@@ -56,7 +56,7 @@ namespace OCA\Shillinq\Repair;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
