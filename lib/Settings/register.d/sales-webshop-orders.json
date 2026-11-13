@@ -1,0 +1,443 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "sales-webshop-orders",
+        "adr": "ADR-037 modular register fragment + ADR-031 declarative intake lifecycle + ADR-091 the shop connection lives in integriq",
+        "description": "Web shop order intake: WebshopOrder (the contract integriq's shop connector writes), WebshopChannel (one per connected shop) and the ARInvoice.webshop group (REQ-SWO-001, REQ-SWO-006)."
+    },
+    "components": {
+        "schemas": {
+            "WebshopOrder": {
+                "slug": "WebshopOrder",
+                "icon": "CartArrowDown",
+                "version": "0.1.0",
+                "title": "Web shop order",
+                "description": "One order as a web shop sent it, written by integriq's shop connector into register shillinq. The schema is the intake contract (docs/integrations/webshop-order-intake.md). Shillinq turns a received order into one issued ARInvoice, once per channel and shop order number.",
+                "x-schema-org": "schema:Order",
+                "type": "object",
+                "required": [
+                    "channelId",
+                    "shopOrderId",
+                    "orderedAt",
+                    "buyer",
+                    "currency",
+                    "lines",
+                    "totals",
+                    "payment"
+                ],
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Every create, update and delete of a web shop order is written to OpenRegister's immutable audit trail."
+                },
+                "x-openregister-lifecycle": {
+                    "field": "intakeState",
+                    "initialState": "received",
+                    "states": {
+                        "received": {
+                            "label": "Received",
+                            "description": "Written by the shop connector; not yet invoiced."
+                        },
+                        "invoiced": {
+                            "label": "Invoiced",
+                            "description": "One ARInvoice was written for this order; arInvoiceId points to it."
+                        },
+                        "refused": {
+                            "label": "Refused",
+                            "description": "Not invoiced; refusalReason names why."
+                        },
+                        "duplicate": {
+                            "label": "Duplicate",
+                            "description": "The same channel and shop order number was received before; no invoice was written."
+                        },
+                        "credited": {
+                            "label": "Credited",
+                            "description": "Refunded or cancelled after invoicing; creditNoteId points to the credit note."
+                        }
+                    },
+                    "transitions": {
+                        "invoice": {
+                            "from": "received",
+                            "to": "invoiced",
+                            "label": "Invoice",
+                            "description": "The invoicer wrote the order's invoice."
+                        },
+                        "refuse": {
+                            "from": "received",
+                            "to": "refused",
+                            "label": "Refuse",
+                            "description": "The order cannot be invoiced: unknown channel, no lines, totals that do not add up, or no VAT route."
+                        },
+                        "markDuplicate": {
+                            "from": "received",
+                            "to": "duplicate",
+                            "label": "Mark duplicate",
+                            "description": "The channel already has an order with this shop order number."
+                        },
+                        "credit": {
+                            "from": "invoiced",
+                            "to": "credited",
+                            "label": "Credit",
+                            "description": "The shop refunded or cancelled the order and a credit note was written."
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "onRefused": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "refuse"
+                        },
+                        "description": "Tell the bookkeepers of the administration that a web shop order was refused, with the reason.",
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "object-acl",
+                                "permission": "manage"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Webwinkelorder {{shopOrderId}} geweigerd: {{refusalReason}}",
+                            "en": "Web shop order {{shopOrderId}} refused: {{refusalReason}}"
+                        }
+                    }
+                },
+                "properties": {
+                    "channelId": {
+                        "type": "string",
+                        "description": "FK to the WebshopChannel this order came through. An order for an unknown channel is refused.",
+                        "title": "Channel"
+                    },
+                    "shopOrderId": {
+                        "type": "string",
+                        "description": "The shop's own order number. With channelId it is the idempotency key: a second record with the same pair is a duplicate and writes no invoice.",
+                        "title": "Shop order number",
+                        "example": "100231"
+                    },
+                    "orderedAt": {
+                        "type": "string",
+                        "description": "When the buyer placed the order in the shop.",
+                        "title": "Ordered at",
+                        "format": "date-time"
+                    },
+                    "buyer": {
+                        "type": "object",
+                        "title": "Buyer",
+                        "description": "The buyer as the shop sent it.",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "business",
+                                    "consumer"
+                                ],
+                                "description": "A business is matched to or created as a CustomerMaster; a consumer is booked on the channel's collective debtor.",
+                                "title": "Buyer type"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "The buyer's name, kept on the invoice.",
+                                "title": "Name"
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "The buyer's email address.",
+                                "title": "Email",
+                                "format": "email"
+                            },
+                            "companyName": {
+                                "type": "string",
+                                "description": "The company name of a business buyer.",
+                                "title": "Company name"
+                            },
+                            "vatId": {
+                                "type": "string",
+                                "description": "The VAT id of a business buyer, matched first.",
+                                "title": "VAT id"
+                            },
+                            "kvkNumber": {
+                                "type": "string",
+                                "description": "The KvK number of a business buyer, matched second.",
+                                "title": "KvK number"
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "The buyer's address as one text, kept on the invoice.",
+                                "title": "Address"
+                            },
+                            "countryCode": {
+                                "type": "string",
+                                "description": "ISO 3166-1 alpha-2 country of the buyer; drives the VAT route.",
+                                "title": "Country",
+                                "minLength": 2,
+                                "maxLength": 2
+                            }
+                        }
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "ISO 4217 currency of the order.",
+                        "title": "Currency",
+                        "minLength": 3,
+                        "maxLength": 3,
+                        "default": "EUR"
+                    },
+                    "pricesIncludeVat": {
+                        "type": "boolean",
+                        "description": "Whether unitPrice, shipping and totals include VAT; the net price is derived by dividing out each line's rate.",
+                        "default": true,
+                        "title": "Prices include VAT"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "title": "Lines",
+                        "description": "The order lines as the shop sent them.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "sku": {
+                                    "type": "string",
+                                    "description": "The shop's article code.",
+                                    "title": "SKU"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "The line text.",
+                                    "title": "Description"
+                                },
+                                "quantity": {
+                                    "type": "number",
+                                    "description": "Ordered quantity.",
+                                    "title": "Quantity"
+                                },
+                                "unitPrice": {
+                                    "type": "number",
+                                    "description": "Price per unit, with or without VAT as pricesIncludeVat says.",
+                                    "title": "Unit price"
+                                },
+                                "vatRate": {
+                                    "type": "number",
+                                    "description": "The line's VAT rate in percent as the shop applied it.",
+                                    "title": "VAT rate"
+                                }
+                            }
+                        }
+                    },
+                    "shipping": {
+                        "type": "number",
+                        "description": "The shipping charge, with or without VAT as pricesIncludeVat says.",
+                        "title": "Shipping"
+                    },
+                    "discountTotal": {
+                        "type": "number",
+                        "description": "The order discount total.",
+                        "title": "Discount total"
+                    },
+                    "totals": {
+                        "type": "object",
+                        "title": "Totals",
+                        "description": "The order totals as the shop sent them; the lines must add up to them.",
+                        "properties": {
+                            "net": {
+                                "type": "number",
+                                "description": "Total without VAT.",
+                                "title": "Net"
+                            },
+                            "vat": {
+                                "type": "number",
+                                "description": "Total VAT.",
+                                "title": "VAT"
+                            },
+                            "gross": {
+                                "type": "number",
+                                "description": "Total with VAT.",
+                                "title": "Gross"
+                            }
+                        }
+                    },
+                    "payment": {
+                        "type": "object",
+                        "title": "Payment",
+                        "description": "The payment state the shop reports.",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "paid",
+                                    "pending",
+                                    "refunded",
+                                    "cancelled"
+                                ],
+                                "description": "paid settles the invoice on the clearing account; refunded or cancelled writes a credit note.",
+                                "title": "Payment status"
+                            },
+                            "method": {
+                                "type": "string",
+                                "description": "The payment method, such as ideal.",
+                                "title": "Method"
+                            },
+                            "providerPaymentId": {
+                                "type": "string",
+                                "description": "The payment provider's id, kept on the invoice for the payout match.",
+                                "title": "Provider payment id"
+                            }
+                        }
+                    },
+                    "administrationId": {
+                        "type": "string",
+                        "description": "FK to the Administration the order is booked in; the channel's administration.",
+                        "title": "Administration"
+                    },
+                    "intakeState": {
+                        "type": "string",
+                        "enum": [
+                            "received",
+                            "invoiced",
+                            "refused",
+                            "duplicate",
+                            "credited"
+                        ],
+                        "default": "received",
+                        "description": "Shillinq's own intake state; managed by the lifecycle, never written by the shop connector.",
+                        "title": "Intake state"
+                    },
+                    "arInvoiceId": {
+                        "type": "string",
+                        "description": "FK to the ARInvoice written for this order.",
+                        "title": "Invoice"
+                    },
+                    "creditNoteId": {
+                        "type": "string",
+                        "description": "FK to the credit note written on refund or cancellation.",
+                        "title": "Credit note"
+                    },
+                    "refusalReason": {
+                        "type": "string",
+                        "description": "Why the order was refused, naming the problem and both totals where they differ.",
+                        "title": "Refusal reason"
+                    }
+                }
+            },
+            "WebshopChannel": {
+                "slug": "WebshopChannel",
+                "icon": "Store",
+                "version": "0.1.0",
+                "title": "Web shop channel",
+                "description": "One connected web shop: what the shop does not know but the invoice needs. An order whose channel is unknown is refused.",
+                "x-schema-org": "schema:OnlineStore",
+                "type": "object",
+                "required": [
+                    "name",
+                    "platform",
+                    "administrationId",
+                    "consumerDebtorId",
+                    "revenueAccount",
+                    "clearingAccount",
+                    "issueMode"
+                ],
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Every create, update and delete of a web shop channel is written to OpenRegister's immutable audit trail."
+                },
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The shop's name, such as its domain.",
+                        "title": "Name",
+                        "example": "theehandelvandijk.nl"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "enum": [
+                            "woocommerce",
+                            "shopify",
+                            "lightspeed",
+                            "ccvshop",
+                            "magento",
+                            "other"
+                        ],
+                        "description": "The shop platform integriq connects to.",
+                        "title": "Platform"
+                    },
+                    "administrationId": {
+                        "type": "string",
+                        "description": "FK to the Administration the shop's orders are booked in.",
+                        "title": "Administration"
+                    },
+                    "consumerDebtorId": {
+                        "type": "string",
+                        "description": "FK to the CustomerMaster that collects the consumer orders (verzameldebiteur).",
+                        "title": "Consumer debtor"
+                    },
+                    "revenueAccount": {
+                        "type": "string",
+                        "description": "The revenue account the order lines are booked on.",
+                        "title": "Revenue account",
+                        "example": "8000"
+                    },
+                    "shippingAccount": {
+                        "type": "string",
+                        "description": "The revenue account the shipping charge is booked on.",
+                        "title": "Shipping account",
+                        "example": "8010"
+                    },
+                    "clearingAccount": {
+                        "type": "string",
+                        "description": "The payment clearing account a paid order is settled on.",
+                        "title": "Clearing account",
+                        "example": "1105"
+                    },
+                    "issueMode": {
+                        "type": "string",
+                        "enum": [
+                            "auto-issue",
+                            "draft-for-review"
+                        ],
+                        "default": "auto-issue",
+                        "description": "auto-issue issues the invoice at once; draft-for-review leaves it a draft.",
+                        "title": "Issue mode"
+                    }
+                }
+            },
+            "ARInvoice": {
+                "properties": {
+                    "webshop": {
+                        "type": "object",
+                        "title": "Web shop",
+                        "description": "Where an invoice written from a web shop order came from.",
+                        "properties": {
+                            "channelId": {
+                                "type": "string",
+                                "description": "FK to the WebshopChannel.",
+                                "title": "Channel"
+                            },
+                            "shopOrderId": {
+                                "type": "string",
+                                "description": "The shop's order number.",
+                                "title": "Shop order number"
+                            },
+                            "orderId": {
+                                "type": "string",
+                                "description": "FK to the WebshopOrder the invoice was written for.",
+                                "title": "Order"
+                            },
+                            "buyerName": {
+                                "type": "string",
+                                "description": "The consumer's name on an invoice booked on the collective debtor.",
+                                "title": "Buyer name"
+                            },
+                            "paymentReference": {
+                                "type": "string",
+                                "description": "The payment provider's id, kept for the payout match.",
+                                "title": "Payment reference"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
