@@ -25,6 +25,8 @@ use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCA\Shillinq\Kernel\Contracts\ScheduledReportDeliveryInterface;
 use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
+use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
 use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
@@ -63,5 +65,6 @@ final class ReportingContractRegistrar {
 		$context->registerServiceAlias(ReportRecipientPolicyInterface::class, ReportRecipientPolicy::class);
 		$context->registerServiceAlias(ScheduledReportDeliveryInterface::class, ScheduledReportDelivery::class);
 		$context->registerServiceAlias(ScheduledReportRunnerInterface::class, ScheduledReportRunner::class);
+		$context->registerServiceAlias(XafAuditfileGeneratorInterface::class, XafAuditfileGenerator::class);
 	}//end register()
 }//end class

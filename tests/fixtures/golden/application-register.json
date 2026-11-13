@@ -1715,6 +1715,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PurchaseOrderApprovalServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrderApprovalService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PurchaseOrderServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\PurchaseOrderService'"
         ]
@@ -2658,6 +2665,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ScheduledReportRunnerInterface'",
             "'OCA\\\\Shillinq\\\\Reporting\\\\Schedule\\\\ScheduledReportRunner'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\XafAuditfileGeneratorInterface'",
+            "'OCA\\\\Shillinq\\\\Reporting\\\\Generator\\\\XafAuditfileGenerator'"
         ]
     ],
     [
