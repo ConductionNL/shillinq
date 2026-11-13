@@ -39,25 +39,20 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates the PeriodClose lifecycle with server-side role enforcement.
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
  */
-class PeriodCloseService {
-	/**
-	 * Thrown-status sentinel for an authorization failure.
-	 *
-	 * @var string
-	 */
-	public const ERR_FORBIDDEN = 'forbidden';
+class PeriodCloseService implements PeriodCloseServiceInterface {
 
 	/**
 	 * Thrown-status sentinel for an invalid lifecycle state.
@@ -65,20 +60,6 @@ class PeriodCloseService {
 	 * @var string
 	 */
 	public const ERR_INVALID_STATE = 'invalid-state';
-
-	/**
-	 * Thrown-status sentinel for a missing record.
-	 *
-	 * @var string
-	 */
-	public const ERR_NOT_FOUND = 'not-found';
-
-	/**
-	 * Thrown-status sentinel for a validation failure.
-	 *
-	 * @var string
-	 */
-	public const ERR_VALIDATION = 'validation';
 
 	/**
 	 * Construct the service.

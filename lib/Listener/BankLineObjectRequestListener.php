@@ -34,10 +34,10 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankMatcherInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -57,14 +57,14 @@ class BankLineObjectRequestListener implements IEventListener {
 	 * @param ObjectRequestBankMatcherInterface $matcher Decides what a line is to the requests.
 	 * @param ManualMatchServiceInterface $manualMatch Writes the match.
 	 * @param ObjectRequestBankSettlementInterface $settlement Settles a request on a confirmed match.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema slug.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema slug.
 	 * @param LoggerInterface $logger Fail-soft log.
 	 */
 	public function __construct(
 		private readonly ObjectRequestBankMatcherInterface $matcher,
 		private readonly ManualMatchServiceInterface $manualMatch,
 		private readonly ObjectRequestBankSettlementInterface $settlement,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

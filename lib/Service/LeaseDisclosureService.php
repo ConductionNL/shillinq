@@ -32,10 +32,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LeaseDisclosureServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes the period-end IFRS 16 disclosure table for one administration.
@@ -51,7 +52,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class LeaseDisclosureService {
+class LeaseDisclosureService implements LeaseDisclosureServiceInterface {
 	/**
 	 * Asset classes disclosed, in stable order (REQ-LD-001).
 	 *

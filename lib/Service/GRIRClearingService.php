@@ -78,11 +78,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 09 of bookkeeping-purchase-order-3way: GR/IR clearing + settlement
@@ -128,7 +129,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class GRIRClearingService {
+class GRIRClearingService implements GRIRClearingServiceInterface {
 
 	/**
 	 * App-config key for the GR/IR clearing account number.

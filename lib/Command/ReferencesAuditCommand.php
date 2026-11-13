@@ -25,8 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
+use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\HrmqCostRateAdapter;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -86,13 +86,13 @@ class ReferencesAuditCommand extends Command {
 	 * Wire collaborators.
 	 *
 	 * @param ContainerInterface $container Container, for the lazy ObjectService resolve.
-	 * @param HrmqCostRateAdapter $humaniq The one place that knows humaniq's register slug.
+	 * @param HrmqCostRateAdapterInterface $humaniq The one place that knows humaniq's register slug.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly HrmqCostRateAdapter $humaniq,
+		private readonly HrmqCostRateAdapterInterface $humaniq,
 	) {
 		parent::__construct();
 	}//end __construct()

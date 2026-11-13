@@ -36,6 +36,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -66,13 +67,13 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param PaymentRequestPortalScope $portalScope The stamping rule the writers share.
+	 * @param PaymentRequestPortalScopeInterface $portalScope The stamping rule the writers share.
 	 */
 	public function __construct(
 		private readonly RegisterLocation $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
+		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
 	) {
 	}//end __construct()
 

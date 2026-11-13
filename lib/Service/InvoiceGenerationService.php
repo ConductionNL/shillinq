@@ -27,14 +27,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Drafting, validation, and GL posting of BillableInvoice rows.
@@ -45,7 +46,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InvoiceGenerationService {
+class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	/**
 	 * Wire collaborators for invoice drafting and posting.
 	 *

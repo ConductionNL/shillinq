@@ -27,6 +27,7 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Container\ContainerInterface;
@@ -65,7 +66,7 @@ final class AppHostRegistration {
 		// observability engine's `{"kind":"provider"}` metric descriptor.
 		$context->registerService(
 			'OCA\\OpenRegister\\AppHost\\IMetricsProvider::' . self::APP_ID,
-			static function (ContainerInterface $c): CustomerBridgeMetricsService {
+			static function (ContainerInterface $c): CustomerBridgeMetricsServiceInterface {
 				return $c->get(CustomerBridgeMetricsService::class);
 			}
 		);

@@ -14,6 +14,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\BbvAllocationValidationListener;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\EventDispatcher\Event;
@@ -110,7 +111,7 @@ final class BbvAllocationValidationListenerGoldenTest extends TestCase {
 		foreach ($params as $param) {
 			$type = (string)$param->getType();
 			$args[] = match ($type) {
-				ListenerSchemaResolver::class => $resolver,
+				ListenerSchemaResolver::class, ListenerSchemaResolverInterface::class => $resolver,
 				RegisterLocation::class => $settings,
 				LoggerInterface::class => $logger,
 				ContainerInterface::class => $this->container($objectService),

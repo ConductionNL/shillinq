@@ -38,9 +38,9 @@ use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\TransactionalGuardInterface;
 use OCA\Shillinq\Service\Booking\CalendarRows;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -76,7 +76,7 @@ class CalendarController extends Controller {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
 	 * @param IGroupManager $groupManager Nextcloud admin bypass for the booking guard.
-	 * @param ObjectTransitionRunner $transitions Runs the declared booking transitions.
+	 * @param ObjectTransitionRunnerInterface $transitions Runs the declared booking transitions.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -88,7 +88,7 @@ class CalendarController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 		private readonly IGroupManager $groupManager,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

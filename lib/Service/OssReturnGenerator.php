@@ -31,9 +31,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\OssReturnGeneratorInterface;
+use OCP\IAppConfig;
 
 /**
  * Generates draft OssReturn line items by aggregating OSS-eligible documents.
@@ -43,7 +44,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssReturnGenerator {
+class OssReturnGenerator implements OssReturnGeneratorInterface {
 	/**
 	 * Construct the generator with lazy DI of OpenRegister's ObjectService.
 	 *

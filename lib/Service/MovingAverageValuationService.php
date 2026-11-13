@@ -48,10 +48,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\MovingAverageValuationServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative moving-average engine driving {@see CogsPosterService}.
@@ -60,7 +61,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
  */
-class MovingAverageValuationService {
+class MovingAverageValuationService implements MovingAverageValuationServiceInterface {
 	/**
 	 * Construct the service.
 	 *

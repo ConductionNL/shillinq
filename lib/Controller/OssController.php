@@ -41,8 +41,8 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\OssRateResolver;
-use OCA\Shillinq\Service\OssReturnGenerator;
+use OCA\Shillinq\Kernel\Contracts\OssRateResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\OssReturnGeneratorInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,8 +62,8 @@ class OssController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param OssRateResolver $rateResolver Destination-country VAT-rate resolver.
-	 * @param OssReturnGenerator $returnGenerator Quarterly return draft generator.
+	 * @param OssRateResolverInterface $rateResolver Destination-country VAT-rate resolver.
+	 * @param OssReturnGeneratorInterface $returnGenerator Quarterly return draft generator.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IUserSession $userSession The user session.
 	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
@@ -72,8 +72,8 @@ class OssController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly OssRateResolver $rateResolver,
-		private readonly OssReturnGenerator $returnGenerator,
+		private readonly OssRateResolverInterface $rateResolver,
+		private readonly OssReturnGeneratorInterface $returnGenerator,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextServiceInterface $context,

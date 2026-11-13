@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTime;
-use OCA\Shillinq\Service\IcpFilingService;
+use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
 use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -58,14 +58,14 @@ class ViesOutageRetryJob extends TimedJob {
 	 * Construct the job and set its daily interval.
 	 *
 	 * @param ITimeFactory $time Time factory for the TimedJob base.
-	 * @param IcpFilingService $filingService ICP filing service (pending-outage scan).
+	 * @param IcpFilingServiceInterface $filingService ICP filing service (pending-outage scan).
 	 * @param ViesService $viesService VIES re-validation service.
 	 * @param INotificationManager $notifications Notification manager for escalation.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly IcpFilingService $filingService,
+		private readonly IcpFilingServiceInterface $filingService,
 		private readonly ViesService $viesService,
 		private readonly INotificationManager $notifications,
 		private readonly LoggerInterface $logger,

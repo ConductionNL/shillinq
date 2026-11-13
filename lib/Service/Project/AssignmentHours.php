@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Project;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -44,18 +45,8 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Sums the hours booked on an assignment and writes its hours budget.
  */
-class AssignmentHours {
+class AssignmentHours implements AssignmentHoursInterface {
 	use ReadsSourceRowsInBatches;
-
-	/**
-	 * The schema holding one booked hour, with `projectAssignmentId` and `hours`.
-	 */
-	public const HOUR_SCHEMA = 'UrenRegistratie';
-
-	/**
-	 * The assignment schema.
-	 */
-	public const ASSIGNMENT_SCHEMA = 'ProjectAssignment';
 
 	/**
 	 * The project schema the assignments point at with `projectId`.

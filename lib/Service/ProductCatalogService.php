@@ -74,6 +74,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -83,7 +84,7 @@ use Throwable;
  *
  * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
  */
-class ProductCatalogService {
+class ProductCatalogService implements ProductCatalogServiceInterface {
 	/**
 	 * Register slug the product master lives in (pipelinq owns it per REQ-SPVP-001).
 	 *
