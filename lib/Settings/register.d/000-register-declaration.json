@@ -110,6 +110,7 @@
                     "CddRecord",
                     "ChartOfAccountsMapping",
                     "ClaimsVoorzieningDetail",
+                    "ClearingGroup",
                     "CloseChecklistInstance",
                     "CloseChecklistTemplate",
                     "CloseMetrics",

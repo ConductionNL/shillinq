@@ -12072,6 +12072,138 @@
                     }
                 }
             }
+        },
+        "/open-items/accounts/{accountId}": {
+            "get": {
+                "operationId": "open-item-clearing-overview",
+                "summary": "What is open on an account kept by open item",
+                "description": "The uncleared posted lines of the account, its groups that do not net to zero or were reopened, and the suggested exact pairs (REQ-LOIC-001, REQ-LOIC-003, REQ-LOIC-004). An account outside the caller's administrations answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "open-item-clearing"
+                ],
+                "parameters": [
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The Account uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/open-items/clear": {
+            "post": {
+                "operationId": "open-item-clearing-clear",
+                "summary": "Clear selected lines into one group",
+                "description": "Clear posted lines of one open-item balance account against each other (REQ-LOIC-002). Lines outside the caller's administrations answer 404; a member without posting rights gets 403; unposted lines, lines on different accounts or administrations and lines already in a group answer 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "open-item-clearing"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "lineIds"
+                                ],
+                                "properties": {
+                                    "lineIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The ledger lines to clear, at least two, of one account kept by open item."
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Why the lines are cleared together."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/open-items/groups/{groupId}/undo": {
+            "post": {
+                "operationId": "open-item-clearing-undo",
+                "summary": "Undo a clearing",
+                "description": "Open the lines of a clearing group again and remove the group (REQ-LOIC-002). A group outside the caller's administrations answers 404; a member without posting rights gets 403. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "open-item-clearing"
+                ],
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ClearingGroup uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
         }
     },
     "components": {

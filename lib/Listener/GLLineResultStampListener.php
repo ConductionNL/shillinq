@@ -22,6 +22,11 @@
  * The write-back is a patch of the two stamp fields, made only when they
  * differ. A failure is logged and never blocks the posting.
  *
+ * A reversal also reopens every clearing group that holds a line of the
+ * reversed transaction (ledger-open-item-clearing design D4), so the group is
+ * listed again on the open items page. That runs on its own, so a failing
+ * stamp does not keep a group cleared, nor the other way round.
+ *
  * @category Listener
  * @package  OCA\Shillinq\Listener
  *
@@ -41,6 +46,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
+use OCA\Shillinq\Service\Ledger\OpenItemClearingService;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
@@ -49,7 +55,11 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Stamps ledger lines when their transaction posts or is reversed.
+ * Stamps ledger lines when their transaction posts or is reversed, and reopens
+ * the clearing groups of a reversed transaction's lines.
+ *
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+ * @spec openspec/changes/ledger-open-item-clearing/design.md (D4)
  *
  * @template-implements IEventListener<Event>
  */
@@ -58,14 +68,16 @@ class GLLineResultStampListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param GlLineResultStamps     $stamps         Writes the stamps.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves an entity's schema slug.
-	 * @param LoggerInterface        $logger         Logger.
+	 * @param GlLineResultStamps      $stamps         Writes the stamps.
+	 * @param ListenerSchemaResolver  $schemaResolver Resolves an entity's schema slug.
+	 * @param LoggerInterface         $logger         Logger.
+	 * @param OpenItemClearingService $clearing       Reopens clearing groups on a reversal.
 	 */
 	public function __construct(
 		private readonly GlLineResultStamps $stamps,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly OpenItemClearingService $clearing,
 	) {
 
 	}//end __construct()
@@ -115,10 +127,34 @@ class GLLineResultStampListener implements IEventListener {
 		}
 
 		if ($event->getTo() === 'reversed') {
+			$this->reopenClearings(transactionId: $transactionId);
 			$this->stamps->stampReversal(transactionId: $transactionId);
 		}
 
 	}//end onTransition()
+
+	/**
+	 * Reopen the clearing groups that hold a line of a reversed transaction.
+	 *
+	 * A failure is logged and does not stop the result stamps.
+	 *
+	 * @param string $transactionId The GLTransaction that moved to reversed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-open-item-clearing/design.md (D4)
+	 */
+	private function reopenClearings(string $transactionId): void {
+		try {
+			$this->clearing->reopenForTransaction(transactionId: $transactionId);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'GLLineResultStampListener: clearing groups not reopened',
+				['transactionId' => $transactionId, 'exception' => $e->getMessage()]
+			);
+		}
+
+	}//end reopenClearings()
 
 	/**
 	 * Stamp a line created under a transaction that is already posted.

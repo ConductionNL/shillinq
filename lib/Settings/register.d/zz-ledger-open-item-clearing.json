@@ -1,0 +1,373 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "ledger-open-item-clearing",
+    "adr": "ADR-037 modular register fragment; ADR-022 apps consume OpenRegister, no own CRUD; ADR-031 declarative balance",
+    "description": "Open item clearing (afletteren) on balance accounts, as designed in openspec/changes/ledger-open-item-clearing/design.md. Account gains openItemManaged, GLLine gains clearingGroupId, and ClearingGroup records which posted lines of one account were cleared against each other, by whom and when. The group's balanceCents is a calculation over the debit and credit totals the clearing service writes, so groups that do not net to zero are a plain filter. Named zz- so it merges after the fragments that set the Account and GLLine versions, whose last value wins the deep merge.",
+    "spec": "openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "Account": {
+        "version": "0.4.0",
+        "properties": {
+          "openItemManaged": {
+            "type": "boolean",
+            "default": false,
+            "title": "Kept by open item",
+            "description": "Whether the lines on this balance account are cleared against each other (afletteren), such as kruisposten, a tussenrekening or a rekening-courant. Only accounts of type assets, liabilities or equity can be cleared; the clearing service refuses any other account.",
+            "example": true
+          }
+        }
+      },
+      "GLLine": {
+        "version": "0.3.0",
+        "properties": {
+          "clearingGroupId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Clearing group",
+            "description": "The ClearingGroup this line is cleared in. Empty while the line is open. A line is in at most one group; undoing the group empties it again.",
+            "example": "a1b2c3d4-0000-4000-8000-000000000001"
+          }
+        }
+      },
+      "ClearingGroup": {
+        "slug": "ClearingGroup",
+        "icon": "LinkVariant",
+        "version": "0.1.0",
+        "title": "Clearing group",
+        "description": "Posted lines of one balance account that a person cleared against each other, with who cleared them and when. A group whose balance is not zero, or that was reopened because one of its transactions was reversed, stays listed as open.",
+        "x-schema-org": "schema:Collection",
+        "x-spec": "openspec/changes/ledger-open-item-clearing/specs/bookkeeping-general-ledger/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "accountNumber",
+          "lineIds",
+          "debitCents",
+          "creditCents",
+          "clearedBy",
+          "clearedAt",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The administration whose ledger the lines belong to.",
+            "example": "adm-consultancy-nl"
+          },
+          "accountNumber": {
+            "type": "string",
+            "title": "Account",
+            "description": "The balance account every line of the group is booked on.",
+            "example": "1950"
+          },
+          "lineIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "title": "Lines",
+            "description": "The ids of the ledger lines cleared in this group.",
+            "example": [
+              "f6d15d08-24f9-5cac-bbde-c0a4f81c3410",
+              "22bdb4fa-efad-5253-ab26-646c9a753a57"
+            ]
+          },
+          "debitCents": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Debit",
+            "description": "The sum of the debit lines in cents.",
+            "example": 500000
+          },
+          "creditCents": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Credit",
+            "description": "The sum of the credit lines in cents.",
+            "example": 500000
+          },
+          "balanceCents": {
+            "type": "integer",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Balance",
+            "description": "Debit minus credit in cents. Zero when the group nets to zero.",
+            "example": 0
+          },
+          "clearedBy": {
+            "type": "string",
+            "title": "Cleared by",
+            "description": "The user who cleared the lines.",
+            "example": "bookkeeper"
+          },
+          "clearedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Cleared at",
+            "description": "When the lines were cleared.",
+            "example": "2026-09-05T10:00:00+00:00"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "title": "Reason",
+            "description": "Why the lines were cleared together, for a group that does not net to zero especially.",
+            "example": "Spaaropdracht 0903"
+          },
+          "reopenedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Reopened at",
+            "description": "When a reversal of one of the group's transactions reopened the group.",
+            "example": "2026-09-20T09:00:00+00:00"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "cleared",
+              "reopened"
+            ],
+            "x-enum-labels": {
+              "cleared": "Cleared",
+              "reopened": "Reopened"
+            },
+            "default": "cleared",
+            "title": "State",
+            "description": "Cleared by a person, or reopened because a transaction of one of its lines was reversed.",
+            "example": "cleared"
+          }
+        },
+        "x-openregister-calculations": {
+          "balanceCents": {
+            "description": "Signed sum of the group's lines: debit positive, credit negative.",
+            "expression": "debitCents - creditCents",
+            "dependsOn": [
+              "debitCents",
+              "creditCents"
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "cleared",
+          "states": {
+            "cleared": {
+              "label": "Cleared",
+              "description": "A person cleared the lines against each other."
+            },
+            "reopened": {
+              "label": "Reopened",
+              "description": "A transaction of one of the lines was reversed; the group is listed again until it is undone."
+            }
+          },
+          "transitions": {
+            "reopen": {
+              "from": "cleared",
+              "to": "reopened",
+              "label": "Reopen"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who cleared which lines, who undid a clearing, and when a reversal reopened a group."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ]
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Account",
+        "slug": "acct-1950-kruisposten",
+        "id": "06fcd490-c43e-5a21-adb8-315d89c5e837"
+      },
+      "accountNumber": "1950",
+      "name": "Kruisposten",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active",
+      "openItemManaged": true,
+      "description": "Transfers between the bank and the savings account wait here until both sides are booked."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-spaaropdracht-0903-out",
+        "id": "c9ba2b5e-d866-5056-847e-9c749f0bfcdd"
+      },
+      "transactionNumber": "MEM-2026-0903",
+      "postingDate": "2026-09-03",
+      "periodId": "2026-09",
+      "currency": "EUR",
+      "description": "Transfer to savings",
+      "sourceReference": "Spaaropdracht 0903",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-spaaropdracht-0903-in",
+        "id": "150111d5-227f-5e9c-a494-26e080697947"
+      },
+      "transactionNumber": "MEM-2026-0904",
+      "postingDate": "2026-09-04",
+      "periodId": "2026-09",
+      "currency": "EUR",
+      "description": "Transfer arrived on savings",
+      "sourceReference": "Spaaropdracht 0903",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLTransaction",
+        "slug": "gltx-kasstorting-0910",
+        "id": "6ff42280-396a-58ad-9fcc-25b863218ace"
+      },
+      "transactionNumber": "MEM-2026-0910",
+      "postingDate": "2026-09-10",
+      "periodId": "2026-09",
+      "currency": "EUR",
+      "description": "Cash deposit",
+      "sourceReference": "Kasstorting 0910",
+      "state": "posted",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0903",
+        "id": "f6d15d08-24f9-5cac-bbde-c0a4f81c3410"
+      },
+      "transactionId": "c9ba2b5e-d866-5056-847e-9c749f0bfcdd",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "debit",
+      "amount": 5000,
+      "currency": "EUR",
+      "periodId": "2026-09",
+      "description": "Spaaropdracht 0903",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1100-0903"
+      },
+      "transactionId": "c9ba2b5e-d866-5056-847e-9c749f0bfcdd",
+      "lineNumber": 2,
+      "accountNumber": "1100",
+      "side": "credit",
+      "amount": 5000,
+      "currency": "EUR",
+      "periodId": "2026-09",
+      "description": "Spaaropdracht 0903",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0904",
+        "id": "22bdb4fa-efad-5253-ab26-646c9a753a57"
+      },
+      "transactionId": "150111d5-227f-5e9c-a494-26e080697947",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "credit",
+      "amount": 5000,
+      "currency": "EUR",
+      "periodId": "2026-09",
+      "description": "Spaaropdracht 0903",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1200-0904"
+      },
+      "transactionId": "150111d5-227f-5e9c-a494-26e080697947",
+      "lineNumber": 2,
+      "accountNumber": "1200",
+      "side": "debit",
+      "amount": 5000,
+      "currency": "EUR",
+      "periodId": "2026-09",
+      "description": "Spaaropdracht 0903",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1950-0910",
+        "id": "78b80b58-9c8e-5943-a9f3-1ed0d710c73a"
+      },
+      "transactionId": "6ff42280-396a-58ad-9fcc-25b863218ace",
+      "lineNumber": 1,
+      "accountNumber": "1950",
+      "side": "debit",
+      "amount": 250,
+      "currency": "EUR",
+      "periodId": "2026-09",
+      "description": "Kasstorting 0910",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "glline-1000-0910"
+      },
+      "transactionId": "6ff42280-396a-58ad-9fcc-25b863218ace",
+      "lineNumber": 2,
+      "accountNumber": "1000",
+      "side": "credit",
+      "amount": 250,
+      "currency": "EUR",
+      "periodId": "2026-09",
+      "description": "Kasstorting 0910",
+      "administrationId": "adm-consultancy-nl"
+    }
+  ]
+}

@@ -68,6 +68,10 @@
         {
             "appVersion": "0.5.7-unstable.20261111150000",
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261113120000",
+            "versionsSha256": "92c493a85a7f0368feb14a547fa1859f7b2c36c0fe2eb8a2063918f386d530c3"
         }
     ],
     "versions": {
@@ -79,7 +83,7 @@
         "schema:ARInvoice": "0.17.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
-        "schema:Account": "0.2.0",
+        "schema:Account": "0.4.0",
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
@@ -178,6 +182,7 @@
         "schema:CddRecord": "0.1.0",
         "schema:ChartOfAccountsMapping": "0.1.0",
         "schema:ClaimsVoorzieningDetail": "0.1.0",
+        "schema:ClearingGroup": "0.1.0",
         "schema:CloseChecklistInstance": "0.1.0",
         "schema:CloseChecklistTemplate": "0.1.0",
         "schema:CloseMetrics": "0.1.0",
@@ -280,7 +285,7 @@
         "schema:FundsTransfer": "0.1.0",
         "schema:FxRate": "0.1.0",
         "schema:FxRevaluationPosting": "0.1.0",
-        "schema:GLLine": "0.2.0",
+        "schema:GLLine": "0.3.0",
         "schema:GLTransaction": "0.3.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",
