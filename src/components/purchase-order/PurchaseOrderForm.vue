@@ -16,8 +16,15 @@
  the detail view (the actual transmission control lives on the detail view
  because the action requires a persisted PO with a complete approval chain).
 
+ A buyer can draw the order against an active framework agreement of the
+ supplier (REQ-PG-005): lines for products on the agreement show the agreed
+ price, and the form shows what is left under the ceiling after this order.
+ The server applies the agreed prices and the ceiling check itself; the form
+ only previews them and sends frameworkAgreementId.
+
  @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+ @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 -->
 <template>
 	<div class="po-form">
@@ -38,6 +45,29 @@
 					v-model="supplierId"
 					:label="t('shillinq', 'Supplier id')"
 					data-testid="po-form-supplier" />
+
+				<NcSelect
+					v-model="frameworkAgreementId"
+					:options="agreementOptions"
+					:inputLabel="t('shillinq', 'Framework agreement (optional)')"
+					:reduce="(o) => o.value"
+					:disabled="agreementOptions.length === 0"
+					data-testid="po-form-agreement" />
+
+				<p
+					v-if="agreementsError"
+					class="po-form__agreement-error"
+					data-testid="po-form-agreement-error">
+					{{ agreementsError }}
+				</p>
+
+				<p
+					v-if="ceilingLeft !== null"
+					class="po-form__ceiling-left"
+					data-testid="po-form-ceiling-left">
+					{{ t('shillinq', 'Left under the ceiling after this order') }}:
+					<strong>{{ formatMoney(ceilingLeft) }}</strong>
+				</p>
 
 				<NcTextField
 					v-model="costCenter"
@@ -97,7 +127,17 @@
 									:label="t('shillinq', 'Quantity')" />
 							</td>
 							<td>
+								<span
+									v-if="agreedPrice(line) !== null"
+									class="po-form__agreed-price"
+									:data-testid="`po-form-agreed-price-${idx}`">
+									{{ formatMoney(agreedPrice(line)) }}
+									<span class="po-form__agreed-price-note">{{
+										t('shillinq', 'Agreed price')
+									}}</span>
+								</span>
 								<NcInputField
+									v-else
 									v-model.number="line.unitPrice"
 									type="number"
 									step="0.01"
@@ -226,6 +266,9 @@ export default {
 			projectCode: '',
 			currency: 'EUR',
 			notes: '',
+			frameworkAgreementId: '',
+			agreements: [],
+			agreementsError: '',
 			lines: [this.emptyLine()],
 			approvalChain: [],
 			administrationOptions: [],
@@ -247,9 +290,51 @@ export default {
 			}
 			return cents / 100
 		},
+
+		/**
+		 * The supplier's active agreements as picker options.
+		 *
+		 * @return {Array<{value: string, label: string}>} The options.
+		 */
+		agreementOptions() {
+			return this.agreements.map((agreement) => {
+				const value = this.agreementKey(agreement)
+				return {
+					value,
+					label: agreement.title ? `${agreement.title} (${value})` : value,
+				}
+			})
+		},
+
+		/**
+		 * What is left under the picked agreement's ceiling once this order is
+		 * drawn, in euro; null without an agreement.
+		 *
+		 * @return {number|null} The amount left.
+		 */
+		ceilingLeft() {
+			const agreement = this.pickedAgreement()
+			if (!agreement) {
+				return null
+			}
+			const leftCents = (Number(agreement.ceilingAmount) || 0)
+				- (Number(agreement.drawnAmount) || 0)
+				- Math.round(this.total * 100)
+			return leftCents / 100
+		},
 	},
 
 	watch: {
+		// The agreements on offer are those of the chosen supplier in the
+		// chosen administration.
+		administrationId() {
+			this.loadAgreements()
+		},
+
+		supplierId() {
+			this.loadAgreements()
+		},
+
 		// Refresh the chain preview whenever the total changes, debounced by Vue's
 		// reactivity batching. Server-authoritative — never compute locally.
 		total: {
@@ -288,8 +373,93 @@ export default {
 
 		lineTotal(line) {
 			const qty = Number(line.quantity) || 0
-			const unit = Number(line.unitPrice) || 0
+			const agreed = this.agreedPrice(line)
+			const unit = agreed !== null ? agreed : Number(line.unitPrice) || 0
 			return Math.round(qty * unit * 100) / 100
+		},
+
+		/**
+		 * The identifier an agreement is picked and sent by.
+		 *
+		 * @param {object} agreement A FrameworkAgreement record.
+		 * @return {string} Its agreement number, or its id.
+		 */
+		agreementKey(agreement) {
+			return agreement.agreementNumber || agreement.id || ''
+		},
+
+		/**
+		 * The picked agreement, if it is still on offer.
+		 *
+		 * @return {object|null} The FrameworkAgreement record.
+		 */
+		pickedAgreement() {
+			if (!this.frameworkAgreementId) {
+				return null
+			}
+			return this.agreements.find(
+				(agreement) => this.agreementKey(agreement) === this.frameworkAgreementId,
+			) || null
+		},
+
+		/**
+		 * The agreed unit price of a line's product under the picked
+		 * agreement, in euro; null when there is none.
+		 *
+		 * @param {object} line A form line.
+		 * @return {number|null} The agreed price.
+		 */
+		agreedPrice(line) {
+			const agreement = this.pickedAgreement()
+			const code = String(line.productCode || '').trim()
+			if (!agreement || code === '') {
+				return null
+			}
+			const price = (agreement.agreedPrices || []).find(
+				(entry) => entry && String(entry.productCode || '').trim() === code,
+			)
+			if (!price || !Number.isFinite(Number(price.unitAmount))) {
+				return null
+			}
+			return Number(price.unitAmount) / 100
+		},
+
+		/**
+		 * Load the active framework agreements of the chosen supplier, and
+		 * drop a picked agreement that is no longer on offer.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async loadAgreements() {
+			this.agreementsError = ''
+			if (!this.administrationId || !this.supplierId) {
+				this.agreements = []
+				this.frameworkAgreementId = ''
+				return
+			}
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/openregister/api/objects/shillinq/FrameworkAgreement'),
+					{
+						params: {
+							administrationId: this.administrationId,
+							supplierId: this.supplierId,
+							statusCode: 'active',
+						},
+					},
+				)
+				const rows = response.data?.results || []
+				this.agreements = Array.isArray(rows) ? rows : []
+			} catch {
+				this.agreements = []
+				this.agreementsError = this.t(
+					'shillinq',
+					'Failed to load framework agreements',
+				)
+			}
+			if (!this.pickedAgreement()) {
+				this.frameworkAgreementId = ''
+			}
 		},
 
 		formatMoney(amount) {
@@ -385,6 +555,12 @@ export default {
 					'Purchase order total must be positive',
 				)
 			}
+			if (this.ceilingLeft !== null && this.ceilingLeft < 0) {
+				return this.t(
+					'shillinq',
+					'This order exceeds the ceiling of the framework agreement',
+				)
+			}
 			return ''
 		},
 
@@ -399,6 +575,9 @@ export default {
 					currency: this.currency,
 					notes: this.notes,
 					lines: this.lines,
+					...(this.frameworkAgreementId
+						? { frameworkAgreementId: this.frameworkAgreementId }
+						: {}),
 				},
 			)
 			const id = createdRecordId(response.data || {}, 'poNumber')
@@ -471,6 +650,20 @@ export default {
 
 .po-form__chain-status--pending {
 	color: var(--color-warning, #c93);
+}
+
+.po-form__agreed-price {
+	display: inline-flex;
+	flex-direction: column;
+}
+
+.po-form__agreed-price-note {
+	color: var(--color-text-maxcontrast);
+	font-size: var(--font-size-small, 13px);
+}
+
+.po-form__agreement-error {
+	color: var(--color-text-error, var(--color-error));
 }
 
 .po-form__error {
