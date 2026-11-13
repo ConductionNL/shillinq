@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAppGrantInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
@@ -47,7 +48,6 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
-use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCP\IAppConfig;
@@ -71,7 +71,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param ObjectPaymentRequestValidator $validator The conditional shape and the uniqueness invariant.
+	 * @param ObjectPaymentRequestValidatorInterface $validator The conditional shape and the uniqueness invariant.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param PaymentActionAuthorizerInterface $authorizer Whether the caller carries payment.request.
 	 * @param FeeScheduleServiceInterface $feeSchedules The published fee for the host object's type.
@@ -86,7 +86,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly ObjectPaymentRequestValidator $validator,
+		private readonly ObjectPaymentRequestValidatorInterface $validator,
 		private readonly IAppConfig $appConfig,
 		private readonly PaymentActionAuthorizerInterface $authorizer,
 		private readonly FeeScheduleServiceInterface $feeSchedules,

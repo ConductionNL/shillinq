@@ -34,6 +34,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
 
 /**
  * Reads the payment requests on one subject across every page.
@@ -67,14 +68,14 @@ final class PaymentRequestFinder implements PaymentRequestFinderInterface {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param ObjectPaymentRequestValidator $validator The subject key.
+	 * @param ObjectPaymentRequestValidatorInterface $validator The subject key.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly ObjectPaymentRequestValidator $validator,
+		private readonly ObjectPaymentRequestValidatorInterface $validator,
 		private readonly IAppConfig $appConfig,
 	) {
 	}//end __construct()

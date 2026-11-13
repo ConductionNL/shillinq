@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener\Registration;
 
+use OCA\Shillinq\Lifecycle\CommitmentGuardServices;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**

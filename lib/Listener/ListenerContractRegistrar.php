@@ -23,6 +23,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Kernel\Contracts\PeppolDeliveryStatusListenerInterface;
 use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
+use OCA\Shillinq\Kernel\Contracts\TenderNedAwardDetectedListenerInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -56,5 +57,6 @@ final class ListenerContractRegistrar {
 	public function register(IRegistrationContext $context): void {
 		$context->registerServiceAlias(PeppolDeliveryStatusListenerInterface::class, PeppolDeliveryStatusListener::class);
 		$context->registerServiceAlias(PosStockDecrementListenerInterface::class, PosStockDecrementListener::class);
+		$context->registerServiceAlias(TenderNedAwardDetectedListenerInterface::class, TenderNedAwardDetectedListener::class);
 	}//end register()
 }//end class

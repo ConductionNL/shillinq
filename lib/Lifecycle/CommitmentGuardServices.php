@@ -10,8 +10,8 @@
  * CommitmentGuardAdapter, not RegisterRequiresGuardAdapter. Kept out of
  * Application so that class stays under the length the gate allows.
  *
- * @category Listener
- * @package  OCA\Shillinq\Listener\Registration
+ * @category Lifecycle
+ * @package  OCA\Shillinq\Lifecycle
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -27,12 +27,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Listener\Registration;
+namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\CommitmentGuardAdapter;
-use OCA\Shillinq\Lifecycle\MandateEnforcer;
-use OCA\Shillinq\Service\Commitment\CommitmentLedger;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Log\LoggerInterface;
 
@@ -78,7 +75,7 @@ final class CommitmentGuardServices {
 						guard: $c->get($guardClass),
 						method: $method,
 						denyMessage: $denyMessage,
-						ledger: $c->get(CommitmentLedger::class),
+						ledger: $c->get(CommitmentLedgerInterface::class),
 						logger: $c->get(LoggerInterface::class),
 					);
 				}
