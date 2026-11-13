@@ -11,7 +11,7 @@
  * @version   GIT: <git_id>
  * @link      https://github.com/ConductionNL/shillinq
  *
- * @spec openspec/specs/method-decomposition/spec.md
+ * @spec exclude Structural contract wiring, no functional requirement.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -139,7 +139,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  *
- * @spec openspec/specs/method-decomposition/spec.md
+ * @spec exclude Structural contract wiring, no functional requirement.
  */
 final class ContractRegistrar {
 
@@ -150,7 +150,7 @@ final class ContractRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/method-decomposition/spec.md
+	 * @spec exclude Structural contract wiring, no functional requirement.
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerServiceAlias(AansluitingServiceInterface::class, AansluitingService::class);

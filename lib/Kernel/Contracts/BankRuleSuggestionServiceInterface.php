@@ -14,7 +14,7 @@
  * @version   GIT: <git_id>
  * @link      https://github.com/ConductionNL/shillinq
  *
- * @spec openspec/specs/method-decomposition/spec.md
+ * @spec exclude Structural contract, no functional requirement.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
