@@ -68,6 +68,10 @@
         {
             "appVersion": "0.5.7-unstable.20261111150000",
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261113190000",
+            "versionsSha256": "b861a4d7f0ce6de6d0d4aae97f9c39005062ca895ff2e07ec903ad998b23a10e"
         }
     ],
     "versions": {
@@ -467,7 +471,7 @@
         "schema:ReconciliationBridge": "0.1.0",
         "schema:ReconciliationMatch": "0.2.0",
         "schema:ReconciliationReport": "0.1.0",
-        "schema:RecurringInvoiceProfile": "0.1.0",
+        "schema:RecurringInvoiceProfile": "0.2.0",
         "schema:ReimbursementPolicy": "0.1.0",
         "schema:ReinvestmentReserve": "0.1.0",
         "schema:RenteRisicoNorm": "0.1.0",

@@ -220,6 +220,30 @@ final class RecurringInvoiceGeneratorTest extends TestCase {
 	}//end testDueProfileGeneratesOrdinaryInvoice()
 
 	/**
+	 * A profile linked to its CustomerMaster bills that customer; an unlinked
+	 * one keeps billing its contact reference (sales-cancellation, REQ-SCX-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 */
+	public function testTheGeneratedInvoiceBillsTheLinkedCustomer(): void {
+		$payload = static fn (array $profile): array => RecurringInvoiceGenerator::buildArInvoicePayload(
+			profile: $profile,
+			profileId: 'prof-1',
+			billingPeriod: '2026-10',
+			periodStart: '2026-10-01',
+			issueDate: '2026-10-01',
+			dueDate: '2026-10-31',
+			language: 'nl'
+		);
+
+		$this->assertSame('cm-42', $payload($this->profile(['customerMasterId' => ' cm-42 ']))['customerId']);
+		$this->assertSame('contact:acme', $payload($this->profile())['customerId']);
+		$this->assertSame('contact:acme', $payload($this->profile(['customerMasterId' => '']))['customerId']);
+	}//end testTheGeneratedInvoiceBillsTheLinkedCustomer()
+
+	/**
 	 * A generated invoice carries its lines as `invoiceLines` in the EN 16931
 	 * shape ARInvoice declares. The former `lines` was dropped by OpenRegister,
 	 * so every generated invoice arrived without lines (REQ-RIN-009).

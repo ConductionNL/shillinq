@@ -6866,7 +6866,9 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Customer record": "Klantrecord",
+        "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice.": "De financiële klant die dit profiel factureert, afgeleid van het contact. Wordt overgenomen in elke gemaakte factuur."
     },
     "nplurals=2; plural=(n != 1);"
 )
