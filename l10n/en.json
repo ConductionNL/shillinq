@@ -4688,7 +4688,17 @@
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "An administrator can show record types they added to the shillinq register in Open Register, in the shillinq admin settings.": "An administrator can show record types they added to the shillinq register in Open Register, in the shillinq admin settings.",
+        "No own records yet": "No own records yet",
+        "Open own records": "Open own records",
+        "Own record types": "Own record types",
+        "Own records": "Own records",
+        "Own record": "Own record",
+        "Show record types you added to the shillinq register in Open Register, each with its own list in shillinq.": "Show record types you added to the shillinq register in Open Register, each with its own list in shillinq.",
+        "The record type \"{type}\" is not available in shillinq.": "The record type \"{type}\" is not available in shillinq.",
+        "Show in shillinq": "Show in shillinq",
+        "No own record types yet. Add a schema to the shillinq register in Open Register first.": "No own record types yet. Add a schema to the shillinq register in Open Register first."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

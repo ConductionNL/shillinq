@@ -148,6 +148,10 @@
             "description": "Raises school contributions in bulk."
         },
         {
+            "name": "custom-record-types",
+            "description": "Own record types: schemas an administrator added to the shillinq register."
+        },
+        {
             "name": "d-ba",
             "description": "DBA Compliance Marker endpoint façade."
         },
@@ -3596,6 +3600,170 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/custom-record-types": {
+            "get": {
+                "operationId": "custom-record-types-index",
+                "summary": "GET the own record types shown in shillinq",
+                "description": "GET the own record types an administrator chose to show: `types`, each with slug, title, description and icon. Own record types are schemas of the shillinq register that the app did not ship. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "custom-record-types-update",
+                "summary": "PUT the list of shown own record types",
+                "description": "PUT the complete list of shown own record types as `shown` (a list of schema slugs). Refuses a slug that ships with shillinq or does not exist in the register. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "shown": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The schema slugs to show."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "custom-record-types-toggle",
+                "summary": "PATCH one own record type on or off",
+                "description": "PATCH one own record type on or off: `slug` and `shown` (boolean). Other shown types stay as they are. Refuses a slug that ships with shillinq or does not exist in the register. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "The schema slug."
+                                    },
+                                    "shown": {
+                                        "type": "boolean",
+                                        "description": "Whether to show it."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/custom-record-types/available": {
+            "get": {
+                "operationId": "custom-record-types-available",
+                "summary": "GET every own record type with its switch",
+                "description": "GET every own record type of the shillinq register as `types` (with `shown`), and `shown` as a map of slug to boolean. Administrators only.",
+                "tags": [
+                    "custom-record-types"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
                     }
                 }
             }

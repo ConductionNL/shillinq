@@ -31,6 +31,7 @@ import { attachManifestActions, manifestActions } from './manifestActions.js'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { customRecordGuard } from './utils/customRecordTypes.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
@@ -284,6 +285,11 @@ router.beforeEach((to, from, next) => {
 
 	loadFragment(fragmentStem).then(() => next())
 })
+
+// platform-custom-record-types (REQ-CRT-003): the generic /records/:schema
+// pages open only record types an administrator chose to show; any other
+// slug goes to the own records page, which says it is not available.
+router.beforeEach(customRecordGuard())
 
 tryLoadTranslations()
 

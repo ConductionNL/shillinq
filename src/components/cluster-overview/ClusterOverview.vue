@@ -96,10 +96,12 @@ export default {
 		},
 
 		/**
-		 * Card sections: `[{ id, label, cards: [{ id, label, description?, route, query? }] }]`.
+		 * Card sections: `[{ id, label, cards: [{ id, label, description?, route, params?, query? }] }]`.
 		 * `route` names a manifest page id (vue-router route name); `query` is an
 		 * optional plain object merged into the router-link target — the same
 		 * shape as a `menu[].query` preset (design.md §4's MERGE-row deep links).
+		 * `params` fills the target route's path params, for a card that opens
+		 * one page per value (platform-custom-record-types: `/records/:schema`).
 		 */
 		sections: {
 			type: Array,
@@ -115,14 +117,19 @@ export default {
 		 * `menu[].query` (@conduction/nextcloud-vue/src/components/CnAppNav/
 		 * CnAppNav.vue).
 		 *
-		 * @param {{route: string, query?: object}} card The card descriptor.
-		 * @return {{name: string, query?: object}} The router-link target.
+		 * @param {{route: string, params?: object, query?: object}} card The card descriptor.
+		 * @return {{name: string, params?: object, query?: object}} The router-link target.
 		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
 		 */
 		cardTo(card) {
-			return card.query
-				? { name: card.route, query: card.query }
-				: { name: card.route }
+			const target = { name: card.route }
+			if (card.params) {
+				target.params = card.params
+			}
+			if (card.query) {
+				target.query = card.query
+			}
+			return target
 		},
 	},
 }

@@ -50,6 +50,7 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 import PipelinqIntegration from './PipelinqIntegration.vue'
 import Settings from './Settings.vue'
+import customRecordTypesFragment from '../../manifest.d/platform-custom-record-types.json'
 import requiredFieldsFragment from '../../manifest.d/platform-required-fields.json'
 import { initializeStores } from '../../store/store.js'
 
@@ -110,6 +111,18 @@ export default {
 					linkLabel: this.t('shillinq', 'Manage required fields'),
 					href: generateUrl('/apps/shillinq/settings/required-fields'),
 					widget: requiredFieldsFragment.adminTab.widget,
+				},
+				{
+					id: 'custom-record-types',
+					name: this.t('shillinq', 'Own records'),
+					description: this.t(
+						'shillinq',
+						'Show record types you added to the shillinq register in Open Register, each with its own list in shillinq.',
+					),
+
+					linkLabel: this.t('shillinq', 'Open own records'),
+					href: generateUrl('/apps/shillinq/records'),
+					widget: customRecordTypesFragment.adminTab.widget,
 				},
 				{
 					id: 'connections',

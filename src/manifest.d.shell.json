@@ -5037,6 +5037,40 @@
 		{
 			"menu": [
 				{
+					"id": "CustomRecordTypes",
+					"label": "Own records",
+					"icon": "DatabaseOutline",
+					"route": "CustomRecordTypes",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-custom-record-types",
+					"id": "CustomRecordTypes",
+					"route": "/records",
+					"type": "custom",
+					"title": "Own records"
+				},
+				{
+					"_fragment": "platform-custom-record-types",
+					"id": "CustomRecords",
+					"route": "/records/:schema",
+					"type": "index",
+					"title": "Own records"
+				},
+				{
+					"_fragment": "platform-custom-record-types",
+					"id": "CustomRecordDetail",
+					"route": "/records/:schema/:id",
+					"type": "detail",
+					"title": "Own record"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RequiredFields",
 					"label": "Required fields",
 					"icon": "TextBoxCheckOutline",

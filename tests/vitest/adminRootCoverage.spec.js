@@ -101,9 +101,9 @@ describe('AdminRoot render', () => {
 			breadcrumbNote: 'only for administrators, each section saves on its own',
 			docUrl: 'https://shillinq.conduction.nl/docs/intro',
 		})
-		expect(shell.attrs.tabs.map((tab) => [tab.id, tab.count])).toEqual([['general', undefined], ['required-fields', 3], ['connections', undefined], ['appointments', undefined]])
+		expect(shell.attrs.tabs.map((tab) => [tab.id, tab.count])).toEqual([['general', undefined], ['required-fields', 3], ['custom-record-types', undefined], ['connections', undefined], ['appointments', undefined]])
 		expect(shell.attrs.breadcrumbs.map((crumb) => crumb.label)).toEqual(['Administration settings', 'Shillinq', 'General'])
-		expect(Object.keys(shell.slots)).toEqual(['default', 'tab-required-fields', 'tab-connections', 'tab-appointments'])
+		expect(Object.keys(shell.slots)).toEqual(['default', 'tab-required-fields', 'tab-custom-record-types', 'tab-connections', 'tab-appointments'])
 	})
 
 	it('shows the embedded settings forms only once the stores are ready', async () => {
@@ -124,20 +124,24 @@ describe('AdminRoot render', () => {
 		const sections = named('CnSettingsSection')
 		expect(sections.map((entry) => [entry.attrs['data-testid'], entry.attrs.name, entry.attrs.wide])).toEqual([
 			['admin-section-required-fields', 'Required fields', ''],
+			['admin-section-custom-record-types', 'Own records', ''],
 			['admin-section-connections', 'Connections', ''],
 			['admin-section-appointments', 'Appointments', ''],
 		])
-		expect(sections[1].attrs.description).toBe('See which connections work before you rely on them.')
+		expect(sections[2].attrs.description).toBe('See which connections work before you rely on them.')
 		const components = (nodes) => nodes.filter((node) => typeof node.type === 'object').map((node) => node.type.name)
 		expect(components(sections[0].slots.default)).toEqual(['CnToggleTableWidget', 'NcButton'])
-		expect(components(sections[1].slots.default)).toEqual(['NcButton'])
+		expect(components(sections[1].slots.default)).toEqual(['CnToggleTableWidget', 'NcButton'])
+		expect(components(sections[2].slots.default)).toEqual(['NcButton'])
 
 		const widgets = named('CnToggleTableWidget')
-		expect(widgets).toHaveLength(1)
+		expect(widgets).toHaveLength(2)
 		expect(widgets[0].attrs.content.bind.schema).toBe('FieldRequirement')
+		expect(widgets[1].attrs.content.bind).toEqual({ mode: 'map', url: '/apps/shillinq/api/custom-record-types/available', path: 'shown' })
 
 		expect(named('NcButton').map((entry) => [entry.attrs.href, entry.slots.default[0].children])).toEqual([
 			['/index.php/apps/shillinq/settings/required-fields', 'Manage required fields'],
+			['/index.php/apps/shillinq/records', 'Open own records'],
 			['/index.php/apps/shillinq/external-adapters', 'Open the connections'],
 			['/index.php/apps/shillinq/settings/booking-widget-keys', 'Manage widget keys'],
 		])
