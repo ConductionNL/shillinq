@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Repair;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\IConfig;
 use OCP\Migration\IOutput;

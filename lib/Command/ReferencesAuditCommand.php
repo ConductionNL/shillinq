@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Command;
 
 use OCA\Shillinq\Kernel\Contracts\HrmqCostRateAdapterInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;

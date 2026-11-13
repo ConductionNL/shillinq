@@ -40,7 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Kernel\Model;
 
 use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 
 /**
  * Immutable envelope: page of {@see KlantbeeldTransaction} + meta.

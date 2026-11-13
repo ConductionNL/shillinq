@@ -64,7 +64,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\GlLineAdministrationBackfillMigratorInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;

@@ -80,6 +80,7 @@ use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 
 /**
  * Resilient HTTP transport for pipelinq calls.
