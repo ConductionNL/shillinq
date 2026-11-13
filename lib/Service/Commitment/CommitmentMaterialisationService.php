@@ -322,7 +322,7 @@ class CommitmentMaterialisationService implements CommitmentMaterialisationServi
 	private function refuseUnfunded(CommitmentSource $source): void {
 		if ($source->failClosed === true) {
 			throw new InsufficientCommitmentBudgetException(
-				sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
+				message: sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
 			);
 		}
 
