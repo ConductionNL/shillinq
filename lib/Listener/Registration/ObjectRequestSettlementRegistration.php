@@ -7,8 +7,8 @@
  * debtor's receipt mail (REQ-ORS-005) and the bank match (REQ-ORS-003/004). Kept out of
  * Application.php, which sits at its phpmd length limit.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Listener
+ * @package  OCA\Shillinq\Listener\Registration
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Listener\Registration;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;

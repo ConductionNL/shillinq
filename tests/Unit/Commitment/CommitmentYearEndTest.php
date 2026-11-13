@@ -26,7 +26,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
-use OCA\Shillinq\AppInfo\CommitmentGuardServices;
+use OCA\Shillinq\Listener\Registration\CommitmentGuardServices;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;

@@ -10,8 +10,8 @@
  * REQ-RSR-002). Kept out of Application so that class stays under its
  * length limit.
  *
- * @category AppInfo
- * @package  OCA\Shillinq\AppInfo
+ * @category Listener
+ * @package  OCA\Shillinq\Listener\Registration
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -27,12 +27,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\AppInfo;
+namespace OCA\Shillinq\Listener\Registration;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCA\Shillinq\Notification\ScheduledReportNotifier;
+use OCA\Shillinq\Dashboard\DashboardWidgetRegistration;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
