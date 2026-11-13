@@ -276,4 +276,30 @@ final class ArInvoiceUblMapperTest extends TestCase {
 		self::assertSame('700.00', (string)$doc->xpath('/*/cac:LegalMonetaryTotal/cbc:LineExtensionAmount')[0], 'BR-CO-10');
 
 	}//end testAFinalInvoiceCarriesTheDeductionAndTheBillingReference()
+	/**
+	 * Malformed list entries (non-array lines, VAT groups and references, or a
+	 * reference without a number) are skipped: the document is the one the
+	 * well-formed entries alone produce.
+	 *
+	 * @return void
+	 */
+	public function testMalformedListEntriesAreSkipped(): void {
+		$clean = array_merge(
+			$this->issuedInvoice(),
+			['precedingInvoiceReferences' => [['reference' => '2026-0030', 'issueDate' => '2026-05-01']]]
+		);
+
+		$noisy = $clean;
+		$noisy['invoiceLines'][] = 'not-a-line';
+		$noisy['vatBreakdown'][] = 42;
+		$noisy['precedingInvoiceReferences'][] = 'not-a-reference';
+		$noisy['precedingInvoiceReferences'][] = ['reference' => '   ', 'issueDate' => '2026-04-01'];
+
+		$mapper = new ArInvoiceUblMapper();
+		$xml    = $mapper->toNlciusXml(arInvoice: $noisy);
+
+		self::assertSame($mapper->toNlciusXml(arInvoice: $clean), $xml);
+		self::assertSame(1, substr_count($xml, '<cac:BillingReference>'));
+
+	}//end testMalformedListEntriesAreSkipped()
 }//end class
