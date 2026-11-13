@@ -7,7 +7,7 @@
       "InvestmentAsset": {
         "slug": "InvestmentAsset",
         "icon": "SolarPower",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "InvestmentAsset",
         "description": "A capitalised asset eligible for one or more investeringsaftrek schemes (KIA/EIA/MIA/Vamil) per Wet IB 2001 art. 3.40-3.47. 1-to-1 with FixedAsset (fixedAssetId). Eligibility is classified at capitalisation against the four schemes; the RvO meldingstermijn deadline is derived from opdrachtverleningDatum. Introduced by the bookkeeping-investeringsaftrek change (T4).",
         "x-schema-org": "schema:Thing",
@@ -170,6 +170,37 @@
               }
             },
             "title": "Eligibility Override"
+          },
+          "eligibilityReasons": {
+            "type": "object",
+            "nullable": true,
+            "description": "Why the asset does or does not qualify, per scheme (kia, eia, mia, vamil), as worked out when the fixed asset became active; an override shows its own reason (REQ-IDC-001).",
+            "properties": {
+              "kia": {
+                "type": "string",
+                "title": "KIA",
+                "description": "The reason for KIA."
+              },
+              "eia": {
+                "type": "string",
+                "title": "EIA",
+                "description": "The reason for EIA."
+              },
+              "mia": {
+                "type": "string",
+                "title": "MIA",
+                "description": "The reason for MIA."
+              },
+              "vamil": {
+                "type": "string",
+                "title": "Vamil",
+                "description": "The reason for Vamil."
+              }
+            },
+            "example": {
+              "kia": "KIA: in aanmerking (binnen drempel en plafond)"
+            },
+            "title": "Eligibility reasons"
           },
           "rvoReportStatus": {
             "type": "string",
@@ -441,7 +472,7 @@
       "InvesteringsaftrekClaim": {
         "slug": "InvesteringsaftrekClaim",
         "icon": "CashRefund",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "InvesteringsaftrekClaim",
         "description": "One claim per (asset, scheme, boekjaar) combination. Carries the grondslag, percentage and computed aftrekbedrag, plus the ingediend -> definitief lifecycle and the async RvO beschikking. Vrijwillige verlaging is tracked separately from the legal entitlement. Introduced by bookkeeping-investeringsaftrek.",
         "x-schema-org": "schema:Thing",
@@ -506,13 +537,14 @@
           "status": {
             "type": "string",
             "enum": [
+              "draft",
               "submitted",
               "final"
             ],
             "default": "submitted",
             "example": "submitted",
             "title": "Status",
-            "description": "The current status of this record."
+            "description": "The current status of this record. A draft is a calculated claim not yet used in a tax return; recalculating the year replaces it."
           },
           "submittedInTaxReturn": {
             "type": "boolean",

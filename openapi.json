@@ -462,6 +462,10 @@
         {
             "name": "widget-settings",
             "description": "Admin endpoints to generate, rotate, and revoke widget API keys."
+        },
+        {
+            "name": "investment-deduction",
+            "description": "The yearly investment deduction (KIA, EIA, MIA) claims."
         }
     ],
     "paths": {
@@ -1332,6 +1336,73 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/investment-deductions/{year}/calculate": {
+            "post": {
+                "operationId": "investment_deduction-calculate",
+                "summary": "Recalculate a year's investment deduction claims",
+                "description": "Work out the year's KIA, EIA and MIA deduction from the eligible assets acquired in that year and that year's tables, and write them as draft claims; a claim already used in a tax return is left as it is (REQ-IDC-002). Takes the administrationId from the body, else the active administration. Needs the right to post in that administration; anyone else receives a masked 404. A year without KIA tiers is refused with 422. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "investment-deduction"
+                ],
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "required": true,
+                        "description": "The year.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration; the active one when left out."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"

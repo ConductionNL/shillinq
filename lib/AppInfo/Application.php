@@ -75,6 +75,7 @@ use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
+use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
@@ -1294,6 +1295,20 @@ class Application extends App implements IBootstrap {
 		// Interest declared up front: the handler's own
 		// `isLeaseContractSchema()` accepts `leasecontract` or
 		// `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
+		// tax-investment-deduction-claims REQ-IDC-001: an active fixed asset
+		// gets its investment deduction eligibility recorded.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectCreatedEvent::class,
+			listener: InvestmentAssetListener::class,
+			schemas: ['FixedAsset']
+		);
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: InvestmentAssetListener::class,
+			schemas: ['FixedAsset']
+		);
 		$this->registerFilteredObjectListener(
 			dispatcher: $dispatcher,
 			event: ObjectCreatedEvent::class,

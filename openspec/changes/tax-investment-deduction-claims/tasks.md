@@ -4,9 +4,9 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `InvestmentAssetListener` creating or updating the `InvestmentAsset` on activation, keeping a manual override (REQ-IDC-001). Verify: PHPUnit with the real event classes; the payload validated against the real register fragment.
-- [ ] 1.2 `InvestmentDeductionService::calculateYear` writing draft claims, refusing a year without tables (REQ-IDC-002). Verify: PHPUnit with the 2026 seed tiers.
-- [ ] 1.3 `POST /api/investment-deductions/{year}/calculate` with route auth and the administration check (REQ-IDC-002). Verify: PHPUnit; route-auth and IDOR gates.
+- [x] 1.1 `InvestmentAssetListener` creating or updating the `InvestmentAsset` on activation, keeping a manual override (REQ-IDC-001). Verify: PHPUnit with the real event classes; the payload validated against the real register fragment.
+- [x] 1.2 `InvestmentDeductionService::calculateYear` writing draft claims, refusing a year without tables (REQ-IDC-002). Verify: PHPUnit with the 2026 seed tiers.
+- [x] 1.3 `POST /api/investment-deductions/{year}/calculate` with route auth and the administration check (REQ-IDC-002). Verify: PHPUnit; route-auth and IDOR gates.
 
 ## 2. Pages
 

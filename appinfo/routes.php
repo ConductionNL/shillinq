@@ -158,6 +158,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
             ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
             ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+            ['name' => 'investment_deduction#calculate', 'url' => '/api/investment-deductions/{year}/calculate', 'verb' => 'POST'],
             ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
             ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
