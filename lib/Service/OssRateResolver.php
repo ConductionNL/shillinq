@@ -36,9 +36,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\OssRateResolverInterface;
+use OCP\IAppConfig;
 
 /**
  * Resolves destination-country VAT rates from the seeded EuVatRate (TEDB) table.
@@ -50,7 +51,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssRateResolver {
+class OssRateResolver implements OssRateResolverInterface {
 	/**
 	 * The set of NL-neighbouring EU member-state ISO codes the OSS scheme covers.
 	 *

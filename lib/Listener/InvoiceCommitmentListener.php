@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -56,12 +56,12 @@ class InvoiceCommitmentListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param CommitmentInvoicingInterface    $invoicing      The invoice to commitment booking.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema slug.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema slug.
 	 * @param LoggerInterface        $logger         Fail-soft log.
 	 */
 	public function __construct(
 		private readonly CommitmentInvoicingInterface $invoicing,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

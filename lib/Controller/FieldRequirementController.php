@@ -22,7 +22,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\Platform\FieldRequirements;
+use OCA\Shillinq\Kernel\Contracts\FieldRequirementsInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -42,12 +42,12 @@ class FieldRequirementController extends Controller {
 	 *
 	 * @param IRequest                     $request      The request.
 	 * @param AdministrationContextServiceInterface $context      The caller's administrations.
-	 * @param FieldRequirements            $requirements The requirements.
+	 * @param FieldRequirementsInterface            $requirements The requirements.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly AdministrationContextServiceInterface $context,
-		private readonly FieldRequirements $requirements,
+		private readonly FieldRequirementsInterface $requirements,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

@@ -68,6 +68,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -88,7 +89,7 @@ use Psr\Log\LoggerInterface;
  * Pre-existing debt (issue #506): early-return refactor deferred pending
  * full behavioral verification of each branch.
  */
-class PipelinqContactAdapter {
+class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	/**
 	 * Per-request HTTP timeout in seconds (giant decision D5).
 	 *

@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Platform;
 
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -33,7 +34,7 @@ use Throwable;
  *
  * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
  */
-class SchemaDefinitions {
+class SchemaDefinitions implements SchemaDefinitionsInterface {
 
 	/**
 	 * OpenRegister's schema mapper, resolved by name so shillinq loads without OpenRegister.

@@ -51,7 +51,7 @@ namespace OCA\Shillinq\Listener;
 use DateTime;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -136,14 +136,14 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's register and schema ids to slugs.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 	) {
 
 	}//end __construct()

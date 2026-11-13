@@ -57,13 +57,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Idempotent reconciliation of PaymentRequest AND DepositPayment records against
@@ -75,34 +76,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class PaymentReconciliationService {
-	/**
-	 * Outcome: the payment was authorized by the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_AUTHORIZED = 'authorized';
-
-	/**
-	 * Outcome: the payment was captured/settled at the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_CAPTURED = 'captured';
-
-	/**
-	 * Outcome: the payment was rejected/failed at the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_FAILED = 'failed';
-
-	/**
-	 * Outcome: the payment was voided/refunded at the gateway.
-	 *
-	 * @var string
-	 */
-	public const OUTCOME_VOIDED = 'voided';
+class PaymentReconciliationService implements PaymentReconciliationServiceInterface {
 
 	/**
 	 * Result: the outcome was applied (state changed).

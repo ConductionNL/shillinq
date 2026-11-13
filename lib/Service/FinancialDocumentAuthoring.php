@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\PayableRaisedEvent;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -39,27 +40,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-009)
  */
-class FinancialDocumentAuthoring {
-	/**
-	 * The action that starts a quote.
-	 *
-	 * @var string
-	 */
-	public const ACTION_CREATE_QUOTE = 'quote.create';
-
-	/**
-	 * The action that credits an invoice.
-	 *
-	 * @var string
-	 */
-	public const ACTION_CREDIT_INVOICE = 'invoice.credit';
-
-	/**
-	 * The action that raises a payout.
-	 *
-	 * @var string
-	 */
-	public const ACTION_RAISE_PAYOUT = 'payable.raise';
+class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface {
 
 	/**
 	 * Invoice states a credit note can be issued for.

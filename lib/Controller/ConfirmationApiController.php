@@ -47,7 +47,7 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -121,7 +121,7 @@ class ConfirmationApiController extends Controller {
 	 * @param ITimeFactory $time Server clock.
 	 * @param IThrottler $throttler Brute-force throttler for
 	 *                              failed token attempts.
-	 * @param ObjectTransitionRunner $transitions Runs the declared
+	 * @param ObjectTransitionRunnerInterface $transitions Runs the declared
 	 *                                            confirm transition.
 	 * @param LoggerInterface $logger Logger for fail-closed
 	 *                                diagnostics.
@@ -134,7 +134,7 @@ class ConfirmationApiController extends Controller {
 		private readonly ConfirmationTokenServiceInterface $tokens,
 		private readonly ITimeFactory $time,
 		private readonly IThrottler $throttler,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

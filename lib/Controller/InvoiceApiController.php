@@ -40,9 +40,9 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
-use OCA\Shillinq\Service\InvoiceGenerationService;
-use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -109,8 +109,8 @@ class InvoiceApiController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param InvoiceGenerationService $service Drafting/posting service.
-	 * @param InvoicePdfGenerator $pdfGenerator PDF/HTML renderer.
+	 * @param InvoiceGenerationServiceInterface $service Drafting/posting service.
+	 * @param InvoicePdfGeneratorInterface $pdfGenerator PDF/HTML renderer.
 	 * @param IUserSession $session User session.
 	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope.
 	 * @param LoggerInterface $logger Logger.
@@ -119,8 +119,8 @@ class InvoiceApiController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InvoiceGenerationService $service,
-		private readonly InvoicePdfGenerator $pdfGenerator,
+		private readonly InvoiceGenerationServiceInterface $service,
+		private readonly InvoicePdfGeneratorInterface $pdfGenerator,
 		private readonly IUserSession $session,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly LoggerInterface $logger,

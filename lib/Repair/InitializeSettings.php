@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Kernel\Contracts\BbvSeedServiceInterface;
-use OCA\Shillinq\Service\Migration\RevenueContractRenameMigrator;
+use OCA\Shillinq\Kernel\Contracts\RevenueContractRenameMigratorInterface;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
@@ -57,7 +57,7 @@ class InitializeSettings implements IRepairStep {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param ContainerInterface $container The DI container
 	 * @param BbvSeedServiceInterface $bbvSeedService The BBV stam-data seed service
-	 * @param RevenueContractRenameMigrator $revenueContractMigrator The Contract → RevenueContract object-migration core
+	 * @param RevenueContractRenameMigratorInterface $revenueContractMigrator The Contract → RevenueContract object-migration core
 	 *
 	 * @return void
 	 */
@@ -67,7 +67,7 @@ class InitializeSettings implements IRepairStep {
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private BbvSeedServiceInterface $bbvSeedService,
-		private RevenueContractRenameMigrator $revenueContractMigrator,
+		private RevenueContractRenameMigratorInterface $revenueContractMigrator,
 	) {
 	}//end __construct()
 

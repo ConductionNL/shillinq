@@ -67,8 +67,8 @@ use OCA\OpenRegister\Service\Deferral\ListenerDeferralService;
 use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\MilestoneTemplateService;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\MilestoneTemplateServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -103,19 +103,19 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param MilestoneTemplateService $templates Pure-logic milestone planner (REQ-003).
+	 * @param MilestoneTemplateServiceInterface $templates Pure-logic milestone planner (REQ-003).
 	 * @param BudgetImpactEmitterInterface $budget Emits the launchpad budget-impact CloudEvent (REQ-007).
 	 * @param ContainerInterface $container DI container for lazy OR ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug + tenant KvK.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly MilestoneTemplateService $templates,
+		private readonly MilestoneTemplateServiceInterface $templates,
 		private readonly BudgetImpactEmitterInterface $budget,
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

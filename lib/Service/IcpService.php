@@ -35,9 +35,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes the ICP ledger, periodicity decision, and reconciliation for a period.
@@ -49,7 +50,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class IcpService {
+class IcpService implements IcpServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

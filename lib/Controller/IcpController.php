@@ -36,8 +36,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
-use OCA\Shillinq\Service\IcpFilingService;
-use OCA\Shillinq\Service\IcpService;
+use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -65,8 +65,8 @@ class IcpController extends Controller {
 	 * Constructor for the IcpController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param IcpService $icpService The ICP read-side computation service.
-	 * @param IcpFilingService $filingService The ICP filing write service (correction + export).
+	 * @param IcpServiceInterface $icpService The ICP read-side computation service.
+	 * @param IcpFilingServiceInterface $filingService The ICP filing write service (correction + export).
 	 * @param ViesService $viesService The VIES validation service.
 	 * @param ArInvoiceIcpPdfRendererInterface $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
@@ -78,8 +78,8 @@ class IcpController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly IcpService $icpService,
-		private readonly IcpFilingService $filingService,
+		private readonly IcpServiceInterface $icpService,
+		private readonly IcpFilingServiceInterface $filingService,
 		private readonly ViesService $viesService,
 		private readonly ArInvoiceIcpPdfRendererInterface $pdfRenderer,
 		private readonly IUserSession $userSession,

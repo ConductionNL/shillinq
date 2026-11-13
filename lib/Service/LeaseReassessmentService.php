@@ -44,10 +44,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LeaseReassessmentServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Records and computes IFRS 16 lease-reassessment events.
@@ -64,7 +65,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class LeaseReassessmentService {
+class LeaseReassessmentService implements LeaseReassessmentServiceInterface {
 	/**
 	 * Approval-routing threshold (RoU asset delta in cents) above which an event
 	 * is created with status `pending-approval` for decidesk routing.

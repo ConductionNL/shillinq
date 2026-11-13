@@ -56,9 +56,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\GlLineFiscalYearBackfillMigratorInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\Migration\GlLineFiscalYearBackfillMigrator;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -75,13 +75,13 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 * Constructor.
 	 *
 	 * @param RegisterLocation                    $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param GlLineFiscalYearBackfillMigrator   $migrator        The pure migration core.
+	 * @param GlLineFiscalYearBackfillMigratorInterface   $migrator        The pure migration core.
 	 * @param LoggerInterface                    $logger          For failures.
 	 * @param ObjectServiceInterface             $objectService   Store access.
 	 */
 	public function __construct(
 		private readonly RegisterLocation $registerLocation,
-		private readonly GlLineFiscalYearBackfillMigrator $migrator,
+		private readonly GlLineFiscalYearBackfillMigratorInterface $migrator,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -131,11 +131,11 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 
 			$lines = $this->readPayloads(
 				registerSlug: $registerSlug,
-				schema: GlLineFiscalYearBackfillMigrator::SCHEMA_GL_LINE
+				schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_LINE
 			);
 			$transactions = $this->readPayloads(
 				registerSlug: $registerSlug,
-				schema: GlLineFiscalYearBackfillMigrator::SCHEMA_GL_TRANSACTION
+				schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_TRANSACTION
 			);
 
 			try {
@@ -198,7 +198,7 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	private function reportRemaining(string $registerSlug, IOutput $output): void {
 		$reread = $this->readPayloads(
 			registerSlug: $registerSlug,
-			schema: GlLineFiscalYearBackfillMigrator::SCHEMA_GL_LINE
+			schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_LINE
 		);
 		$missing = $this->migrator->countMissingFiscalYearId(glLines: $reread);
 
@@ -243,7 +243,7 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 				$this->objectService->saveObject(
 					object: $row,
 					register: $registerSlug,
-					schema: GlLineFiscalYearBackfillMigrator::SCHEMA_GL_LINE,
+					schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_LINE,
 					uuid: $objectId,
 					_rbac: false,
 					_multitenancy: false,

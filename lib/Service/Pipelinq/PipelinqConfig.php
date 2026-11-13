@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqConfigInterface;
 use OCA\Shillinq\Service\StoredSecret;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -49,7 +50,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
  */
-class PipelinqConfig {
+class PipelinqConfig implements PipelinqConfigInterface {
 
 	/**
 	 * IAppConfig key for the pipelinq API endpoint URL.

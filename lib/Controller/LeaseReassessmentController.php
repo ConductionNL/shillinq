@@ -44,7 +44,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\LeaseReassessmentService;
+use OCA\Shillinq\Kernel\Contracts\LeaseReassessmentServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -71,7 +71,7 @@ class LeaseReassessmentController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param LeaseReassessmentService $reassessmentService The remeasurement service.
+	 * @param LeaseReassessmentServiceInterface $reassessmentService The remeasurement service.
 	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to the client).
@@ -82,7 +82,7 @@ class LeaseReassessmentController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly LeaseReassessmentService $reassessmentService,
+		private readonly LeaseReassessmentServiceInterface $reassessmentService,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,

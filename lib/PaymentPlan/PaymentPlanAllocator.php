@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentPlan;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -60,13 +60,13 @@ class PaymentPlanAllocator {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param ObjectTransitionRunner $transitions   Runs the declared transitions.
+	 * @param ObjectTransitionRunnerInterface $transitions   Runs the declared transitions.
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly RegisterLocation $registerLocation,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly LoggerInterface $logger,
 	) {
 

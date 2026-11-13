@@ -45,11 +45,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\NrvWriteDownServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lower-of-cost-or-NRV period-end write-down + balanced GL (ADR-031 exception).
@@ -58,7 +59,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class NrvWriteDownService {
+class NrvWriteDownService implements NrvWriteDownServiceInterface {
 
 	/**
 	 * App-config key for the inventory asset account (RGS 3.5 default '1300').
