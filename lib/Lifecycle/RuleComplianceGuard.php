@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -235,18 +236,34 @@ class RuleComplianceGuard {
 	}//end idOf()
 
 	/**
-	 * Build the evaluation context. Jurisdiction drives which rules apply; it
-	 * defaults to NL (the home jurisdiction — EU + global rules then apply) and
-	 * is the seam for per-administration jurisdiction resolution later.
+	 * Build the evaluation context. Jurisdiction drives which rules apply: the
+	 * administration's own jurisdiction, NL when it names none (EU and global
+	 * rules then apply as well). A failed lookup keeps NL, the home jurisdiction.
 	 *
 	 * @param array<string, mixed> $object The object under evaluation.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	private function context(array $object): array {
+		$administrationId = ($object['administrationId'] ?? null);
+		$jurisdiction = AdministrationJurisdiction::DEFAULT;
+		if (is_string($administrationId) === true && trim($administrationId) !== '') {
+			try {
+				$jurisdiction = (new AdministrationJurisdiction(objectService: $this->objectService, appConfig: $this->appConfig))
+					->of(administrationId: $administrationId);
+			} catch (\Throwable $e) {
+				$this->logger->warning(
+					'RuleComplianceGuard: the administration\'s jurisdiction could not be read; checking under NL rules',
+					['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+				);
+			}
+		}
+
 		return [
-			'jurisdiction' => 'NL',
-			'administrationId' => ($object['administrationId'] ?? null),
+			'jurisdiction' => $jurisdiction,
+			'administrationId' => $administrationId,
 		];
 
 	}//end context()

@@ -6868,7 +6868,10 @@ OC.L10N.register(
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
         "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
         "VAT reverse-charged": "Btw verlegd",
-        "The buyer's VAT number is required for reverse charge.": "Het btw-nummer van de afnemer is verplicht bij verlegde btw."
+        "The buyer's VAT number is required for reverse charge.": "Het btw-nummer van de afnemer is verplicht bij verlegde btw.",
+        "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.": "ISO 3166 alpha-2-land onder wiens regels de boeken worden gevoerd: het bepaalt de regelcontroles, het sjabloon voor rekeningschema en btw-tarieven en de beschikbare uitvoer. Vast zodra de administratie een geboekte transactie heeft.",
+        "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.": "ISO 3166 alpha-2-land waartoe het tarief behoort; NL als het leeg is. Een wetgevingspakket zaait de tarieven van zijn land.",
+        "Belgian minimum chart (MAR/PCMN)": "Belgisch minimumrekeningenstelsel (MAR/PCMN)"
     },
     "nplurals=2; plural=(n != 1);"
 )

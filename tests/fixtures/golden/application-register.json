@@ -899,6 +899,14 @@
         ]
     ],
     [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\JurisdictionLockListener'",
+            "0"
+        ]
+    ],
+    [
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Guard\\\\Iv3XmlValidationGuard::requireValidXml'",

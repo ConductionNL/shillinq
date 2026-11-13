@@ -68,6 +68,10 @@
         {
             "appVersion": "0.5.7-unstable.20261111150000",
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261113191000",
+            "versionsSha256": "901091ce5c221b5135657416d54c9c2a95af885d1cb0a00799a19ac8bf3f8b8a"
         }
     ],
     "versions": {
@@ -83,7 +87,7 @@
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
-        "schema:Administration": "0.2.0",
+        "schema:Administration": "0.3.0",
         "schema:AdministrationBackupRun": "0.1.0",
         "schema:AdministrationMembership": "0.1.0",
         "schema:AdministrationMigration": "0.1.0",
@@ -569,7 +573,7 @@
         "schema:VatCorrection": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",
-        "schema:VatTariff": "0.3.0",
+        "schema:VatTariff": "0.4.0",
         "schema:VendorPerformance": "0.1.0",
         "schema:VerklaringDraft": "0.1.0",
         "schema:ViesValidation": "0.1.0",
