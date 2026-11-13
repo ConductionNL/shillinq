@@ -69,6 +69,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\BudgetImpactEmitterInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\MilestoneTemplateServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\TenderNedAwardDetectedListenerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -87,7 +88,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class TenderNedAwardDetectedListener implements IEventListener {
+class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDetectedListenerInterface {
 
 	/**
 	 * Dedupe prefix for buffered promotions.

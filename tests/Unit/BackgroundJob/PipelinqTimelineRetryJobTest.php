@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -239,7 +240,7 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 					return $objectService;
 				}
 
-				if ($id === PipelinqContactAdapter::class) {
+				if ($id === PipelinqContactAdapter::class || $id === PipelinqContactAdapterInterface::class) {
 					return $adapter;
 				}
 

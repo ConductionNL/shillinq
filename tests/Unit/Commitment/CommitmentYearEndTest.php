@@ -26,7 +26,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
-use OCA\Shillinq\Listener\Registration\CommitmentGuardServices;
+use OCA\Shillinq\Lifecycle\CommitmentGuardServices;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -315,6 +316,7 @@ final class CommitmentYearEndTest extends TestCase {
 			CommitmentLedger::class => $this->ledger(),
 			LoggerInterface::class => $logger,
 		];
+		$services[CommitmentLedgerInterface::class] = $services[CommitmentLedger::class];
 		$inner = $this->createMock(ContainerInterface::class);
 		$inner->method('get')->willReturn($store);
 		$services[MandateEnforcer::class] = new MandateEnforcer($inner, $config, $logger);

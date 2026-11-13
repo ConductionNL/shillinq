@@ -210,5 +210,22 @@ final class GuardRegistrar {
 				);
 			}
 		);
+
+		// REQ-BSC-004 — registered (unlike the still-unregistered, pre-existing
+		// CashflowRecurringGuard/ProgrammaLinkGuard `preconditions.save` tags,
+		// shillinq#433's own fleet-wide gap, out of this change's scope) so
+		// this guard actually enforces the one-unresolvable-conflict rule at
+		// runtime.
+		$context->registerService(
+			'OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(BudgetScenarioModifierGuard::class),
+					method: 'validateOnSave',
+					denyMessage: 'This modifier conflicts with an existing modifier in the same scenario, or is missing a required field for its type.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
 	}//end register()
 }//end class

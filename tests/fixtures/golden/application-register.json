@@ -1505,6 +1505,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\NoShowFeeCaptureServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\NoShowFeeCaptureService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\NrvWriteDownServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\NrvWriteDownService'"
         ]
@@ -1514,6 +1521,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ObjectApiRequestInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Platform\\\\ObjectApiRequest'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ObjectPaymentRequestValidatorInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\ObjectPaymentRequestValidator'"
         ]
     ],
     [
@@ -1925,6 +1939,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SuspenseAgeingServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\SuspenseAgeingService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TaxNotificationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\TaxNotificationService'"
         ]
@@ -2254,6 +2275,13 @@
         ]
     ],
     [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Service\\\\KnownCostScheduleExpanderInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\KnownCostScheduleExpander'"
+        ]
+    ],
+    [
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Notification\\\\RoleFallbackResolver::financeOfficer'",
@@ -2434,6 +2462,14 @@
     [
         "registerService",
         [
+            "'OCA\\\\Shillinq\\\\Guard\\\\BudgetScenarioModifierGuard::validateOnSave'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\FiscalYearGuard::requireAllPeriodsClosedForYear'",
             "Closure",
             "true"
@@ -2517,21 +2553,6 @@
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\AnnualBudgetDefaultGuard::isUniqueDefault'",
             "Closure",
             "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
-            "'OCA\\\\Shillinq\\\\Guard\\\\BudgetScenarioModifierGuard::validateOnSave'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerServiceAlias",
-        [
-            "'OCA\\\\Shillinq\\\\Service\\\\KnownCostScheduleExpanderInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\KnownCostScheduleExpander'"
         ]
     ],
     [
@@ -2651,6 +2672,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\PosStockDecrementListenerInterface'",
             "'OCA\\\\Shillinq\\\\Listener\\\\PosStockDecrementListener'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\TenderNedAwardDetectedListenerInterface'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\TenderNedAwardDetectedListener'"
         ]
     ],
     [

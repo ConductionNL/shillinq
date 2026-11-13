@@ -52,7 +52,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -206,7 +206,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			}
 
 			$dto = $this->reconstructDto(entry: $entry);
-			$adapter = $this->container->get(PipelinqContactAdapter::class);
+			$adapter = $this->container->get(PipelinqContactAdapterInterface::class);
 
 			$ok = $adapter->publishTimelineEvent(event: $dto);
 			if ($ok === true) {

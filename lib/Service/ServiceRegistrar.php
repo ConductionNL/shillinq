@@ -297,5 +297,32 @@ final class ServiceRegistrar {
 		// Refinitiv) is bound; the IntercompanyLoan + FXPosition manual-entry
 		// path remains the v1 fallback per REQ-IHB-004.
 		$context->registerServiceAlias(TreasuryRateAdapterInterface::class, LogTreasuryRateAdapter::class);
+
+		// REQ-BSC-006 — BudgetScenarioEvaluator depends on
+		// KnownCostScheduleExpanderInterface rather than on budget-known-costs's
+		// concrete KnownCostScheduleExpander, and this is the binding between them.
+		//
+		// This used to be a runtime-probing factory. When budget-scenarios was
+		// written, the concrete class lived on an unmerged sibling branch (PR #967)
+		// and was absent from this checkout, so the factory tested for it at
+		// container-resolution time and threw a descriptive RuntimeException when it
+		// was missing — deliberately loud, so a missing integration could not read
+		// as a passing test.
+		//
+		// That scaffolding has done its job and is now dead. The class has landed
+		// and declares `implements KnownCostScheduleExpanderInterface`, which makes
+		// the probe unconditionally true (PHPStan: `function.alreadyNarrowedType`)
+		// and the throw unreachable. Keeping a guard that can no longer fail is
+		// worse than not having one: it reads like an active safety check while
+		// testing nothing.
+		//
+		// A plain alias is now strictly stronger than the probe ever was. The
+		// `implements` clause is checked by PHP at class-load time and by PHPStan
+		// at analysis time, so a class that stops satisfying the contract fails
+		// earlier and louder than any container-resolution check could manage.
+		$context->registerServiceAlias(
+			KnownCostScheduleExpanderInterface::class,
+			KnownCostScheduleExpander::class
+		);
 	}//end register()
 }//end class

@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 use DateTime;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -202,7 +203,7 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 		/** @var ContainerInterface&MockObject $container */
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(static function (string $id) use ($store, $adapter): object {
-			if ($id === PipelinqContactAdapter::class) {
+			if ($id === PipelinqContactAdapter::class || $id === PipelinqContactAdapterInterface::class) {
 				return $adapter;
 			}
 
