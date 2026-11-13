@@ -1,11 +1,7 @@
 <?php
 
 /**
- * Unit tests for SmsSendResult: which outcomes count as delivered, and the
- * array shape the notification history stores.
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * Unit tests for SmsSendResult.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service\Sms
@@ -16,7 +12,10 @@
  *
  * @link https://conduction.nl
  *
- * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
+ * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-21
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -24,29 +23,63 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Sms;
 
 use OCA\Shillinq\Service\Sms\SmsSendResult;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \OCA\Shillinq\Service\Sms\SmsSendResult
+ * Which send outcomes count as delivered, and the array shape the reminder
+ * log stores.
  */
+#[CoversClass(SmsSendResult::class)]
 final class SmsSendResultTest extends TestCase {
 
-	public function testSentAndPendingCountAsDeliveredFailedAndSkippedDoNot(): void {
-		self::assertTrue((new SmsSendResult(SmsSendResult::STATUS_SENT, 'ref-1', null, 1))->isDelivered());
-		self::assertTrue((new SmsSendResult(SmsSendResult::STATUS_PENDING))->isDelivered());
-		self::assertFalse((new SmsSendResult(SmsSendResult::STATUS_FAILED, null, 'gateway down'))->isDelivered());
-		self::assertFalse((new SmsSendResult(SmsSendResult::STATUS_SKIPPED, null, 'opted out'))->isDelivered());
-		self::assertFalse((new SmsSendResult('SENT'))->isDelivered());
-	}
+	/**
+	 * Each status and whether it counts as delivered.
+	 *
+	 * @return array<string, array{0: string, 1: bool}>
+	 */
+	public static function statuses(): array {
+		return [
+			'sent' => [SmsSendResult::STATUS_SENT, true],
+			'pending' => [SmsSendResult::STATUS_PENDING, true],
+			'failed' => [SmsSendResult::STATUS_FAILED, false],
+			'skipped' => [SmsSendResult::STATUS_SKIPPED, false],
+			'unknown' => ['queued', false],
+			'case-sensitive' => ['SENT', false],
+		];
 
-	public function testToArrayCarriesEveryFieldInOrder(): void {
+	}//end statuses()
+
+	/**
+	 * Sent and pending are delivered; failed, skipped and anything else are not.
+	 *
+	 * @param string $status    The status.
+	 * @param bool   $delivered Whether it counts as delivered.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('statuses')]
+	public function testDelivery(string $status, bool $delivered): void {
+		self::assertSame($delivered, (new SmsSendResult(status: $status))->isDelivered());
+
+	}//end testDelivery()
+
+	/**
+	 * The array carries every field in a fixed order, nulls included.
+	 *
+	 * @return void
+	 */
+	public function testToArray(): void {
 		self::assertSame(
-			['status' => 'sent', 'providerReference' => 'ref-9', 'reason' => null, 'segments' => 2],
-			(new SmsSendResult(SmsSendResult::STATUS_SENT, 'ref-9', null, 2))->toArray()
+			['status' => 'sent', 'providerReference' => 'msg-1', 'reason' => null, 'segments' => 2],
+			(new SmsSendResult(status: SmsSendResult::STATUS_SENT, providerReference: 'msg-1', segments: 2))->toArray()
 		);
 		self::assertSame(
-			['status' => 'failed', 'providerReference' => null, 'reason' => 'no connector', 'segments' => null],
-			(new SmsSendResult(SmsSendResult::STATUS_FAILED, reason: 'no connector'))->toArray()
+			['status' => 'skipped', 'providerReference' => null, 'reason' => 'opted_out', 'segments' => null],
+			(new SmsSendResult(status: SmsSendResult::STATUS_SKIPPED, reason: 'opted_out'))->toArray()
 		);
-	}
-}
+
+	}//end testToArray()
+
+}//end class
