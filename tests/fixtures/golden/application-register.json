@@ -21,6 +21,13 @@
         ]
     ],
     [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\OpenRegister\\\\Mcp\\\\IMcpToolProvider::shillinq'",
+            "'OCA\\\\Shillinq\\\\Mcp\\\\ShillinqToolProvider'"
+        ]
+    ],
+    [
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Controller\\\\DashboardController'",
