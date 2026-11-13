@@ -40,6 +40,8 @@
 		"BtwAangiften": "Retired from navigation by #1717: it lists VatReturn records, whose rubrieken aggregation can never compute (GLLine carries no VAT tariff, rate or period dates to join on), while VATReturnService files BtwAangifte records, which VATReturns lists. menu-layout.json removalsReplacedBy names VATReturns. Kept routable so an existing VatReturn record still opens by URL; delete it together with the VatReturn schema.",
 		"BtwAangifteDetail": "Retired with its index BtwAangiften by #1717 (see that entry); reached only from BtwAangiften rows or by URL.",
 		"RelationsBothWays": "Reports card (ADR-112 Decision 2): reachable from the Relations both ways card on the Reports page, so it carries no menu entry (reporting-relation-both-sides).",
-		"FinancialPivot": "Reports card (ADR-112 Decision 2): reachable from the Financial pivot card on the Reports page, so it carries no menu entry (reporting-custom-analysis)."
+		"FinancialPivot": "Reports card (ADR-112 Decision 2): reachable from the Financial pivot card on the Reports page, so it carries no menu entry (reporting-custom-analysis).",
+		"MobileReceipt": "Shillinq Mobile screen (platform-mobile-pwa): reached from MobileHome's 'Capture a receipt' action and the installed app's shortcut, not from the desktop menu, which lists only the app's home",
+		"MobileInvoice": "Shillinq Mobile screen (platform-mobile-pwa): reached from MobileHome's 'Draft an invoice' action and the installed app's shortcut, not from the desktop menu, which lists only the app's home"
 	}
 }

@@ -1,0 +1,40 @@
+{
+	"name": "Shillinq Mobile",
+	"short_name": "Shillinq",
+	"description": "Capture receipts and draft invoices on your phone, also without a connection.",
+	"id": "/apps/shillinq/mobile",
+	"start_url": "/apps/shillinq/mobile",
+	"scope": "/apps/shillinq/mobile/",
+	"display": "standalone",
+	"orientation": "portrait",
+	"theme_color": "#0082c9",
+	"background_color": "#ffffff",
+	"icons": [
+		{
+			"src": "icons/inventory-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any maskable"
+		},
+		{
+			"src": "icons/inventory-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Capture a receipt",
+			"short_name": "Receipt",
+			"url": "/apps/shillinq/mobile/receipt",
+			"icons": [{ "src": "icons/inventory-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Draft an invoice",
+			"short_name": "Invoice",
+			"url": "/apps/shillinq/mobile/invoice",
+			"icons": [{ "src": "icons/inventory-192.png", "sizes": "192x192" }]
+		}
+	]
+}

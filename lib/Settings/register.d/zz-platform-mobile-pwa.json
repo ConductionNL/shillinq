@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "platform-mobile-pwa",
+    "adr": "ADR-037 modular register fragment",
+    "description": "A receipt or invoice draft made on the phone carries the client id the phone gave it, unique per schema, so a queued item sent twice is found again instead of stored twice (REQ-PMP-003). Receipt's version moves here (0.1.0 -> 0.2.0); ARInvoice's moves in zz-financial-documents-linked-objects.json (0.17.0 -> 0.18.0), the fragment that keeps the last word on that schema's version."
+  },
+  "components": {
+    "schemas": {
+      "Receipt": {
+        "version": "0.2.0",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "title": "Client id",
+            "description": "The id the mobile app gave this receipt when it was captured, also offline. A second sync of the same receipt finds it by this id. Empty on a receipt made on the desktop.",
+            "example": "3f1c9a52-7d4e-4b8a-9c21-5e6f7a8b9c0d"
+          }
+        },
+        "x-openregister-unique": [
+          [
+            "clientId"
+          ]
+        ]
+      },
+      "ARInvoice": {
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "title": "Client id",
+            "description": "The id the mobile app gave this invoice draft when it was made, also offline. A second sync of the same draft finds it by this id. Empty on an invoice made on the desktop.",
+            "example": "8a2b4c6d-1e3f-4a5b-8c7d-9e0f1a2b3c4d"
+          }
+        },
+        "x-openregister-unique": [
+          [
+            "clientId"
+          ]
+        ]
+      }
+    }
+  }
+}

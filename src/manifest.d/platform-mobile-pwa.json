@@ -1,0 +1,42 @@
+{
+	"menu": [
+		{
+			"id": "Sales",
+			"children": [
+				{
+					"id": "MobileHome",
+					"label": "Shillinq Mobile",
+					"icon": "ReceiptOutline",
+					"route": "MobileHome",
+					"order": 90
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "MobileHome",
+			"route": "/mobile",
+			"type": "custom",
+			"title": "Shillinq Mobile",
+			"component": "MobileHome",
+			"_note": "Home screen of the installable Shillinq Mobile app (REQ-PMP-001): two large actions and the receipts and invoice drafts made on this phone with their sync state (queued, sending, synced, not sent). The list is the phone's own IndexedDB queue, not a register collection, so `type: index` has no register/schema to bind; the page also registers the mobile service worker, sends the queue when the connection returns and offers Issue on a synced draft only while online (REQ-PMP-003, REQ-PMP-004)."
+		},
+		{
+			"id": "MobileReceipt",
+			"route": "/mobile/receipt",
+			"type": "custom",
+			"title": "Capture a receipt",
+			"component": "MobileReceipt",
+			"_note": "Camera capture of a receipt (REQ-PMP-002): a file input with capture=environment, amount, date and category. The save goes into the offline queue with the photo and is sent at once when online, else when the connection returns; `type: form` posts to the server on submit and has no camera input and no queue, so a phone without signal could not save."
+		},
+		{
+			"id": "MobileInvoice",
+			"route": "/mobile/invoice",
+			"type": "custom",
+			"title": "Draft an invoice",
+			"component": "MobileInvoice",
+			"_note": "Invoice draft on the phone (REQ-PMP-003): customer, date and lines with VAT as the desktop quick draft takes them, queued under a client id and sent through the quick-draft endpoint, which answers a repeated client id with the existing draft. `type: form` writes one object online only; this page works offline from a remembered customer list."
+		}
+	]
+}
