@@ -9,12 +9,11 @@
  * Balance sheet (balans) report generator
  *
  * Produces a balance sheet per peildatum, rendered as editable DOCX/ODT or as a
- * dompdf PDF from the default in-code layout. The figures are aggregated from
- * the real Account objects in the shillinq register: each account's balance is
- * classified by accountType (assets / liabilities / equity) and totalled into
- * the two sides of the balance. When account balances are not materialised on
- * the Account objects themselves, the balances are derived from the posted
- * GLLine movements (side + amount) per account.
+ * dompdf PDF from the default in-code layout. The figures come from
+ * StatementCalculator::balancesAsOf at the peildatum, the same figures the
+ * balance sheet page shows (reporting-financial-statements REQ-RFS-004):
+ * posted, unreversed ledger lines up to that date, with the running result of
+ * the fiscal year in equity, never stored account balances.
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting\Generator
@@ -51,13 +50,18 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\ReportSection;
+use OCA\Shillinq\Reporting\StatementPeriods;
+use Throwable;
 
 /**
- * Renders a balance sheet from Account balances (assets / liabilities / equity).
+ * Renders a balance sheet from the statement calculator's figures.
+ *
+ * @spec openspec/changes/reporting-financial-statements
  */
 final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator {
+
 	/**
-	 * The catalogue report-type id this generator produces.
+	 * Report type identifier.
 	 *
 	 * @return string
 	 */
@@ -66,7 +70,7 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	}//end reportType()
 
 	/**
-	 * Cover title for the document.
+	 * Document title.
 	 *
 	 * @return string
 	 */
@@ -75,32 +79,31 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	}//end documentTitle()
 
 	/**
-	 * Build the balans body: assets vs. equity/liabilities from Account balances.
+	 * Build the balance sheet into the report section.
 	 *
-	 * @param ReportSection $section The block accumulator to fill.
-	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
+	 * @param ReportSection        $section The section to render into.
+	 * @param array<string, mixed> $context administrationId, period, asOf, to.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-financial-statements
 	 */
 	protected function build(ReportSection $section, array $context): void {
-		$administrationId = $this->str($context, 'administrationId');
-		$accounts = $this->loadAccounts($administrationId);
-		$run = new StatementRun(section: $section, currency: $this->accountsCurrency($accounts));
-		$grouped = $this->groupByType($accounts, $administrationId);
+		$statement = $this->statement($context);
+		$run = new StatementRun(section: $section, currency: 'EUR');
 
-		$this->addCover($section, 'Balans', 'Balans per peildatum', $context);
-		$this->addAssets($run, $grouped);
-		$this->addPassiva($run, $grouped);
-		$this->addBalanceCheck($run, count($accounts));
+		$this->addCover($section, 'Balans', 'Balans per ' . $statement['asOf'], $context);
+		$this->addAssets($run, $statement);
+		$this->addPassiva($run, $statement);
+		$this->addBalanceCheck($run);
 
-		if ($accounts === []) {
-			$this->addNote($section, 'Er zijn geen grootboekrekeningen gevonden voor deze administratie.');
+		if ($statement['assets'] === [] && $statement['liabilities'] === [] && $statement['equity'] === []) {
+			$this->addNote($section, 'Er zijn geen geboekte grootboekregels gevonden voor deze administratie tot deze datum.');
 		}
-
 	}//end build()
 
 	/**
-	 * Balance-sheet account tables show the account balance.
+	 * Header of the amount column.
 	 *
 	 * @return string
 	 */
@@ -109,88 +112,107 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 	}//end accountAmountHead()
 
 	/**
-	 * The Activa side: the asset accounts and their total (the debit side).
+	 * The calculator's balance sheet for the context, empty when it is unavailable.
 	 *
-	 * @param StatementRun $run     The rendering in progress.
-	 * @param array{assets: array<int, array{label: string, amount: float}>} $grouped The grouped accounts.
+	 * @param array<string, mixed> $context The generation context.
+	 *
+	 * @return array<string, mixed> asOf, assets, liabilities, equity.
+	 */
+	private function statement(array $context): array {
+		$asOf = $this->asOf($context);
+		$calculator = $this->calculator();
+		if ($calculator === null) {
+			return ['asOf' => $asOf, 'assets' => [], 'liabilities' => [], 'equity' => []];
+		}
+
+		return $calculator->balancesAsOf(administrationId: $this->str($context, 'administrationId'), asOf: $asOf);
+	}//end statement()
+
+	/**
+	 * The peildatum: an explicit `asOf`, else the end of the context's range.
+	 *
+	 * @param array<string, mixed> $context The generation context.
+	 *
+	 * @return string YYYY-MM-DD.
+	 *
+	 * @spec openspec/changes/reporting-financial-statements
+	 */
+	private function asOf(array $context): string {
+		$asOf = $this->str($context, 'asOf');
+		if ($asOf !== '') {
+			try {
+				StatementPeriods::date(date: $asOf, field: 'asOf');
+				return $asOf;
+			} catch (Throwable $e) {
+				// An unreadable asOf falls back to the end of the period.
+			}
+		}
+
+		return $this->contextRange($context)['to'];
+	}//end asOf()
+
+	/**
+	 * Render the assets side.
+	 *
+	 * @param StatementRun         $run       The statement being rendered.
+	 * @param array<string, mixed> $statement The calculator's balance sheet.
 	 *
 	 * @return void
 	 */
-	private function addAssets(StatementRun $run, array $grouped): void {
+	private function addAssets(StatementRun $run, array $statement): void {
 		$this->addHeading($run->section, 'Activa');
-		$run->debitTotal = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal activa', lines: $grouped['assets']));
+		$run->debitTotal = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal activa', lines: $statement['assets']));
 	}//end addAssets()
 
 	/**
-	 * The Passiva side: equity and liabilities, then their recapitulation
-	 * (the credit side).
+	 * Render equity, debts and the passiva recap.
 	 *
-	 * @param StatementRun $run     The rendering in progress.
-	 * @param array{equity: array<int, array{label: string, amount: float}>, liabilities: array<int, array{label: string, amount: float}>} $grouped The grouped accounts.
+	 * @param StatementRun         $run       The statement being rendered.
+	 * @param array<string, mixed> $statement The calculator's balance sheet.
 	 *
 	 * @return void
 	 */
-	private function addPassiva(StatementRun $run, array $grouped): void {
+	private function addPassiva(StatementRun $run, array $statement): void {
 		$run->section->addTextBreak(1);
 		$this->addHeading($run->section, 'Passiva');
-		$recap = $this->addEquityAndDebts($run, $grouped);
+
+		$run->section->addText('Eigen vermogen', 'amountBold', 'tight');
+		$totalEquity = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal eigen vermogen', lines: $statement['equity']));
+
+		$run->section->addTextBreak(1);
+		$run->section->addText('Schulden', 'amountBold', 'tight');
+		$totalLiabilities = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal schulden', lines: $statement['liabilities']));
+
+		$run->creditTotal = round(($totalEquity + $totalLiabilities), 2);
 
 		$run->section->addTextBreak(1);
 		$this->addAmountTable(
 			$run->section,
 			'Recapitulatie passiva',
 			'Bedrag',
-			$recap->lines,
-			['label' => $recap->totalLabel, 'amount' => $run->creditTotal],
+			[
+				['label' => 'Eigen vermogen', 'amount' => $totalEquity],
+				['label' => 'Schulden', 'amount' => $totalLiabilities],
+			],
+			['label' => 'Totaal passiva', 'amount' => $run->creditTotal],
 			$run->currency
 		);
 	}//end addPassiva()
 
 	/**
-	 * The equity and the liability tables; sets the credit-side total and
-	 * answers the recapitulation lines.
+	 * Render the check that both sides agree.
 	 *
-	 * @param StatementRun $run     The rendering in progress.
-	 * @param array{equity: array<int, array{label: string, amount: float}>, liabilities: array<int, array{label: string, amount: float}>} $grouped The grouped accounts.
-	 *
-	 * @return AccountBucket The recapitulation of the passiva.
-	 */
-	private function addEquityAndDebts(StatementRun $run, array $grouped): AccountBucket {
-		$run->section->addText('Eigen vermogen', 'amountBold', 'tight');
-		$totalEquity = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal eigen vermogen', lines: $grouped['equity']));
-
-		$run->section->addTextBreak(1);
-		$run->section->addText('Schulden', 'amountBold', 'tight');
-		$totalLiabilities = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal schulden', lines: $grouped['liabilities']));
-
-		$run->creditTotal = ($totalEquity + $totalLiabilities);
-
-		return new AccountBucket(
-			totalLabel: 'Totaal passiva',
-			lines: [
-				['label' => 'Eigen vermogen', 'amount' => $totalEquity],
-				['label' => 'Schulden', 'amount' => $totalLiabilities],
-			]
-		);
-	}//end addEquityAndDebts()
-
-	/**
-	 * The Balanscontrole: account count, both side totals, their difference
-	 * and whether the balance closes (within half a cent).
-	 *
-	 * @param StatementRun $run          The rendering in progress.
-	 * @param int          $accountCount Number of general-ledger accounts read.
+	 * @param StatementRun $run The statement being rendered.
 	 *
 	 * @return void
 	 */
-	private function addBalanceCheck(StatementRun $run, int $accountCount): void {
+	private function addBalanceCheck(StatementRun $run): void {
 		$run->section->addTextBreak(1);
 		$this->addHeading($run->section, 'Balanscontrole');
-		$difference = ($run->debitTotal - $run->creditTotal);
+		$difference = round(($run->debitTotal - $run->creditTotal), 2);
 		$this->addDetailsTable(
 			$run->section,
 			[
-				'Aantal grootboekrekeningen' => (string)$accountCount,
 				'Totaal activa' => $this->money($run->debitTotal, $run->currency),
 				'Totaal passiva' => $this->money($run->creditTotal, $run->currency),
 				'Verschil' => $this->money($difference, $run->currency),
@@ -198,77 +220,4 @@ final class BalanceSheetReportGenerator extends AbstractStatementReportGenerator
 			]
 		);
 	}//end addBalanceCheck()
-
-	/**
-	 * Group accounts into the three balance-sheet buckets, resolving each
-	 * account's balance (materialised field or derived from GLLine movements).
-	 *
-	 * @param array<int, array<string, mixed>> $accounts The Account objects.
-	 * @param string $administrationId The administration scope.
-	 *
-	 * @return array{assets: array<int, array{label: string, amount: float}>, liabilities: array<int, array{label: string, amount: float}>, equity: array<int, array{label: string, amount: float}>}
-	 */
-	private function groupByType(array $accounts, string $administrationId): array {
-		$grouped = ['assets' => [], 'liabilities' => [], 'equity' => []];
-		$movements = null;
-
-		foreach ($accounts as $account) {
-			$bucket = $this->balanceBucket($account);
-			if ($bucket === null) {
-				// Skip P&L accounts (revenue/expenses) — they do not sit on the balance.
-				continue;
-			}
-
-			$balance = $this->accountBalance($account);
-			if ($balance === null) {
-				$movements ??= $this->deriveMovements($administrationId);
-				$balance = ($movements[$this->accountKey($account)] ?? 0.0);
-			}
-
-			$grouped[$bucket][] = ['label' => $this->accountLabel($account), 'amount' => $balance];
-		}
-
-		return $grouped;
-	}//end groupByType()
-
-	/**
-	 * The balance-sheet bucket of an account, or null for a P&L account.
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string|null assets / liabilities / equity, or null.
-	 */
-	private function balanceBucket(array $account): string|null {
-		$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
-
-		return match ($type) {
-			// `activa` stays: this arm is a deliberately BILINGUAL tolerance
-			// list — its siblings still accept `vreemd-vermogen` and
-			// `eigen-vermogen` — so it keeps reading rows the value migration
-			// has not reached yet. Translating it produced a duplicate arm and
-			// psalm caught it as a ParadoxicalCondition.
-			'assets', 'asset', 'activa' => 'assets',
-			'liabilities', 'liability', 'debts', 'vreemd-vermogen' => 'liabilities',
-			'equity', 'eigen-vermogen' => 'equity',
-			default => null,
-		};
-	}//end balanceBucket()
-
-	/**
-	 * Read a materialised balance field from an Account, or null when absent so
-	 * the caller derives it from GLLine movements.
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return float|null
-	 */
-	private function accountBalance(array $account): ?float {
-		foreach (['balance', 'currentBalance', 'closingBalance', 'endBalance', 'saldo'] as $key) {
-			if (array_key_exists($key, $account) === true && is_numeric($account[$key]) === true) {
-				return (float)$account[$key];
-			}
-		}
-
-		return null;
-	}//end accountBalance()
 }//end class
