@@ -4,9 +4,10 @@
 
 ## 1. Customer defaults
 
-- [ ] 1.1 Add `paymentTermDays`, `deliveryMethod` and `invoiceEmail` to `CustomerMaster` in a new fragment `lib/Settings/register.d/sales-invoice-sending.json`, and put them on `CustomerDetail` (REQ-SIS-005). Verify: `npm run check:registers` and a PHPUnit case that the merged schema declares the three fields with their defaults.
-- [ ] 1.2 Replace the `Customers` index columns with declared keys (`customerId`, `legalName`, `paymentTermDays`, `deliveryMethod`, `creditLimit`, `lifecycleState`) (REQ-SIS-006). Verify: `npm run check:manifest` and a manifest test that every index column of `Customers` exists on `CustomerMaster`.
+- [x] 1.1 Add `paymentTermDays`, `deliveryMethod` and `invoiceEmail` to `CustomerMaster` in a new fragment `lib/Settings/register.d/sales-invoice-sending.json`, and put them on `CustomerDetail` (REQ-SIS-005). Verify: `npm run check:registers` and a PHPUnit case that the merged schema declares the three fields with their defaults.
+- [x] 1.2 Replace the `Customers` index columns with declared keys (`customerId`, `legalName`, `paymentTermDays`, `deliveryMethod`, `creditLimit`, `lifecycleState`) (REQ-SIS-006). Verify: `npm run check:manifest` and a manifest test that every index column of `Customers` exists on `CustomerMaster`.
 - [ ] 1.3 Read `paymentTermDays` in `InvoiceQuickDraftModal.vue`, `InvoiceGenerationService::draftInvoice()` and the recurring profile modal default (REQ-SIS-005). Verify: Vitest for `dueDateFromTerms` with a 14-day customer; PHPUnit for a 30-day customer through `draftInvoice()`.
+  - Partly done: the quick draft (`customerTerms()`) and `draftInvoice()` (`BillableInvoiceRecords::invoicePayload()`) read the term. Not done: the recurring profile modal names its customer as free text (`customerReference`), so it has no customer record to take a default from; it keeps 30.
 
 ## 2. Send one invoice
 

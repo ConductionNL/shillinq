@@ -64,13 +64,15 @@ final class BillableInvoiceRecords {
 
 
 	/**
-	 * The draft BillableInvoice record, due 30 days after the invoice date.
+	 * The draft BillableInvoice record, due the customer's payment term after
+	 * the invoice date (sales-invoice-sending REQ-SIS-005).
 	 *
 	 * @param InvoiceDraft $draft The totalled draft.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
 	 */
 	public function invoicePayload(InvoiceDraft $draft): array {
 		$request = $draft->request;
@@ -83,7 +85,7 @@ final class BillableInvoiceRecords {
 			'customerId' => $request->customerId,
 			'projectId' => $request->projectId,
 			'invoiceDate' => $request->toDate,
-			'dueDate' => $this->addDays(isoDate: $request->toDate, days: 30),
+			'dueDate' => $this->addDays(isoDate: $request->toDate, days: $draft->paymentTermDays),
 			'timeEntryIds' => $request->timeEntryIds,
 			'expenseIds' => $request->expenseIds,
 			'meterReadingIds' => $request->meterReadingIds,
@@ -95,7 +97,7 @@ final class BillableInvoiceRecords {
 			'vatAmount' => $amounts['vatAmount'],
 			'grossAmount' => $amounts['grossAmount'],
 			'currency' => 'EUR',
-			'paymentTerms' => 'net 30',
+			'paymentTerms' => 'net ' . $draft->paymentTermDays,
 			'status' => 'draft',
 			'posted' => false,
 			'obligationId' => null,

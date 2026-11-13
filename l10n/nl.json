@@ -6877,7 +6877,14 @@
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Payment term (days)": "Betaaltermijn (dagen)",
+        "Delivery method": "Verzendwijze",
+        "Credit limit": "Kredietlimiet",
+        "Invoice email": "Factuur-e-mailadres",
+        "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.": "Hoeveel dagen na de factuurdatum een factuur voor deze klant vervalt. Een nieuwe factuur neemt er haar vervaldatum van over.",
+        "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.": "Hoe een factuur deze klant bereikt: per e-mail, via Peppol, per post of helemaal niet.",
+        "The address invoices are mailed to. Empty uses the customer's email address.": "Het adres waar facturen naartoe gemaild worden. Leeg gebruikt het e-mailadres van de klant."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
 	buildQuickDraftRequest,
 	computeTotals,
+	customerTerms,
 	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
@@ -69,6 +70,26 @@ describe('invoiceQuickDraft — payment terms + due date', () => {
 	it('returns empty string for missing/invalid invoice date', () => {
 		expect(dueDateFromTerms('', 'net30')).toBe('')
 		expect(dueDateFromTerms('not-a-date', 'net30')).toBe('')
+	})
+})
+
+// sales-invoice-sending REQ-SIS-005: the quick draft takes the customer's own payment term.
+describe('invoiceQuickDraft — the customer\'s payment term', () => {
+	it('dates a 14-day customer\'s draft 14 days on', () => {
+		const customer = { legalName: 'Bakkerij De Korenaar B.V.', paymentTermDays: 14 }
+		expect(customerTerms(customer)).toBe('net14')
+		expect(dueDateFromTerms('2026-10-01', customerTerms(customer))).toBe('2026-10-15')
+	})
+
+	it('keeps a term of zero days as due on the invoice date', () => {
+		expect(dueDateFromTerms('2026-10-01', customerTerms({ paymentTermDays: 0 }))).toBe('2026-10-01')
+	})
+
+	it('falls back to 30 days without a usable term', () => {
+		for (const customer of [null, undefined, {}, { paymentTermDays: null }, { paymentTermDays: '' }, { paymentTermDays: 400 }, { paymentTermDays: -1 }, { paymentTermDays: 7.5 }, { paymentTerms: 'net14' }]) {
+			expect(customerTerms(customer)).toBe('net30')
+		}
+		expect(customerTerms({ paymentTermDays: '21' })).toBe('net21')
 	})
 })
 

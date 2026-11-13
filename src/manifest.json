@@ -7715,30 +7715,30 @@
 				"schema": "CustomerMaster",
 				"columns": [
 					{
+						"key": "customerId",
+						"label": "Code",
+						"sortable": true
+					},
+					{
 						"key": "legalName",
 						"label": "Name",
 						"sortable": true,
 						"secondary": "{tradeName}"
 					},
 					{
-						"key": "kvkNumber",
-						"label": "KvK Number",
+						"key": "paymentTermDays",
+						"label": "Payment term (days)",
 						"sortable": true
 					},
 					{
-						"key": "legalForm",
-						"label": "Legal form",
+						"key": "deliveryMethod",
+						"label": "Delivery method",
 						"sortable": true
 					},
 					{
-						"key": "address.city",
-						"label": "City",
-						"sortable": false
-					},
-					{
-						"key": "email",
-						"label": "Email",
-						"sortable": false
+						"key": "creditLimit",
+						"label": "Credit limit",
+						"sortable": true
 					},
 					{
 						"key": "lifecycleState",
@@ -7793,7 +7793,7 @@
 						"id": "customer-identity",
 						"type": "data",
 						"title": "Customer details",
-						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
+						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId", "paymentTermDays", "deliveryMethod", "invoiceEmail"]}
 					},
 					{
 						"id": "customer-stats-open-invoices",

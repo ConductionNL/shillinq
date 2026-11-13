@@ -4677,7 +4677,14 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "Payment term (days)": "Payment term (days)",
+        "Delivery method": "Delivery method",
+        "Credit limit": "Credit limit",
+        "Invoice email": "Invoice email",
+        "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.": "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.",
+        "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.": "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.",
+        "The address invoices are mailed to. Empty uses the customer's email address.": "The address invoices are mailed to. Empty uses the customer's email address."
     },
     "nplurals=2; plural=(n != 1);"
 )

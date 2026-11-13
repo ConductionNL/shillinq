@@ -96,6 +96,7 @@ class InvoiceGenerationService {
 
 		$draft = new InvoiceDraft();
 		$draft->request       = $request;
+		$draft->paymentTermDays = $this->customerTermDays(request: $request);
 		$draft->lineDrafts    = $this->records()->withStatutoryVatRates(lineDrafts: $this->lineDraftsFor(draft: $draft));
 		$draft->totals        = $this->vat->calculateVAT($draft->lineDrafts);
 		$draft->invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
@@ -110,6 +111,31 @@ class InvoiceGenerationService {
 
 		return $this->fetchInvoice(invoiceId: $draft->invoiceId);
 }//end draftInvoice()
+
+	/**
+	 * The customer's payment term in days, read from its CustomerMaster in
+	 * the request's administration; 30 when the customer or its term cannot
+	 * be read (sales-invoice-sending REQ-SIS-005).
+	 *
+	 * @param InvoiceGenerationRequest $request The request.
+	 *
+	 * @return int Days, 0 to 365.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+	 */
+	private function customerTermDays(InvoiceGenerationRequest $request): int {
+		if ($request->customerId === '') {
+			return 30;
+		}
+
+		$customer = $this->findScoped(schema: 'CustomerMaster', id: $request->customerId, administrationId: $request->administrationId);
+		$days = filter_var(($customer['paymentTermDays'] ?? null), FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 365]]);
+		if ($days === false) {
+			return 30;
+		}
+
+		return $days;
+	}//end customerTermDays()
 
 	/**
 	 * Refuse a request whose time entries or expenses are already invoiced.

@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-invoice-sending",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json or other fragments. ADR-031: a customer's payment term and delivery method are plain data with defaults.",
+    "description": "Gives CustomerMaster the payment term, delivery method and invoice address every new invoice for that customer reads (REQ-SIS-005). The fragment moves CustomerMaster to 0.4.0; it sorts after billable-period-becomes-an-invoice, which set 0.3.0.",
+    "spec": "openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "CustomerMaster": {
+        "version": "0.4.0",
+        "properties": {
+          "paymentTermDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365,
+            "default": 30,
+            "title": "Payment term (days)",
+            "description": "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.",
+            "example": 14
+          },
+          "deliveryMethod": {
+            "type": "string",
+            "enum": ["email", "peppol", "post", "none"],
+            "default": "email",
+            "title": "Delivery method",
+            "description": "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.",
+            "example": "email"
+          },
+          "invoiceEmail": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "title": "Invoice email",
+            "description": "The address invoices are mailed to. Empty uses the customer's email address.",
+            "example": "facturen@dekorenaar.example"
+          }
+        }
+      }
+    }
+  }
+}
