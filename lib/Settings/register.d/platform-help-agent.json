@@ -1,0 +1,123 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "platform-help-agent",
+    "description": "HelpArticle: one page of shillinq's user guide, seeded from docs/user-guide by the SeedHelpArticles repair step, so the in-app assistant can ground how-to answers in it (REQ-PHA-001). Readable by every user; written by the seed."
+  },
+  "components": {
+    "schemas": {
+      "HelpArticle": {
+        "slug": "HelpArticle",
+        "icon": "HelpCircleOutline",
+        "version": "0.1.0",
+        "title": "Help Article",
+        "description": "One page of shillinq's user guide, held as an object so the in-app assistant can search it. Seeded from docs/user-guide on install and upgrade, keyed by sourcePath; an unchanged file (same sourceHash) is left untouched.",
+        "x-schema-org": "schema:TechArticle",
+        "type": "object",
+        "authorization": {
+          "create": [
+            "shillinq_admin"
+          ],
+          "update": [
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
+        },
+        "required": [
+          "slug",
+          "title",
+          "sourcePath",
+          "sourceHash"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "The page's route in the user guide, with slashes as dashes (e.g. user-guide-bookkeeping-year-end).",
+            "example": "user-guide-bookkeeping-year-end",
+            "title": "Slug",
+            "facetable": true
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "The page title: its front matter title, else its first heading.",
+            "example": "Periode afsluiten",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "description": "The page's markdown without its front matter.",
+            "title": "Body"
+          },
+          "documentationUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where the page is published on the documentation site; the assistant links to it.",
+            "example": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end",
+            "title": "Documentation URL"
+          },
+          "pageIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ids of the app pages whose documentation link points at this article; the assistant prefers articles for the page the user is on.",
+            "example": [
+              "PeriodClose",
+              "PeriodCloseDetail"
+            ],
+            "title": "Page IDs",
+            "facetable": true
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "The page's language: its front matter language, else the documentation site's default (en).",
+            "example": "en",
+            "title": "Language",
+            "facetable": true
+          },
+          "sourcePath": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "The markdown file in the app the article is seeded from, relative to the app root.",
+            "example": "docs/user-guide/bookkeeping/year-end.md",
+            "title": "Source path"
+          },
+          "sourceHash": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "SHA-256 of the markdown file when it was last seeded; an unchanged hash skips the file.",
+            "title": "Source hash"
+          }
+        },
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search shillinq's user guide (help articles). Use for how-to questions about shillinq; filter on pageIds with the page the user is on to prefer the article that explains it.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": [
+                  "slug",
+                  "pageIds",
+                  "language"
+                ]
+              },
+              "get": {
+                "description": "Get one help article by id, with its markdown body and documentation link.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

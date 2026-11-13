@@ -56,6 +56,7 @@ use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
 use OCA\Shillinq\Lifecycle\WriteOffReasonGuard;
+use OCA\Shillinq\Listener\OfferHelperAgentTemplate;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
@@ -236,6 +237,14 @@ class Application extends App implements IBootstrap {
 				listener: PaymentRequestLeafRegistrationListener::class
 			);
 		}
+
+		// Change platform-help-agent, REQ-PHA-002 — offer the "Shillinq helper" agent
+		// template when hermiq collects templates from installed apps. Registered
+		// by name: the event only exists, and only fires, when hermiq is installed.
+		$context->registerEventListener(
+			event: OfferHelperAgentTemplate::EVENT,
+			listener: OfferHelperAgentTemplate::class
+		);
 
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine

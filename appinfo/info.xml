@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261111150000</version>
+    <version>0.5.7-unstable.20261113200000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -290,6 +290,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>
+            <!-- platform-help-agent (REQ-PHA-001): the user guide as HelpArticle
+                 objects, keyed by source path; unchanged files are skipped. -->
+            <step>OCA\Shillinq\Repair\SeedHelpArticles</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
             <!-- FoldIntoOrder RE-ENABLED (issue #1094, formerly Codeberg #503, 2026-07-25): live-verified end to end on 8080 against real
