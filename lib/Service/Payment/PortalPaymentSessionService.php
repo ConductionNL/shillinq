@@ -54,6 +54,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payment;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -74,7 +75,7 @@ use Throwable;
  * step of the ownership chain (ADR-005); collapsing them would trade
  * auditability for a score.
  */
-class PortalPaymentSessionService {
+class PortalPaymentSessionService implements PortalPaymentSessionServiceInterface {
 	/**
 	 * OpenRegister's object service, resolved lazily by FQCN so shillinq
 	 * keeps its existing zero-compile-time-coupling convention.

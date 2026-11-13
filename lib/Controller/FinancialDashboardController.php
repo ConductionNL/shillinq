@@ -46,7 +46,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\FinancialDashboardService;
+use OCA\Shillinq\Kernel\Contracts\FinancialDashboardServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,7 +64,7 @@ class FinancialDashboardController extends Controller {
 	 * Constructor for the FinancialDashboardController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param FinancialDashboardService $dashboard The series/summary computation service.
+	 * @param FinancialDashboardServiceInterface $dashboard The series/summary computation service.
 	 * @param AdministrationContextServiceInterface $context Authenticated-user context (ADR-005).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -72,7 +72,7 @@ class FinancialDashboardController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly FinancialDashboardService $dashboard,
+		private readonly FinancialDashboardServiceInterface $dashboard,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
@@ -236,7 +236,7 @@ class FinancialDashboardController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		// GUARD (security-endpoint-guards REQ-001): FinancialDashboardService
+		// GUARD (security-endpoint-guards REQ-001): FinancialDashboardServiceInterface
 		// aggregates GLTransaction/GLLine/Account/UrenRegistratie/ARInvoice/
 		// APTransaction across ALL matching objects with no per-administration
 		// filter at all (verified by reading FinancialDashboardService::

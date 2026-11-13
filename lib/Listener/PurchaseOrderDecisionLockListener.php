@@ -31,8 +31,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use OCP\EventDispatcher\Event;
@@ -58,12 +58,12 @@ class PurchaseOrderDecisionLockListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver Matches PurchaseOrder in shillinq's register.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Matches PurchaseOrder in shillinq's register.
 	 * @param ServerWriteAuthority   $authority      The request-scoped write grants.
 	 * @param IUserSession           $userSession    The caller; system saves pass.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly ServerWriteAuthority $authority,
 		private readonly IUserSession $userSession,
 	) {

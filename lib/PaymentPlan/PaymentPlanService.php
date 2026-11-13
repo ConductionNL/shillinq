@@ -41,7 +41,7 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -69,7 +69,7 @@ class PaymentPlanService {
 	 * @param PaymentPlanSchedule    $schedule      Draws up the instalments.
 	 * @param PaymentPlanAllocator   $allocator     Allocates payments.
 	 * @param DunningRunServiceInterface      $dunning       Pauses and resumes dunning.
-	 * @param ObjectTransitionRunner $transitions   Runs the declared transitions.
+	 * @param ObjectTransitionRunnerInterface $transitions   Runs the declared transitions.
 	 * @param PaymentPlanMailer      $mailer        Mails the customer.
 	 * @param ITimeFactory           $time          Today.
 	 * @param LoggerInterface        $logger        Logger.
@@ -80,7 +80,7 @@ class PaymentPlanService {
 		private readonly PaymentPlanSchedule $schedule,
 		private readonly PaymentPlanAllocator $allocator,
 		private readonly DunningRunServiceInterface $dunning,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly PaymentPlanMailer $mailer,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,

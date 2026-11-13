@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\GoodsReceiptNoteService;
+use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -77,7 +77,7 @@ class GoodsReceiptNoteController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param GoodsReceiptNoteService $grnService The GRN service (server-authoritative).
+	 * @param GoodsReceiptNoteServiceInterface $grnService The GRN service (server-authoritative).
 	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
@@ -86,7 +86,7 @@ class GoodsReceiptNoteController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly GoodsReceiptNoteService $grnService,
+		private readonly GoodsReceiptNoteServiceInterface $grnService,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,

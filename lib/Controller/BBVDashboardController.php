@@ -41,7 +41,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Dashboard\BBVComplianceWidget;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -100,7 +100,7 @@ class BBVDashboardController extends Controller {
 	 *                                                            so cross-tenant requests
 	 *                                                            cannot read another
 	 *                                                            administration's data.
-	 * @param FiscalYearContextService $fiscalYearContext Active fiscal-year resolver
+	 * @param FiscalYearContextServiceInterface $fiscalYearContext Active fiscal-year resolver
 	 *                                                    (slice 09, REQ-BBVW-006) —
 	 *                                                    collapses the client-
 	 *                                                    supplied fiscal year to
@@ -116,7 +116,7 @@ class BBVDashboardController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly BBVComplianceWidget $widget,
 		private readonly AdministrationContextServiceInterface $administrationContext,
-		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

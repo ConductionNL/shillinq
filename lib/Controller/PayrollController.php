@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\PayrollService;
+use OCA\Shillinq\Kernel\Contracts\PayrollServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -67,7 +67,7 @@ class PayrollController extends Controller {
 	 * Constructor for the PayrollController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param PayrollService $payrollService The payroll computation service.
+	 * @param PayrollServiceInterface $payrollService The payroll computation service.
 	 * @param IUserSession $userSession User session for authentication guard.
 	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param LoggerInterface $logger Logger (no stack traces to client, no raw BSN).
@@ -77,7 +77,7 @@ class PayrollController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PayrollService $payrollService,
+		private readonly PayrollServiceInterface $payrollService,
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,

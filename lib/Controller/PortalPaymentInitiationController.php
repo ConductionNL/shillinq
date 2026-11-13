@@ -38,9 +38,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -72,13 +72,13 @@ class PortalPaymentInitiationController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
-	 * @param PortalPaymentSessionService $sessionService Resolves ownership + mints the payment session.
+	 * @param PortalPaymentSessionServiceInterface $sessionService Resolves ownership + mints the payment session.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly PortalAssertionVerifier $verifier,
-		private readonly PortalPaymentSessionService $sessionService,
+		private readonly PortalPaymentSessionServiceInterface $sessionService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

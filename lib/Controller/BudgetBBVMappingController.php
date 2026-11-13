@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -77,7 +77,7 @@ class BudgetBBVMappingController extends Controller {
 	 *                                                            — every mapping read is
 	 *                                                            scoped to an administration
 	 *                                                            the user is a member of.
-	 * @param FiscalYearContextService $fiscalYearContext Active fiscal-year resolver
+	 * @param FiscalYearContextServiceInterface $fiscalYearContext Active fiscal-year resolver
 	 *                                                    (slice 09, REQ-BBVW-006).
 	 *
 	 * @return void
@@ -87,7 +87,7 @@ class BudgetBBVMappingController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly AdministrationContextServiceInterface $administrationContext,
-		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestRefundServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -44,7 +45,7 @@ use Throwable;
  *
  * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
  */
-class ObjectRequestRefundService {
+class ObjectRequestRefundService implements ObjectRequestRefundServiceInterface {
 
 	/**
 	 * App config key: the refunds payable account.

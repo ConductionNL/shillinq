@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Event\PayableRaisedEvent;
-use OCA\Shillinq\Service\InboundPayableService;
+use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -39,12 +39,12 @@ class PayableRaisedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param InboundPayableService $payables Checks and stores the payable.
+	 * @param InboundPayableServiceInterface $payables Checks and stores the payable.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly InboundPayableService $payables,
+		private readonly InboundPayableServiceInterface $payables,
 	) {
 	}//end __construct()
 

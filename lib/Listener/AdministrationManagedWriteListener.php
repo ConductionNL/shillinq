@@ -29,7 +29,7 @@ use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -67,7 +67,7 @@ class AdministrationManagedWriteListener implements IEventListener {
 	 *
 	 * @param AdministrationContextServiceInterface $administrationContext The session user.
 	 * @param AdministrationManagementAccessInterface $managementAccess Owner or admin check.
-	 * @param ListenerSchemaResolver $schemaResolver Schema matching for the written entity.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Schema matching for the written entity.
 	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void
@@ -75,7 +75,7 @@ class AdministrationManagedWriteListener implements IEventListener {
 	public function __construct(
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly AdministrationManagementAccessInterface $managementAccess,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

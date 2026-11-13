@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 
@@ -39,7 +40,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
  */
-final class PaymentRequestFinder {
+final class PaymentRequestFinder implements PaymentRequestFinderInterface {
 	/**
 	 * Rows per page.
 	 *

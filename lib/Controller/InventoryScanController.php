@@ -49,7 +49,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\InventoryScanService;
+use OCA\Shillinq\Kernel\Contracts\InventoryScanServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -90,7 +90,7 @@ class InventoryScanController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IUserSession $userSession The user session (acting user identity).
 	 * @param IGroupManager $groupManager Group membership for role checks.
-	 * @param InventoryScanService $scanService Server-authoritative scan logic.
+	 * @param InventoryScanServiceInterface $scanService Server-authoritative scan logic.
 	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 */
@@ -98,7 +98,7 @@ class InventoryScanController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly InventoryScanService $scanService,
+		private readonly InventoryScanServiceInterface $scanService,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {

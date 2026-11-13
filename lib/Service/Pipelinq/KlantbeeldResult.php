@@ -39,6 +39,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
+use OCA\Shillinq\Kernel\Contracts\KlantbeeldResultInterface;
+
 /**
  * Immutable envelope: page of {@see KlantbeeldTransaction} + meta.
  *
@@ -48,7 +50,7 @@ namespace OCA\Shillinq\Service\Pipelinq;
  *     #506): changing this constructor signature would ripple to callers;
  *     deferred.
  */
-final class KlantbeeldResult implements \JsonSerializable {
+final class KlantbeeldResult implements \JsonSerializable, KlantbeeldResultInterface {
 	/**
 	 * Constructor (use the named factories for clarity).
 	 *

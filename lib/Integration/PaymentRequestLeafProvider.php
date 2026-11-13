@@ -39,14 +39,16 @@ namespace OCA\Shillinq\Integration;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
-use OCA\Shillinq\Service\FeeScheduleService;
+use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAppGrantInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
-use OCA\Shillinq\Service\ObjectRequestInvoiceService;
-use OCA\Shillinq\Service\PaymentActionAppGrant;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
-use OCA\Shillinq\Service\PaymentSettlementService;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -68,7 +70,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 *
 	 * @var string
 	 */
-	public const ACTION_REQUEST = PaymentActionAuthorizer::ACTION_REQUEST;
+	public const ACTION_REQUEST = PaymentActionAuthorizerInterface::ACTION_REQUEST;
 
 	/**
 	 * The schema holding payment requests.
@@ -83,13 +85,13 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param ObjectPaymentRequestValidator $validator The conditional shape and the uniqueness invariant.
 	 * @param IAppConfig $appConfig App config, for the register slug.
-	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries payment.request.
-	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
-	 * @param PaymentSettlementService $settlements Money that arrived another way, and the state it derives.
-	 * @param PaymentActionAppGrant $appGrant Whether a calling app carries payment.request (REQ-SOPR-010).
-	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
-	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
-	 * @param ?ObjectRequestInvoiceService $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
+	 * @param PaymentActionAuthorizerInterface $authorizer Whether the caller carries payment.request.
+	 * @param FeeScheduleServiceInterface $feeSchedules The published fee for the host object's type.
+	 * @param PaymentSettlementServiceInterface $settlements Money that arrived another way, and the state it derives.
+	 * @param PaymentActionAppGrantInterface $appGrant Whether a calling app carries payment.request (REQ-SOPR-010).
+	 * @param PaymentRequestFinderInterface|null $finder Reads every page of requests on a subject; built on demand when absent.
+	 * @param PaymentRequestPortalScopeInterface $portalScope Gives a request without an invoice its portal scope.
+	 * @param ?ObjectRequestInvoiceServiceInterface $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
 	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
 	 *
 	 * @return void
@@ -98,13 +100,13 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectPaymentRequestValidator $validator,
 		private readonly IAppConfig $appConfig,
-		private readonly PaymentActionAuthorizer $authorizer,
-		private readonly FeeScheduleService $feeSchedules,
-		private readonly PaymentSettlementService $settlements,
-		private readonly PaymentActionAppGrant $appGrant,
-		private readonly ?PaymentRequestFinder $finder = null,
-		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
-		private readonly ?ObjectRequestInvoiceService $invoices = null,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
+		private readonly FeeScheduleServiceInterface $feeSchedules,
+		private readonly PaymentSettlementServiceInterface $settlements,
+		private readonly PaymentActionAppGrantInterface $appGrant,
+		private readonly ?PaymentRequestFinderInterface $finder = null,
+		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
+		private readonly ?ObjectRequestInvoiceServiceInterface $invoices = null,
 		private readonly ?DebtorCreditServiceInterface $credits = null,
 	) {
 	}//end __construct()
@@ -585,9 +587,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	/**
 	 * The request finder, injected or built on demand.
 	 *
-	 * @return PaymentRequestFinder The finder.
+	 * @return PaymentRequestFinderInterface The finder.
 	 */
-	private function finder(): PaymentRequestFinder {
+	private function finder(): PaymentRequestFinderInterface {
 		return ($this->finder ?? new PaymentRequestFinder(
 			objectService: $this->objectService,
 			validator: $this->validator,

@@ -33,9 +33,9 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
-use OCA\Shillinq\Service\FeeScheduleService;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
-use OCA\Shillinq\Service\PaymentSettlementService;
+use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,13 +64,13 @@ class PaymentRequestActionController extends Controller {
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param PaymentActionAuthorizer $authorizer The payment action matrix.
+	 * @param PaymentActionAuthorizerInterface $authorizer The payment action matrix.
 	 * @param IMailer $mailer Nextcloud's mailer.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param LoggerInterface $logger Logger.
-	 * @param FeeScheduleService $feeSchedules The published fees.
+	 * @param FeeScheduleServiceInterface $feeSchedules The published fees.
 	 * @param PaymentRequestLeafProvider $leaf The leaf that appends the request.
-	 * @param PaymentSettlementService $settlements Money that arrived another way.
+	 * @param PaymentSettlementServiceInterface $settlements Money that arrived another way.
 	 *
 	 * @return void
 	 */
@@ -78,13 +78,13 @@ class PaymentRequestActionController extends Controller {
 		string $appName,
 		IRequest $request,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly PaymentActionAuthorizer $authorizer,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
 		private readonly IMailer $mailer,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly FeeScheduleService $feeSchedules,
+		private readonly FeeScheduleServiceInterface $feeSchedules,
 		private readonly PaymentRequestLeafProvider $leaf,
-		private readonly PaymentSettlementService $settlements,
+		private readonly PaymentSettlementServiceInterface $settlements,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 	}//end __construct()
@@ -100,7 +100,7 @@ class PaymentRequestActionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function send(string $id): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Sending a payment link needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 
@@ -177,7 +177,7 @@ class PaymentRequestActionController extends Controller {
 		float $amount = 0.0,
 		string $reason = '',
 	): JSONResponse {
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Settling a payment request needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
 		}
 

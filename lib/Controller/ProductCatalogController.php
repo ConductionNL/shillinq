@@ -46,7 +46,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\ProductCatalogService;
+use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -66,13 +66,13 @@ class ProductCatalogController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request.
-	 * @param ProductCatalogService $catalogService Resolves the catalog.
+	 * @param ProductCatalogServiceInterface $catalogService Resolves the catalog.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ProductCatalogService $catalogService,
+		private readonly ProductCatalogServiceInterface $catalogService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

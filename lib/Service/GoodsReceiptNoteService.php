@@ -51,10 +51,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 04 of bookkeeping-purchase-order-3way: GRN lifecycle + inventory
@@ -88,7 +89,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): early-return refactor deferred pending
  * full behavioral verification of each branch.
  */
-class GoodsReceiptNoteService {
+class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	/**
 	 * StockMove movementType for the GRN-accept inventory credit.
 	 *

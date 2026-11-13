@@ -50,7 +50,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\InventoryMobileScannerService;
+use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -97,7 +97,7 @@ class InventoryMobileScannerController extends Controller {
 	 * @param IGroupManager $groupManager Group membership lookups.
 	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param AdministrationContextServiceInterface $admin Per-user administration scope.
-	 * @param InventoryMobileScannerService $scanner Sync core.
+	 * @param InventoryMobileScannerServiceInterface $scanner Sync core.
 	 * @param ContainerInterface $container DI container (locations lookup).
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
@@ -107,7 +107,7 @@ class InventoryMobileScannerController extends Controller {
 		private readonly IGroupManager $groupManager,
 		private readonly RegisterLocation $registerLocation,
 		private readonly AdministrationContextServiceInterface $admin,
-		private readonly InventoryMobileScannerService $scanner,
+		private readonly InventoryMobileScannerServiceInterface $scanner,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {

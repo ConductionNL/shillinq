@@ -49,11 +49,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LandedCostAllocationServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Pro-rata landed-cost capitalisation into unit cost + balanced GL (ADR-031 exception).
@@ -62,7 +63,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class LandedCostAllocationService {
+class LandedCostAllocationService implements LandedCostAllocationServiceInterface {
 
 	/**
 	 * App-config key for the inventory asset account (RGS 3.5 default '1300').
