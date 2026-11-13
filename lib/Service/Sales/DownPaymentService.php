@@ -39,6 +39,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 
 /**
  * Raises down payments on an order and deducts them on its final invoice.

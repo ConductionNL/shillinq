@@ -39,6 +39,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 
 /**
  * Approves and pays a requested refund, with its two bookings.

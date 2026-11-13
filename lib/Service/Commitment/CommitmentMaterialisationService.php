@@ -72,6 +72,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 
 /**
  * Assembles a Commitment + CommitmentLines from an approved

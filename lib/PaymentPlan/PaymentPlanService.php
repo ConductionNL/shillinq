@@ -48,6 +48,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 
 /**
  * The payment plan flow.

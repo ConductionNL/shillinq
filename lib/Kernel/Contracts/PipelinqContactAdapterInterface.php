@@ -24,11 +24,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\Pipelinq\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 
 /**
  * Contract of PipelinqContactAdapter.

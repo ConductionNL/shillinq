@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\Budget\BudgetEditRefusedException;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 
 /**
  * Contract of BudgetEditingService.

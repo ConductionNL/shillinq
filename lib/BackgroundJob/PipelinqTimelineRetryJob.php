@@ -53,7 +53,7 @@ use DateTimeZone;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;

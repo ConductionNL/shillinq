@@ -4,7 +4,7 @@
  * Outcome value-object for PortalPaymentSessionService::initiate() (portal-payment-initiation).
  *
  * @category Service
- * @package  OCA\Shillinq\Service\Payment
+ * @package  OCA\Shillinq\Kernel\Model
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Payment;
+namespace OCA\Shillinq\Kernel\Model;
 
 /**
  * One of four uniform outcomes the controller maps to an HTTP status:

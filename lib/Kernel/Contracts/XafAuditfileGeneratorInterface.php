@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 
 /**
  * Contract of XafAuditfileGenerator.

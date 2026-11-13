@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Security\ISecureRandom;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 
 /**
  * Drafts an ARInvoice on the server.

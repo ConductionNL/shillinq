@@ -41,7 +41,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use Psr\Log\LoggerInterface;
 
 /**

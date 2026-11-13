@@ -4,7 +4,7 @@
  * Result value-object returned by a DepositPaymentAdapter call.
  *
  * @category Service
- * @package  OCA\Shillinq\Service\External\DepositPayment
+ * @package  OCA\Shillinq\Kernel\Model
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\External\DepositPayment;
+namespace OCA\Shillinq\Kernel\Model;
 
 /**
  * Result of a DepositPayment lifecycle operation

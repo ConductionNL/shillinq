@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OutOfBoundsException;
 
 /**

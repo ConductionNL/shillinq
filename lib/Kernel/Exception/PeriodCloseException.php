@@ -10,7 +10,7 @@
  * status without leaking a stack trace to the client (ADR-005).
  *
  * @category Service
- * @package  OCA\Shillinq\Service
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -26,7 +26,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service;
+namespace OCA\Shillinq\Kernel\Exception;
 
 /**
  * Carries a stable status sentinel for HTTP mapping in the controller.

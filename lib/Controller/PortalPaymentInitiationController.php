@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
+use OCA\Shillinq\Kernel\Model\PortalPaymentSessionResult;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;

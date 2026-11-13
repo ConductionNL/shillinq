@@ -36,7 +36,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;

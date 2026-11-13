@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Kernel\Contracts;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 
 /**
  * Contract of NoShowFeeCaptureService.

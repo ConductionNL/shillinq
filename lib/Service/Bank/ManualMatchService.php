@@ -46,6 +46,7 @@ use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 
 /**
  * Manual bank line matching (REQ-BMM-001, REQ-BMM-002).

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Budget Edit Refused Exception
+ * A manual match the service refuses, with a message a person can act on.
  *
- * A budget edit that cannot be carried out, with an English source
- * string and its parameters so the controller can translate the reason.
+ * The message is an English source string with `%1$s` placeholders, the
+ * form Nextcloud's IL10N::t() fills; the controller translates it, so the refusal reaches the user in their language.
  *
- * @category Budget
- * @package  OCA\Shillinq\Budget
+ * @category Service
+ * @package  OCA\Shillinq\Kernel\Exception
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/budget-grid-view/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,16 +23,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Budget;
+namespace OCA\Shillinq\Kernel\Exception;
 
 use DomainException;
 
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/specs/budget-grid-view/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
-class BudgetEditRefusedException extends DomainException {
+class ManualMatchRefusedException extends DomainException {
 	/**
 	 * Constructor.
 	 *
@@ -43,7 +43,7 @@ class BudgetEditRefusedException extends DomainException {
 		private readonly string $template,
 		private readonly array $parameters = [],
 	) {
-		parent::__construct(message: vsprintf($template, $parameters));
+		parent::__construct(message: self::render(template: $template, parameters: $parameters));
 
 	}//end __construct()
 
@@ -52,7 +52,7 @@ class BudgetEditRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -64,10 +64,23 @@ class BudgetEditRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function getParameters(): array {
 		return $this->parameters;
 
 	}//end getParameters()
+
+	/**
+	 * Fill the placeholders.
+	 *
+	 * @param string            $template   The template.
+	 * @param array<int,string> $parameters The values.
+	 *
+	 * @return string
+	 */
+	private static function render(string $template, array $parameters): string {
+		return vsprintf($template, $parameters);
+
+	}//end render()
 }//end class

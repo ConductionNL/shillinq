@@ -44,6 +44,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\BudgetEditingServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 
 /**
  * Budget entry over AnnualBudget, BudgetLine and LedgerGroup.

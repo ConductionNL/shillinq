@@ -34,6 +34,7 @@ use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 
 /**
  * Starts a quote, a credit note or a payout on a host object.

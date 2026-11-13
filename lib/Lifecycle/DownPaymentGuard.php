@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use RuntimeException;
 
 /**

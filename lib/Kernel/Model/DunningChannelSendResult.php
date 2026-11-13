@@ -8,7 +8,7 @@
  * openTracking on the executed run record.
  *
  * @category Service
- * @package  OCA\Shillinq\Service\Dunning
+ * @package  OCA\Shillinq\Kernel\Model
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Service\Dunning;
+namespace OCA\Shillinq\Kernel\Model;
 
 /**
  * Immutable result value object.
