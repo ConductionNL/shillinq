@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261111150000</version>
+    <version>0.5.7-unstable.20261113120000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -201,6 +201,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
              due date move to overdue and each overdue invoice gets the ladder
              stage that is due. Ships off for every administration. -->
         <job>OCA\Shillinq\BackgroundJob\DunningTickJob</job>
+        <!-- purchasing-call-offs-and-reorder-proposals REQ-IRA-011: daily
+             TimedJob comparing every active reorder rule with its stock; low
+             stock raises a ReorderProposal (the alert) and a draft purchase
+             order, one open proposal per rule. The work is
+             ReorderProposalService, run as the system inside each rule's
+             administration. -->
+        <job>OCA\Shillinq\BackgroundJob\ReorderProposalJob</job>
     </background-jobs>
 
     <repair-steps>

@@ -38,6 +38,7 @@
  *
  * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+ * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
  */
 
 declare(strict_types=1);
@@ -254,6 +255,7 @@ class PurchaseOrderService {
 	 *                           budget is exceeded, or a required field is missing.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
 		$order              = $this->checkedOrder(administrationId: $administrationId, payload: $payload);
@@ -274,17 +276,36 @@ class PurchaseOrderService {
 	 * The checked parties, lines and total of a new order, refused in that
 	 * order when one is missing or invalid.
 	 *
+	 * A call-off of a framework agreement takes the agreement's agreed unit
+	 * price on every line of a product the agreement lists, whatever price the
+	 * caller sent, so the total counted against the ceiling is the agreed one
+	 * (REQ-PG-005).
+	 *
 	 * @param string              $administrationId Administration scope (server-resolved).
 	 * @param array<string,mixed> $payload          Caller payload.
 	 *
 	 * @return array{administrationId:string,requesterId:string,supplierId:string,costCenter:string,lines:array<int,array<string,mixed>>,totalCents:int,payload:array<string,mixed>}
 	 *
-	 * @throws \RuntimeException When the requester lacks access or a field is missing or invalid.
+	 * @throws \RuntimeException When the requester lacks access, a field is missing or invalid,
+	 *                           or the framework agreement cannot be called off.
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
 	private function checkedOrder(string $administrationId, array $payload): array {
 		$order = $this->orderParties(administrationId: $administrationId, payload: $payload);
 
-		$order['lines']      = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []));
+		$agreedUnitCents = [];
+		$frameworkAgreementId = trim((string)($payload['frameworkAgreementId'] ?? ''));
+		if ($frameworkAgreementId !== '') {
+			$agreement = $this->frameworkAgreementDrawdownGuard->agreementForCallOff(
+				administrationId: $administrationId,
+				frameworkAgreementId: $frameworkAgreementId,
+				supplierId: $order['supplierId']
+			);
+			$agreedUnitCents = $this->frameworkAgreementDrawdownGuard->agreedUnitAmounts(agreement: $agreement);
+		}
+
+		$order['lines']      = $this->normaliseLines(rawLines: (array)($payload['lines'] ?? []), agreedUnitCents: $agreedUnitCents);
 		$order['totalCents'] = $this->totalCents(lines: $order['lines']);
 		if ($order['totalCents'] <= 0) {
 			throw new RuntimeException('Purchase order total must be positive');
@@ -934,13 +955,19 @@ class PurchaseOrderService {
 	 * not supply one. Monetary fields (unitPrice, lineTotal, vatAmount) are
 	 * computed in integer cents and presented back as floats with multipleOf 0.01.
 	 *
-	 * @param array<int,mixed> $rawLines Raw line entries from the caller.
+	 * A line whose product code has an agreed unit price ($agreedUnitCents)
+	 * takes that price and is marked `agreedPrice: true` (REQ-PG-005).
+	 *
+	 * @param array<int,mixed> $rawLines        Raw line entries from the caller.
+	 * @param array<string,int> $agreedUnitCents Product code => agreed unit price in cents.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @throws \RuntimeException When a line is malformed.
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
 	 */
-	private function normaliseLines(array $rawLines): array {
+	private function normaliseLines(array $rawLines, array $agreedUnitCents=[]): array {
 		if ($rawLines === []) {
 			throw new RuntimeException('Purchase order must have at least one line');
 		}
@@ -951,7 +978,18 @@ class PurchaseOrderService {
 				throw new RuntimeException('Line item must be an object');
 			}
 
-			$lines[] = $this->pricedLine(line: $this->checkedLine(raw: $raw, lineNumber: ($index + 1)));
+			$line   = $this->checkedLine(raw: $raw, lineNumber: ($index + 1));
+			$agreed = array_key_exists($line['productCode'], $agreedUnitCents);
+			if ($agreed === true) {
+				$line['unitPrice'] = $this->fromCents(cents: $agreedUnitCents[$line['productCode']]);
+			}
+
+			$priced = $this->pricedLine(line: $line);
+			if ($agreed === true) {
+				$priced['agreedPrice'] = true;
+			}
+
+			$lines[] = $priced;
 		}
 
 		return $lines;
@@ -1166,11 +1204,16 @@ class PurchaseOrderService {
 	 * requests are tolerated at this layer (the PO id remains unique via the OR
 	 * record id); the displayable po_number is best-effort sequential.
 	 *
+	 * Also numbers the draft orders ReorderProposalService proposes, so every
+	 * order of an administration shares one sequence (REQ-IRA-011).
+	 *
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/inventory-reorder-automation/spec.md (REQ-IRA-011)
 	 */
-	private function generatePoNumber(string $administrationId): string {
+	public function generatePoNumber(string $administrationId): string {
 		$year = (int)date('Y');
 
 		$existing = $this->findAll(

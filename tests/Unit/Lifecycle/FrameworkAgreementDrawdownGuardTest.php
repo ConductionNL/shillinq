@@ -211,4 +211,128 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase {
 		$this->expectExceptionMessage('not found');
 		$guard->assertWithinCeiling(administrationId: 'adm-1', frameworkAgreementId: 'FA-1', addCents: 1000);
 	}//end testMissingAgreementIsBlocked()
+
+	/**
+	 * A call-off by the agreement's own supplier gets the agreement; any other
+	 * supplier, a closed or a missing agreement is refused (REQ-PG-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testAgreementForCallOffBelongsToTheOrdersSupplier(): void {
+		$agreement = (['supplierId' => 'sup-1'] + $this->nearCeilingAgreement());
+		$closed    = (['agreementNumber' => 'FA-2', 'statusCode' => 'closed'] + $agreement);
+		$guard     = $this->buildGuard(agreements: [$agreement, $closed]);
+
+		self::assertSame($agreement, $guard->agreementForCallOff(administrationId: 'adm-1', frameworkAgreementId: 'FA-1', supplierId: 'sup-1'));
+
+		$refusals = [];
+		foreach ([['adm-1', 'FA-1', 'sup-2'], ['adm-1', 'FA-1', ''], ['adm-1', 'FA-2', 'sup-1'], ['adm-2', 'FA-1', 'sup-1']] as [$administrationId, $id, $supplierId]) {
+			try {
+				$guard->agreementForCallOff(administrationId: $administrationId, frameworkAgreementId: $id, supplierId: $supplierId);
+				$refusals[] = 'accepted';
+			} catch (\RuntimeException $e) {
+				$refusals[] = $e->getMessage();
+			}
+		}
+
+		self::assertSame(
+			[
+				'Framework agreement is with another supplier.',
+				'Framework agreement is with another supplier.',
+				'Framework agreement is not active.',
+				'Framework agreement not found.',
+			],
+			$refusals
+		);
+	}//end testAgreementForCallOffBelongsToTheOrdersSupplier()
+
+	/**
+	 * A lookup that fails is a refusal, logged, never a pass (fail-closed).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testAgreementForCallOffFailsClosed(): void {
+		$failing = new class {
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * The store is down.
+			 *
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				throw new \LogicException('store down');
+			}//end findAll()
+		};
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('error')->with(
+			'FrameworkAgreementDrawdownGuard: agreement lookup failed — denying (fail-closed)',
+			['frameworkAgreementId' => 'FA-1', 'exception' => 'store down']
+		);
+		$guard = new FrameworkAgreementDrawdownGuard(appConfig: $appConfig, logger: $logger, objectService: new DuckObjectServiceAdapter($failing));
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Framework agreement drawdown check failed.');
+		$guard->agreementForCallOff(administrationId: 'adm-1', frameworkAgreementId: 'FA-1', supplierId: 'sup-1');
+	}//end testAgreementForCallOffFailsClosed()
+
+	/**
+	 * The agreed prices by product code, in cents; entries without a product
+	 * code or a usable amount are left out.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/purchasing-call-offs-and-reorder-proposals/specs/procurement-governance/spec.md (REQ-PG-005)
+	 */
+	public function testAgreedUnitAmountsByProductCode(): void {
+		$guard = $this->buildGuard(agreements: []);
+
+		self::assertSame(
+			['PAPER' => 4200, 'TONER' => 0, 'PEN' => 150],
+			$guard->agreedUnitAmounts(
+				agreement: [
+					'agreedPrices' => [
+						['productCode' => ' PAPER ', 'unitAmount' => 4200],
+						['productCode' => 'TONER', 'unitAmount' => 0],
+						['productCode' => 'PEN', 'unitAmount' => '150'],
+						['productCode' => '', 'unitAmount' => 10],
+						['productCode' => 'NEG', 'unitAmount' => -1],
+						['productCode' => 'TEXT', 'unitAmount' => 'ten'],
+						['productCode' => 'NONE'],
+						'loose',
+					],
+				]
+			)
+		);
+		self::assertSame([], $guard->agreedUnitAmounts(agreement: []));
+	}//end testAgreedUnitAmountsByProductCode()
 }//end class
