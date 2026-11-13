@@ -96,14 +96,16 @@ final class AppHostRegistration {
 		$context->registerService(
 			'OCA\\Shillinq\\Settings\\AdminSettings',
 			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings';
+				$class     = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings';
+				$placement = 'OCA\\OpenRegister\\AppHost\\Settings\\SettingsPlacement';
+				$services  = 'OCA\\OpenRegister\\AppHost\\Settings\\AdminFormServices';
 				return new $class(
-					appId: $appId,
-					sectionId: $appId,
-					priority: 10,
-					appManager: $c->get('OCP\\App\\IAppManager'),
-					initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState'),
-					appConfig: $c->get('OCP\\IAppConfig')
+					placement: new $placement(appId: $appId, sectionId: $appId, priority: 10),
+					services: new $services(
+						appManager: $c->get('OCP\\App\\IAppManager'),
+						initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState'),
+						appConfig: $c->get('OCP\\IAppConfig')
+					)
 				);
 			}
 		);
@@ -111,13 +113,12 @@ final class AppHostRegistration {
 		$context->registerService(
 			'OCA\\Shillinq\\Sections\\SettingsSection',
 			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection';
+				$class      = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection';
+				$placement  = 'OCA\\OpenRegister\\AppHost\\Settings\\SettingsPlacement';
+				$appearance = 'OCA\\OpenRegister\\AppHost\\Settings\\SectionAppearance';
 				return new $class(
-					sectionId: $appId,
-					name: 'Shillinq',
-					appId: $appId,
-					iconFile: 'app-dark.svg',
-					priority: 75,
+					placement: new $placement(appId: $appId, sectionId: $appId, priority: 75),
+					appearance: new $appearance(name: 'Shillinq', iconFile: 'app-dark.svg'),
 					urlGenerator: $c->get('OCP\\IURLGenerator')
 				);
 			}
