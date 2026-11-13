@@ -87,6 +87,14 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\Hermiq\\\\Event\\\\CollectAgentTemplatesEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\OfferHelperAgentTemplate'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\StockMoveTransitionedListener'",
             "0"
