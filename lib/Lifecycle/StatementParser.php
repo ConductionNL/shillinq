@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -50,7 +51,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md#req-br-003
  * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
  */
-class StatementParser {
+class StatementParser implements StatementParserInterface {
 	/**
 	 * Construct the parser with DI dependencies.
 	 *

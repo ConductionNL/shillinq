@@ -42,8 +42,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
-use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -70,7 +70,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-	 * @param BudgetBlocker $budgetBlocker Reused, unmodified budget/mandate guard.
+	 * @param BudgetBlockerInterface $budgetBlocker Reused, unmodified budget/mandate guard.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
@@ -79,7 +79,7 @@ class RequisitionService implements RequisitionServiceInterface {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
-		private readonly BudgetBlocker $budgetBlocker,
+		private readonly BudgetBlockerInterface $budgetBlocker,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

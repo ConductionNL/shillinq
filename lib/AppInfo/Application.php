@@ -47,6 +47,17 @@ use OCA\Shillinq\Lifecycle\LifecycleRegistrar;
 use OCA\Shillinq\Repair\RepairRegistrar;
 use OCA\Shillinq\Service\ServiceRegistrar;
 use OCA\Shillinq\Listener\Registration\ListenerRegistrar;
+use OCA\Shillinq\Lifecycle\LifecycleContractRegistrar;
+use OCA\Shillinq\Reporting\ReportingContractRegistrar;
+use OCA\Shillinq\Listener\ListenerContractRegistrar;
+use OCA\Shillinq\Guard\GuardContractRegistrar;
+use OCA\Shillinq\BackgroundJob\BackgroundJobContractRegistrar;
+use OCA\Shillinq\PaymentRun\PaymentRunContractRegistrar;
+use OCA\Shillinq\PaymentPlan\PaymentPlanContractRegistrar;
+use OCA\Shillinq\Integration\IntegrationContractRegistrar;
+use OCA\Shillinq\Budget\BudgetContractRegistrar;
+use OCA\Shillinq\Portal\PortalContractRegistrar;
+use OCA\Shillinq\Dashboard\DashboardContractRegistrar;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
@@ -189,6 +200,17 @@ class Application extends App implements IBootstrap {
 		// registered as one unit. See BudgetScenarioRegistration's own
 		// docblock for why this lives in its own class.
 		(new BudgetScenarioRegistration())->register(context: $context);
+		(new LifecycleContractRegistrar())->register(context: $context);
+		(new ReportingContractRegistrar())->register(context: $context);
+		(new ListenerContractRegistrar())->register(context: $context);
+		(new GuardContractRegistrar())->register(context: $context);
+		(new BackgroundJobContractRegistrar())->register(context: $context);
+		(new PaymentRunContractRegistrar())->register(context: $context);
+		(new PaymentPlanContractRegistrar())->register(context: $context);
+		(new IntegrationContractRegistrar())->register(context: $context);
+		(new BudgetContractRegistrar())->register(context: $context);
+		(new PortalContractRegistrar())->register(context: $context);
+		(new DashboardContractRegistrar())->register(context: $context);
 
 	}//end register()
 

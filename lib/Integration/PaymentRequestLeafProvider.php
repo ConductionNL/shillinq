@@ -44,6 +44,7 @@ use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAppGrantInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
@@ -57,20 +58,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
  */
-final class PaymentRequestLeafProvider implements IntegrationProvider {
-	/**
-	 * The leaf id, equal on both halves so gate-24 can pair them.
-	 *
-	 * @var string
-	 */
-	public const LEAF_ID = 'shillinq-payment-requests';
-
-	/**
-	 * The action a caller needs before a request may be raised.
-	 *
-	 * @var string
-	 */
-	public const ACTION_REQUEST = PaymentActionAuthorizerInterface::ACTION_REQUEST;
+final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRequestLeafProviderInterface {
 
 	/**
 	 * The schema holding payment requests.

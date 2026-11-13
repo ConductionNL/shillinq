@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Notification;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportDeliveryInterface;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
@@ -88,7 +88,7 @@ class ScheduledReportNotifier implements INotifier {
 	public function prepare(INotification $notification, string $languageCode): INotification {
 		$subject = $notification->getSubject();
 		if ($notification->getApp() !== AppIdentity::APP_ID
-			|| in_array($subject, [ScheduledReportDelivery::SUBJECT_READY, ScheduledReportDelivery::SUBJECT_FAILED], true) === false
+			|| in_array($subject, [ScheduledReportDeliveryInterface::SUBJECT_READY, ScheduledReportDeliveryInterface::SUBJECT_FAILED], true) === false
 		) {
 			throw new UnknownNotificationException();
 		}
@@ -96,7 +96,7 @@ class ScheduledReportNotifier implements INotifier {
 		$l          = $this->l10nFactory->get(AppIdentity::APP_ID, $languageCode);
 		$parameters = $notification->getSubjectParameters();
 		$name       = (string)($parameters['name'] ?? '');
-		if ($subject === ScheduledReportDelivery::SUBJECT_READY) {
+		if ($subject === ScheduledReportDeliveryInterface::SUBJECT_READY) {
 			$notification->setParsedSubject($l->t('%1$s for %2$s is ready', [$name, (string)($parameters['period'] ?? '')]));
 			return $notification;
 		}

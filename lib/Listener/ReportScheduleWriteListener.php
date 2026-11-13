@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
+use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IUserSession;
@@ -70,12 +70,12 @@ class ReportScheduleWriteListener implements IEventListener {
 	 * Construct the listener.
 	 *
 	 * @param ListenerSchemaResolverInterface $schemaResolver Matches ReportSchedule in shillinq's register.
-	 * @param ReportRecipientPolicy  $policy         Who may receive the reports.
+	 * @param ReportRecipientPolicyInterface  $policy         Who may receive the reports.
 	 * @param IUserSession           $userSession    The caller; system saves pass.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
-		private readonly ReportRecipientPolicy $policy,
+		private readonly ReportRecipientPolicyInterface $policy,
 		private readonly IUserSession $userSession,
 	) {
 	}//end __construct()

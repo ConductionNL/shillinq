@@ -39,6 +39,7 @@ use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\ScheduledReportRunnerInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -48,7 +49,7 @@ use Throwable;
 /**
  * Runs the due report schedules.
  */
-class ScheduledReportRunner {
+class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**

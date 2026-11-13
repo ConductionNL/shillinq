@@ -63,8 +63,8 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LotSellabilityGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
-use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -95,14 +95,14 @@ class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceIn
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
-	 * @param LotSellabilityGuard $lotGuard Decides whether a line may be issued from its lots.
+	 * @param LotSellabilityGuardInterface $lotGuard Decides whether a line may be issued from its lots.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly LotSellabilityGuard $lotGuard,
+		private readonly LotSellabilityGuardInterface $lotGuard,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 

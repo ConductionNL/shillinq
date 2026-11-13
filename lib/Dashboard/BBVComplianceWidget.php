@@ -45,6 +45,7 @@ namespace OCA\Shillinq\Dashboard;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
 use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use Psr\Container\ContainerInterface;
@@ -56,7 +57,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-final class BBVComplianceWidget {
+final class BBVComplianceWidget implements BBVComplianceWidgetInterface {
 	/**
 	 * The status buckets every envelope starts with, in display order.
 	 *

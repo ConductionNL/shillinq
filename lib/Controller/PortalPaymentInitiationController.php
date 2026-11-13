@@ -38,8 +38,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
-use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -71,13 +71,13 @@ class PortalPaymentInitiationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies the X-Portal-Subject assertion.
 	 * @param PortalPaymentSessionServiceInterface $sessionService Resolves ownership + mints the payment session.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
+		private readonly PortalAssertionVerifierInterface $verifier,
 		private readonly PortalPaymentSessionServiceInterface $sessionService,
 		private readonly LoggerInterface $logger,
 	) {
@@ -115,7 +115,7 @@ class PortalPaymentInitiationController extends Controller {
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function initiate(): JSONResponse {
 		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).
-		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));
+		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($claims === null) {
 			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
 		}

@@ -36,6 +36,7 @@ namespace OCA\Shillinq\PaymentPlan;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanBankMatcherInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
-class PaymentPlanBankMatcher {
+class PaymentPlanBankMatcher implements PaymentPlanBankMatcherInterface {
 	/**
 	 * The confirming actor of a match made on arrival.
 	 *
