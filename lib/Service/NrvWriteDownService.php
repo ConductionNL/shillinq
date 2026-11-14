@@ -121,81 +121,170 @@ class NrvWriteDownService implements NrvWriteDownServiceInterface {
 
 		// Lower-of-cost-or-NRV: NEVER write up. NRV at or above cost is a no-op.
 		if ($nrvPerUnit >= $unitCost) {
-			return [
-				'posted' => false,
-				'writeDownCents' => 0,
-				'valuation' => $valuation,
-				'message' => 'NRV >= cost — no write-down (lower-of-cost-or-NRV never writes up)',
-			];
+			return $this->notWrittenDown(valuation: $valuation, message: 'NRV >= cost — no write-down (lower-of-cost-or-NRV never writes up)');
 		}
 
 		$writeDownCents = (int)round((($unitCost - $nrvPerUnit) * $quantity) * 100);
 		if ($writeDownCents <= 0) {
-			return [
-				'posted' => false,
-				'writeDownCents' => 0,
-				'valuation' => $valuation,
-				'message' => 'write-down rounds to zero — nothing to post',
-			];
+			return $this->notWrittenDown(valuation: $valuation, message: 'write-down rounds to zero — nothing to post');
 		}
 
+		$adjustment = $this->adjustmentFor(valuation: $valuation, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit, postingDate: $postingDate);
+		$adjustment->periodId = $periodId;
+
+		return $this->postAndRemark(valuation: $valuation, nrvPerUnit: $nrvPerUnit, writeDownCents: $writeDownCents, adjustment: $adjustment);
+
+	}//end writeDown()
+
+	/**
+	 * The envelope for a valuation that is not written down.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation snapshot.
+	 * @param string              $message   Why nothing is posted.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function notWrittenDown(array $valuation, string $message): array {
+		return [
+			'posted' => false,
+			'writeDownCents' => 0,
+			'valuation' => $valuation,
+			'message' => $message,
+		];
+
+	}//end notWrittenDown()
+
+	/**
+	 * The NRV adjustment posting, debit write-down and credit inventory.
+	 *
+	 * @param array<string,mixed> $valuation      The InventoryValuation snapshot.
+	 * @param int                 $writeDownCents The write-down in cents.
+	 * @param float               $nrvPerUnit     Net realisable value per unit.
+	 * @param string              $postingDate    ISO yyyy-mm-dd; empty defaults to today.
+	 *
+	 * @return GlAdjustmentPosting
+	 */
+	private function adjustmentFor(array $valuation, int $writeDownCents, float $nrvPerUnit, string $postingDate): GlAdjustmentPosting {
 		$administrationId = (string)($valuation['administrationId'] ?? '');
-		$itemId = (string)($valuation['productId'] ?? '');
+		$itemId           = (string)($valuation['productId'] ?? '');
+		$effectiveDate    = $this->effectiveDate(postingDate: $postingDate);
+		$sourceReference  = $this->sourceReferenceFor(itemId: $itemId);
+
+		$adjustment = new GlAdjustmentPosting(administrationId: $administrationId, journalCode: 'NRV');
+		$adjustment->debitAccount    = $this->writeDownAccount();
+		$adjustment->creditAccount   = $this->inventoryAccount();
+		$adjustment->amountCents     = $writeDownCents;
+		$adjustment->description     = $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit);
+		$adjustment->sourceReference = $sourceReference;
+		$adjustment->postingDate     = $effectiveDate;
+
+		return $adjustment;
+
+	}//end adjustmentFor()
+
+	/**
+	 * The posting date: the given date's day part, else today.
+	 *
+	 * @param string $postingDate ISO yyyy-mm-dd; empty defaults to today.
+	 *
+	 * @return string
+	 */
+	private function effectiveDate(string $postingDate): string {
 		$effectiveDate = date('Y-m-d');
 		if ($postingDate !== '') {
 			$effectiveDate = substr($postingDate, 0, 10);
 		}
 
+		return $effectiveDate;
+
+	}//end effectiveDate()
+
+	/**
+	 * The adjustment's source reference: the product id, else `inventory`.
+	 *
+	 * @param string $itemId The product id.
+	 *
+	 * @return string
+	 */
+	private function sourceReferenceFor(string $itemId): string {
 		$sourceReference = 'inventory';
 		if ($itemId !== '') {
 			$sourceReference = $itemId;
 		}
 
-		$adjustment = new GlAdjustmentPosting(administrationId: $administrationId, journalCode: 'NRV');
-		$adjustment->debitAccount = $this->writeDownAccount();
-		$adjustment->creditAccount = $this->inventoryAccount();
-		$adjustment->amountCents = $writeDownCents;
-		$adjustment->description = $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit);
-		$adjustment->sourceReference = $sourceReference;
-		$adjustment->postingDate = $effectiveDate;
-		$adjustment->periodId = $periodId;
+		return $sourceReference;
+
+	}//end sourceReferenceFor()
+
+	/**
+	 * Post the adjustment and, when it posted, re-mark the snapshot to NRV.
+	 *
+	 * @param array<string,mixed> $valuation      The InventoryValuation snapshot.
+	 * @param float               $nrvPerUnit     Net realisable value per unit.
+	 * @param int                 $writeDownCents The write-down in cents.
+	 * @param GlAdjustmentPosting $adjustment     The NRV adjustment posting.
+	 *
+	 * @return array<string,mixed> Result envelope: 'posted' bool, 'writeDownCents', 'posting', 'valuation'.
+	 */
+	private function postAndRemark(array $valuation, float $nrvPerUnit, int $writeDownCents, GlAdjustmentPosting $adjustment): array {
 		$posting = $this->poster->postAdjustment(posting: $adjustment);
 
 		if (((bool)($posting['posted'] ?? false)) !== true) {
-			$this->logger->warning(
-				'NrvWriteDownService: write-down computed but GL post did not succeed',
-				[
-					'productId' => $itemId,
-					'writeDownCents' => $writeDownCents,
-					'reason' => (string)($posting['message'] ?? ''),
-				]
-			);
-
-			return [
-				'posted' => false,
-				'writeDownCents' => $writeDownCents,
-				'posting' => $posting,
-				'valuation' => $valuation,
-				'message' => 'write-down computed but GL post failed: ' . ((string)($posting['message'] ?? '')),
-			];
+			return $this->postFailed(valuation: $valuation, writeDownCents: $writeDownCents, posting: $posting);
 		}
-
-		// Re-mark the snapshot to NRV.
-		$newTotalCents = (int)round(($nrvPerUnit * $quantity) * 100);
-		$valuation['unitCost'] = round($nrvPerUnit, 4);
-		$valuation['totalValue'] = round(($newTotalCents / 100), 2);
-		$valuation['status'] = 'adjusted';
-		$savedValuation = $this->saveValuation(data: $valuation);
 
 		return [
 			'posted' => true,
 			'writeDownCents' => $writeDownCents,
 			'posting' => $posting,
-			'valuation' => $savedValuation,
+			'valuation' => $this->remarkToNrv(valuation: $valuation, nrvPerUnit: $nrvPerUnit),
 			'message' => 'inventory written down to NRV',
 		];
 
-	}//end writeDown()
+	}//end postAndRemark()
+
+	/**
+	 * Re-mark the snapshot to NRV and save it.
+	 *
+	 * @param array<string,mixed> $valuation  The InventoryValuation snapshot.
+	 * @param float               $nrvPerUnit Net realisable value per unit.
+	 *
+	 * @return array<string,mixed> The saved valuation.
+	 */
+	private function remarkToNrv(array $valuation, float $nrvPerUnit): array {
+		$newTotalCents           = (int)round(($nrvPerUnit * (float)($valuation['quantity'] ?? 0)) * 100);
+		$valuation['unitCost']   = round($nrvPerUnit, 4);
+		$valuation['totalValue'] = round(($newTotalCents / 100), 2);
+		$valuation['status']     = 'adjusted';
+
+		return $this->saveValuation(data: $valuation);
+
+	}//end remarkToNrv()
+
+	/**
+	 * Log and report a write-down whose GL post did not succeed.
+	 *
+	 * @param array<string,mixed> $valuation      The InventoryValuation snapshot.
+	 * @param int                 $writeDownCents The write-down in cents.
+	 * @param array<string,mixed> $posting        The poster's result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function postFailed(array $valuation, int $writeDownCents, array $posting): array {
+		$this->logger->warning(
+			'NrvWriteDownService: write-down computed but GL post did not succeed',
+			['productId' => (string)($valuation['productId'] ?? ''), 'writeDownCents' => $writeDownCents, 'reason' => (string)($posting['message'] ?? '')]
+		);
+
+		return [
+			'posted' => false,
+			'writeDownCents' => $writeDownCents,
+			'posting' => $posting,
+			'valuation' => $valuation,
+			'message' => 'write-down computed but GL post failed: ' . ((string)($posting['message'] ?? '')),
+		];
+
+	}//end postFailed()
 
 	/**
 	 * Run lower-of-cost-or-NRV across every active snapshot for an
