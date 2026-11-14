@@ -352,6 +352,10 @@
             "description": "The multi-year reserve overview endpoint."
         },
         {
+            "name": "retention-due",
+            "description": "The records whose retention period has ended and are due for destruction."
+        },
+        {
             "name": "revenue",
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
         },
@@ -12249,6 +12253,51 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/retention/due": {
+            "get": {
+                "operationId": "retention-due-index",
+                "summary": "The records whose retention period has ended",
+                "description": "The records whose retention period has ended, oldest end date first, with the register, the record, the retention rule, the end date and the disposition. Records under a legal hold are left out. Query: `administrationId` (optional): one administration; without it, the caller's active administration. An administration the caller may not read answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "retention-due"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
                     }
                 }
             }

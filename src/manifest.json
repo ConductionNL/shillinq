@@ -7405,20 +7405,23 @@
 				"widgets": [
 					{
 						"id": "nearing-retention",
-						"title": "Retention periods expiring soon",
-						"type": "stats-block",
-						"iconClass": "icon-calendar",
-						"props": {
-							"countLabel": "bewaartermijnen",
-							"variant": "warning"
-						},
-						"dataSource": {
-							"register": "shillinq",
-							"schema": "RetentionRule",
-							"filter": {
-								"daysUntilRetention_lt": 90
+						"title": "Records due for destruction",
+						"type": "stat",
+						"content": {
+							"label": "Records due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/retention/due"
 							},
-							"aggregate": "count"
+							"valueField": "total",
+							"clickRoute": "RetentionDueRecords",
+							"variantWhen": [
+								{
+									"op": "gt",
+									"value": 0,
+									"variant": "warning"
+								}
+							]
 						}
 					}
 				],

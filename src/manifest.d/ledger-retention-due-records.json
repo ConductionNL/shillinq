@@ -1,0 +1,64 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "ledger-retention-due-records",
+		"adr": "ADR-037 modular manifest fragment",
+		"description": "The list of records whose retention period has ended (REQ-RET-015), under Reporting & Compliance. A `logs` page in source mode: it reads GET /api/retention/due, which resolves the caller's active administration, checks access to it and answers `{results, total}`. Records under a legal hold are left off by the service."
+	},
+	"menu": [
+		{
+			"id": "ReportingCompliance",
+			"label": "Reporting & Compliance",
+			"icon": "ChartBoxOutline",
+			"order": 70,
+			"children": [
+				{
+					"id": "RetentionDueRecords",
+					"label": "Due for destruction",
+					"icon": "CalendarRemoveOutline",
+					"route": "RetentionDueRecords",
+					"order": 25
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "RetentionDueRecords",
+			"route": "/reporting/retention-due",
+			"type": "logs",
+			"title": "Due for destruction",
+			"config": {
+				"source": "/index.php/apps/shillinq/api/retention/due",
+				"columns": [
+					{
+						"key": "register",
+						"label": "Register",
+						"sortable": true
+					},
+					{
+						"key": "recordId",
+						"label": "Record",
+						"sortable": false
+					},
+					{
+						"key": "ruleCode",
+						"label": "Retention rule",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "End date",
+						"sortable": true
+					},
+					{
+						"key": "disposition",
+						"label": "Disposition",
+						"sortable": true
+					}
+				]
+			}
+		}
+	]
+}

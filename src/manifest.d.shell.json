@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -4749,6 +4763,34 @@
 					"route": "/general-ledger/:id",
 					"type": "detail",
 					"title": "GL Transaction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ReportingCompliance",
+					"label": "Reporting & Compliance",
+					"icon": "ChartBoxOutline",
+					"order": 70,
+					"children": [
+						{
+							"id": "RetentionDueRecords",
+							"label": "Due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"route": "RetentionDueRecords",
+							"order": 25
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-retention-due-records",
+					"id": "RetentionDueRecords",
+					"route": "/reporting/retention-due",
+					"type": "logs",
+					"title": "Due for destruction"
 				}
 			]
 		},

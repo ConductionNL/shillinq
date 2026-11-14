@@ -8,11 +8,11 @@
 
 ## 2. Page
 
-- [ ] 2.1 A "Due for destruction" page in `src/manifest.d/` as a card on Reporting & compliance, fed by a route on the service; point the BewaartermijnenDashboard count at records instead of rules (REQ-RET-015). Verify: `npm run check:manifest`, route-auth and IDOR gates.
+- [x] 2.1 A "Due for destruction" page in `src/manifest.d/` as a card on Reporting & compliance, fed by a route on the service; point the BewaartermijnenDashboard count at records instead of rules (REQ-RET-015). Verify: `npm run check:manifest`, route-auth and IDOR gates.
 
 ## 3. Strings and live check
 
-- [ ] 3.1 English and Dutch strings. Verify: `npm run test:l10n`.
+- [x] 3.1 English and Dutch strings. Verify: `npm run test:l10n`.
 - [ ] 3.2 Live: seed a 2018 transaction and see it on the list; set a legal hold and see it leave.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

@@ -148,6 +148,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // Automatic dunning (task 4.1): the Next run preview and a ladder's stage texts.
             ['name' => 'dunningPreview#nextRun', 'url' => '/api/dunning/next-run', 'verb' => 'GET'],
             ['name' => 'dunningPreview#ladderStages', 'url' => '/api/dunning/ladders/{id}/stages', 'verb' => 'GET'],
+            // Records whose retention period has ended (ledger-retention-due-records, REQ-RET-015).
+            // #[NoAdminRequired] with a per-administration canAccess() guard in the controller (ADR-005).
+            ['name' => 'retentionDue#index', 'url' => '/api/retention/due', 'verb' => 'GET'],
 
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
             ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
