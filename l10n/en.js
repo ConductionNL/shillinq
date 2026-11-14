@@ -4862,7 +4862,14 @@ OC.L10N.register(
         "Correction posting": "Correction posting",
         "Filed on": "Filed on",
         "Digipoort reference": "Digipoort reference",
-        "File supplementary return": "File supplementary return"
+        "File supplementary return": "File supplementary return",
+        "Your withdrawal has been received": "Your withdrawal has been received",
+        "We received your withdrawal on %1$s at %2$s (%3$s).": "We received your withdrawal on %1$s at %2$s (%3$s).",
+        "Service: %s": "Service: %s",
+        "Appointment: %s": "Appointment: %s",
+        "The appointment is cancelled without a cancellation fee.": "The appointment is cancelled without a cancellation fee.",
+        "Your payment of EUR %s is being refunded in full.": "Your payment of EUR %s is being refunded in full.",
+        "Your payment of EUR %1$s will be refunded in full, no later than %2$s.": "Your payment of EUR %1$s will be refunded in full, no later than %2$s."
     },
     "nplurals=2; plural=(n != 1);"
 )

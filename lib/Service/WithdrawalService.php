@@ -29,6 +29,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -50,6 +51,13 @@ use Throwable;
  * @spec openspec/changes/sales-cancellation/tasks.md#task-3.1
  */
 class WithdrawalService {
+
+	/**
+	 * App-config key of portaliq's guest page for the `withdraw` action (design D4).
+	 *
+	 * @var string
+	 */
+	public const GUEST_PAGE_KEY = 'portal_withdrawal_url';
 
 	/**
 	 * The withdrawal period for a service, in days from the booking (Directive 2011/83/EU, article 9).
@@ -136,6 +144,9 @@ class WithdrawalService {
 	 * @param CancellationService|null       $cancellation Applies the cancellation.
 	 * @param DepositPaymentAdapterInterface|null $deposits Refunds a deposit.
 	 * @param LoggerInterface|null           $logger       The logger.
+	 * @param WithdrawalAcknowledgementMailer|null $acknowledgement Mails the acknowledgement (task 3.3).
+	 * @param WithdrawalLinkSigner|null      $signer       Signs the guest withdrawal link (task 3.3).
+	 * @param IAppConfig|null                $appConfig    Holds the portal's guest page URL (task 3.3).
 	 *
 	 * @return void
 	 */
@@ -145,6 +156,9 @@ class WithdrawalService {
 		private readonly ?CancellationService $cancellation = null,
 		private readonly ?DepositPaymentAdapterInterface $deposits = null,
 		private readonly ?LoggerInterface $logger = null,
+		private readonly ?WithdrawalAcknowledgementMailer $acknowledgement = null,
+		private readonly ?WithdrawalLinkSigner $signer = null,
+		private readonly ?IAppConfig $appConfig = null,
 	) {
 	}//end __construct()
 
@@ -195,9 +209,94 @@ class WithdrawalService {
 		$cancelled['status'] = 'cancelled';
 		$cancelled['withdrawal'] = ['withdrawalId' => (string)($withdrawal['id'] ?? ''), 'withdrawnAt' => $now->format(DATE_ATOM)];
 		$cancelled = $this->save(objects: $objects, schema: 'Appointment', id: $appointmentId, data: self::payload(row: $cancelled));
+		$withdrawal = $this->acknowledge(objects: $objects, appointment: $appointment, withdrawal: $withdrawal, now: $now);
 
 		return ['withdrawn' => true, 'code' => self::WITHDRAWABLE, 'reason' => null, 'withdrawal' => $withdrawal, 'appointment' => $cancelled];
 	}//end withdraw()
+
+	/**
+	 * Mail the acknowledgement and record when it left (REQ-SCX-006).
+	 *
+	 * A mail that cannot be sent does not undo the withdrawal: `acknowledgedAt`
+	 * stays null, which staff see on the record.
+	 *
+	 * @param object               $objects     OpenRegister's ObjectService.
+	 * @param array<string, mixed> $appointment The appointment.
+	 * @param array<string, mixed> $withdrawal  The saved Withdrawal.
+	 * @param DateTimeImmutable    $now         The moment of the withdrawal.
+	 *
+	 * @return array<string, mixed> The Withdrawal, with `acknowledgedAt` when mailed.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	private function acknowledge(object $objects, array $appointment, array $withdrawal, DateTimeImmutable $now): array {
+		if ($this->acknowledgement === null
+			|| $this->acknowledgement->send(appointment: $appointment, withdrawal: $withdrawal, now: $now) === false
+		) {
+			return $withdrawal;
+		}
+
+		$withdrawal['acknowledgedAt'] = $now->format(DATE_ATOM);
+		$id = (string)($withdrawal['id'] ?? '');
+		if ($id === '') {
+			return $withdrawal;
+		}
+
+		return $this->save(objects: $objects, schema: 'Withdrawal', id: $id, data: self::payload(row: $withdrawal));
+	}//end acknowledge()
+
+	/**
+	 * The signed guest link to withdraw from an appointment, while it can be withdrawn.
+	 *
+	 * The link opens portaliq's guest page for the `withdraw` action (design
+	 * D4): the page URL an administrator set as `portal_withdrawal_url`, with a
+	 * token signed for this appointment that expires when the withdrawal period
+	 * ends. Null when the appointment cannot be withdrawn, the page is not set
+	 * or is not https, or the link cannot be signed.
+	 *
+	 * @param array<string, mixed> $appointment The appointment, with its `@self.created` moment.
+	 * @param DateTimeImmutable    $now         The moment.
+	 *
+	 * @return array{url: string, periodEndsOn: string}|null The link and the last day it works.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	public function guestLinkFor(array $appointment, DateTimeImmutable $now): ?array {
+		if ($this->signer === null || $this->appConfig === null || $this->container === null) {
+			return null;
+		}
+
+		$page = trim($this->appConfig->getValueString('shillinq', self::GUEST_PAGE_KEY, ''));
+		if (str_starts_with($page, 'https://') === false) {
+			return null;
+		}
+
+		try {
+			$service = $this->serviceOf(objects: $this->container->get(self::OBJECT_SERVICE), appointment: $appointment);
+		} catch (Throwable $e) {
+			// An unknown service could be exempt: offer no link rather than a wrong one.
+			return null;
+		}
+
+		$answer = $this->isWithdrawable(appointment: $appointment, service: $service, now: $now);
+		$appointmentId = (string)($appointment['id'] ?? ($appointment['appointmentId'] ?? ''));
+		if ($answer['withdrawable'] === false || $answer['periodEndsOn'] === null || $appointmentId === '') {
+			return null;
+		}
+
+		$expiresAt = (new DateTimeImmutable($answer['periodEndsOn'], new DateTimeZone('UTC')))->modify('+1 day');
+		$token = $this->signer->tokenFor(appointmentId: $appointmentId, expiresAt: $expiresAt);
+		if ($token === null) {
+			return null;
+		}
+
+		$glue = '?';
+		if (str_contains($page, '?') === true) {
+			$glue = '&';
+		}
+
+		return ['url' => $page . $glue . 'token=' . rawurlencode($token), 'periodEndsOn' => $answer['periodEndsOn']];
+	}//end guestLinkFor()
 
 	/**
 	 * The withdrawal record, with the refund started or recorded as due.

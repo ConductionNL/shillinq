@@ -7042,7 +7042,14 @@ OC.L10N.register(
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "Your withdrawal has been received": "Uw herroeping is ontvangen",
+        "We received your withdrawal on %1$s at %2$s (%3$s).": "We hebben uw herroeping ontvangen op %1$s om %2$s (%3$s).",
+        "Service: %s": "Dienst: %s",
+        "Appointment: %s": "Afspraak: %s",
+        "The appointment is cancelled without a cancellation fee.": "De afspraak is geannuleerd zonder annuleringskosten.",
+        "Your payment of EUR %s is being refunded in full.": "Uw betaling van EUR %s wordt volledig terugbetaald.",
+        "Your payment of EUR %1$s will be refunded in full, no later than %2$s.": "Uw betaling van EUR %1$s wordt uiterlijk %2$s volledig terugbetaald."
     },
     "nplurals=2; plural=(n != 1);"
 )

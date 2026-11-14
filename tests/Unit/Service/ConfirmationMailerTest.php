@@ -25,6 +25,8 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\Booking\TimezoneResolver;
 use OCA\Shillinq\Service\ConfirmationMailer;
 use OCA\Shillinq\Service\IcsService;
+use OCA\Shillinq\Service\WithdrawalService;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IConfig;
 use OCP\IURLGenerator;
 use OCP\Mail\IAttachment;
@@ -133,6 +135,9 @@ final class ConfirmationMailerTest extends TestCase {
 			IcsService::class => $ics,
 			LoggerInterface::class => $this->createMock(LoggerInterface::class),
 			ContainerInterface::class => $container,
+			// sales-cancellation task 3.3: the withdrawal link; none unless a test sets one.
+			WithdrawalService::class => $this->withdrawals,
+			ITimeFactory::class => null,
 		];
 
 		$arguments = [];
@@ -146,6 +151,51 @@ final class ConfirmationMailerTest extends TestCase {
 
 		return new ConfirmationMailer(...$arguments);
 	}//end makeMailer()
+
+	/**
+	 * The withdrawal service double, when a test wants a link.
+	 *
+	 * @var WithdrawalService|null
+	 */
+	private ?WithdrawalService $withdrawals = null;
+
+	/**
+	 * A booking made online carries the signed withdrawal link and its last day;
+	 * the confirm link stays.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	public function testAnOnlineBookingCarriesTheSignedWithdrawalLink(): void {
+		$withdrawals = $this->createMock(WithdrawalService::class);
+		$withdrawals->expects($this->once())->method('guestLinkFor')
+			->with($this->callback(static fn (array $a): bool => $a['appointmentNumber'] === 'APT-1'))
+			->willReturn(['url' => 'https://portal.example.nl/w?token=signed', 'periodEndsOn' => '2026-05-30']);
+		$this->withdrawals = $withdrawals;
+		$this->mailer->method('send')->willReturn([]);
+
+		self::assertTrue($this->makeMailer()->send(appointment: $this->appointment(), rawToken: 'rawtok123'));
+
+		self::assertStringContainsString('Withdraw from contract here (until 2026-05-30): https://portal.example.nl/w?token=signed', $this->sent['body']);
+		self::assertStringContainsString('token=rawtok123', $this->sent['body']);
+	}//end testAnOnlineBookingCarriesTheSignedWithdrawalLink()
+
+	/**
+	 * Without a right of withdrawal the mail has no withdrawal line.
+	 *
+	 * @return void
+	 */
+	public function testNoWithdrawalLineWithoutALink(): void {
+		$withdrawals = $this->createMock(WithdrawalService::class);
+		$withdrawals->method('guestLinkFor')->willReturn(null);
+		$this->withdrawals = $withdrawals;
+		$this->mailer->method('send')->willReturn([]);
+
+		$this->makeMailer()->send(appointment: $this->appointment(), rawToken: 'rawtok123');
+
+		self::assertStringNotContainsString('Withdraw', $this->sent['body']);
+	}//end testNoWithdrawalLineWithoutALink()
 
 	/**
 	 * A demo appointment fixture.

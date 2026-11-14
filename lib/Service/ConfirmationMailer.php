@@ -38,6 +38,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use DateTimeImmutable;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;
@@ -63,12 +65,16 @@ class ConfirmationMailer {
 	 * @param IURLGenerator $urlGenerator For building the confirmation web link.
 	 * @param IcsService $icsService ICS calendar generator.
 	 * @param LoggerInterface $logger Logger.
+	 * @param WithdrawalService|null $withdrawals Builds the signed withdrawal link (sales-cancellation task 3.3).
+	 * @param ITimeFactory|null $clock The moment the link is built for.
 	 */
 	public function __construct(
 		private IMailer $mailer,
 		private IURLGenerator $urlGenerator,
 		private IcsService $icsService,
 		private LoggerInterface $logger,
+		private ?WithdrawalService $withdrawals = null,
+		private ?ITimeFactory $clock = null,
 	) {
 	}//end __construct()
 
@@ -133,7 +139,8 @@ class ConfirmationMailer {
 			'to' => $email,
 			'subject' => '[Bookings] Confirmation needed: ' . ($appointment['serviceName'] ?? '') . ' on '
 				. ($appointment['startTime'] ?? ''),
-			'body' => $this->buildBody(appointment: $appointment, webLink: $webLink, timezone: $timezone),
+			'body' => $this->buildBody(appointment: $appointment, webLink: $webLink, timezone: $timezone)
+				. $this->withdrawalLines(appointment: $appointment),
 			'webLink' => $webLink,
 			'timezone' => $timezone,
 			'attachments' => [
@@ -177,6 +184,37 @@ class ConfirmationMailer {
 
 		return implode("\n", $lines) . "\n";
 	}//end buildBody()
+
+	/**
+	 * The withdrawal lines of a booking made online: the signed link that
+	 * opens the withdraw action for a guest, and the last day it works
+	 * (sales-cancellation REQ-SCX-004). Empty when there is no right of
+	 * withdrawal or no link can be made.
+	 *
+	 * @param array<string,mixed> $appointment The appointment object array.
+	 *
+	 * @return string The lines, or ''.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-3.3
+	 */
+	private function withdrawalLines(array $appointment): string {
+		if ($this->withdrawals === null) {
+			return '';
+		}
+
+		$now = new DateTimeImmutable('now');
+		if ($this->clock !== null) {
+			$now = $this->clock->now();
+		}
+
+		$link = $this->withdrawals->guestLinkFor(appointment: $appointment, now: $now);
+		if ($link === null) {
+			return '';
+		}
+
+		return "\n" . 'Changed your mind? Withdraw from contract here (until ' . $link['periodEndsOn'] . '): '
+			. $link['url'] . "\n";
+	}//end withdrawalLines()
 
 	/**
 	 * Send the payload through Nextcloud's mailer.
