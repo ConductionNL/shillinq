@@ -177,8 +177,7 @@ class SubjectCostServiceTest extends TestCase {
 		$service = $this->service([], ['p1' => 5000], readThrows: true);
 
 		$result = $service->costForHours(
-			'dossiq',
-			'case-1',
+			['app' => 'dossiq', 'id' => 'case-1'],
 			[
 				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1', 'domainObjectType' => 'dossiq:case'],
 				['employeeId' => 'p1', 'hours' => 9.0, 'administrationId' => 'adm-1', 'domainObjectType' => 'pipelinq:lead'],

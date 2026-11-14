@@ -55,13 +55,19 @@ class ClassifiedSubjectCostSource {
 	private const HOURS_APPS = ['humaniq', 'hrmq'];
 
 	/**
+	 * The configured sources: the shipped `lib/Settings/subject-cost-sources.json`.
+	 *
+	 * @var SubjectCostSourceConfiguration
+	 */
+	private readonly SubjectCostSourceConfiguration $configuration;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container Resolves OpenRegister's ObjectService lazily.
 	 * @param IAppManager $appManager Whether the source app and humaniq are installed.
 	 * @param SubjectCostService $subjectCosts Costs one object's hours.
 	 * @param HrmqCostRateAdapter $rates Knows the register the hours live in.
-	 * @param SubjectCostSourceConfiguration $configuration The configured sources.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
@@ -69,9 +75,9 @@ class ClassifiedSubjectCostSource {
 		private readonly IAppManager $appManager,
 		private readonly SubjectCostService $subjectCosts,
 		private readonly HrmqCostRateAdapter $rates,
-		private readonly SubjectCostSourceConfiguration $configuration,
 		private readonly LoggerInterface $logger,
 	) {
+		$this->configuration = new SubjectCostSourceConfiguration();
 	}//end __construct()
 
 	/**
@@ -126,8 +132,7 @@ class ClassifiedSubjectCostSource {
 		foreach ($this->hoursPerObject(source: $source, range: $range) as $objectId => $entries) {
 			$type = $this->typeOf(source: $source, objectId: (string)$objectId, types: $types);
 			$cost = $this->subjectCosts->costForHours(
-				subjectApp: $source['app'],
-				subjectId: (string)$objectId,
+				subject: ['app' => (string)$source['app'], 'id' => (string)$objectId],
 				timeEntries: $entries,
 				administrationIds: $administrationIds,
 				period: substr($range[1], 0, 7)

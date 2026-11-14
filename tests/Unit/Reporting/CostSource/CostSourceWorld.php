@@ -23,7 +23,6 @@ namespace OCA\Shillinq\Tests\Unit\Reporting\CostSource;
 
 use OCA\Shillinq\Reporting\CostSource\ClassifiedSubjectCostSource;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
-use OCA\Shillinq\Reporting\CostSource\SubjectCostSourceConfiguration;
 use OCA\Shillinq\Reporting\CostSource\TaskFieldRollup;
 use OCA\Shillinq\Service\HrmqCostRateAdapter;
 use OCA\Shillinq\Service\SubjectCostAggregator;
@@ -211,7 +210,6 @@ final class CostSourceWorld {
 			$apps,
 			new SubjectCostService($container, $rates, new SubjectCostAggregator($logger), $logger),
 			$rates,
-			new SubjectCostSourceConfiguration(),
 			$logger
 		);
 	}//end source()
