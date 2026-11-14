@@ -36,7 +36,6 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
-use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -73,10 +72,6 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 		'digipoort-sbr' => [
 			'interface' => DigipoortSbrAdapterInterface::class,
 			'consequence' => 'No ICP statement or other SBR filing reaches Digipoort; download the XML instead.',
-		],
-		'mollie' => [
-			'interface' => MolliePaymentAdapterInterface::class,
-			'consequence' => 'No payment reaches Mollie.',
 		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,

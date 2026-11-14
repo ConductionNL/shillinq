@@ -1,0 +1,70 @@
+{
+	"$comment": "Shillinq Integrations (platform-integration-catalogue): integriq's catalog_item cards on the bookkeeping categories; see that change's design.md D1-D2.",
+	"menu": [
+		{
+			"id": "Integrations",
+			"label": "Integrations",
+			"icon": "StoreOutline",
+			"route": "IntegrationCatalogue",
+			"order": 47
+		}
+	],
+	"pages": [
+		{
+			"id": "IntegrationCatalogue",
+			"route": "/integrations",
+			"type": "index",
+			"title": "Integrations",
+			"requiresApp": {"id": "integriq", "name": "Integriq"},
+			"config": {
+				"register": "integriq",
+				"schema": "catalog_item",
+				"viewMode": "cards",
+				"showAdd": false,
+				"showViewAction": false,
+				"selectable": false,
+				"description": "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.",
+				"defaultFilters": {"category": ["Bank", "Payments", "E-invoicing", "Tax filing", "Commerce", "Payroll"]},
+				"defaultSort": {"field": "name", "direction": "asc"},
+				"columns": [
+					{"key": "name", "label": "Name"},
+					{"key": "description", "label": "Description", "sortable": false},
+					{"key": "category", "label": "Category"},
+					{"key": "status", "label": "Status"}
+				],
+				"cardFields": ["description", "category", "status"],
+				"actions": [
+					{
+						"id": "open-in-integriq",
+						"label": "Open in Integriq",
+						"icon": "StoreOutline",
+						"handler": "openIntegriqStore",
+						"description": "Open integriq's catalogue, where this integration is switched on."
+					}
+				],
+				"afterList": [
+					{
+						"id": "not-available-yet",
+						"title": "Not available yet",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "integriq",
+								"schema": "app_connection",
+								"filter": {"app": "shillinq"},
+								"order": {"order": "asc"},
+								"limit": 50
+							},
+							"emptyText": "Every connection family has an integration in the catalogue.",
+							"columns": [
+								{"key": "title", "label": "Connection"},
+								{"key": "description", "label": "Description", "sortable": false},
+								{"key": "statusMessage", "label": "Reason", "sortable": false}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}
