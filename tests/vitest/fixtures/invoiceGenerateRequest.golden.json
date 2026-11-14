@@ -30,12 +30,17 @@
 		"shared": []
 	},
 	"every reference": {
-		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"rateCardId\":\"rc-1\",\"retainerScheduleId\":\"rs-1\",\"milestoneId\":\"ms-1\"}",
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"retainerScheduleId\":\"rs-1\",\"milestoneId\":\"ms-1\"}",
 		"inputsUnchanged": true,
 		"shared": []
 	},
 	"references in another order": {
-		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"rateCardId\":\"rc-1\",\"milestoneId\":\"ms-1\"}",
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"milestoneId\":\"ms-1\"}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"mixed keeps the rate card": {
+		"request": "{\"billingModel\":\"mixed\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"rateCardId\":\"rc-1\",\"retainerScheduleId\":\"rs-1\"}",
 		"inputsUnchanged": true,
 		"shared": []
 	},

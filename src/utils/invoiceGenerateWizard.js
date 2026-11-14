@@ -10,6 +10,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { spawnDialog } from '@nextcloud/vue/functions/dialog'
 import InvoiceGenerateWizard from '../modals/InvoiceGenerateWizard.vue'
+import { RATE_CARD_MODELS } from './billableRate.js'
 import { loadBillableReadings } from './usageBilling.js'
 
 /** Billing models InvoiceGenerationRequest accepts, in the order the select shows them. */
@@ -107,14 +108,20 @@ export function buildGenerateRequest(source, chosen) {
 }
 
 /**
- * The optional references the source sets (a falsy value is left out).
+ * The optional references the source sets (a falsy value is left out). A
+ * rate card is sent only for a model that takes one.
+ *
+ * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
  *
  * @param {object} source The source step.
  * @return {object} The set references.
  */
 function optionalReferences(source) {
 	return Object.fromEntries(
-		OPTIONAL_REFERENCES.filter((key) => source[key]).map((key) => [
+		OPTIONAL_REFERENCES.filter(
+			(key) => source[key]
+				&& (key !== 'rateCardId' || RATE_CARD_MODELS.includes(source.billingModel)),
+		).map((key) => [
 			key,
 			source[key],
 		]),

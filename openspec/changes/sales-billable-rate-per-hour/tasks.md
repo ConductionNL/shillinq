@@ -15,7 +15,7 @@
 ## 3. Billing
 
 - [x] 3.1 Make `InvoiceGenerationService::loadTimeEntries()` rate each hour through `BillableRateService`, refuse a draft holding an unrated hour with 422 naming person and date, and write `rateApplied` per line (REQ-BRPH-002, REQ-BRPH-005). Verify: PHPUnit for the EUR 1,320 two-rate invoice and the refused draft; controller test through the real middleware that the status is 422.
-- [ ] 3.2 Let the `BillableHoursSource` rows of `sales-time-and-expense-billing` carry the resolution (rate, tier, value or no-rate reason), and hide the rate card select on `InvoiceGenerator.vue` for the time and material model (REQ-BRPH-005). Verify: Vitest for the payload and the hidden select.
+- [x] 3.2 Let the `BillableHoursSource` rows of `sales-time-and-expense-billing` carry the resolution (rate, tier, value or no-rate reason), and hide the rate card select on `InvoiceGenerator.vue` for the time and material model (REQ-BRPH-005). Verify: Vitest for the payload and the hidden select.
 
 ## 4. Project page
 

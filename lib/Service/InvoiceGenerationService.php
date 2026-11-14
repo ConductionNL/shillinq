@@ -640,7 +640,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 */
 	private function hourRate(array $entry, ?string $rateCardId, array $scope): array {
 		$date = (string)$entry['date'];
-		if ($rateCardId !== null) {
+		if ($rateCardId !== null && trim($rateCardId) !== '') {
 			$legacy = $this->rateCards->resolveRate(
 				rateCardId: $rateCardId,
 				resourceType: (string)$entry['resourceType'],

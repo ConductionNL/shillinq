@@ -20,6 +20,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCA\Shillinq\Service\BillableLinesService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
@@ -47,12 +50,29 @@ final class BillableLinesServiceTest extends TestCase {
 					['id' => 'p-x', 'administrationId' => 'adm-2', 'customerId' => 'cust-a'],
 				],
 				'UrenRegistratie' => [
-					['id' => 't-late', 'administrationId' => 'adm-1', 'projectId' => 'p-a1', 'date' => '2026-09-20'],
+					['id' => 't-late', 'administrationId' => 'adm-1', 'projectId' => 'p-a1', 'date' => '2026-09-20', 'personId' => 'user-alice', 'hours' => 2],
 					['id' => 't-early', 'administrationId' => 'adm-1', 'projectId' => 'p-a2', 'date' => '2026-09-02'],
 					['id' => 't-other-customer', 'administrationId' => 'adm-1', 'projectId' => 'p-b', 'date' => '2026-09-05'],
 					['id' => 't-other-admin', 'administrationId' => 'adm-2', 'projectId' => 'p-x', 'date' => '2026-09-05'],
 					['id' => 't-out-of-period', 'administrationId' => 'adm-1', 'projectId' => 'p-a1', 'date' => '2026-10-01'],
 					['id' => 't-no-project', 'administrationId' => 'adm-1', 'date' => '2026-09-06'],
+				],
+				// Alice is on p-a1 under a card whose client rate for cust-a is EUR 95.
+				'ProjectAssignment' => [
+					[
+						'id' => 'pa-1', 'administrationId' => 'adm-1', 'personId' => 'user-alice', 'projectId' => 'p-a1',
+						'rateCardId' => 'rct-1', 'startDate' => '2026-01-01',
+					],
+				],
+				'RateCardTemplate' => [['id' => 'rct-1', 'administrationId' => 'adm-1']],
+				'RateCardVersion' => [
+					['id' => 'rcv-1', 'templateId' => 'rct-1', 'status' => 'active', 'effectiveDate' => '2026-01-01', 'administrationId' => 'adm-1'],
+				],
+				'RateSchedule' => [
+					[
+						'id' => 'rs-1', 'versionId' => 'rcv-1', 'tier' => 'client', 'entityId' => 'cust-a', 'rate' => 95, 'unit' => 'hourly',
+						'status' => 'active', 'effectiveDate' => '2026-01-01', 'administrationId' => 'adm-1',
+					],
 				],
 				'ExpenseClaimEntry' => [
 					['id' => 'c-a', 'administrationId' => 'adm-1', 'passThroughCustomerIds' => ['cust-a'], 'submittedDate' => '2026-09-14'],
@@ -68,7 +88,15 @@ final class BillableLinesServiceTest extends TestCase {
 			static fn (string $app, string $key, string $default = ''): string => $key === 'register' ? 'shillinq' : $default
 		);
 
-		return new BillableLinesService(objectService: $store, appConfig: $appConfig);
+		return new BillableLinesService(
+			objectService: $store,
+			appConfig: $appConfig,
+			billableRates: new BillableRateService(
+				$store,
+				$this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
+				$this->createMock(ITimeFactory::class)
+			)
+		);
 	}//end service()
 
 	/**
@@ -89,6 +117,31 @@ final class BillableLinesServiceTest extends TestCase {
 		self::assertSame(['t-early', 't-late'], array_column($lines['timeEntries'], 'id'));
 		self::assertSame(['c-a'], array_column($lines['expenses'], 'id'));
 	}//end testOffersOnlyTheCustomersLinesInTheAdministration()
+
+	/**
+	 * Each offered hour carries what it is worth, or why it has no rate
+	 * (sales-billable-rate-per-hour REQ-BRPH-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.2
+	 */
+	public function testEachHourCarriesItsRate(): void {
+		$lines = $this->service()->forCustomer(
+			administrationId: 'adm-1',
+			customerId: 'cust-a',
+			projectId: '',
+			fromDate: '2026-09-01',
+			toDate: '2026-09-30'
+		);
+		$byId = array_combine(array_column($lines['timeEntries'], 'id'), array_column($lines['timeEntries'], 'rate'));
+
+		self::assertSame(
+			['status' => 'rated', 'rate' => 95.0, 'unit' => 'hourly', 'tier' => 'client', 'scheduleId' => 'rs-1', 'value' => 190.0],
+			$byId['t-late']
+		);
+		self::assertSame(['status' => 'no-rate', 'reason' => 'no-assignment'], array_intersect_key($byId['t-early'], ['status' => 1, 'reason' => 1]));
+	}//end testEachHourCarriesItsRate()
 
 	/**
 	 * A project narrows the hours; a project of another customer offers none.
