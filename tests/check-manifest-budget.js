@@ -231,7 +231,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // fourth tab of the receivables tab strip and its payouts table):
 // development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
 // Raised to 1,259,400: 6,262 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_259_400
+//
+// Re-measured 2026-11-14 (receivables-sepa-direct-debit 2.1: the new
+// receivables-sepa-direct-debit.json fragment with the mandates, direct debit
+// batches and collections and their pages): development held 1,257,096 bytes.
+// This change adds 9,440 B. 1,266,536 in all.
+// Raised to 1,272,900: 6,364 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_272_900
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

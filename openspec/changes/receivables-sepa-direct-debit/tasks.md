@@ -15,11 +15,13 @@
 
 ## 2. Pages
 
-- [ ] 2.1 `SepaMandates`, `DirectDebitBatches` and batch detail with propose, generate and download (REQ-SDD-011, 012). Verify: `npm run check:manifest`; nav reachability; vitest on the actions.
+- [x] 2.1 `SepaMandates`, `DirectDebitBatches` and batch detail with propose, generate and download (REQ-SDD-011, 012). Verify: `npm run check:manifest`; nav reachability; vitest on the actions.
+  - Built: `src/manifest.d/receivables-sepa-direct-debit.json` under Bookkeeping: Direct debit mandates (index and page with its collections and lifecycle), Direct debit batches (index with Propose direct debit: `ProposeDirectDebitModal` through `POST /api/v1/direct-debit-batches/propose`), the batch page (its collections, the Generate pain.008 transition, Download pain.008 once a file is stored) and Direct debit collections (index and page with the Settled and Rejected transitions; Rejected asks for the reason code through the transition's declared input). Helpers in `src/utils/directDebitApi.js` and `directDebitActions.js`, registered in `src/manifestActions.js`; the routes are in `openapi.json`. `check:manifest`, `check:nav-reachability`, `check:manifest-shell` pass; the manifest budget is re-measured and raised by the fragment's size. Pinned by `receivablesSepaDirectDebit.spec.js` and `proposeDirectDebitModal.spec.js`.
 
 ## 3. Strings and end to end
 
-- [ ] 3.1 Dutch and English strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
+- [x] 3.1 Dutch and English strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
+  - Built: every new `t()`/`n()` string, manifest label and schema title/description in `l10n/en.json` and `l10n/nl.json`, `.js` rebuilt. `test:l10n`, `test:l10n-parity` and `check:l10n-js` pass; `check:schema-l10n` adds no uncovered string (it is already 10 over its baseline on development).
 - [ ] 3.2 Playwright `tests/e2e/receivables-sepa-direct-debit.spec.ts`: register a mandate, propose, generate, download. Verify: passes locally.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

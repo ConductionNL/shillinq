@@ -156,6 +156,10 @@
             "description": "Per-user deadline-calendar category toggles (REQ-CDC-006)."
         },
         {
+            "name": "direct-debit-batch",
+            "description": "SEPA direct debit batches: propose the draft batches and download their pain.008 file."
+        },
+        {
             "name": "down-payment",
             "description": "Down-payment endpoints."
         },
@@ -7781,6 +7785,119 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/direct-debit-batches/propose": {
+            "post": {
+                "operationId": "direct-debit-batch-propose",
+                "summary": "Propose the draft direct debit batches for a collection date",
+                "description": "Propose the draft direct debit batches for a collection date. Request: administrationId, collectionDate (YYYY-MM-DD). 201 with the batches and the skipped invoices; 422 with the skipped invoices when nothing can be collected; 400 on a malformed date; 403 outside the caller's administrations. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "direct-debit-batch"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration id.",
+                                        "type": "string"
+                                    },
+                                    "collectionDate": {
+                                        "description": "The requested collection date, YYYY-MM-DD.",
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "required": [
+                                    "administrationId",
+                                    "collectionDate"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/direct-debit-batches/{id}/file": {
+            "get": {
+                "operationId": "direct-debit-batch-file",
+                "summary": "Download the pain.008 file of a generated direct debit batch",
+                "description": "Download the pain.008.001.02 file of a generated direct debit batch as an XML attachment. 404 for a missing batch or one of another administration; 409 when the batch has no file yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "direct-debit-batch"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The DirectDebitBatch id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The pain.008 file.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "text/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
                     }
                 }
             }

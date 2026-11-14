@@ -16,6 +16,8 @@
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
+import { openProposeDirectDebit } from './utils/directDebitActions.js'
+import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
@@ -60,6 +62,10 @@ export const manifestActions = Object.freeze({
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
+	// receivables-sepa-direct-debit: Propose direct debit on Direct debit
+	// batches and Download pain.008 on a generated batch.
+	openProposeDirectDebit,
+	downloadDirectDebitFile,
 	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
 	approvePayable,
 	markPayablePaid,

@@ -447,6 +447,12 @@
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordDirectDebitRejectAction",
                   "description": "Require the four-character reason code and keep the invoice open."
                 }
+              ],
+              "inputs": [
+                {
+                  "field": "pain002ReasonCode",
+                  "required": true
+                }
               ]
             },
             "succeed": {
