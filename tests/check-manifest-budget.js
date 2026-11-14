@@ -237,7 +237,15 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // batches and collections and their pages): development held 1,257,096 bytes.
 // This change adds 9,467 B. 1,266,563 in all.
 // Raised to 1,272,900: 6,337 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_272_900
+//
+// Re-measured 2026-11-14 (investment deductions, tax-investment-deduction-
+// claims REQ-IDC-003: the claims and investment assets pages under Taxes,
+// their detail pages, and FixedAssetDetail copied whole to add the
+// Investment deduction tab): development held 1,280,220 bytes, already over
+// the 1,272,900 above. This change adds the 11,254 B
+// tax-investment-deduction-claims.json. 1,291,474 in all.
+// Raised to 1,297,900: 6,426 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_297_900
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

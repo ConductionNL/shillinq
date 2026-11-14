@@ -41,6 +41,7 @@ use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
@@ -351,6 +352,8 @@ final class ListenerRegistrarTest extends TestCase {
 				[ObjectUpdatedEvent::class, SupplierInvoiceWarningListener::class],
 				[ObjectCreatedEvent::class, ContractObligationTaskListener::class],
 				[ObjectUpdatedEvent::class, ContractObligationTaskListener::class],
+				[ObjectCreatedEvent::class, InvestmentAssetListener::class],
+				[ObjectUpdatedEvent::class, InvestmentAssetListener::class],
 				[ObjectCreatedEvent::class, LeaseActivationListener::class],
 				[ObjectUpdatedEvent::class, LeaseActivationListener::class],
 				[ObjectCreatedEvent::class, OssPaymentReconciliationListener::class],

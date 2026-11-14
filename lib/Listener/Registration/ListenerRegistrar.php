@@ -45,6 +45,7 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
+use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\WebshopOrderListener;
@@ -484,6 +485,21 @@ final class ListenerRegistrar {
 			schemas: ['ContractObligation']
 		);
 		// --- end gate-57 region ---
+		// tax-investment-deduction-claims REQ-IDC-001: an active fixed asset
+		// gets its investment deduction eligibility recorded.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectCreatedEvent::class,
+			listener: InvestmentAssetListener::class,
+			schemas: ['FixedAsset']
+		);
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: InvestmentAssetListener::class,
+			schemas: ['FixedAsset']
+		);
+
 		// IFRS-16 lease schedule trigger (revive-lease-capabilities,
 		// shillinq#446). When a LeaseContract is created already `active` or is
 		// updated across the `draft → active` edge, materialise its
