@@ -1407,6 +1407,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\JointArrangementAllocationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\JointArrangementAllocation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\KlantbeeldResultInterface'",
             "'OCA\\\\Shillinq\\\\Kernel\\\\Model\\\\KlantbeeldResult'"
         ]

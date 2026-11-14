@@ -1,0 +1,258 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "public-sector-task-field-allocation",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycle, imperative allocation (a split over posted lines and participant shares)",
+    "description": "The joint arrangement allocation run (GRAllocationRun: propose, confirm, invoice), the customer a participant is invoiced as, and the run a contribution invoice came from. The split and the invoices live in lib/Service/PublicSector/JointArrangementAllocation.php."
+  },
+  "components": {
+    "schemas": {
+      "GRAllocationRun": {
+        "slug": "GRAllocationRun",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "GR allocation run",
+        "description": "The costs posted on a joint arrangement allocation key's cost clusters over a period, split over the active participants by share. One line per participant; the lines add up to the total to the cent. A confirmed run is locked and can invoice each participant with a draft contribution invoice.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-gr-consolidation/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "keyId",
+          "periodFrom",
+          "periodTo",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The administration of the joint arrangement whose posted lines are split.",
+            "example": "adm-gr-1"
+          },
+          "keyId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "GRVerdeelsleutel",
+            "title": "Allocation key",
+            "description": "The allocation key whose cost clusters are split."
+          },
+          "keyName": {
+            "type": "string",
+            "nullable": true,
+            "title": "Key name",
+            "description": "The allocation key's name, as shown on the run."
+          },
+          "periodFrom": {
+            "type": "string",
+            "format": "date",
+            "title": "Period from",
+            "description": "The first day of the period, inclusive.",
+            "example": "2026-01-01"
+          },
+          "periodTo": {
+            "type": "string",
+            "format": "date",
+            "title": "Period to",
+            "description": "The last day of the period, inclusive.",
+            "example": "2026-03-31"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "title": "Name",
+            "description": "The run's name: the key and the period."
+          },
+          "total": {
+            "type": "number",
+            "nullable": true,
+            "title": "Total",
+            "description": "The costs posted on the key's cost clusters in the period, in euros."
+          },
+          "lines": {
+            "type": "array",
+            "title": "Participants",
+            "description": "One line per active participant with its share and amount.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "participantId": {
+                  "type": "string",
+                  "title": "Participant",
+                  "description": "The participant (GRDeelnemer)."
+                },
+                "participantName": {
+                  "type": "string",
+                  "title": "Participant",
+                  "description": "The participant's name, as shown on the run."
+                },
+                "share": {
+                  "type": "number",
+                  "title": "Share",
+                  "description": "The participant's share of the total, between 0 and 1."
+                },
+                "amount": {
+                  "type": "number",
+                  "title": "Amount",
+                  "description": "The participant's part of the total, in euros."
+                },
+                "invoiceId": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Invoice",
+                  "description": "The draft contribution invoice written for this line."
+                }
+              }
+            }
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "title": "Invoice date",
+            "description": "The date of the contribution invoices; today when empty."
+          },
+          "paymentTermDays": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 30,
+            "nullable": true,
+            "title": "Payment term (days)",
+            "description": "Days between the invoice date and the due date."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "confirmed",
+              "invoiced"
+            ],
+            "x-enum-labels": {
+              "draft": "Draft",
+              "confirmed": "Confirmed",
+              "invoiced": "Invoiced"
+            },
+            "default": "draft",
+            "title": "State",
+            "description": "Draft, confirmed or invoiced.",
+            "example": "draft"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "The run has a key and a period; its lines can be proposed and proposed again."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "The lines are locked. No other run for the same key and period can be proposed or confirmed."
+            },
+            "invoiced": {
+              "label": "Invoiced",
+              "description": "Every participant line has a draft contribution invoice."
+            }
+          },
+          "transitions": {
+            "propose": {
+              "from": "draft",
+              "to": "draft",
+              "label": "Propose",
+              "description": "Sum the costs posted on the key's cost clusters in the period and split them over the active participants by share.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\JointArrangementAllocationAction",
+                  "description": "Fill the lines and the total.",
+                  "actionParameters": {
+                    "step": "propose"
+                  }
+                }
+              ]
+            },
+            "confirm": {
+              "from": "draft",
+              "to": "confirmed",
+              "label": "Confirm",
+              "description": "Lock the lines of the run.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\JointArrangementAllocationAction",
+                  "description": "Refuse an empty run and a second run for the same key and period.",
+                  "actionParameters": {
+                    "step": "confirm"
+                  }
+                }
+              ]
+            },
+            "invoice": {
+              "from": "confirmed",
+              "to": "invoiced",
+              "label": "Invoice participants",
+              "description": "Write one draft contribution invoice per participant line, naming the run.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\JointArrangementAllocationAction",
+                  "description": "Write the draft invoices and keep their ids on the lines.",
+                  "actionParameters": {
+                    "step": "invoice"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who proposed, confirmed and invoiced the run, and when."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        }
+      },
+      "GRDeelnemer": {
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "CustomerMaster",
+            "nullable": true,
+            "title": "Customer",
+            "description": "The customer this participant is invoiced as for its contributions."
+          }
+        }
+      },
+      "ARInvoice": {
+        "properties": {
+          "allocationRunId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Allocation run",
+            "description": "The joint arrangement allocation run this contribution invoice was written for."
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}
