@@ -40,6 +40,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -50,6 +51,11 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
  */
 class AdministrationContextService implements AdministrationContextServiceInterface {
+	/**
+	 * The user preference that holds the chosen administration.
+	 */
+	public const ACTIVE_PREFERENCE = 'activeAdministrationId';
+
 	/**
 	 * Roles permitted to post journal entries when the membership does not
 	 * explicitly set mayPostJournalEntries (REQ-MA-003). Read-only roles
@@ -104,6 +110,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 	 * @param IUserSession $userSession The current user session.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param IConfig         $config The user preference holding the chosen administration.
 	 *
 	 * @return void
 	 */
@@ -112,6 +119,7 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 		private readonly IUserSession $userSession,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly IConfig $config,
 	) {
 	}//end __construct()
 
@@ -181,15 +189,10 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 			];
 		}//end foreach
 
-		$activeId = null;
-		if ($administrations !== []) {
-			$activeId = $administrations[0]['administrationId'];
-		}
-
 		return [
 			'userId' => $userId,
 			'administrations' => $administrations,
-			'activeAdministrationId' => $activeId,
+			'activeAdministrationId' => $this->activeAmong(userId: $userId, administrations: $administrations),
 		];
 
 	}//end buildContext()
@@ -351,6 +354,55 @@ class AdministrationContextService implements AdministrationContextServiceInterf
 
 		return false;
 	}//end isOwnerOf()
+
+	/**
+	 * Store the administration the current user chose, so the context
+	 * returns it on the next request and the next login.
+	 *
+	 * Callers check membership first ({@see resolveSwitchTarget()}); the
+	 * stored id is checked again on every read, so a membership that ends
+	 * later falls back to the first one.
+	 *
+	 * @param string $administrationId The chosen administration.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 */
+	public function rememberActiveAdministration(string $administrationId): void {
+		$userId = $this->currentUserId();
+		if ($userId === null || $administrationId === '') {
+			return;
+		}
+
+		$this->config->setUserValue($userId, AppIdentity::APP_ID, self::ACTIVE_PREFERENCE, $administrationId);
+	}//end rememberActiveAdministration()
+
+	/**
+	 * The stored choice when the user may still use it, else the first
+	 * administration, else null.
+	 *
+	 * @param string                           $userId          The user.
+	 * @param array<int, array<string, mixed>> $administrations The user's usable administrations, in order.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 */
+	private function activeAmong(string $userId, array $administrations): ?string {
+		if ($administrations === []) {
+			return null;
+		}
+
+		$stored = $this->config->getUserValue($userId, AppIdentity::APP_ID, self::ACTIVE_PREFERENCE, '');
+		foreach ($administrations as $administration) {
+			if ($stored !== '' && $administration['administrationId'] === $stored) {
+				return $stored;
+			}
+		}
+
+		return $administrations[0]['administrationId'];
+	}//end activeAmong()
 
 	/**
 	 * Validate a requested active administration and return the id to switch to (REQ-MA-003).

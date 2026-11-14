@@ -4716,7 +4716,15 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Save as template": "Save as template",
+        "Let other administrations start from this chart of accounts. Postings, relations and balances are not copied.": "Let other administrations start from this chart of accounts. Postings, relations and balances are not copied.",
+        "Other administrations can start from this chart of accounts. Postings, relations and balances are not copied.": "Other administrations can start from this chart of accounts. Postings, relations and balances are not copied.",
+        "Template name": "Template name",
+        "Save template": "Save template",
+        "Give the template a name.": "Give the template a name.",
+        "Template saved.": "Template saved.",
+        "The template could not be saved.": "The template could not be saved."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

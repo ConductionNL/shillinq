@@ -72,6 +72,10 @@
         {
             "appVersion": "0.5.7-unstable.20261113190000",
             "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114120000",
+            "versionsSha256": "59ad95f95c6afa884db053c44c277630407b579b361964a43287cbbc9c8d7a46"
         }
     ],
     "versions": {
@@ -87,10 +91,11 @@
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
-        "schema:Administration": "0.2.0",
+        "schema:Administration": "0.3.0",
         "schema:AdministrationBackupRun": "0.1.0",
         "schema:AdministrationMembership": "0.1.0",
-        "schema:AdministrationMigration": "0.1.0",
+        "schema:AdministrationMigration": "0.2.0",
+        "schema:AdministrationTemplate": "0.1.0",
         "schema:AlertLog": "0.1.0",
         "schema:AlgemeenBelangBesluit": "0.1.0",
         "schema:AllocationRule": "0.1.0",

@@ -140,4 +140,16 @@ interface AdministrationContextServiceInterface {
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
 	 */
 	public function resolveSwitchTarget(string $targetId): ?string;
+
+	/**
+	 * Store the administration the current user chose, so the context
+	 * returns it on the next request and the next login (REQ-LMA-001).
+	 *
+	 * @param string $administrationId The chosen administration; the caller checked membership first.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
+	 */
+	public function rememberActiveAdministration(string $administrationId): void;
 }//end interface

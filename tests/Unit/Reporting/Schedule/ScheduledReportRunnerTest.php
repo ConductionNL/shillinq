@@ -105,7 +105,8 @@ class ScheduledReportRunnerTest extends TestCase {
 			$container,
 			$this->createMock(IUserSession::class),
 			$appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			$this->createMock(\OCP\IConfig::class)
 		);
 
 		$this->reports  = $this->createMock(ReportGenerationService::class);

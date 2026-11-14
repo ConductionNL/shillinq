@@ -117,12 +117,14 @@ class AdministrationController extends Controller {
 	 * Switch the active administration for the session (REQ-MA-003).
 	 *
 	 * Validates the user has a valid membership for the requested administration.
-	 * On success returns the new active administration id; when the user has no
-	 * membership the response is a masked 404 (REQ-MA-001).
+	 * On success stores the choice for the user (REQ-LMA-001) and returns the new
+	 * active administration id; when the user has no membership the response is a
+	 * masked 404 (REQ-MA-001) and nothing is stored.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-the-chosen-administration-sticks-req-lma-001
 	 */
 	#[NoAdminRequired]
 	public function switch(): JSONResponse {
@@ -137,6 +139,9 @@ class AdministrationController extends Controller {
 
 		try {
 			$target = $this->context->resolveSwitchTarget(targetId: $administrationId);
+			if ($target !== null) {
+				$this->context->rememberActiveAdministration(administrationId: $target);
+			}
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AdministrationController: failed to resolve switch target',
