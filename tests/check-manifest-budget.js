@@ -231,7 +231,14 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // fourth tab of the receivables tab strip and its payouts table):
 // development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
 // Raised to 1,259,400: 6,262 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_259_400
+//
+// Re-measured 2026-11-14 (investment deductions, tax-investment-deduction-
+// claims REQ-IDC-003: the claims and investment assets pages under Taxes,
+// their detail pages, and FixedAssetDetail copied whole to add the
+// Investeringsaftrek tab): the branch held 1,257,096 bytes. This change adds
+// the 11,246 B tax-investment-deduction-claims.json. 1,268,342 in all.
+// Raised to 1,274,700: 6,358 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_274_700
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

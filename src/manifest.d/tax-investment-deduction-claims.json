@@ -1,0 +1,271 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "tax-investment-deduction-claims",
+		"adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
+		"description": "Investment deductions (REQ-IDC-003): the year's claims with the Recalculate action under Taxes, the investment assets with their eligibility, and the Investeringsaftrek tab on FixedAssetDetail. mergePages() replaces a page wholesale by id, so FixedAssetDetail is a full copy of src/manifest.json with the fields moved into a data widget and the depreciation schedule into an object list: re-sync if the base page changes."
+	},
+	"menu": [
+		{"id": "InvestmentDeductions", "label": "Investment deductions", "icon": "CashRefund", "route": "InvestmentDeductions", "order": 75},
+		{"id": "InvestmentAssets", "label": "Investment assets", "icon": "SolarPower", "route": "InvestmentAssets", "order": 76}
+	],
+	"pages": [
+		{
+			"id": "InvestmentDeductions",
+			"route": "/tax/investment-deductions",
+			"type": "index",
+			"title": "Investment deductions",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvesteringsaftrekClaim",
+				"columns": [
+					{"key": "financialYear", "label": "Year", "sortable": true},
+					{"key": "scheme", "label": "Scheme", "sortable": true},
+					{"key": "investmentAssetId", "label": "Asset"},
+					{"key": "basis", "label": "Basis (cents)", "sortable": true},
+					{"key": "percentage", "label": "Percentage"},
+					{"key": "deductionAmount", "label": "Deduction (cents)", "sortable": true},
+					{"key": "rvoReportDeadline", "label": "Notification deadline", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "submittedInTaxReturn", "label": "In tax return"}
+				],
+				"filters": [
+					{"key": "financialYear", "label": "Year", "type": "number"},
+					{"key": "scheme", "label": "Scheme", "type": "select", "options": ["KIA", "EIA", "MIA", "Vamil"]},
+					{"key": "status", "label": "Status", "type": "select", "options": ["draft", "submitted", "final"]}
+				],
+				"defaultSort": "financialYear",
+				"detailRoute": "InvestmentDeductionDetail",
+				"headerActions": [
+					{
+						"id": "recalculate-investment-deductions",
+						"label": "Recalculate",
+						"icon": "Calculator",
+						"handler": "openRecalculateInvestmentDeductions",
+						"description": "Work out the year's KIA, EIA and MIA claims from the active investment assets and show the total per scheme."
+					}
+				]
+			}
+		},
+		{
+			"id": "InvestmentDeductionDetail",
+			"route": "/tax/investment-deductions/:id",
+			"type": "detail",
+			"title": "Investment deduction",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvesteringsaftrekClaim",
+				"_note": "CONFIG: one claim per asset, scheme and year. A draft is replaced by the next recalculation; a claim used in a tax return is kept.",
+				"fields": [
+					{"key": "financialYear", "label": "Year", "type": "number"},
+					{"key": "scheme", "label": "Scheme", "type": "string"},
+					{"key": "investmentAssetId", "label": "Asset", "type": "string"},
+					{"key": "basis", "label": "Basis (cents)", "type": "number"},
+					{"key": "percentage", "label": "Percentage", "type": "number"},
+					{"key": "deductionAmount", "label": "Deduction (cents)", "type": "number"},
+					{"key": "rvoReportDeadline", "label": "Notification deadline", "type": "date"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "submittedInTaxReturn", "label": "In tax return", "type": "boolean"},
+					{"key": "voluntaryReduction", "label": "Voluntary reduction", "type": "number"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"auditTrail": true,
+				"indexRoute": "InvestmentDeductions"
+			}
+		},
+		{
+			"id": "InvestmentAssets",
+			"route": "/tax/investment-assets",
+			"type": "index",
+			"title": "Investment assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvestmentAsset",
+				"columns": [
+					{"key": "description", "label": "Description", "sortable": true},
+					{"key": "acquisitionDate", "label": "Acquisition Date", "sortable": true},
+					{"key": "acquisitionValue", "label": "Value (cents)", "sortable": true},
+					{"key": "kiaEligible", "label": "KIA"},
+					{"key": "eiaEligible", "label": "EIA"},
+					{"key": "miaEligible", "label": "MIA"},
+					{"key": "vamilEligible", "label": "Vamil"},
+					{"key": "rvoReportDeadline", "label": "Notification deadline", "sortable": true},
+					{"key": "rvoReportStatus", "label": "Notification status", "sortable": true}
+				],
+				"defaultSort": "acquisitionDate",
+				"detailRoute": "InvestmentAssetDetail"
+			}
+		},
+		{
+			"id": "InvestmentAssetDetail",
+			"route": "/tax/investment-assets/:id",
+			"type": "detail",
+			"title": "Investment asset",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvestmentAsset",
+				"_note": "The investment deduction eligibility of one fixed asset: the flags and reasons worked out on activation, the bookkeeper's override (never overwritten by a recalculation) and the RVO notification deadline.",
+				"fields": [
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "fixedAssetId", "label": "Fixed Asset", "type": "string"},
+					{"key": "acquisitionDate", "label": "Acquisition Date", "type": "date"},
+					{"key": "assignmentAwardDate", "label": "Order date", "type": "date"},
+					{"key": "acquisitionValue", "label": "Value (cents)", "type": "number"},
+					{"key": "energyListCode", "label": "Energy List code", "type": "string"},
+					{"key": "environmentListCode", "label": "Environment List code", "type": "string"},
+					{"key": "kiaEligible", "label": "KIA", "type": "boolean"},
+					{"key": "eiaEligible", "label": "EIA", "type": "boolean"},
+					{"key": "miaEligible", "label": "MIA", "type": "boolean"},
+					{"key": "vamilEligible", "label": "Vamil", "type": "boolean"},
+					{"key": "eligibilityReasons", "label": "Eligibility reasons", "type": "object"},
+					{"key": "eligibilityOverride", "label": "Eligibility override", "type": "object"},
+					{"key": "rvoReportDeadline", "label": "Notification deadline", "type": "date"},
+					{"key": "rvoReportStatus", "label": "Notification status", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"auditTrail": true,
+				"indexRoute": "InvestmentAssets"
+			}
+		},
+		{
+			"id": "FixedAssetDetail",
+			"route": "/fixed-assets/:id",
+			"type": "detail",
+			"title": "Fixed Asset",
+			"config": {
+				"register": "shillinq",
+				"_note": "Fixed Asset detail — a capitalised asset with commercial and fiscal book values and depreciation method (linear/degressive, VAMIL). The depreciation schedule lists each period's charge and GL posting; audit trail evidences impairment/disposal decisions. Aggregation surfaces book-value roll-forward. tax-investment-deduction-claims REQ-IDC-003 adds the Investeringsaftrek tab with the linked InvestmentAsset (eligibility, reasons, override, notification deadline).",
+				"aggregation": "bookValueRollforward",
+				"auditTrail": true,
+				"schema": "FixedAsset",
+				"headerActions": [
+					{
+						"id": "post-missed-depreciation",
+						"label": "Post missed depreciation",
+						"type": "handler",
+						"handler": "openMissedDepreciation",
+						"icon": "CalendarClock",
+						"description": "List the months that ended without their depreciation posted, with the amounts, and post them."
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FixedAssets",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/fixed-assets",
+				"widgets": [
+					{
+						"id": "fixed-asset-panels",
+						"type": "tabs",
+						"title": "Fixed asset",
+						"content": {
+							"tabs": [
+								{"widgetId": "fixed-asset-data", "label": "Overview"},
+								{"widgetId": "fixed-asset-depreciation", "label": "Depreciation schedule", "countFrom": "widget"},
+								{"widgetId": "fixed-asset-investment-deduction", "label": "Investment deduction", "countFrom": "widget"}
+							]
+						}
+					},
+					{
+						"id": "fixed-asset-data",
+						"type": "data",
+						"title": "Details",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"assetNumber",
+								"name",
+								"assetCategory",
+								"acquisitionDate",
+								"acquisitionCost",
+								"currency",
+								"usefulLifeMonths",
+								"residualValue",
+								"depreciationMethod",
+								"degressiveRate",
+								"commercialRate",
+								"fiscalRate",
+								"assetAccountNumber",
+								"accumulatedDepAccountNumber",
+								"depreciationExpenseAccountNumber",
+								"currentBookValue",
+								"monthlyDepreciation",
+								"commercialBookValue",
+								"fiscalBookValue",
+								"fiscalCostBasis",
+								"disposalDate",
+								"disposalAccountingTreatment",
+								"lifecycleState",
+								"administrationId"
+							]
+						}
+					},
+					{
+						"id": "fixed-asset-depreciation",
+						"type": "object-list",
+						"title": "Depreciation schedule",
+						"icon": "CalendarClock",
+						"content": {
+							"register": "shillinq",
+							"schema": "DepreciationSchedule",
+							"filter": {"assetRef": "@objectId"},
+							"sort": {"field": "periodStartDate", "dir": "asc"},
+							"limit": 50,
+							"columns": [
+								{"key": "scheduleNumber", "label": "#"},
+								{"key": "periodStartDate", "label": "Period"},
+								{"key": "depreciationAmount", "label": "Charge (EUR)"},
+								{"key": "accumulatedDepreciation", "label": "Accumulated (EUR)"},
+								{"key": "bookValue", "label": "Book value (EUR)"},
+								{"key": "status", "label": "Status"}
+							],
+							"emptyText": "No depreciation has been scheduled for this asset.",
+							"allowCreate": false
+						}
+					},
+					{
+						"id": "fixed-asset-investment-deduction",
+						"type": "object-list",
+						"title": "Investment deduction",
+						"icon": "CashRefund",
+						"content": {
+							"register": "shillinq",
+							"schema": "InvestmentAsset",
+							"filter": {"fixedAssetId": "@objectId"},
+							"limit": 5,
+							"columns": [
+								{"key": "description", "label": "Description"},
+								{"key": "kiaEligible", "label": "KIA"},
+								{"key": "eiaEligible", "label": "EIA"},
+								{"key": "miaEligible", "label": "MIA"},
+								{"key": "vamilEligible", "label": "Vamil"},
+								{"key": "rvoReportDeadline", "label": "Notification deadline"}
+							],
+							"rowRoute": "InvestmentAssetDetail",
+							"emptyText": "Investment deduction eligibility is worked out when the asset becomes active.",
+							"allowCreate": false
+						}
+					}
+				],
+				"layout": [{"id": "1", "widgetId": "fixed-asset-panels", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 10}]
+			}
+		}
+	]
+}

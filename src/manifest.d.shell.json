@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -5496,6 +5510,61 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InvestmentDeductions",
+					"label": "Investment deductions",
+					"icon": "CashRefund",
+					"route": "InvestmentDeductions",
+					"order": 75
+				},
+				{
+					"id": "InvestmentAssets",
+					"label": "Investment assets",
+					"icon": "SolarPower",
+					"route": "InvestmentAssets",
+					"order": 76
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentDeductions",
+					"route": "/tax/investment-deductions",
+					"type": "index",
+					"title": "Investment deductions"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentDeductionDetail",
+					"route": "/tax/investment-deductions/:id",
+					"type": "detail",
+					"title": "Investment deduction"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentAssets",
+					"route": "/tax/investment-assets",
+					"type": "index",
+					"title": "Investment assets"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentAssetDetail",
+					"route": "/tax/investment-assets/:id",
+					"type": "detail",
+					"title": "Investment asset"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "FixedAssetDetail",
+					"route": "/fixed-assets/:id",
+					"type": "detail",
+					"title": "Fixed Asset"
 				}
 			]
 		},

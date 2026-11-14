@@ -236,7 +236,7 @@ class InvestmentDeductionServiceTest extends TestCase {
 			'fa-old' => self::fixedAsset(name: 'Oude kassa', cost: 900.0, date: '2025-06-01'),
 		];
 		$this->store['InvestmentAsset'] = [
-			'ia-pump' => ['administrationId' => 'adm-korenaar', 'fixedAssetId' => 'fa-pump', 'description' => 'Warmtepomp', 'acquisitionValue' => 0, 'acquisitionDate' => '2026-03-01', 'energyListCode' => '210000'],
+			'ia-pump' => ['administrationId' => 'adm-korenaar', 'fixedAssetId' => 'fa-pump', 'description' => 'Warmtepomp', 'acquisitionValue' => 0, 'acquisitionDate' => '2026-03-01', 'assignmentAwardDate' => '2026-02-15', 'energyListCode' => '210000'],
 		];
 
 		$result = $this->service()->calculateYear(administrationId: 'adm-korenaar', year: 2026);
@@ -258,6 +258,15 @@ class InvestmentDeductionServiceTest extends TestCase {
 			$claims
 		);
 		self::assertCount(3, $this->store['InvestmentAsset']);
+
+		// The EIA claim carries the heat pump's notification deadline; a KIA claim has none.
+		$deadlines = [];
+		foreach ($this->store['InvesteringsaftrekClaim'] as $claim) {
+			$deadlines[$this->store['InvestmentAsset'][$claim['investmentAssetId']]['fixedAssetId'] . ' ' . $claim['scheme']] = $claim['rvoReportDeadline'] ?? null;
+		}
+
+		self::assertSame('2026-05-15', $deadlines['fa-pump EIA']);
+		self::assertNull($deadlines['fa-pump KIA']);
 	}//end testTheYearGivesKiaByTheTiersAndEiaAtTheListPercentage()
 
 	/**

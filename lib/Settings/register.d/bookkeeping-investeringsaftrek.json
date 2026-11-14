@@ -534,6 +534,14 @@
             "example": 2000000,
             "title": "Aftrekbedrag"
           },
+          "rvoReportDeadline": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "The asset's RVO notification deadline, copied onto an EIA or MIA claim when the year is calculated so the claims list shows it (REQ-IDC-003). Null for KIA.",
+            "example": "2026-06-15",
+            "title": "RVO notification deadline"
+          },
           "status": {
             "type": "string",
             "enum": [

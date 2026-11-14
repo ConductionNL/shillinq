@@ -10,11 +10,11 @@
 
 ## 2. Pages
 
-- [ ] 2.1 `InvestmentDeductions` page with totals and the recalculate action, and the tab on `FixedAssetDetail` (REQ-IDC-003). Verify: `npm run check:manifest`; nav reachability.
+- [x] 2.1 `InvestmentDeductions` page with totals and the recalculate action, and the tab on `FixedAssetDetail` (REQ-IDC-003). Verify: `npm run check:manifest`; nav reachability.
 
 ## 3. End to end and strings
 
 - [ ] 3.1 Playwright `tests/e2e/tax-investment-deduction-claims.spec.ts`: activate an asset, see eligibility, recalculate the year. Verify: passes locally.
-- [ ] 3.2 Dutch and English strings. Verify: `npm run test:l10n`.
+- [x] 3.2 Dutch and English strings. Verify: `npm run test:l10n`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

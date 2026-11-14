@@ -221,8 +221,11 @@ class InvestmentDeductionService {
 				$options = [$keep => $options[$keep]];
 			}
 
+			// The asset's RVO notification deadline travels with the claim, so
+			// the year's claims list shows it (REQ-IDC-003).
+			$deadline = $asset['rvoReportDeadline'] ?? null;
 			foreach ($options as $scheme => $claim) {
-				$claims[self::idOf(row: $asset) . '|' . $scheme] = $claim;
+				$claims[self::idOf(row: $asset) . '|' . $scheme] = $claim + ['rvoReportDeadline' => $deadline];
 			}
 		}//end foreach
 

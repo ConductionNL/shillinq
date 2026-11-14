@@ -49,6 +49,8 @@
 		"Vpb": "Taxes",
 		"VennootschapsbelastingBalans": "Taxes",
 		"VATReturns": "Taxes",
+		"InvestmentDeductions": "Taxes",
+		"InvestmentAssets": "Taxes",
 		"VATReports": "Taxes",
 		"OssRegistration": "Taxes",
 		"OssReturns": "Taxes",
