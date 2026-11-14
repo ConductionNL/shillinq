@@ -581,141 +581,265 @@ class SettingsService implements SettingsServiceInterface {
 			return ['success' => false, 'message' => 'administrationId must not be empty.'];
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/fixed-assets-demo.json';
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: fixed-assets-demo.json'];
+		$seedResult = $this->loadFixedAssetsDemoSeed();
+		if (isset($seedResult['error']) === true) {
+			return $seedResult['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read fixed-assets-demo.json'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse fixed-assets-demo.json: ' . json_last_error_msg(),
-			];
-		}
+		$data = $seedResult['data'];
 
 		$fixedAssets = ($data['fixedAssets'] ?? []);
 		$depreciationSchedules = ($data['depreciationSchedules'] ?? []);
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seededAssets = 0;
-			$skippedAssets = 0;
-			$seededSchedules = 0;
-			$skippedSchedules = 0;
-			$assetUuidByNumber = [];
-
-			foreach ($fixedAssets as $asset) {
-				$asset['administrationId'] = $administrationId;
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('FixedAsset')
-					->findAll(
-						[
-							'filters' => [
-								'assetNumber' => $asset['assetNumber'],
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skippedAssets++;
-					// Cache the existing UUID for schedule linking.
-					$firstRow = $existing[0];
-					$existingUuid = ObjectIdentifier::resolve(saved: $firstRow);
-					if ($existingUuid !== '') {
-						$assetUuidByNumber[$asset['assetNumber']] = $existingUuid;
-					}
-
-					continue;
-				}
-
-				$saved = $objectService->saveObject(
-					object: $asset,
-					register: $registerSlug,
-					schema: 'FixedAsset',
-				);
-				$seededAssets++;
-
-				$savedUuid = ObjectIdentifier::resolve(saved: $saved);
-				if ($savedUuid !== '') {
-					$assetUuidByNumber[$asset['assetNumber']] = $savedUuid;
-				}
-			}//end foreach
-
-			foreach ($depreciationSchedules as $schedule) {
-				$schedule['administrationId'] = $administrationId;
-
-				// Resolve assetNumber → assetRef UUID.
-				$assetNumber = (string)($schedule['assetNumber'] ?? '');
-				if ($assetNumber !== '' && isset($assetUuidByNumber[$assetNumber]) === true) {
-					$schedule['assetRef'] = $assetUuidByNumber[$assetNumber];
-				}
-
-				unset($schedule['assetNumber']);
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('DepreciationSchedule')
-					->findAll(
-						[
-							'filters' => [
-								'scheduleNumber' => $schedule['scheduleNumber'],
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skippedSchedules++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $schedule,
-					register: $registerSlug,
-					schema: 'DepreciationSchedule',
-				);
-				$seededSchedules++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: fixed-assets demo seeded',
-				[
-					'seededAssets' => $seededAssets,
-					'skippedAssets' => $skippedAssets,
-					'seededSchedules' => $seededSchedules,
-					'skippedSchedules' => $skippedSchedules,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
-				'seededAssets' => $seededAssets,
-				'skippedAssets' => $skippedAssets,
-				'seededSchedules' => $seededSchedules,
-				'skippedSchedules' => $skippedSchedules,
-			];
+			return $this->importFixedAssetsDemo(administrationId: $administrationId, fixedAssets: $fixedAssets, schedules: $depreciationSchedules);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: fixed-assets demo seeding failed',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('Shillinq: fixed-assets demo seeding failed', ['exception' => $e->getMessage()]);
 			return ['success' => false, 'message' => $e->getMessage()];
 		}//end try
 
 	}//end seedFixedAssetsDemo()
+
+	/**
+	 * Read and decode `lib/Settings/seeds/fixed-assets-demo.json`.
+	 *
+	 * Returns `['data' => mixed]` on success, or `['error' => array]` with a
+	 * failure result array when the file is missing, unreadable or invalid JSON.
+	 *
+	 * @return array{data: mixed}|array{error: array<string,mixed>}
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function loadFixedAssetsDemoSeed(): array {
+		$seedPath = __DIR__ . '/../Settings/seeds/fixed-assets-demo.json';
+		if (file_exists($seedPath) === false) {
+			return ['error' => ['success' => false, 'message' => 'Seed file not found: fixed-assets-demo.json']];
+		}
+
+		$content = file_get_contents($seedPath);
+		if ($content === false) {
+			return ['error' => ['success' => false, 'message' => 'Failed to read fixed-assets-demo.json']];
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			return [
+				'error' => [
+					'success' => false,
+					'message' => 'Failed to parse fixed-assets-demo.json: ' . json_last_error_msg(),
+				],
+			];
+		}
+
+		return ['data' => $data];
+	}//end loadFixedAssetsDemoSeed()
+
+	/**
+	 * Seed the demo FixedAssets and their DepreciationSchedules, then log and report the counts.
+	 *
+	 * @param string       $administrationId The administrationId to stamp on seeded records.
+	 * @param array<mixed> $fixedAssets      FixedAsset rows from the seed file.
+	 * @param array<mixed> $schedules        DepreciationSchedule rows from the seed file.
+	 *
+	 * @return array<string,mixed> Result with success flag and seeded/skipped counts.
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function importFixedAssetsDemo(string $administrationId, array $fixedAssets, array $schedules): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->getRegisterSlug();
+		$assets = $this->seedDemoFixedAssets(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			fixedAssets: $fixedAssets,
+			administrationId: $administrationId
+		);
+		$seededSchedules = 0;
+		$skippedSchedules = 0;
+
+		foreach ($schedules as $schedule) {
+			$schedule['administrationId'] = $administrationId;
+			$schedule = $this->linkDemoScheduleToAsset(schedule: $schedule, assetUuidByNumber: $assets['uuids']);
+
+			if ($this->seedDemoSchedule(objectService: $objectService, registerSlug: $registerSlug, schedule: $schedule) === false) {
+				$skippedSchedules++;
+				continue;
+			}
+
+			$seededSchedules++;
+		}
+
+		return $this->reportFixedAssetsDemo(
+			counts: [
+				'seededAssets' => $assets['seeded'],
+				'skippedAssets' => $assets['skipped'],
+				'seededSchedules' => $seededSchedules,
+				'skippedSchedules' => $skippedSchedules,
+			]
+		);
+	}//end importFixedAssetsDemo()
+
+	/**
+	 * Seed every demo FixedAsset and collect the asset UUIDs by assetNumber.
+	 *
+	 * @param mixed        $objectService    OpenRegister's ObjectService.
+	 * @param string       $registerSlug     The register to write to.
+	 * @param array<mixed> $fixedAssets      FixedAsset rows from the seed file.
+	 * @param string       $administrationId The administrationId to stamp on seeded records.
+	 *
+	 * @return array{seeded: int, skipped: int, uuids: array<string,string>}
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function seedDemoFixedAssets(mixed $objectService, string $registerSlug, array $fixedAssets, string $administrationId): array {
+		$result = ['seeded' => 0, 'skipped' => 0, 'uuids' => []];
+
+		foreach ($fixedAssets as $asset) {
+			$asset['administrationId'] = $administrationId;
+
+			$outcome = $this->seedDemoFixedAsset(objectService: $objectService, registerSlug: $registerSlug, asset: $asset);
+			if ($outcome['seeded'] === true) {
+				$result['seeded']++;
+			} else {
+				$result['skipped']++;
+			}
+
+			if ($outcome['uuid'] !== '') {
+				$result['uuids'][$asset['assetNumber']] = $outcome['uuid'];
+			}
+		}
+
+		return $result;
+	}//end seedDemoFixedAssets()
+
+	/**
+	 * Resolve a demo schedule's assetNumber to the assetRef UUID and drop the assetNumber.
+	 *
+	 * @param array<string,mixed>  $schedule          The schedule row.
+	 * @param array<string,string> $assetUuidByNumber Asset UUIDs keyed by assetNumber.
+	 *
+	 * @return array<string,mixed> The schedule row with assetRef set when resolvable.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function linkDemoScheduleToAsset(array $schedule, array $assetUuidByNumber): array {
+		// Resolve assetNumber → assetRef UUID.
+		$assetNumber = (string)($schedule['assetNumber'] ?? '');
+		if ($assetNumber !== '' && isset($assetUuidByNumber[$assetNumber]) === true) {
+			$schedule['assetRef'] = $assetUuidByNumber[$assetNumber];
+		}
+
+		unset($schedule['assetNumber']);
+
+		return $schedule;
+	}//end linkDemoScheduleToAsset()
+
+	/**
+	 * Log the fixed-assets demo counts and build the success result.
+	 *
+	 * @param array<string,int> $counts The seeded and skipped counts per schema.
+	 *
+	 * @return array<string,mixed> Result with success flag and the counts.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function reportFixedAssetsDemo(array $counts): array {
+		$this->logger->info('Shillinq: fixed-assets demo seeded', $counts);
+
+		return array_merge(
+			[
+				'success' => true,
+				'message' => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
+			],
+			$counts
+		);
+	}//end reportFixedAssetsDemo()
+
+	/**
+	 * Find the one record of a schema that matches the given filters.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to search.
+	 * @param string              $schema        The schema to search.
+	 * @param array<string,mixed> $filters       The deduplication filters.
+	 *
+	 * @return mixed The findAll result, at most one row.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function findDemoRecord(mixed $objectService, string $registerSlug, string $schema, array $filters): mixed {
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema($schema)
+			->findAll(['filters' => $filters, 'limit' => 1]);
+	}//end findDemoRecord()
+
+	/**
+	 * Save one demo FixedAsset unless a record with its assetNumber already exists.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to write to.
+	 * @param array<string,mixed> $asset         The asset row, already stamped with its administrationId.
+	 *
+	 * @return array{seeded: bool, uuid: string} Whether it was saved, and the UUID of the saved or existing record.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function seedDemoFixedAsset(mixed $objectService, string $registerSlug, array $asset): array {
+		$filters = ['assetNumber' => $asset['assetNumber'], 'administrationId' => $asset['administrationId']];
+		$existing = $this->findDemoRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'FixedAsset', filters: $filters);
+
+		if (empty($existing) === false) {
+			// Cache the existing UUID for schedule linking.
+			$firstRow = $existing[0];
+			return ['seeded' => false, 'uuid' => ObjectIdentifier::resolve(saved: $firstRow)];
+		}
+
+		$saved = $objectService->saveObject(
+			object: $asset,
+			register: $registerSlug,
+			schema: 'FixedAsset',
+		);
+
+		return ['seeded' => true, 'uuid' => ObjectIdentifier::resolve(saved: $saved)];
+	}//end seedDemoFixedAsset()
+
+	/**
+	 * Save one demo DepreciationSchedule unless a record with its scheduleNumber already exists.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to write to.
+	 * @param array<string,mixed> $schedule      The schedule row, already stamped with its administrationId.
+	 *
+	 * @return bool True when the schedule was saved, false when it already existed.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function seedDemoSchedule(mixed $objectService, string $registerSlug, array $schedule): bool {
+		$filters = ['scheduleNumber' => $schedule['scheduleNumber'], 'administrationId' => $schedule['administrationId']];
+		$existing = $this->findDemoRecord(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			schema: 'DepreciationSchedule',
+			filters: $filters
+		);
+
+		if (empty($existing) === false) {
+			return false;
+		}
+
+		$objectService->saveObject(
+			object: $schedule,
+			register: $registerSlug,
+			schema: 'DepreciationSchedule',
+		);
+
+		return true;
+	}//end seedDemoSchedule()
 
 	/**
 	 * The per-administration BBV seeds, run with this service's register settings.
@@ -1372,90 +1496,8 @@ class SettingsService implements SettingsServiceInterface {
 			];
 		}
 
-		$totalSeeded = 0;
-		$totalSkipped = 0;
-
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			$files = [
-				'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
-				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
-				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
-			];
-
-			foreach ($files as $filename => [$schema, $arrayKey, $dedupeKey]) {
-				$seedPath = $seedDir . '/' . $filename;
-				if (file_exists($seedPath) === false) {
-					continue;
-				}
-
-				$content = file_get_contents($seedPath);
-				if ($content === false) {
-					continue;
-				}
-
-				$data = json_decode($content, true);
-				if (json_last_error() !== JSON_ERROR_NONE) {
-					$this->logger->warning(
-						'Shillinq: failed to parse WMO seed file: ' . $filename,
-						['error' => json_last_error_msg()]
-					);
-					continue;
-				}
-
-				$records = ($data[$arrayKey] ?? []);
-				foreach ($records as $record) {
-					// Drop _meta-only keys that aren't schema properties.
-					unset($record['_meta']);
-					$record['administrationId'] = $administrationId;
-
-					// Build the dedupe filter per schema.
-					$filter = ['administrationId' => $administrationId];
-					if ($dedupeKey === '__ikpKey') {
-						$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
-						$filter['period'] = ($record['period'] ?? '');
-					} elseif (isset($record[$dedupeKey]) === true) {
-						$filter[$dedupeKey] = $record[$dedupeKey];
-					}
-
-					$existing = $objectService
-						->setRegister($registerSlug)
-						->setSchema($schema)
-						->findAll(
-							[
-								'filters' => $filter,
-								'limit' => 1,
-							]
-						);
-
-					if (empty($existing) === false) {
-						$totalSkipped++;
-						continue;
-					}
-
-					$objectService->saveObject(
-						object: $record,
-						register: $registerSlug,
-						schema: $schema,
-					);
-					$totalSeeded++;
-				}//end foreach
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: WMO commercial activities seeded',
-				['seeded' => $totalSeeded, 'skipped' => $totalSkipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'WMO commercial activities seeded.',
-				'seeded' => $totalSeeded,
-				'skipped' => $totalSkipped,
-			];
+			return $this->importWmoSeeds(seedDir: $seedDir, administrationId: $administrationId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: WMO seeding failed',
@@ -1468,4 +1510,170 @@ class SettingsService implements SettingsServiceInterface {
 		}//end try
 
 	}//end seedWmoCommercialActivities()
+
+	/**
+	 * Seed the records of every WMO seed file, then log and report the totals.
+	 *
+	 * @param string $seedDir          The commercial-activities seed directory.
+	 * @param string $administrationId The administrationId to stamp on seeded records.
+	 *
+	 * @return array<string,mixed> Result with success flag and seeded/skipped totals.
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function importWmoSeeds(string $seedDir, string $administrationId): array {
+		$totalSeeded = 0;
+		$totalSkipped = 0;
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->getRegisterSlug();
+
+		foreach ($this->wmoSeedFiles() as $filename => $spec) {
+			$records = $this->readWmoSeedRecords(seedPath: $seedDir . '/' . $filename, filename: $filename, arrayKey: $spec[1]);
+			if ($records === null) {
+				continue;
+			}
+
+			foreach ($records as $record) {
+				// Drop _meta-only keys that aren't schema properties.
+				unset($record['_meta']);
+				$record['administrationId'] = $administrationId;
+
+				if ($this->seedWmoRecord(objectService: $objectService, registerSlug: $registerSlug, spec: $spec, record: $record) === false) {
+					$totalSkipped++;
+					continue;
+				}
+
+				$totalSeeded++;
+			}
+		}//end foreach
+
+		return $this->reportWmoSeeds(seeded: $totalSeeded, skipped: $totalSkipped);
+	}//end importWmoSeeds()
+
+	/**
+	 * The WMO seed files, each mapped to [schema, records key, dedupe key].
+	 *
+	 * @return array<string,array{0: string, 1: string, 2: string}>
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function wmoSeedFiles(): array {
+		return [
+			'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
+			'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
+			'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
+			'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
+		];
+	}//end wmoSeedFiles()
+
+	/**
+	 * Read one WMO seed file and return its records, or null when it cannot be used.
+	 *
+	 * @param string $seedPath The seed file path.
+	 * @param string $filename The seed file name, for the warning log.
+	 * @param string $arrayKey The key that holds the records.
+	 *
+	 * @return mixed The records, or null when the file is missing, unreadable or invalid JSON.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function readWmoSeedRecords(string $seedPath, string $filename, string $arrayKey): mixed {
+		if (file_exists($seedPath) === false) {
+			return null;
+		}
+
+		$content = file_get_contents($seedPath);
+		if ($content === false) {
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: failed to parse WMO seed file: ' . $filename,
+				['error' => json_last_error_msg()]
+			);
+			return null;
+		}
+
+		return ($data[$arrayKey] ?? []);
+	}//end readWmoSeedRecords()
+
+	/**
+	 * Save one WMO record unless a record with the same natural key already exists.
+	 *
+	 * @param mixed                $objectService OpenRegister's ObjectService.
+	 * @param string               $registerSlug  The register to write to.
+	 * @param array<int,string>    $spec          The seed file's [schema, records key, dedupe key].
+	 * @param array<string,mixed>  $record        The record, already stamped with its administrationId.
+	 *
+	 * @return bool True when the record was saved, false when it already existed.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function seedWmoRecord(mixed $objectService, string $registerSlug, array $spec, array $record): bool {
+		$schema = $spec[0];
+		$filter = $this->wmoDedupeFilter(record: $record, dedupeKey: $spec[2]);
+		$existing = $this->findDemoRecord(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, filters: $filter);
+
+		if (empty($existing) === false) {
+			return false;
+		}
+
+		$objectService->saveObject(
+			object: $record,
+			register: $registerSlug,
+			schema: $schema,
+		);
+
+		return true;
+	}//end seedWmoRecord()
+
+	/**
+	 * Build the dedupe filter for one WMO record.
+	 *
+	 * @param array<string,mixed> $record    The record, already stamped with its administrationId.
+	 * @param string              $dedupeKey The natural key, or `__ikpKey` for (commercialActivityId, period).
+	 *
+	 * @return array<string,mixed> The findAll filters.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function wmoDedupeFilter(array $record, string $dedupeKey): array {
+		$filter = ['administrationId' => $record['administrationId']];
+		if ($dedupeKey === '__ikpKey') {
+			$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
+			$filter['period'] = ($record['period'] ?? '');
+		} elseif (isset($record[$dedupeKey]) === true) {
+			$filter[$dedupeKey] = $record[$dedupeKey];
+		}
+
+		return $filter;
+	}//end wmoDedupeFilter()
+
+	/**
+	 * Log the WMO seed totals and build the success result.
+	 *
+	 * @param int $seeded  Records saved.
+	 * @param int $skipped Records that already existed.
+	 *
+	 * @return array<string,mixed> Result with success flag and the totals.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function reportWmoSeeds(int $seeded, int $skipped): array {
+		$this->logger->info(
+			'Shillinq: WMO commercial activities seeded',
+			['seeded' => $seeded, 'skipped' => $skipped]
+		);
+
+		return [
+			'success' => true,
+			'message' => 'WMO commercial activities seeded.',
+			'seeded' => $seeded,
+			'skipped' => $skipped,
+		];
+	}//end reportWmoSeeds()
 }//end class
