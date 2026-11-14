@@ -109,7 +109,6 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 	 */
 	public function downloadDeltas(?string $since, string $administrationId, int $limit = 500): array {
 		$serverTimestamp = $this->nowIso();
-		$deltas = [];
 
 		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->warning('Shillinq mobile scanner: OpenRegister unavailable; returning empty deltas');
@@ -121,6 +120,22 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 			return ['deltas' => [], 'serverTimestamp' => $serverTimestamp];
 		}
 
+		$deltas = $this->loadDeltas(since: $since, administrationId: $administrationId, limit: $limit);
+
+		return ['deltas' => $deltas, 'serverTimestamp' => $serverTimestamp];
+	}//end downloadDeltas()
+
+	/**
+	 * Load the tenant's InventoryStock delta rows; a failure is logged and
+	 * yields no rows.
+	 *
+	 * @param string|null $since ISO 8601 UTC timestamp, or null for a full sync.
+	 * @param string $administrationId Tenant scope.
+	 * @param int $limit Maximum records to return per page.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function loadDeltas(string|null $since, string $administrationId, int $limit): array {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$registerSlug = $this->registerLocation->getRegisterSlug();
@@ -137,24 +152,38 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					]
 				);
 
-			foreach ($records as $record) {
-				$row = $this->stockToArray(record: $record);
-				if ($since !== null && $since !== '' && $this->isStrictlyAfter(since: $since, candidate: ($row['lastModified'] ?? '')) === true) {
-					continue;
-				}
-
-				$deltas[] = $row;
-			}
+			return $this->filterDeltas(since: $since, records: $records);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq mobile scanner: failed to download deltas',
 				['exception' => $e->getMessage()]
 			);
-			return ['deltas' => [], 'serverTimestamp' => $serverTimestamp];
+			return [];
 		}//end try
 
-		return ['deltas' => $deltas, 'serverTimestamp' => $serverTimestamp];
-	}//end downloadDeltas()
+	}//end loadDeltas()
+
+	/**
+	 * Project records onto delta rows, dropping those not modified after $since.
+	 *
+	 * @param string|null $since ISO 8601 UTC timestamp, or null for a full sync.
+	 * @param mixed $records Records returned by ObjectService::findAll().
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function filterDeltas(string|null $since, mixed $records): array {
+		$deltas = [];
+		foreach ($records as $record) {
+			$row = $this->stockToArray(record: $record);
+			if ($since !== null && $since !== '' && $this->isStrictlyAfter(since: $since, candidate: ($row['lastModified'] ?? '')) === true) {
+				continue;
+			}
+
+			$deltas[] = $row;
+		}
+
+		return $deltas;
+	}//end filterDeltas()
 
 	/**
 	 * Apply a batch of warehouse operations from the mobile PWA.
@@ -186,28 +215,9 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 		$serverTimestamp = $this->nowIso();
 		$results = [];
 
-		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
-			foreach ($operations as $op) {
-				$results[] = [
-					'transactionId' => (string)($op['transactionId'] ?? ''),
-					'status' => 'rejected_validation',
-					'reason' => 'OpenRegister unavailable',
-				];
-			}
-
-			return ['results' => $results, 'serverTimestamp' => $serverTimestamp];
-		}
-
-		if ($administrationId === '' || $userId === '') {
-			foreach ($operations as $op) {
-				$results[] = [
-					'transactionId' => (string)($op['transactionId'] ?? ''),
-					'status' => 'rejected_validation',
-					'reason' => 'missing tenant or user',
-				];
-			}
-
-			return ['results' => $results, 'serverTimestamp' => $serverTimestamp];
+		$reason = $this->uploadPreconditionFailure(userId: $userId, administrationId: $administrationId);
+		if ($reason !== null) {
+			return ['results' => $this->rejectAll(operations: $operations, reason: $reason), 'serverTimestamp' => $serverTimestamp];
 		}
 
 		try {
@@ -218,15 +228,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 				'Shillinq mobile scanner: failed to acquire ObjectService',
 				['exception' => $e->getMessage()]
 			);
-			foreach ($operations as $op) {
-				$results[] = [
-					'transactionId' => (string)($op['transactionId'] ?? ''),
-					'status' => 'rejected_validation',
-					'reason' => 'sync backend unavailable',
-				];
-			}
-
-			return ['results' => $results, 'serverTimestamp' => $serverTimestamp];
+			return ['results' => $this->rejectAll(operations: $operations, reason: 'sync backend unavailable'), 'serverTimestamp' => $serverTimestamp];
 		}
 
 		foreach ($operations as $op) {
@@ -243,6 +245,47 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 
 		return ['results' => $results, 'serverTimestamp' => $serverTimestamp];
 	}//end uploadOperations()
+
+	/**
+	 * Return why an upload batch cannot be processed at all, or null when it can.
+	 *
+	 * @param string $userId Nextcloud user id of the submitter.
+	 * @param string $administrationId Tenant scope.
+	 *
+	 * @return string|null The rejection reason for every operation, or null.
+	 */
+	private function uploadPreconditionFailure(string $userId, string $administrationId): string|null {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
+			return 'OpenRegister unavailable';
+		}
+
+		if ($administrationId === '' || $userId === '') {
+			return 'missing tenant or user';
+		}
+
+		return null;
+	}//end uploadPreconditionFailure()
+
+	/**
+	 * Build a validation rejection ACK for every operation in a batch.
+	 *
+	 * @param array<int,array<string,mixed>> $operations Client-submitted operations.
+	 * @param string $reason Rejection reason reported for each operation.
+	 *
+	 * @return list<array<string,mixed>> Per-operation ACKs.
+	 */
+	private function rejectAll(array $operations, string $reason): array {
+		$results = [];
+		foreach ($operations as $op) {
+			$results[] = [
+				'transactionId' => (string)($op['transactionId'] ?? ''),
+				'status' => 'rejected_validation',
+				'reason' => $reason,
+			];
+		}
+
+		return $results;
+	}//end rejectAll()
 
 	/**
 	 * Process a single operation from a sync batch.
@@ -361,6 +404,58 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 	 * @return string|null Null on valid; rejection reason on invalid.
 	 */
 	private function validateOperation(array $op): ?string {
+		$reason = $this->validateOperationIdentity(op: $op);
+		if ($reason === null) {
+			$reason = $this->validateTransferTarget(op: $op);
+		}
+
+		if ($reason === null) {
+			$reason = $this->validateQuantities(op: $op);
+		}
+
+		return $reason;
+	}//end validateOperation()
+
+	/**
+	 * Validate the keys, sku and location of a client operation.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validateOperationIdentity(array $op): string|null {
+		$reason = $this->validateOperationKeys(op: $op);
+		if ($reason === null) {
+			$reason = $this->validateOperationItem(op: $op);
+		}
+
+		return $reason;
+	}//end validateOperationIdentity()
+
+	/**
+	 * Validate the quantity and, for counts, the counted quantity.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validateQuantities(array $op): string|null {
+		$reason = $this->validateQuantity(op: $op);
+		if ($reason === null) {
+			$reason = $this->validatePhysicalQuantity(op: $op);
+		}
+
+		return $reason;
+	}//end validateQuantities()
+
+	/**
+	 * Validate the transactionId and operation type of a client operation.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validateOperationKeys(array $op): string|null {
 		$transactionId = (string)($op['transactionId'] ?? '');
 		if ($transactionId === '') {
 			return 'missing transactionId';
@@ -371,6 +466,17 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 			return 'unknown operation type';
 		}
 
+		return null;
+	}//end validateOperationKeys()
+
+	/**
+	 * Validate the sku and location of a client operation.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validateOperationItem(array $op): string|null {
 		$sku = (string)($op['sku'] ?? '');
 		if ($sku === '') {
 			return 'missing sku';
@@ -381,17 +487,44 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 			return 'missing location';
 		}
 
-		if ($type === 'transfer') {
-			$toLocation = (string)($op['toLocation'] ?? '');
-			if ($toLocation === '') {
-				return 'transfer requires toLocation';
-			}
+		return null;
+	}//end validateOperationItem()
 
-			if ($toLocation === $location) {
-				return 'transfer source and destination must differ';
-			}
+	/**
+	 * Validate the destination of a transfer operation; other types pass.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validateTransferTarget(array $op): string|null {
+		$type = (string)($op['type'] ?? '');
+		if ($type !== 'transfer') {
+			return null;
 		}
 
+		$location = (string)($op['location'] ?? '');
+		$toLocation = (string)($op['toLocation'] ?? '');
+		if ($toLocation === '') {
+			return 'transfer requires toLocation';
+		}
+
+		if ($toLocation === $location) {
+			return 'transfer source and destination must differ';
+		}
+
+		return null;
+	}//end validateTransferTarget()
+
+	/**
+	 * Validate the quantity of a client operation.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validateQuantity(array $op): string|null {
+		$type = (string)($op['type'] ?? '');
 		$quantity = ($op['quantity'] ?? null);
 		if (is_numeric($quantity) === false) {
 			return 'quantity must be numeric';
@@ -401,15 +534,29 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 			return 'quantity must be strictly positive';
 		}
 
-		if ($type === 'count') {
-			$physical = ($op['physicalQuantity'] ?? null);
-			if (is_numeric($physical) === false || (float)$physical < 0.0) {
-				return 'physicalQuantity must be a non-negative number';
-			}
+		return null;
+	}//end validateQuantity()
+
+	/**
+	 * Validate the counted quantity of a count operation; other types pass.
+	 *
+	 * @param array<string,mixed> $op Operation row.
+	 *
+	 * @return string|null Null on valid; rejection reason on invalid.
+	 */
+	private function validatePhysicalQuantity(array $op): string|null {
+		$type = (string)($op['type'] ?? '');
+		if ($type !== 'count') {
+			return null;
+		}
+
+		$physical = ($op['physicalQuantity'] ?? null);
+		if (is_numeric($physical) === false || (float)$physical < 0.0) {
+			return 'physicalQuantity must be a non-negative number';
 		}
 
 		return null;
-	}//end validateOperation()
+	}//end validatePhysicalQuantity()
 
 	/**
 	 * Locate a previously-processed sync batch for the supplied transactionId,
@@ -429,8 +576,44 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 		string $transactionId,
 		string $administrationId,
 	): ?array {
+		$existing = $this->findSyncBatchRows(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			transactionId: $transactionId,
+			administrationId: $administrationId,
+		);
+
+		if (empty($existing) === true) {
+			return null;
+		}
+
+		$row = $this->toArray(record: $existing[0]);
+		if ($this->isOutsideDedupWindow(row: $row) === true) {
+			return null;
+		}
+
+		return $row;
+	}//end findDuplicateBatch()
+
+	/**
+	 * Look up the sync batch rows for a transactionId within a tenant. A failed
+	 * lookup is logged and yields no rows, so the operation proceeds as new.
+	 *
+	 * @param object $objectService OR ObjectService.
+	 * @param string $registerSlug Shillinq register slug.
+	 * @param string $transactionId Client transactionId.
+	 * @param string $administrationId Tenant scope.
+	 *
+	 * @return mixed The findAll() result, or an empty list when the lookup failed.
+	 */
+	private function findSyncBatchRows(
+		object $objectService,
+		string $registerSlug,
+		string $transactionId,
+		string $administrationId,
+	): mixed {
 		try {
-			$existing = $objectService
+			return $objectService
 				->setRegister($registerSlug)
 				->setSchema('MobileScannerSyncBatch')
 				->findAll(
@@ -447,34 +630,36 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 				'Shillinq mobile scanner: dedup lookup failed; proceeding as non-duplicate',
 				['exception' => $e->getMessage(), 'transactionId' => $transactionId]
 			);
-			return null;
+			return [];
 		}
 
-		if (empty($existing) === true) {
-			return null;
-		}
+	}//end findSyncBatchRows()
 
-		$row = $this->toArray(record: $existing[0]);
-
+	/**
+	 * Whether a stored sync batch row is older than the dedup window. A row
+	 * without a (parseable) timestamp is never outside the window.
+	 *
+	 * @param array<string,mixed> $row Stored sync batch row.
+	 *
+	 * @return bool True when the row may be ignored as a duplicate.
+	 */
+	private function isOutsideDedupWindow(array $row): bool {
 		$occurredAt = (string)($row['occurredAt'] ?? '');
 		if ($occurredAt === '') {
 			// Defensive: a row without a timestamp is treated as a duplicate so
 			// we never re-apply a possibly-recent mutation.
-			return $row;
+			return false;
 		}
 
 		$occurredEpoch = strtotime($occurredAt);
 		if ($occurredEpoch === false) {
-			return $row;
+			return false;
 		}
 
 		$nowEpoch = $this->time->getTime();
-		if (($nowEpoch - $occurredEpoch) > self::DEDUP_WINDOW_SECONDS) {
-			return null;
-		}
+		return ($nowEpoch - $occurredEpoch) > self::DEDUP_WINDOW_SECONDS;
 
-		return $row;
-	}//end findDuplicateBatch()
+	}//end isOutsideDedupWindow()
 
 	/**
 	 * Determine whether the supplied roles permit the supplied operation
