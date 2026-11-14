@@ -60,6 +60,7 @@
             "icon": "FileDocument",
             "content": {
               "columns": 2,
+              "overrides": {"invoiceNumber": {"readOnly": true, "emptyValue": "Assigned when issued"}},
               "include": [
                 "invoiceNumber",
                 "customerId",

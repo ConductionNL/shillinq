@@ -26,6 +26,7 @@ use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
@@ -45,6 +46,7 @@ use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
+use OCA\Shillinq\Listener\InvoiceNumberLockListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
@@ -309,6 +311,9 @@ final class ListenerRegistrar {
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
 
 		(new PurchasingControlsRegistration())->register(context: $context);
+
+		// An assigned AR invoice number cannot be changed (sales-invoice-issue-controls REQ-SIIC-002).
+		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: InvoiceNumberLockListener::class);
 
 		(new PaymentControlsRegistration())->register(context: $context);
 

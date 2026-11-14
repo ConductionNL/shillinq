@@ -2695,6 +2695,14 @@
 						"icon": "History",
 						"category": "housekeeping",
 						"route": "BookkeepingDestructionReport"
+					},
+					{
+						"id": "InvoiceNumberCheck",
+						"label": "Invoice number check",
+						"description": "Missing and duplicate numbers in a year of issued sales invoices.",
+						"icon": "Numeric",
+						"category": "housekeeping",
+						"route": "InvoiceNumberCheck"
 					}
 				]
 			}
@@ -8132,6 +8140,13 @@
 							"lifecycleState": "overdue"
 						},
 						"showCount": true
+					},
+					{
+						"label": "Awaiting approval",
+						"filter": {
+							"lifecycleState": "awaiting-approval"
+						},
+						"showCount": true
 					}
 				],
 				"searchPlaceholder": "Search by number, customer or amount",
@@ -8174,6 +8189,7 @@
 						"icon": "FileDocument",
 						"content": {
 							"columns": 2,
+							"overrides": {"invoiceNumber": {"readOnly": true, "emptyValue": "Assigned when issued"}},
 							"include": [
 								"invoiceNumber",
 								"customerId",

@@ -72,6 +72,12 @@ final class LedgerPostingRegistration {
 			'validateInvoice',
 			'The invoice cannot be issued: it breaks a mandatory invoice rule, such as a missing number or a total that is not net plus VAT.',
 		],
+		// ARInvoice.approve (sales-invoice-issue-controls.json): four eyes, REQ-SIIC-003.
+		'OCA\Shillinq\Lifecycle\SalesInvoiceApprovalGuard::canApprove' => [
+			SalesInvoiceApprovalGuard::class,
+			'canApprove',
+			'The invoice cannot be approved: who created it, or who is approving it, could not be determined.',
+		],
 		// JournalEntry.post and JournalEntry.postDirect (add-shillinq-bookkeeping-foundation.json).
 		'OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost' => [
 			JournalEntryGuard::class,

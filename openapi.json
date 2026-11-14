@@ -232,6 +232,10 @@
             "description": "HTTP API for BillableInvoice drafting + posting."
         },
         {
+            "name": "invoice-number-check",
+            "description": "GET /api/sales/invoice-number-check: missing and duplicate numbers in a year of issued sales invoices."
+        },
+        {
             "name": "kor",
             "description": "GET /api/kor/monitor — KOR drempel-status for an administration + year."
         },
@@ -12249,6 +12253,34 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/sales/invoice-number-check": {
+            "get": {
+                "operationId": "invoice-number-check-check",
+                "summary": "The missing and duplicate numbers of a year of issued sales invoices of one administration.",
+                "description": "The missing and duplicate numbers of a year of issued sales invoices of one administration. Query parameters: - administrationId (optional) the administration; defaults to the caller's active administration. - year (optional) four digits; defaults to this year. Returns HTTP 200 with { year, checked, first, last, missing, duplicates, outsideSeries, administrationId, missingCount, duplicateCount, rows }; HTTP 400 without an administration or with a malformed year; HTTP 404 for an administration the caller is not a member of; HTTP 500 without a stack trace on an unexpected failure. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-number-check"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }

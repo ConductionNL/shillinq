@@ -393,7 +393,6 @@
           "description": "Bookkeeping sub-ledger register; every lifecycle transition (issue / overdue / match / dispute / write-off / void) and every header / line edit is recorded on the OR audit-trail-immutable channel + ADR-022."
         },
         "required": [
-          "invoiceNumber",
           "customerId",
           "administrationId",
           "invoiceDate",
@@ -407,7 +406,7 @@
         "properties": {
           "invoiceNumber": {
             "type": "string",
-            "description": "Sequential invoice number.",
+            "description": "Sequential invoice number, assigned from the administration's series when the invoice is issued; a draft carries none, and an assigned number cannot be changed.",
             "example": "2026-0042",
             "title": "Invoice Number"
           },
@@ -553,6 +552,11 @@
               "label": "Issue invoice",
               "description": "Credit-limit check; materialises a balanced GLTransaction and writes glTransactionId.",
               "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\AssignInvoiceNumberAction",
+                  "description": "First: take the next number of the administration's series for the invoice's fiscal year under a lock, so the booking and every later step carry it; a self-billed invoice keeps the customer's number (REQ-SIIC-001)."
+                },
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\DownPaymentGuard",
