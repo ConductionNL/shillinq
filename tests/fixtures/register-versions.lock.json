@@ -76,6 +76,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114130000",
             "versionsSha256": "f728fb4065a5615f8629d79c69e3d11cbf1db0b4ba3b8305afd429c23c581636"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114143500",
+            "versionsSha256": "d4d64accfaf9651391b5a826c9257d51445f5c17dc4afab0c6abc72fb8f95a65"
         }
     ],
     "versions": {
@@ -420,9 +424,10 @@
         "schema:PassThroughMarkupRule": "0.1.0",
         "schema:Payee": "0.2.0",
         "schema:Payment": "0.1.0",
+        "schema:PaymentDevice": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.10.0",
+        "schema:PaymentRequest": "0.10.1",
         "schema:PaymentRun": "0.3.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
@@ -446,7 +451,7 @@
         "schema:Programmabegroting": "0.1.0",
         "schema:ProjectAssignment": "0.1.0",
         "schema:ProjectBudget": "0.1.0",
-        "schema:ProviderPayout": "0.1.1",
+        "schema:ProviderPayout": "0.2.0",
         "schema:ProvincialeFondsPosting": "0.1.0",
         "schema:Provision": "0.1.0",
         "schema:ProvisionDisclosureTabel": "0.1.0",
@@ -473,7 +478,7 @@
         "schema:Rechtmatigheidsparagraaf": "0.1.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
-        "schema:ReconciliationMatch": "0.2.0",
+        "schema:ReconciliationMatch": "0.2.1",
         "schema:ReconciliationReport": "0.1.0",
         "schema:RecurringInvoiceProfile": "0.1.0",
         "schema:ReimbursementPolicy": "0.1.0",

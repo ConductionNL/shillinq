@@ -10,6 +10,9 @@
  * request is quoted for the amount still open, a candidate for the bookkeeper
  * otherwise. On the `confirm` transition of a `payment-request` match, by
  * either route, it settles the request through ObjectRequestBankSettlement.
+ * A new line that brought in a booked provider payout is matched to that
+ * payout first, through PayoutBankMatcher, and is then no request's
+ * (receivables-provider-payouts D4, REQ-RPPO-004).
  * Fail-soft: a problem is logged and never undoes the bank line.
  *
  * @category Listener
@@ -38,6 +41,7 @@ use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankMatcherInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
+use OCA\Shillinq\Service\Payout\PayoutBankMatcher;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -59,6 +63,7 @@ class BankLineObjectRequestListener implements IEventListener {
 	 * @param ObjectRequestBankSettlementInterface $settlement Settles a request on a confirmed match.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema slug.
 	 * @param LoggerInterface $logger Fail-soft log.
+	 * @param PayoutBankMatcher $payouts Matches a line to the booked provider payout it brought in.
 	 */
 	public function __construct(
 		private readonly ObjectRequestBankMatcherInterface $matcher,
@@ -66,6 +71,7 @@ class BankLineObjectRequestListener implements IEventListener {
 		private readonly ObjectRequestBankSettlementInterface $settlement,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
+		private readonly PayoutBankMatcher $payouts,
 	) {
 	}//end __construct()
 
@@ -108,6 +114,11 @@ class BankLineObjectRequestListener implements IEventListener {
 		$line = ($entity->getObject() ?? []);
 		$line['id'] = (string)($entity->getUuid() ?? ($line['id'] ?? ''));
 		if ((string)($line['status'] ?? 'unmatched') !== 'unmatched') {
+			return;
+		}
+
+		// A provider payout's line is reconciled to the payout and is no request's (REQ-RPPO-004).
+		if ($this->payouts->reconcile(line: $line) !== null) {
 			return;
 		}
 

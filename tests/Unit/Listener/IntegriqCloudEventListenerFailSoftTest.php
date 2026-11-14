@@ -29,6 +29,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\PaymentReconciliationService;
+use OCA\Shillinq\Service\Payout\PayoutIntakeService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -82,6 +83,7 @@ final class IntegriqCloudEventListenerFailSoftTest extends TestCase {
 			schemaResolver: $this->resolver,
 			reconciliation: $this->reconciliation,
 			logger: $this->logger,
+			payoutIntake: $this->createMock(originalClassName: PayoutIntakeService::class),
 		);
 	}//end setUp()
 

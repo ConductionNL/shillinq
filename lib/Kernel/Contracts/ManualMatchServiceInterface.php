@@ -121,6 +121,23 @@ interface ManualMatchServiceInterface {
 	public function matchPaymentRequest(array $line, array $request, string $actor): array;
 
 	/**
+	 * Match a line to the booked provider payout it brought in and confirm it
+	 * (REQ-RPPO-004). The payout's own posting booked the line; this match
+	 * books nothing further.
+	 *
+	 * @param array<string,mixed> $line   The line, with its id.
+	 * @param array<string,mixed> $payout The booked ProviderPayout, with its id.
+	 * @param string              $actor  The confirming user id, or `system:bank-match`.
+	 *
+	 * @return array<string,mixed> The confirmed match.
+	 *
+	 * @throws ManualMatchRefusedException When the line cannot be matched.
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.5
+	 */
+	public function matchProviderPayout(array $line, array $payout, string $actor): array;
+
+	/**
 	 * Propose a line as a candidate for an object payment request, for the
 	 * bookkeeper to confirm or reject; nothing is settled (REQ-ORS-003). The
 	 * same line and request are proposed once.

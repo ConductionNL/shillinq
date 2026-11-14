@@ -61,6 +61,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\Payout\CaptureBookingService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -171,6 +172,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	 * @param ?PaymentRevenueAccountResolver $revenueAccounts Resolves the revenue account for a settlement, absent when nothing maps one.
 	 * @param ?PaymentSettlementService $settlements Stamps the settled edge; built on demand when absent.
 	 * @param ?ObjectTransitionRunner $transitions Posts the receipt's journal entry; built on demand when absent.
+	 * @param ?CaptureBookingService $captureBooking Books the capture of a paid invoice; built on demand when absent.
 	 *
 	 * @return void
 	 */
@@ -182,6 +184,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		private readonly ?PaymentRevenueAccountResolver $revenueAccounts = null,
 		private readonly ?PaymentSettlementService $settlements = null,
 		private readonly ?ObjectTransitionRunner $transitions = null,
+		private readonly ?CaptureBookingService $captureBooking = null,
 	) {
 	}//end __construct()
 
@@ -204,6 +207,24 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 	private function settlements(): PaymentSettlementService {
 		return ($this->settlements ?? new PaymentSettlementService());
 	}//end settlements()
+
+	/**
+	 * The capture booking, built on demand so the callers that constructed
+	 * this service before `receivables-provider-payouts` keep working.
+	 *
+	 * @return CaptureBookingService The service.
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.3
+	 */
+	private function captureBooking(): CaptureBookingService {
+		return ($this->captureBooking ?? new CaptureBookingService(
+			objectService: $this->objectService,
+			appConfig: $this->appConfig,
+			transitions: $this->transitions(),
+			logger: $this->logger,
+			revenueAccounts: $this->revenueAccounts(),
+		));
+	}//end captureBooking()
 
 	/**
 	 * The revenue-account mapping, resolved lazily so the existing callers that
@@ -504,6 +525,11 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 				schema: 'ARInvoice',
 				_rbac: false,
 			);
+
+			// Book the capture: debit clearing, credit debtors, so the clearing
+			// account holds what the provider holds until its payout
+			// (receivables-provider-payouts D3, REQ-RPPO-003). Fail-soft inside.
+			$this->captureBooking()->book(registerSlug: $registerSlug, request: $request, invoice: $invoice);
 
 			// Post the realised FX gain/loss when the invoice was issued in a
 			// foreign currency and settles at a different rate (REQ-MC-010).

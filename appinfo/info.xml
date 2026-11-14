@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261114130000</version>
+    <version>0.5.7-unstable.20261114143500</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -408,6 +408,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              carry subjectApp / subjectId before that overlay is retired
              (hours-to-humaniq task 2.1). Read-only. -->
         <command>OCA\Shillinq\Command\HoursSubjectAuditCommand</command>
+        <!-- List the invoices paid through a payment provider whose capture has
+             no booking yet, and on request book each at its capture date
+             (receivables-provider-payouts task 2.3). Read-only by default. -->
+        <command>OCA\Shillinq\Command\BookCapturesCommand</command>
     </commands>
 
     <settings>

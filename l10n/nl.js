@@ -6904,7 +6904,23 @@ OC.L10N.register(
         "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
         "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
         "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
-        "Newest rate: %s": "Nieuwste koers: %s"
+        "Newest rate: %s": "Nieuwste koers: %s",
+        "For a refund or chargeback: the provider's id of the payment it returns, which names the invoice it is booked against.": "Bij een terugbetaling of terugboeking: het id van de provider voor de betaling die wordt teruggedraaid, dat de factuur aanwijst waartegen deze wordt geboekt.",
+        "Original payment ID": "Oorspronkelijke betalings-ID",
+        "Whether the line matched a payment request, a booking deposit or an invoice.": "Of de regel is gekoppeld aan een betaalverzoek, een aanbetaling van een boeking of een factuur.",
+        "Payment device": "Betaalapparaat",
+        "The Nextcloud user whose phone this is.": "De Nextcloud-gebruiker van wie deze telefoon is.",
+        "The payment provider the phone is registered with.": "De betaalprovider waarbij de telefoon is geregistreerd.",
+        "Device ID": "Apparaat-ID",
+        "The provider's id of the phone or terminal, entered from the provider's app.": "Het id van de telefoon of terminal bij de provider, overgenomen uit de app van de provider.",
+        "A name the user recognises the phone by.": "Een naam waaraan de gebruiker de telefoon herkent.",
+        "The administration the phone takes payments for; empty for every administration of the user.": "De administratie waarvoor de telefoon betalingen ontvangt; leeg voor elke administratie van de gebruiker.",
+        "Open lines": "Open regels",
+        "Taken on the spot": "Ter plekke afgerekend",
+        "On the phone": "Op de telefoon",
+        "QR code": "QR-code",
+        "How a payment taken on the spot reached the customer: pushed to the phone, or shown as a QR code.": "Hoe een betaling ter plekke de klant bereikte: naar de telefoon gestuurd, of als QR-code getoond.",
+        "The provider's id of the phone the payment was taken on.": "Het id bij de provider van de telefoon waarop de betaling is ontvangen."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -741,7 +741,16 @@ final class PaymentReconciliationServiceTest extends TestCase {
 
 		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
 		self::assertSame([], $this->savedIn($saved, 'GLTransaction'));
-		self::assertSame([], $this->savedIn($saved, 'JournalEntry'));
+		// The only journal entry is the capture booking, clearing to debtors
+		// (receivables-provider-payouts REQ-RPPO-003): no revenue is booked.
+		$journals = $this->savedIn($saved, 'JournalEntry');
+		self::assertCount(1, $journals);
+		self::assertSame('CA-tr_obj', $journals[0]['journalNumber']);
+		self::assertSame(
+			[['1100', 'debit', 250.0], ['1100', 'credit', 250.0]],
+			array_map(static fn (array $line): array => [$line['accountNumber'], $line['side'], $line['amount']], $journals[0]['lines'])
+		);
+		self::assertNotContains('8050', array_column($journals[0]['lines'], 'accountNumber'));
 		self::assertSame('paid', $this->savedIn($saved, 'ARInvoice')[0]['lifecycleState']);
 		self::assertSame('captured', $this->savedIn($saved, 'PaymentRequest')[0]['state']);
 	}//end testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt()
