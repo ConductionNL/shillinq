@@ -85,6 +85,7 @@
 
 ## 6. Docs
 
-- [ ] 6.1 Release note: one derivation, totals may differ from before and why, the checks, the unity. Verify: the note is in the PR body.
+- [x] 6.1 Release note: one derivation, totals may differ from before and why, the checks, the unity. Verify: the note is in the PR body.
+      DONE 2026-11-14: the release note is the "Release note" section of the PR body of #3062.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/tax-vat-return-from-books/tasks.md#task-N` on every new method, Dutch and English strings for every check message and label.
