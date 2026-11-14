@@ -299,10 +299,33 @@ class SettingsService implements SettingsServiceInterface {
 			return ['error' => ['success' => false, 'message' => 'Unknown RGS template variant: ' . $templateVariant]];
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/' . $fileMap[$templateVariant];
+		$seed = $this->readRgsSeed(fileName: $fileMap[$templateVariant]);
+		if (isset($seed['error']) === true) {
+			return $seed;
+		}
+
+		$data = $seed['data'];
+
+		$accounts = ($data['accounts'] ?? []);
+		if (empty($accounts) === true) {
+			return ['error' => ['success' => false, 'message' => 'Seed file contains no accounts.']];
+		}
+
+		return ['accounts' => $accounts];
+	}//end loadSeedAccounts()
+
+	/**
+	 * Read and decode one RGS seed file.
+	 *
+	 * @param string $fileName The seed file name under Settings/seeds/.
+	 *
+	 * @return array{data: mixed}|array{error: array<string,mixed>}
+	 */
+	private function readRgsSeed(string $fileName): array {
+		$seedPath = __DIR__ . '/../Settings/seeds/' . $fileName;
 		if (file_exists($seedPath) === false) {
 			$this->logger->error('Shillinq: seed file not found at ' . $seedPath);
-			return ['error' => ['success' => false, 'message' => 'Seed file not found: ' . $fileMap[$templateVariant]]];
+			return ['error' => ['success' => false, 'message' => 'Seed file not found: ' . $fileName]];
 		}
 
 		$content = file_get_contents($seedPath);
@@ -315,13 +338,8 @@ class SettingsService implements SettingsServiceInterface {
 			return ['error' => ['success' => false, 'message' => 'Failed to parse seed file: ' . json_last_error_msg()]];
 		}
 
-		$accounts = ($data['accounts'] ?? []);
-		if (empty($accounts) === true) {
-			return ['error' => ['success' => false, 'message' => 'Seed file contains no accounts.']];
-		}
-
-		return ['accounts' => $accounts];
-	}//end loadSeedAccounts()
+		return ['data' => $data];
+	}//end readRgsSeed()
 
 	/**
 	 * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
@@ -1523,40 +1541,81 @@ class SettingsService implements SettingsServiceInterface {
 				continue;
 			}
 
-			$manifestPath = __DIR__ . '/../Settings/statements/' . $fileName;
-			if (file_exists($manifestPath) === false) {
-				$this->logger->warning('Shillinq: statement manifest not found: ' . $fileName);
+			$manifest = $this->readStatementManifest(fileName: $fileName);
+			if ($manifest === null) {
 				continue;
 			}
 
-			$content = file_get_contents($manifestPath);
-			if ($content === false) {
-				$this->logger->warning('Shillinq: failed to read statement manifest: ' . $fileName);
-				continue;
-			}
-
-			$decoded = json_decode($content, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				$this->logger->warning(
-					'Shillinq: failed to parse statement manifest ' . $fileName . ': ' . json_last_error_msg()
-				);
-				continue;
-			}
-
-			// Stamp the import timestamp so a future presentation-standard migration
-			// (BBV — T3; IFRS full — T5) can tell template-sourced from operator-authored.
-			if (isset($decoded['_meta']) === true && is_array($decoded['_meta']) === true) {
-				$decoded['_meta']['imported'] = gmdate('Y-m-d\TH:i:s\Z');
-			}
-
-			$this->appConfig->setValueString(
-				AppIdentity::APP_ID,
-				$configKey,
-				(string)json_encode($decoded)
-			);
+			$this->storeStatementManifest(configKey: $configKey, decoded: $manifest['decoded']);
 			$imported++;
 		}//end foreach
 
+		return $this->reportStatementManifests(imported: $imported, skipped: $skipped);
+
+	}//end seedStatementManifests()
+
+	/**
+	 * Read and decode one bundled statement manifest.
+	 *
+	 * @param string $fileName The manifest file name under Settings/statements/.
+	 *
+	 * @return array{decoded: mixed}|null The decoded manifest, or null when missing, unreadable or invalid JSON.
+	 */
+	private function readStatementManifest(string $fileName): array|null {
+		$manifestPath = __DIR__ . '/../Settings/statements/' . $fileName;
+		if (file_exists($manifestPath) === false) {
+			$this->logger->warning('Shillinq: statement manifest not found: ' . $fileName);
+			return null;
+		}
+
+		$content = file_get_contents($manifestPath);
+		if ($content === false) {
+			$this->logger->warning('Shillinq: failed to read statement manifest: ' . $fileName);
+			return null;
+		}
+
+		$decoded = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: failed to parse statement manifest ' . $fileName . ': ' . json_last_error_msg()
+			);
+			return null;
+		}
+
+		return ['decoded' => $decoded];
+	}//end readStatementManifest()
+
+	/**
+	 * Stamp the import time on a statement manifest and persist it in app config.
+	 *
+	 * @param string $configKey The app config key to store the manifest under.
+	 * @param mixed  $decoded   The decoded manifest.
+	 *
+	 * @return void
+	 */
+	private function storeStatementManifest(string $configKey, mixed $decoded): void {
+		// Stamp the import timestamp so a future presentation-standard migration
+		// (BBV — T3; IFRS full — T5) can tell template-sourced from operator-authored.
+		if (isset($decoded['_meta']) === true && is_array($decoded['_meta']) === true) {
+			$decoded['_meta']['imported'] = gmdate('Y-m-d\TH:i:s\Z');
+		}
+
+		$this->appConfig->setValueString(
+			AppIdentity::APP_ID,
+			$configKey,
+			(string)json_encode($decoded)
+		);
+	}//end storeStatementManifest()
+
+	/**
+	 * Log the statement manifest counts and build the success result.
+	 *
+	 * @param int $imported Manifests imported.
+	 * @param int $skipped  Manifests already persisted.
+	 *
+	 * @return array<string,mixed> Result with success flag and the counts.
+	 */
+	private function reportStatementManifests(int $imported, int $skipped): array {
 		$this->logger->info(
 			'Shillinq: statement manifests imported',
 			['imported' => $imported, 'skipped' => $skipped]
@@ -1568,8 +1627,7 @@ class SettingsService implements SettingsServiceInterface {
 			'imported' => $imported,
 			'skipped' => $skipped,
 		];
-
-	}//end seedStatementManifests()
+	}//end reportStatementManifests()
 
 	/**
 	 * Seed the WMO (Wet Markt en Overheid) example records, idempotently per administration.
