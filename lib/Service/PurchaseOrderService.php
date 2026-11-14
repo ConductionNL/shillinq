@@ -546,13 +546,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			administrationId: $administrationId,
 			purchaseOrderId: $purchaseOrderId
 		);
-		$supplierId = (string)($po['supplierId'] ?? '');
-		// The generalised port (REQ-EINV-004) names the parameter partyId —
-		// it resolves suppliers (PO) and debtors (AR) through the same lookup.
-		$participant = $this->peppolAdapter->lookupParticipant(
-			administrationId: $administrationId,
-			partyId: $supplierId
-		);
+		$participant = $this->supplierParticipant(administrationId: $administrationId, po: $po);
 
 		// No Peppol participant id = graceful PDF + email fallback (REQ-PO3W-002 D2).
 		if ($participant === null || trim($participant) === '') {
@@ -563,6 +557,43 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			);
 		}
 
+		return $this->transmitOverPeppol(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId, po: $po, participant: $participant);
+	}//end sendToPeppol()
+
+	/**
+	 * The supplier's Peppol participant id, or null when it is not a participant.
+	 *
+	 * The generalised port (REQ-EINV-004) names the parameter partyId —
+	 * it resolves suppliers (PO) and debtors (AR) through the same lookup.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $po The PurchaseOrder.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function supplierParticipant(string $administrationId, array $po): string|null {
+		$supplierId = (string)($po['supplierId'] ?? '');
+		return $this->peppolAdapter->lookupParticipant(
+			administrationId: $administrationId,
+			partyId: $supplierId
+		);
+	}//end supplierParticipant()
+
+	/**
+	 * Submit the UBL order over Peppol and mark the PO sent; fall back to PDF + email when the Access Point fails.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $purchaseOrderId PO id.
+	 * @param array<string,mixed> $po The PurchaseOrder.
+	 * @param string $participant The supplier's Peppol participant id.
+	 *
+	 * @return array<string,mixed> The PurchaseOrder after transition to "sent".
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function transmitOverPeppol(string $administrationId, string $purchaseOrderId, array $po, string $participant): array {
 		$ubl = $this->peppolMapper->toUblOrderXml(
 			purchaseOrder: $po,
 			buyerParticipantId: $this->buyerParticipantId(administrationId: $administrationId),
@@ -570,11 +601,28 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 			issueDate: substr($this->nowIso(), 0, 10)
 		);
 
+		$messageId = $this->submitPeppolOrder(purchaseOrderId: $purchaseOrderId, participant: $participant, ubl: $ubl);
+		if ($messageId === null) {
+			return $this->sendToPDFEmail(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId, fallbackReason: 'peppol_send_failed');
+		}
+
+		return $this->markSentOverPeppol(po: $po, messageId: $messageId);
+	}//end transmitOverPeppol()
+
+	/**
+	 * Submit the UBL order to the Access Point; a failure is logged and yields null.
+	 *
+	 * @param string $purchaseOrderId PO id (for the log).
+	 * @param string $participant The supplier's Peppol participant id.
+	 * @param string $ubl The UBL Order XML.
+	 *
+	 * @return string|null The Peppol message id, or null when the submission failed.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function submitPeppolOrder(string $purchaseOrderId, string $participant, string $ubl): string|null {
 		try {
-			$messageId = $this->peppolAdapter->submitOrder(
-				participantId: $participant,
-				ublOrderXml: $ubl
-			);
+			return $this->peppolAdapter->submitOrder(participantId: $participant, ublOrderXml: $ubl);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'PurchaseOrderService: Peppol submission failed, falling back to PDF+email',
@@ -583,13 +631,21 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 					'exception' => $e->getMessage(),
 				]
 			);
-			return $this->sendToPDFEmail(
-				administrationId: $administrationId,
-				purchaseOrderId: $purchaseOrderId,
-				fallbackReason: 'peppol_send_failed'
-			);
+			return null;
 		}
+	}//end submitPeppolOrder()
 
+	/**
+	 * Stamp the Peppol message id and save the PO as sent.
+	 *
+	 * @param array<string,mixed> $po The PurchaseOrder.
+	 * @param string $messageId The Peppol message id.
+	 *
+	 * @return array<string,mixed> The saved PurchaseOrder.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function markSentOverPeppol(array $po, string $messageId): array {
 		$po['peppolMessageId'] = $messageId;
 		$po['peppolSentAt'] = $this->nowIso();
 		$po['peppolFallbackReason'] = null;
@@ -597,7 +653,7 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		$po['sentAt'] = $this->nowIso();
 
 		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
-	}//end sendToPeppol()
+	}//end markSentOverPeppol()
 
 	/**
 	 * Transmit an approved PO via the PDF + email fallback path.
