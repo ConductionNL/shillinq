@@ -129,8 +129,7 @@ class VatNumberCheck implements VatNumberCheckInterface {
 	 */
 	public function checkSellerOnArrival(array $invoice): ?array {
 		$number = $this->vies->canonicalVatId(vatId: (string)($invoice['sellerVatId'] ?? ''));
-		$prefix = substr($number, 0, 2);
-		if (strlen($number) < 4 || $prefix === 'NL' || in_array($prefix, self::EU_PREFIXES, true) === false) {
+		if (self::isForeignEuVatId(number: $number) === false) {
 			return null;
 		}
 
@@ -159,6 +158,18 @@ class VatNumberCheck implements VatNumberCheckInterface {
 		}
 
 	}//end checkSellerOnArrival()
+
+	/**
+	 * Whether a canonical VAT number is one of another EU member state.
+	 *
+	 * @param string $number The canonical VAT number.
+	 *
+	 * @return bool
+	 */
+	private static function isForeignEuVatId(string $number): bool {
+		$prefix = substr($number, 0, 2);
+		return (strlen($number) < 4 || $prefix === 'NL' || in_array($prefix, self::EU_PREFIXES, true) === false) === false;
+	}//end isForeignEuVatId()
 
 	/**
 	 * Map a VIES outcome onto the record's status enum.

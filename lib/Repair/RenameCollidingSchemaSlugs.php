@@ -140,44 +140,9 @@ class RenameCollidingSchemaSlugs implements IRepairStep {
 			return;
 		}
 
-		if ($new !== []) {
-			// Both slugs present: each may own objects, and renaming would collide
-			// with the new row. Abandoning either set is not a call a repair step
-			// gets to make without being asked.
-			$this->logger->warning(
-				'RenameCollidingSchemaSlugs: both slugs exist; refusing to merge them.',
-				['from' => $from, 'to' => $to, 'old' => $old, 'new' => $new]
-			);
-			$output->warning(
-				'RenameCollidingSchemaSlugs: both `' . $from . '` and `' . $to
-				. '` exist; refusing to merge them. Resolve by hand.'
-			);
-			return;
-		}
-
-		if (count($old) > 1) {
-			$this->logger->warning(
-				'RenameCollidingSchemaSlugs: duplicate slugs; refusing to guess.',
-				['from' => $from, 'ids' => $old]
-			);
-			$output->warning('RenameCollidingSchemaSlugs: duplicate `' . $from . '` schemas; refusing to guess.');
-			return;
-		}
-
-		try {
-			$this->db->executeStatement(
-				'UPDATE `*PREFIX*openregister_schemas` SET slug = ? WHERE id = ?',
-				[$to, $old[0]]
-			);
-		} catch (Exception $e) {
-			// Safe to fail: the import then creates a new schema rather than
-			// updating this one, which is the pre-existing behaviour. Loud,
-			// because the objects on the old schema stop being reachable.
-			$this->logger->error(
-				'RenameCollidingSchemaSlugs: slug rename failed; the import will create a second schema.',
-				['from' => $from, 'id' => $old[0], 'exception' => $e->getMessage()]
-			);
-			$output->warning('RenameCollidingSchemaSlugs: renaming `' . $from . '` failed; see the log.');
+		$warning = $this->renameWarning(from: $from, to: $to, old: $old, new: $new);
+		if ($warning !== null) {
+			$output->warning($warning);
 			return;
 		}
 
@@ -186,6 +151,89 @@ class RenameCollidingSchemaSlugs implements IRepairStep {
 			. '` (collided with ' . $with . '); its objects stay attached.'
 		);
 	}//end renameOne()
+
+	/**
+	 * Refuse a conflicting rename, else perform it; return the output warning
+	 * when the slug was left alone, or null when it was renamed.
+	 *
+	 * @param string $from The slug being moved away from.
+	 * @param string $to The namespaced slug.
+	 * @param array<int,mixed> $old Ids carrying the old slug (non-empty).
+	 * @param array<int,mixed> $new Ids carrying the new slug.
+	 *
+	 * @return string|null The warning for the repair output, or null on success.
+	 */
+	private function renameWarning(string $from, string $to, array $old, array $new): string|null {
+		$warning = $this->conflictWarning(from: $from, to: $to, old: $old, new: $new);
+		if ($warning === null) {
+			$warning = $this->renameFailure(from: $from, to: $to, id: $old[0]);
+		}
+
+		return $warning;
+	}//end renameWarning()
+
+	/**
+	 * Log and describe why the rename must not happen, or null when it may.
+	 *
+	 * @param string $from The slug being moved away from.
+	 * @param string $to The namespaced slug.
+	 * @param array<int,mixed> $old Ids carrying the old slug (non-empty).
+	 * @param array<int,mixed> $new Ids carrying the new slug.
+	 *
+	 * @return string|null The warning for the repair output, or null.
+	 */
+	private function conflictWarning(string $from, string $to, array $old, array $new): string|null {
+		if ($new !== []) {
+			// Both slugs present: each may own objects, and renaming would collide
+			// with the new row. Abandoning either set is not a call a repair step
+			// gets to make without being asked.
+			$this->logger->warning(
+				'RenameCollidingSchemaSlugs: both slugs exist; refusing to merge them.',
+				['from' => $from, 'to' => $to, 'old' => $old, 'new' => $new]
+			);
+			return 'RenameCollidingSchemaSlugs: both `' . $from . '` and `' . $to
+				. '` exist; refusing to merge them. Resolve by hand.';
+		}
+
+		if (count($old) > 1) {
+			$this->logger->warning(
+				'RenameCollidingSchemaSlugs: duplicate slugs; refusing to guess.',
+				['from' => $from, 'ids' => $old]
+			);
+			return 'RenameCollidingSchemaSlugs: duplicate `' . $from . '` schemas; refusing to guess.';
+		}
+
+		return null;
+	}//end conflictWarning()
+
+	/**
+	 * Rename the schema row; log and describe a failure, or return null on success.
+	 *
+	 * @param string $from The slug being moved away from.
+	 * @param string $to The namespaced slug.
+	 * @param mixed $id The schema id.
+	 *
+	 * @return string|null The warning for the repair output, or null.
+	 */
+	private function renameFailure(string $from, string $to, mixed $id): string|null {
+		try {
+			$this->db->executeStatement(
+				'UPDATE `*PREFIX*openregister_schemas` SET slug = ? WHERE id = ?',
+				[$to, $id]
+			);
+		} catch (Exception $e) {
+			// Safe to fail: the import then creates a new schema rather than
+			// updating this one, which is the pre-existing behaviour. Loud,
+			// because the objects on the old schema stop being reachable.
+			$this->logger->error(
+				'RenameCollidingSchemaSlugs: slug rename failed; the import will create a second schema.',
+				['from' => $from, 'id' => $id, 'exception' => $e->getMessage()]
+			);
+			return 'RenameCollidingSchemaSlugs: renaming `' . $from . '` failed; see the log.';
+		}
+
+		return null;
+	}//end renameFailure()
 
 	/**
 	 * Ids of this application's schemas carrying the given slug.

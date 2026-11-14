@@ -16,6 +16,8 @@
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
+import { openProposeDirectDebit } from './utils/directDebitActions.js'
+import { downloadDirectDebitFile } from './utils/directDebitApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
@@ -46,6 +48,13 @@ import {
 	checkSupplierVatNumber,
 } from './utils/vatNumberCheck.js'
 import { openPrepareVatReturn } from './utils/vatReturnActions.js'
+import {
+	checkVatReturnForCorrections,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
+	prepareSupplementaryReturn,
+} from './utils/vatSuppletieActions.js'
 
 export const manifestActions = Object.freeze({
 	// The External Connections page's Add integration action leaves for
@@ -66,6 +75,10 @@ export const manifestActions = Object.freeze({
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
+	// receivables-sepa-direct-debit: Propose direct debit on Direct debit
+	// batches and Download pain.008 on a generated batch.
+	openProposeDirectDebit,
+	downloadDirectDebitFile,
 	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
 	approvePayable,
 	markPayablePaid,
@@ -100,6 +113,13 @@ export const manifestActions = Object.freeze({
 	openDunningSwitchOn,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
+	// Prepare / Download / File on a correction, and the position's lines.
+	checkVatReturnForCorrections,
+	prepareSupplementaryReturn,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
 })
 
 /**

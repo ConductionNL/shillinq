@@ -163,31 +163,12 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			) + $touched);
 
 			// Persist every project we appended at least one line to.
-			$saved = 0;
-			foreach (array_keys($touched) as $projectKey) {
-				if (isset($projectArrays[$projectKey]) === false) {
-					continue;
-				}
-
-				$record = $projectArrays[$projectKey];
-				try {
-					$this->objectService
-						->setRegister($registerSlug)
-						->setSchema('engagement')
-						->saveObject(
-							object: $record,
-							register: $registerSlug,
-							schema: 'engagement',
-							_rbac: false,
-							_multitenancy: false,
-						);
-					$saved++;
-				} catch (\Throwable $e) {
-					$output->warning(
-						'Shillinq: fold — failed to save Project ' . $projectKey . ': ' . $e->getMessage()
-					);
-				}
-			}//end foreach
+			$saved = $this->saveTouchedProjects(
+				registerSlug: $registerSlug,
+				touched: $touched,
+				projectArrays: $projectArrays,
+				output: $output
+			);
 
 			// Touch $admin to document the resolved installer user (kept for
 			// parity with RBAC-bypassing repair steps that stamp an owner).
@@ -207,6 +188,46 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 		}//end try
 
 	}//end run()
+
+	/**
+	 * Save every touched project and count the saves that succeeded.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param array<string,bool> $touched The touched project keys.
+	 * @param array<string,array<string,mixed>> $projectArrays ProjectKey → record.
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return int The number of Project records saved.
+	 */
+	private function saveTouchedProjects(string $registerSlug, array $touched, array $projectArrays, IOutput $output): int {
+		$saved = 0;
+		foreach (array_keys($touched) as $projectKey) {
+			if (isset($projectArrays[$projectKey]) === false) {
+				continue;
+			}
+
+			$record = $projectArrays[$projectKey];
+			try {
+				$this->objectService
+					->setRegister($registerSlug)
+					->setSchema('engagement')
+					->saveObject(
+						object: $record,
+						register: $registerSlug,
+						schema: 'engagement',
+						_rbac: false,
+						_multitenancy: false,
+					);
+				$saved++;
+			} catch (\Throwable $e) {
+				$output->warning(
+					'Shillinq: fold — failed to save Project ' . $projectKey . ': ' . $e->getMessage()
+				);
+			}
+		}//end foreach
+
+		return $saved;
+	}//end saveTouchedProjects()
 
 	/**
 	 * Resolve an admin IUser object (never a string). Repair steps run
@@ -243,39 +264,82 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 		foreach ($projects as $project) {
 			$arr = $this->rowPayload(row: $project);
-			$id = (string)($arr['id'] ?? '');
-			if ($id === '') {
-				$id = (string)($arr['uuid'] ?? '');
-			}
+			$id = $this->projectRowId(arr: $arr);
 
 			if ($id === '') {
 				continue;
 			}
 
-			// Ensure the save targets this same row and the line arrays exist.
-			if (isset($arr['id']) === false) {
-				$arr['id'] = $id;
-			}
-
-			if (is_array($arr['costLines'] ?? null) === false) {
-				$arr['costLines'] = [];
-			}
-
-			if (is_array($arr['hoursLines'] ?? null) === false) {
-				$arr['hoursLines'] = [];
-			}
+			$arr = $this->prepareProjectRow(arr: $arr, id: $id);
 
 			$projectArrays[$id] = $arr;
 
-			foreach ([$id, (string)($arr['uuid'] ?? ''), (string)($arr['projectNumber'] ?? ''), (string)($arr['code'] ?? '')] as $alias) {
-				if ($alias !== '') {
-					$byKey[$alias] = $id;
-				}
+			$aliases = [$id, (string)($arr['uuid'] ?? ''), (string)($arr['projectNumber'] ?? ''), (string)($arr['code'] ?? '')];
+			foreach ($this->nonEmptyKeys(keys: $aliases) as $alias) {
+				$byKey[$alias] = $id;
 			}
 		}//end foreach
 
 		return [$byKey, $projectArrays];
 	}//end indexProjects()
+
+	/**
+	 * Return a project row's id, falling back to its uuid.
+	 *
+	 * @param array<string,mixed> $arr The Project row.
+	 *
+	 * @return string The id, or '' when the row has neither.
+	 */
+	private function projectRowId(array $arr): string {
+		$id = (string)($arr['id'] ?? '');
+		if ($id === '') {
+			$id = (string)($arr['uuid'] ?? '');
+		}
+
+		return $id;
+	}//end projectRowId()
+
+	/**
+	 * Ensure the save targets this same row and the line arrays exist.
+	 *
+	 * @param array<string,mixed> $arr The Project row.
+	 * @param string $id The resolved project id.
+	 *
+	 * @return array<string,mixed> The prepared row.
+	 */
+	private function prepareProjectRow(array $arr, string $id): array {
+		if (isset($arr['id']) === false) {
+			$arr['id'] = $id;
+		}
+
+		if (is_array($arr['costLines'] ?? null) === false) {
+			$arr['costLines'] = [];
+		}
+
+		if (is_array($arr['hoursLines'] ?? null) === false) {
+			$arr['hoursLines'] = [];
+		}
+
+		return $arr;
+	}//end prepareProjectRow()
+
+	/**
+	 * Keep the non-empty keys, in order.
+	 *
+	 * @param list<string> $keys Candidate keys.
+	 *
+	 * @return list<string> The non-empty keys.
+	 */
+	private function nonEmptyKeys(array $keys): array {
+		$kept = [];
+		foreach ($keys as $key) {
+			if ($key !== '') {
+				$kept[] = $key;
+			}
+		}
+
+		return $kept;
+	}//end nonEmptyKeys()
 
 	/**
 	 * Build a claimId → projectId index from ExpenseClaimEntry rows, so a
@@ -302,10 +366,8 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 				continue;
 			}
 
-			foreach ([(string)($arr['id'] ?? ''), (string)($arr['uuid'] ?? ''), (string)($arr['claimNumber'] ?? '')] as $claimKey) {
-				if ($claimKey !== '') {
-					$index[$claimKey] = $projectId;
-				}
+			foreach ($this->nonEmptyKeys(keys: [(string)($arr['id'] ?? ''), (string)($arr['uuid'] ?? ''), (string)($arr['claimNumber'] ?? '')]) as $claimKey) {
+				$index[$claimKey] = $projectId;
 			}
 		}//end foreach
 
@@ -354,24 +416,17 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 		foreach ($rows as $row) {
 			try {
 				$arr = $this->rowPayload(row: $row);
-				$sourceId = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
-				if ($sourceId === '') {
-					continue;
-				}
-
-				$projectKey = $this->resolveProjectKey(
+				$target = $this->costLineTarget(
 					arr: $arr,
 					byKey: $byKey,
-					claimIndex: $claimIndex
+					claimIndex: $claimIndex,
+					projectArrays: $projectArrays
 				);
-				if ($projectKey === null) {
-					// No owning project — leave the source row in place.
+				if ($target === null) {
 					continue;
 				}
 
-				if ($this->costLineExists(record: $projectArrays[$projectKey], sourceId: $sourceId) === true) {
-					continue;
-				}
+				[$projectKey, $sourceId] = $target;
 
 				$line = $mapper($arr);
 				$line['sourceId'] = $sourceId;
@@ -386,6 +441,36 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 		return $newlyTouched;
 	}//end foldCostFamily()
+
+	/**
+	 * Resolve where an expense row folds to: its project key and source id,
+	 * or null when the row has no id, no owning project, or is already folded.
+	 *
+	 * @param array<string,mixed> $arr The source row.
+	 * @param array<string,string> $byKey Identifier → projectKey index.
+	 * @param array<string,string> $claimIndex Claim id/number → projectId index.
+	 * @param array<string,array<string,mixed>> $projectArrays ProjectKey → record.
+	 *
+	 * @return array{0: string, 1: string}|null The project key and source id, or null to skip the row.
+	 */
+	private function costLineTarget(array $arr, array $byKey, array $claimIndex, array $projectArrays): array|null {
+		$sourceId = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
+		if ($sourceId === '') {
+			return null;
+		}
+
+		$projectKey = $this->resolveProjectKey(arr: $arr, byKey: $byKey, claimIndex: $claimIndex);
+		if ($projectKey === null) {
+			// No owning project — leave the source row in place.
+			return null;
+		}
+
+		if ($this->costLineExists(record: $projectArrays[$projectKey], sourceId: $sourceId) === true) {
+			return null;
+		}
+
+		return [$projectKey, $sourceId];
+	}//end costLineTarget()
 
 	/**
 	 * Fold UrenRegistratie rows into Project.hoursLines.
@@ -417,24 +502,12 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 		foreach ($rows as $row) {
 			try {
 				$arr = $this->rowPayload(row: $row);
-				$sourceId = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
-				if ($sourceId === '') {
+				$target = $this->hoursLineTarget(arr: $arr, byKey: $byKey, projectArrays: $projectArrays);
+				if ($target === null) {
 					continue;
 				}
 
-				$projectId = (string)($arr['projectId'] ?? '');
-				if ($projectId === '') {
-					continue;
-				}
-
-				$projectKey = $byKey[$projectId] ?? null;
-				if ($projectKey === null) {
-					continue;
-				}
-
-				if ($this->hoursLineExists(record: $projectArrays[$projectKey], sourceId: $sourceId) === true) {
-					continue;
-				}
+				[$projectKey, $sourceId] = $target;
 
 				$line = $this->mapHours(arr: $arr);
 				$line['sourceId'] = $sourceId;
@@ -448,6 +521,39 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 
 		return $newlyTouched;
 	}//end foldHours()
+
+	/**
+	 * Resolve where an UrenRegistratie row folds to: its project key and source
+	 * id, or null when the row has no id, no known project, or is already folded.
+	 *
+	 * @param array<string,mixed> $arr The source row.
+	 * @param array<string,string> $byKey Identifier → projectKey index.
+	 * @param array<string,array<string,mixed>> $projectArrays ProjectKey → record.
+	 *
+	 * @return array{0: string, 1: string}|null The project key and source id, or null to skip the row.
+	 */
+	private function hoursLineTarget(array $arr, array $byKey, array $projectArrays): array|null {
+		$sourceId = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
+		if ($sourceId === '') {
+			return null;
+		}
+
+		$projectId = (string)($arr['projectId'] ?? '');
+		if ($projectId === '') {
+			return null;
+		}
+
+		$projectKey = $byKey[$projectId] ?? null;
+		if ($projectKey === null) {
+			return null;
+		}
+
+		if ($this->hoursLineExists(record: $projectArrays[$projectKey], sourceId: $sourceId) === true) {
+			return null;
+		}
+
+		return [$projectKey, $sourceId];
+	}//end hoursLineTarget()
 
 	/**
 	 * Resolve the owning project key for an expense row: a direct
@@ -466,6 +572,19 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			return $byKey[$directProjectId];
 		}
 
+		return $this->claimProjectKey(arr: $arr, byKey: $byKey, claimIndex: $claimIndex);
+	}//end resolveProjectKey()
+
+	/**
+	 * Resolve the owning project key through the row's claim.
+	 *
+	 * @param array<string,mixed> $arr The source row.
+	 * @param array<string,string> $byKey Identifier → projectKey index.
+	 * @param array<string,string> $claimIndex Claim id/number → projectId index.
+	 *
+	 * @return string|null The resolved project key, or null when unmatched.
+	 */
+	private function claimProjectKey(array $arr, array $byKey, array $claimIndex): string|null {
 		$claimId = (string)($arr['claimId'] ?? '');
 		if ($claimId !== '' && isset($claimIndex[$claimId]) === true) {
 			$claimProjectId = $claimIndex[$claimId];
@@ -475,7 +594,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 		}
 
 		return null;
-	}//end resolveProjectKey()
+	}//end claimProjectKey()
 
 	/**
 	 * Whether a costLine carrying the given sourceId already exists.

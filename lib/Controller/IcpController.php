@@ -313,13 +313,9 @@ class IcpController extends Controller {
 			return $error;
 		}
 
-		$error = $this->validateId(value: $correctsPeriod, label: 'corrects_period');
+		$error = $this->correctionInputRefusal(correctsPeriod: $correctsPeriod, lines: $lines);
 		if ($error !== null) {
 			return $error;
-		}
-
-		if (is_array($lines) === false || $lines === []) {
-			return new JSONResponse(['error' => 'lines must be a non-empty array'], Http::STATUS_BAD_REQUEST);
 		}
 
 		return $this->run(
@@ -334,6 +330,29 @@ class IcpController extends Controller {
 		);
 
 	}//end correction()
+
+	/**
+	 * The 400 for a malformed corrected period or an empty line set; null when both are valid.
+	 *
+	 * @param string $correctsPeriod The period being corrected.
+	 * @param mixed $lines The corrective lines.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
+	 */
+	private function correctionInputRefusal(string $correctsPeriod, mixed $lines): JSONResponse|null {
+		$error = $this->validateId(value: $correctsPeriod, label: 'corrects_period');
+		if ($error !== null) {
+			return $error;
+		}
+
+		if (is_array($lines) === false || $lines === []) {
+			return new JSONResponse(['error' => 'lines must be a non-empty array'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return null;
+	}//end correctionInputRefusal()
 
 	/**
 	 * Export the Belastingdienst inspection bundle (ZIP) for a period (REQ-ICP-010).

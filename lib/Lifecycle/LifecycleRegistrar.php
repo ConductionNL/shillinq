@@ -52,6 +52,27 @@ final class LifecycleRegistrar {
 	 * @spec exclude Structural composition root, no functional requirement.
 	 */
 	public function register(IRegistrationContext $context): void {
+		$this->registerFiscalYearGuardRequireAllPeriodsClosedForYear(context: $context);
+		$this->registerGLReversalGuardIsReversed(context: $context);
+		$this->registerWriteOffReasonGuardRequireReason(context: $context);
+		$this->registerAPGuardIsInvoiceNumberUnique(context: $context);
+		$this->registerAPGuardRequireWriteOffReason(context: $context);
+		$this->registerWBSOExportValidationGuard(context: $context);
+		$this->registerPeriodCloseGuardTrialBalanceVerifies(context: $context);
+		$this->registerAPTransactionSettlementGuard(context: $context);
+		$this->registerFourEyesPaymentRunGuard(context: $context);
+		$this->registerPaymentRunDuplicateGuard(context: $context);
+		$this->registerAnnualBudgetDefaultGuardIsUniqueDefault(context: $context);
+	}//end register()
+
+	/**
+	 * Register the FiscalYearGuard::requireAllPeriodsClosedForYear guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerFiscalYearGuardRequireAllPeriodsClosedForYear(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\FiscalYearGuard::requireAllPeriodsClosedForYear',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -63,7 +84,16 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerFiscalYearGuardRequireAllPeriodsClosedForYear()
 
+	/**
+	 * Register the GLReversalGuard::isReversed guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerGLReversalGuardIsReversed(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\GLReversalGuard::isReversed',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -75,7 +105,16 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerGLReversalGuardIsReversed()
 
+	/**
+	 * Register the WriteOffReasonGuard::requireReason guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerWriteOffReasonGuardRequireReason(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\WriteOffReasonGuard::requireReason',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -87,7 +126,16 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerWriteOffReasonGuardRequireReason()
 
+	/**
+	 * Register the APGuard::isInvoiceNumberUnique guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerAPGuardIsInvoiceNumberUnique(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\APGuard::isInvoiceNumberUnique',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -99,7 +147,16 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerAPGuardIsInvoiceNumberUnique()
 
+	/**
+	 * Register the APGuard::requireWriteOffReason guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerAPGuardRequireWriteOffReason(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\APGuard::requireWriteOffReason',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -111,7 +168,16 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerAPGuardRequireWriteOffReason()
 
+	/**
+	 * Register the WBSOExportValidationGuard guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerWBSOExportValidationGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\WBSOExportValidationGuard',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -123,7 +189,16 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerWBSOExportValidationGuard()
 
+	/**
+	 * Register the PeriodCloseGuard::trialBalanceVerifies guard.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerPeriodCloseGuardTrialBalanceVerifies(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\PeriodCloseGuard::trialBalanceVerifies',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -135,27 +210,47 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerPeriodCloseGuardTrialBalanceVerifies()
 
-		// Payment-run-four-eyes REQ-PR4E-001 — segregation of duties on the
-		// outgoing SEPA payment-run `approve` transition. This guard
-		// implements LifecycleGuardInterface directly (it needs the caller
-		// uid, which the shared RegisterRequiresGuardAdapter does not forward),
-		// so it is registered under its own FQCN tag — the exact string the
-		// PaymentRun schema's `transitions.approve.requires` names. Registering
-		// explicitly (rather than relying on container autowiring) matches the
-		// shillinq#425 convention and guarantees LifecycleGuardRegistry can
-		// resolve it. Fail-closed: an indeterminate preparer blocks the
-		// release (ADR-022 audit trail is the sole preparer-of-record).
-		// APTransaction matchFull / matchPartial run only inside the settlement
-		// of a confirmed bank match; registered under the FQCN tag the
-		// accounts-payable fragment names.
+	/**
+	 * Register the APTransactionSettlementGuard guard.
+	 *
+	 * APTransaction matchFull / matchPartial run only inside the settlement
+	 * of a confirmed bank match; registered under the FQCN tag the
+	 * accounts-payable fragment names.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerAPTransactionSettlementGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			APTransactionSettlementGuard::class,
 			static function ($c): APTransactionSettlementGuard {
 				return new APTransactionSettlementGuard(logger: $c->get(LoggerInterface::class));
 			}
 		);
+	}//end registerAPTransactionSettlementGuard()
 
+	/**
+	 * Register the FourEyesPaymentRunGuard guard.
+	 *
+	 * Payment-run-four-eyes REQ-PR4E-001 — segregation of duties on the
+	 * outgoing SEPA payment-run `approve` transition. This guard
+	 * implements LifecycleGuardInterface directly (it needs the caller
+	 * uid, which the shared RegisterRequiresGuardAdapter does not forward),
+	 * so it is registered under its own FQCN tag — the exact string the
+	 * PaymentRun schema's `transitions.approve.requires` names. Registering
+	 * explicitly (rather than relying on container autowiring) matches the
+	 * shillinq#425 convention and guarantees LifecycleGuardRegistry can
+	 * resolve it. Fail-closed: an indeterminate preparer blocks the
+	 * release (ADR-022 audit trail is the sole preparer-of-record).
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerFourEyesPaymentRunGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			FourEyesPaymentRunGuard::class,
 			static function ($c): FourEyesPaymentRunGuard {
@@ -165,15 +260,25 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerFourEyesPaymentRunGuard()
 
-		// Payment-control-guards REQ-PCG-001 — duplicate-payment control on the
-		// outgoing SEPA payment-run `export` transition. Rejects exporting a
-		// batch whose line settles an AP invoice that is already paid or already
-		// queued in another open/executed batch. Implements
-		// LifecycleGuardInterface directly and is registered under its own FQCN
-		// tag — the exact string the PaymentRun schema's
-		// `transitions.export.requires` names — so LifecycleGuardRegistry can
-		// resolve it (the shillinq#425 convention). Fail-closed.
+	/**
+	 * Register the PaymentRunDuplicateGuard guard.
+	 *
+	 * Payment-control-guards REQ-PCG-001 — duplicate-payment control on the
+	 * outgoing SEPA payment-run `export` transition. Rejects exporting a
+	 * batch whose line settles an AP invoice that is already paid or already
+	 * queued in another open/executed batch. Implements
+	 * LifecycleGuardInterface directly and is registered under its own FQCN
+	 * tag — the exact string the PaymentRun schema's
+	 * `transitions.export.requires` names — so LifecycleGuardRegistry can
+	 * resolve it (the shillinq#425 convention). Fail-closed.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerPaymentRunDuplicateGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			PaymentRunDuplicateGuard::class,
 			static function ($c): PaymentRunDuplicateGuard {
@@ -185,16 +290,26 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
+	}//end registerPaymentRunDuplicateGuard()
 
-		// Budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
-		// transition's `requires` tag
-		// (OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault)
-		// is a `Class::method`-shaped string, which per shillinq#425/#433
-		// never autowires through Nextcloud's container without an explicit
-		// alias. Registered under the exact literal tag the register.d
-		// fragment names, mapped through the shared
-		// RegisterRequiresGuardAdapter, matching the convention every guard
-		// registered since #425 follows.
+	/**
+	 * Register the AnnualBudgetDefaultGuard::isUniqueDefault guard.
+	 *
+	 * Budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
+	 * transition's `requires` tag
+	 * (OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault)
+	 * is a `Class::method`-shaped string, which per shillinq#425/#433
+	 * never autowires through Nextcloud's container without an explicit
+	 * alias. Registered under the exact literal tag the register.d
+	 * fragment names, mapped through the shared
+	 * RegisterRequiresGuardAdapter, matching the convention every guard
+	 * registered since #425 follows.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 */
+	private function registerAnnualBudgetDefaultGuardIsUniqueDefault(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -206,5 +321,5 @@ final class LifecycleRegistrar {
 				);
 			}
 		);
-	}//end register()
+	}//end registerAnnualBudgetDefaultGuardIsUniqueDefault()
 }//end class

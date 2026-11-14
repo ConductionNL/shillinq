@@ -127,29 +127,69 @@ class CancellationService {
 			return 0;
 		}
 
-		$policy = ($appointment['appliedPolicy'] ?? []);
-		$brackets = ($policy['lateFeeBrackets'] ?? []);
-		if (is_array($brackets) === false || $brackets === []) {
+		$brackets = self::lateFeeBrackets(appointment: $appointment);
+		if ($brackets === []) {
 			// No fee structure snapshotted → full refund (free cancellation).
 			return $cost;
 		}
 
 		$cancelledAt = ($cancelledAt ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-		$start = $this->parseUtc(value: (string)($appointment['startTime'] ?? ''));
-		if ($start === null) {
-			// No resolvable start time → refuse to compute a fee, full refund.
-			return $cost;
-		}
-
-		$daysUntilStart = $this->wholeDaysBetween(from: $cancelledAt, to: $start);
-		$bracket = $this->matchBracket(brackets: $brackets, daysUntilStart: $daysUntilStart);
+		$bracket     = $this->applicableBracket(appointment: $appointment, brackets: $brackets, cancelledAt: $cancelledAt);
 		if ($bracket === null) {
 			return $cost;
 		}
 
 		$feeCents = $this->bracketFeeCents(bracket: $bracket, costCents: $cost);
 
-		$refund = ($cost - $feeCents);
+		return self::clampRefund(refund: ($cost - $feeCents), cost: $cost);
+	}//end calculateRefund()
+
+	/**
+	 * The late-fee brackets snapshotted on the appointment's policy; empty when there are none.
+	 *
+	 * @param array<string, mixed> $appointment The appointment.
+	 *
+	 * @return array<int|string, mixed>
+	 */
+	private static function lateFeeBrackets(array $appointment): array {
+		$policy   = ($appointment['appliedPolicy'] ?? []);
+		$brackets = ($policy['lateFeeBrackets'] ?? []);
+		if (is_array($brackets) === false) {
+			return [];
+		}
+
+		return $brackets;
+	}//end lateFeeBrackets()
+
+	/**
+	 * The late-fee bracket for the time left before the start, or null when the start
+	 * cannot be resolved (refuse to compute a fee, full refund) or no bracket matches.
+	 *
+	 * @param array<string, mixed>     $appointment The appointment.
+	 * @param array<int|string, mixed> $brackets    The snapshotted late-fee brackets.
+	 * @param DateTimeImmutable        $cancelledAt When it was cancelled.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function applicableBracket(array $appointment, array $brackets, DateTimeImmutable $cancelledAt): array|null {
+		$start = $this->parseUtc(value: (string)($appointment['startTime'] ?? ''));
+		if ($start === null) {
+			return null;
+		}
+
+		$daysUntilStart = $this->wholeDaysBetween(from: $cancelledAt, to: $start);
+		return $this->matchBracket(brackets: $brackets, daysUntilStart: $daysUntilStart);
+	}//end applicableBracket()
+
+	/**
+	 * The refund, kept between zero and the cost.
+	 *
+	 * @param int $refund The cost minus the fee, in cents.
+	 * @param int $cost   The appointment cost, in cents.
+	 *
+	 * @return int
+	 */
+	private static function clampRefund(int $refund, int $cost): int {
 		if ($refund < 0) {
 			$refund = 0;
 		}
@@ -159,7 +199,7 @@ class CancellationService {
 		}
 
 		return $refund;
-	}//end calculateRefund()
+	}//end clampRefund()
 
 	/**
 	 * Validate whether an appointment may be cancelled.
