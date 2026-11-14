@@ -568,16 +568,7 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 		$found = [];
 		foreach ((glob(__DIR__ . '/Generator/*.php') ?: []) as $file) {
 			$class = '\\OCA\\Shillinq\\Reporting\\Generator\\' . basename($file, '.php');
-			if (class_exists($class) === false) {
-				continue;
-			}
-
-			if (in_array(ReportGeneratorInterface::class, class_implements($class), true) === false) {
-				continue;
-			}
-
-			// Skip the abstract document base (matches the glob + interface but is not instantiable).
-			if ((new ReflectionClass($class))->isInstantiable() === false) {
+			if (self::isGeneratorClass(class: $class) === false) {
 				continue;
 			}
 
@@ -601,6 +592,26 @@ class ReportGenerationService implements ReportGenerationServiceInterface {
 		$this->generators = $found;
 		return $found;
 	}//end generators()
+
+	/**
+	 * Whether the class exists, implements ReportGeneratorInterface and can be instantiated.
+	 *
+	 * @param string $class The fully qualified class name.
+	 *
+	 * @return bool True for a concrete generator.
+	 */
+	private static function isGeneratorClass(string $class): bool {
+		if (class_exists($class) === false) {
+			return false;
+		}
+
+		if (in_array(ReportGeneratorInterface::class, class_implements($class), true) === false) {
+			return false;
+		}
+
+		// Skip the abstract document base (matches the glob + interface but is not instantiable).
+		return (new ReflectionClass($class))->isInstantiable();
+	}//end isGeneratorClass()
 
 	/**
 	 * Write the rendered bytes to Nextcloud Files under the user's
