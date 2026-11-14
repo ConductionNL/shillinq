@@ -376,7 +376,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function testTheAppWiresTheListener(): void {
-		$registration = (string)file_get_contents(__DIR__ . '/../../../../lib/AppInfo/ObjectRequestSettlementRegistration.php');
+		$registration = (string)file_get_contents(__DIR__ . '/../../../../lib/Listener/Registration/ObjectRequestSettlementRegistration.php');
 
 		self::assertMatchesRegularExpression('/ObjectCreatedEvent::class,\s*listener: BankLineObjectRequestListener::class/', $registration);
 		self::assertMatchesRegularExpression('/ObjectTransitionedEvent::class,\s*listener: BankLineObjectRequestListener::class/', $registration);

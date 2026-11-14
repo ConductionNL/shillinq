@@ -60,13 +60,14 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AansluitingResolutionGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\AansluitingServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Computes, explains, resolves, and reopens AansluitingResult records.
@@ -77,7 +78,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class AansluitingService {
+class AansluitingService implements AansluitingServiceInterface {
 	/**
 	 * ARInvoice lifecycleState values counted as "open" (not yet settled)
 	 * for the subledger-gl-control AR resolver (REQ-AANS-005).
@@ -112,7 +113,7 @@ class AansluitingService {
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.
 	 * @param VATReturnService $vatReturnService The BTW ledger-derivation engine this service diffs against.
-	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+	 * @param AansluitingResolutionGuardInterface $resolutionGuard The ADR-031 exception guard for explained -> resolved.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
@@ -120,7 +121,7 @@ class AansluitingService {
 		private readonly LoggerInterface $logger,
 		private readonly AansluitingCalculator $calculator,
 		private readonly VATReturnService $vatReturnService,
-		private readonly AansluitingResolutionGuard $resolutionGuard,
+		private readonly AansluitingResolutionGuardInterface $resolutionGuard,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()

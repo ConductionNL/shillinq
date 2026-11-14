@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Guard\UrencriteriumYearGuard;
+use OCA\Shillinq\Kernel\Contracts\UrencriteriumYearGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,11 +45,11 @@ final class GrotendeelsCriteriumService {
 	/**
 	 * Construct the service.
 	 *
-	 * @param UrencriteriumYearGuard $guard Owns the >50% policy.
+	 * @param UrencriteriumYearGuardInterface $guard Owns the >50% policy.
 	 * @param LoggerInterface $logger Diagnostics logger.
 	 */
 	public function __construct(
-		private readonly UrencriteriumYearGuard $guard,
+		private readonly UrencriteriumYearGuardInterface $guard,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

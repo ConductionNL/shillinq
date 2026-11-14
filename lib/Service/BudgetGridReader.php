@@ -71,6 +71,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetGridReaderInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -80,7 +81,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
  */
-class BudgetGridReader {
+class BudgetGridReader implements BudgetGridReaderInterface {
 	/**
 	 * Ledger group schema slug.
 	 *

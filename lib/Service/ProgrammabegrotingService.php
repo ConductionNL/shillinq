@@ -32,16 +32,17 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ProgrammabegrotingServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Reads programmabegroting data and produces sluitend-status and exports.
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-30
  */
-class ProgrammabegrotingService {
+class ProgrammabegrotingService implements ProgrammabegrotingServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

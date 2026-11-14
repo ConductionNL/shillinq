@@ -4694,7 +4694,26 @@ OC.L10N.register(
         "Invoiced quantity": "Invoiced quantity",
         "How much of the quantity is already invoiced; the next invoice takes only the rest.": "How much of the quantity is already invoiced; the next invoice takes only the rest.",
         "Sales order": "Sales order",
-        "The sales order this invoice was written from.": "The sales order this invoice was written from."
+        "The sales order this invoice was written from.": "The sales order this invoice was written from.",
+        "Payouts to pay": "Payouts to pay",
+        "To approve": "To approve",
+        "To pay": "To pay",
+        "Reject": "Reject",
+        "Approve the payout and book the expense against the payable.": "Approve the payout and book the expense against the payable.",
+        "Record the bank payment that paid the payout and clear the payable against the bank.": "Record the bank payment that paid the payout and clear the payable against the bank.",
+        "Refuse the payout with a reason the raising app is told.": "Refuse the payout with a reason the raising app is told.",
+        "Bank ledger account": "Bank ledger account",
+        "Leave empty for today.": "Leave empty for today.",
+        "The app that raised the payout is told this reason.": "The app that raised the payout is told this reason.",
+        "Approve payout": "Approve payout",
+        "Mark payout paid": "Mark payout paid",
+        "Reject payout": "Reject payout",
+        "{amount} to {name}": "{amount} to {name}",
+        "Fill in the bank reference and the bank ledger account.": "Fill in the bank reference and the bank ledger account.",
+        "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
+        "Give a reason for the rejection.": "Give a reason for the rejection.",
+        "The payout step could not be carried out.": "The payout step could not be carried out.",
+        "Payout updated.": "Payout updated."
     },
     "nplurals=2; plural=(n != 1);"
 )

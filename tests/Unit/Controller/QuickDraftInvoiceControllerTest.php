@@ -23,7 +23,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\QuickDraftInvoiceController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
-use OCA\Shillinq\Service\Sales\QuickDraftRefusedException;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;

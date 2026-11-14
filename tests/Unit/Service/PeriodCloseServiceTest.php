@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\Shillinq\Service\PeriodCloseException;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
 use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;

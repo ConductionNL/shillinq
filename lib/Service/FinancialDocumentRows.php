@@ -27,12 +27,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentRowsInterface;
+
 /**
  * The row shape of the financial documents leaf.
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
-final class FinancialDocumentRows {
+final class FinancialDocumentRows implements FinancialDocumentRowsInterface {
 	/**
 	 * Per schema: the number, status, amount, issued and due fields.
 	 *

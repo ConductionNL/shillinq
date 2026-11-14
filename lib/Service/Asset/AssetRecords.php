@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -37,7 +38,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
-class AssetRecords {
+class AssetRecords implements AssetRecordsInterface {
 
 	/**
 	 * Constructor.
