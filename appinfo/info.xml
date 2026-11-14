@@ -188,6 +188,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
              named INTERVAL_SECONDS constant), so none busy-loops cron. -->
         <job>OCA\Shillinq\BackgroundJob\TaxDeadlineReminderJob</job>
         <job>OCA\Shillinq\BackgroundJob\BookingReminderJob</job>
+        <job>OCA\Shillinq\BackgroundJob\SmsReminderJob</job>
         <job>OCA\Shillinq\BackgroundJob\ViesOutageRetryJob</job>
         <!-- adopt-connection-registry: once a day, tells integriq which adapter
              answers for the three adapter families shillinq calls. Sends
