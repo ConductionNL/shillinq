@@ -61,6 +61,13 @@ final class InvoiceDraft {
 	public float $hoursLogged = 0.0;
 
 	/**
+	 * The customer's payment term in days: the due date is the invoice date plus this.
+	 *
+	 * @var int
+	 */
+	public int $paymentTermDays = 30;
+
+	/**
 	 * The line drafts.
 	 *
 	 * @var array<int,array<string,mixed>>

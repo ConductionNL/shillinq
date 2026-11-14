@@ -74,6 +74,22 @@ export function paymentTermDays(terms) {
 }
 
 /**
+ * The payment terms of a customer as a terms string: its `paymentTermDays`
+ * (0 to 365) when set, else 30 days (sales-invoice-sending REQ-SIS-005).
+ *
+ * @spec openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-a-customer-carries-a-payment-term-and-a-delivery-method-req-sis-005
+ * @param {object|null|undefined} customer The CustomerMaster record.
+ * @return {string} The terms, e.g. `net14`.
+ */
+export function customerTerms(customer) {
+	const days = Number(customer?.paymentTermDays)
+	if (customer?.paymentTermDays === null || customer?.paymentTermDays === undefined || customer?.paymentTermDays === '') {
+		return 'net30'
+	}
+	return Number.isInteger(days) && days >= 0 && days <= 365 ? `net${days}` : 'net30'
+}
+
+/**
  * Compute a due date string (YYYY-MM-DD) from an invoice date plus the
  * customer's payment terms.
  *

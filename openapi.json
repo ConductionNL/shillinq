@@ -1951,6 +1951,94 @@
                 }
             }
         },
+        "/ar-invoices/{id}/send": {
+            "post": {
+                "operationId": "invoice-sending-send",
+                "summary": "Send an issued ARInvoice by the customer's delivery method",
+                "description": "Send an issued or overdue ARInvoice: by email with its PDF attached, through Peppol, or record post or none, by the customer's delivery method. POST /api/ar-invoices/{id}/send Body: { administrationId, via? } where via email mails the PDF whatever the method. Answers {status, sending, error}; status is sent, recorded, fallback (no Peppol participant: send by email instead) or failed. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-sending"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ARInvoice id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/ar-invoices/send-batch": {
+            "post": {
+                "operationId": "invoice-sending-send-batch",
+                "summary": "Send the selected ARInvoices in a queued batch",
+                "description": "Record an InvoiceBatch of kind send for up to 200 issued invoices of one administration and queue the job that sends each by its customer's delivery method. POST /api/ar-invoices/send-batch Body: { administrationId, invoiceIds, resend? }. An invoice already sent is skipped unless resend is true. Answers 202 with the queued batch; the batch records an outcome per invoice (sent, skipped or failed) and notifies the requester when done. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-sending"
+                ],
+                "responses": {
+                    "202": {
+                        "description": "The batch is queued.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/audit/export": {
             "get": {
                 "operationId": "compliance-export-export",
