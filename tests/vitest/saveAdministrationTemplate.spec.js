@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: EUPL-1.2
+ * Copyright (C) 2026 Conduction B.V.
+ */
+
 /**
  * Save as template on an administration (ledger-multi-administration 3.2,
  * REQ-LMA-003): the header action on the administration page opens the

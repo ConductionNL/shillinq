@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: EUPL-1.2
+ * Copyright (C) 2026 Conduction B.V.
+ */
+
 /**
  * Lists show the active administration only (ledger-multi-administration 2.1,
  * REQ-LMA-002): the `index` page type adds the active administration to the
