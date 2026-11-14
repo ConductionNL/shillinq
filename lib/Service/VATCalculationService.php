@@ -26,6 +26,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Tax\VatTariffRefusedException;
+use OCA\Shillinq\Service\Tax\VatTariffResolver;
+
 /**
  * Pure VAT totaller — no external dependencies, fully unit-testable.
  */
@@ -38,15 +41,32 @@ class VATCalculationService {
 	private const VALID_RATES = [0.0, 6.0, 9.0, 21.0];
 
 	/**
+	 * Constructor.
+	 *
+	 * @param VatTariffResolver|null $tariffs Resolves a line's `vatTariff` code on its document date;
+	 *                                        without it a line naming a tariff is refused.
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 */
+	public function __construct(
+		private readonly ?VatTariffResolver $tariffs = null,
+	) {
+
+	}//end __construct()
+
+	/**
 	 * Calculate totals + per-rate breakdown for an array of line items.
 	 *
 	 * Each line item is expected to expose:
 	 *   - costAmountCents (int)   — net amount in cents
-	 *   - vatRate         (float) — percentage (e.g. 21.0)
+	 *   - vatTariff       (string) with documentDate (Y-m-d) — the VatTariff code, resolved on that date; or
+	 *   - vatRate         (float) — percentage (e.g. 21.0), for lines that name no tariff yet
 	 *
 	 * @param array<int,array<string,mixed>> $lineItems Lines to total.
 	 *
 	 * @return array{netCents:int,vatCents:int,grossCents:int,breakdown:array<int,array{rate:float,netCents:int,vatCents:int,grossCents:int}>}
+	 *
+	 * @throws VatTariffRefusedException When a line names a tariff that cannot be resolved.
 	 */
 	public function calculateVAT(array $lineItems): array {
 		$breakdown = [];
@@ -76,7 +96,7 @@ class VATCalculationService {
 	private function netPerRate(array $lineItems): array {
 		$byRate = [];
 		foreach ($lineItems as $line) {
-			$rate = (float)($line['vatRate'] ?? 21.0);
+			$rate = $this->lineRate(line: $line);
 			$rateKey = (string)$rate;
 			if (isset($byRate[$rateKey]) === false) {
 				$byRate[$rateKey] = ['rate' => $rate, 'netCents' => 0];
@@ -88,6 +108,35 @@ class VATCalculationService {
 		return $byRate;
 
 	}//end netPerRate()
+
+	/**
+	 * A line's VAT percentage: the tariff its `vatTariff` code names on its
+	 * `documentDate`, else its bare `vatRate` (21 % when it has none).
+	 *
+	 * A line naming a tariff never falls back to a rate: an unknown or expired
+	 * code, a missing date, or no resolver refuses the line (REQ-TVRD-002).
+	 *
+	 * @param array<string,mixed> $line One line item.
+	 *
+	 * @return float The percentage.
+	 *
+	 * @throws VatTariffRefusedException When the line names a tariff that cannot be resolved.
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.1
+	 */
+	public function lineRate(array $line): float {
+		$code = trim((string)($line['vatTariff'] ?? ''));
+		if ($code === '') {
+			return (float)($line['vatRate'] ?? 21.0);
+		}
+
+		$date = trim((string)($line['documentDate'] ?? ''));
+		if ($this->tariffs === null || $date === '') {
+			throw new VatTariffRefusedException(tariffCode: $code, date: $date, why: 'unknown');
+		}
+
+		return $this->tariffs->rateFor(code: $code, date: $date);
+	}//end lineRate()
 
 	/**
 	 * One breakdown line: a rate's net, its VAT and its gross.
