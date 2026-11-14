@@ -33,12 +33,6 @@ use OCA\Shillinq\Service\Tax\VatTariffResolver;
  * Pure VAT totaller — no external dependencies, fully unit-testable.
  */
 class VATCalculationService {
-	/**
-	 * Dutch statutory VAT rates per Wet OB 1968 (REQ-ITE-009).
-	 *
-	 * @var array<int,float>
-	 */
-	private const VALID_RATES = [0.0, 6.0, 9.0, 21.0];
 
 	/**
 	 * Constructor.
@@ -170,19 +164,4 @@ class VATCalculationService {
 		// PHP_ROUND_HALF_EVEN — bankers' rounding, customary for Dutch invoicing.
 		return (int)round($value, 0, PHP_ROUND_HALF_EVEN);
 	}//end vatOnNet()
-
-	/**
-	 * Whether a percentage matches one of the four statutory Dutch rates.
-	 *
-	 * Used by callers that want to clamp client-supplied per-line VAT
-	 * to the statutory set (21 / 9 / 6 / 0) before passing the line to
-	 * calculateVAT(); also referenced from the unit test.
-	 *
-	 * @param float $rate VAT percentage.
-	 *
-	 * @return bool
-	 */
-	public function isValidRate(float $rate): bool {
-		return in_array($rate, self::VALID_RATES, true);
-	}//end isValidRate()
 }//end class

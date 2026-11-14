@@ -84,6 +84,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114200000",
             "versionsSha256": "c5e802ed35c370efc551ed630309d7df0ba5a69eec336ce3b0a4c6f84219e5b0"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114201000",
+            "versionsSha256": "4de43b3c51ccaf4f5e9db93e2bd21a296c7f7b22a0b0ff7507c95995980031fb"
         }
     ],
     "versions": {
@@ -146,7 +150,7 @@
         "schema:Bevinding": "0.1.0",
         "schema:BezwaarBeroep": "0.1.0",
         "schema:BillableInvoice": "0.1.0",
-        "schema:BillableInvoiceLine": "0.1.0",
+        "schema:BillableInvoiceLine": "0.2.0",
         "schema:BlanketOrder": "0.1.0",
         "schema:Booking": "0.1.0",
         "schema:BookingCancellation": "0.1.0",

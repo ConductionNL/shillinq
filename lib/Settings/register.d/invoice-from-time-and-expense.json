@@ -266,7 +266,7 @@
         },
         "slug": "BillableInvoiceLine",
         "icon": "FormatListBulletedSquare",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Billable Invoice Line",
         "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
         "x-schema-org": "schema:Service",
@@ -363,6 +363,13 @@
             "description": "Final line cost in euros after rate × units × (1 + markup/100). Persisted as integer cents in services for exact arithmetic.",
             "example": 6000.0,
             "title": "Cost Amount"
+          },
+          "vatTariff": {
+            "type": "string",
+            "nullable": true,
+            "description": "The VatTariff code the line is taxed at, resolved on the invoice date; vatRate is that tariff's rate (tax-vat-rates-and-deductibility REQ-TVRD-002).",
+            "example": "high",
+            "title": "VAT tariff"
           },
           "vatRate": {
             "type": "number",

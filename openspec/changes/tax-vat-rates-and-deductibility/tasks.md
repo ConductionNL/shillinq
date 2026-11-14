@@ -15,15 +15,20 @@
 
 ## 2. Calculation
 
-- [ ] 2.1 Add `lib/Service/Tax/VatTariffResolver.php` with the dated lookup and the legacy-code map, and make `VATCalculationService` use it, removing `VALID_RATES` (REQ-TVRD-002). Verify: PHPUnit for each tariff, a legacy code, an expired tariff and an unknown code.
+- [x] 2.1 Add `lib/Service/Tax/VatTariffResolver.php` with the dated lookup and the legacy-code map, and make `VATCalculationService` use it, removing `VALID_RATES` (REQ-TVRD-002). Verify: PHPUnit for each tariff, a legacy code, an expired tariff and an unknown code.
       PARTLY DONE (2026-11-14): `VatTariffResolver::forCode()` / `rateFor()` read the VatTariff records once per request
       and return the one whose code matches and whose dates contain the document date (both bounds inclusive, no end is
       open); BTW21, BTW9, BTW0 and VERLEGD map to high, low, zero and reverse-charge; an unknown or expired code throws
       `VatTariffRefusedException` naming the code and the date, with no default rate. `VATCalculationService` resolves a
       line's `vatTariff` on its `documentDate` (refused without a date or a resolver). `VatTariffResolverTest` (8),
-      over the shipped seed. LEFT, and moving with 2.2: removing `VALID_RATES` / `isValidRate()`, whose only caller is
-      the generation clamp in `BillableInvoiceRecords::withStatutoryVatRates()` that 2.2 replaces with tariff codes.
-- [ ] 2.2 Pass tariff codes from `InvoiceGenerationService` and the invoice lines it builds (REQ-TVRD-002). Verify: the existing generation tests updated and green; Playwright generates the mixed-rate invoice.
+      over the shipped seed. `VALID_RATES` / `isValidRate()` removed with 2.2, which replaced their only caller.
+- [x] 2.2 Pass tariff codes from `InvoiceGenerationService` and the invoice lines it builds (REQ-TVRD-002). Verify: the existing generation tests updated and green; Playwright generates the mixed-rate invoice.
+      DONE: `BillableInvoiceRecords::withVatTariffs()` replaces the 21-percent clamp: each line keeps its own `vatTariff`
+      or gets the seeded tariff its rate stands for (21 high, 9 low, 0 zero), is resolved on the invoice date and takes
+      that tariff's rate; a rate with no tariff, an unknown and an expired code refuse the invoice. Saved lines carry
+      `vatTariff` (`BillableInvoiceLine` 0.2.0). `BillableInvoiceVatTariffTest` (5); the generation tests run over the
+      seeded tariffs (`Support/SeededVatTariffs`) and the golden snapshot gained the line codes. The Playwright run is
+      a browser task, not done here.
 
 ## 3. Deductibility
 

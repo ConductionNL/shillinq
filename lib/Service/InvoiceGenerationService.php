@@ -100,7 +100,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		$draft = new InvoiceDraft();
 		$draft->request       = $request;
 		$draft->currency      = $this->invoiceCurrency(request: $request);
-		$draft->lineDrafts    = $this->records()->withStatutoryVatRates(lineDrafts: $this->lineDraftsFor(draft: $draft));
+		$draft->lineDrafts    = $this->records()->withVatTariffs(lineDrafts: $this->lineDraftsFor(draft: $draft), documentDate: $request->toDate);
 		$draft->totals        = $this->vat->calculateVAT($draft->lineDrafts);
 		$draft->invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
 		$draft->invoiceId     = $this->saveDraftHeader(draft: $draft);
