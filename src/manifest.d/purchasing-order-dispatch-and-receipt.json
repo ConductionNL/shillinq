@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "purchasing-order-dispatch-and-receipt",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Task 4.1 (REQ-PODR-004): the service receipts a budget holder confirms get a list and a detail page, reachable from the purchasing menu right after Goods Receipts. Confirm and Accept call the existing service-receipt endpoints, so accepting still advances the order; Reject runs the declared `reject` transition and asks for the reason. ServiceReceiptDetail is not a menu leaf: the index rowRoute opens it."
+		"description": "Tasks 4.1 and 4.2 (REQ-PODR-004): the service receipts a budget holder confirms get a list and a detail page, reachable from the purchasing menu right after Goods Receipts. Confirm and Accept call the existing service-receipt endpoints, so accepting still advances the order; Reject runs the declared `reject` transition and asks for the reason. ServiceReceiptDetail is not a menu leaf: the index rowRoute opens it."
 	},
 	"menu": [
 		{
@@ -40,6 +40,14 @@
 				"defaultSort": "periodStart",
 				"rowRoute": "ServiceReceiptDetail"
 			}
+		},
+		{
+			"id": "ServiceReceiptForm",
+			"route": "/inkoop/service-receipts/new",
+			"type": "custom",
+			"title": "Confirm service",
+			"component": "ServiceReceiptForm",
+			"_note": "Opened from Confirm service on a purchase order (?poId=). Each service line is confirmed by one of three modes (percentage complete, quantity or amount), and one submit creates the receipt, adds a line per entry and confirms it through /api/service-receipts, /{id}/lines and /{id}/confirm. `type: form` writes one object against one schema and has no per-row mode choice."
 		},
 		{
 			"id": "ServiceReceiptDetail",

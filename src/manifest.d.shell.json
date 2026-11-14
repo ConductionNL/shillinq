@@ -5229,6 +5229,13 @@
 				},
 				{
 					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptForm",
+					"route": "/inkoop/service-receipts/new",
+					"type": "custom",
+					"title": "Confirm service"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
 					"id": "ServiceReceiptDetail",
 					"route": "/inkoop/service-receipts/:id",
 					"type": "detail",

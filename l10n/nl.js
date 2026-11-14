@@ -6904,7 +6904,15 @@ OC.L10N.register(
         "Order line": "Bestelregel",
         "Quantity confirmed": "Bevestigde hoeveelheid",
         "Amount confirmed (cents)": "Bevestigd bedrag (centen)",
-        "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).": "Waarom de controller de verklaring heeft afgekeurd, gevraagd bij het afkeuren (REQ-PODR-004)."
+        "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).": "Waarom de controller de verklaring heeft afgekeurd, gevraagd bij het afkeuren (REQ-PODR-004).",
+        "Confirm service": "Dienst bevestigen",
+        "Purchase order": "Inkooporder",
+        "This purchase order has no service lines.": "Deze inkooporder heeft geen dienstregels.",
+        "Confirm by": "Bevestigen op",
+        "Percentage complete": "Percentage gereed",
+        "Quantity delivered": "Geleverde hoeveelheid",
+        "Percentage complete (0–100)": "Percentage gereed (0–100)",
+        "Amount delivered (EUR)": "Geleverd bedrag (EUR)"
     },
     "nplurals=2; plural=(n != 1);"
 )

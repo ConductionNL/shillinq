@@ -4721,7 +4721,15 @@ OC.L10N.register(
         "% complete": "% complete",
         "Quantity confirmed": "Quantity confirmed",
         "Amount confirmed (cents)": "Amount confirmed (cents)",
-        "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).": "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004)."
+        "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).": "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).",
+        "Confirm service": "Confirm service",
+        "Purchase order": "Purchase order",
+        "This purchase order has no service lines.": "This purchase order has no service lines.",
+        "Confirm by": "Confirm by",
+        "Percentage complete": "Percentage complete",
+        "Quantity delivered": "Quantity delivered",
+        "Percentage complete (0–100)": "Percentage complete (0–100)",
+        "Amount delivered (EUR)": "Amount delivered (EUR)"
     },
     "nplurals=2; plural=(n != 1);"
 )

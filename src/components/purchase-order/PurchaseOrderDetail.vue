@@ -236,6 +236,13 @@
 							: t('shillinq', 'Send via PDF+email')
 					}}
 				</NcButton>
+				<NcButton
+					v-if="hasServiceLines"
+					variant="secondary"
+					data-testid="po-detail-confirm-service"
+					@click="onConfirmService">
+					{{ t('shillinq', 'Confirm service') }}
+				</NcButton>
 				<p
 					v-for="channel in unavailableChannels"
 					:key="channel"
@@ -276,6 +283,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
+import { isServiceLine } from '../../utils/serviceReceiptLines.js'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -317,6 +325,16 @@ export default {
 		 * @return {string[]}
 		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 		 */
+		/**
+		 * Whether the order holds a service line, so a delivery can be confirmed.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 */
+		hasServiceLines() {
+			return (this.purchaseOrder?.lines || []).some(isServiceLine)
+		},
+
 		unavailableChannels() {
 			return ['peppol', 'email'].filter((channel) => !this.channelAvailable(channel))
 		},
@@ -475,6 +493,15 @@ export default {
 				failed: this.t('shillinq', 'Not delivered'),
 			}
 			return labels[status] || '—'
+		},
+
+		/**
+		 * Open the service receipt form for this order.
+		 *
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 */
+		onConfirmService() {
+			this.$router.push({ name: 'ServiceReceiptForm', query: { poId: this.id } })
 		},
 
 		async onSendPeppol() {
