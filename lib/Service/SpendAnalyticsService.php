@@ -94,6 +94,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SpendAnalyticsServiceInterface;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -105,7 +106,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/spend-analytics/spec.md
  */
-class SpendAnalyticsService {
+class SpendAnalyticsService implements SpendAnalyticsServiceInterface {
 	/**
 	 * FQCN of OpenRegister's aggregation runner (fetched lazily from the DI
 	 * container so the leaf does not hard-link the class at boot).

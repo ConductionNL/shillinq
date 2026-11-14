@@ -34,9 +34,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\Kernel\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TaxReportServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a period-scoped Vpb quarterly tax statement from the general ledger.
@@ -51,7 +52,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-22
  */
-class TaxReportService {
+class TaxReportService implements TaxReportServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

@@ -75,6 +75,12 @@ use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\ICache;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 
 /**
  * Resilient HTTP transport for pipelinq calls.

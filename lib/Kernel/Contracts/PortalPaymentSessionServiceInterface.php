@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Kernel\Contracts;
 
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
+use OCA\Shillinq\Kernel\Model\PortalPaymentSessionResult;
 
 /**
  * Contract of PortalPaymentSessionService.

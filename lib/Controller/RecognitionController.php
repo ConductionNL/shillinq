@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\RevenueRecognitionService;
+use OCA\Shillinq\Kernel\Contracts\RevenueRecognitionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,7 +64,7 @@ class RecognitionController extends Controller {
 	 * Constructor for the RecognitionController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param RevenueRecognitionService $recognitionService The recognition computation service.
+	 * @param RevenueRecognitionServiceInterface $recognitionService The recognition computation service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
@@ -73,7 +73,7 @@ class RecognitionController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly RevenueRecognitionService $recognitionService,
+		private readonly RevenueRecognitionServiceInterface $recognitionService,
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,

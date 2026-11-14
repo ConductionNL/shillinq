@@ -33,8 +33,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -52,17 +52,17 @@ class SupplierInvoiceWarningListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SupplierInvoiceChecks  $checks         The shared checks.
+	 * @param SupplierInvoiceChecksInterface  $checks         The shared checks.
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema slug.
 	 * @param ObjectServiceInterface $objectService  Writes the warning fields back.
-	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $settings Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger         Fail-soft log.
 	 */
 	public function __construct(
-		private readonly SupplierInvoiceChecks $checks,
+		private readonly SupplierInvoiceChecksInterface $checks,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly LoggerInterface $logger,
 	) {
 

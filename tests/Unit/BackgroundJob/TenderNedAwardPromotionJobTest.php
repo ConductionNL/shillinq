@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 use OCA\OpenRegister\Service\Deferral\DeferredListenerContext;
 use OCA\OpenRegister\Service\OrganisationService;
 use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
+use OCA\Shillinq\Kernel\Contracts\TenderNedAwardDetectedListenerInterface;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IUserManager;
@@ -70,7 +71,7 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 			 * @return mixed
 			 */
 			public function get(string $id): mixed {
-				if ($id === TenderNedAwardDetectedListener::class && $this->listener !== null) {
+				if (($id === TenderNedAwardDetectedListener::class || $id === TenderNedAwardDetectedListenerInterface::class) && $this->listener !== null) {
 					return $this->listener;
 				}
 
@@ -84,7 +85,7 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 			 * @return bool
 			 */
 			public function has(string $id): bool {
-				return ($id === TenderNedAwardDetectedListener::class && $this->listener !== null);
+				return (($id === TenderNedAwardDetectedListener::class || $id === TenderNedAwardDetectedListenerInterface::class) && $this->listener !== null);
 			}
 		};
 

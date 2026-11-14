@@ -36,7 +36,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
-use OCA\Shillinq\Service\PeriodCloseException;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

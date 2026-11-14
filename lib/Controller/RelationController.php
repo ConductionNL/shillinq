@@ -33,8 +33,8 @@ use DateTimeImmutable;
 use DomainException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\Relation\RelationBothSidesService;
-use OCA\Shillinq\Service\Relation\RelationLinkService;
+use OCA\Shillinq\Kernel\Contracts\RelationBothSidesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RelationLinkServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -70,14 +70,14 @@ class RelationController extends Controller {
 	 *
 	 * @param IRequest                     $request   The request.
 	 * @param AdministrationContextServiceInterface $context   The caller's administrations.
-	 * @param RelationLinkService          $links     Suggestions and links.
-	 * @param RelationBothSidesService     $bothSides Both sides of a relation.
+	 * @param RelationLinkServiceInterface          $links     Suggestions and links.
+	 * @param RelationBothSidesServiceInterface     $bothSides Both sides of a relation.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly AdministrationContextServiceInterface $context,
-		private readonly RelationLinkService $links,
-		private readonly RelationBothSidesService $bothSides,
+		private readonly RelationLinkServiceInterface $links,
+		private readonly RelationBothSidesServiceInterface $bothSides,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 

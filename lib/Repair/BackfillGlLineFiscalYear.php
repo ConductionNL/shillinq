@@ -57,9 +57,9 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\GlLineFiscalYearBackfillMigratorInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -74,13 +74,13 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation                    $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface                    $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param GlLineFiscalYearBackfillMigratorInterface   $migrator        The pure migration core.
 	 * @param LoggerInterface                    $logger          For failures.
 	 * @param ObjectServiceInterface             $objectService   Store access.
 	 */
 	public function __construct(
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly GlLineFiscalYearBackfillMigratorInterface $migrator,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

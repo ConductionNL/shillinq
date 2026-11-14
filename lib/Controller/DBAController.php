@@ -37,10 +37,10 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Enums\DBAConstants;
-use OCA\Shillinq\Guard\DBAOpdrachtGuard;
-use OCA\Shillinq\Guard\DBAScoreCalculator;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DBAOpdrachtGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\DBAScoreCalculatorInterface;
 use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
@@ -94,8 +94,8 @@ class DBAController extends Controller {
 	 * @param ContainerInterface $container DI container for ObjectService.
 	 * @param IAppConfig $appConfig App config.
 	 * @param IUserSession $userSession User session.
-	 * @param DBAScoreCalculator $scoreCalc Score calculator guard.
-	 * @param DBAOpdrachtGuard $assignmentGuard Save-precondition guard.
+	 * @param DBAScoreCalculatorInterface $scoreCalc Score calculator guard.
+	 * @param DBAOpdrachtGuardInterface $assignmentGuard Save-precondition guard.
 	 * @param DBAVbarMonitorServiceInterface $vbarMonitor VBAR monitor service.
 	 * @param LoggerInterface $logger Logger.
 	 * @param AdministrationContextServiceInterface $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
@@ -106,8 +106,8 @@ class DBAController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly IUserSession $userSession,
-		private readonly DBAScoreCalculator $scoreCalc,
-		private readonly DBAOpdrachtGuard $assignmentGuard,
+		private readonly DBAScoreCalculatorInterface $scoreCalc,
+		private readonly DBAOpdrachtGuardInterface $assignmentGuard,
 		private readonly DBAVbarMonitorServiceInterface $vbarMonitor,
 		private readonly LoggerInterface $logger,
 		private readonly AdministrationContextServiceInterface $administrationContext,

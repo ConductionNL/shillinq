@@ -38,25 +38,26 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Lifecycle\RequisitionConversionGuard;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Materialises an approved Requisition into a PurchaseOrder (REQ-REQ-005).
  *
  * @spec openspec/specs/purchase-requisition/spec.md
  */
-class RequisitionConversionService {
+class RequisitionConversionService implements RequisitionConversionServiceInterface {
 	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-	 * @param RequisitionConversionGuard $guard Fail-closed status precondition.
+	 * @param RequisitionConversionGuardInterface $guard Fail-closed status precondition.
 	 * @param PurchaseOrderService $purchaseOrderService Reused, unmodified PO creation.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -66,7 +67,7 @@ class RequisitionConversionService {
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly AdministrationContextService $administrationContext,
-		private readonly RequisitionConversionGuard $guard,
+		private readonly RequisitionConversionGuardInterface $guard,
 		private readonly PurchaseOrderService $purchaseOrderService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

@@ -44,14 +44,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\Tax\VatNumberCheck;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -91,13 +92,7 @@ use OCA\Shillinq\Service\Tax\VatNumberCheck;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
-class SupplierInvoiceService {
-	/**
-	 * Initial lifecycle state of a newly ingested invoice (REQ-SI-002).
-	 *
-	 * @var string
-	 */
-	public const STATUS_RECEIVED = 'received';
+class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 
 	/**
 	 * Source-format tag stored on the SupplierInvoice record indicating the

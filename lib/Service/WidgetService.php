@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; deferred pending a dedicated refactor.
  */
-class WidgetService {
+class WidgetService implements WidgetServiceInterface {
 
 	/**
 	 * The widget payload fields read as trimmed strings.
@@ -547,7 +548,6 @@ class WidgetService {
 		) !== null;
 
 	}//end isPubliclyBookable()
-
 
 	/**
 	 * Resolve a bookable public Service by its serviceId, or null.

@@ -61,13 +61,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
+use OCA\Shillinq\Kernel\Contracts\LotSellabilityGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Wires Delivery confirm/cancel into the existing StockMove issue/cancel
@@ -80,7 +81,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  */
-class SalesDispatchStockIssueService {
+class SalesDispatchStockIssueService implements SalesDispatchStockIssueServiceInterface {
 	/**
 	 * URI scheme prefix used on StockMove.referenceDocumentUri to identify
 	 * the originating Delivery + line index, and to detect prior issuance
@@ -94,14 +95,14 @@ class SalesDispatchStockIssueService {
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs full payloads.
-	 * @param LotSellabilityGuard $lotGuard Decides whether a line may be issued from its lots.
+	 * @param LotSellabilityGuardInterface $lotGuard Decides whether a line may be issued from its lots.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly LotSellabilityGuard $lotGuard,
+		private readonly LotSellabilityGuardInterface $lotGuard,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 

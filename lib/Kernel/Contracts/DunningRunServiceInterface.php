@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Kernel\Contracts;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
 /**
  * Contract of DunningRunService.

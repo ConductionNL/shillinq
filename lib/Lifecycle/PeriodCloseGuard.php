@@ -47,7 +47,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\SuspenseAgeingService;
+use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -366,7 +366,7 @@ class PeriodCloseGuard {
 				return true;
 			}
 
-			$ageing = $this->container->get(SuspenseAgeingService::class);
+			$ageing = $this->container->get(SuspenseAgeingServiceInterface::class);
 			if ($ageing->hasUnresolvedItems($administrationId) === true) {
 				$this->logger->info(
 					'PeriodCloseGuard: suspense worklist non-empty — denying close',

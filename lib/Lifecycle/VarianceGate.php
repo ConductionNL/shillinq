@@ -50,6 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VarianceGateInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -66,7 +67,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
  */
-class VarianceGate {
+class VarianceGate implements VarianceGateInterface {
 
 	/**
 	 * Default quantity-variance threshold (percent) per REQ-ICC-004 when no

@@ -63,7 +63,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
+use OCA\Shillinq\Kernel\Contracts\OrderFulfilmentGuardInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -113,12 +113,12 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param OrderFulfilmentGuard $guard The REQ-004 precondition guard (single source of truth).
+	 * @param OrderFulfilmentGuardInterface $guard The REQ-004 precondition guard (single source of truth).
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema to its slug.
 	 * @param LoggerInterface $logger Logger for guard diagnostics.
 	 */
 	public function __construct(
-		private readonly OrderFulfilmentGuard $guard,
+		private readonly OrderFulfilmentGuardInterface $guard,
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {

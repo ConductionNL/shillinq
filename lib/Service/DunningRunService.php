@@ -50,7 +50,7 @@ use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
-use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
 use OCA\Shillinq\Service\Dunning\DunningStageChoice;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;

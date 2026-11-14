@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Schedule;
 
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCP\IGroupManager;
 
 /**
@@ -36,7 +37,7 @@ use OCP\IGroupManager;
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.8
  */
-class ReportRecipientPolicy {
+class ReportRecipientPolicy implements ReportRecipientPolicyInterface {
 
 	/**
 	 * Construct the policy.

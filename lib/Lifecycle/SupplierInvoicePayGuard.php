@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,13 +55,13 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 	 * Construct the guard.
 	 *
 	 * @param ContainerInterface     $container       DI container for the lazy ObjectService.
-	 * @param RegisterLocation        $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger          Logger.
 	 * @param ListenerSchemaResolverInterface $schemas         Tells which register and schema an object is in.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ListenerSchemaResolverInterface $schemas,
 	) {

@@ -50,12 +50,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Lifecycle\VarianceGate;
+use OCA\Shillinq\Kernel\Contracts\VarianceGateInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Per REQ-ICC-006 snapshot fan-out + REQ-ICC-007 variance posting.
@@ -91,13 +91,13 @@ class CycleCountService {
 	 * @param IAppConfig $appConfig App config — used to read register
 	 *                              slug.
 	 * @param LoggerInterface $logger Logger for diagnostics; never logs payloads.
-	 * @param VarianceGate $varianceGate Pure helper for threshold + recalculation.
+	 * @param VarianceGateInterface $varianceGate Pure helper for threshold + recalculation.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly VarianceGate $varianceGate,
+		private readonly VarianceGateInterface $varianceGate,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 

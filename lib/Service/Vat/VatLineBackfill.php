@@ -42,8 +42,9 @@ namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
+use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -54,7 +55,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.3
  */
-class VatLineBackfill {
+class VatLineBackfill implements VatLineBackfillInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**
@@ -333,8 +334,8 @@ class VatLineBackfill {
 	 */
 	private function vatAccountKind(string $accountNumber): ?string {
 		$accounts = [
-			'output' => [MaterialiseGlTransactionAction::CFG_OUTPUT_VAT_ACCOUNT, '2110'],
-			'input' => [MaterialiseGlTransactionAction::CFG_INPUT_VAT_ACCOUNT, '1230'],
+			'output' => [MaterialiseGlTransactionActionInterface::CFG_OUTPUT_VAT_ACCOUNT, '2110'],
+			'input' => [MaterialiseGlTransactionActionInterface::CFG_INPUT_VAT_ACCOUNT, '1230'],
 		];
 		foreach ($accounts as $kind => [$key, $default]) {
 			$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));

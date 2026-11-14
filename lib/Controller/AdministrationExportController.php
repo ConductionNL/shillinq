@@ -44,8 +44,8 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Reporting\GeneratedFile;
-use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
+use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -200,13 +200,13 @@ class AdministrationExportController extends Controller {
 	/**
 	 * The XAF generator from the container.
 	 *
-	 * @return XafAuditfileGenerator
+	 * @return XafAuditfileGeneratorInterface
 	 *
 	 * @throws RuntimeException When the container does not hold one.
 	 */
-	private function xafGenerator(): XafAuditfileGenerator {
-		$generator = $this->container->get(XafAuditfileGenerator::class);
-		if (($generator instanceof XafAuditfileGenerator) === false) {
+	private function xafGenerator(): XafAuditfileGeneratorInterface {
+		$generator = $this->container->get(XafAuditfileGeneratorInterface::class);
+		if (($generator instanceof XafAuditfileGeneratorInterface) === false) {
 			throw new RuntimeException('XAF generator unavailable');
 		}
 

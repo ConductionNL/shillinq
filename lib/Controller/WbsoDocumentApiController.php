@@ -34,8 +34,8 @@ namespace OCA\Shillinq\Controller;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\WbsoDocumentService;
-use OCA\Shillinq\Service\WbsoRbacResolver;
+use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -74,8 +74,8 @@ class WbsoDocumentApiController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param WbsoDocumentService $documents Document service.
-	 * @param WbsoRbacResolver $rbac Role resolver.
+	 * @param WbsoDocumentServiceInterface $documents Document service.
+	 * @param WbsoRbacResolverInterface $rbac Role resolver.
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
@@ -83,8 +83,8 @@ class WbsoDocumentApiController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WbsoDocumentService $documents,
-		private readonly WbsoRbacResolver $rbac,
+		private readonly WbsoDocumentServiceInterface $documents,
+		private readonly WbsoRbacResolverInterface $rbac,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,

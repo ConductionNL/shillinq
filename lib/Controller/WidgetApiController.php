@@ -32,10 +32,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\SlotService;
-use OCA\Shillinq\Service\WidgetAuthService;
-use OCA\Shillinq\Service\WidgetService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -61,6 +61,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ShortVariable)
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; variable renames deferred pending a dedicated pass.
+ *
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class WidgetApiController extends Controller {
 	/**
@@ -91,19 +93,19 @@ class WidgetApiController extends Controller {
 	 * Construct the controller with DI dependencies.
 	 *
 	 * @param IRequest $request The HTTP request.
-	 * @param WidgetAuthService $auth API key + rate-limit gateway.
-	 * @param WidgetService $widgetService The single widget booking write path.
-	 * @param SlotService $slots Slot availability computation.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param WidgetAuthServiceInterface $auth API key + rate-limit gateway.
+	 * @param WidgetServiceInterface $widgetService The single widget booking write path.
+	 * @param SlotServiceInterface $slots Slot availability computation.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WidgetAuthService $auth,
-		private readonly WidgetService $widgetService,
-		private readonly SlotService $slots,
-		private readonly RegisterLocation $registerLocation,
+		private readonly WidgetAuthServiceInterface $auth,
+		private readonly WidgetServiceInterface $widgetService,
+		private readonly SlotServiceInterface $slots,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -266,7 +268,7 @@ class WidgetApiController extends Controller {
 			]
 		);
 		$response->addHeader('ETag', $result['etag']);
-		$response->addHeader('Cache-Control', 'public, max-age=' . SlotService::SLOT_CACHE_TTL_SECONDS);
+		$response->addHeader('Cache-Control', 'public, max-age=' . SlotServiceInterface::SLOT_CACHE_TTL_SECONDS);
 
 		return $response;
 	}//end slots()
@@ -380,9 +382,9 @@ class WidgetApiController extends Controller {
 			return $this->unauthorised();
 		}
 
-		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthService::DEFAULT_RATE_LIMIT));
+		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthServiceInterface::DEFAULT_RATE_LIMIT));
 		if ($rateLimit <= 0) {
-			$rateLimit = WidgetAuthService::DEFAULT_RATE_LIMIT;
+			$rateLimit = WidgetAuthServiceInterface::DEFAULT_RATE_LIMIT;
 		}
 
 		$rl = $this->auth->consumeRateLimit(businessId: $businessId, limit: $rateLimit);
@@ -394,7 +396,7 @@ class WidgetApiController extends Controller {
 				],
 				statusCode: Http::STATUS_TOO_MANY_REQUESTS,
 			);
-			$response->addHeader('Retry-After', (string)($rl['retryAfter'] ?? WidgetAuthService::RATE_LIMIT_WINDOW_SECONDS));
+			$response->addHeader('Retry-After', (string)($rl['retryAfter'] ?? WidgetAuthServiceInterface::RATE_LIMIT_WINDOW_SECONDS));
 			return $response;
 		}
 

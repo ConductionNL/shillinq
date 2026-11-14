@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\TrialBalanceService;
+use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,7 +57,7 @@ class TrialBalanceController extends Controller {
 	 * Constructor for the TrialBalanceController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param TrialBalanceService $trialBalanceService The trial-balance computation service.
+	 * @param TrialBalanceServiceInterface $trialBalanceService The trial-balance computation service.
 	 * @param AdministrationContextServiceInterface $context Admin-membership / RBAC context (REQ-TB-016).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -65,7 +65,7 @@ class TrialBalanceController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly TrialBalanceService $trialBalanceService,
+		private readonly TrialBalanceServiceInterface $trialBalanceService,
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {

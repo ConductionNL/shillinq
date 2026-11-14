@@ -45,11 +45,12 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
-use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Kernel\Contracts\ExceptionResolutionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -61,25 +62,32 @@ use RuntimeException;
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 class ThreeWayMatchExceptionController extends Controller {
+	/**
+	 * The groups whose members may accept a three-way-match exception.
+	 */
+	public const EXCEPTION_APPROVER_GROUPS = ['shillinq_approver', 'shillinq_controller'];
+
 
 	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param ExceptionResolutionService $exceptions Slice 08 server-authoritative
+	 * @param ExceptionResolutionServiceInterface $exceptions Slice 08 server-authoritative
 	 *                                               service.
 	 * @param AdministrationContextServiceInterface $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 * @param IGroupManager $groupManager Who is an exception approver.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ExceptionResolutionService $exceptions,
+		private readonly ExceptionResolutionServiceInterface $exceptions,
 		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -99,6 +107,11 @@ class ThreeWayMatchExceptionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function accept(): JSONResponse {
+		$refusal = $this->approverRefusal();
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		$resolution = $this->resolution(action: 'accept');
 		if ($resolution instanceof JSONResponse) {
 			return $resolution;
@@ -171,6 +184,39 @@ class ThreeWayMatchExceptionController extends Controller {
 			)
 		);
 	}//end reject()
+
+	/**
+	 * Accepting a three-way-match exception books an invoice that does not
+	 * match its order or receipt, so only an exception approver may do it:
+	 * an administrator, or a member of an approver group. Disputing and
+	 * rejecting stay open to everyone who handles the match.
+	 *
+	 * Returns null for an anonymous caller, so the 401 comes from
+	 * resolution() as for every other action.
+	 *
+	 * @return JSONResponse|null The 403, or null when the caller may accept.
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
+	 */
+	private function approverRefusal(): ?JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return null;
+		}
+
+		$userId = $user->getUID();
+		if ($this->groupManager->isAdmin($userId) === true) {
+			return null;
+		}
+
+		foreach (self::EXCEPTION_APPROVER_GROUPS as $group) {
+			if ($this->groupManager->isInGroup($userId, $group) === true) {
+				return null;
+			}
+		}
+
+		return new JSONResponse(['error' => 'Only an exception approver can accept a three-way-match exception'], Http::STATUS_FORBIDDEN);
+	}//end approverRefusal()
 
 	/**
 	 * The resolution the caller may record, or the refusal: 401 anonymous, 400

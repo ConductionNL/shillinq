@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
-use OCA\Shillinq\Portal\PortalAssertionVerifier;
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -49,6 +49,7 @@ use Throwable;
  * contribution.
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PortalContributionDeclineController extends Controller {
 	/**
@@ -63,13 +64,13 @@ class PortalContributionDeclineController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request.
-	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies the X-Portal-Subject assertion.
 	 * @param ContributionDeclineServiceInterface $declineService Closes the guardian's own voluntary contribution.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
+		private readonly PortalAssertionVerifierInterface $verifier,
 		private readonly ContributionDeclineServiceInterface $declineService,
 		private readonly LoggerInterface $logger,
 	) {
@@ -97,7 +98,7 @@ class PortalContributionDeclineController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function decline(): JSONResponse {
-		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));
+		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($claims === null) {
 			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
 		}

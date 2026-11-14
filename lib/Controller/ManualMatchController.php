@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ManualMatchServiceInterface;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

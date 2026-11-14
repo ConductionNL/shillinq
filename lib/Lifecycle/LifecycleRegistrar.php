@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
+use OCA\Shillinq\Kernel\Contracts\PaymentBlockCheckerInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -181,7 +181,7 @@ final class LifecycleRegistrar {
 					container: $c->get(ContainerInterface::class),
 					appConfig: $c->get(IAppConfig::class),
 					logger: $c->get(LoggerInterface::class),
-					blockChecker: $c->get(PaymentBlockChecker::class),
+					blockChecker: $c->get(PaymentBlockCheckerInterface::class),
 				);
 			}
 		);

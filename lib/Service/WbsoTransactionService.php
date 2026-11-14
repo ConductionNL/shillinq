@@ -36,18 +36,19 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Transaction-register helper service (REQ-WBSO-002 / REQ-WBSO-008).
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-24
  */
-class WbsoTransactionService {
+class WbsoTransactionService implements WbsoTransactionServiceInterface {
 
 	/**
 	 * Allowed transactionType values.
@@ -199,7 +200,6 @@ class WbsoTransactionService {
 
 		$this->validateTransactionPayload(payload: $payload);
 
-
 		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
 		// this method declares — returning it raised a TypeError on every call.
 		return (array)$this->objectService
@@ -235,7 +235,6 @@ class WbsoTransactionService {
 
 		$existing['status'] = 'posted';
 		$existing['postedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
-
 
 		// ADR-084: see createTransaction() — the contract returns an entity.
 		return (array)$this->objectService
@@ -290,7 +289,6 @@ class WbsoTransactionService {
 			'reversalOfTransactionId' => (string)($existing['id'] ?? $existing['transactionNumber']),
 			'reversalReason' => $reason,
 		];
-
 
 		// ADR-084: see createTransaction() — the contract returns an entity.
 		return (array)$this->objectService

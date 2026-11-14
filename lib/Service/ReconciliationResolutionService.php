@@ -33,10 +33,11 @@ namespace OCA\Shillinq\Service;
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Persists REQ-REC-004 resolutions onto ReconciliationMatch records and
@@ -44,7 +45,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
  */
-class ReconciliationResolutionService {
+class ReconciliationResolutionService implements ReconciliationResolutionServiceInterface {
 	/**
 	 * Constructor.
 	 *

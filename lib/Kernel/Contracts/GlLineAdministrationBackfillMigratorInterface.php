@@ -54,7 +54,7 @@ interface GlLineAdministrationBackfillMigratorInterface {
 	 *
 	 * Written ONLY by {@see \OCA\Shillinq\Repair\BackfillGlLineAdministration}
 	 * after it has RE-READ every `GLLine` row from the store and counted zero
-	 * without a scope; read by {@see \OCA\Shillinq\Service\SpendAnalyticsService}
+	 * without a scope; read by SpendAnalyticsService
 	 * before it will filter a GL-backed aggregation on `administrationId`.
 	 */
 	public const GATE_CONFIG_KEY = 'glline_administration_backfill_complete';

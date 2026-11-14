@@ -54,6 +54,7 @@ use OCP\BackgroundJob\IJobList;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
 /**
  * Default slice-09 binding for {@see TimelineRetryQueue}.
