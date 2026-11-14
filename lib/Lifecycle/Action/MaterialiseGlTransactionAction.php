@@ -86,6 +86,7 @@ use RuntimeException;
  * Books a source document into one balanced, posted GLTransaction.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One small mapper per source schema, by design D2.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  *
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
@@ -226,6 +227,34 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+		$sourceSchema = $this->supportedSourceSchema(parameters: $parameters);
+
+		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+			return $objectData;
+		}
+
+		$sourceId        = $this->sourceIdOf(objectData: $objectData, sourceSchema: $sourceSchema);
+		$sourceReference = $sourceSchema . ':' . $sourceId;
+		$existing        = $this->findExistingTransaction(sourceReference: $sourceReference);
+		if ($existing !== '') {
+			$objectData['glTransactionId'] = $existing;
+			return $objectData;
+		}
+
+		$objectData['glTransactionId'] = $this->post(objectData: $objectData, parameters: $parameters, sourceSchema: $sourceSchema, sourceId: $sourceId);
+		return $objectData;
+	}//end execute()
+
+	/**
+	 * The declared source schema, refused when no posting is defined for it.
+	 *
+	 * @param array<string,mixed> $parameters The declared actionParameters.
+	 *
+	 * @return string The supported source schema.
+	 *
+	 * @throws RuntimeException When the source schema has no mapper.
+	 */
+	private function supportedSourceSchema(array $parameters): string {
 		$sourceSchema = (string)($parameters['sourceSchema'] ?? '');
 		if (in_array($sourceSchema, self::SUPPORTED_SOURCES, true) === false) {
 			throw new RuntimeException(
@@ -237,44 +266,111 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			);
 		}
 
-		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
-			return $objectData;
-		}
+		return $sourceSchema;
+	}//end supportedSourceSchema()
 
+	/**
+	 * The source document's id, refused when it has none.
+	 *
+	 * @param array<string,mixed> $objectData   The source document.
+	 * @param string              $sourceSchema The source schema, for the message.
+	 *
+	 * @return string The source id.
+	 *
+	 * @throws RuntimeException When the source has no id.
+	 */
+	private function sourceIdOf(array $objectData, string $sourceSchema): string {
 		$sourceId = (string)($objectData['id'] ?? ($objectData['@self']['id'] ?? ''));
 		if ($sourceId === '') {
 			throw new RuntimeException(sprintf('Cannot post a %s without an id.', $sourceSchema));
 		}
 
-		$sourceReference = $sourceSchema . ':' . $sourceId;
-		$existing = $this->findExistingTransaction(sourceReference: $sourceReference);
-		if ($existing !== '') {
-			$objectData['glTransactionId'] = $existing;
-			return $objectData;
-		}
+		return $sourceId;
+	}//end sourceIdOf()
 
-		$posting = match ($sourceSchema) {
-			'JournalEntry' => $this->mapJournalEntry(entry: $objectData, sourceId: $sourceId),
-			'ARInvoice' => $this->mapArInvoice(invoice: $objectData, sourceId: $sourceId),
-			default => $this->mapApInvoice(invoice: $objectData, sourceId: $sourceId),
-		};
-		$lines = $this->normaliseLines(lines: $posting['lines']);
+	/**
+	 * Map, balance-check, book at rate, stamp and write the source's posting.
+	 *
+	 * @param array<string,mixed> $objectData   The source document.
+	 * @param array<string,mixed> $parameters   The declared actionParameters.
+	 * @param string              $sourceSchema The supported source schema.
+	 * @param string              $sourceId     The source id.
+	 *
+	 * @return string The new GLTransaction id.
+	 *
+	 * @throws RuntimeException When the posting does not balance, has no administration, or a write fails.
+	 */
+	private function post(array $objectData, array $parameters, string $sourceSchema, string $sourceId): string {
+		$posting      = $this->mapPosting(sourceSchema: $sourceSchema, objectData: $objectData, sourceId: $sourceId);
+		$lines        = $this->normaliseLines(lines: $posting['lines']);
 		$keepBalanced = (($parameters['keepBalanced'] ?? true) !== false);
 		if ($keepBalanced === true) {
 			$this->assertBalanced(lines: $lines, label: $posting['header']['description']);
 		}
 
-		$header = $posting['header'];
-		$header['sourceReference'] = $sourceReference;
-		$header['state'] = 'posted';
-		$header['currency'] = (string)($objectData['currency'] ?? 'EUR');
+		$header = $this->postingHeader(header: $posting['header'], objectData: $objectData, sourceReference: $sourceSchema . ':' . $sourceId);
+
+		return $this->bookAndWrite(
+			booking: ['lines' => $lines, 'header' => $header, 'keepBalanced' => $keepBalanced],
+			objectData: $objectData,
+			sourceId: $sourceId
+		);
+	}//end post()
+
+	/**
+	 * Map the source onto a posting with its schema's mapper.
+	 *
+	 * @param string              $sourceSchema The supported source schema.
+	 * @param array<string,mixed> $objectData   The source document.
+	 * @param string              $sourceId     The source id.
+	 *
+	 * @return array{header: array<string,mixed>, lines: list<array<string,mixed>>}
+	 */
+	private function mapPosting(string $sourceSchema, array $objectData, string $sourceId): array {
+		return match ($sourceSchema) {
+			'JournalEntry' => $this->mapJournalEntry(entry: $objectData, sourceId: $sourceId),
+			'ARInvoice' => $this->mapArInvoice(invoice: $objectData, sourceId: $sourceId),
+			default => $this->mapApInvoice(invoice: $objectData, sourceId: $sourceId),
+		};
+	}//end mapPosting()
+
+	/**
+	 * Complete the mapper's header with the source reference, state, currency and administration.
+	 *
+	 * @param array<string,mixed> $header          The mapper's header.
+	 * @param array<string,mixed> $objectData      The source document.
+	 * @param string              $sourceReference The `<schema>:<id>` source reference.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws RuntimeException When the source has no administrationId.
+	 */
+	private function postingHeader(array $header, array $objectData, string $sourceReference): array {
+		$header['sourceReference']  = $sourceReference;
+		$header['state']            = 'posted';
+		$header['currency']         = (string)($objectData['currency'] ?? 'EUR');
 		$header['administrationId'] = (string)($objectData['administrationId'] ?? '');
 		if ($header['administrationId'] === '') {
 			throw new RuntimeException(sprintf('Cannot post %s: it has no administrationId.', $sourceReference));
 		}
 
+		return $header;
+	}//end postingHeader()
+
+	/**
+	 * Book the posting at its rate, stamp period and posting metadata, and write it.
+	 *
+	 * @param array<string,mixed> $booking    `lines`, `header` and `keepBalanced`.
+	 * @param array<string,mixed> $objectData The source document.
+	 * @param string              $sourceId   The source id.
+	 *
+	 * @return string The new GLTransaction id.
+	 *
+	 * @throws RuntimeException When the rate cannot be resolved or a write fails.
+	 */
+	private function bookAndWrite(array $booking, array $objectData, string $sourceId): string {
 		$booked = $this->bookAtRate(
-			booking: ['lines' => $lines, 'header' => $header, 'keepBalanced' => $keepBalanced],
+			booking: $booking,
 			currency: strtoupper(trim((string)($objectData['currency'] ?? '')))
 		);
 		$lines  = $booked['lines'];
@@ -283,9 +379,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
 		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
 
-		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
-		return $objectData;
-	}//end execute()
+		return $this->write(header: $header, lines: $lines, sourceId: $sourceId);
+	}//end bookAndWrite()
 
 	/**
 	 * JournalEntry: its `lines` already carry account, side and amount.
@@ -342,86 +437,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 */
 	private function mapArInvoice(array $invoice, string $sourceId): array {
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
-		$label = 'Sales invoice ' . $number;
-		$revenue = $this->account(key: self::CFG_REVENUE_ACCOUNT);
-		$advances = $this->account(key: self::CFG_ADVANCES_ACCOUNT);
-		if ((string)(($invoice['downPayment'] ?? [])['kind'] ?? '') === 'down-payment') {
-			// A down payment is not revenue until delivery: the advance is a liability (REQ-SDP-002).
-			$revenue = $advances;
-		}
-
-		$lines = [
-			[
-				'accountNumber' => $this->account(key: self::CFG_AR_CONTROL_ACCOUNT),
-				'side' => 'debit',
-				'cents' => $this->cents(amount: ($invoice['grossAmount'] ?? 0)),
-				'description' => $label,
-				'subLedgerType' => 'ar',
-				'subLedgerRef' => $sourceId,
-			],
-		];
-
-		$invoiceLines = (array)($invoice['invoiceLines'] ?? []);
-		if ($invoiceLines === []) {
-			$lines[] = $this->revenueLine(account: $revenue, amount: ($invoice['netAmount'] ?? 0), description: $label);
-		}
-
-		// Each line carries its tariff and box; the VAT is booked per tariff (REQ-VBTW-004).
-		$vat    = $this->vatStamper();
-		$groups = [];
-		foreach ($invoiceLines as $line) {
-			if (is_array($line) === true) {
-				// A deduction line takes a down payment off: its negative net releases the advance (REQ-SDP-003).
-				$lineAccount = $revenue;
-				if ((string)($line['downPaymentInvoiceId'] ?? '') !== '') {
-					$lineAccount = $advances;
-				}
-
-				$code    = $vat->saleTariff(line: $line);
-				$lines[] = $this->revenueLine(
-					account: $lineAccount,
-					amount: ($line['netAmount'] ?? 0),
-					description: (string)($line['itemName'] ?? $label)
-				) + $vat->stamp(code: $code, kind: 'base', purchase: false);
-				$groups  = $this->addToVatGroup(
-					groups: $groups,
-					code: $code,
-					baseCents: $this->cents(amount: ($line['netAmount'] ?? 0)),
-					vatCents: $vat->vatCents(baseCents: $this->cents(amount: ($line['netAmount'] ?? 0)), rate: ($line['vatRate'] ?? null))
-				);
-			}
-		}//end foreach
-
-		if ($invoiceLines !== []) {
-			// Document-level charges add to revenue, allowances reduce it (EN 16931 BT-99 / BT-107).
-			// With one tariff on the invoice they are at that tariff; with several no box is guessed.
-			$only = '';
-			if (count($groups) === 1) {
-				$only = (string)array_key_first($groups);
-			}
-
-			$documentLevel = [
-				$label . ' charges' => $this->cents(amount: ($invoice['chargesTotal'] ?? 0)),
-				$label . ' allowances' => -$this->cents(amount: ($invoice['allowancesTotal'] ?? 0)),
-			];
-			foreach ($documentLevel as $description => $cents) {
-				$lines[] = $this->revenueLine(account: $revenue, amount: ($cents / 100), description: $description)
-					+ $vat->stamp(code: $only, kind: 'base', purchase: false);
-				if ($only !== '') {
-					$groups[$only]['base'] += $cents;
-				}
-			}
-		}//end if
-
-		$groups = $this->applyVatBreakdown(groups: $groups, breakdown: (array)($invoice['vatBreakdown'] ?? []));
-		foreach ($vat->splitVat(groups: $groups, totalCents: $this->cents(amount: ($invoice['vatAmount'] ?? 0))) as $code => $cents) {
-			$lines[] = [
-				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
-				'side' => 'credit',
-				'cents' => $cents,
-				'description' => $label . ' VAT',
-			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: false);
-		}
+		$label  = 'Sales invoice ' . $number;
+		$lines  = $this->arPostingLines(invoice: $invoice, sourceId: $sourceId, label: $label);
 
 		return [
 			'header' => [
@@ -433,6 +450,217 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapArInvoice()
+
+	/**
+	 * The ARInvoice's lines: receivables, revenue per line or document level, and output VAT per tariff.
+	 *
+	 * @param array<string,mixed> $invoice  The ARInvoice.
+	 * @param string              $sourceId The ARInvoice id.
+	 * @param string              $label    The posting label.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function arPostingLines(array $invoice, string $sourceId, string $label): array {
+		$accounts = $this->arAccounts(invoice: $invoice);
+		$lines    = [$this->arControlLine(invoice: $invoice, sourceId: $sourceId, label: $label)];
+
+		$invoiceLines = (array)($invoice['invoiceLines'] ?? []);
+		if ($invoiceLines === []) {
+			$lines[] = $this->revenueLine(account: $accounts['revenue'], amount: ($invoice['netAmount'] ?? 0), description: $label);
+		}
+
+		$booked = $this->arLineBookings(invoiceLines: $invoiceLines, accounts: $accounts, label: $label);
+		if ($invoiceLines !== []) {
+			$booked = $this->arDocumentLevelBookings(invoice: $invoice, revenue: $accounts['revenue'], label: $label, booked: $booked);
+		}
+
+		$groups = $this->applyVatBreakdown(groups: $booked['groups'], breakdown: (array)($invoice['vatBreakdown'] ?? []));
+		return array_merge($lines, $booked['lines'], $this->arOutputVatLines(invoice: $invoice, groups: $groups, label: $label));
+	}//end arPostingLines()
+
+	/**
+	 * The ARInvoice's revenue and advances accounts.
+	 *
+	 * @param array<string,mixed> $invoice The ARInvoice.
+	 *
+	 * @return array{revenue: string, advances: string}
+	 */
+	private function arAccounts(array $invoice): array {
+		$revenue  = $this->account(key: self::CFG_REVENUE_ACCOUNT);
+		$advances = $this->account(key: self::CFG_ADVANCES_ACCOUNT);
+		if ((string)(($invoice['downPayment'] ?? [])['kind'] ?? '') === 'down-payment') {
+			// A down payment is not revenue until delivery: the advance is a liability (REQ-SDP-002).
+			$revenue = $advances;
+		}
+
+		return ['revenue' => $revenue, 'advances' => $advances];
+	}//end arAccounts()
+
+	/**
+	 * The receivables control line for the invoice's gross amount.
+	 *
+	 * @param array<string,mixed> $invoice  The ARInvoice.
+	 * @param string              $sourceId The ARInvoice id.
+	 * @param string              $label    The posting label.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function arControlLine(array $invoice, string $sourceId, string $label): array {
+		return [
+			'accountNumber' => $this->account(key: self::CFG_AR_CONTROL_ACCOUNT),
+			'side' => 'debit',
+			'cents' => $this->cents(amount: ($invoice['grossAmount'] ?? 0)),
+			'description' => $label,
+			'subLedgerType' => 'ar',
+			'subLedgerRef' => $sourceId,
+		];
+	}//end arControlLine()
+
+	/**
+	 * Each line carries its tariff and box; the VAT is booked per tariff (REQ-VBTW-004).
+	 *
+	 * @param array<int|string,mixed>                  $invoiceLines The ARInvoice's invoice lines.
+	 * @param array{revenue: string, advances: string} $accounts     The revenue and advances accounts.
+	 * @param string                                   $label        The posting label.
+	 *
+	 * @return array{lines: list<array<string,mixed>>, groups: array<string, array{base: int, vat: float|null}>}
+	 */
+	private function arLineBookings(array $invoiceLines, array $accounts, string $label): array {
+		$vat    = $this->vatStamper();
+		$lines  = [];
+		$groups = [];
+		foreach ($invoiceLines as $line) {
+			if (is_array($line) === true) {
+				$code    = $vat->saleTariff(line: $line);
+				$lines[] = $this->arRevenueLine(line: $line, accounts: $accounts, label: $label, code: $code);
+				$groups  = $this->addSaleToVatGroup(groups: $groups, code: $code, line: $line);
+			}
+		}
+
+		return ['lines' => $lines, 'groups' => $groups];
+	}//end arLineBookings()
+
+	/**
+	 * A sales line's revenue line, stamped with its tariff.
+	 *
+	 * @param array<string,mixed>                      $line     The invoice line.
+	 * @param array{revenue: string, advances: string} $accounts The revenue and advances accounts.
+	 * @param string                                   $label    The posting label.
+	 * @param string                                   $code     The line's tariff code.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function arRevenueLine(array $line, array $accounts, string $label, string $code): array {
+		return $this->revenueLine(
+			account: $this->arLineAccount(line: $line, accounts: $accounts),
+			amount: ($line['netAmount'] ?? 0),
+			description: (string)($line['itemName'] ?? $label)
+		) + $this->vatStamper()->stamp(code: $code, kind: 'base', purchase: false);
+	}//end arRevenueLine()
+
+	/**
+	 * A deduction line takes a down payment off: its negative net releases the advance (REQ-SDP-003).
+	 *
+	 * @param array<string,mixed>                      $line     The invoice line.
+	 * @param array{revenue: string, advances: string} $accounts The revenue and advances accounts.
+	 *
+	 * @return string The account the line's revenue books to.
+	 */
+	private function arLineAccount(array $line, array $accounts): string {
+		$lineAccount = $accounts['revenue'];
+		if ((string)($line['downPaymentInvoiceId'] ?? '') !== '') {
+			$lineAccount = $accounts['advances'];
+		}
+
+		return $lineAccount;
+	}//end arLineAccount()
+
+	/**
+	 * Add a sales line's base and VAT to its tariff's group.
+	 *
+	 * @param array<string, array{base: int, vat: float|null}> $groups The groups so far, in document order.
+	 * @param string                                           $code   The line's tariff code.
+	 * @param array<string,mixed>                              $line   The invoice line.
+	 *
+	 * @return array<string, array{base: int, vat: float|null}>
+	 */
+	private function addSaleToVatGroup(array $groups, string $code, array $line): array {
+		return $this->addToVatGroup(
+			groups: $groups,
+			code: $code,
+			baseCents: $this->cents(amount: ($line['netAmount'] ?? 0)),
+			vatCents: $this->vatStamper()->vatCents(baseCents: $this->cents(amount: ($line['netAmount'] ?? 0)), rate: ($line['vatRate'] ?? null))
+		);
+	}//end addSaleToVatGroup()
+
+	/**
+	 * Document-level charges add to revenue, allowances reduce it (EN 16931 BT-99 / BT-107).
+	 * With one tariff on the invoice they are at that tariff; with several no box is guessed.
+	 *
+	 * @param array<string,mixed>                                                                               $invoice The ARInvoice.
+	 * @param string                                                                                            $revenue The revenue account.
+	 * @param string                                                                                            $label   The posting label.
+	 * @param array{lines: list<array<string,mixed>>, groups: array<string, array{base: int, vat: float|null}>} $booked  The line bookings so far.
+	 *
+	 * @return array{lines: list<array<string,mixed>>, groups: array<string, array{base: int, vat: float|null}>}
+	 */
+	private function arDocumentLevelBookings(array $invoice, string $revenue, string $label, array $booked): array {
+		$only = $this->singleTariff(groups: $booked['groups']);
+
+		$documentLevel = [
+			$label . ' charges' => $this->cents(amount: ($invoice['chargesTotal'] ?? 0)),
+			$label . ' allowances' => -$this->cents(amount: ($invoice['allowancesTotal'] ?? 0)),
+		];
+		foreach ($documentLevel as $description => $cents) {
+			$booked['lines'][] = $this->revenueLine(account: $revenue, amount: ($cents / 100), description: $description)
+				+ $this->vatStamper()->stamp(code: $only, kind: 'base', purchase: false);
+			if ($only !== '') {
+				$booked['groups'][$only]['base'] += $cents;
+			}
+		}
+
+		return $booked;
+	}//end arDocumentLevelBookings()
+
+	/**
+	 * The one tariff on the invoice, or empty when there are none or several.
+	 *
+	 * @param array<string, array{base: int, vat: float|null}> $groups The VAT groups.
+	 *
+	 * @return string
+	 */
+	private function singleTariff(array $groups): string {
+		$only = '';
+		if (count($groups) === 1) {
+			$only = (string)array_key_first($groups);
+		}
+
+		return $only;
+	}//end singleTariff()
+
+	/**
+	 * Output VAT lines, one per tariff.
+	 *
+	 * @param array<string,mixed>                              $invoice The ARInvoice.
+	 * @param array<string, array{base: int, vat: float|null}> $groups  The VAT groups.
+	 * @param string                                           $label   The posting label.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function arOutputVatLines(array $invoice, array $groups, string $label): array {
+		$vat   = $this->vatStamper();
+		$lines = [];
+		foreach ($vat->splitVat(groups: $groups, totalCents: $this->cents(amount: ($invoice['vatAmount'] ?? 0))) as $code => $cents) {
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' VAT',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: false);
+		}
+
+		return $lines;
+	}//end arOutputVatLines()
 
 	/**
 	 * APInvoice: expense per line and input VAT against payables.
@@ -923,7 +1151,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @return string The new GLTransaction id.
 	 */
 	private function write(array $header, array $lines, string $sourceId): string {
-		$register = $this->register();
+		$register      = $this->register();
 		$transactionId = $this->idOf(
 			saved: $this->objectService->saveObject(object: $header, register: $register, schema: 'GLTransaction')->jsonSerialize()
 		);
@@ -934,40 +1162,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$written = [];
 		try {
 			foreach ($lines as $index => $line) {
-				$row = [
-					'transactionId' => $transactionId,
-					'lineNumber' => ($index + 1),
-					'accountNumber' => (string)$line['accountNumber'],
-					'side' => (string)$line['side'],
-					'amount' => round(((int)$line['cents'] / 100), 2),
-					'currency' => (string)$header['currency'],
-					'periodId' => (string)$header['periodId'],
-					'administrationId' => (string)$header['administrationId'],
-					'description' => (string)($line['description'] ?? ''),
-				];
-				foreach (['costCenterCode', 'projectCode'] as $dimension) {
-					if (isset($line[$dimension]) === true) {
-						$row[$dimension] = (string)$line[$dimension];
-					}
-				}
-
-				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind'] as $vatField) {
-					if (isset($line[$vatField]) === true) {
-						$row[$vatField] = (string)$line[$vatField];
-					}
-				}
-
-				$row = array_merge($row, self::fxColumns(line: $line));
-
-				if (isset($line['subLedgerType']) === true) {
-					$row['subLedgerType'] = (string)$line['subLedgerType'];
-					$row['subLedgerRef'] = (string)$line['subLedgerRef'];
-				}
-
+				$row       = $this->glLineRow(line: $line, index: $index, transactionId: $transactionId, header: $header);
 				$written[] = $this->idOf(
 					saved: $this->objectService->saveObject(object: $row, register: $register, schema: 'GLLine')->jsonSerialize()
 				);
-			}//end foreach
+			}
 		} catch (\Throwable $e) {
 			$this->rollBack(transactionId: $transactionId, lineIds: $written);
 			$this->logger->error(
@@ -979,6 +1178,59 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 
 		return $transactionId;
 	}//end write()
+
+	/**
+	 * The GLLine row for one normalised line, with its dimensions, VAT, FX and sub-ledger fields.
+	 *
+	 * @param array<string,mixed> $line          The normalised line.
+	 * @param int                 $index         The line's position, zero based.
+	 * @param string              $transactionId The GLTransaction id.
+	 * @param array<string,mixed> $header        The GLTransaction header.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function glLineRow(array $line, int $index, string $transactionId, array $header): array {
+		$row = [
+			'transactionId' => $transactionId,
+			'lineNumber' => ($index + 1),
+			'accountNumber' => (string)$line['accountNumber'],
+			'side' => (string)$line['side'],
+			'amount' => round(((int)$line['cents'] / 100), 2),
+			'currency' => (string)$header['currency'],
+			'periodId' => (string)$header['periodId'],
+			'administrationId' => (string)$header['administrationId'],
+			'description' => (string)($line['description'] ?? ''),
+		];
+		$row = self::copyStringFields(row: $row, line: $line, fields: ['costCenterCode', 'projectCode']);
+		$row = self::copyStringFields(row: $row, line: $line, fields: ['vatTariffCode', 'vatReturnBox', 'vatAmountKind']);
+		$row = array_merge($row, self::fxColumns(line: $line));
+
+		if (isset($line['subLedgerType']) === true) {
+			$row['subLedgerType'] = (string)$line['subLedgerType'];
+			$row['subLedgerRef']  = (string)$line['subLedgerRef'];
+		}
+
+		return $row;
+	}//end glLineRow()
+
+	/**
+	 * Copy each of the fields the line sets onto the row, as strings.
+	 *
+	 * @param array<string,mixed> $row    The GLLine row.
+	 * @param array<string,mixed> $line   The normalised line.
+	 * @param list<string>        $fields The fields to copy.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function copyStringFields(array $row, array $line, array $fields): array {
+		foreach ($fields as $field) {
+			if (isset($line[$field]) === true) {
+				$row[$field] = (string)$line[$field];
+			}
+		}
+
+		return $row;
+	}//end copyStringFields()
 
 	/**
 	 * Remove a partially written transaction and its lines, best effort.
