@@ -1,0 +1,463 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Belgisch minimumrekeningenstelsel (MAR/PCMN), KB 12 september 1983, as amended",
+    "description": "Belgisch minimumrekeningenstelsel, klassen 1 tot 7, met de Nederlandse en Franse naam van elke rekening. Een boekhouder breidt het uit zoals elk rekeningschema.",
+    "imported": "2026-11-13T00:00:00Z"
+  },
+  "accounts": [
+    {
+      "accountNumber": "100000",
+      "name": "Geplaatst kapitaal",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 100: Geplaatst kapitaal / Capital souscrit."
+    },
+    {
+      "accountNumber": "130000",
+      "name": "Wettelijke reserve",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 130: Wettelijke reserve / Réserve légale."
+    },
+    {
+      "accountNumber": "133000",
+      "name": "Beschikbare reserves",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 133: Beschikbare reserves / Réserves disponibles."
+    },
+    {
+      "accountNumber": "140000",
+      "name": "Overgedragen winst",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 140: Overgedragen winst / Bénéfice reporté."
+    },
+    {
+      "accountNumber": "141000",
+      "name": "Overgedragen verlies",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 141: Overgedragen verlies / Perte reportée."
+    },
+    {
+      "accountNumber": "160000",
+      "name": "Voorzieningen voor pensioenen en soortgelijke verplichtingen",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 160: Voorzieningen voor pensioenen en soortgelijke verplichtingen / Provisions pour pensions et obligations similaires."
+    },
+    {
+      "accountNumber": "173000",
+      "name": "Kredietinstellingen, schulden op meer dan één jaar",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 173: Kredietinstellingen, schulden op meer dan één jaar / Établissements de crédit, dettes à plus d'un an."
+    },
+    {
+      "accountNumber": "200000",
+      "name": "Oprichtingskosten",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 200: Oprichtingskosten / Frais d'établissement."
+    },
+    {
+      "accountNumber": "210000",
+      "name": "Immateriële vaste activa",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 210: Immateriële vaste activa / Immobilisations incorporelles."
+    },
+    {
+      "accountNumber": "220000",
+      "name": "Terreinen en gebouwen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 220: Terreinen en gebouwen / Terrains et constructions."
+    },
+    {
+      "accountNumber": "230000",
+      "name": "Installaties, machines en uitrusting",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 230: Installaties, machines en uitrusting / Installations, machines et outillage."
+    },
+    {
+      "accountNumber": "240000",
+      "name": "Meubilair en rollend materieel",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 240: Meubilair en rollend materieel / Mobilier et matériel roulant."
+    },
+    {
+      "accountNumber": "280000",
+      "name": "Financiële vaste activa",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 280: Financiële vaste activa / Immobilisations financières."
+    },
+    {
+      "accountNumber": "300000",
+      "name": "Grondstoffen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 300: Grondstoffen / Matières premières."
+    },
+    {
+      "accountNumber": "340000",
+      "name": "Handelsgoederen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 340: Handelsgoederen / Marchandises."
+    },
+    {
+      "accountNumber": "400000",
+      "name": "Handelsdebiteuren",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 400: Handelsdebiteuren / Clients.",
+      "controlAccountFor": "receivables"
+    },
+    {
+      "accountNumber": "401000",
+      "name": "Te innen wissels",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "400000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 401: Te innen wissels / Effets à recevoir."
+    },
+    {
+      "accountNumber": "407000",
+      "name": "Dubieuze debiteuren",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "400000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 407: Dubieuze debiteuren / Créances douteuses."
+    },
+    {
+      "accountNumber": "411000",
+      "name": "Terug te vorderen btw",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 411: Terug te vorderen btw / TVA à récupérer.",
+      "vatApplicable": true,
+      "controlAccountFor": "vat"
+    },
+    {
+      "accountNumber": "416000",
+      "name": "Diverse vorderingen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 416: Diverse vorderingen / Créances diverses."
+    },
+    {
+      "accountNumber": "440000",
+      "name": "Leveranciers",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 440: Leveranciers / Fournisseurs.",
+      "controlAccountFor": "payables"
+    },
+    {
+      "accountNumber": "441000",
+      "name": "Te betalen wissels",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "parentAccountNumber": "440000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 441: Te betalen wissels / Effets à payer."
+    },
+    {
+      "accountNumber": "444000",
+      "name": "Te ontvangen facturen",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "parentAccountNumber": "440000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 444: Te ontvangen facturen / Factures à recevoir."
+    },
+    {
+      "accountNumber": "450000",
+      "name": "Geraamd bedrag der belastingschulden",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 450: Geraamd bedrag der belastingschulden / Dettes fiscales estimées."
+    },
+    {
+      "accountNumber": "451000",
+      "name": "Te betalen btw",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 451: Te betalen btw / TVA à payer.",
+      "vatApplicable": true,
+      "controlAccountFor": "vat"
+    },
+    {
+      "accountNumber": "453000",
+      "name": "Ingehouden voorheffingen",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 453: Ingehouden voorheffingen / Précomptes retenus."
+    },
+    {
+      "accountNumber": "454000",
+      "name": "Rijksdienst voor Sociale Zekerheid",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 454: Rijksdienst voor Sociale Zekerheid / Office national de sécurité sociale."
+    },
+    {
+      "accountNumber": "455000",
+      "name": "Bezoldigingen",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 455: Bezoldigingen / Rémunérations."
+    },
+    {
+      "accountNumber": "489000",
+      "name": "Diverse schulden",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 489: Diverse schulden / Dettes diverses."
+    },
+    {
+      "accountNumber": "490000",
+      "name": "Over te dragen kosten",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 490: Over te dragen kosten / Charges à reporter."
+    },
+    {
+      "accountNumber": "492000",
+      "name": "Toe te rekenen kosten",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 492: Toe te rekenen kosten / Charges à imputer."
+    },
+    {
+      "accountNumber": "499000",
+      "name": "Wachtrekening",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 499: Wachtrekening / Compte d'attente."
+    },
+    {
+      "accountNumber": "550000",
+      "name": "Kredietinstellingen, rekeningen-courant",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 550: Kredietinstellingen, rekeningen-courant / Établissements de crédit, comptes courants."
+    },
+    {
+      "accountNumber": "570000",
+      "name": "Kassen, contanten",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 570: Kassen, contanten / Caisses, espèces."
+    },
+    {
+      "accountNumber": "580000",
+      "name": "Interne overboekingen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 580: Interne overboekingen / Virements internes."
+    },
+    {
+      "accountNumber": "600000",
+      "name": "Aankopen van grondstoffen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 600: Aankopen van grondstoffen / Achats de matières premières."
+    },
+    {
+      "accountNumber": "604000",
+      "name": "Aankopen van handelsgoederen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 604: Aankopen van handelsgoederen / Achats de marchandises."
+    },
+    {
+      "accountNumber": "609000",
+      "name": "Wijziging in voorraad",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 609: Wijziging in voorraad / Variation des stocks."
+    },
+    {
+      "accountNumber": "610000",
+      "name": "Diensten en diverse goederen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 610: Diensten en diverse goederen / Services et biens divers."
+    },
+    {
+      "accountNumber": "620000",
+      "name": "Bezoldigingen en rechtstreekse sociale voordelen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 620: Bezoldigingen en rechtstreekse sociale voordelen / Rémunérations et avantages sociaux directs."
+    },
+    {
+      "accountNumber": "621000",
+      "name": "Werkgeversbijdragen voor sociale verzekeringen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 621: Werkgeversbijdragen voor sociale verzekeringen / Cotisations patronales d'assurances sociales."
+    },
+    {
+      "accountNumber": "630000",
+      "name": "Afschrijvingen en waardeverminderingen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 630: Afschrijvingen en waardeverminderingen / Amortissements et réductions de valeur."
+    },
+    {
+      "accountNumber": "640000",
+      "name": "Andere bedrijfskosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 640: Andere bedrijfskosten / Autres charges d'exploitation."
+    },
+    {
+      "accountNumber": "650000",
+      "name": "Kosten van schulden",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 650: Kosten van schulden / Charges des dettes."
+    },
+    {
+      "accountNumber": "670000",
+      "name": "Belastingen op het resultaat",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 670: Belastingen op het resultaat / Impôts sur le résultat."
+    },
+    {
+      "accountNumber": "700000",
+      "name": "Omzet",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 700: Omzet / Chiffre d'affaires."
+    },
+    {
+      "accountNumber": "708000",
+      "name": "Toegekende kortingen, ristorno's en rabatten",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "parentAccountNumber": "700000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 708: Toegekende kortingen, ristorno's en rabatten / Remises, ristournes et rabais accordés."
+    },
+    {
+      "accountNumber": "740000",
+      "name": "Andere bedrijfsopbrengsten",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 740: Andere bedrijfsopbrengsten / Autres produits d'exploitation."
+    },
+    {
+      "accountNumber": "750000",
+      "name": "Opbrengsten uit vlottende activa",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "MAR/PCMN 750: Opbrengsten uit vlottende activa / Produits des actifs circulants."
+    }
+  ]
+}

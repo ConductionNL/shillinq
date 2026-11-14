@@ -550,6 +550,64 @@ final class SetupControllerTest extends TestCase {
 	}//end testRunActionSeedRunsWhenRequiredStepsAreSet()
 
 	/**
+	 * runAction('seed') with a legislation pack template seeds that country's
+	 * pack instead of the Dutch RGS, BTW and BBV data (ledger-foreign-legislation REQ-LFL-001).
+	 *
+	 * @return void
+	 */
+	public function testRunActionSeedWithALegislationPackSeedsThePack(): void {
+		$this->stubConfig(
+			[
+				'legal_region' => 'bv',
+				'rgs_template' => 'legislation-be',
+				'administration_id' => 'VDS',
+			]
+		);
+
+		$this->settingsService->expects($this->once())
+			->method('seedLegislationPack')
+			->with(country: 'BE', administrationId: 'VDS')
+			->willReturn(['success' => true, 'country' => 'BE']);
+		$this->settingsService->expects($this->never())->method('seedRgsTemplate');
+		$this->settingsService->expects($this->never())->method('seedBtwTariffs');
+		$this->settingsService->expects($this->never())->method('seedBbvTaakvelden');
+
+		$this->appConfig->expects($this->once())
+			->method('setValueString')
+			->with('shillinq', 'setup_seed_done', '1');
+
+		$response = $this->controller->runAction('seed');
+
+		self::assertTrue($response->getData()['success']);
+		self::assertSame('Chart of accounts and VAT rates seeded from the BE legislation pack.', $response->getData()['message']);
+
+	}//end testRunActionSeedWithALegislationPackSeedsThePack()
+
+	/**
+	 * A pack that cannot be seeded leaves the seed step open and says why.
+	 *
+	 * @return void
+	 */
+	public function testRunActionSeedWithAFailingPackLeavesTheStepOpen(): void {
+		$this->stubConfig(
+			[
+				'legal_region' => 'bv',
+				'rgs_template' => 'legislation-be',
+				'administration_id' => 'VDS',
+			]
+		);
+
+		$this->settingsService->method('seedLegislationPack')->willReturn(['success' => false, 'message' => 'No legislation pack for BE.']);
+		$this->appConfig->expects($this->never())->method('setValueString');
+
+		$response = $this->controller->runAction('seed');
+
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		self::assertSame('No legislation pack for BE.', $response->getData()['message']);
+
+	}//end testRunActionSeedWithAFailingPackLeavesTheStepOpen()
+
+	/**
 	 * runAction() returns 404 for an unrecognised action id.
 	 *
 	 * @return void

@@ -42,6 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Tax\ReverseChargeNotice;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
 use OCP\IL10N;
@@ -382,7 +383,8 @@ class ArInvoiceIcpPdfRenderer implements ArInvoiceIcpPdfRendererInterface {
 	 * @return string The translated notice (UTF-8).
 	 */
 	private function reverseChargeNotice(): string {
-		return $this->l10n->t('VAT reverse-charged');
+		// The one notice every reverse-charged output prints (design D1).
+		return $this->l10n->t(ReverseChargeNotice::NOTICE);
 	}//end reverseChargeNotice()
 
 	/**

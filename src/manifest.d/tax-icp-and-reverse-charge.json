@@ -1,0 +1,92 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "tax-icp-and-reverse-charge",
+		"adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
+		"description": "The ICP page (REQ-ICR-002, REQ-ICR-003): the statements prepared from the books (IcpOpgaaf, the line-bearing statement IcpFilingService and IcpFinalizeGuard already use), a Prepare header action that writes the period's draft and shows its reconciliation with box 3b, and on the detail page the reconciliation check, the XML download and File, which only files when the Digipoort hand-off is bound. mergePages() replaces a page wholesale by id, so both pages are full copies: re-sync if the base pages change."
+	},
+	"pages": [
+		{
+			"id": "IcpOpgaaf",
+			"route": "/belastingen/icp-opgaaf",
+			"type": "index",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpOpgaaf",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "periodicity", "label": "Periodicity", "sortable": true},
+					{"key": "type", "label": "Type", "sortable": true},
+					{"key": "total", "label": "Total", "sortable": true, "type": "money"},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "status", "label": "Status", "type": "select", "options": ["draft", "finalized", "submitted", "accepted", "rejected", "corrected"]}
+				],
+				"defaultSort": "period",
+				"detailRoute": "IcpOpgaafDetail",
+				"headerActions": [
+					{"id": "prepare-icp-statement", "label": "Prepare statement", "icon": "EarthArrowRight", "handler": "openPrepareIcpStatement", "description": "Add up the posted intra-EU supplies of a period per buyer VAT number and supply type, save them as a draft statement and compare it with box 3b."}
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+			}
+		},
+		{
+			"id": "IcpOpgaafDetail",
+			"route": "/belastingen/icp-opgaaf/:id",
+			"type": "detail",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"_note": "ICP statement detail: one line per buyer VAT number and supply type, the totals, the lifecycle (draft, finalised after the box 3b check, submitted, accepted or rejected as Digipoort answers) and the Digipoort reference. Reconcile, Download XML and File are header actions; File shows on a finalised statement and refuses while no Digipoort hand-off is bound. Audit trail in the sidebar.",
+				"auditTrail": true,
+				"schema": "IcpOpgaaf",
+				"lifecycleActions": true,
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "periodicity", "label": "Periodicity", "type": "string"},
+					{"key": "type", "label": "Type", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "lines", "label": "Lines", "type": "array"},
+					{"key": "total", "label": "Total", "type": "money"},
+					{"key": "totalGoods", "label": "Goods", "type": "money"},
+					{"key": "totalServices", "label": "Services", "type": "money"},
+					{"key": "totalTriangulation", "label": "Triangulation", "type": "money"},
+					{"key": "taxAuthorityReference", "label": "Belastingdienst reference", "type": "string"},
+					{"key": "submittedAt", "label": "Submitted on", "type": "datetime"},
+					{"key": "correctsPeriod", "label": "Corrects period", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"headerActions": [
+					{"id": "reconcile-icp-statement", "label": "Reconcile with box 3b", "type": "handler", "handler": "reconcileIcpStatement", "icon": "ScaleBalance", "description": "Compare the statement's total with box 3b of the VAT return of the same period."},
+					{"id": "download-icp-statement", "label": "Download XML", "type": "handler", "handler": "downloadIcpStatementXml", "icon": "Download", "description": "Download the statement as its XBRL instance, to file it yourself."},
+					{"id": "file-icp-statement", "label": "File", "type": "handler", "handler": "fileIcpStatement", "icon": "Send", "description": "File the finalised statement with the Belastingdienst through Digipoort.", "visibleWhen": {"field": "status", "op": "eq", "value": "finalized"}}
+				],
+				"indexRoute": "IcpOpgaaf",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+			}
+		}
+	]
+}

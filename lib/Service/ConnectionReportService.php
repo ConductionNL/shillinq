@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -68,6 +69,10 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
+		'digipoort-sbr' => [
+			'interface' => DigipoortSbrAdapterInterface::class,
+			'consequence' => 'No ICP statement or other SBR filing reaches Digipoort; download the XML instead.',
+		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,
 			'consequence' => 'No rates are fetched from the ECB or a market data provider.',

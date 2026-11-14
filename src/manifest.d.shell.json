@@ -5534,6 +5534,25 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-icp-and-reverse-charge",
+					"id": "IcpOpgaaf",
+					"route": "/belastingen/icp-opgaaf",
+					"type": "index",
+					"title": "ICP-opgaaf"
+				},
+				{
+					"_fragment": "tax-icp-and-reverse-charge",
+					"id": "IcpOpgaafDetail",
+					"route": "/belastingen/icp-opgaaf/:id",
+					"type": "detail",
+					"title": "ICP-opgaaf"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "Cashflow",

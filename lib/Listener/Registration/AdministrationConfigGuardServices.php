@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener\Registration;
 
 use OCA\Shillinq\Listener\AdministrationManagedWriteListener;
+use OCA\Shillinq\Listener\JurisdictionLockListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -50,6 +51,12 @@ final class AdministrationConfigGuardServices {
 				listener: AdministrationManagedWriteListener::class
 			);
 		}
+
+		// An administration's jurisdiction is fixed once it has postings (ledger-foreign-legislation D1).
+		$context->registerEventListener(
+			event: 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
+			listener: JurisdictionLockListener::class
+		);
 
 	}//end register()
 }//end class

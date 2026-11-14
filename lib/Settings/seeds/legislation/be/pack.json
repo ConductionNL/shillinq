@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "description": "Legislation pack: the chart and VAT rates an administration of this jurisdiction is seeded from, and the outputs it does not offer."
+  },
+  "country": "BE",
+  "name": "België / Belgique",
+  "chart": "chart.json",
+  "vatRates": "vat-rates.json",
+  "disables": [
+    "dutch-vat-return",
+    "sbr",
+    "icp"
+  ]
+}

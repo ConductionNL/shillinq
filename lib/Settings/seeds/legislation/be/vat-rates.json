@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wetboek van de belasting over de toegevoegde waarde (WBTW) en KB nr. 20",
+    "description": "Belgische btw-tarieven 0, 6, 12 en 21 procent.",
+    "imported": "2026-11-13T00:00:00Z"
+  },
+  "tariffs": [
+    {
+      "code": "be-standard",
+      "label": "Normaal tarief",
+      "ratePercentage": 21,
+      "reverseCharge": false,
+      "effectiveFrom": "1996-01-01",
+      "effectiveTo": null,
+      "legalBasis": "WBTW art. 37, § 1, en KB nr. 20",
+      "jurisdiction": "BE"
+    },
+    {
+      "code": "be-intermediate",
+      "label": "Tussentarief",
+      "ratePercentage": 12,
+      "reverseCharge": false,
+      "effectiveFrom": "1996-01-01",
+      "effectiveTo": null,
+      "legalBasis": "KB nr. 20, tabel B",
+      "jurisdiction": "BE"
+    },
+    {
+      "code": "be-reduced",
+      "label": "Verlaagd tarief",
+      "ratePercentage": 6,
+      "reverseCharge": false,
+      "effectiveFrom": "1996-01-01",
+      "effectiveTo": null,
+      "legalBasis": "KB nr. 20, tabel A",
+      "jurisdiction": "BE"
+    },
+    {
+      "code": "be-zero",
+      "label": "Nultarief",
+      "ratePercentage": 0,
+      "reverseCharge": false,
+      "effectiveFrom": "1996-01-01",
+      "effectiveTo": null,
+      "legalBasis": "KB nr. 20, tabel B, en WBTW art. 39 tot 42",
+      "jurisdiction": "BE"
+    }
+  ]
+}

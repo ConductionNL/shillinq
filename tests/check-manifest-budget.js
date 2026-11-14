@@ -231,7 +231,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // fourth tab of the receivables tab strip and its payouts table):
 // development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
 // Raised to 1,259,400: 6,262 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_259_400
+//
+// Re-measured 2026-11-14 (tax-icp-and-reverse-charge 2.3: the ICP page reads
+// the line-bearing IcpOpgaaf statements, with Prepare, Reconcile, Download XML
+// and File): development held 1,257,205 bytes. This change adds 4,866 B in the
+// new tax-icp-and-reverse-charge.json fragment. 1,262,071 in all.
+// Raised to 1,268,400: 6,329 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_268_400
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
