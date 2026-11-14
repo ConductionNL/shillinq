@@ -31,7 +31,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;

@@ -27,10 +27,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\PipelinqRequestRun;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;

@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 use DateTimeImmutable;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\LoggingTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
