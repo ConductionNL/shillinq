@@ -10,6 +10,6 @@
 
 ## 2. Follow-up
 
-- [ ] 2.1 "Payouts to pay" menu entry on the InboundPayable index with the three row actions. Verify: Playwright on the live instance.
+- [x] 2.1 "Payouts to pay" menu entry on the InboundPayable index with the three row actions. Built: page `InboundPayables` in `src/manifest.d/inbound-payable-from-another-app.json` (opens on To approve), relocated under Banking & Cashflow; row actions Approve (requested), Mark paid (approved) and Reject (requested or approved) through `approvePayable`, `markPayablePaid`, `rejectPayable` and `InboundPayableStepDialog` to `InboundPayableController`; vitest `tests/vitest/inboundPayablePayouts.spec.js`. Not run: the Playwright pass on the live instance.
 - [x] 2.3 `PayableCancelRequestedEvent`, `PayableCancelRequestedListener`, `InboundPayableService::cancel()`: the raising app withdraws a requested payable; schema 0.2.0 adds `cancelled`, `cancelledAt`, `cancelledReason` (REQ-IPY-005). Verify: `testTheAppWithdrawsARequestedPayable`, `testWithdrawingIsRefusedOnceFinanceActed`, `testStepsNeedTheAdministerActionAndTheListenerIsWired`.
 - [ ] 2.2 Tell dossiq to raise its dwangsom payout through `PayableRaisedEvent` (refactor lane R3, C16 part 2).

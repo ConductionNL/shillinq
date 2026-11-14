@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\AppInfo\GuardTagServices;
+use OCA\Shillinq\Listener\Registration\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;
@@ -579,6 +579,48 @@ final class ImportBatchStepsTest extends TestCase {
 		$this->expectExceptionMessage('batch-1');
 		$action->execute(array_merge($ready, ['status' => 'posting']), $ready, ['step' => 'post'], ImportBatchAction::class);
 	}//end testTheSameImportIsNotPostedTwice()
+
+	/**
+	 * The batch that posted the files is not refused as its own duplicate (REQ-AIW-001).
+	 *
+	 * @return void
+	 */
+	public function testABatchIsNotRefusedAsItsOwnEarlierPost(): void {
+		$action = $this->action();
+		$ready  = $this->throughDryRun(action: $action, batch: $this->batch(status: 'draft'));
+		$this->store->setSchema('ImportBatch')->saveObject(array_merge($ready, ['status' => 'posted']));
+
+		$posted = $this->step(action: $action, batch: $ready, to: 'posting', step: 'post');
+
+		$this->assertSame('posted', $posted['status']);
+		$this->assertCount(1, $this->rows(schema: 'JournalEntry'));
+	}//end testABatchIsNotRefusedAsItsOwnEarlierPost()
+
+	/**
+	 * Reversing into a period that is not open is refused with the pipeline's message (REQ-AIW-003).
+	 *
+	 * @return void
+	 */
+	public function testReversingIntoAPeriodThatIsNotOpenIsRefused(): void {
+		$year   = $this->store->setSchema('FiscalYear')->saveObject(
+			['administrationId' => 'adm-new', 'yearNumber' => 2026, 'startDate' => '2026-01-01', 'endDate' => '2026-12-31', 'state' => 'open']
+		);
+		$action = $this->action();
+		$posted = $this->step(action: $action, batch: $this->throughDryRun(action: $action, batch: $this->batch(status: 'draft')), to: 'posting', step: 'post');
+		$this->store->setSchema('FiscalYear')->patchObject((string)$year->getObject()['id'], ['state' => 'closed']);
+
+		try {
+			$this->step(action: $action, batch: $posted, to: 'reversed', step: 'reverse');
+			$this->fail('reverse did not refuse');
+		} catch (DomainException $e) {
+			$this->assertSame(
+				'Reversal is blocked: the batch is not posted or the target period is closed. Follow correction-journal practice.',
+				$e->getMessage()
+			);
+		}
+
+		$this->assertCount(1, $this->rows(schema: 'JournalEntry'));
+	}//end testReversingIntoAPeriodThatIsNotOpenIsRefused()
 
 	/**
 	 * Reversing posts the reversing entry and removes the customers the import wrote (REQ-AIW-003).

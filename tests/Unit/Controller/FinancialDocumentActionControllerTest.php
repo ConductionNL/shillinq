@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\FinancialDocumentActionController;
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentActions;
 use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

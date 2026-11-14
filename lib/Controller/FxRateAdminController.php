@@ -36,8 +36,8 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\BackgroundJob\FxRateImportJob;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
@@ -74,7 +74,7 @@ class FxRateAdminController extends Controller {
 		private readonly TreasuryRateAdapterInterface $adapter,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
