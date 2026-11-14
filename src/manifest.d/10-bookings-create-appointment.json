@@ -65,7 +65,17 @@
 				"defaultSort": "startTime",
 				"detailRoute": "AfspraakDetail",
 				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. AfspraakDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
-				"rowRoute": "AfspraakDetail"
+				"rowRoute": "AfspraakDetail",
+				"headerActions": [
+					{
+						"id": "new-repeating-appointment",
+						"label": "New repeating appointment",
+						"icon": "CalendarSync",
+						"type": "handler",
+						"handler": "openRepeatAppointment",
+						"description": "Book an appointment that repeats daily, weekly or monthly, after a number of times or until a date, as one series (REQ-BRS-004)."
+					}
+				]
 			}
 		},
 		{

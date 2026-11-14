@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookings-messages-and-embedding",
 		"adr": "ADR-037 modular register fragment, never edit shillinq_register.json",
-		"description": "kind: feature. REQ-BCF-013: the appointment records whether the confirmation request reached the mail server, so a failed send can be shown and resent. Written by ConfirmationTokenService after each send or resend, never by a user."
+		"description": "kind: feature. REQ-BCF-013: the appointment records whether the confirmation request reached the mail server, so a failed send can be shown and resent. Written by ConfirmationTokenService after each send or resend, never by a user. REQ-BET-011: a booking records when its last reminder was sent and on which channel, written by BookingNotificationService after the reminder left. REQ-SMS-021: an SMS channel shows whether a real provider is bound (connectionState), and an appointment records its SMS reminder outcome, written by SmsReminderRunner. REQ-WSW-011: the key-lifecycle audit trail records a change of a key's allowed origins (origins-changed; lists merge, so this extends the action enum)."
 	},
 	"components": {
 		"schemas": {
@@ -23,6 +23,64 @@
 						"nullable": true,
 						"title": "Confirmation request tried at",
 						"description": "When the last confirmation request was tried, ISO 8601."
+					},
+					"smsReminderStatus": {
+						"type": "string",
+						"enum": ["sent", "pending", "failed", "skipped"],
+						"nullable": true,
+						"title": "SMS reminder",
+						"description": "The outcome of the SMS reminder: handed to the provider (sent or pending), failed, or skipped (opted out, no number). Empty until the reminder was due."
+					},
+					"smsReminderAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"title": "SMS reminder tried at",
+						"description": "When the SMS reminder was tried, ISO 8601."
+					},
+					"smsReminderReference": {
+						"type": "string",
+						"nullable": true,
+						"title": "SMS provider reference",
+						"description": "The provider's reference for the reminder message, when it gave one."
+					}
+				}
+			},
+			"Booking": {
+				"properties": {
+					"lastReminderSentAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"title": "Last reminder sent at",
+						"description": "When the last reminder for this booking was accepted by its channel, ISO 8601. Empty until a reminder was sent."
+					},
+					"lastReminderChannel": {
+						"type": "string",
+						"nullable": true,
+						"title": "Last reminder channel",
+						"description": "The channel that accepted the last reminder, for example email or sms."
+					}
+				}
+			},
+			"BookingSmsReminderChannel": {
+				"properties": {
+					"connectionState": {
+						"type": "string",
+						"enum": ["connected", "not-connected"],
+						"nullable": true,
+						"title": "Provider connection",
+						"description": "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job."
+					}
+				}
+			},
+			"WidgetAccessKeyAuditEntry": {
+				"properties": {
+					"action": {
+						"type": "string",
+						"title": "Action",
+						"description": "The lifecycle action that triggered the audit entry.",
+						"enum": ["origins-changed"]
 					}
 				}
 			}
