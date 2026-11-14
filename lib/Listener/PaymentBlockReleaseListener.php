@@ -93,32 +93,45 @@ class PaymentBlockReleaseListener implements IEventListener {
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#2-state-guards
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof ObjectUpdatingEvent === false) {
+		$release = $this->release(event: $event);
+		if ($release === null) {
 			return;
 		}
 
-		$old = $event->getOldObject();
-		$new = $event->getNewObject();
-		if ($old === null || $new === null) {
-			return;
-		}
-
-		$before = $old->getObject();
-		$after  = $new->getObject();
-		if (($before['paymentBlocked'] ?? false) !== true || ($after['paymentBlocked'] ?? false) === true) {
-			return;
-		}
-
-		if ($this->isBlockable(entity: $new) === false) {
-			return;
-		}
-
-		$refusal = $this->refusal(before: $before, after: $after);
+		$refusal = $this->refusal(before: $release['before'], after: $release['after']);
 		if ($refusal !== null) {
 			$event->setErrors($refusal);
 			$event->stopPropagation();
 		}
 	}//end handle()
+
+	/**
+	 * The object before and after the save when the save releases a block on a blockable object, else null.
+	 *
+	 * @param Event $event The event being handled.
+	 *
+	 * @return array{before: array<string, mixed>, after: array<string, mixed>}|null
+	 */
+	private function release(Event $event): ?array {
+		if ($event instanceof ObjectUpdatingEvent === false) {
+			return null;
+		}
+
+		$saved   = $event->getNewObject();
+		$current = $event->getOldObject();
+		if ($saved === null || $current === null) {
+			return null;
+		}
+
+		$before = $current->getObject();
+		$after  = $saved->getObject();
+		$lifts  = ($before['paymentBlocked'] ?? false) === true && ($after['paymentBlocked'] ?? false) !== true;
+		if ($lifts === false || $this->isBlockable(entity: $saved) === false) {
+			return null;
+		}
+
+		return ['before' => $before, 'after' => $after];
+	}//end release()
 
 	/**
 	 * Why a release is refused, or null when it may go through.
