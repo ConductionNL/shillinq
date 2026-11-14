@@ -122,13 +122,7 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 			return GuardResult::deny(self::MESSAGE_INDETERMINATE);
 		}
 
-		$amounts = [];
-		foreach ($rows as $row) {
-			$instalment = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($instalment !== null) {
-				$amounts[] = (float)($instalment['amount'] ?? 0);
-			}
-		}
+		$amounts = $this->instalmentAmounts(rows: $rows);
 
 		$total = (float)($plan['totalAmount'] ?? 0);
 		if ($this->schedule->balances(total: $total, amounts: $amounts) === true) {
@@ -140,4 +134,25 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 		);
 
 	}//end requireBalancedSchedule()
+
+	/**
+	 * The amounts of the instalment rows that carry an id.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return list<float> The instalment amounts.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-1.1
+	 */
+	private function instalmentAmounts(mixed $rows): array {
+		$amounts = [];
+		foreach ($rows as $row) {
+			$instalment = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($instalment !== null) {
+				$amounts[] = (float)($instalment['amount'] ?? 0);
+			}
+		}
+
+		return $amounts;
+	}//end instalmentAmounts()
 }//end class
