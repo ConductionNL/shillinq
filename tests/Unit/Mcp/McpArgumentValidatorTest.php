@@ -73,4 +73,98 @@ class McpArgumentValidatorTest extends TestCase {
 			$validator->problems(self::SCHEMA, ['id' => 7, 'decision' => null])
 		);
 	}//end testEachProblemIsNamed()
+
+	/**
+	 * An integer argument must be an int within its bounds; a numeric string is refused.
+	 *
+	 * @return void
+	 */
+	public function testIntegerArgumentsAreBounded(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => ['year' => ['type' => 'integer', 'minimum' => 2020, 'maximum' => 2099]],
+			'required' => ['year'],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['year' => 2020]));
+		$this->assertSame([], $validator->problems($schema, ['year' => 2099]));
+		$this->assertSame(['year must be at least 2020'], $validator->problems($schema, ['year' => 2019]));
+		$this->assertSame(['year must be at most 2099'], $validator->problems($schema, ['year' => 2100]));
+		$this->assertSame(['year must be an integer'], $validator->problems($schema, ['year' => '2024']));
+		$this->assertSame(['year must be an integer'], $validator->problems($schema, ['year' => 2024.0]));
+	}//end testIntegerArgumentsAreBounded()
+
+	/**
+	 * A number argument takes an int or a float within its bounds, and may be nullable.
+	 *
+	 * @return void
+	 */
+	public function testNumberArgumentsTakeIntsAndFloats(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => ['amount' => ['type' => ['number', 'null'], 'minimum' => 0]],
+			'required' => [],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['amount' => 12]));
+		$this->assertSame([], $validator->problems($schema, ['amount' => 12.5]));
+		$this->assertSame([], $validator->problems($schema, ['amount' => null]));
+		$this->assertSame(['amount must be at least 0'], $validator->problems($schema, ['amount' => -0.5]));
+		$this->assertSame(['amount must be a number'], $validator->problems($schema, ['amount' => '12.5']));
+	}//end testNumberArgumentsTakeIntsAndFloats()
+
+	/**
+	 * A list argument is bounded, and each object item is validated as arguments are, named by position.
+	 *
+	 * @return void
+	 */
+	public function testListArgumentsValidateTheirItems(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => [
+				'lines' => [
+					'type' => 'array',
+					'minItems' => 1,
+					'maxItems' => 2,
+					'items' => [
+						'type' => 'object',
+						'properties' => ['text' => ['type' => 'string'], 'qty' => ['type' => 'number', 'minimum' => 0]],
+						'required' => ['text'],
+					],
+				],
+			],
+			'required' => ['lines'],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['lines' => [['text' => 'a', 'qty' => 1.5], ['text' => 'b']]]));
+		$this->assertSame(['lines must have at least 1 items'], $validator->problems($schema, ['lines' => []]));
+		$this->assertSame(['lines must have at most 2 items'], $validator->problems($schema, ['lines' => [['text' => 'a'], ['text' => 'b'], ['text' => 'c']]]));
+		$this->assertSame(['lines must be a list'], $validator->problems($schema, ['lines' => ['a' => ['text' => 'x']]]));
+		$this->assertSame(['lines must be a list'], $validator->problems($schema, ['lines' => 'x']));
+		$this->assertSame(
+			['lines[0].text is required; lines[0].qty must be at least 0; lines[1] must be an object'],
+			$validator->problems($schema, ['lines' => [['qty' => -1], 'x']])
+		);
+		$this->assertSame(['lines[0].note is not an argument of this tool'], $validator->problems($schema, ['lines' => [['text' => 'a', 'note' => 'x']]]));
+	}//end testListArgumentsValidateTheirItems()
+
+	/**
+	 * A list of strings validates each string against the item schema.
+	 *
+	 * @return void
+	 */
+	public function testListsOfStringsValidateEachString(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => ['ids' => ['type' => 'array', 'items' => ['type' => 'string', 'pattern' => '^[a-z0-9-]{1,8}$']]],
+			'required' => ['ids'],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['ids' => ['m-1', 'm-2']]));
+		$this->assertSame(['ids[1] is not well-formed; ids[2] must be a string'], $validator->problems($schema, ['ids' => ['m-1', '../x', 7]]));
+	}//end testListsOfStringsValidateEachString()
 }//end class
