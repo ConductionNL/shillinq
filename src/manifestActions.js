@@ -18,6 +18,12 @@ import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.j
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
+import {
+	downloadIcpStatementXml,
+	fileIcpStatement,
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+} from './utils/icpStatementActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import {
 	approvePayable,
@@ -94,6 +100,12 @@ export const manifestActions = Object.freeze({
 	openDunningSwitchOn,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// tax-icp-and-reverse-charge: Prepare statement on the ICP page, and
+	// Reconcile, Download XML and File on a statement.
+	openPrepareIcpStatement,
+	reconcileIcpStatement,
+	downloadIcpStatementXml,
+	fileIcpStatement,
 })
 
 /**
