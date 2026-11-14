@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Integration;
 use InvalidArgumentException;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\DebtorCreditService;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
@@ -151,6 +152,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		?object $inner = null,
 		array $appGrants = [],
 		array $enabledApps = [],
+		?MolliePaymentAdapterInterface $paymentAdapter = null,
 	): PaymentRequestLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -205,6 +207,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			),
 			settlements: new PaymentSettlementService(),
 			appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $appManager),
+			paymentAdapter: $paymentAdapter,
 		);
 	}//end makeProvider()
 
@@ -262,6 +265,27 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame('https://pay.example/pr-1', $listed['items'][0]['paymentLink']);
 		self::assertArrayHasKey('fee', $listed);
 	}//end testListIsScopedToTheHostObject()
+
+	/**
+	 * The list says whether online payment is live: a live adapter yes, a
+	 * dormant or absent one no, with the reason the panel shows
+	 * (receivables-payment-links task 3.3, REQ-RPL-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+	 */
+	public function testListSaysWhetherOnlinePaymentIsLive(): void {
+		$stored = [$this->storedRequest('pr-1', 'zaak-7')];
+		foreach ([[false, ['live' => true, 'reason' => '']], [true, ['live' => false, 'reason' => 'not-set-up']]] as [$dormant, $expected]) {
+			$adapter = $this->createMock(MolliePaymentAdapterInterface::class);
+			$adapter->method('isDormant')->willReturn($dormant);
+			$listed = $this->makeProvider(stored: $stored, paymentAdapter: $adapter)->list('dossiq', 'Zaak', 'zaak-7');
+			self::assertSame($expected, $listed['onlinePayment']);
+		}
+
+		self::assertSame(['live' => false, 'reason' => 'not-set-up'], $this->makeProvider(stored: $stored)->list('dossiq', 'Zaak', 'zaak-7')['onlinePayment']);
+	}//end testListSaysWhetherOnlinePaymentIsLive()
 
 	/**
 	 * A caller whose groups do not carry `payment.request` is refused, and NOTHING

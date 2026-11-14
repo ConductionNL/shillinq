@@ -4773,7 +4773,8 @@ OC.L10N.register(
         "Correction posting": "Correction posting",
         "Filed on": "Filed on",
         "Digipoort reference": "Digipoort reference",
-        "File supplementary return": "File supplementary return"
+        "File supplementary return": "File supplementary return",
+        "Online payment is not set up: configure a payment source in integriq.": "Online payment is not set up: configure a payment source in integriq."
     },
     "nplurals=2; plural=(n != 1);"
 )

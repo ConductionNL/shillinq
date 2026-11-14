@@ -48,6 +48,7 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCP\IAppConfig;
@@ -81,6 +82,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @param PaymentRequestPortalScopeInterface $portalScope Gives a request without an invoice its portal scope.
 	 * @param ?ObjectRequestInvoiceServiceInterface $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
 	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
+	 * @param ?MolliePaymentAdapterInterface $paymentAdapter The bound payment adapter; dormant or absent means online payment is not set up.
 	 *
 	 * @return void
 	 */
@@ -96,6 +98,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
 		private readonly ?ObjectRequestInvoiceServiceInterface $invoices = null,
 		private readonly ?DebtorCreditServiceInterface $credits = null,
+		private readonly ?MolliePaymentAdapterInterface $paymentAdapter = null,
 	) {
 	}//end __construct()
 
@@ -252,8 +255,26 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			'total' => count($projected),
 			'nextCursor' => null,
 			'fee' => $this->feeFor(register: $register, schema: $schema, objectId: $objectId),
+			'onlinePayment' => $this->onlinePayment(),
 		];
 	}//end list()
+
+	/**
+	 * Whether a payment link can be created: a live payment adapter is bound.
+	 * The panel disables Send payment link with the reason otherwise
+	 * (receivables-payment-links D5, REQ-RPL-002).
+	 *
+	 * @return array{live: bool, reason: string} `reason` is `not-set-up` when not live, else ''.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+	 */
+	private function onlinePayment(): array {
+		if ($this->paymentAdapter === null || $this->paymentAdapter->isDormant() === true) {
+			return ['live' => false, 'reason' => 'not-set-up'];
+		}
+
+		return ['live' => true, 'reason' => ''];
+	}//end onlinePayment()
 
 	/**
 	 * The published fee for the host object's type, or null when it carries none.

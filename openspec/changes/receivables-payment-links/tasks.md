@@ -20,6 +20,7 @@
 - [ ] 3.2 Print the pay link in `InvoicePdfGenerator::renderHtml()` and put it in the invoice mail of `sales-invoice-sending` (REQ-RPL-004). Verify: PHPUnit asserting the link in the rendered HTML and mail body, and no link with a dormant adapter.
       > Built: `InvoicePdfGenerator::renderHtml()` prints "Betaal online" with the signed URL under the totals through `PayLinkService::forOpenInvoice()`, which gives a URL only for an issued, partially paid or overdue invoice with a live adapter bound (`tests/Unit/Service/InvoicePdfPayLinkTest.php`). Open: the invoice mail, which `sales-invoice-sending`'s `InvoiceSendingService` adds and is not on development yet; it calls `forOpenInvoice()` for the mail body.
 - [ ] 3.3 Disable Send payment link with the reason on the Payment requests page and the case panel when the adapter is dormant (REQ-RPL-002). Verify: Vitest for `ShillinqPaymentRequestsPanel.vue`; Playwright on `PaymentRequests`.
+      > Built: the payment requests leaf reports `onlinePayment {live, reason}` from the bound adapter, and `ShillinqPaymentRequestsPanel.vue` says "Online payment is not set up: configure a payment source in integriq." and disables Send payment link with that reason (`tests/vitest/paymentRequestsPanelOnlinePayment.spec.js`, `PaymentRequestLeafProviderTest::testListSaysWhetherOnlinePaymentIsLive`). Open: the Payment requests page has no Send payment link action to disable yet, and the Playwright check on `PaymentRequests` is a browser task.
 
 ## 4. End to end
 
