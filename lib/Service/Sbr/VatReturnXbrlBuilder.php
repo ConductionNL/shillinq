@@ -188,12 +188,61 @@ class VatReturnXbrlBuilder {
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
 	 */
 	public function instance(array $vatReturn, array $declarations, array $administration, ?array $taxonomy): array {
+		$period = self::period(vatReturn: $vatReturn);
+		$xml    = XbrlInstanceWriter::write(
+			header: self::header(administration: $administration, taxonomy: $taxonomy) + $period,
+			facts: self::facts(declarations: $declarations, taxonomy: $taxonomy)
+		);
+
+		return XbrlInstanceWriter::record(identity: self::identity(vatReturn: $vatReturn, taxonomy: $taxonomy), xml: $xml);
+	}//end instance()
+
+	/**
+	 * The return's period.
+	 *
+	 * @param array<string,mixed> $vatReturn The BtwAangifte.
+	 *
+	 * @return array{start:string,end:string} First and last day (Y-m-d).
+	 *
+	 * @throws RuntimeException When the return has no period.
+	 */
+	private static function period(array $vatReturn): array {
 		$start = substr(trim((string) ($vatReturn['startDate'] ?? '')), 0, 10);
 		$end   = substr(trim((string) ($vatReturn['endDate'] ?? '')), 0, 10);
 		if ($start === '' || $end === '') {
 			throw new RuntimeException('The VAT return has no period; it cannot be filed.');
 		}
 
+		return ['start' => $start, 'end' => $end];
+	}//end period()
+
+	/**
+	 * Who reports (the VAT number), the concept namespaces and the entry point schema.
+	 *
+	 * @param array<string,mixed>      $administration The administration.
+	 * @param array<string,mixed>|null $taxonomy       The taxonomy effective for the period, or null.
+	 *
+	 * @return array<string,mixed> The instance header without its period.
+	 */
+	private static function header(array $administration, ?array $taxonomy): array {
+		$vatNumber = strtoupper((string) preg_replace('/[\s.]+/', '', (string) ($administration['vatNumber'] ?? '')));
+
+		return [
+			'entity'     => ['scheme' => self::VAT_SCHEME, 'identifier' => $vatNumber],
+			'namespaces' => XbrlInstanceWriter::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
+			'schemaRef'  => XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT),
+		];
+	}//end header()
+
+	/**
+	 * One duration fact per box amount the taxonomy has a concept for, in form order.
+	 *
+	 * @param list<array<string,mixed>> $declarations The VATDeclarations.
+	 * @param array<string,mixed>|null  $taxonomy     The taxonomy, or null.
+	 *
+	 * @return list<array{concept:string,value:int,context:string}> The facts.
+	 */
+	private static function facts(array $declarations, ?array $taxonomy): array {
 		$concepts = self::concepts(taxonomy: $taxonomy);
 		$facts    = [];
 		foreach (self::amounts(declarations: $declarations) as $key => $amount) {
@@ -202,31 +251,31 @@ class VatReturnXbrlBuilder {
 			}
 		}
 
-		$vatNumber = strtoupper((string) preg_replace('/[\s.]+/', '', (string) ($administration['vatNumber'] ?? '')));
-		$xml       = XbrlInstanceWriter::write(
-			entity: ['scheme' => self::VAT_SCHEME, 'identifier' => $vatNumber],
-			start: $start,
-			end: $end,
-			namespaces: XbrlInstanceWriter::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
-			facts: $facts,
-			schemaRef: XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT)
-		);
+		return $facts;
+	}//end facts()
+
+	/**
+	 * The identity fields of the return's instance record, in record order.
+	 *
+	 * @param array<string,mixed>      $vatReturn The BtwAangifte (with a period).
+	 * @param array<string,mixed>|null $taxonomy  The taxonomy, or null.
+	 *
+	 * @return array<string,string> The fields.
+	 */
+	private static function identity(array $vatReturn, ?array $taxonomy): array {
+		$period = self::period(vatReturn: $vatReturn);
 
 		return [
 			'administrationId'     => (string) ($vatReturn['administrationId'] ?? ''),
-			'instanceNumber'       => 'OB-' . (string) ($vatReturn['returnNumber'] ?? $start),
+			'instanceNumber'       => 'OB-' . (string) ($vatReturn['returnNumber'] ?? $period['start']),
 			'entryPoint'           => self::ENTRY_POINT,
 			'filingType'           => self::FILING_TYPE,
 			'sourceReturnId'       => (string) ($vatReturn['id'] ?? ($vatReturn['@self']['id'] ?? '')),
 			'taxonomyVersion'      => (string) ($taxonomy['taxonomyVersion'] ?? ''),
-			'reportingPeriodStart' => $start,
-			'reportingPeriodEnd'   => $end,
-			'instanceXml'          => $xml,
-			'instanceHash'         => hash('sha256', $xml),
-			'state'                => 'draft',
-			'digipoortSourceSlug'  => 'digipoort-sbr',
+			'reportingPeriodStart' => $period['start'],
+			'reportingPeriodEnd'   => $period['end'],
 		];
-	}//end instance()
+	}//end identity()
 
 	/**
 	 * The amounts of the return in whole euros, keyed as CONCEPTS is, in form order.

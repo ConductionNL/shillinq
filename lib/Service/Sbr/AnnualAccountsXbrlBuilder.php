@@ -170,14 +170,65 @@ class AnnualAccountsXbrlBuilder {
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.3
 	 */
 	public function instance(array $statement, array $administration, ?array $taxonomy, array $mappings=[]): array {
+		$period = self::period(statement: $statement);
+		$xml    = XbrlInstanceWriter::write(
+			header: self::header(statement: ['kvkNumber' => ($administration['kvkNumber'] ?? '')] + $statement, taxonomy: $taxonomy) + $period,
+			facts: self::facts(statement: $statement, concepts: self::concepts(taxonomy: $taxonomy, mappings: $mappings))
+		);
+
+		$statement['administrationId'] = ($administration['id'] ?? ($statement['administrationId'] ?? ''));
+		return XbrlInstanceWriter::record(identity: self::identity(statement: $statement, taxonomy: $taxonomy), xml: $xml);
+	}//end instance()
+
+	/**
+	 * The statement's reporting period.
+	 *
+	 * @param array<string,mixed> $statement The FinancialStatement.
+	 *
+	 * @return array{start:string,end:string} First and last day (Y-m-d).
+	 *
+	 * @throws RuntimeException When the statement has no reporting period.
+	 */
+	private static function period(array $statement): array {
 		$start = substr(trim((string) ($statement['reportingPeriodStart'] ?? '')), 0, 10);
 		$end   = substr(trim((string) ($statement['reportingPeriodEnd'] ?? '')), 0, 10);
 		if ($start === '' || $end === '') {
 			throw new RuntimeException('The financial statement has no reporting period; it cannot be filed.');
 		}
 
-		$concepts = self::concepts(taxonomy: $taxonomy, mappings: $mappings);
-		$facts    = [];
+		return ['start' => $start, 'end' => $end];
+	}//end period()
+
+	/**
+	 * Who reports (the KvK number), the concept namespaces and the entry point
+	 * schema: the size class's, else the generic one.
+	 *
+	 * @param array<string,mixed>      $statement The FinancialStatement, with the administration's `kvkNumber`.
+	 * @param array<string,mixed>|null $taxonomy  The taxonomy, or null.
+	 *
+	 * @return array<string,mixed> The instance header without its period.
+	 */
+	private static function header(array $statement, ?array $taxonomy): array {
+		$sizeClass = strtolower(trim((string) ($statement['sizeClass'] ?? '')));
+		$schemaRef = XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT . ':' . $sizeClass);
+
+		return [
+			'entity'     => ['scheme' => self::KVK_SCHEME, 'identifier' => (string) preg_replace('/\D+/', '', (string) $statement['kvkNumber'])],
+			'namespaces' => XbrlInstanceWriter::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
+			'schemaRef'  => ($schemaRef ?? XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT)),
+		];
+	}//end header()
+
+	/**
+	 * One fact per amount: balance lines at the instant, result lines over the period.
+	 *
+	 * @param array<string,mixed>  $statement The FinancialStatement.
+	 * @param array<string,string> $concepts  The concept of each line.
+	 *
+	 * @return list<array{concept:string,value:int,context:string}> The facts.
+	 */
+	private static function facts(array $statement, array $concepts): array {
+		$facts = [];
 		foreach (self::amounts(statement: $statement) as $key => $amount) {
 			$context = XbrlInstanceWriter::DURATION;
 			if (isset(self::BALANCE_CONCEPTS[$key]) === true) {
@@ -187,37 +238,49 @@ class AnnualAccountsXbrlBuilder {
 			$facts[] = ['concept' => $concepts[$key], 'value' => $amount, 'context' => $context];
 		}
 
-		$sizeClass = strtolower(trim((string) ($statement['sizeClass'] ?? '')));
-		$schemaRef = XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT . ':' . $sizeClass);
-		$xml       = XbrlInstanceWriter::write(
-			entity: ['scheme' => self::KVK_SCHEME, 'identifier' => (string) preg_replace('/\D+/', '', (string) ($administration['kvkNumber'] ?? ''))],
-			start: $start,
-			end: $end,
-			namespaces: XbrlInstanceWriter::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
-			facts: $facts,
-			schemaRef: ($schemaRef ?? XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT))
-		);
+		return $facts;
+	}//end facts()
 
-		$number = 'KVK-' . substr($end, 0, 4);
-		if ($sizeClass !== '') {
-			$number .= '-' . $sizeClass;
-		}
+	/**
+	 * The identity fields of the statement's instance record, in record order.
+	 *
+	 * @param array<string,mixed>      $statement The FinancialStatement (with a period and its administrationId).
+	 * @param array<string,mixed>|null $taxonomy  The taxonomy, or null.
+	 *
+	 * @return array<string,string> The fields.
+	 */
+	private static function identity(array $statement, ?array $taxonomy): array {
+		$period = self::period(statement: $statement);
 
 		return [
-			'administrationId'     => (string) ($administration['id'] ?? ($statement['administrationId'] ?? '')),
-			'instanceNumber'       => $number,
+			'administrationId'     => (string) $statement['administrationId'],
+			'instanceNumber'       => self::number(statement: $statement, end: $period['end']),
 			'entryPoint'           => self::ENTRY_POINT,
 			'filingType'           => self::FILING_TYPE,
 			'sourceStatementId'    => (string) ($statement['id'] ?? ''),
 			'taxonomyVersion'      => (string) ($taxonomy['taxonomyVersion'] ?? ''),
-			'reportingPeriodStart' => $start,
-			'reportingPeriodEnd'   => $end,
-			'instanceXml'          => $xml,
-			'instanceHash'         => hash('sha256', $xml),
-			'state'                => 'draft',
-			'digipoortSourceSlug'  => 'digipoort-sbr',
+			'reportingPeriodStart' => $period['start'],
+			'reportingPeriodEnd'   => $period['end'],
 		];
-	}//end instance()
+	}//end identity()
+
+	/**
+	 * The instance number: `KVK-<year>`, with `-<size class>` when the statement has one.
+	 *
+	 * @param array<string,mixed> $statement The FinancialStatement.
+	 * @param string              $end       The last day of the period.
+	 *
+	 * @return string The number.
+	 */
+	private static function number(array $statement, string $end): string {
+		$number    = 'KVK-' . substr($end, 0, 4);
+		$sizeClass = strtolower(trim((string) ($statement['sizeClass'] ?? '')));
+		if ($sizeClass !== '') {
+			$number .= '-' . $sizeClass;
+		}
+
+		return $number;
+	}//end number()
 
 	/**
 	 * The statement's figures in whole euros, keyed as the concept maps are.

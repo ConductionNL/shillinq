@@ -35,10 +35,10 @@ final class XbrlInstanceWriterTest extends TestCase {
 	private const ENTITY = ['scheme' => 'http://www.kvk.nl/kvk-id/', 'identifier' => '12345678'];
 
 	public function testItWritesTheContextsUnitAndWholeEuroFacts(): void {
-		$xml = XbrlInstanceWriter::write(self::ENTITY, '2025-01-01', '2025-12-31', ['j' => 'urn:j'], [
+		$xml = XbrlInstanceWriter::write(['entity' => self::ENTITY, 'start' => '2025-01-01', 'end' => '2025-12-31', 'namespaces' => ['j' => 'urn:j'], 'schemaRef' => ' http://example.test/ep.xsd '], [
 			['concept' => 'j:Equity', 'value' => 1234.5, 'context' => XbrlInstanceWriter::INSTANT],
 			['concept' => 'j:Revenue', 'value' => -10.4, 'context' => XbrlInstanceWriter::DURATION],
-		], ' http://example.test/ep.xsd ');
+		]);
 		$document = new DOMDocument();
 		$this->assertTrue($document->loadXML($xml));
 		$xpath = new DOMXPath($document);
@@ -58,13 +58,13 @@ final class XbrlInstanceWriterTest extends TestCase {
 	}
 
 	public function testWithoutASchemaNoReferenceIsWritten(): void {
-		$this->assertStringNotContainsString('schemaRef', XbrlInstanceWriter::write(self::ENTITY, '2025-01-01', '2025-12-31', [], [], ' '));
+		$this->assertStringNotContainsString('schemaRef', XbrlInstanceWriter::write(['entity' => self::ENTITY, 'start' => '2025-01-01', 'end' => '2025-12-31', 'namespaces' => [], 'schemaRef' => ' '], []));
 	}
 
 	public function testAConceptWithoutANamespaceIsRefused(): void {
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('The concept x:Equity has no namespace.');
 
-		XbrlInstanceWriter::write(self::ENTITY, '2025-01-01', '2025-12-31', ['j' => 'urn:j'], [['concept' => 'x:Equity', 'value' => 1, 'context' => 'i']]);
+		XbrlInstanceWriter::write(['entity' => self::ENTITY, 'start' => '2025-01-01', 'end' => '2025-12-31', 'namespaces' => ['j' => 'urn:j']], [['concept' => 'x:Equity', 'value' => 1, 'context' => 'i']]);
 	}
 }

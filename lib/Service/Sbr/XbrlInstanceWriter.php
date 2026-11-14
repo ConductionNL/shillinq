@@ -68,12 +68,13 @@ final class XbrlInstanceWriter {
 	/**
 	 * Write the instance.
 	 *
-	 * @param array{scheme:string,identifier:string}                  $entity     Who reports.
-	 * @param string                                                  $start      First day of the period (Y-m-d).
-	 * @param string                                                  $end        Last day of the period (Y-m-d).
-	 * @param array<string,string>                                    $namespaces Concept prefix to namespace URI.
+	 * The header holds `entity` (array{scheme:string,identifier:string}, who
+	 * reports), `start` and `end` (first and last day of the period, Y-m-d),
+	 * `namespaces` (concept prefix to namespace URI) and, optionally,
+	 * `schemaRef` (the entry point schema, when known).
+	 *
+	 * @param array<string,mixed>                                       $header The instance header.
 	 * @param list<array{concept:string,value:int|float,context:string}> $facts  Monetary facts in EUR, in writing order.
-	 * @param string|null                                             $schemaRef  The entry point schema, when known.
 	 *
 	 * @return string The instance XML.
 	 *
@@ -81,31 +82,19 @@ final class XbrlInstanceWriter {
 	 *
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
 	 */
-	public static function write(array $entity, string $start, string $end, array $namespaces, array $facts, ?string $schemaRef=null): string {
+	public static function write(array $header, array $facts): string {
+		self::assertNamespaced(facts: $facts, namespaces: $header['namespaces']);
+
 		$writer = new XMLWriter();
 		$writer->openMemory();
 		$writer->setIndent(true);
 		$writer->setIndentString('  ');
 		$writer->startDocument('1.0', 'UTF-8');
 
-		$writer->startElementNs('xbrli', 'xbrl', self::XBRLI);
-		$writer->writeAttributeNs('xmlns', 'link', null, self::LINK);
-		$writer->writeAttributeNs('xmlns', 'xlink', null, self::XLINK);
-		$writer->writeAttributeNs('xmlns', 'iso4217', null, self::ISO4217);
-		ksort($namespaces);
-		foreach ($namespaces as $prefix => $uri) {
-			$writer->writeAttributeNs('xmlns', (string) $prefix, null, $uri);
-		}
-
-		if ($schemaRef !== null && trim($schemaRef) !== '') {
-			$writer->startElementNs('link', 'schemaRef', null);
-			$writer->writeAttributeNs('xlink', 'type', null, 'simple');
-			$writer->writeAttributeNs('xlink', 'href', null, trim($schemaRef));
-			$writer->endElement();
-		}
-
-		self::writeContext(writer: $writer, id: self::DURATION, entity: $entity, start: $start, end: $end);
-		self::writeContext(writer: $writer, id: self::INSTANT, entity: $entity, start: null, end: $end);
+		self::openRoot(writer: $writer, header: $header);
+		$context = ['entity' => $header['entity'], 'end' => $header['end']];
+		self::writeContext(writer: $writer, context: ['id' => self::DURATION, 'start' => $header['start']] + $context);
+		self::writeContext(writer: $writer, context: ['id' => self::INSTANT, 'start' => null] + $context);
 
 		$writer->startElementNs('xbrli', 'unit', null);
 		$writer->writeAttribute('id', 'EUR');
@@ -113,17 +102,7 @@ final class XbrlInstanceWriter {
 		$writer->endElement();
 
 		foreach ($facts as $fact) {
-			$prefix = strstr($fact['concept'], ':', true);
-			if ($prefix === false || isset($namespaces[$prefix]) === false) {
-				throw new InvalidArgumentException(sprintf('The concept %s has no namespace.', $fact['concept']));
-			}
-
-			$writer->startElement($fact['concept']);
-			$writer->writeAttribute('contextRef', $fact['context']);
-			$writer->writeAttribute('unitRef', 'EUR');
-			$writer->writeAttribute('decimals', 'INF');
-			$writer->text(self::amount(value: $fact['value']));
-			$writer->endElement();
+			self::writeFact(writer: $writer, fact: $fact);
 		}
 
 		$writer->endElement();
@@ -131,6 +110,89 @@ final class XbrlInstanceWriter {
 
 		return $writer->outputMemory();
 	}//end write()
+
+	/**
+	 * The draft XbrlInstance record: its identity fields, then the XML, its hash and the draft state.
+	 *
+	 * @param array<string,string> $identity The record's identity fields, in record order.
+	 * @param string               $xml      The instance XML.
+	 *
+	 * @return array<string,mixed> The instance record.
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
+	 */
+	public static function record(array $identity, string $xml): array {
+		return $identity + [
+			'instanceXml'         => $xml,
+			'instanceHash'        => hash('sha256', $xml),
+			'state'               => 'draft',
+			'digipoortSourceSlug' => 'digipoort-sbr',
+		];
+	}//end record()
+
+	/**
+	 * Refuse a fact whose concept prefix has no namespace, the first in writing order.
+	 *
+	 * @param list<array{concept:string,value:int|float,context:string}> $facts      The facts.
+	 * @param array<string,string>                                       $namespaces Concept prefix to namespace URI.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a fact's prefix has no namespace.
+	 */
+	private static function assertNamespaced(array $facts, array $namespaces): void {
+		foreach ($facts as $fact) {
+			$prefix = strstr($fact['concept'], ':', true);
+			if ($prefix === false || isset($namespaces[$prefix]) === false) {
+				throw new InvalidArgumentException(sprintf('The concept %s has no namespace.', $fact['concept']));
+			}
+		}
+	}//end assertNamespaced()
+
+	/**
+	 * Open the xbrl root with its namespaces, and the schema reference when there is one.
+	 *
+	 * @param XMLWriter           $writer The writer.
+	 * @param array<string,mixed> $header The instance header (see write()).
+	 *
+	 * @return void
+	 */
+	private static function openRoot(XMLWriter $writer, array $header): void {
+		$writer->startElementNs('xbrli', 'xbrl', self::XBRLI);
+		$writer->writeAttributeNs('xmlns', 'link', null, self::LINK);
+		$writer->writeAttributeNs('xmlns', 'xlink', null, self::XLINK);
+		$writer->writeAttributeNs('xmlns', 'iso4217', null, self::ISO4217);
+		$namespaces = $header['namespaces'];
+		ksort($namespaces);
+		foreach ($namespaces as $prefix => $uri) {
+			$writer->writeAttributeNs('xmlns', (string) $prefix, null, $uri);
+		}
+
+		$schemaRef = trim((string) ($header['schemaRef'] ?? ''));
+		if ($schemaRef !== '') {
+			$writer->startElementNs('link', 'schemaRef', null);
+			$writer->writeAttributeNs('xlink', 'type', null, 'simple');
+			$writer->writeAttributeNs('xlink', 'href', null, $schemaRef);
+			$writer->endElement();
+		}
+	}//end openRoot()
+
+	/**
+	 * Write one monetary fact in whole euros.
+	 *
+	 * @param XMLWriter                                            $writer The writer.
+	 * @param array{concept:string,value:int|float,context:string} $fact   The fact.
+	 *
+	 * @return void
+	 */
+	private static function writeFact(XMLWriter $writer, array $fact): void {
+		$writer->startElement($fact['concept']);
+		$writer->writeAttribute('contextRef', $fact['context']);
+		$writer->writeAttribute('unitRef', 'EUR');
+		$writer->writeAttribute('decimals', 'INF');
+		$writer->text(self::amount(value: $fact['value']));
+		$writer->endElement();
+	}//end writeFact()
 
 	/**
 	 * The concept namespaces: the taxonomy's, else the default.
@@ -186,32 +248,33 @@ final class XbrlInstanceWriter {
 	/**
 	 * Write one context.
 	 *
-	 * @param XMLWriter                               $writer The writer.
-	 * @param string                                  $id     The context id.
-	 * @param array{scheme:string,identifier:string}  $entity Who reports.
-	 * @param string|null                             $start  The first day, null for an instant.
-	 * @param string                                  $end    The last day, or the instant.
+	 * @param XMLWriter                                                                                 $writer  The writer.
+	 * @param array{id:string,entity:array{scheme:string,identifier:string},start:string|null,end:string} $context The context id,
+	 *                                                                                                            who reports, the
+	 *                                                                                                            first day (null for
+	 *                                                                                                            an instant) and the
+	 *                                                                                                            last day or instant.
 	 *
 	 * @return void
 	 */
-	private static function writeContext(XMLWriter $writer, string $id, array $entity, ?string $start, string $end): void {
+	private static function writeContext(XMLWriter $writer, array $context): void {
 		$writer->startElementNs('xbrli', 'context', null);
-		$writer->writeAttribute('id', $id);
+		$writer->writeAttribute('id', $context['id']);
 		$writer->startElementNs('xbrli', 'entity', null);
 		$writer->startElementNs('xbrli', 'identifier', null);
-		$writer->writeAttribute('scheme', $entity['scheme']);
-		$writer->text($entity['identifier']);
+		$writer->writeAttribute('scheme', $context['entity']['scheme']);
+		$writer->text($context['entity']['identifier']);
 		$writer->endElement();
 		$writer->endElement();
 
 		$writer->startElementNs('xbrli', 'period', null);
-		if ($start === null) {
-			$writer->writeElementNs('xbrli', 'instant', null, $end);
+		if ($context['start'] === null) {
+			$writer->writeElementNs('xbrli', 'instant', null, $context['end']);
 		}
 
-		if ($start !== null) {
-			$writer->writeElementNs('xbrli', 'startDate', null, $start);
-			$writer->writeElementNs('xbrli', 'endDate', null, $end);
+		if ($context['start'] !== null) {
+			$writer->writeElementNs('xbrli', 'startDate', null, $context['start']);
+			$writer->writeElementNs('xbrli', 'endDate', null, $context['end']);
 		}
 
 		$writer->endElement();

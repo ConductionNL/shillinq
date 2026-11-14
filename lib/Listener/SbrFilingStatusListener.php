@@ -137,8 +137,10 @@ class SbrFilingStatusListener implements IEventListener {
 	public function apply(array $payload): ?string {
 		$objectUri = trim((string) ($payload['objectUri'] ?? ''));
 		$status    = strtolower(trim((string) ($payload['status'] ?? '')));
-		$reference = trim((string) ($payload['deliveryReference'] ?? ''));
-		$errors    = self::errors(errors: ($payload['errors'] ?? []));
+		$report    = [
+			'reference' => trim((string) ($payload['deliveryReference'] ?? '')),
+			'errors'    => self::errors(errors: ($payload['errors'] ?? [])),
+		];
 
 		$instance = $this->instance(objectUri: $objectUri);
 		if ($instance === null) {
@@ -147,9 +149,9 @@ class SbrFilingStatusListener implements IEventListener {
 		}
 
 		$state = match ($status) {
-			'delivered' => $this->delivered(instance: $instance, reference: $reference, outcome: null, errors: ''),
-			'accepted', 'rejected' => $this->delivered(instance: $instance, reference: $reference, outcome: $status, errors: $errors),
-			'failed' => $this->failed(instance: $instance, errors: $errors),
+			'delivered' => $this->delivered(instance: $instance, report: ['outcome' => null] + $report),
+			'accepted', 'rejected' => $this->delivered(instance: $instance, report: ['outcome' => $status] + $report),
+			'failed' => $this->failed(instance: $instance, errors: $report['errors']),
 			default => null,
 		};
 		if ($state === null) {
@@ -160,54 +162,33 @@ class SbrFilingStatusListener implements IEventListener {
 			return null;
 		}
 
-		$this->mirrorOnReturn(instance: $instance, state: $state, reference: $reference, errors: $errors);
+		$this->mirrorOnReturn(instance: $instance, report: ['state' => $state] + $report);
 		return $state;
 	}//end apply()
 
 	/**
 	 * Record the delivery, and the outcome when there is one.
 	 *
-	 * @param array<string,mixed> $instance  The XbrlInstance.
-	 * @param string              $reference The Digipoort delivery reference.
-	 * @param string|null         $outcome   `accepted`, `rejected` or null for the delivery alone.
-	 * @param string              $errors    The recipient's errors.
+	 * @param array<string,mixed>                                          $instance The XbrlInstance.
+	 * @param array{reference: string, errors: string, outcome: string|null} $report   The delivery reference, the
+	 *                                                                               recipient's errors, and
+	 *                                                                               `accepted`, `rejected` or null
+	 *                                                                               for the delivery alone.
 	 *
 	 * @return string|null The state reached, null when the report does not fit.
 	 */
-	private function delivered(array $instance, string $reference, ?string $outcome, string $errors): ?string {
-		$state = (string) ($instance['state'] ?? '');
-		$final = ['accepted' => 'accepted', 'rejected' => 'rejected'];
-		if ($outcome !== null && $state === $final[$outcome]) {
+	private function delivered(array $instance, array $report): ?string {
+		$state   = (string) ($instance['state'] ?? '');
+		$outcome = $report['outcome'];
+		if (self::alreadyThere(state: $state, outcome: $outcome) === true) {
 			return $state;
 		}
 
-		if ($state !== 'handed-off' && $state !== 'submitted') {
+		if (self::deliverable(state: $state, reference: $report['reference']) === false) {
 			return null;
 		}
 
-		if ($state === 'submitted' && $outcome === null) {
-			return $state;
-		}
-
-		$changes = [];
-		if ($state === 'handed-off') {
-			if ($reference === '') {
-				return null;
-			}
-
-			$changes['digipoortReceiptId'] = $reference;
-			$changes['submittedAt']        = gmdate('Y-m-d\TH:i:s\Z');
-		}
-
-		if ($outcome === 'accepted') {
-			$changes['acceptedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		}
-
-		if ($outcome === 'rejected') {
-			$changes['rejectionReason'] = $errors;
-		}
-
-		$this->records->save(schema: 'XbrlInstance', record: array_merge($instance, $changes));
+		$this->records->save(schema: 'XbrlInstance', record: array_merge($instance, self::deliveryChanges(state: $state, report: $report)));
 		if ($state === 'handed-off') {
 			$this->transitions->runAsSystem(objectId: (string) $instance['id'], action: 'deliver');
 		}
@@ -219,6 +200,57 @@ class SbrFilingStatusListener implements IEventListener {
 		$this->transitions->runAsSystem(objectId: (string) $instance['id'], action: ['accepted' => 'accept', 'rejected' => 'reject'][$outcome]);
 		return $outcome;
 	}//end delivered()
+
+	/**
+	 * Whether the instance already stands where the report would bring it: the
+	 * outcome reached, or a delivery alone reported for a submitted filing.
+	 *
+	 * @param string      $state   The instance's state.
+	 * @param string|null $outcome `accepted`, `rejected` or null for the delivery alone.
+	 *
+	 * @return bool True when nothing is left to record.
+	 */
+	private static function alreadyThere(string $state, ?string $outcome): bool {
+		return ($outcome !== null && $state === $outcome) || ($state === 'submitted' && $outcome === null);
+	}//end alreadyThere()
+
+	/**
+	 * Whether a delivery can be recorded: on a submitted filing, or on a handed-off one with its reference.
+	 *
+	 * @param string $state     The instance's state.
+	 * @param string $reference The Digipoort delivery reference.
+	 *
+	 * @return bool True when it can.
+	 */
+	private static function deliverable(string $state, string $reference): bool {
+		return $state === 'submitted' || ($state === 'handed-off' && $reference !== '');
+	}//end deliverable()
+
+	/**
+	 * The fields a delivery and its outcome set on the instance.
+	 *
+	 * @param string                                                         $state  The instance's state.
+	 * @param array{reference: string, errors: string, outcome: string|null} $report The report.
+	 *
+	 * @return array<string,string> The changes.
+	 */
+	private static function deliveryChanges(string $state, array $report): array {
+		$changes = [];
+		if ($state === 'handed-off') {
+			$changes['digipoortReceiptId'] = $report['reference'];
+			$changes['submittedAt']        = gmdate('Y-m-d\TH:i:s\Z');
+		}
+
+		if ($report['outcome'] === 'accepted') {
+			$changes['acceptedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		}
+
+		if ($report['outcome'] === 'rejected') {
+			$changes['rejectionReason'] = $report['errors'];
+		}
+
+		return $changes;
+	}//end deliveryChanges()
 
 	/**
 	 * Return a filing integriq could not deliver to validated, with the reason.
@@ -247,59 +279,94 @@ class SbrFilingStatusListener implements IEventListener {
 	 * retracted to draft when integriq could not deliver. A return in draft
 	 * (its instance filed from the SBR filings page) is left alone.
 	 *
-	 * @param array<string,mixed> $instance  The XbrlInstance.
-	 * @param string              $state     The instance's state now.
-	 * @param string              $reference The Digipoort delivery reference.
-	 * @param string              $errors    The recipient's errors.
+	 * @param array<string,mixed>                                  $instance The XbrlInstance.
+	 * @param array{state: string, reference: string, errors: string} $report   The instance's state now, the
+	 *                                                                        Digipoort delivery reference and
+	 *                                                                        the recipient's errors.
 	 *
 	 * @return void
 	 */
-	private function mirrorOnReturn(array $instance, string $state, string $reference, string $errors): void {
+	private function mirrorOnReturn(array $instance, array $report): void {
 		$vatReturn = $this->records->find(schema: 'BtwAangifte', id: (string) ($instance['sourceReturnId'] ?? ''));
 		if ($vatReturn === null) {
 			return;
 		}
 
+		if ($report['reference'] === '') {
+			$report['reference'] = (string) ($instance['digipoortReceiptId'] ?? '');
+		}
+
 		$status = (string) ($vatReturn['statusCode'] ?? 'draft');
-		$id     = (string) $vatReturn['id'];
-		if ($status === 'handed-off' && $state === 'validated') {
-			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Not delivered to Digipoort: ' . $errors);
+		if ($status === 'handed-off') {
+			$this->returnFromHandedOff(vatReturn: $vatReturn, report: $report);
+			return;
+		}
+
+		if ($status === 'submitted') {
+			$this->returnFromSubmitted(vatReturn: $vatReturn, report: $report);
+		}
+	}//end mirrorOnReturn()
+
+	/**
+	 * A handed-off return: retracted when its instance was not delivered, else
+	 * delivered with the reference and then settled like a submitted one.
+	 *
+	 * @param array<string,mixed>                                  $vatReturn The BtwAangifte.
+	 * @param array{state: string, reference: string, errors: string} $report    The report.
+	 *
+	 * @return void
+	 */
+	private function returnFromHandedOff(array $vatReturn, array $report): void {
+		$id = (string) $vatReturn['id'];
+		if ($report['state'] === 'validated') {
+			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Not delivered to Digipoort: ' . $report['errors']);
 			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
 			$this->transitions->runAsSystem(objectId: $id, action: 'retract');
 			return;
 		}
 
-		if ($status === 'handed-off') {
-			if ($reference === '') {
-				$reference = (string) ($instance['digipoortReceiptId'] ?? '');
-			}
+		$vatReturn['filingReference'] = $report['reference'];
+		$vatReturn['submissionDate']  = gmdate('Y-m-d');
+		if ($report['state'] === 'rejected') {
+			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Rejected by the Belastingdienst: ' . $report['errors']);
+		}
 
-			$vatReturn['filingReference'] = $reference;
-			$vatReturn['submissionDate']  = gmdate('Y-m-d');
-			if ($state === 'rejected') {
-				$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Rejected by the Belastingdienst: ' . $errors);
-			}
+		$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
+		$this->transitions->runAsSystem(objectId: $id, action: 'deliver');
+		$this->settleReturn(id: $id, state: $report['state']);
+	}//end returnFromHandedOff()
 
+	/**
+	 * A submitted return: the rejection noted, then settled.
+	 *
+	 * @param array<string,mixed>                                  $vatReturn The BtwAangifte.
+	 * @param array{state: string, reference: string, errors: string} $report    The report.
+	 *
+	 * @return void
+	 */
+	private function returnFromSubmitted(array $vatReturn, array $report): void {
+		if ($report['state'] === 'rejected') {
+			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Rejected by the Belastingdienst: ' . $report['errors']);
 			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
-			$this->transitions->runAsSystem(objectId: $id, action: 'deliver');
-			$status = 'submitted';
-		} else if ($status === 'submitted' && $state === 'rejected') {
-			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Rejected by the Belastingdienst: ' . $errors);
-			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
 		}
 
-		if ($status !== 'submitted') {
-			return;
-		}
+		$this->settleReturn(id: (string) $vatReturn['id'], state: $report['state']);
+	}//end returnFromSubmitted()
 
-		if ($state === 'accepted') {
-			$this->transitions->runAsSystem(objectId: $id, action: 'verify');
+	/**
+	 * Verify a submitted return whose instance was accepted, reopen one whose instance was rejected.
+	 *
+	 * @param string $id    The return's id.
+	 * @param string $state The instance's state now.
+	 *
+	 * @return void
+	 */
+	private function settleReturn(string $id, string $state): void {
+		$action = (['accepted' => 'verify', 'rejected' => 'rebase'][$state] ?? null);
+		if ($action !== null) {
+			$this->transitions->runAsSystem(objectId: $id, action: $action);
 		}
-
-		if ($state === 'rejected') {
-			$this->transitions->runAsSystem(objectId: $id, action: 'rebase');
-		}
-	}//end mirrorOnReturn()
+	}//end settleReturn()
 
 	/**
 	 * The notes with one line added.
