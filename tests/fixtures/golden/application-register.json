@@ -1040,6 +1040,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\SubscriptionCancellationServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\SubscriptionCancellationService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ContributionRaiseServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ContributionRaiseService'"
         ]

@@ -74,6 +74,10 @@
             "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
         },
         {
+            "appVersion": "0.5.7-unstable.20261113191000",
+            "versionsSha256": "8099c6e403c779783b69676750c4215d0e6f00224a4feba34aa57b382003e761"
+        },
+        {
             "appVersion": "0.5.7-unstable.20261114130000",
             "versionsSha256": "f728fb4065a5615f8629d79c69e3d11cbf1db0b4ba3b8305afd429c23c581636"
         },
@@ -82,16 +86,12 @@
             "versionsSha256": "c9d22233dfaee51c0c3663208b6fa7f2b54a4ebfb865146ebefe3f9188305824"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114200000",
-            "versionsSha256": "b94363b07c23e7683a7d61e69a943950215d9625d0e012c2f65f642b0bd73c80"
+            "appVersion": "0.5.7-unstable.20261114190000",
+            "versionsSha256": "b6318eb2982bdafd95228b4a6fe1ac17be097fc52db71fea64dbda0373762cfb"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114210000",
-            "versionsSha256": "ae456fde68f1de6ca046413e891bbb5091075e7fcc7daceb0dd10d50ac568c1e"
-        },
-        {
-            "appVersion": "0.5.7-unstable.20261114220000",
-            "versionsSha256": "0d4639c955f1a061622a06a8bbb00477b06a035c5b632e8471dc76ba9bee4474"
+            "appVersion": "0.5.7-unstable.20261114214000",
+            "versionsSha256": "c11f43a52e054da2c82067a08fc2e5cabd8ff4786248e605eca14b998f19ae19"
         }
     ],
     "versions": {
@@ -118,7 +118,7 @@
         "schema:AnalyticalDimension": "0.2.0",
         "schema:AnnualBudget": "0.1.0",
         "schema:AnnualReport": "0.1.0",
-        "schema:Appointment": "0.1.0",
+        "schema:Appointment": "0.2.0",
         "schema:AppointmentSeries": "1.0.0",
         "schema:ApprovalStep": "0.1.0",
         "schema:AssuranceEngagement": "0.1.0",
@@ -491,7 +491,7 @@
         "schema:ReconciliationBridge": "0.1.0",
         "schema:ReconciliationMatch": "0.2.0",
         "schema:ReconciliationReport": "0.1.0",
-        "schema:RecurringInvoiceProfile": "0.1.0",
+        "schema:RecurringInvoiceProfile": "0.3.0",
         "schema:ReimbursementPolicy": "0.1.0",
         "schema:ReinvestmentReserve": "0.1.0",
         "schema:RenteRisicoNorm": "0.1.0",
@@ -527,7 +527,7 @@
         "schema:SchatkistbankierenSaldo": "0.1.0",
         "schema:SegregatedLedger": "0.1.0",
         "schema:SepaMandate": "0.1.0",
-        "schema:Service": "0.2.0",
+        "schema:Service": "0.3.0",
         "schema:ServiceCategoryOverride": "0.1.0",
         "schema:SiSaAssurance": "0.1.0",
         "schema:SisaRegelingIndicator": "0.1.0",
@@ -620,6 +620,7 @@
         "schema:WidgetAccessKeyAuditEntry": "0.1.0",
         "schema:WinstToerekening": "0.1.0",
         "schema:WipBalance": "0.1.0",
+        "schema:Withdrawal": "0.1.0",
         "schema:XBRLMapping": "0.1.0",
         "schema:XBRLTaxonomy": "0.1.0",
         "schema:XbrlInstance": "0.1.0",

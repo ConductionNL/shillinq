@@ -47,6 +47,7 @@ use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
@@ -623,6 +624,21 @@ final class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: CommitmentTransitionListener::class,
 			schemas: ['Commitment']
+		);
+
+		// Sales-webshop-orders REQ-SWO-001: a saved WebshopOrder that waits
+		// for its invoice is invoiced, marked duplicate or refused.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectCreatedEvent::class,
+			listener: WebshopOrderListener::class,
+			schemas: ['WebshopOrder']
+		);
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: WebshopOrderListener::class,
+			schemas: ['WebshopOrder']
 		);
 	}//end subscribe()
 }//end class
