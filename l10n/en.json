@@ -4867,7 +4867,27 @@
             "{count} times were skipped because they fall outside the opening hours or are already booked."
         ],
         "{count} time was skipped because it falls outside the opening hours or is already booked.": "{count} time was skipped because it falls outside the opening hours or is already booked.",
-        "{count} times were skipped because they fall outside the opening hours or are already booked.": "{count} times were skipped because they fall outside the opening hours or are already booked."
+        "{count} times were skipped because they fall outside the opening hours or are already booked.": "{count} times were skipped because they fall outside the opening hours or are already booked.",
+        "Last reminder channel": "Last reminder channel",
+        "Last reminder sent at": "Last reminder sent at",
+        "Provider connection": "Provider connection",
+        "SMS provider reference": "SMS provider reference",
+        "SMS reminder": "SMS reminder",
+        "SMS reminder tried at": "SMS reminder tried at",
+        "The channel that accepted the last reminder, for example email or sms.": "The channel that accepted the last reminder, for example email or sms.",
+        "The lifecycle action that triggered the audit entry.": "The lifecycle action that triggered the audit entry.",
+        "The outcome of the SMS reminder: handed to the provider (sent or pending), failed, or skipped (opted out, no number). Empty until the reminder was due.": "The outcome of the SMS reminder: handed to the provider (sent or pending), failed, or skipped (opted out, no number). Empty until the reminder was due.",
+        "The provider's reference for the reminder message, when it gave one.": "The provider's reference for the reminder message, when it gave one.",
+        "When the SMS reminder was tried, ISO 8601.": "When the SMS reminder was tried, ISO 8601.",
+        "When the last reminder for this booking was accepted by its channel, ISO 8601. Empty until a reminder was sent.": "When the last reminder for this booking was accepted by its channel, ISO 8601. Empty until a reminder was sent.",
+        "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job.": "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job.",
+        "Confirmation request": "Confirmation request",
+        "Confirmation request tried at": "Confirmation request tried at",
+        "Confirm before": "Confirm before",
+        "Request sent at": "Request sent at",
+        "All pending": "All pending",
+        "Request failed": "Request failed",
+        "Pending confirmations": "Pending confirmations"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

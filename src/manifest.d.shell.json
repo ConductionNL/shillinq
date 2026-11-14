@@ -1058,7 +1058,7 @@
 					"_fragment": "bookings-confirm-flow",
 					"id": "BookingsPendingConfirmations",
 					"route": "/verkoop/openstaande-bevestigingen",
-					"type": "custom",
+					"type": "index",
 					"title": "Pending confirmations"
 				}
 			]

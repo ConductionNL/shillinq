@@ -7024,7 +7024,26 @@ OC.L10N.register(
         "{count} appointments were planned in the series.": "{count} afspraken zijn in de reeks gepland.",
         "_{count} time was skipped because it falls outside the opening hours or is already booked._::_{count} times were skipped because they fall outside the opening hours or are already booked._": ["{count} tijdstip is overgeslagen omdat het buiten de openingstijden valt of al geboekt is.","{count} tijdstippen zijn overgeslagen omdat ze buiten de openingstijden vallen of al geboekt zijn."],
         "{count} time was skipped because it falls outside the opening hours or is already booked.": "{count} tijdstip is overgeslagen omdat het buiten de openingstijden valt of al geboekt is.",
-        "{count} times were skipped because they fall outside the opening hours or are already booked.": "{count} tijdstippen zijn overgeslagen omdat ze buiten de openingstijden vallen of al geboekt zijn."
+        "{count} times were skipped because they fall outside the opening hours or are already booked.": "{count} tijdstippen zijn overgeslagen omdat ze buiten de openingstijden vallen of al geboekt zijn.",
+        "Last reminder channel": "Kanaal van de laatste herinnering",
+        "Last reminder sent at": "Laatste herinnering verstuurd op",
+        "Provider connection": "Verbinding met de provider",
+        "SMS provider reference": "Referentie van de sms-provider",
+        "SMS reminder": "Sms-herinnering",
+        "SMS reminder tried at": "Sms-herinnering geprobeerd op",
+        "The channel that accepted the last reminder, for example email or sms.": "Het kanaal dat de laatste herinnering aannam, bijvoorbeeld e-mail of sms.",
+        "The lifecycle action that triggered the audit entry.": "De levenscyclusactie die tot deze auditregel leidde.",
+        "The outcome of the SMS reminder: handed to the provider (sent or pending), failed, or skipped (opted out, no number). Empty until the reminder was due.": "De uitkomst van de sms-herinnering: aan de provider gegeven (verzonden of in behandeling), mislukt of overgeslagen (afgemeld, geen nummer). Leeg tot de herinnering aan de beurt was.",
+        "The provider's reference for the reminder message, when it gave one.": "De referentie van de provider voor het herinneringsbericht, als die er een gaf.",
+        "When the SMS reminder was tried, ISO 8601.": "Wanneer de sms-herinnering werd geprobeerd, ISO 8601.",
+        "When the last reminder for this booking was accepted by its channel, ISO 8601. Empty until a reminder was sent.": "Wanneer de laatste herinnering voor deze boeking door het kanaal werd aangenomen, ISO 8601. Leeg tot er een herinnering is verstuurd.",
+        "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job.": "Of er een sms-provider gekoppeld is die kan versturen (connected) of niet (not-connected); zolang er geen verbinding is, wordt er geen herinnering verstuurd. Geschreven door de herinneringstaak.",
+        "Confirmation request": "Bevestigingsverzoek",
+        "Confirmation request tried at": "Bevestigingsverzoek geprobeerd op",
+        "Confirm before": "Bevestigen voor",
+        "Request sent at": "Verzoek verstuurd op",
+        "All pending": "Alle openstaande",
+        "Request failed": "Verzoek mislukt"
     },
     "nplurals=2; plural=(n != 1);"
 )
