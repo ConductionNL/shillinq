@@ -343,6 +343,40 @@
               "op": "eq",
               "value": "overdue"
             }
+          },
+          {
+            "id": "reject-self-billed",
+            "label": "Reject self-billed invoice",
+            "type": "open-form",
+            "icon": "CloseCircleOutline",
+            "_note": "sales-einvoice-exchange REQ-SEIX-007: a self-billed invoice a customer sent arrives as a draft; the bookkeeper issues it (the issue transition refuses it without a current agreement) or rejects it here with a reason, which leaves it unbooked. The endpoint checks the administration (404 for another one).",
+            "endpoint": {
+              "url": "/apps/shillinq/api/ar-invoices/@object.invoiceNumber/reject-self-billed?administrationId=@object.administrationId",
+              "method": "POST"
+            },
+            "formProperties": {
+              "reason": {
+                "type": "string",
+                "title": "Reason",
+                "description": "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.",
+                "maxLength": 500
+              }
+            },
+            "successMessage": "Self-billed invoice rejected.",
+            "visibleWhen": {
+              "all": [
+                {
+                  "field": "selfBilled",
+                  "op": "eq",
+                  "value": true
+                },
+                {
+                  "field": "lifecycleState",
+                  "op": "eq",
+                  "value": "draft"
+                }
+              ]
+            }
           }
         ],
         "_boardNote": "Board ShVerkoopfactuur. The four totals tiles read 0 (a sum over a filter on the invoice id); the Money card keeps the amounts and the Reminders tab the count. Agree a payment plan is restored: this fragment replaces the base page whole."

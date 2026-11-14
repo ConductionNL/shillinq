@@ -99,7 +99,7 @@
       },
       "SelfBilledInvoiceRefusal": {
         "slug": "SelfBilledInvoiceRefusal",
-        "icon": "FileCancelOutline",
+        "icon": "CloseCircleOutline",
         "version": "0.1.0",
         "title": "Self-billed invoice refusal",
         "description": "A self-billed invoice received over Peppol that was not turned into a sales invoice: no administration or customer matched, or the customer has no current self-billing agreement. Listed for the bookkeeper with the reason (REQ-SEIX-006).",

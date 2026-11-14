@@ -356,6 +356,10 @@
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
         },
         {
+            "name": "self-billed-invoice",
+            "description": "Rejects a received self-billed invoice (REQ-SEIX-007)."
+        },
+        {
             "name": "sepa-audit",
             "description": "Audit-dossier export endpoint for SEPA mandates (REQ-SDD-010)."
         },
@@ -1898,6 +1902,83 @@
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/ar-invoices/{invoiceNumber}/reject-self-billed": {
+            "post": {
+                "operationId": "self-billed-invoice-reject",
+                "summary": "Reject a draft self-billed invoice with a reason",
+                "description": "Reject a draft self-billed invoice with a reason; it stays unbooked. POST /api/ar-invoices/{invoiceNumber}/reject-self-billed?administrationId=... Body: { reason }. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "self-billed-invoice"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoiceNumber",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ARInvoice.invoiceNumber (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The administration the invoice belongs to.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "description": "Why the self-billed invoice is not accepted."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "The request succeeded.",

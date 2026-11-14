@@ -6899,7 +6899,10 @@ OC.L10N.register(
         "The administration the document was addressed to, when one matched.": "De administratie waaraan het document gericht was, als er een paste.",
         "Rejected e-invoices": "Afgewezen e-facturen",
         "Refused self-billed invoices": "Geweigerde facturen uitgereikt door afnemer",
-        "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Facturen die een afnemer namens u opmaakte en via Peppol stuurde, maar die geen verkoopfactuur werden, met de reden."
+        "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Facturen die een afnemer namens u opmaakte en via Peppol stuurde, maar die geen verkoopfactuur werden, met de reden.",
+        "Reject self-billed invoice": "Factuur uitgereikt door afnemer afwijzen",
+        "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.": "Waarom u deze factuur van de afnemer niet accepteert, bijvoorbeeld een hoeveelheid die niet klopt met de levering.",
+        "Self-billed invoice rejected.": "Factuur uitgereikt door afnemer afgewezen."
     },
     "nplurals=2; plural=(n != 1);"
 )

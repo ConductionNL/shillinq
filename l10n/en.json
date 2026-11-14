@@ -4721,7 +4721,10 @@
         "The administration the document was addressed to, when one matched.": "The administration the document was addressed to, when one matched.",
         "Rejected e-invoices": "Rejected e-invoices",
         "Refused self-billed invoices": "Refused self-billed invoices",
-        "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason."
+        "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.",
+        "Reject self-billed invoice": "Reject self-billed invoice",
+        "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.": "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.",
+        "Self-billed invoice rejected.": "Self-billed invoice rejected."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
