@@ -609,6 +609,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
 
+            // Deferral schedules (ledger-period-end, REQ-LPE-004): "Spread over
+            // periods" on an AP or AR invoice line. preview precedes the bare
+            // collection route only for readability; the verbs and paths differ.
+            ['name' => 'deferralSchedule#preview', 'url' => '/api/deferral-schedules/preview', 'verb' => 'POST'],
+            ['name' => 'deferralSchedule#create', 'url' => '/api/deferral-schedules', 'verb' => 'POST'],
+
             // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
             // exclusively via this endpoint (a service call, atomic demotion of
             // the previous default) — never an x-openregister-lifecycle

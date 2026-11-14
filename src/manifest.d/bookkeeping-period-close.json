@@ -269,7 +269,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CloseChecklistTemplate",
-				"_note": "CONFIG: the tasks a period's close checklist is filled with when it starts closing (ledger-period-end REQ-LPE-001, REQ-LPE-003). Edits apply to periods that start closing afterwards.",
+				"_note": "CONFIG: the tasks a closing period copies (REQ-LPE-003).",
 				"fields": [
 					{
 						"key": "templateName",

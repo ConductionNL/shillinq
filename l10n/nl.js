@@ -6929,7 +6929,27 @@ OC.L10N.register(
         "Total (cents)": "Totaal (centen)",
         "What is spread, as shown on the journal entries.": "Wat wordt gespreid, zoals het op de memoriaalposten staat.",
         "When the release was posted.": "Wanneer de vrijval is geboekt.",
-        "Whether a prepaid cost or deferred revenue is spread.": "Of een vooruitbetaalde kostenpost of vooruitontvangen opbrengst wordt gespreid."
+        "Whether a prepaid cost or deferred revenue is spread.": "Of een vooruitbetaalde kostenpost of vooruitontvangen opbrengst wordt gespreid.",
+        "{count} releases, EUR {total} in total": "{count} vrijvalposten, in totaal EUR {total}",
+        "Cost account": "Kostenrekening",
+        "Days": "Dagen",
+        "Invoice line": "Factuurregel",
+        "Show releases": "Vrijval tonen",
+        "Spread line {line} over periods": "Regel {line} over perioden spreiden",
+        "Spread over periods": "Over perioden spreiden",
+        "The invoice could not be loaded.": "De factuur kon niet worden geladen.",
+        "The invoice line could not be spread.": "De factuurregel kon niet worden gespreid.",
+        "The line is spread over {count} periods. The nightly close releases each period after it ends.": "De regel is over {count} perioden gespreid. De nachtelijke afsluiting laat elke periode vrijvallen nadat die is afgelopen.",
+        "The releases could not be worked out.": "De vrijval kon niet worden berekend.",
+        "Choose prepaid cost or deferred revenue": "Kies vooruitbetaalde kosten of vooruitontvangen opbrengsten",
+        "The balance account must differ from the result account": "De balansrekening moet verschillen van de resultaatrekening",
+        "The service period must span more than one period": "De dienstperiode moet meer dan één periode beslaan",
+        "This invoice line is already spread": "Deze factuurregel is al gespreid",
+        "The amount must be a whole number of cents above zero": "Het bedrag moet een heel aantal centen boven nul zijn",
+        "Dates must be given as YYYY-MM-DD": "Datums moeten als JJJJ-MM-DD worden opgegeven",
+        "The service period ends before it starts": "De dienstperiode eindigt voordat die begint",
+        "The amount to spread must be more than zero": "Het te spreiden bedrag moet meer dan nul zijn",
+        "Spread the line": "Regel spreiden"
     },
     "nplurals=2; plural=(n != 1);"
 )

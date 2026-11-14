@@ -4744,7 +4744,27 @@ OC.L10N.register(
         "Total (cents)": "Total (cents)",
         "What is spread, as shown on the journal entries.": "What is spread, as shown on the journal entries.",
         "When the release was posted.": "When the release was posted.",
-        "Whether a prepaid cost or deferred revenue is spread.": "Whether a prepaid cost or deferred revenue is spread."
+        "Whether a prepaid cost or deferred revenue is spread.": "Whether a prepaid cost or deferred revenue is spread.",
+        "{count} releases, EUR {total} in total": "{count} releases, EUR {total} in total",
+        "Cost account": "Cost account",
+        "Days": "Days",
+        "Invoice line": "Invoice line",
+        "Show releases": "Show releases",
+        "Spread line {line} over periods": "Spread line {line} over periods",
+        "Spread over periods": "Spread over periods",
+        "The invoice could not be loaded.": "The invoice could not be loaded.",
+        "The invoice line could not be spread.": "The invoice line could not be spread.",
+        "The line is spread over {count} periods. The nightly close releases each period after it ends.": "The line is spread over {count} periods. The nightly close releases each period after it ends.",
+        "The releases could not be worked out.": "The releases could not be worked out.",
+        "Choose prepaid cost or deferred revenue": "Choose prepaid cost or deferred revenue",
+        "The balance account must differ from the result account": "The balance account must differ from the result account",
+        "The service period must span more than one period": "The service period must span more than one period",
+        "This invoice line is already spread": "This invoice line is already spread",
+        "The amount must be a whole number of cents above zero": "The amount must be a whole number of cents above zero",
+        "Dates must be given as YYYY-MM-DD": "Dates must be given as YYYY-MM-DD",
+        "The service period ends before it starts": "The service period ends before it starts",
+        "The amount to spread must be more than zero": "The amount to spread must be more than zero",
+        "Spread the line": "Spread the line"
     },
     "nplurals=2; plural=(n != 1);"
 )
