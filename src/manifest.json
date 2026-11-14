@@ -4451,6 +4451,66 @@
 						]
 					}
 				],
+				"relatedCollections": [
+					{
+						"title": "Booked lines",
+						"register": "shillinq",
+						"schema": "GLLine",
+						"filter": {
+							"transactionId": "@objectId"
+						},
+						"sort": {
+							"field": "lineNumber",
+							"dir": "asc"
+						},
+						"columns": [
+						{
+							"key": "lineNumber",
+							"label": "#"
+						},
+						{
+							"key": "accountNumber",
+							"label": "Account"
+						},
+						{
+							"key": "side",
+							"label": "D/C"
+						},
+						{
+							"key": "transactionAmount",
+							"label": "Transaction amount"
+						},
+						{
+							"key": "transactionCurrency",
+							"label": "Transaction currency"
+						},
+						{
+							"key": "fxRate",
+							"label": "Exchange rate"
+						},
+						{
+							"key": "fxRateSource",
+							"label": "Rate source"
+						},
+						{
+							"key": "fxRateDate",
+							"label": "Rate date"
+						},
+						{
+							"key": "amount",
+							"label": "Base amount"
+						},
+						{
+							"key": "baseCurrency",
+							"label": "Base currency"
+						},
+						{
+							"key": "description",
+							"label": "Description"
+						}
+						]
+					}
+				],
 				"lifecycleActions": true,
 				"indexRoute": "GeneralLedger",
 				"sidebarProps": {
@@ -4612,6 +4672,66 @@
 						"key": "lines",
 						"label": "Lines",
 						"type": "array"
+					}
+				],
+				"relatedCollections": [
+					{
+						"title": "Posted lines",
+						"register": "shillinq",
+						"schema": "GLLine",
+						"filter": {
+							"transactionId": "@object.glTransactionId"
+						},
+						"sort": {
+							"field": "lineNumber",
+							"dir": "asc"
+						},
+						"columns": [
+						{
+							"key": "lineNumber",
+							"label": "#"
+						},
+						{
+							"key": "accountNumber",
+							"label": "Account"
+						},
+						{
+							"key": "side",
+							"label": "D/C"
+						},
+						{
+							"key": "transactionAmount",
+							"label": "Transaction amount"
+						},
+						{
+							"key": "transactionCurrency",
+							"label": "Transaction currency"
+						},
+						{
+							"key": "fxRate",
+							"label": "Exchange rate"
+						},
+						{
+							"key": "fxRateSource",
+							"label": "Rate source"
+						},
+						{
+							"key": "fxRateDate",
+							"label": "Rate date"
+						},
+						{
+							"key": "amount",
+							"label": "Base amount"
+						},
+						{
+							"key": "baseCurrency",
+							"label": "Base currency"
+						},
+						{
+							"key": "description",
+							"label": "Description"
+						}
+						]
 					}
 				],
 				"lifecycleActions": true,

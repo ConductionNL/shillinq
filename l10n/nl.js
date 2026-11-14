@@ -6929,7 +6929,18 @@ OC.L10N.register(
         "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Facturen die een afnemer namens u opmaakte en via Peppol stuurde, maar die geen verkoopfactuur werden, met de reden.",
         "Reject self-billed invoice": "Factuur uitgereikt door afnemer afwijzen",
         "Why this self-billed invoice is not accepted, for example a quantity that does not match the delivery.": "Waarom u deze factuur van de afnemer niet accepteert, bijvoorbeeld een hoeveelheid die niet klopt met de levering.",
-        "Self-billed invoice rejected.": "Factuur uitgereikt door afnemer afgewezen."
+        "Self-billed invoice rejected.": "Factuur uitgereikt door afnemer afgewezen.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
