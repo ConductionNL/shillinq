@@ -12,11 +12,11 @@
 
 - [x] 2.1 Add the `DeferralSchedule` schema with its lifecycle in a `register.d` fragment (REQ-LPE-004). Verify: `npm run check:registers`, `npm run check:seeds` with the seed from design.md.
 - [x] 2.2 "Spread over periods" line action on the AP and AR invoice detail pages creating the schedule and the opening entry (REQ-LPE-004). Verify: PHPUnit for the schedule maths (day count, remainder on the last release).
-- [ ] 2.3 Release step in `SoftCloseExecutor` posting ended periods and completing the schedule (REQ-LPE-005). Verify: PHPUnit for a run, a rerun and the last release.
+- [x] 2.3 Release step in `SoftCloseExecutor` posting ended periods and completing the schedule (REQ-LPE-005). Verify: PHPUnit for a run, a rerun and the last release.
 
 ## 3. Accruals
 
-- [ ] 3.1 Make `SoftCloseExecutor` write and post the `JournalEntry` it names, and the reversal per `reversalPattern` (REQ-LPE-006). Verify: PHPUnit asserting one entry per rule and period across two runs.
+- [x] 3.1 Make `SoftCloseExecutor` write and post the `JournalEntry` it names, and the reversal per `reversalPattern` (REQ-LPE-006). Verify: PHPUnit asserting one entry per rule and period across two runs.
 
 ## 4. End to end and strings
 
