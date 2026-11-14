@@ -6875,6 +6875,12 @@ OC.L10N.register(
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
         "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Integrations": "Koppelingen",
+        "Open in Integriq": "Openen in Integriq",
+        "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.": "Kant-en-klare koppelingen voor de boekhouding uit de catalogus van integriq. Zet er een aan in integriq.",
+        "Open integriq's catalogue, where this integration is switched on.": "Open de catalogus van integriq, waar u deze koppeling aanzet.",
+        "Not available yet": "Nog niet beschikbaar",
+        "Every connection family has an integration in the catalogue.": "Voor elke soort verbinding staat een koppeling in de catalogus.",
         "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.": "Nog niet ingesteld. Koppel de KvK-bron in Integriq om bedrijven op te zoeken bij het toevoegen van een klant of leverancier.",
         "Payouts to pay": "Te betalen uitbetalingen",
         "To approve": "Goed te keuren",
@@ -6931,7 +6937,18 @@ OC.L10N.register(
         "{count} draft batch, total EUR {total}.": "{count} conceptbatch, totaal EUR {total}.",
         "{count} draft batches, total EUR {total}.": "{count} conceptbatches, totaal EUR {total}.",
         "{scheme} {sequenceType}: {count} collection, EUR {total}": "{scheme} {sequenceType}: {count} incasso, EUR {total}",
-        "{scheme} {sequenceType}: {count} collections, EUR {total}": "{scheme} {sequenceType}: {count} incasso's, EUR {total}"
+        "{scheme} {sequenceType}: {count} collections, EUR {total}": "{scheme} {sequenceType}: {count} incasso's, EUR {total}",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
