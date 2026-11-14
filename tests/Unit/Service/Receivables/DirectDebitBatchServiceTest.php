@@ -275,22 +275,22 @@ class DirectDebitBatchServiceTest extends TestCase {
 
 		$result = $this->service(records: $records)->propose(administrationId: self::ADMIN, collectionDate: '2026-10-15');
 
-		$this->assertSame([], $result['skipped']);
-		$this->assertCount(2, $result['batches']);
+		$this->assertSame(expected: [], actual: $result['skipped']);
+		$this->assertCount(expectedCount: 2, haystack: $result['batches']);
 
 		$byType = [];
 		foreach ($result['batches'] as $batch) {
 			$byType[$batch['sequenceType']] = $batch;
 		}
 
-		ksort($byType);
-		$this->assertSame(['FRST', 'RCUR'], array_keys($byType));
-		$this->assertSame(['202'], array_column($byType['FRST']['collections'], 'invoiceId'));
-		$this->assertSame(['m-b'], array_column($byType['FRST']['collections'], 'mandateId'));
-		$this->assertSame(['201'], array_column($byType['RCUR']['collections'], 'invoiceId'));
-		$this->assertSame(['m-a'], array_column($byType['RCUR']['collections'], 'mandateId'));
-		$this->assertSame(40.0, $byType['RCUR']['controlSum']);
-		$this->assertSame('DD-20261001093000-CORE-RCUR', $byType['RCUR']['messageId']);
+		ksort(array: $byType);
+		$this->assertSame(expected: ['FRST', 'RCUR'], actual: array_keys(array: $byType));
+		$this->assertSame(expected: ['202'], actual: array_column(array: $byType['FRST']['collections'], column_key: 'invoiceId'));
+		$this->assertSame(expected: ['m-b'], actual: array_column(array: $byType['FRST']['collections'], column_key: 'mandateId'));
+		$this->assertSame(expected: ['201'], actual: array_column(array: $byType['RCUR']['collections'], column_key: 'invoiceId'));
+		$this->assertSame(expected: ['m-a'], actual: array_column(array: $byType['RCUR']['collections'], column_key: 'mandateId'));
+		$this->assertSame(expected: 40.0, actual: $byType['RCUR']['controlSum']);
+		$this->assertSame(expected: 'DD-20261001093000-CORE-RCUR', actual: $byType['RCUR']['messageId']);
 
 	}//end testAMandateUsedByAnEarlierCollectionIsCollectedAsRecurring()
 
