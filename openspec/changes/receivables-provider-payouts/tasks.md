@@ -23,6 +23,6 @@
 
 ## 4. Docs
 
-- [ ] 4.1 User guide pages on payouts and on taking payments on the spot, and a release note naming the fee account default and the capture booking command. Verify: the pages in `docs/` and the note in the PR body.
+- [x] 4.1 User guide pages on payouts and on taking payments on the spot, and a release note naming the fee account default and the capture booking command. Verify: the pages in `docs/` and the note in the PR body.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/receivables-provider-payouts/tasks.md#task-N` on every new method, English source strings with Dutch translations, and coordinate the match target with `banking-manual-match` in this OpenSpec pass.
