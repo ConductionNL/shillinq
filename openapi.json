@@ -6522,6 +6522,37 @@
                 }
             }
         },
+        "/invoices/billable-work": {
+            "get": {
+                "operationId": "billable-work-index",
+                "summary": "The unbilled hours and pass-through expenses one customer can be invoiced for (GET /api/v1/invoices/billable-work)",
+                "description": "The unbilled hours and pass-through expenses one customer can be invoiced for (GET /api/v1/invoices/billable-work). Query: customerId, projectId (hours come from one of the customer's projects), from, to, rateCardId (optional, prices the hours), administrationId (optional; refused with 404 unless the caller may access it, else the caller's active administration). `hours.available` false means the hours could not be read, with `hours.reason`. Hours and items a draft or posted invoice already references are left out. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-api"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
         "/invoices/generate": {
             "post": {
                 "operationId": "invoice-api-generate",

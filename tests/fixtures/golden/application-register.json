@@ -850,6 +850,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\BillableWorkServiceInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\BillableWorkService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\BillablePeriodInvoiceServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\BillablePeriodInvoiceService'"
         ]
