@@ -4,7 +4,8 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `DirectDebitBatchService::propose` (REQ-SDD-011). Verify: PHPUnit red first with the real guards; collections and batch validated against the real fragment; an invoice without an active mandate is skipped with the reason.
+- [x] 1.1 `DirectDebitBatchService::propose` (REQ-SDD-011). Verify: PHPUnit red first with the real guards; collections and batch validated against the real fragment; an invoice without an active mandate is skipped with the reason.
+  - Built: `lib/Service/Receivables/DirectDebitBatchService.php`. Open (`issued`, `overdue`) invoices with `paymentMethod: direct_debit`, the invoice's own mandate else the customer's `defaultMandateId`, one draft batch per scheme and sequence type (FRST for a recurring mandate's first collection, RCUR after, OOFF for a one-off), skipped invoices named with `no-mandate`, `mandate-inactive`, `mandate-ended`, `already-collected`, `not-euro` or `nothing-due`. Pinned by `DirectDebitBatchServiceTest`; every write is validated against the shipped fragment. The guards stay on the collections' `submit` transition (design D1); no endpoint calls `propose` yet, which is 2.1's page action.
 - [ ] 1.2 `SepaPain008Generator` and the `generate` action, XSD validated (REQ-SDD-012). Verify: PHPUnit asserts the XML validates against `pain.008.001.02.xsd` and carries the control sum; an invalid IBAN keeps the batch draft.
 - [ ] 1.3 Download endpoint (REQ-SDD-012). Verify: controller test; a caller from another administration is refused; route-auth and IDOR gates.
 - [ ] 1.4 `succeed` registers the payment, `reject` keeps the invoice open (REQ-SDD-013). Verify: PHPUnit with the real `InvoiceSettlementService`.

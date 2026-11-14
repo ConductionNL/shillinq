@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Service\WbsoDocumentService;
+use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -47,11 +47,11 @@ class WbsoDocumentGuard {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param WbsoDocumentService $documents Shared retention math.
+	 * @param WbsoDocumentServiceInterface $documents Shared retention math.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly WbsoDocumentService $documents,
+		private readonly WbsoDocumentServiceInterface $documents,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

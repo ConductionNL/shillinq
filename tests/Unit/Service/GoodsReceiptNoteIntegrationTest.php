@@ -294,14 +294,29 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	 */
 	public function testAcceptPostsEachStockMoveFieldForField(): void {
 		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$warnings = [];
 		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects(self::once())->method('warning')->with(
-			'GoodsReceiptNoteService: PO line missing on accept; StockMove skipped',
-			['poLineId' => 'poline-gone', 'grnId' => 'grn-1']
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message, array $context = []) use (&$warnings): void {
+				$warnings[] = [$message, $context];
+			}
 		);
 		$service = $this->buildServiceWithLogger(stub: $stub, logger: $logger);
 
 		$accepted = $service->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1');
+
+		// Without a transition engine each accepted line is posted directly and
+		// says so (inventory-receipt-cost-layers REQ-IRCL-001); the missing PO
+		// line is still skipped with its own warning.
+		$fallback = 'GoodsReceiptNoteService: StockMove posted without the transition engine; its post listeners did not run';
+		self::assertSame(
+			[
+				[$fallback, ['stockMoveId' => 'obj-1', 'movementNumber' => 'SM-2026-adm-1-000001-LINEA']],
+				[$fallback, ['stockMoveId' => 'obj-2', 'movementNumber' => 'SM-2026-adm-1-000001-LINEB']],
+				['GoodsReceiptNoteService: PO line missing on accept; StockMove skipped', ['poLineId' => 'poline-gone', 'grnId' => 'grn-1']],
+			],
+			$this->sortedByMessage($warnings)
+		);
 
 		self::assertSame('accepted', $accepted['statusCode']);
 		$moves = $stub->rows('StockMove');
@@ -340,6 +355,61 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		self::assertSame('partial_received', $stub->rows('PurchaseOrder')[0]['statusCode']);
 
 	}//end testAcceptPostsEachStockMoveFieldForField()
+
+	/**
+	 * With the transition engine every accepted line is saved as an unlocked
+	 * draft and posted through the engine, once, and no fallback warning is
+	 * logged (inventory-receipt-cost-layers REQ-IRCL-001).
+	 *
+	 * @return void
+	 */
+	public function testAcceptPostsEachReceiptThroughTheTransitionEngine(): void {
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$transitions = [];
+		$engine = new class ($stub, $transitions) {
+			/**
+			 * Constructor.
+			 *
+			 * @param object            $stub        The register.
+			 * @param array<int, mixed> $transitions Each transition, with the move's state when it ran.
+			 */
+			public function __construct(private object $stub, private array &$transitions) {
+			}
+
+			/**
+			 * Record the transition and post the move.
+			 *
+			 * @param string $id     The move id.
+			 * @param string $action The transition.
+			 *
+			 * @return void
+			 */
+			public function transition(string $id, string $action): void {
+				$row = array_values(array_filter($this->stub->rows('StockMove'), static fn (array $r): bool => $r['id'] === $id))[0];
+				$this->transitions[] = [$id, $action, $row['lifecycleState'], $row['locked'], $row['postedAt']];
+				$row['lifecycleState'] = 'posted';
+				$row['locked'] = true;
+				$this->stub->setSchema('StockMove')->saveObject($row);
+			}
+		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturn(true);
+		$container->method('get')->willReturn($engine);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('warning')->with(
+			'GoodsReceiptNoteService: PO line missing on accept; StockMove skipped',
+			['poLineId' => 'poline-gone', 'grnId' => 'grn-1']
+		);
+
+		$this->buildServiceWithLogger(stub: $stub, logger: $logger, container: $container)->acceptGRN(administrationId: 'adm-1', grnId: 'grn-1');
+
+		self::assertSame(
+			[['obj-1', 'post', 'draft', false, null], ['obj-2', 'post', 'draft', false, null]],
+			$transitions
+		);
+		self::assertSame(['posted', 'posted'], array_column($stub->rows('StockMove'), 'lifecycleState'));
+
+	}//end testAcceptPostsEachReceiptThroughTheTransitionEngine()
 
 	/**
 	 * Golden for the accept guards: an inaccessible or empty administration,
@@ -461,14 +531,28 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	}//end acceptFixture()
 
 	/**
+	 * Warnings in a stable order: by message, then in the order they came.
+	 *
+	 * @param array<int, array{0: string, 1: array<string, mixed>}> $warnings The warnings.
+	 *
+	 * @return array<int, array{0: string, 1: array<string, mixed>}>
+	 */
+	private function sortedByMessage(array $warnings): array {
+		usort($warnings, static fn (array $a, array $b): int => strcmp($b[0], $a[0]));
+		return $warnings;
+
+	}//end sortedByMessage()
+
+	/**
 	 * Build the service for adm-1 with the given logger.
 	 *
 	 * @param object $stub The ObjectService stub.
 	 * @param LoggerInterface $logger The logger.
+	 * @param ContainerInterface|null $container The container the transition engine comes from, or null for none.
 	 *
 	 * @return GoodsReceiptNoteService
 	 */
-	private function buildServiceWithLogger(object $stub, LoggerInterface $logger): GoodsReceiptNoteService {
+	private function buildServiceWithLogger(object $stub, LoggerInterface $logger, ?ContainerInterface $container = null): GoodsReceiptNoteService {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -483,6 +567,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			container: $container,
 		);
 
 	}//end buildServiceWithLogger()

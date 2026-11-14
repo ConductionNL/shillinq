@@ -39,7 +39,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\ContractCostRollupService;
+use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -63,7 +63,7 @@ class ContractCostRollupJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Nextcloud's clock.
-	 * @param ContractCostRollupService $rollup The roll-up itself.
+	 * @param ContractCostRollupServiceInterface $rollup The roll-up itself.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param LoggerInterface $logger Logger.
@@ -72,7 +72,7 @@ class ContractCostRollupJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ContractCostRollupService $rollup,
+		private readonly ContractCostRollupServiceInterface $rollup,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
@@ -122,7 +122,7 @@ class ContractCostRollupJob extends TimedJob {
 		try {
 			return $this->objectService
 				->setRegister($register)
-				->setSchema(ContractCostRollupService::SCHEMA)
+				->setSchema(ContractCostRollupServiceInterface::SCHEMA)
 				->findAll(['limit' => 1000]);
 		} catch (\Throwable $e) {
 			$this->logger->error('Shillinq: the contract cost roll-up could not read the contracts', ['exception' => $e->getMessage()]);

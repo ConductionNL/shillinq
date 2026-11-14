@@ -62,15 +62,17 @@ namespace OCA\Shillinq\Service\Commitment;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandateEnforcer;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetBlockerInterface;
+use OCA\Shillinq\Kernel\Contracts\CommitmentMaterialisationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\MandateEnforcerInterface;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 
 /**
  * Assembles a Commitment + CommitmentLines from an approved
@@ -79,7 +81,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentMaterialisationService {
+class CommitmentMaterialisationService implements CommitmentMaterialisationServiceInterface {
 	/**
 	 * CloudEvent name for the rechtmatigheid commitment-stage trigger (REQ-VPL-012).
 	 *
@@ -91,16 +93,16 @@ class CommitmentMaterialisationService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for register slug resolution.
-	 * @param MandateEnforcer $mandate Reused mandate-sufficiency guard (REQ-VPL-002).
-	 * @param BudgetBlocker $budget Reused budget-room guard (REQ-VPL-001).
+	 * @param MandateEnforcerInterface $mandate Reused mandate-sufficiency guard (REQ-VPL-002).
+	 * @param BudgetBlockerInterface $budget Reused budget-room guard (REQ-VPL-001).
 	 * @param IEventDispatcher $dispatcher NC event dispatcher (rechtmatigheid trigger transport).
 	 * @param LoggerInterface $logger Logger for fail-soft/fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly MandateEnforcer $mandate,
-		private readonly BudgetBlocker $budget,
+		private readonly MandateEnforcerInterface $mandate,
+		private readonly BudgetBlockerInterface $budget,
 		private readonly IEventDispatcher $dispatcher,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
@@ -320,7 +322,7 @@ class CommitmentMaterialisationService {
 	private function refuseUnfunded(CommitmentSource $source): void {
 		if ($source->failClosed === true) {
 			throw new InsufficientCommitmentBudgetException(
-				sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
+				message: sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
 			);
 		}
 

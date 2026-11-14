@@ -39,7 +39,7 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -83,13 +83,13 @@ class LotExpiryAlertJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for job scheduling and current-time reads.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService lookup.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {

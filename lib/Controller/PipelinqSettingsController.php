@@ -27,8 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\Pipelinq\PipelinqConfig;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqConfigInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -62,11 +62,11 @@ class PipelinqSettingsController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The current HTTP request.
-	 * @param PipelinqConfig $pipelinqConfig The connection config service.
+	 * @param PipelinqConfigInterface $pipelinqConfig The connection config service.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PipelinqConfig $pipelinqConfig,
+		private readonly PipelinqConfigInterface $pipelinqConfig,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
