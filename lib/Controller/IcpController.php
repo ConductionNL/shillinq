@@ -47,6 +47,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
 /**
  * GET ICP ledger / reconciliation / periodicity endpoints.
@@ -501,6 +502,11 @@ class IcpController extends Controller {
 	private function run(string $action, callable $compute, array $context): JSONResponse {
 		try {
 			$result = $compute();
+		} catch (JurisdictionRefusedException $e) {
+			return new JSONResponse(
+				['error' => 'jurisdiction-refused', 'message' => $e->getMessage(), 'jurisdiction' => $e->getJurisdiction()],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'IcpController: failed to ' . $action,

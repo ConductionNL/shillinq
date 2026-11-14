@@ -6895,7 +6895,10 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.": "ISO 3166 alpha-2-land onder wiens regels de boeken worden gevoerd: het bepaalt de regelcontroles, het sjabloon voor rekeningschema en btw-tarieven en de beschikbare uitvoer. Vast zodra de administratie een geboekte transactie heeft.",
+        "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.": "ISO 3166 alpha-2-land waartoe het tarief behoort; NL als het leeg is. Een wetgevingspakket zaait de tarieven van zijn land.",
+        "Belgian minimum chart (MAR/PCMN)": "Belgisch minimumrekeningenstelsel (MAR/PCMN)"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

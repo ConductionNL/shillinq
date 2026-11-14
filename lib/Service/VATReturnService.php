@@ -56,6 +56,8 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
+use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
 /**
  * Composes VAT returns from GL transactions using the real OpenRegister API.
@@ -90,11 +92,13 @@ class VATReturnService implements VATReturnServiceInterface {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AdministrationJurisdiction|null $jurisdiction The administration's jurisdiction; built from the object service when absent.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?AdministrationJurisdiction $jurisdiction=null,
 	) {
 	}//end __construct()
 
@@ -109,7 +113,10 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @return array<string,mixed> The created VATReturn record (incl. id).
 	 *
+	 * @throws JurisdictionRefusedException When the administration is not under Dutch rules.
+	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
 	 */
 	public function createReturn(
 		string $administrationId,
@@ -118,6 +125,9 @@ class VATReturnService implements VATReturnServiceInterface {
 		int $periodNumber,
 		string $regime,
 	): array {
+		// The BTW return is a Dutch filing: refuse an administration kept under other rules (REQ-LFL-004).
+		$this->jurisdiction()->assertIs(administrationId: $administrationId, output: 'Dutch VAT return');
+
 		[$startDate, $endDate] = $this->resolvePeriodBounds(period: $period, periodYear: $periodYear, periodNumber: $periodNumber);
 
 		$returnNumber = $this->buildReturnNumber(periodYear: $periodYear, periodNumber: $periodNumber, period: $period, regime: $regime);
@@ -458,6 +468,8 @@ class VATReturnService implements VATReturnServiceInterface {
 	 */
 	public function submitReturn(string $returnId, string $userId): array {
 		$vatReturn = $this->fetchReturn(returnId: $returnId);
+		// Submission goes to the Dutch tax authority over SBR (REQ-LFL-004).
+		$this->jurisdiction()->assertIs(administrationId: (string)($vatReturn['administrationId'] ?? ''), output: 'Dutch VAT return submission (SBR)');
 		$status = (string)($vatReturn['statusCode'] ?? '');
 		if ($status !== 'draft') {
 			throw new RuntimeException(
@@ -952,6 +964,15 @@ class VATReturnService implements VATReturnServiceInterface {
 	private function fromCents(int $cents): float {
 		return round(($cents / 100), 2);
 	}//end fromCents()
+
+	/**
+	 * The administration jurisdiction lookup.
+	 *
+	 * @return AdministrationJurisdiction
+	 */
+	private function jurisdiction(): AdministrationJurisdiction {
+		return ($this->jurisdiction ?? new AdministrationJurisdiction(objectService: $this->objectService, appConfig: $this->appConfig));
+	}//end jurisdiction()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

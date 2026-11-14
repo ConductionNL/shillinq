@@ -379,6 +379,19 @@ interface SettingsServiceInterface {
 	public function seedWmoCommercialActivities(string $administrationId): array;
 
 	/**
+	 * Seed an administration from the legislation pack of a country: its chart
+	 * of accounts and VAT rates, and the administration's jurisdiction.
+	 *
+	 * @param string $country          ISO 3166 alpha-2, e.g. `BE`.
+	 * @param string $administrationId The administration (its administrationCode or uuid).
+	 *
+	 * @return array<string,mixed> Result with success flag and message.
+	 *
+	 * @spec openspec/changes/ledger-foreign-legislation/specs/bookkeeping-multi-administratie/spec.md
+	 */
+	public function seedLegislationPack(string $country, string $administrationId): array;
+
+	/**
 	 * Update settings with the provided data.
 	 *
 	 * @param array<string,mixed> $data The data to update

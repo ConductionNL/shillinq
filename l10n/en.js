@@ -4696,7 +4696,11 @@ OC.L10N.register(
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Jurisdiction": "Jurisdiction",
+        "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.": "ISO 3166 alpha-2 country whose rules the books are kept under: it selects the rule checks, the chart and VAT rate template and the outputs on offer. Fixed once the administration has a posted transaction.",
+        "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.": "ISO 3166 alpha-2 country the rate belongs to; NL when empty. A legislation pack seeds the rates of its country.",
+        "Belgian minimum chart (MAR/PCMN)": "Belgian minimum chart (MAR/PCMN)"
     },
     "nplurals=2; plural=(n != 1);"
 )
