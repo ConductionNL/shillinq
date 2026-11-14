@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -76,7 +77,10 @@ class VatPositionController extends Controller {
 	/**
 	 * The VAT position of an administration for a period.
 	 *
-	 * @return JSONResponse 200 with the position; 400 for a missing administration or a malformed
+	 * Without `administrationId` the caller's active administration is read; without `period`
+	 * the quarter of today, the open period.
+	 *
+	 * @return JSONResponse 200 with the position; 400 without any administration or for a malformed
 	 *                      period; 401 without a user; 404 for an administration the caller may not see.
 	 *
 	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.2
@@ -88,6 +92,11 @@ class VatPositionController extends Controller {
 		}
 
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId === '') {
+			// The VAT reports page asks without one: the caller's active administration.
+			$administrationId = (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
+		}
+
 		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
@@ -97,6 +106,10 @@ class VatPositionController extends Controller {
 		}
 
 		$period = trim((string)$this->request->getParam('period', ''));
+		if ($period === '') {
+			$period = self::openQuarter(today: new DateTimeImmutable());
+		}
+
 		try {
 			$position = $this->position->positionFor(administrationId: $administrationId, period: $period);
 		} catch (InvalidArgumentException $e) {
@@ -110,6 +123,42 @@ class VatPositionController extends Controller {
 			return new JSONResponse(['error' => 'Failed to read the VAT position'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
+		$position['boxes'] = self::withRowIds(boxes: (array)($position['boxes'] ?? []));
+
 		return new JSONResponse(['data' => $position], Http::STATUS_OK);
 	}//end show()
+
+	/**
+	 * The quarter a day falls in, as `YYYY-Qn`: the open period the VAT reports page shows.
+	 *
+	 * @param DateTimeImmutable $today The day.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+	 */
+	public static function openQuarter(DateTimeImmutable $today): string {
+		return $today->format('Y') . '-Q' . (string)intdiv(((int)$today->format('n') + 2), 3);
+	}//end openQuarter()
+
+	/**
+	 * Each box with an `id` (box, type and rate), so a table can key and act on its rows.
+	 *
+	 * @param array<int,array<string,mixed>> $boxes The boxes.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.3
+	 */
+	private static function withRowIds(array $boxes): array {
+		foreach ($boxes as $index => $box) {
+			if (is_array($box) === false) {
+				continue;
+			}
+
+			$boxes[$index] = ['id' => implode('-', [(string)($box['returnBox'] ?? ''), (string)($box['type'] ?? ''), (string)($box['taxRate'] ?? '')])] + $box;
+		}
+
+		return $boxes;
+	}//end withRowIds()
 }//end class

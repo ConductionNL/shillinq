@@ -126,38 +126,70 @@ class ContributionDeclineService implements ContributionDeclineServiceInterface 
 
 		try {
 			$objectService = $this->container->get(self::OBJECT_SERVICE);
-			$customerMasterId = $this->subjects->customerMasterId(
-				objectService: $objectService,
-				subjectRef: (string)($claims['sub'] ?? ''),
-				audience: $audience,
-			);
-			if ($customerMasterId === null) {
-				return self::FORBIDDEN;
-			}
-
-			$invoice = $this->findOwnedVoluntaryInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId);
-			if ($invoice === null) {
-				return self::FORBIDDEN;
-			}
-
-			// A double click, or a second tab: the refusal already stands.
-			if ($this->policy->isDeclined(invoice: $invoice) === true) {
-				return self::DECLINED;
-			}
-
-			if (in_array((string)($invoice['lifecycleState'] ?? ''), self::OPEN_STATES, true) === false) {
-				return self::FORBIDDEN;
-			}
-
-			$this->closeInvoice(objectService: $objectService, invoice: $invoice, now: ($now ?? new DateTimeImmutable()));
-			$this->voidPendingRequests(objectService: $objectService, invoiceId: (string)$invoice['id']);
+			return $this->declineAsSubject(objectService: $objectService, claims: $claims, target: $target, now: $now);
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: declining a voluntary contribution failed', ['exception' => $e->getMessage()]);
 			return self::DOWNSTREAM_ERROR;
 		}//end try
+	}//end decline()
+
+	/**
+	 * Decline the invoice when it belongs to the asserted subject's customer.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param string $target The trimmed opaque invoice id.
+	 * @param DateTimeImmutable|null $now The moment to stamp; defaults to now.
+	 *
+	 * @return string DECLINED or FORBIDDEN.
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	private function declineAsSubject(object $objectService, array $claims, string $target, DateTimeImmutable|null $now): string {
+		$customerMasterId = $this->subjects->customerMasterId(
+			objectService: $objectService,
+			subjectRef: (string)($claims['sub'] ?? ''),
+			audience: (string)($claims['audience'] ?? ''),
+		);
+		if ($customerMasterId === null) {
+			return self::FORBIDDEN;
+		}
+
+		return $this->declineOwnedInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId, now: $now);
+	}//end declineAsSubject()
+
+	/**
+	 * Close the customer's open voluntary invoice and void its pending payment requests.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $target The trimmed opaque invoice id.
+	 * @param string $customerMasterId The subject's customer.
+	 * @param DateTimeImmutable|null $now The moment to stamp; defaults to now.
+	 *
+	 * @return string DECLINED or FORBIDDEN.
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	private function declineOwnedInvoice(object $objectService, string $target, string $customerMasterId, DateTimeImmutable|null $now): string {
+		$invoice = $this->findOwnedVoluntaryInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId);
+		if ($invoice === null) {
+			return self::FORBIDDEN;
+		}
+
+		// A double click, or a second tab: the refusal already stands.
+		if ($this->policy->isDeclined(invoice: $invoice) === true) {
+			return self::DECLINED;
+		}
+
+		if (in_array((string)($invoice['lifecycleState'] ?? ''), self::OPEN_STATES, true) === false) {
+			return self::FORBIDDEN;
+		}
+
+		$this->closeInvoice(objectService: $objectService, invoice: $invoice, now: ($now ?? new DateTimeImmutable()));
+		$this->voidPendingRequests(objectService: $objectService, invoiceId: (string)$invoice['id']);
 
 		return self::DECLINED;
-	}//end decline()
+	}//end declineOwnedInvoice()
 
 	/**
 	 * The target invoice when it exists, belongs to this customer and is a

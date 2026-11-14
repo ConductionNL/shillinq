@@ -241,16 +241,7 @@ final class LegesIntakeStepService {
 			'paymentGateway' => 'mollie',
 		];
 
-		if (isset($schedule['legalBasis']) === true && is_array($schedule['legalBasis']) === true) {
-			// The article the amount rests on travels with the request, so a
-			// citizen asked for money can see what it rests on and so can anyone
-			// checking the books later (REQ-FPCR-001).
-			$request['legalBasis'] = $schedule['legalBasis'];
-		}
-
-		if ((string)($schedule['revenueAccount'] ?? '') !== '') {
-			$request['revenueAccount'] = (string)$schedule['revenueAccount'];
-		}
+		$request = self::withScheduleFields(request: $request, schedule: $schedule);
 
 		if (isset($context['debtor']) === true && is_array($context['debtor']) === true) {
 			$request['debtor'] = $context['debtor'];
@@ -262,6 +253,40 @@ final class LegesIntakeStepService {
 
 		$this->validator->validate(request: $request, existing: []);
 
+		return $this->saveRequest(request: $request);
+	}//end raise()
+
+	/**
+	 * Carry the schedule's legal basis and revenue account onto the request when it has them.
+	 *
+	 * @param array<string, mixed> $request  The leges request.
+	 * @param array<string, mixed> $schedule The fee schedule entry.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function withScheduleFields(array $request, array $schedule): array {
+		if (isset($schedule['legalBasis']) === true && is_array($schedule['legalBasis']) === true) {
+			// The article the amount rests on travels with the request, so a
+			// citizen asked for money can see what it rests on and so can anyone
+			// checking the books later (REQ-FPCR-001).
+			$request['legalBasis'] = $schedule['legalBasis'];
+		}
+
+		if ((string)($schedule['revenueAccount'] ?? '') !== '') {
+			$request['revenueAccount'] = (string)$schedule['revenueAccount'];
+		}
+
+		return $request;
+	}//end withScheduleFields()
+
+	/**
+	 * Save the request and return it as an array carrying its id.
+	 *
+	 * @param array<string, mixed> $request The validated leges request.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function saveRequest(array $request): array {
 		$saved = $this->objectService->saveObject(
 			object: $request,
 			register: $this->registerSlug(),
@@ -274,7 +299,7 @@ final class LegesIntakeStepService {
 		}
 
 		return $written;
-	}//end raise()
+	}//end saveRequest()
 
 	/**
 	 * The pending leges request already standing on this object, if any.
@@ -298,27 +323,37 @@ final class LegesIntakeStepService {
 		);
 
 		foreach ($rows as $row) {
-			if (is_array($row) === false || is_array($row['subject'] ?? null) === false) {
-				continue;
+			if ($this->isOpenLegesRequestFor(row: $row, key: $key) === true) {
+				return $row;
 			}
-
-			if ((string)($row['requestType'] ?? '') !== 'leges') {
-				continue;
-			}
-
-			if ($this->validator->subjectKey((array)$row['subject']) !== $key) {
-				continue;
-			}
-
-			if (in_array((string)($row['state'] ?? ''), ['failed', 'expired', 'voided'], true) === true) {
-				continue;
-			}
-
-			return $row;
 		}
 
 		return null;
 	}//end existingLegesRequest()
+
+	/**
+	 * Whether a row is a leges request on the subject that has not failed, expired or been voided.
+	 *
+	 * @param mixed  $row The PaymentRequest row.
+	 * @param string $key The subject key of the case.
+	 *
+	 * @return bool
+	 */
+	private function isOpenLegesRequestFor(mixed $row, string $key): bool {
+		if (is_array($row) === false || is_array($row['subject'] ?? null) === false) {
+			return false;
+		}
+
+		if ((string)($row['requestType'] ?? '') !== 'leges') {
+			return false;
+		}
+
+		if ($this->validator->subjectKey((array)$row['subject']) !== $key) {
+			return false;
+		}
+
+		return in_array((string)($row['state'] ?? ''), ['failed', 'expired', 'voided'], true) === false;
+	}//end isOpenLegesRequestFor()
 
 	/**
 	 * The plain-language reason shown on the checkout and repeated on the

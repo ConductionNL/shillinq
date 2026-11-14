@@ -132,27 +132,60 @@ class CommitmentGuard {
 			return true;
 		}
 
-		foreach ($milestones as $milestone) {
-			if (is_array($milestone) === false) {
-				continue;
-			}
+		return $this->eachMilestoneWithinTerm(commitment: $commitment, milestones: $milestones, start: $start, end: $end);
+	}//end milestonesWithinTerm()
 
-			$date = $this->parseDate(value: (string)($milestone['date'] ?? ''));
-			if ($date === null || $date < $start || $date > $end) {
-				$this->logger->info(
-					'CommitmentGuard: milestone date out of contract term — denying activation',
-					[
-						'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
-						'milestoneId' => ($milestone['milestoneId'] ?? 'unknown'),
-						'date' => ($milestone['date'] ?? 'unknown'),
-					]
-				);
+	/**
+	 * Whether every milestone falls within [start, end]; the first one outside is logged.
+	 *
+	 * @param array<string, mixed> $commitment Commitment object array.
+	 * @param array<mixed> $milestones The planned milestones.
+	 * @param int $start The term start (epoch).
+	 * @param int $end The term end (epoch).
+	 *
+	 * @return bool True when all milestone dates are in range.
+	 */
+	private function eachMilestoneWithinTerm(array $commitment, array $milestones, int $start, int $end): bool {
+		foreach ($milestones as $milestone) {
+			if ($this->isMilestoneOutOfTerm(commitment: $commitment, milestone: $milestone, start: $start, end: $end) === true) {
 				return false;
 			}
-		}//end foreach
+		}
 
 		return true;
-	}//end milestonesWithinTerm()
+	}//end eachMilestoneWithinTerm()
+
+	/**
+	 * Whether a milestone's date is missing, unparseable or outside the term; such a milestone is logged.
+	 * A milestone that is not an array is not checked.
+	 *
+	 * @param array<string, mixed> $commitment Commitment object array.
+	 * @param mixed $milestone The milestone.
+	 * @param int $start The term start (epoch).
+	 * @param int $end The term end (epoch).
+	 *
+	 * @return bool True when the milestone denies activation.
+	 */
+	private function isMilestoneOutOfTerm(array $commitment, mixed $milestone, int $start, int $end): bool {
+		if (is_array($milestone) === false) {
+			return false;
+		}
+
+		$date = $this->parseDate(value: (string)($milestone['date'] ?? ''));
+		if ($date === null || $date < $start || $date > $end) {
+			$this->logger->info(
+				'CommitmentGuard: milestone date out of contract term — denying activation',
+				[
+					'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
+					'milestoneId' => ($milestone['milestoneId'] ?? 'unknown'),
+					'date' => ($milestone['date'] ?? 'unknown'),
+				]
+			);
+			return true;
+		}
+
+		return false;
+	}//end isMilestoneOutOfTerm()
 
 	/**
 	 * Parse an ISO 8601 date string into a Unix epoch, or null on failure.

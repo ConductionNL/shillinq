@@ -108,20 +108,8 @@ class LoadCbsSeedsStep implements IRepairStep {
 	public function run(IOutput $output): void {
 		$output->info('Seeding CBSSubmission + CBSLine example records...');
 
-		if (file_exists($this->seedPath) === false) {
-			$output->warning('CBS seed fragment not found at ' . $this->seedPath . ', skipping');
-			return;
-		}
-
-		$content = file_get_contents($this->seedPath);
-		if ($content === false) {
-			$output->warning('Failed to read CBS seed fragment, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-			$output->warning('Failed to parse CBS seed fragment: ' . json_last_error_msg());
+		$data = $this->readSeedFragment(output: $output);
+		if ($data === null) {
 			return;
 		}
 
@@ -150,6 +138,36 @@ class LoadCbsSeedsStep implements IRepairStep {
 	}//end run()
 
 	/**
+	 * Read and decode the CBS seed fragment, or null (reported) when it is missing, unreadable or not a JSON object.
+	 *
+	 * @param IOutput $output Progress output interface.
+	 *
+	 * @return array<mixed>|null The decoded fragment.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function readSeedFragment(IOutput $output): array|null {
+		if (file_exists($this->seedPath) === false) {
+			$output->warning('CBS seed fragment not found at ' . $this->seedPath . ', skipping');
+			return null;
+		}
+
+		$content = file_get_contents($this->seedPath);
+		if ($content === false) {
+			$output->warning('Failed to read CBS seed fragment, skipping');
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
+			$output->warning('Failed to parse CBS seed fragment: ' . json_last_error_msg());
+			return null;
+		}
+
+		return $data;
+	}//end readSeedFragment()
+
+	/**
 	 * The seed itself.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
@@ -162,76 +180,112 @@ class LoadCbsSeedsStep implements IRepairStep {
 	 */
 	private function runInner(object $objectService, array $objects, IOutput $output): void {
 		$registerSlug = $this->register();
-		$seeded = 0;
-		$skipped = 0;
+		$counts = ['seeded' => 0, 'skipped' => 0, 'failed' => 0];
 
 		foreach ($objects as $object) {
-			if (is_array($object) === false) {
+			$identity = $this->seedIdentity(object: $object);
+			if ($identity === null) {
 				continue;
 			}
 
-			$self = (array)($object['@self'] ?? []);
-			$schema = (string)($self['schema'] ?? '');
-			$slug = (string)($self['slug'] ?? '');
-			if ($schema === '' || $slug === '') {
-				continue;
-			}
-
-			if (in_array($schema, ['CBSSubmission', 'CBSLine'], true) === false) {
-				continue;
-			}
-
-			try {
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema($schema)
-					->findAll(
-						[
-							'filters' => ['slug' => $slug],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				// Drop the @self envelope before persisting — the OR backend
-				// honours register + schema named args, not the inline block.
-				$payload = $object;
-				unset($payload['@self']);
-				$payload['slug'] = $slug;
-
-				// Runs in the installer/repair context where no web user is
-				// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
-				// seed persists instead of throwing "User 'Anonymous' does not have
-				// permission to 'create'" — mirrors the OR ImportHandler fix.
-				$objectService->saveObject(
-					object: $payload,
-					register: $registerSlug,
-					schema: $schema,
-					_rbac: false,
-					_multitenancy: false,
-				);
-				$seeded++;
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'CBS seed: failed to save record',
-					['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
+			$outcome = $this->seedObject(objectService: $objectService, registerSlug: $registerSlug, object: $object, identity: $identity);
+			$counts[$outcome]++;
+		}
 
 		$output->info(
 			sprintf(
 				'CBS seed: %d created, %d skipped (already exist).',
-				$seeded,
-				$skipped,
+				$counts['seeded'],
+				$counts['skipped'],
 			)
 		);
 
 	}//end runInner()
+
+	/**
+	 * The schema and slug of a seedable CBSSubmission / CBSLine object, or null for anything else.
+	 *
+	 * @param mixed $object One entry of the fragment's `objects[]`.
+	 *
+	 * @return array{0: string, 1: string}|null [schema, slug].
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function seedIdentity(mixed $object): array|null {
+		if (is_array($object) === false) {
+			return null;
+		}
+
+		$self = (array)($object['@self'] ?? []);
+		$schema = (string)($self['schema'] ?? '');
+		$slug = (string)($self['slug'] ?? '');
+		if ($schema === '' || $slug === '') {
+			return null;
+		}
+
+		if (in_array($schema, ['CBSSubmission', 'CBSLine'], true) === false) {
+			return null;
+		}
+
+		return [$schema, $slug];
+	}//end seedIdentity()
+
+	/**
+	 * Save one seed object unless an object with its slug already exists; failures are logged.
+	 *
+	 * @param object               $objectService OpenRegister's ObjectService.
+	 * @param string               $registerSlug  The register to write to.
+	 * @param array<string,mixed>  $object        The seed object.
+	 * @param array{0: string, 1: string} $identity      [schema, slug].
+	 *
+	 * @return string One of `seeded`, `skipped` or `failed`.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function seedObject(object $objectService, string $registerSlug, array $object, array $identity): string {
+		[$schema, $slug] = $identity;
+
+		try {
+			$existing = $objectService
+				->setRegister($registerSlug)
+				->setSchema($schema)
+				->findAll(
+					[
+						'filters' => ['slug' => $slug],
+						'limit' => 1,
+					]
+				);
+
+			if (empty($existing) === false) {
+				return 'skipped';
+			}
+
+			// Drop the @self envelope before persisting — the OR backend
+			// honours register + schema named args, not the inline block.
+			$payload = $object;
+			unset($payload['@self']);
+			$payload['slug'] = $slug;
+
+			// Runs in the installer/repair context where no web user is
+			// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+			// seed persists instead of throwing "User 'Anonymous' does not have
+			// permission to 'create'" — mirrors the OR ImportHandler fix.
+			$objectService->saveObject(
+				object: $payload,
+				register: $registerSlug,
+				schema: $schema,
+				_rbac: false,
+				_multitenancy: false,
+			);
+			return 'seeded';
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'CBS seed: failed to save record',
+				['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
+			);
+			return 'failed';
+		}//end try
+	}//end seedObject()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

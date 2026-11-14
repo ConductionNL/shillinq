@@ -102,9 +102,7 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 		}
 
 		$debtor = $payload['debtor'] ?? null;
-		if (is_array($debtor) === false || ((string)($debtor['customerMasterId'] ?? '') === '' && (string)($debtor['email'] ?? '') === '')) {
-			throw new FinancialDocumentActionRefusedException(message: 'An invoice needs a debtor: a customer, or a name and an email.', status: 400);
-		}
+		$this->assertInvoiceDebtor(debtor: $debtor);
 
 		$link = ['register' => $register, 'schema' => $schema, 'id' => $objectId];
 		$type = trim((string)($payload['objectType'] ?? ''));
@@ -126,6 +124,23 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 
 		return ['id' => $id];
 	}//end issueInvoice()
+
+	/**
+	 * Require a debtor: a customer, or a name and an email.
+	 *
+	 * @param mixed $debtor The payload's debtor.
+	 *
+	 * @return void
+	 *
+	 * @throws FinancialDocumentActionRefusedException When there is no usable debtor.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+	 */
+	private function assertInvoiceDebtor(mixed $debtor): void {
+		if (is_array($debtor) === false || ((string)($debtor['customerMasterId'] ?? '') === '' && (string)($debtor['email'] ?? '') === '')) {
+			throw new FinancialDocumentActionRefusedException(message: 'An invoice needs a debtor: a customer, or a name and an email.', status: 400);
+		}
+	}//end assertInvoiceDebtor()
 
 	/**
 	 * Ask for payment of an outstanding invoice through shillinq.

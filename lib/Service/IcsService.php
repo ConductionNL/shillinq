@@ -358,14 +358,7 @@ final class IcsService {
 
 		try {
 			$tz = new DateTimeZone($tzId);
-			// Pull transitions covering the whole appointment year so the client
-			// sees both STANDARD and DAYLIGHT rules for the date in question.
-			$yearStart = (int)(new DateTimeImmutable($start->format('Y') . '-01-01T00:00:00Z'))->getTimestamp();
-			$yearEnd = (int)(new DateTimeImmutable(((int)$start->format('Y') + 1) . '-01-01T00:00:00Z'))->getTimestamp();
-			$transitions = $tz->getTransitions($yearStart, $yearEnd);
-			if ($transitions === false) {
-				$transitions = [];
-			}
+			$transitions = $this->yearTransitions(tz: $tz, start: $start);
 
 			$emitted = 0;
 			foreach ($transitions as $transition) {
@@ -373,33 +366,12 @@ final class IcsService {
 					break;
 				}
 
-				if ($transition['isdst'] === true) {
-					$component = 'DAYLIGHT';
-				} else {
-					$component = 'STANDARD';
-				}
-
-				$when = (new DateTimeImmutable('@' . $transition['ts']))->setTimezone(new DateTimeZone('UTC'));
-				$offsetTo = $this->formatOffset(seconds: (int)$transition['offset']);
-				$offsetFrom = $offsetTo;
-				$lines[] = 'BEGIN:' . $component;
-				$lines[] = 'TZNAME:' . (string)$transition['abbr'];
-				$lines[] = 'DTSTART:' . $when->format('Ymd\THis');
-				$lines[] = 'TZOFFSETFROM:' . $offsetFrom;
-				$lines[] = 'TZOFFSETTO:' . $offsetTo;
-				$lines[] = 'END:' . $component;
+				array_push($lines, ...$this->transitionLines(transition: $transition));
 				$emitted++;
-			}//end foreach
+			}
 
 			if ($emitted === 0) {
-				// Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
-				$offset = $this->formatOffset(seconds: (new DateTimeImmutable('now', $tz))->getOffset());
-				$lines[] = 'BEGIN:STANDARD';
-				$lines[] = 'TZNAME:' . $tzId;
-				$lines[] = 'DTSTART:19700101T000000';
-				$lines[] = 'TZOFFSETFROM:' . $offset;
-				$lines[] = 'TZOFFSETTO:' . $offset;
-				$lines[] = 'END:STANDARD';
+				array_push($lines, ...$this->fixedOffsetLines(tz: $tz, tzId: $tzId));
 			}
 		} catch (Throwable $e) {
 			$this->logger->warning('IcsService: VTIMEZONE build failed for ' . $tzId . ': ' . $e->getMessage());
@@ -420,6 +392,77 @@ final class IcsService {
 
 		return implode(self::CRLF, $lines);
 	}//end buildVTimezone()
+
+	/**
+	 * The timezone's transitions within the appointment's year.
+	 *
+	 * @param DateTimeZone      $tz    The appointment timezone.
+	 * @param DateTimeImmutable $start Appointment start (UTC).
+	 *
+	 * @return array<int,array<string,mixed>> The transitions (empty when none can be read).
+	 */
+	private function yearTransitions(DateTimeZone $tz, DateTimeImmutable $start): array {
+		// Pull transitions covering the whole appointment year so the client
+		// sees both STANDARD and DAYLIGHT rules for the date in question.
+		$yearStart = (int)(new DateTimeImmutable($start->format('Y') . '-01-01T00:00:00Z'))->getTimestamp();
+		$yearEnd = (int)(new DateTimeImmutable(((int)$start->format('Y') + 1) . '-01-01T00:00:00Z'))->getTimestamp();
+		$transitions = $tz->getTransitions($yearStart, $yearEnd);
+		if ($transitions === false) {
+			$transitions = [];
+		}
+
+		return $transitions;
+	}//end yearTransitions()
+
+	/**
+	 * The STANDARD or DAYLIGHT block for one timezone transition.
+	 *
+	 * @param array<string,mixed> $transition One DateTimeZone::getTransitions() entry.
+	 *
+	 * @return list<string> The block's lines.
+	 */
+	private function transitionLines(array $transition): array {
+		if ($transition['isdst'] === true) {
+			$component = 'DAYLIGHT';
+		} else {
+			$component = 'STANDARD';
+		}
+
+		$when = (new DateTimeImmutable('@' . $transition['ts']))->setTimezone(new DateTimeZone('UTC'));
+		$offsetTo = $this->formatOffset(seconds: (int)$transition['offset']);
+		$offsetFrom = $offsetTo;
+
+		return [
+			'BEGIN:' . $component,
+			'TZNAME:' . (string)$transition['abbr'],
+			'DTSTART:' . $when->format('Ymd\THis'),
+			'TZOFFSETFROM:' . $offsetFrom,
+			'TZOFFSETTO:' . $offsetTo,
+			'END:' . $component,
+		];
+	}//end transitionLines()
+
+	/**
+	 * The single STANDARD block of a fixed-offset zone (e.g. UTC).
+	 *
+	 * @param DateTimeZone $tz   The appointment timezone.
+	 * @param string       $tzId IANA timezone identifier.
+	 *
+	 * @return list<string> The block's lines.
+	 */
+	private function fixedOffsetLines(DateTimeZone $tz, string $tzId): array {
+		// Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
+		$offset = $this->formatOffset(seconds: (new DateTimeImmutable('now', $tz))->getOffset());
+
+		return [
+			'BEGIN:STANDARD',
+			'TZNAME:' . $tzId,
+			'DTSTART:19700101T000000',
+			'TZOFFSETFROM:' . $offset,
+			'TZOFFSETTO:' . $offset,
+			'END:STANDARD',
+		];
+	}//end fixedOffsetLines()
 
 	/**
 	 * Format a numeric UTC offset (in seconds) as RFC 5545 ±HHMM.
