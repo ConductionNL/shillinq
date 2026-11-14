@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
+use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\BalanceGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
 use OCA\Shillinq\Lifecycle\LineDimensionCheck;

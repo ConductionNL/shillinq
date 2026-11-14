@@ -46,18 +46,19 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\IntercompanyLinkServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Creates the mirrored intercompany side and reconciles the pair (REQ-GLTAX-002).
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class IntercompanyLinkService {
+class IntercompanyLinkService implements IntercompanyLinkServiceInterface {
 
 	/**
 	 * IntercompanyJournalEntry schema slug.

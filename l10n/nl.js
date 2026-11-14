@@ -6875,7 +6875,25 @@ OC.L10N.register(
         "cost centre": "kostenplaats",
         "cost carrier": "kostendrager",
         "project": "project",
-        "Project Code": "Projectcode"
+        "Project Code": "Projectcode",
+        "Payouts to pay": "Te betalen uitbetalingen",
+        "To approve": "Goed te keuren",
+        "To pay": "Te betalen",
+        "Approve the payout and book the expense against the payable.": "Keur de uitbetaling goed en boek de kosten tegen de schuld.",
+        "Record the bank payment that paid the payout and clear the payable against the bank.": "Leg de bankbetaling vast waarmee de uitbetaling is betaald en boek de schuld af tegen de bank.",
+        "Refuse the payout with a reason the raising app is told.": "Wijs de uitbetaling af met een reden die de aanvragende app te horen krijgt.",
+        "Bank ledger account": "Grootboekrekening van de bank",
+        "Leave empty for today.": "Laat leeg voor vandaag.",
+        "The app that raised the payout is told this reason.": "De app die de uitbetaling aanvroeg krijgt deze reden te horen.",
+        "Approve payout": "Uitbetaling goedkeuren",
+        "Mark payout paid": "Uitbetaling als betaald markeren",
+        "Reject payout": "Uitbetaling afwijzen",
+        "{amount} to {name}": "{amount} aan {name}",
+        "Fill in the bank reference and the bank ledger account.": "Vul de bankreferentie en de grootboekrekening van de bank in.",
+        "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
+        "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
+        "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
+        "Payout updated.": "Uitbetaling bijgewerkt."
     },
     "nplurals=2; plural=(n != 1);"
 )

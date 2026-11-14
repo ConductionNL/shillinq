@@ -34,8 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -53,13 +53,13 @@ class AppointmentCreatedListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param ConfirmationTokenService $tokens Token + email dispatcher.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param ConfirmationTokenServiceInterface $tokens Token + email dispatcher.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft.
 	 */
 	public function __construct(
-		private readonly ConfirmationTokenService $tokens,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ConfirmationTokenServiceInterface $tokens,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

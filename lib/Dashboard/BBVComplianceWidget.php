@@ -45,8 +45,9 @@ namespace OCA\Shillinq\Dashboard;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\Service\ComplianceService;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
+use OCA\Shillinq\Kernel\Contracts\ComplianceServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -56,7 +57,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-final class BBVComplianceWidget {
+final class BBVComplianceWidget implements BBVComplianceWidgetInterface {
 	/**
 	 * The status buckets every envelope starts with, in display order.
 	 *
@@ -73,14 +74,14 @@ final class BBVComplianceWidget {
 	 * Construct the widget with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param ComplianceService $compliance Compliance envelope source.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param ComplianceServiceInterface $compliance Compliance envelope source.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $registerLocation,
-		private readonly ComplianceService $compliance,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly ComplianceServiceInterface $compliance,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

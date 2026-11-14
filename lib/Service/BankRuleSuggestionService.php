@@ -41,6 +41,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BankRuleSuggestionServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -55,13 +56,7 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class BankRuleSuggestionService {
-	/**
-	 * Default repeat threshold when the caller does not supply one.
-	 *
-	 * @var int
-	 */
-	public const DEFAULT_THRESHOLD = 3;
+class BankRuleSuggestionService implements BankRuleSuggestionServiceInterface {
 
 	/**
 	 * Constructor.

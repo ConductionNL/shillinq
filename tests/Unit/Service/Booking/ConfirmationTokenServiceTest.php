@@ -30,6 +30,9 @@ use OCA\Shillinq\Util\TokenValidator;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IConfig;
 use OCP\IURLGenerator;
+use OCP\Mail\IAttachment;
+use OCP\Mail\IMailer;
+use OCP\Mail\IMessage;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -105,11 +108,18 @@ class ConfirmationTokenServiceTest extends TestCase {
 	private bool $openRegister = true;
 
 	/**
-	 * The notification dispatcher integriq offers; null when absent.
+	 * What the mailer was given: recipients, subject, body, attachments and how many sends.
 	 *
-	 * @var object|null
+	 * @var array<string, mixed>
 	 */
-	private ?object $dispatcher = null;
+	private array $mail = ['to' => null, 'subject' => null, 'body' => null, 'attachments' => [], 'created' => [], 'sends' => 0];
+
+	/**
+	 * What the mailer's send() does: the refused recipients it answers, or a Throwable it throws.
+	 *
+	 * @var array<int, string>|\Throwable
+	 */
+	private array|\Throwable $sendOutcome = [];
 
 	/**
 	 * The logger mock.
@@ -143,10 +153,6 @@ class ConfirmationTokenServiceTest extends TestCase {
 					return $store;
 				}
 
-				if ($id === 'OCA\\Integriq\\Service\\NotificationDispatcher' && $this->dispatcher !== null) {
-					return $this->dispatcher;
-				}
-
 				throw new RuntimeException('not registered: '.$id);
 			}
 		);
@@ -164,8 +170,50 @@ class ConfirmationTokenServiceTest extends TestCase {
 
 		$ics = new IcsService(new TimezoneResolver($this->createMock(IConfig::class), $this->createMock(LoggerInterface::class)), $this->createMock(LoggerInterface::class));
 
-		return new ConfirmationTokenService($container, $location, $ics, $time, $urls, $this->logger);
+		return new ConfirmationTokenService($container, $location, $ics, $time, $urls, $this->logger, $this->mailer());
 	}//end service()
+
+	/**
+	 * A mailer double that records the message it is given into $this->mail.
+	 *
+	 * @return IMailer
+	 */
+	private function mailer(): IMailer {
+		$message = $this->createMock(IMessage::class);
+		$message->method('setTo')->willReturnCallback(function (array $to) use ($message): IMessage {
+			$this->mail['to'] = $to;
+			return $message;
+		});
+		$message->method('setSubject')->willReturnCallback(function (string $subject) use ($message): IMessage {
+			$this->mail['subject'] = $subject;
+			return $message;
+		});
+		$message->method('setPlainBody')->willReturnCallback(function (string $body) use ($message): IMessage {
+			$this->mail['body'] = $body;
+			return $message;
+		});
+		$message->method('attach')->willReturnCallback(function (IAttachment $attachment) use ($message): IMessage {
+			$this->mail['attachments'][] = $attachment;
+			return $message;
+		});
+
+		$mailer = $this->createMock(IMailer::class);
+		$mailer->method('createMessage')->willReturn($message);
+		$mailer->method('createAttachment')->willReturnCallback(function (string $data, string $name, string $type): IAttachment {
+			$this->mail['created'][] = ['data' => $data, 'name' => $name, 'type' => $type];
+			return $this->createMock(IAttachment::class);
+		});
+		$mailer->method('send')->willReturnCallback(function (): array {
+			$this->mail['sends']++;
+			if ($this->sendOutcome instanceof \Throwable) {
+				throw $this->sendOutcome;
+			}
+
+			return $this->sendOutcome;
+		});
+
+		return $mailer;
+	}//end mailer()
 
 	/**
 	 * The fake OpenRegister object service.
@@ -440,45 +488,33 @@ class ConfirmationTokenServiceTest extends TestCase {
 	}//end testNothingIsSentWithoutAnAppointment()
 
 	/**
-	 * The email goes through integriq's dispatcher with the link and the ICS attached.
+	 * The request goes through Nextcloud's mailer with the confirm link in the body and the ICS attached.
 	 *
 	 * @return void
 	 */
-	public function testTheEmailIsDispatched(): void {
-		$this->dispatcher = new class {
-			/**
-			 * @var array<int, array>
-			 */
-			public array $sent = [];
-
-			/**
-			 * @param array $payload The email.
-			 * @return void
-			 */
-			public function dispatch(array $payload): void {
-				$this->sent[] = $payload;
-			}
-		};
+	public function testTheRequestIsMailed(): void {
 		$appointment = ['appointmentId' => 'a-1', 'serviceName' => 'Paspoort', 'startTime' => '2026-05-20T09:00:00Z', 'endTime' => '2026-05-20T09:30:00Z', 'location' => 'Stadhuis'];
 
 		$result = $this->service()->issueAndSend($appointment, ['email' => 'jan@example.org', 'name' => 'Jan']);
 
 		$this->assertTrue($result['sent']);
 		$this->assertSame($this->saves[0][0]['tokenId'], $result['tokenId']);
-		$payload = $this->dispatcher->sent[0];
-		$this->assertSame('jan@example.org', $payload['to']);
-		$this->assertSame('Confirmation needed: Paspoort on 2026-05-20T09:00:00Z', $payload['subject']);
-		$this->assertSame('BookingConfirmationTemplate', $payload['template']);
-		$this->assertSame(['customerName' => 'Jan', 'appointmentDate' => '2026-05-20T09:00:00Z', 'serviceName' => 'Paspoort', 'location' => 'Stadhuis'], array_diff_key($payload['variables'], ['confirmUrl' => true]));
-		$this->assertStringStartsWith('https://cloud.example/apps/shillinq/confirm/a-1?token=', $payload['variables']['confirmUrl']);
-		$plaintext = substr($payload['variables']['confirmUrl'], strlen('https://cloud.example/apps/shillinq/confirm/a-1?token='));
-		$this->assertTrue(password_verify($plaintext, $this->saves[0][0]['tokenString']));
-		$this->assertSame(['filename' => 'appointment.ics', 'contentType' => 'text/calendar; charset=utf-8'], array_diff_key($payload['attachments'][0], ['content' => true]));
-		$this->assertStringContainsString('BEGIN:VCALENDAR', $payload['attachments'][0]['content']);
-	}//end testTheEmailIsDispatched()
+		$this->assertSame(1, $this->mail['sends']);
+		$this->assertSame(['jan@example.org' => 'Jan'], $this->mail['to']);
+		$this->assertSame('Confirmation needed: Paspoort on 2026-05-20T09:00:00Z', $this->mail['subject']);
+		$this->assertStringContainsString("Hello Jan,", $this->mail['body']);
+		$this->assertStringContainsString("Where: Stadhuis", $this->mail['body']);
+		$this->assertSame(1, preg_match('#Confirm here: (https://cloud\.example/apps/shillinq/confirm/a-1\?token=(\S+))#', $this->mail['body'], $link));
+		$this->assertTrue(password_verify($link[2], $this->saves[0][0]['tokenString']), 'the link carries the plaintext of the stored hash');
+		$this->assertCount(1, $this->mail['attachments']);
+		$this->assertCount(1, $this->mail['created']);
+		$attachment = $this->mail['created'][0];
+		$this->assertSame(['name' => 'appointment.ics', 'type' => 'text/calendar; charset=utf-8'], array_diff_key($attachment, ['data' => true]));
+		$this->assertStringContainsString('BEGIN:VCALENDAR', $attachment['data']);
+	}//end testTheRequestIsMailed()
 
 	/**
-	 * Without a customer email nothing is dispatched, and that is logged.
+	 * Without a customer email nothing is sent, and that is logged.
 	 *
 	 * @return void
 	 */
@@ -488,38 +524,37 @@ class ConfirmationTokenServiceTest extends TestCase {
 		$result = $this->service()->issueAndSend(['appointmentId' => 'a-1'], []);
 
 		$this->assertFalse($result['sent']);
+		$this->assertSame(0, $this->mail['sends']);
 		$this->assertCount(1, $this->saves);
 	}//end testNoEmailMeansNoDispatch()
 
 	/**
-	 * Without a dispatcher the email is only prepared; a failing dispatcher is logged too.
+	 * A refused recipient counts as not sent and is logged.
 	 *
 	 * @return void
 	 */
-	public function testAnUnavailableDispatcherSendsNothing(): void {
-		$this->logger->expects($this->once())->method('info')->with('ConfirmationTokenService: openconnector unavailable; prepared email payload only.', ['to' => 'jan@example.org', 'subject' => 'Confirmation needed: your appointment on ']);
-		$this->assertFalse($this->service()->issueAndSend(['appointmentId' => 'a-1'], ['email' => 'jan@example.org'])['sent']);
-	}//end testAnUnavailableDispatcherSendsNothing()
+	public function testARefusedRecipientIsNotSent(): void {
+		$this->sendOutcome = ['jan@example.org'];
+		$this->logger->expects($this->once())->method('warning')->with('ConfirmationTokenService: the mail server refused the confirmation request', ['appointmentId' => 'a-1']);
+
+		$result = $this->service()->issueAndSend(['appointmentId' => 'a-1'], ['email' => 'jan@example.org']);
+
+		$this->assertFalse($result['sent']);
+		$this->assertSame(['jan@example.org' => 'jan@example.org'], $this->mail['to'], 'without a name the address names itself');
+		$this->assertSame('Confirmation needed: your appointment on ', $this->mail['subject']);
+	}//end testARefusedRecipientIsNotSent()
 
 	/**
-	 * A dispatcher that throws is logged and nothing counts as sent.
+	 * A mailer that throws is logged and nothing counts as sent.
 	 *
 	 * @return void
 	 */
-	public function testAFailingDispatcherIsLogged(): void {
-		$this->dispatcher = new class {
-			/**
-			 * @return never
-			 */
-			public function dispatch(): never {
-				throw new RuntimeException('smtp down');
-			}
-		};
-		$this->logger->expects($this->once())->method('error')->with('ConfirmationTokenService: openconnector dispatch failed', ['exception' => 'smtp down']);
-		$this->logger->expects($this->once())->method('info');
+	public function testAFailingMailerIsLogged(): void {
+		$this->sendOutcome = new RuntimeException('smtp down');
+		$this->logger->expects($this->once())->method('error')->with('ConfirmationTokenService: the confirmation request could not be sent', ['appointmentId' => 'a-1', 'exception' => 'smtp down']);
 
 		$this->assertFalse($this->service()->issueAndSend(['appointmentId' => 'a-1'], ['email' => 'jan@example.org'])['sent']);
-	}//end testAFailingDispatcherIsLogged()
+	}//end testAFailingMailerIsLogged()
 
 	/**
 	 * Resending revokes the active token first and issues a new one by the actor.
