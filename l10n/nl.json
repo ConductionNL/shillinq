@@ -6881,7 +6881,9 @@
         "Integrations": "Koppelingen",
         "Open in Integriq": "Openen in Integriq",
         "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.": "Kant-en-klare koppelingen voor de boekhouding uit de catalogus van integriq. Zet er een aan in integriq.",
-        "Open integriq's catalogue, where this integration is switched on.": "Open de catalogus van integriq, waar u deze koppeling aanzet."
+        "Open integriq's catalogue, where this integration is switched on.": "Open de catalogus van integriq, waar u deze koppeling aanzet.",
+        "Not available yet": "Nog niet beschikbaar",
+        "Every connection family has an integration in the catalogue.": "Voor elke soort verbinding staat een koppeling in de catalogus."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

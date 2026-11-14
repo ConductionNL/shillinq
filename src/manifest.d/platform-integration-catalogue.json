@@ -1,5 +1,5 @@
 {
-	"$comment": "Shillinq Integrations (platform-integration-catalogue, REQ-PIC-001, REQ-PIC-003). The cards are integriq's `catalog_item` objects, the catalogue integriq's own Store page reads; shillinq opens on the bookkeeping categories and leaves switching an item on to integriq (ADR-023). The menu entry is not gated on integriq: on an instance without it the page shows the missing-dependency screen naming Integriq, which is what REQ-PIC-003 asks for.",
+	"$comment": "Shillinq Integrations (platform-integration-catalogue, REQ-PIC-001, REQ-PIC-002, REQ-PIC-003). The cards are integriq's `catalog_item` objects, the catalogue integriq's own Store page reads; shillinq opens on the bookkeeping categories and leaves switching an item on to integriq (ADR-023). The menu entry is not gated on integriq: on an instance without it the page shows the missing-dependency screen naming Integriq, which is what REQ-PIC-003 asks for.",
 	"menu": [
 		{
 			"id": "Integrations",
@@ -73,6 +73,44 @@
 						"icon": "StoreOutline",
 						"handler": "openIntegriqStore",
 						"description": "Open integriq's catalogue, where this integration is switched on."
+					}
+				],
+				"_afterListNote": "Not available yet (design D2, REQ-PIC-002): shillinq's own connection families, as integriq's `app_connection` rows synced from lib/Settings/connections.json, each with the reason integriq reports. No family has a bookkeeping catalogue item yet, so every family is listed; once integriq ships one and accepts a catalogue item link in the connection declaration, that family moves into the cards and this list narrows to the rest.",
+				"afterList": [
+					{
+						"id": "not-available-yet",
+						"title": "Not available yet",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "integriq",
+								"schema": "app_connection",
+								"filter": {
+									"app": "shillinq"
+								},
+								"order": {
+									"order": "asc"
+								},
+								"limit": 50
+							},
+							"emptyText": "Every connection family has an integration in the catalogue.",
+							"columns": [
+								{
+									"key": "title",
+									"label": "Connection"
+								},
+								{
+									"key": "description",
+									"label": "Description",
+									"sortable": false
+								},
+								{
+									"key": "statusMessage",
+									"label": "Reason",
+									"sortable": false
+								}
+							]
+						}
 					}
 				]
 			}

@@ -81,6 +81,43 @@ describe('the Integrations page (REQ-PIC-001)', () => {
 	})
 })
 
+describe('the families without a catalogue item (REQ-PIC-002)', () => {
+	const section = (page.config.afterList || []).find((w) => w.id === 'not-available-yet')
+	const declared = readJson('lib', 'Settings', 'connections.json').connections
+
+	it("lists shillinq's own connection families under the cards", () => {
+		expect(section.type).toBe('object-table')
+		expect(section.title).toBe('Not available yet')
+		expect(section.content.source).toEqual({
+			register: 'integriq',
+			schema: 'app_connection',
+			filter: { app: 'shillinq' },
+			order: { order: 'asc' },
+			limit: 50,
+		})
+		// Every declared family fits on the one read.
+		expect(declared.length).toBeLessThanOrEqual(section.content.source.limit)
+	})
+
+	it('shows each family with the reason integriq reports for it', () => {
+		expect(section.content.columns.map((c) => c.key)).toEqual(['title', 'description', 'statusMessage'])
+	})
+
+	// No family has a catalogue item yet: the declaration carries no link,
+	// so the section rightly lists all of them (design D2).
+	it('has no family linked to a catalogue item yet', () => {
+		expect(declared.filter((c) => 'catalogItem' in c)).toEqual([])
+	})
+
+	it('translates its labels into Dutch', () => {
+		for (const key of [section.title, section.content.emptyText, ...section.content.columns.map((c) => c.label)]) {
+			expect(en[key], key).toBe(key)
+			expect(nl[key], key).toBeTruthy()
+			expect(nl[key], key).not.toBe(key)
+		}
+	})
+})
+
 describe('without integriq (REQ-PIC-003)', () => {
 	// The menu entry stays, so the page is reachable and says what it needs
 	// instead of looking like an empty catalogue.
@@ -108,12 +145,15 @@ describe('the Open in Integriq handler', () => {
 		openIntegriqStore({ name: 'Mollie & iDEAL' })
 		openIntegriqStore({ name: '  ' })
 		openIntegriqStore()
+		// What the index page's row dispatch passes.
+		openIntegriqStore({ actionId: 'open-in-integriq', item: { name: 'Peppol' } })
 
 		expect(INTEGRIQ_STORE_PATH).toBe('/apps/integriq/store')
 		expect(assign.mock.calls).toEqual([
 			['/index.php/apps/integriq/store?_search=Mollie%20%26%20iDEAL'],
 			['/index.php/apps/integriq/store'],
 			['/index.php/apps/integriq/store'],
+			['/index.php/apps/integriq/store?_search=Peppol'],
 		])
 	})
 })

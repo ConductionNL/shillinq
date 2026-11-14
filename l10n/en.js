@@ -4681,7 +4681,10 @@ OC.L10N.register(
         "Integrations": "Integrations",
         "Open in Integriq": "Open in Integriq",
         "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.": "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.",
-        "Open integriq's catalogue, where this integration is switched on.": "Open integriq's catalogue, where this integration is switched on."
+        "Open integriq's catalogue, where this integration is switched on.": "Open integriq's catalogue, where this integration is switched on.",
+        "Not available yet": "Not available yet",
+        "Every connection family has an integration in the catalogue.": "Every connection family has an integration in the catalogue.",
+        "Connection": "Connection"
     },
     "nplurals=2; plural=(n != 1);"
 )
