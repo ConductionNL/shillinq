@@ -128,6 +128,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class GRIRClearingService implements GRIRClearingServiceInterface {
 
@@ -890,20 +891,7 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 			]
 		);
 
-		$candidate = null;
-		$candidateTime = '';
-		foreach ($matches as $match) {
-			$status = (string)($match['matchStatus'] ?? '');
-			if ($status !== self::MATCH_STATUS_AUTO_APPROVED && $status !== self::MATCH_STATUS_WITHIN_TOLERANCE) {
-				continue;
-			}
-
-			$createdAt = (string)($match['createdAt'] ?? '');
-			if ($candidate === null || $createdAt > $candidateTime) {
-				$candidate = $match;
-				$candidateTime = $createdAt;
-			}
-		}
+		$candidate = $this->latestApprovedMatch(matches: $matches);
 
 		if ($candidate === null) {
 			$this->logger->debug(
@@ -918,6 +906,47 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 
 		return $this->settleGRIRPosting(administrationId: $administrationId, threeWayMatch: $candidate);
 	}//end settleGRIRForMatchedInvoice()
+
+	/**
+	 * The most recently created auto_approved / within_tolerance match.
+	 *
+	 * @param iterable<mixed> $matches The invoice's ThreeWayMatch records.
+	 *
+	 * @return array<string,mixed>|null The match, or null when none qualifies.
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	private function latestApprovedMatch(iterable $matches): array|null {
+		$candidate = null;
+		$candidateTime = '';
+		foreach ($matches as $match) {
+			if ($this->isApprovedMatch(threeWayMatch: $match) === false) {
+				continue;
+			}
+
+			$createdAt = (string)($match['createdAt'] ?? '');
+			if ($candidate === null || $createdAt > $candidateTime) {
+				$candidate = $match;
+				$candidateTime = $createdAt;
+			}
+		}
+
+		return $candidate;
+	}//end latestApprovedMatch()
+
+	/**
+	 * Whether a match's status lets it settle the GR/IR posting.
+	 *
+	 * @param array<string,mixed> $threeWayMatch A ThreeWayMatch record.
+	 *
+	 * @return bool True for auto_approved and within_tolerance.
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	private function isApprovedMatch(array $threeWayMatch): bool {
+		$status = (string)($threeWayMatch['matchStatus'] ?? '');
+		return $status === self::MATCH_STATUS_AUTO_APPROVED || $status === self::MATCH_STATUS_WITHIN_TOLERANCE;
+	}//end isApprovedMatch()
 
 	/**
 	 * Shared per-line fan-out for {@see postGRIRForGoodsReceiptAccept()}
@@ -1011,6 +1040,36 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 		array $transaction,
 		array $lines,
 	): array {
+		$debitCents = $this->assertBalanced(lines: $lines);
+
+		try {
+			return $this->persistPosting(administrationId: $administrationId, transaction: $transaction, lines: $lines, debitCents: $debitCents);
+		} catch (RuntimeException $e) {
+			// Re-raise balance failure as-is.
+			throw $e;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GRIRClearingService: failed to persist GL posting',
+				[
+					'transactionNumber' => ($transaction['transactionNumber'] ?? null),
+					'exception' => $e->getMessage(),
+				]
+			);
+			throw new RuntimeException('Failed to persist GR/IR posting');
+		}//end try
+
+	}//end postBalancedTransaction()
+
+	/**
+	 * Assert the double-entry balance invariant over the lines and return the debit total.
+	 *
+	 * @param array<int,array> $lines Per-line entries.
+	 *
+	 * @return int The debit (= credit) total in cents.
+	 *
+	 * @throws \RuntimeException When the lines do not balance.
+	 */
+	private function assertBalanced(array $lines): int {
 		$debitCents = 0;
 		$creditCents = 0;
 		foreach ($lines as $line) {
@@ -1031,55 +1090,56 @@ class GRIRClearingService implements GRIRClearingServiceInterface {
 			);
 		}
 
-		try {
-			$header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
-			$headerId = (string)($header['id'] ?? ($header['@self']['id'] ?? ''));
+		return $debitCents;
+	}//end assertBalanced()
 
-			$lineNumber = 1;
-			$persistedLines = [];
-			foreach ($lines as $line) {
-				$persistedLines[] = $this->saveOnSchema(
-					schema: self::SCHEMA_GL_LINE,
-					data: [
-						'transactionId' => $headerId,
-						'lineNumber' => $lineNumber,
-						'accountNumber' => $line['accountNumber'],
-						'side' => $line['side'],
-						'amount' => round(($line['amountCents'] / 100.0), 2),
-						'currency' => 'EUR',
-						'description' => $line['description'],
-						'costCenter' => $line['costCenter'],
-						'costCenterCode' => $line['costCenter'],
-						'projectCode' => $line['projectCode'],
-						'periodId' => ($transaction['periodId'] ?? ''),
-						'administrationId' => $administrationId,
-					]
-				);
-				$lineNumber++;
-			}
+	/**
+	 * Save the balanced GLTransaction header and its GLLines.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $transaction      Header data.
+	 * @param array<int,array>    $lines            Per-line entries.
+	 * @param int                 $debitCents       The posting total in cents.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 *
+	 * @throws \Throwable When a save fails.
+	 */
+	private function persistPosting(string $administrationId, array $transaction, array $lines, int $debitCents): array {
+		$header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
+		$headerId = (string)($header['id'] ?? ($header['@self']['id'] ?? ''));
 
-			return [
-				'posted' => true,
-				'transaction' => $header,
-				'lines' => $persistedLines,
-				'amountCents' => $debitCents,
-				'message' => 'GR/IR posting materialised',
-			];
-		} catch (RuntimeException $e) {
-			// Re-raise balance failure as-is.
-			throw $e;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GRIRClearingService: failed to persist GL posting',
-				[
-					'transactionNumber' => ($transaction['transactionNumber'] ?? null),
-					'exception' => $e->getMessage(),
+		$lineNumber = 1;
+		$persistedLines = [];
+		foreach ($lines as $line) {
+			$persistedLines[] = $this->saveOnSchema(
+				schema: self::SCHEMA_GL_LINE,
+				data: [
+					'transactionId' => $headerId,
+					'lineNumber' => $lineNumber,
+					'accountNumber' => $line['accountNumber'],
+					'side' => $line['side'],
+					'amount' => round(($line['amountCents'] / 100.0), 2),
+					'currency' => 'EUR',
+					'description' => $line['description'],
+					'costCenter' => $line['costCenter'],
+					'costCenterCode' => $line['costCenter'],
+					'projectCode' => $line['projectCode'],
+					'periodId' => ($transaction['periodId'] ?? ''),
+					'administrationId' => $administrationId,
 				]
 			);
-			throw new RuntimeException('Failed to persist GR/IR posting');
-		}//end try
+			$lineNumber++;
+		}
 
-	}//end postBalancedTransaction()
+		return [
+			'posted' => true,
+			'transaction' => $header,
+			'lines' => $persistedLines,
+			'amountCents' => $debitCents,
+			'message' => 'GR/IR posting materialised',
+		];
+	}//end persistPosting()
 
 	/**
 	 * Resolve the GL account number from the PO line, with a defensive

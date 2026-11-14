@@ -235,19 +235,40 @@ final class ContributionDebtorResolver {
 	private function customer(string $id): ?string {
 		$scoped = $this->objectService->setRegister($this->registerSlug())->setSchema(self::CUSTOMER);
 
+		return self::customerById(scoped: $scoped, id: $id) ?? self::customerByCode(scoped: $scoped, id: $id);
+	}//end customer()
+
+	/**
+	 * The customer found by its OpenRegister id, or null.
+	 *
+	 * @param object $scoped The ObjectService scoped to the customer schema.
+	 * @param string $id     The customer reference.
+	 *
+	 * @return string|null
+	 */
+	private static function customerById(object $scoped, string $id): string|null {
 		try {
 			$record = ObjectIdentifier::recordWithId(candidate: ObjectIdentifier::findScoped(
 				scoped: $scoped,
 				id: $id,
 				named: ['_rbac' => false, '_multitenancy' => false]
 			));
-			if ($record !== null && (string)($record['id'] ?? '') !== '') {
-				return (string)$record['id'];
-			}
+			return self::idOfRecord(record: $record);
 		} catch (Throwable $notAUuid) {
 			// Fall through to the code lookup.
+			return null;
 		}
+	}//end customerById()
 
+	/**
+	 * The customer found by its customerId code, or null.
+	 *
+	 * @param object $scoped The ObjectService scoped to the customer schema.
+	 * @param string $id     The customer reference.
+	 *
+	 * @return string|null
+	 */
+	private static function customerByCode(object $scoped, string $id): string|null {
 		try {
 			$rows = $scoped->findAll(['filters' => ['customerId' => $id], 'limit' => 1], _rbac: false, _multitenancy: false);
 		} catch (Throwable $e) {
@@ -255,14 +276,29 @@ final class ContributionDebtorResolver {
 		}
 
 		foreach ($rows as $row) {
-			$record = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($record !== null && (string)($record['id'] ?? '') !== '') {
-				return (string)$record['id'];
+			$customerId = self::idOfRecord(record: ObjectIdentifier::recordWithId(candidate: $row));
+			if ($customerId !== null) {
+				return $customerId;
 			}
 		}
 
 		return null;
-	}//end customer()
+	}//end customerByCode()
+
+	/**
+	 * The record's id, or null when there is no record or it has no id.
+	 *
+	 * @param array<string, mixed>|null $record The record.
+	 *
+	 * @return string|null
+	 */
+	private static function idOfRecord(array|null $record): string|null {
+		if ($record !== null && (string)($record['id'] ?? '') !== '') {
+			return (string)$record['id'];
+		}
+
+		return null;
+	}//end idOfRecord()
 
 	/**
 	 * The first customer with this email in the administration.
