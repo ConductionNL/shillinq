@@ -4486,6 +4486,66 @@
 						]
 					}
 				],
+				"relatedCollections": [
+					{
+						"title": "Booked lines",
+						"register": "shillinq",
+						"schema": "GLLine",
+						"filter": {
+							"transactionId": "@objectId"
+						},
+						"sort": {
+							"field": "lineNumber",
+							"dir": "asc"
+						},
+						"columns": [
+						{
+							"key": "lineNumber",
+							"label": "#"
+						},
+						{
+							"key": "accountNumber",
+							"label": "Account"
+						},
+						{
+							"key": "side",
+							"label": "D/C"
+						},
+						{
+							"key": "transactionAmount",
+							"label": "Transaction amount"
+						},
+						{
+							"key": "transactionCurrency",
+							"label": "Transaction currency"
+						},
+						{
+							"key": "fxRate",
+							"label": "Exchange rate"
+						},
+						{
+							"key": "fxRateSource",
+							"label": "Rate source"
+						},
+						{
+							"key": "fxRateDate",
+							"label": "Rate date"
+						},
+						{
+							"key": "amount",
+							"label": "Base amount"
+						},
+						{
+							"key": "baseCurrency",
+							"label": "Base currency"
+						},
+						{
+							"key": "description",
+							"label": "Description"
+						}
+						]
+					}
+				],
 				"lifecycleActions": true,
 				"indexRoute": "GeneralLedger",
 				"sidebarProps": {
@@ -4647,6 +4707,66 @@
 						"key": "lines",
 						"label": "Lines",
 						"type": "array"
+					}
+				],
+				"relatedCollections": [
+					{
+						"title": "Posted lines",
+						"register": "shillinq",
+						"schema": "GLLine",
+						"filter": {
+							"transactionId": "@object.glTransactionId"
+						},
+						"sort": {
+							"field": "lineNumber",
+							"dir": "asc"
+						},
+						"columns": [
+						{
+							"key": "lineNumber",
+							"label": "#"
+						},
+						{
+							"key": "accountNumber",
+							"label": "Account"
+						},
+						{
+							"key": "side",
+							"label": "D/C"
+						},
+						{
+							"key": "transactionAmount",
+							"label": "Transaction amount"
+						},
+						{
+							"key": "transactionCurrency",
+							"label": "Transaction currency"
+						},
+						{
+							"key": "fxRate",
+							"label": "Exchange rate"
+						},
+						{
+							"key": "fxRateSource",
+							"label": "Rate source"
+						},
+						{
+							"key": "fxRateDate",
+							"label": "Rate date"
+						},
+						{
+							"key": "amount",
+							"label": "Base amount"
+						},
+						{
+							"key": "baseCurrency",
+							"label": "Base currency"
+						},
+						{
+							"key": "description",
+							"label": "Description"
+						}
+						]
 					}
 				],
 				"lifecycleActions": true,
@@ -7440,20 +7560,23 @@
 				"widgets": [
 					{
 						"id": "nearing-retention",
-						"title": "Retention periods expiring soon",
-						"type": "stats-block",
-						"iconClass": "icon-calendar",
-						"props": {
-							"countLabel": "bewaartermijnen",
-							"variant": "warning"
-						},
-						"dataSource": {
-							"register": "shillinq",
-							"schema": "RetentionRule",
-							"filter": {
-								"daysUntilRetention_lt": 90
+						"title": "Records due for destruction",
+						"type": "stat",
+						"content": {
+							"label": "Records due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/retention/due"
 							},
-							"aggregate": "count"
+							"valueField": "total",
+							"clickRoute": "RetentionDueRecords",
+							"variantWhen": [
+								{
+									"op": "gt",
+									"value": 0,
+									"variant": "warning"
+								}
+							]
 						}
 					}
 				],

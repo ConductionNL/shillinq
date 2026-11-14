@@ -174,11 +174,7 @@ class BbvProgrammeBudgetService implements BbvProgrammeBudgetServiceInterface {
 		?array $statuses = null,
 	): array {
 		$administrationIds = $this->adminContext->accessibleAdministrationIds();
-		if ($administrationIds === []) {
-			return $this->emptyEnvelope();
-		}
-
-		$window = $this->resolveWindow(administrationIds: $administrationIds, fiscalYear: $fiscalYear);
+		$window            = $this->windowFor(administrationIds: $administrationIds, fiscalYear: $fiscalYear);
 		if ($window === null) {
 			return $this->emptyEnvelope();
 		}
@@ -201,6 +197,22 @@ class BbvProgrammeBudgetService implements BbvProgrammeBudgetServiceInterface {
 		return $this->envelope(run: $run, figures: $figures);
 
 	}//end programmeBudgetVsActuals()
+
+	/**
+	 * The fiscal-year window over the caller's administrations, or null when there are none or no window resolves.
+	 *
+	 * @param array<int, string> $administrationIds The caller's administrations.
+	 * @param int|null           $fiscalYear        The requested fiscal year, or null for the current one.
+	 *
+	 * @return array{fiscalYear:int,startDate:string,endDate:string}|null The window, or null.
+	 */
+	private function windowFor(array $administrationIds, int|null $fiscalYear): array|null {
+		if ($administrationIds === []) {
+			return null;
+		}
+
+		return $this->resolveWindow(administrationIds: $administrationIds, fiscalYear: $fiscalYear);
+	}//end windowFor()
 
 	/**
 	 * Read budget, spend and commitments per programme, in that order.

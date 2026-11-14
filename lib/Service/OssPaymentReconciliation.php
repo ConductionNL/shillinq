@@ -114,15 +114,7 @@ class OssPaymentReconciliation implements OssPaymentReconciliationInterface {
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
 	public function reconcileDistribution(array $ossReturn, array $confirmation): array {
-		$declared = [];
-		foreach (($ossReturn['lineItems'] ?? []) as $line) {
-			$country = (string)($line['countryCode'] ?? '');
-			if ($country === '') {
-				continue;
-			}
-
-			$declared[$country] = (($declared[$country] ?? 0) + $this->toCents(amount: ($line['vatAmount'] ?? 0)));
-		}
+		$declared = $this->declaredCentsByCountry(ossReturn: $ossReturn);
 
 		$differences = [];
 		$countries = array_unique(array_merge(array_keys($declared), array_keys($confirmation)));
@@ -147,6 +139,29 @@ class OssPaymentReconciliation implements OssPaymentReconciliationInterface {
 		];
 
 	}//end reconcileDistribution()
+
+	/**
+	 * The declared VAT in cents per country of the return's line items.
+	 *
+	 * @param array<string,mixed> $ossReturn The OssReturn carrying declared line items.
+	 *
+	 * @return array<string,int> Cents per country code.
+	 *
+	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 */
+	private function declaredCentsByCountry(array $ossReturn): array {
+		$declared = [];
+		foreach (($ossReturn['lineItems'] ?? []) as $line) {
+			$country = (string)($line['countryCode'] ?? '');
+			if ($country === '') {
+				continue;
+			}
+
+			$declared[$country] = (($declared[$country] ?? 0) + $this->toCents(amount: ($line['vatAmount'] ?? 0)));
+		}
+
+		return $declared;
+	}//end declaredCentsByCountry()
 
 	/**
 	 * Normalise an IBAN for comparison (strip spaces, upper-case).

@@ -610,6 +610,23 @@ class RealisedFxSettlementService {
 			return null;
 		}
 
+		$rows = $this->fxRateRows(foreignCurrency: $foreignCurrency, functionalCurrency: $functionalCurrency);
+		if ($rows === []) {
+			return null;
+		}
+
+		return $this->bestRateOnOrBefore(rows: $rows, onDate: $onDate);
+	}//end resolveRate()
+
+	/**
+	 * The FxRate rows for the currency pair; empty when there are none or the lookup fails.
+	 *
+	 * @param string $foreignCurrency    The foreign currency.
+	 * @param string $functionalCurrency The functional currency.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function fxRateRows(string $foreignCurrency, string $functionalCurrency): array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
@@ -628,15 +645,15 @@ class RealisedFxSettlementService {
 				'RealisedFxSettlementService: FxRate lookup failed',
 				['foreignCurrency' => $foreignCurrency, 'exception' => $e->getMessage()]
 			);
-			return null;
+			return [];
 		}
 
-		if (is_array($rows) === false || $rows === []) {
-			return null;
+		if (is_array($rows) === false) {
+			return [];
 		}
 
-		return $this->bestRateOnOrBefore(rows: $rows, onDate: $onDate);
-	}//end resolveRate()
+		return $rows;
+	}//end fxRateRows()
 
 	/**
 	 * The rate of the row dated exactly $onDate, else of the most recent row

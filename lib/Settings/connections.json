@@ -60,10 +60,10 @@
         {
             "key": "mollie",
             "title": "Mollie payments",
-            "description": "iDEAL, Bancontact and SEPA payments started from the portal's pay now button.",
+            "description": "iDEAL, Bancontact and SEPA payments for payment requests and invoices, created by Integriq's payment source.",
             "order": 80,
-            "reportedOnly": true,
-            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
+            "unconfiguredMessage": "Not set up yet. Link the Mollie payments source in Integriq to give payment requests and invoices a pay link.",
+            "sourceTemplate": "mollie-payments"
         },
         {
             "key": "bunq",

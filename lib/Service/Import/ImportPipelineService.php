@@ -307,8 +307,24 @@ class ImportPipelineService {
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-9
 	 */
 	private function resolveOne(array $account, array $chart, array $profileMap, string $administrationId, string $batchId): array {
-		$sourceCode = (string)($account['code'] ?? '');
-		$sourceName = (string)($account['name'] ?? '');
+		return array_merge(
+			$this->mappingBase(account: $account, administrationId: $administrationId, batchId: $batchId),
+			$this->mappingTarget(account: $account, chart: $chart, profileMap: $profileMap)
+		);
+	}//end resolveOne()
+
+	/**
+	 * The source half of a mapping row.
+	 *
+	 * @param array<string,mixed> $account          Staged source account.
+	 * @param string              $administrationId Owning administration.
+	 * @param string              $batchId          Owning batch.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-9
+	 */
+	private function mappingBase(array $account, string $administrationId, string $batchId): array {
 		$rgs = (string)($account['rgsCode'] ?? '');
 
 		if ($rgs !== '') {
@@ -317,33 +333,69 @@ class ImportPipelineService {
 			$sourceRgsCode = null;
 		}
 
-		$base = [
+		return [
 			'batchReference' => $batchId,
-			'sourceCode' => $sourceCode,
-			'sourceName' => $sourceName,
+			'sourceCode' => (string)($account['code'] ?? ''),
+			'sourceName' => (string)($account['name'] ?? ''),
 			'sourceRgsCode' => $sourceRgsCode,
 			'administrationId' => $administrationId,
 		];
+	}//end mappingBase()
+
+	/**
+	 * The target half of a mapping row: RGS match, profile hit, suggestion, or unmapped.
+	 *
+	 * @param array<string,mixed>                                            $account    Staged source account.
+	 * @param array{byRgs:array<string,string>,numbers:array<string,string>} $chart      The target chart.
+	 * @param array<string,string>                                           $profileMap Source code → target code.
+	 *
+	 * @return array{targetAccount:string|null,mappingSource:string,confirmed:bool}
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-9
+	 */
+	private function mappingTarget(array $account, array $chart, array $profileMap): array {
+		$confirmed = $this->confirmedTarget(account: $account, chart: $chart, profileMap: $profileMap);
+		if ($confirmed !== null) {
+			return $confirmed;
+		}
+
+		// (3) Code/name similarity suggestion — operator must confirm.
+		$suggested = $this->suggestByCodeOrName(sourceCode: (string)($account['code'] ?? ''), targetNumbers: $chart['numbers']);
+		if ($suggested !== null) {
+			return ['targetAccount' => $suggested, 'mappingSource' => 'manual', 'confirmed' => false];
+		}
+
+		// (4) Unmapped.
+		return ['targetAccount' => null, 'mappingSource' => 'unmapped', 'confirmed' => false];
+	}//end mappingTarget()
+
+	/**
+	 * The pre-confirmed target from an RGS match or a saved profile, or null.
+	 *
+	 * @param array<string,mixed>                                            $account    Staged source account.
+	 * @param array{byRgs:array<string,string>,numbers:array<string,string>} $chart      The target chart.
+	 * @param array<string,string>                                           $profileMap Source code → target code.
+	 *
+	 * @return array{targetAccount:string,mappingSource:string,confirmed:bool}|null
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-9
+	 */
+	private function confirmedTarget(array $account, array $chart, array $profileMap): array|null {
+		$sourceCode = (string)($account['code'] ?? '');
+		$rgs = (string)($account['rgsCode'] ?? '');
 
 		// (1) RGS auto-match, pre-confirmed.
 		if ($rgs !== '' && isset($chart['byRgs'][$rgs]) === true) {
-			return array_merge($base, ['targetAccount' => $chart['byRgs'][$rgs], 'mappingSource' => 'rgs-auto', 'confirmed' => true]);
+			return ['targetAccount' => $chart['byRgs'][$rgs], 'mappingSource' => 'rgs-auto', 'confirmed' => true];
 		}
 
 		// (2) Saved profile hit, pre-confirmed.
 		if ($sourceCode !== '' && isset($profileMap[$sourceCode]) === true) {
-			return array_merge($base, ['targetAccount' => $profileMap[$sourceCode], 'mappingSource' => 'profile-default', 'confirmed' => true]);
+			return ['targetAccount' => $profileMap[$sourceCode], 'mappingSource' => 'profile-default', 'confirmed' => true];
 		}
 
-		// (3) Code/name similarity suggestion — operator must confirm.
-		$suggested = $this->suggestByCodeOrName(sourceCode: $sourceCode, targetNumbers: $chart['numbers']);
-		if ($suggested !== null) {
-			return array_merge($base, ['targetAccount' => $suggested, 'mappingSource' => 'manual', 'confirmed' => false]);
-		}
-
-		// (4) Unmapped.
-		return array_merge($base, ['targetAccount' => null, 'mappingSource' => 'unmapped', 'confirmed' => false]);
-	}//end resolveOne()
+		return null;
+	}//end confirmedTarget()
 
 	/**
 	 * Suggest a target account by exact code match (cheap similarity heuristic).
@@ -409,36 +461,87 @@ class ImportPipelineService {
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-11
 	 */
 	public function validate(array $batch): array {
-		$findings = [];
 		$staging = ($batch['stagingPayload'] ?? []);
 		$mappings = ($batch['mappings'] ?? []);
 
-		// (1) Balanced opening journal.
-		[$debit, $credit] = $this->sumOpeningBalance(staging: $staging);
-		if (abs($debit - $credit) > self::TOLERANCE) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'opening-journal-unbalanced',
-				message: 'Opening balance is not balanced.',
-				context: ['debit' => $debit, 'credit' => $credit, 'difference' => round(($debit - $credit), 2)]
-			);
-		}
-
-		// (2) Open period.
-		if (($batch['periodOpen'] ?? null) === false) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'period-closed',
-				message: 'Migration date falls in a closed period.',
-				context: ['migrationDate' => ($batch['migrationDate'] ?? null)]
-			);
-		}
+		// (1) Balanced opening journal, (2) open period.
+		$findings = array_merge($this->balanceFindings(staging: $staging), $this->periodFindings(batch: $batch));
 
 		// (3) AR / AP control-account == open-items sum (double-count guard).
 		$findings = array_merge($findings, $this->validateControlAccount(staging: $staging, side: 'ar'));
 		$findings = array_merge($findings, $this->validateControlAccount(staging: $staging, side: 'ap'));
 
 		// (4) Mappings complete.
+		$findings = array_merge($findings, $this->mappingFindings(mappings: $mappings));
+
+		// (5) Relation dedupe preview (warnings only).
+		$findings = array_merge($findings, $this->dedupePreview(staging: $staging));
+
+		$valid = ($this->hasErrors(findings: $findings) === false);
+
+		return ['findings' => $findings, 'valid' => $valid];
+	}//end validate()
+
+	/**
+	 * The finding of an unbalanced opening journal, if any.
+	 *
+	 * @param mixed $staging The staging payload.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-11
+	 */
+	private function balanceFindings(mixed $staging): array {
+		[$debit, $credit] = $this->sumOpeningBalance(staging: $staging);
+		if (abs($debit - $credit) > self::TOLERANCE) {
+			return [
+				$this->finding(
+					severity: self::SEVERITY_ERROR,
+					code: 'opening-journal-unbalanced',
+					message: 'Opening balance is not balanced.',
+					context: ['debit' => $debit, 'credit' => $credit, 'difference' => round(($debit - $credit), 2)]
+				),
+			];
+		}
+
+		return [];
+	}//end balanceFindings()
+
+	/**
+	 * The finding of a migration date in a closed period, if any.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch object data.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-11
+	 */
+	private function periodFindings(array $batch): array {
+		if (($batch['periodOpen'] ?? null) === false) {
+			return [
+				$this->finding(
+					severity: self::SEVERITY_ERROR,
+					code: 'period-closed',
+					message: 'Migration date falls in a closed period.',
+					context: ['migrationDate' => ($batch['migrationDate'] ?? null)]
+				),
+			];
+		}
+
+		return [];
+	}//end periodFindings()
+
+	/**
+	 * The findings of unmapped or unconfirmed source accounts that block posting.
+	 *
+	 * @param mixed $mappings The resolved mappings.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-11
+	 */
+	private function mappingFindings(mixed $mappings): array {
+		$findings = [];
 		if ($this->mappingsBlock(mappings: $mappings) === true) {
 			foreach ($mappings as $row) {
 				if (($row['mappingSource'] ?? '') === 'unmapped' || ($row['confirmed'] ?? false) !== true) {
@@ -452,13 +555,8 @@ class ImportPipelineService {
 			}
 		}
 
-		// (5) Relation dedupe preview (warnings only).
-		$findings = array_merge($findings, $this->dedupePreview(staging: $staging));
-
-		$valid = ($this->hasErrors(findings: $findings) === false);
-
-		return ['findings' => $findings, 'valid' => $valid];
-	}//end validate()
+		return $findings;
+	}//end mappingFindings()
 
 	/**
 	 * Validate one control-account side against the staged open items.
@@ -662,11 +760,48 @@ class ImportPipelineService {
 	 */
 	public function post(array $batch): array {
 		// Idempotency (REQ-AIM-009): an already-posted key is a no-op.
-		$existingRefs = ($batch['postingRefs'] ?? null);
-		if (($batch['status'] ?? '') === 'posted' && is_array($existingRefs) === true && $existingRefs !== []) {
-			return ['status' => 'posted', 'postingRefs' => $existingRefs, 'findings' => [], 'idempotent' => true];
+		if ($this->isAlreadyPosted(batch: $batch) === true) {
+			return ['status' => 'posted', 'postingRefs' => $batch['postingRefs'], 'findings' => [], 'idempotent' => true];
 		}
 
+		$refusal = $this->stagedChangedRefusal(batch: $batch) ?? $this->unbalancedRefusal(batch: $batch);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$written = $this->posting->post(batch: $batch, report: $this->dryRun(batch: $batch));
+		$status  = 'posted';
+		if ($written['failed'] === true) {
+			$status = 'posting_failed';
+		}
+
+		return ['status' => $status, 'postingRefs' => $written['postingRefs'], 'findings' => $written['findings'], 'idempotent' => false];
+	}//end post()
+
+	/**
+	 * Whether the batch is already posted with posting refs.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch object data.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-13
+	 */
+	private function isAlreadyPosted(array $batch): bool {
+		$existingRefs = ($batch['postingRefs'] ?? null);
+		return (($batch['status'] ?? '') === 'posted' && is_array($existingRefs) === true && $existingRefs !== []);
+	}//end isAlreadyPosted()
+
+	/**
+	 * The refusal when the staged state changed since the dry-run (REQ-AIM-008), or null.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch object data.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-13
+	 */
+	private function stagedChangedRefusal(array $batch): array|null {
 		// Dry-run consistency (REQ-AIM-008): staged state must match the dry-run.
 		$recordedHash = (string)(($batch['dryRunReport']['stagedHash'] ?? ''));
 		$currentHash = $this->computeStagedHash(stagingPayload: ($batch['stagingPayload'] ?? []), mappings: ($batch['mappings'] ?? []));
@@ -686,7 +821,19 @@ class ImportPipelineService {
 			];
 		}
 
-		// Re-check balance fail-closed before any write.
+		return null;
+	}//end stagedChangedRefusal()
+
+	/**
+	 * The refusal when the opening balance is not balanced, re-checked before any write, or null.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch object data.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-13
+	 */
+	private function unbalancedRefusal(array $batch): array|null {
 		[$debit, $credit] = $this->sumOpeningBalance(staging: ($batch['stagingPayload'] ?? []));
 		if (abs($debit - $credit) > self::TOLERANCE) {
 			return [
@@ -704,14 +851,8 @@ class ImportPipelineService {
 			];
 		}
 
-		$written = $this->posting->post(batch: $batch, report: $this->dryRun(batch: $batch));
-		$status  = 'posted';
-		if ($written['failed'] === true) {
-			$status = 'posting_failed';
-		}
-
-		return ['status' => $status, 'postingRefs' => $written['postingRefs'], 'findings' => $written['findings'], 'idempotent' => false];
-	}//end post()
+		return null;
+	}//end unbalancedRefusal()
 
 	/**
 	 * Reverse a posted batch (REQ-AIM-009).
@@ -1012,36 +1153,47 @@ class ImportPipelineService {
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
 	private function loadTargetChart(string $administrationId): array {
-		$byRgs = [];
-		$numbers = [];
+		$chart = ['byRgs' => [], 'numbers' => []];
 		try {
 			$service = $this->objectService();
 			if ($service === null) {
-				return ['byRgs' => $byRgs, 'numbers' => $numbers];
+				return $chart;
 			}
 
 			$accounts = $service->setRegister($this->register())
 				->setSchema('Account')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);
 			foreach (($accounts ?? []) as $account) {
-				$row = $this->toArray(object: $account);
-				$rgs = (string)($row['rgsCode'] ?? '');
-				$code = (string)($row['accountNumber'] ?? ($row['code'] ?? ''));
-				if ($code === '') {
-					continue;
-				}
-
-				$numbers[$code] = $code;
-				if ($rgs !== '') {
-					$byRgs[$rgs] = $code;
-				}
+				$this->addToChart(account: $account, chart: $chart);
 			}
 		} catch (\Throwable $e) {
 			$this->logger->warning('ImportPipelineService: loadTargetChart degraded', ['exception' => $e->getMessage()]);
 		}
 
-		return ['byRgs' => $byRgs, 'numbers' => $numbers];
+		return $chart;
 	}//end loadTargetChart()
+
+	/**
+	 * Add one account to the target chart, by number and by RGS code.
+	 *
+	 * @param mixed                                                          $account The Account record.
+	 * @param array{byRgs:array<string,string>,numbers:array<string,string>} $chart   The chart, updated.
+	 *
+	 * @return void
+	 */
+	private function addToChart(mixed $account, array &$chart): void {
+		$row = $this->toArray(object: $account);
+		$rgs = (string)($row['rgsCode'] ?? '');
+		$code = (string)($row['accountNumber'] ?? ($row['code'] ?? ''));
+		if ($code === '') {
+			return;
+		}
+
+		$chart['numbers'][$code] = $code;
+		if ($rgs !== '') {
+			$chart['byRgs'][$rgs] = $code;
+		}
+	}//end addToChart()
 
 	/**
 	 * Load a saved mapping profile as source code → target code.

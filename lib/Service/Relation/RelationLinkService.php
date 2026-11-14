@@ -137,18 +137,69 @@ class RelationLinkService implements RelationLinkServiceInterface {
 			throw new DomainException('A link is matched on kvk, vat or manual');
 		}
 
+		self::requireCustomerFree(customer: $customer, payeeId: $payeeId);
+		$this->requirePayeeFree(administrationId: $administrationId, payeeId: $payeeId, customerId: $customerId);
+
+		$fields = self::linkFields(payeeId: $payeeId, matchedOn: $matchedOn, userId: $userId);
+		$this->records->patch(schema: 'CustomerMaster', id: $customerId, fields: $fields);
+
+		return $fields;
+
+	}//end link()
+
+	/**
+	 * Refuse a customer that is linked to another supplier already.
+	 *
+	 * @param array<string, mixed> $customer The CustomerMaster.
+	 * @param string               $payeeId  The supplier to link.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the customer has another supplier.
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+	 */
+	private static function requireCustomerFree(array $customer, string $payeeId): void {
 		$current = (string)($customer['payeeId'] ?? '');
 		if ($current !== '' && $current !== $payeeId) {
 			throw new DomainException('This customer is already linked to another supplier');
 		}
+	}//end requireCustomerFree()
 
+	/**
+	 * Refuse a supplier that another customer is linked to already.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $payeeId          The supplier to link.
+	 * @param string $customerId       The customer being linked.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When another customer has the supplier.
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+	 */
+	private function requirePayeeFree(string $administrationId, string $payeeId, string $customerId): void {
 		foreach ($this->records->rows(schema: 'CustomerMaster', administrationId: $administrationId, filters: ['payeeId' => $payeeId]) as $other) {
 			if ($other['id'] !== $customerId) {
 				throw new DomainException('This supplier is already linked to another customer');
 			}
 		}
+	}//end requirePayeeFree()
 
-		$fields = [
+	/**
+	 * The fields that record the confirmed link on the customer.
+	 *
+	 * @param string $payeeId   The supplier.
+	 * @param string $matchedOn kvk, vat or manual.
+	 * @param string $userId    Who confirms the link.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+	 */
+	private static function linkFields(string $payeeId, string $matchedOn, string $userId): array {
+		return [
 			'payeeId'   => $payeeId,
 			'payeeLink' => [
 				'matchedOn'   => $matchedOn,
@@ -156,11 +207,7 @@ class RelationLinkService implements RelationLinkServiceInterface {
 				'confirmedAt' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
 			],
 		];
-		$this->records->patch(schema: 'CustomerMaster', id: $customerId, fields: $fields);
-
-		return $fields;
-
-	}//end link()
+	}//end linkFields()
 
 	/**
 	 * Stop suggesting one pair.
