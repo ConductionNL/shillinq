@@ -52,6 +52,7 @@ class GuardRegistrarTest extends TestCase {
 		'OCA\Shillinq\Guard\RateScheduleOverlapGuard::requireNonOverlappingWindow' => 'OCA\Shillinq\Guard\RateScheduleOverlapGuard',
 		'OCA\Shillinq\Service\OssPaymentReconciliation::canMarkPaid' => 'OCA\Shillinq\Guard\OssPaymentGuard',
 		'OCA\Shillinq\Guard\IntercompanyEliminationGuard::requireReconciledPair' => 'OCA\Shillinq\Guard\IntercompanyEliminationGuard',
+		'OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave' => 'OCA\Shillinq\Guard\BudgetScenarioModifierGuard',
 	];
 
 	/**
