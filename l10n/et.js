@@ -1571,7 +1571,7 @@ OC.L10N.register(
         "Where the books sit against budget, and by how much.": "Kus raamatud on eelarve suhtes ja kui palju.",
         "Everything Reporting & Compliance has already produced.": "Kõik, mida Aruandlus ja vastavus on juba loonud.",
         "What retention destroyed, and when.": "Mida säilitus hävitas ja millal.",
-        "Store": "Pood",
+        "Marketplace": "Pood",
         "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Paigalda registrid, skeemid ja voog, mille teised organisatsioonid on avaldanud."
     },
     "nplurals=2; plural=(n != 1);"
