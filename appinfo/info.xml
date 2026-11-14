@@ -403,6 +403,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              (The option name is not spelled here: a double hyphen is illegal
              inside an XML comment and makes info.xml unparseable.) -->
         <command>OCA\Shillinq\Command\ReferencesAuditCommand</command>
+        <!-- List the e-invoices the old send path left at queued without handing
+             them to integriq and, once confirmed, send them again through it
+             (sales-einvoice-exchange). Lists only unless confirmed. -->
+        <command>OCA\Shillinq\Command\EInvoiceRequeueCommand</command>
     </commands>
 
     <settings>

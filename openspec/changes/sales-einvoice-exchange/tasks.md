@@ -8,7 +8,8 @@
 - [x] 1.2 Replace the Nextcloud event dispatch with a save of the outbound CloudEvent object in integriq's `event` schema, drop the local port call from the invoice path, and answer "not available" when integriq is absent (REQ-SEIX-001). Verify: PHPUnit for integriq present, integriq absent and a failed save, each asserting `deliveryStatus`.
 - [ ] 1.3 Live check on an instance with integriq: send one invoice and confirm integriq writes a `peppol_transmission` for it. Record the result in the PR body; if integriq's consumer does not match because of the id comparison, open the integriq issue and link it (REQ-SEIX-001). Verify: the transmission uuid or the issue link in the PR body.
 
-- [ ] 1.4 Add `occ shillinq:einvoice:requeue`, which lists invoices left at `queued` by the old path and, when the operator confirms, sends them again through the new one (REQ-SEIX-001). Verify: PHPUnit for the listing and the confirmed requeue.
+- [x] 1.4 Add `occ shillinq:einvoice:requeue`, which lists invoices left at `queued` by the old path and, when the operator confirms, sends them again through the new one (REQ-SEIX-001). Verify: PHPUnit for the listing and the confirmed requeue.
+  - Built: `lib/Command/EInvoiceRequeueCommand.php`, registered in `appinfo/info.xml`, over two new `EInvoiceService` methods. `queuedByTheOldPath()` lists the `queued` invoices whose payload reference is none or the old `docudesk://` placeholder; `requeue()` sends one again through the same validation, storage and hand-off as Send e-invoice, without the per-user administration check (the command has no session), and clears the log-only port's transmission id. Nothing is sent without `--yes` or a yes at the prompt; an invoice that cannot be sent stays queued and fails the run. `EInvoiceService::findAll()` now keeps the `ObjectEntity` rows OpenRegister answers, which it used to drop. Tests: `tests/Unit/Command/EInvoiceRequeueCommandTest.php`.
 
 ## 2. Status and rejection
 

@@ -40,6 +40,7 @@ use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -98,6 +99,13 @@ final class EInvoiceService {
 		'code' => 'peppol_payload_not_stored',
 		'message' => 'The e-invoice file could not be stored',
 	];
+
+	/**
+	 * The payload reference the old send path recorded: a hash, not a stored file.
+	 *
+	 * @var string
+	 */
+	public const OLD_PATH_PAYLOAD_PREFIX = 'docudesk://';
 
 	/**
 	 * Constructor.
@@ -159,6 +167,99 @@ final class EInvoiceService {
 		return $this->transmit(send: $send);
 
 	}//end sendEInvoice()
+
+	/**
+	 * The invoices the old send path left at `queued` without handing them over.
+	 *
+	 * Before this change a send reserved a made-up transmission id from the
+	 * log-only port and recorded a `docudesk://file/<hash>` reference that named
+	 * no stored file, so nothing reached integriq. A `queued` invoice is one that
+	 * was handed over only when its payload reference is a stored file; the rest
+	 * are what `occ shillinq:einvoice:requeue` offers to send again.
+	 *
+	 * Operator use only: this reads every administration in the register.
+	 *
+	 * @return array<int,array<string,mixed>> The stuck invoices, in register order.
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 */
+	public function queuedByTheOldPath(): array {
+		$stuck = [];
+		foreach ($this->findAll(schema: 'ARInvoice', filters: ['deliveryStatus' => 'queued']) as $invoice) {
+			if (self::handedOver(invoice: $invoice) === false) {
+				$stuck[] = $invoice;
+			}
+		}
+
+		return $stuck;
+	}//end queuedByTheOldPath()
+
+	/**
+	 * Send one invoice the old path left at `queued` again, through integriq.
+	 *
+	 * The same validation, storage and hand-off as {@see self::sendEInvoice()},
+	 * without the per-user administration check: the caller is the operator's
+	 * `occ` command, which has no user session. The made-up transmission id of
+	 * the log-only port is cleared; integriq's status writes the real one.
+	 *
+	 * @param array<string,mixed> $invoice One record from {@see self::queuedByTheOldPath()}.
+	 *
+	 * @return array{deliveryStatus:string,transmissionId:?string,payloadFileUri:?string,fallback:bool,warnings:array<int,array<string,string>>}
+	 *
+	 * @throws RuntimeException When the record names no administration or invoice
+	 *                          number, is not issued, was already handed over, or
+	 *                          fails validation.
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 */
+	public function requeue(array $invoice): array {
+		$administrationId = trim((string)($invoice['administrationId'] ?? ''));
+		$invoiceNumber    = trim((string)($invoice['invoiceNumber'] ?? ''));
+		if ($administrationId === '' || $invoiceNumber === '') {
+			throw new RuntimeException('The invoice names no administration or invoice number');
+		}
+
+		if ((string)($invoice['lifecycleState'] ?? '') !== ArInvoiceUblMapper::REQUIRED_LIFECYCLE_STATE) {
+			throw new RuntimeException(
+				'ARInvoice must be in lifecycleState "' . ArInvoiceUblMapper::REQUIRED_LIFECYCLE_STATE . '" to send an e-invoice'
+			);
+		}
+
+		if ((string)($invoice['deliveryStatus'] ?? '') !== 'queued' || self::handedOver(invoice: $invoice) === true) {
+			throw new RuntimeException('ARInvoice ' . $invoiceNumber . ' is not waiting from the old send path');
+		}
+
+		$invoice['transmissionId'] = null;
+
+		$validation = $this->validateForSend(administrationId: $administrationId, invoice: $invoice);
+		if ($validation['peppolParticipantId'] === null) {
+			return $this->fallbackResult(warnings: $validation['warnings']);
+		}
+
+		$send = new EInvoiceSend();
+		$send->administrationId = $administrationId;
+		$send->invoiceNumber    = $invoiceNumber;
+		$send->invoice          = $invoice;
+		$send->participantId    = $validation['peppolParticipantId'];
+		$send->warnings         = $validation['warnings'];
+
+		return $this->transmit(send: $send);
+	}//end requeue()
+
+	/**
+	 * Whether a queued invoice was handed over: its payload is a stored file.
+	 *
+	 * @param array<string,mixed> $invoice The ARInvoice record.
+	 *
+	 * @return bool False for no reference or the old path's placeholder.
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.4
+	 */
+	private static function handedOver(array $invoice): bool {
+		$uri = trim((string)($invoice['payloadFileUri'] ?? ''));
+
+		return $uri !== '' && str_starts_with($uri, self::OLD_PATH_PAYLOAD_PREFIX) === false;
+	}//end handedOver()
 
 	/**
 	 * The issued ARInvoice to send, once the tenant may be served.
@@ -432,10 +533,14 @@ final class EInvoiceService {
 			return [];
 		}
 
+		// OpenRegister's findAll() answers ObjectEntity instances, not arrays
+		// (RenderObject::renderEntities()); keeping only arrays dropped every row
+		// a live instance returned, as in PeppolDeliveryStatusListener (#1754).
 		$result = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
+			$record = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($record !== null) {
+				$result[] = $record;
 			}
 		}
 
