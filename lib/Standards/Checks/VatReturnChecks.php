@@ -167,6 +167,27 @@ class VatReturnChecks {
 	}//end run()
 
 	/**
+	 * The name of a check as the checks tab shows it.
+	 *
+	 * @param string $id The check id.
+	 *
+	 * @return string The check's name in the reader's language; the id for an unknown check.
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.3
+	 */
+	public function title(string $id): string {
+		return match ($id) {
+			'vat-line-has-box' => $this->l10n->t('Every VAT line has a box'),
+			'vat-equals-base-times-rate' => $this->l10n->t('Posted VAT equals base times rate'),
+			'vat-accounts-match-return' => $this->l10n->t('The VAT accounts match the return'),
+			'no-unposted-documents' => $this->l10n->t('No unposted documents in the period'),
+			'previous-return-filed' => $this->l10n->t('The previous return is filed'),
+			'reverse-charge-owed-and-deductible' => $this->l10n->t('Reverse-charged VAT is owed and deducted'),
+			default => $id,
+		};
+	}//end title()
+
+	/**
 	 * The period's transactions and booked lines, and the VAT accounts.
 	 *
 	 * @param array<string, mixed> $return The return.

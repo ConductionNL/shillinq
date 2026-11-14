@@ -296,6 +296,32 @@ final class VatReturnChecksTest extends TestCase {
 	}//end testReverseChargedVatMustBeOwedAndDeducted()
 
 	/**
+	 * Every check has a name for the checks tab; an unknown id keeps its id.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.3
+	 */
+	public function testEveryCheckHasATitle(): void {
+		$checks = $this->checks($this->createMock(ObjectServiceInterface::class));
+
+		$titles = array_map(static fn (string $id): string => $checks->title($id), array_keys(VatReturnChecks::CHECKS));
+
+		$this->assertSame(
+			[
+				'Every VAT line has a box',
+				'Posted VAT equals base times rate',
+				'The VAT accounts match the return',
+				'No unposted documents in the period',
+				'The previous return is filed',
+				'Reverse-charged VAT is owed and deducted',
+			],
+			$titles
+		);
+		$this->assertSame('something-else', $checks->title('something-else'));
+	}//end testEveryCheckHasATitle()
+
+	/**
 	 * Books that cannot be read fail every check, so nothing is submitted on checks that did not run.
 	 *
 	 * @return void

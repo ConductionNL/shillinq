@@ -25,7 +25,11 @@
 
 - [x] 2.1 Rewrite `VATReturnService::scanRubrieken()` to sum stamped lines by box and kind as booked, writing declarations and lines with `returnBox` (REQ-VBTW-004). Verify: PHPUnit on the Korenbloem seed gives 1b EUR 10,000 and EUR 900, 5b EUR 1,020.
 - [x] 2.2 Make `VatReturnReportGenerator` render from the return's declarations and remove `deriveFromInvoices()`; point its `@spec` at `bookkeeping-vat-btw-filing` now that the code follows REQ-VBTW-004 (REQ-VBTW-004). Verify: PHPUnit that the file equals the snapshot; hydra gate spec-coverage passes on the file.
-- [ ] 2.3 Add "Prepare return" to `VATReturns`, repoint the Taxes menu entry "BTW returns" to it, and remove `BtwAangiften` from the menu (REQ-VBTW-004). Verify: nav reachability gate passes; Playwright prepares Q3 2026.
+- [x] 2.3 Add "Prepare return" to `VATReturns`, repoint the Taxes menu entry "BTW returns" to it, and remove `BtwAangiften` from the menu (REQ-VBTW-004). Verify: nav reachability gate passes; Playwright prepares Q3 2026.
+      DONE on development before this pass (98fe1b0a8 and #1717): the `prepare-vat-return` header action on `VATReturns`
+      opens `PrepareVatReturnModal` (`src/utils/vatReturnActions.js`, `tests/vitest/vatReturnPrepare.spec.js`), and
+      `src/menu-layout.json` removes `BtwAangiften` from the menu with `VATReturns` as its replacement. The Playwright run
+      is not done here.
 
 ## 3. Checks
 
@@ -42,7 +46,12 @@
       `BtwAangifte.submit` declares `requires: OCA\\Shillinq\\Lifecycle\\VatReturnChecksGuard::check`, bound by
       `VatReturnGuardServices` through `GuardTagServices` (called from `Application::register()`); BtwAangifte 0.1.1.
       Tests: `tests/Unit/Lifecycle/VatReturnChecksGuardTest.php` (4).
-- [ ] 3.3 Add the Checks tab on `VATReturnDetail` (REQ-TVRB-001). Verify: Playwright shows a failed and a passed check on seed data.
+- [x] 3.3 Add the Checks tab on `VATReturnDetail` (REQ-TVRB-001). Verify: Playwright shows a failed and a passed check on seed data.
+      DONE 2026-11-14 (code and PHPUnit; the Playwright run is not done here): `GET /api/vat-returns/{returnId}/checks`
+      (`VatReturnChecksController::index`, authorised on the return's administration, 404 otherwise) answers per check its
+      name (`VatReturnChecks::title()`), severity, passed or failed and message, and whether a blocking check fails. The
+      `checks` body widget on `VATReturnDetail` is an `object-table` over that endpoint. Tests:
+      `tests/Unit/Controller/VatReturnChecksControllerTest.php` (4), `VatReturnChecksTest::testEveryCheckHasATitle`.
 
 ## 4. Broken year
 

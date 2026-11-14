@@ -128,6 +128,25 @@
 					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"},
 					{"id": "check-corrections", "label": "Check for corrections", "type": "handler", "handler": "checkVatReturnForCorrections", "icon": "FileSearchOutline", "visibleWhen": {"field": "statusCode", "op": "in", "value": ["submitted", "verified", "filed"]}, "description": "Compare this filed return with the books. When they differ, a correction is written to the corrections page."}
 				],
+				"bodyWidgets": [
+					{
+						"id": "checks",
+						"type": "object-table",
+						"title": "Checks",
+						"placement": "after-data",
+						"_note": "tax-vat-return-from-books REQ-TVRB-001: the checks tab. GET /api/vat-returns/{id}/checks runs the six checks on the return's period and answers per check its name, whether it blocks filing, passed or failed, and the message naming what failed. Submit is refused by VatReturnChecksGuard while a blocking check fails.",
+						"content": {
+							"endpointSource": {"url": "/apps/shillinq/api/vat-returns/@objectId/checks", "responsePath": "data"},
+							"emptyText": "The checks could not run for this return.",
+							"columns": [
+								{"key": "title", "label": "Check"},
+								{"key": "status", "label": "Result"},
+								{"key": "severityLabel", "label": "Severity"},
+								{"key": "message", "label": "Message"}
+							]
+						}
+					}
+				],
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [

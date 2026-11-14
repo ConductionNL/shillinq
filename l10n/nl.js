@@ -7008,7 +7008,18 @@ OC.L10N.register(
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "Every VAT line has a box": "Elke btw-regel heeft een rubriek",
+        "Posted VAT equals base times rate": "Geboekte btw is grondslag maal tarief",
+        "The VAT accounts match the return": "De btw-rekeningen sluiten aan op de aangifte",
+        "No unposted documents in the period": "Geen ongeboekte documenten in de periode",
+        "The previous return is filed": "De vorige aangifte is ingediend",
+        "Reverse-charged VAT is owed and deducted": "Verlegde btw is verschuldigd en afgetrokken",
+        "Blocks filing": "Blokkeert indienen",
+        "Checks": "Controles",
+        "Check": "Controle",
+        "Message": "Melding",
+        "The checks could not run for this return.": "De controles konden voor deze aangifte niet worden uitgevoerd."
     },
     "nplurals=2; plural=(n != 1);"
 )

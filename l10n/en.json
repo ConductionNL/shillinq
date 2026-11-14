@@ -4845,7 +4845,19 @@
         "Correction posting": "Correction posting",
         "Filed on": "Filed on",
         "Digipoort reference": "Digipoort reference",
-        "File supplementary return": "File supplementary return"
+        "File supplementary return": "File supplementary return",
+        "Every VAT line has a box": "Every VAT line has a box",
+        "Posted VAT equals base times rate": "Posted VAT equals base times rate",
+        "The VAT accounts match the return": "The VAT accounts match the return",
+        "No unposted documents in the period": "No unposted documents in the period",
+        "The previous return is filed": "The previous return is filed",
+        "Reverse-charged VAT is owed and deducted": "Reverse-charged VAT is owed and deducted",
+        "Blocks filing": "Blocks filing",
+        "Checks": "Checks",
+        "Check": "Check",
+        "Severity": "Severity",
+        "Message": "Message",
+        "The checks could not run for this return.": "The checks could not run for this return."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
