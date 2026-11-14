@@ -24,6 +24,7 @@
  *
  * @covers \OCA\Shillinq\Service\Payment\PortalPaymentSessionService
  * @uses   \OCA\Shillinq\Service\Payment\PayLinkService
+ * @uses   \OCA\Shillinq\Service\Payment\PaymentLinkCreator
  * @uses   \OCA\Shillinq\Service\Payment\PaymentSessionRequest
  * @uses   \OCA\Shillinq\Service\Payment\PaymentSessionResult
  * @uses   \OCA\Shillinq\Service\Payment\PaymentTargetLookup

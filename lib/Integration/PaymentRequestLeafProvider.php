@@ -49,6 +49,7 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCP\IAppConfig;
@@ -83,6 +84,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @param ?ObjectRequestInvoiceServiceInterface $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
 	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
 	 * @param ?MolliePaymentAdapterInterface $paymentAdapter The bound payment adapter; dormant or absent means online payment is not set up.
+	 * @param ?PaymentLinkCreator $linkCreator Creates the checkout link of a raised request (receivables-payment-links D2).
 	 *
 	 * @return void
 	 */
@@ -99,6 +101,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 		private readonly ?ObjectRequestInvoiceServiceInterface $invoices = null,
 		private readonly ?DebtorCreditServiceInterface $credits = null,
 		private readonly ?MolliePaymentAdapterInterface $paymentAdapter = null,
+		private readonly ?PaymentLinkCreator $linkCreator = null,
 	) {
 	}//end __construct()
 
@@ -552,8 +555,50 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
 		}
 
-		return $this->saveRequest(request: $request, asSystem: $asSystem);
+		return $this->withPaymentLink(created: $this->saveRequest(request: $request, asSystem: $asSystem), asSystem: $asSystem);
 	}//end finaliseRequest()
+
+	/**
+	 * Give a raised, still pending request its checkout link from the
+	 * provider, and store it with the provider payment id and the checkout
+	 * expiry (REQ-RPL-001). Without a live provider the request stays without
+	 * a link.
+	 *
+	 * @param array<string, mixed> $created  The saved request, with its id.
+	 * @param bool                 $asSystem Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The request, with its link fields when it got a link.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	private function withPaymentLink(array $created, bool $asSystem): array {
+		if ($this->linkCreator === null) {
+			return $created;
+		}
+
+		$fields = $this->linkCreator->linkFieldsFor(request: $created);
+		if ($fields === []) {
+			return $created;
+		}
+
+		$data = [];
+		foreach ($created as $key => $value) {
+			if ($key !== 'id' && str_starts_with((string)$key, '@') === false) {
+				$data[$key] = $value;
+			}
+		}
+
+		$this->objectService->saveObject(
+			object: array_merge($data, $fields),
+			register: $this->registerSlug(),
+			schema: self::SCHEMA,
+			uuid: (string)$created['id'],
+			_rbac: ($asSystem === false),
+			_multitenancy: ($asSystem === false),
+		);
+
+		return array_merge($created, $fields);
+	}//end withPaymentLink()
 
 	/**
 	 * An invoice asked for at create stands behind the request, so a

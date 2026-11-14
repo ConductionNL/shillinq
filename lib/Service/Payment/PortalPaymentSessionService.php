@@ -132,14 +132,6 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	private const CONFIG_REDIRECT_URL = 'portal_payment_redirect_url';
 
 	/**
-	 * How long a provider checkout stays usable after it is created, in
-	 * seconds. Integriq's answer carries no expiry, and an iDEAL checkout
-	 * expires after fifteen minutes; a pay link followed later opens a new one
-	 * (receivables-payment-links D4).
-	 */
-	private const CHECKOUT_LIFETIME = 900;
-
-	/**
 	 * ARInvoice states that mean the invoice needs no more payment: the pay
 	 * link answers paid and opens no checkout (REQ-RPL-004).
 	 *
@@ -979,10 +971,8 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 		}
 
 		$data['paymentIntentId'] = $paymentIntentId;
-		if ($session !== null && $session->dormant === false && $session->checkoutUrl !== '') {
-			$data['providerPaymentId'] = $paymentIntentId;
-			$data['paymentLink']       = $session->checkoutUrl;
-			$data['checkoutExpiresAt'] = gmdate('Y-m-d\TH:i:s\Z', (time() + self::CHECKOUT_LIFETIME));
+		if ($session !== null) {
+			$data = array_merge($data, PaymentLinkCreator::fieldsOf(session: $session));
 		}
 
 		$saveUuid = null;
