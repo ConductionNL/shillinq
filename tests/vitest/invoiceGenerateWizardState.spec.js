@@ -145,7 +145,8 @@ describe('InvoiceGenerateWizard options', () => {
 		}
 
 		expect(needs).toEqual({
-			t_and_m: [true, false, false],
+			// Time and material prices each hour by its own rate (REQ-BRPH-005).
+			t_and_m: [false, false, false],
 			fixed_fee: [false, false, true],
 			retainer: [false, true, false],
 			mixed: [true, true, true],

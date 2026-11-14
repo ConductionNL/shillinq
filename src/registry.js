@@ -169,6 +169,7 @@ import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePan
 // declarative `detail` page type — so the page is registered as a
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
+import ProjectBillableHoursCard from './components/project/ProjectBillableHoursCard.vue'
 import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
 // bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
 // previews the server-determined approval chain as the line total changes
@@ -537,6 +538,15 @@ export default {
 		kind: 'widget',
 		component: ArDownPaymentPanel,
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// sales-billable-rate-per-hour (REQ-BRPH-003): one month of a project's
+	// rated hours on ProjectDetail, through the slot widget-project-billable-hours.
+	ProjectBillableHoursCard: {
+		// @custom-widget-ratchet exclude the card reads GET /api/v1/projects/{id}/billable-hours, which rates each hour of another app's hours source by the assignment's rate card and joins the invoices that bill it; no declarative widget computes a value per row on the server or says that its source is not connected instead of showing zero.
+		kind: 'widget',
+		component: ProjectBillableHoursCard,
+		_note: 'Lists a month of the project\'s hours with rate, tier, value and billed state and totals the unbilled value. An object-table widget cannot tell "no hours source" from "no hours" and has no month picker.',
 	},
 
 	// ledger-booking-rules (REQ-LBR-003): the booking lines with each

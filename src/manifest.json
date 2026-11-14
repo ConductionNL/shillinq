@@ -2266,6 +2266,9 @@
 			"route": "/bookkeeping/dimensions/projects/:id",
 			"type": "detail",
 			"title": "Project",
+			"slots": {
+				"widget-project-billable-hours": "ProjectBillableHoursCard"
+			},
 			"config": {
 				"register": "shillinq",
 				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Hours budget per assignment and in total (people-hours-budget), assignments and WIP history are listed; segment P&L aggregation and audit trail evidence recognition method changes.",
@@ -2309,6 +2312,13 @@
 								"hoursOverBudget"
 							]
 						}
+					},
+					{
+						"id": "project-billable-hours",
+						"type": "custom",
+						"title": "Billable hours",
+						"icon": "CashClock",
+						"_note": "sales-billable-rate-per-hour REQ-BRPH-003, rendered through the page slot widget-project-billable-hours -> ProjectBillableHoursCard: one month of the project's hours with rate, tier, value and billed state, and the unbilled totals, from GET /api/v1/projects/{id}/billable-hours."
 					},
 					{
 						"id": "project-finance",
@@ -2362,6 +2372,15 @@
 								{
 									"key": "hoursUsedPercent",
 									"label": "Hours used (%)"
+								},
+								{
+									"key": "billingRoleId",
+									"label": "Billing role"
+								},
+								{
+									"key": "recognisedRate",
+									"label": "Rate",
+									"format": "currency"
 								},
 								{
 									"key": "state",
@@ -2427,10 +2446,18 @@
 						"gridHeight": 5
 					},
 					{
+						"id": "6",
+						"widgetId": "project-billable-hours",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 6
+					},
+					{
 						"id": "3",
 						"widgetId": "project-assignments",
 						"gridX": 0,
-						"gridY": 5,
+						"gridY": 11,
 						"gridWidth": 12,
 						"gridHeight": 5
 					},
@@ -2438,7 +2465,7 @@
 						"id": "4",
 						"widgetId": "project-finance",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 16,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
@@ -2446,7 +2473,7 @@
 						"id": "5",
 						"widgetId": "project-wip",
 						"gridX": 0,
-						"gridY": 14,
+						"gridY": 20,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}
