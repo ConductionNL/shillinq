@@ -22,6 +22,6 @@
 
 - [ ] 4.1 Playwright `tests/e2e/ledger-period-end.spec.ts`: start close, resolve an item, spread an invoice line (REQ-LPE-001, REQ-LPE-002, REQ-LPE-004). Verify: passes locally.
 - [ ] 4.2 Run `occ background-job:execute` for `SoftCloseJob` on a seeded instance and read the posted entries (REQ-LPE-005, REQ-LPE-006). Verify: the transaction ids are in the PR body.
-- [ ] 4.3 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
+- [x] 4.3 Dutch and English strings. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push; `@spec` tags on new methods.
