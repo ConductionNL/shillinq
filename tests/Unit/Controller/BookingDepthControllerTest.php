@@ -478,4 +478,126 @@ final class BookingDepthControllerTest extends TestCase {
 		self::assertStringNotContainsString('RRULE', json_encode($data));
 
 	}//end testCreateSeriesValidationFailureDoesNotLeakExceptionText()
+
+	/**
+	 * captureNoShow refuses a blank appointment id with 400 before any lookup.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowRequiresAnAppointmentId(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->container->expects(self::never())->method('get');
+
+		$response = $this->makeController()->captureNoShow('   ');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(['error' => 'appointmentId is required'], $response->getData());
+
+	}//end testCaptureNoShowRequiresAnAppointmentId()
+
+	/**
+	 * captureNoShow answers 503 when OpenRegister is unavailable.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowReturns503WithoutOpenRegister(): void {
+		$this->settings = $this->createMock(RegisterLocation::class);
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(false);
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->container->expects(self::never())->method('get');
+
+		$response = $this->makeController()->captureNoShow('apt-1');
+
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		self::assertSame(['error' => 'OpenRegister unavailable'], $response->getData());
+
+	}//end testCaptureNoShowReturns503WithoutOpenRegister()
+
+	/**
+	 * captureNoShow answers 404 for an unknown appointment and saves nothing.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowReturns404ForAnUnknownAppointment(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$objectService = $this->makeObjectService(['Appointment' => []]);
+		$this->container->method('get')->willReturn($objectService);
+
+		$response = $this->makeController()->captureNoShow('apt-ghost');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'Appointment not found'], $response->getData());
+		self::assertSame([], $objectService->saved);
+
+	}//end testCaptureNoShowReturns404ForAnUnknownAppointment()
+
+	/**
+	 * A failing lookup answers 500 with a generic message; the exception text
+	 * stays in the log.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowReturns500WhenTheLookupFails(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->container->method('get')->willThrowException(new \RuntimeException('register offline'));
+
+		$response = $this->makeController()->captureNoShow('apt-1');
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'No-show capture failed'], $response->getData());
+
+	}//end testCaptureNoShowReturns500WhenTheLookupFails()
+
+	/**
+	 * Entity-shaped appointment rows are normalised before the tenant check:
+	 * a jsonSerialize() array, an object whose jsonSerialize() is not an
+	 * array (cast), and a plain object all reach the fee capture; a scalar
+	 * row carries no administration and is refused.
+	 *
+	 * @return void
+	 */
+	public function testCaptureNoShowNormalisesEntityShapedRows(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$checked = [];
+		$this->context->method('canAccess')->willReturnCallback(
+			static function (string $administrationId) use (&$checked): bool {
+				$checked[] = $administrationId;
+				return $administrationId === 'admin-1';
+			}
+		);
+
+		$serialisable = new class implements \JsonSerializable {
+			public function jsonSerialize(): mixed {
+				return ['appointmentId' => 'apt-1', 'administrationId' => 'admin-1'];
+			}
+		};
+		$castable = new class implements \JsonSerializable {
+			public string $appointmentId = 'apt-1';
+			public string $administrationId = 'admin-1';
+			public function jsonSerialize(): mixed {
+				return null;
+			}
+		};
+		$plain = (object)['appointmentId' => 'apt-1', 'administrationId' => 'admin-1'];
+
+		foreach ([$serialisable, $castable, $plain] as $row) {
+			$objectService = $this->makeObjectService(['Appointment' => [$row]]);
+			$this->container = $this->createMock(ContainerInterface::class);
+			$this->container->method('get')->willReturn($objectService);
+
+			$response = $this->makeController()->captureNoShow('apt-1');
+
+			self::assertSame(Http::STATUS_OK, $response->getStatus());
+			self::assertFalse($response->getData()['charged']);
+			self::assertSame('no_show', $objectService->saved[0]['object']['status']);
+			self::assertSame('apt-1', $objectService->saved[0]['object']['appointmentId']);
+		}
+
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->container->method('get')->willReturn($this->makeObjectService(['Appointment' => ['scalar']]));
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $this->makeController()->captureNoShow('apt-1')->getStatus());
+		self::assertSame(['admin-1', 'admin-1', 'admin-1', ''], $checked);
+
+	}//end testCaptureNoShowNormalisesEntityShapedRows()
 }//end class
