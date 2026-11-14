@@ -26,6 +26,7 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Listener\WebshopOrderListener;
@@ -166,7 +167,9 @@ final class WebshopOrderInvoicerTest extends TestCase {
 		);
 
 		$config = $this->createMock(IAppConfig::class);
-		$config->method('getValueString')->willReturn('shillinq');
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($key === 'register' ? 'shillinq' : $default)
+		);
 
 		return new WebshopOrderInvoicer(
 			objectService: $objectService,
@@ -390,6 +393,91 @@ final class WebshopOrderInvoicerTest extends TestCase {
 	}//end testABusinessBuyerWithOnlyAnEmailIsMatchedByIt()
 
 	/**
+	 * An invoiced order with its issued invoice, as the store holds them.
+	 *
+	 * @param array<string,mixed> $invoice Invoice fields to change.
+	 *
+	 * @return array<string,mixed> The order.
+	 */
+	private function invoicedOrder(array $invoice = []): array {
+		$this->seedChannel();
+		$this->store['ARInvoice'] = [$invoice + [
+			'id' => 'inv-1', 'invoiceNumber' => 'WEB-100231', 'invoiceDate' => '2026-11-12', 'administrationId' => 'adm-1',
+			'grossAmount' => 22.85, 'lifecycleState' => 'issued',
+			'webshop' => ['channelId' => self::CHANNEL, 'shopOrderId' => '100231', 'orderId' => self::ORDER],
+		]];
+
+		return self::order(overrides: ['intakeState' => 'invoiced', 'arInvoiceId' => 'inv-1']);
+	}//end invoicedOrder()
+
+	/**
+	 * REQ-SWO-004: a paid order's invoice is settled on the channel's clearing
+	 * account through a posted receipt, keeps the provider's payment id and
+	 * is marked paid; the order keeps the receipt so it is settled once.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public function testAPaidOrderIsSettledOnTheClearingAccount(): void {
+		$order = $this->invoicedOrder();
+
+		self::assertSame('settled', $this->invoicer()->settle(order: $order, orderId: self::ORDER));
+
+		$journal = $this->savesOf(schema: 'JournalEntry')[0][1];
+		self::assertSame(
+			[['1290', 'debit', 22.85], ['1100', 'credit', 22.85]],
+			array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $journal['lines'])
+		);
+		self::assertSame(['2026-11-12', 'adm-1', 'draft'], [$journal['entryDate'], $journal['administrationId'], $journal['state']]);
+		self::assertSame('Web shop order 100231 paid, invoice WEB-100231, reference tr_7Qw2', $journal['description']);
+		self::assertSame([['journalentry-1', 'postDirect'], ['inv-1', 'mark-paid']], $this->transitionsRun);
+
+		$invoice = $this->savesOf(schema: 'ARInvoice')[0];
+		self::assertSame('inv-1', $invoice[2]);
+		self::assertSame('tr_7Qw2', $invoice[1]['webshop']['paymentReference']);
+		self::assertSame(self::CHANNEL, $invoice[1]['webshop']['channelId']);
+		self::assertSame('journalentry-1', $this->savesOf(schema: 'WebshopOrder')[0][1]['settlementJournalId']);
+	}//end testAPaidOrderIsSettledOnTheClearingAccount()
+
+	/**
+	 * A pending order is not settled; its invoice only keeps the payment id.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public function testAPendingOrderKeepsItsPaymentIdAndIsNotSettled(): void {
+		$order = ['payment' => ['status' => 'pending', 'method' => 'ideal', 'providerPaymentId' => 'tr_9Xk1']] + $this->invoicedOrder();
+
+		self::assertSame('pending', $this->invoicer()->settle(order: $order, orderId: self::ORDER));
+
+		self::assertSame([], $this->savesOf(schema: 'JournalEntry'));
+		self::assertSame([], $this->transitionsRun);
+		self::assertSame('tr_9Xk1', $this->savesOf(schema: 'ARInvoice')[0][1]['webshop']['paymentReference']);
+	}//end testAPendingOrderKeepsItsPaymentIdAndIsNotSettled()
+
+	/**
+	 * An order already settled, one whose invoice is still a draft, and one
+	 * not invoiced are not settled.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public function testOnlyAnIssuedInvoiceIsSettledAndOnlyOnce(): void {
+		$order = $this->invoicedOrder(invoice: ['lifecycleState' => 'draft']);
+		$invoicer = $this->invoicer();
+
+		self::assertSame('skipped', $invoicer->settle(order: $order, orderId: self::ORDER));
+		self::assertSame('skipped', $invoicer->settle(order: ['settlementJournalId' => 'je-1'] + $this->invoicedOrder(), orderId: self::ORDER));
+		self::assertSame('skipped', $invoicer->settle(order: self::order(), orderId: self::ORDER));
+
+		self::assertSame([], $this->savesOf(schema: 'JournalEntry'));
+		self::assertSame([], $this->transitionsRun);
+	}//end testOnlyAnIssuedInvoiceIsSettledAndOnlyOnce()
+
+	/**
 	 * The listener hands a created WebshopOrder, stamped with a numeric schema id and its uuid, to the invoicer.
 	 *
 	 * @return void
@@ -412,6 +500,28 @@ final class WebshopOrderInvoicerTest extends TestCase {
 		self::assertCount(1, $this->savesOf(schema: 'ARInvoice'));
 		self::assertSame([[self::ORDER, 'invoice']], $this->transitionsRun);
 	}//end testTheListenerInvoicesACreatedOrder()
+
+	/**
+	 * A paid status sent later as an update of an invoiced order settles its invoice.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public function testTheListenerSettlesAnUpdatedPaidOrder(): void {
+		$entity = new ObjectEntity();
+		$entity->setUuid(self::ORDER);
+		$entity->setObject($this->invoicedOrder());
+
+		$resolver = $this->createMock(ListenerSchemaResolverInterface::class);
+		$resolver->method('matchesSchema')->willReturn(true);
+
+		(new WebshopOrderListener(invoicer: $this->invoicer(), schemaResolver: $resolver, logger: $this->createStub(LoggerInterface::class)))
+			->handle(new ObjectUpdatedEvent($entity));
+
+		self::assertCount(1, $this->savesOf(schema: 'JournalEntry'));
+		self::assertSame([['journalentry-1', 'postDirect'], ['inv-1', 'mark-paid']], $this->transitionsRun);
+	}//end testTheListenerSettlesAnUpdatedPaidOrder()
 
 	/**
 	 * Another schema's object is ignored, and a failing invoicer is logged rather than thrown.

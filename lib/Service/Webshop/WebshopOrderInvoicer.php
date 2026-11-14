@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Service\Webshop;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -128,11 +129,160 @@ class WebshopOrderInvoicer {
 			)
 		);
 
-		$this->saveOrder(order: ['arInvoiceId' => $invoiceId] + $order, orderId: $orderId);
+		$invoiced = ['arInvoiceId' => $invoiceId] + $order;
+		$this->saveOrder(order: $invoiced, orderId: $orderId);
 		$this->transitions->run(objectId: $orderId, action: 'invoice');
+		$this->settle(order: ['intakeState' => 'invoiced'] + $invoiced, orderId: $orderId);
 
 		return 'invoiced';
 	}//end handle()
+
+	/**
+	 * Settle the invoice of a paid order on the channel's clearing account
+	 * (REQ-SWO-004).
+	 *
+	 * A paid order whose invoice is issued gets one receipt journal entry,
+	 * debit the channel's clearing account and credit receivables, posted
+	 * through its `postDirect` transition; the invoice keeps the provider's
+	 * payment id as its payment reference for the payout match and is marked
+	 * paid, and the order keeps the journal entry so it is settled once. A
+	 * pending order only passes its payment id on to the invoice.
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param string              $orderId Its id.
+	 *
+	 * @return string settled, pending, or skipped (no invoice, already settled, invoice not issued, no clearing account).
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public function settle(array $order, string $orderId): string {
+		$invoiceId = (string)($order['arInvoiceId'] ?? '');
+		if ($orderId === '' || $invoiceId === '' || ($order['intakeState'] ?? '') !== 'invoiced'
+			|| (string)($order['settlementJournalId'] ?? '') !== ''
+		) {
+			return 'skipped';
+		}
+
+		$invoice = $this->record(schema: 'ARInvoice', id: $invoiceId);
+		if ($invoice === null) {
+			return 'skipped';
+		}
+
+		$payment   = (array)($order['payment'] ?? []);
+		$reference = trim((string)($payment['providerPaymentId'] ?? ''));
+		$webshop   = (array)($invoice['webshop'] ?? []);
+		if (($payment['status'] ?? '') !== 'paid') {
+			if ($reference !== '' && (string)($webshop['paymentReference'] ?? '') !== $reference) {
+				$this->saveInvoice(invoice: ['webshop' => ['paymentReference' => $reference] + $webshop] + $invoice, invoiceId: $invoiceId);
+			}
+
+			return 'pending';
+		}
+
+		$channel  = $this->record(schema: 'WebshopChannel', id: (string)($order['channelId'] ?? ''));
+		$clearing = trim((string)($channel['clearingAccount'] ?? ''));
+		if (($invoice['lifecycleState'] ?? '') !== 'issued' || $clearing === '') {
+			return 'skipped';
+		}
+
+		$journalId = $this->postReceipt(
+			journal: self::receiptJournal(
+				order: $order,
+				invoice: $invoice,
+				accounts: ['clearing' => $clearing, 'receivables' => $this->receivablesAccount()],
+				reference: $reference
+			)
+		);
+
+		$this->saveInvoice(invoice: ['webshop' => ['paymentReference' => $reference] + $webshop] + $invoice, invoiceId: $invoiceId);
+		$this->transitions->run(objectId: $invoiceId, action: 'mark-paid');
+		$this->saveOrder(order: ['settlementJournalId' => $journalId] + $order, orderId: $orderId);
+
+		return 'settled';
+	}//end settle()
+
+	/**
+	 * The receipt journal entry of a paid order: debit the clearing account,
+	 * credit receivables, for the invoice's gross amount.
+	 *
+	 * @param array<string,mixed>                          $order     The order.
+	 * @param array<string,mixed>                          $invoice   Its issued invoice.
+	 * @param array{clearing: string, receivables: string} $accounts  The two accounts.
+	 * @param string                                       $reference The provider's payment id.
+	 *
+	 * @return array<string,mixed> The draft JournalEntry.
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.4
+	 */
+	public static function receiptJournal(array $order, array $invoice, array $accounts, string $reference): array {
+		$amount = round((float)($invoice['grossAmount'] ?? 0), 2);
+		$date   = substr((string)($order['payment']['paidAt'] ?? ($invoice['invoiceDate'] ?? gmdate('Y-m-d'))), 0, 10);
+		$memo   = sprintf('Web shop order %s paid, invoice %s', (string)($order['shopOrderId'] ?? ''), (string)($invoice['invoiceNumber'] ?? ''));
+		if ($reference !== '') {
+			$memo .= ', reference ' . $reference;
+		}
+
+		return [
+			'journalNumber' => 'WEB-PAY-' . (string)($order['shopOrderId'] ?? ''),
+			'entryDate' => $date,
+			'description' => $memo,
+			'journalType' => 'manual',
+			'approvalState' => 'not-required',
+			'administrationId' => (string)($invoice['administrationId'] ?? ($order['administrationId'] ?? '')),
+			'state' => 'draft',
+			'lines' => [
+				['accountNumber' => $accounts['clearing'], 'side' => 'debit', 'amount' => $amount, 'description' => $memo],
+				['accountNumber' => $accounts['receivables'], 'side' => 'credit', 'amount' => $amount, 'description' => $memo],
+			],
+		];
+	}//end receiptJournal()
+
+	/**
+	 * Save the receipt journal entry and post it.
+	 *
+	 * @param array<string,mixed> $journal The draft JournalEntry.
+	 *
+	 * @return string Its id.
+	 *
+	 * @throws RuntimeException When the save answers without an id.
+	 */
+	private function postReceipt(array $journal): string {
+		$saved = $this->objectService->saveObject(object: $journal, register: $this->register(), schema: 'JournalEntry');
+		$id = ObjectIdentifier::resolve(saved: $saved);
+		if ($id === '') {
+			throw new RuntimeException('The web shop receipt was saved but OpenRegister answered without an id.');
+		}
+
+		$this->transitions->run(objectId: $id, action: 'postDirect');
+		return $id;
+	}//end postReceipt()
+
+	/**
+	 * The receivables control account, as the ledger posting is configured.
+	 *
+	 * @return string
+	 */
+	private function receivablesAccount(): string {
+		$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, MaterialiseGlTransactionAction::CFG_AR_CONTROL_ACCOUNT, ''));
+		if ($configured !== '') {
+			return $configured;
+		}
+
+		return '1100';
+	}//end receivablesAccount()
+
+	/**
+	 * Save an invoice back under its own id.
+	 *
+	 * @param array<string,mixed> $invoice   The invoice with the change.
+	 * @param string              $invoiceId Its id.
+	 *
+	 * @return void
+	 */
+	private function saveInvoice(array $invoice, string $invoiceId): void {
+		unset($invoice['@self']);
+		$this->objectService->saveObject(object: $invoice, register: $this->register(), schema: 'ARInvoice', uuid: $invoiceId);
+	}//end saveInvoice()
 
 	/**
 	 * Whether an order still waits for its invoice: received, with no invoice and no refusal.

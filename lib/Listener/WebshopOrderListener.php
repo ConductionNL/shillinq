@@ -82,13 +82,19 @@ class WebshopOrderListener implements IEventListener {
 		}
 
 		$order = $entity->getObject();
-		if (is_array($order) === false || WebshopOrderInvoicer::isWaiting(order: $order) === false) {
+		if (is_array($order) === false) {
 			return;
 		}
 
 		$orderId = ObjectIdentifier::resolve(saved: $entity);
 		try {
-			$this->invoicer->handle(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
+			if (WebshopOrderInvoicer::isWaiting(order: $order) === true) {
+				$this->invoicer->handle(order: $order, orderId: $orderId, today: gmdate('Y-m-d'));
+				return;
+			}
+
+			// REQ-SWO-004: a payment status sent later as an update of the order settles its invoice.
+			$this->invoicer->settle(order: $order, orderId: $orderId);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'WebshopOrderListener: the web shop order could not be invoiced',

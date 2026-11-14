@@ -4864,7 +4864,9 @@ OC.L10N.register(
         "Digipoort reference": "Digipoort reference",
         "File supplementary return": "File supplementary return",
         "Created by web shop channel": "Created by web shop channel",
-        "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.": "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq."
+        "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.": "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.",
+        "Settlement": "Settlement",
+        "FK to the JournalEntry that settled the paid order's invoice on the channel's clearing account. Set once, so a repeated paid status settles nothing twice.": "FK to the JournalEntry that settled the paid order's invoice on the channel's clearing account. Set once, so a repeated paid status settles nothing twice."
     },
     "nplurals=2; plural=(n != 1);"
 )

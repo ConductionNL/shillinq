@@ -11,7 +11,7 @@
             "WebshopOrder": {
                 "slug": "WebshopOrder",
                 "icon": "CartArrowDown",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Web shop order",
                 "description": "One order as a web shop sent it, written by integriq's shop connector into register shillinq. The schema is the intake contract (docs/integrations/webshop-order-intake.md). Shillinq turns a received order into one issued ARInvoice, once per channel and shop order number.",
                 "x-schema-org": "schema:Order",
@@ -308,6 +308,12 @@
                         "type": "string",
                         "description": "FK to the ARInvoice written for this order.",
                         "title": "Invoice"
+                    },
+                    "settlementJournalId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to the JournalEntry that settled the paid order's invoice on the channel's clearing account. Set once, so a repeated paid status settles nothing twice.",
+                        "title": "Settlement"
                     },
                     "creditNoteId": {
                         "type": "string",

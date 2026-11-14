@@ -7044,7 +7044,8 @@ OC.L10N.register(
         "Digipoort reference": "Digipoort-kenmerk",
         "File supplementary return": "Suppletie indienen",
         "Created by web shop channel": "Aangemaakt door webwinkelkanaal",
-        "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.": "Het webwinkelkanaal dat deze klant uit een zakelijke bestelling aanmaakte, zodat een boekhouder klanten die niemand met de hand invoerde kan vinden en nakijken. Leeg voor klanten die in shillinq zijn ingevoerd."
+        "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.": "Het webwinkelkanaal dat deze klant uit een zakelijke bestelling aanmaakte, zodat een boekhouder klanten die niemand met de hand invoerde kan vinden en nakijken. Leeg voor klanten die in shillinq zijn ingevoerd.",
+        "FK to the JournalEntry that settled the paid order's invoice on the channel's clearing account. Set once, so a repeated paid status settles nothing twice.": "Verwijzing naar de memoriaalboeking die de factuur van de betaalde bestelling op de tussenrekening van het kanaal verrekende. Wordt een keer gezet, zodat een herhaalde status betaald niets twee keer verrekent."
     },
     "nplurals=2; plural=(n != 1);"
 )
