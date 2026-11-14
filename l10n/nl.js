@@ -6926,7 +6926,18 @@ OC.L10N.register(
         "File the finalised statement with the Belastingdienst through Digipoort.": "Dien de vastgestelde opgaaf via Digipoort in bij de Belastingdienst.",
         "Periodicity": "Periodiciteit",
         "Prepare statement": "Opgaaf opstellen",
-        "Reconcile with box 3b": "Aansluiten met rubriek 3b"
+        "Reconcile with box 3b": "Aansluiten met rubriek 3b",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
