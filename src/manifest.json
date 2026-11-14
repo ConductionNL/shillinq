@@ -2681,6 +2681,14 @@
 						"route": "FinancialPivot"
 					},
 					{
+						"id": "CancellationReasons",
+						"label": "Cancellation reasons",
+						"description": "Why subscriptions ended, per quarter.",
+						"icon": "AccountCancelOutline",
+						"category": "financial",
+						"route": "CancellationReasons"
+					},
+					{
 						"id": "GeneratedReportsIndex",
 						"label": "Generated reports",
 						"description": "Everything Reporting & Compliance has already produced.",
