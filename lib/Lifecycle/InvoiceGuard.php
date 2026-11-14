@@ -101,23 +101,7 @@ class InvoiceGuard {
 				return false;
 			}
 
-			$lines = $this->resolveLines(invoiceId: $invoiceId, invoice: $invoice);
-			if (count($lines) < 1) {
-				return false;
-			}
-
-			$billingModel = (string)($invoice['billingModel'] ?? '');
-			if ($billingModel === '') {
-				return false;
-			}
-
-			if ($this->modelLinesAreConsistent(billingModel: $billingModel, lines: $lines) === false) {
-				return false;
-			}
-
-			// Double-invoicing guard: no time/expense source id may already be
-			// referenced by another non-cancelled invoice (REQ-ITE-007).
-			return $this->sourceIdsAreUnique(invoice: $invoice);
+			return $this->invoiceIsPostable(invoiceId: $invoiceId, invoice: $invoice);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InvoiceGuard: post check failed — denying post transition (fail-closed)',
@@ -126,6 +110,34 @@ class InvoiceGuard {
 			return false;
 		}//end try
 	}//end canPost()
+
+	/**
+	 * Whether a resolved invoice has lines, a billing model its lines are consistent with, and only unique sources.
+	 *
+	 * @param string               $invoiceId The Invoice id.
+	 * @param array<string, mixed> $invoice   The resolved Invoice.
+	 *
+	 * @return bool
+	 */
+	private function invoiceIsPostable(string $invoiceId, array $invoice): bool {
+		$lines = $this->resolveLines(invoiceId: $invoiceId, invoice: $invoice);
+		if (count($lines) < 1) {
+			return false;
+		}
+
+		$billingModel = (string)($invoice['billingModel'] ?? '');
+		if ($billingModel === '') {
+			return false;
+		}
+
+		if ($this->modelLinesAreConsistent(billingModel: $billingModel, lines: $lines) === false) {
+			return false;
+		}
+
+		// Double-invoicing guard: no time/expense source id may already be
+		// referenced by another non-cancelled invoice (REQ-ITE-007).
+		return $this->sourceIdsAreUnique(invoice: $invoice);
+	}//end invoiceIsPostable()
 
 	/**
 	 * Returns true iff the line set satisfies the model-specific mandatory-line
@@ -209,15 +221,11 @@ class InvoiceGuard {
 			->findAll([]);
 
 		foreach ($others as $other) {
-			if (is_array($other) === false || ($other['state'] ?? '') === 'cancelled') {
+			if (self::isOtherLiveInvoice(other: $other, ownId: $ownId) === false) {
 				continue;
 			}
 
-			$otherId = (string)($other['id'] ?? '');
-			if ($otherId !== '' && $otherId === $ownId) {
-				continue;
-			}
-
+			$otherId      = (string)($other['id'] ?? '');
 			$otherSources = $this->collectSourceIds(invoice: $other);
 			if (array_intersect($ownSources, $otherSources) !== []) {
 				$this->logger->warning(
@@ -230,6 +238,23 @@ class InvoiceGuard {
 
 		return true;
 	}//end sourceIdsAreUnique()
+
+	/**
+	 * Whether a row is another invoice that is not cancelled.
+	 *
+	 * @param mixed  $other The Invoice row.
+	 * @param string $ownId The id of the invoice being posted.
+	 *
+	 * @return bool
+	 */
+	private static function isOtherLiveInvoice(mixed $other, string $ownId): bool {
+		if (is_array($other) === false || ($other['state'] ?? '') === 'cancelled') {
+			return false;
+		}
+
+		$otherId = (string)($other['id'] ?? '');
+		return ($otherId !== '' && $otherId === $ownId) === false;
+	}//end isOtherLiveInvoice()
 
 	/**
 	 * Collect the deduplicated set of time + expense source ids on an invoice.
