@@ -91,6 +91,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
             ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+            ['name' => 'invoiceNumberCheck#check', 'url' => '/api/sales/invoice-number-check', 'verb' => 'GET'],
             // banking-connected-accounts REQ-BCON-004: cash position per bank account and combined.
             ['name' => 'financialDashboard#cashPosition', 'url' => '/api/v1/cash-position', 'verb' => 'GET'],
             // reporting-relation-both-sides: links between a customer and a supplier record, and both sides of the relation.

@@ -31,6 +31,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Service\Sales\InvoiceNumberSequenceService;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -45,6 +46,9 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The generator meets every collaborator of a
+ *     draft (rates, retainers, VAT, readings, the number series) at one seam.
  */
 class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	/**
@@ -60,6 +64,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param BilledReadings $billedReadings Refuses an unbillable reading and marks billed ones invoiced.
+	 * @param InvoiceNumberSequenceService|null $sequences The invoice number series (REQ-SIIC-001).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -72,6 +77,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		private readonly UsageRatingCalculator $usageRating,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly BilledReadings $billedReadings,
+		private readonly ?InvoiceNumberSequenceService $sequences = null,
 	) {
 	}//end __construct()
 
@@ -765,14 +771,31 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	}//end loadMilestone()
 
 	/**
-	 * Generate an invoice number scoped to an administration + month.
+	 * Take the invoice number of a time-and-expense invoice.
+	 *
+	 * The number comes from the administration's `billable` series for the
+	 * year of the invoice date, under that series' lock (REQ-SIIC-001), so a
+	 * deleted invoice or two users at once never break or repeat it. Without a
+	 * series service (a test double of this class) it falls back to the count
+	 * of the administration's invoices.
 	 *
 	 * @param string $administrationId Tenant id.
 	 * @param string $invoiceDate ISO date.
 	 *
 	 * @return string Invoice number.
+	 *
+	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-1.2
 	 */
 	private function generateInvoiceNumber(string $administrationId, string $invoiceDate): string {
+		$year = substr($invoiceDate, 0, 4);
+		if ($this->sequences !== null) {
+			return $this->sequences->next(
+				administrationId: $administrationId,
+				kind: InvoiceNumberSequenceService::KIND_BILLABLE,
+				year: (int)$year
+			);
+		}
+
 		try {
 			$rs = $this->objectService->setRegister($this->register())
 				->setSchema('BillableInvoice')
@@ -782,7 +805,6 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			$count = 0;
 		}
 
-		$year = substr($invoiceDate, 0, 4);
 		return sprintf('BIL-%s-%04d', $year, ($count + 1));
 	}//end generateInvoiceNumber()
 
