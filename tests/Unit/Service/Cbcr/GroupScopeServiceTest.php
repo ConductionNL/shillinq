@@ -223,6 +223,28 @@ final class GroupScopeServiceTest extends TestCase {
 	}//end testCrossingTheThresholdBringsTheCbcReportOnly()
 
 	/**
+	 * The weekly job's list: an ultimate parent with last year's statement and
+	 * no assessment yet is due, it is not due once assessed, and a constituent
+	 * entity or a year without last year's statement is never due.
+	 *
+	 * @return void
+	 */
+	public function testAnUltimateParentIsDueOnceForAYearWithLastYearsStatement(): void {
+		$service = $this->service(revenue: [2025 => 805000000.0]);
+		$this->store->rows['GroupEntityRegistry'][] = [
+			'id' => 'ce-1', 'entityName' => 'Voorbeeld GmbH', 'ultimateParentEntity' => 'upe-1', 'administrationId' => 'adm-holding',
+		];
+		$this->store->rows['GroupEntityRegistry'][] = ['id' => 'upe-2', 'entityName' => 'Zelfstandig B.V.', 'ultimateParentEntity' => 'upe-2'];
+
+		$this->assertSame(['upe-1'], array_column($service->dueUltimateParents(2026), 'id'));
+		$this->assertSame([], $service->dueUltimateParents(2028));
+
+		$service->assess('upe-1', 2026, [], 'system', new DateTimeImmutable('2026-02-10T09:00:00+00:00'));
+
+		$this->assertSame([], $service->dueUltimateParents(2026));
+	}//end testAnUltimateParentIsDueOnceForAYearWithLastYearsStatement()
+
+	/**
 	 * "Pillar Two follows two years in four": with EUR 790M in 2026 the
 	 * minimum tax applies to 2027 as its first year, so the GloBE information
 	 * return is due 30 June 2029 (18 months) and the top-up tax return 31

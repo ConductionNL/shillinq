@@ -4835,7 +4835,12 @@ OC.L10N.register(
         "Income tax, deferred": "Income tax, deferred",
         "Income tax payable": "Income tax payable",
         "Tangible asset": "Tangible asset",
-        "Eligible payroll": "Eligible payroll"
+        "Eligible payroll": "Eligible payroll",
+        "The tax scope of %1$s changed for %2$s": "The tax scope of %1$s changed for %2$s",
+        "A country-by-country report is due.": "A country-by-country report is due.",
+        "No country-by-country report is due.": "No country-by-country report is due.",
+        "The minimum tax applies.": "The minimum tax applies.",
+        "The minimum tax does not apply.": "The minimum tax does not apply."
     },
     "nplurals=2; plural=(n != 1);"
 )

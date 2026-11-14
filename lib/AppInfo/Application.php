@@ -30,6 +30,7 @@ use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Middleware\ApiContractMiddleware;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\EInvoiceNotifier;
+use OCA\Shillinq\Notification\GroupScopeChangedNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCP\AppFramework\App;
@@ -194,6 +195,10 @@ class Application extends App implements IBootstrap {
 		// would be discarded at display time — the reconciliation/audit
 		// surface would be silently unreachable.
 		$context->registerNotifierService(PosStockUnmatchedLineNotifier::class);
+
+		// Change tax-cbcr-and-pillar2-returns task 3.2 — render the notification
+		// GroupScopeAssessmentJob sends when a group's tax scope changes.
+		$context->registerNotifierService(GroupScopeChangedNotifier::class);
 
 		(new GuardRegistrar())->register(context: $context);
 

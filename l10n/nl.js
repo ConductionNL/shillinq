@@ -7023,7 +7023,12 @@ OC.L10N.register(
         "Income tax, deferred": "Winstbelasting, latent",
         "Income tax payable": "Te betalen winstbelasting",
         "Tangible asset": "Materieel actief",
-        "Eligible payroll": "In aanmerking komende loonkosten (rekening)"
+        "Eligible payroll": "In aanmerking komende loonkosten (rekening)",
+        "The tax scope of %1$s changed for %2$s": "De fiscale reikwijdte van %1$s is gewijzigd voor %2$s",
+        "A country-by-country report is due.": "Er moet een landenrapport worden ingediend.",
+        "No country-by-country report is due.": "Er hoeft geen landenrapport te worden ingediend.",
+        "The minimum tax applies.": "De minimumbelasting is van toepassing.",
+        "The minimum tax does not apply.": "De minimumbelasting is niet van toepassing."
     },
     "nplurals=2; plural=(n != 1);"
 )

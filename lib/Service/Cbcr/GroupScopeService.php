@@ -73,6 +73,44 @@ class GroupScopeService {
 	}//end __construct()
 
 	/**
+	 * The ultimate parents the weekly job assesses for a fiscal year: a group
+	 * entity that is its own ultimate parent (none named, or itself), has no
+	 * assessment for the year yet, and whose group has a consolidated income
+	 * statement for the year before.
+	 *
+	 * @param int $fiscalYear The fiscal year, named by the calendar year it ends in.
+	 *
+	 * @return array<int,array<string,mixed>> The ultimate parents, as stored.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-3.2
+	 */
+	public function dueUltimateParents(int $fiscalYear): array {
+		$due = [];
+		foreach ($this->all(schema: 'GroupEntityRegistry', filters: []) as $entity) {
+			$id     = $this->idOf(row: $entity);
+			$parent = trim((string)($entity['ultimateParentEntity'] ?? ''));
+			if ($id === null || ($parent !== '' && $parent !== $id)) {
+				continue;
+			}
+
+			$group   = $this->groupOf(upe: $entity);
+			$groupId = $this->idOf(row: $group);
+			if ($groupId === null
+				|| $this->first(schema: 'GroupScopeAssessment', filters: ['ultimateParentEntity' => $id, 'fiscalYear' => $fiscalYear]) !== null
+			) {
+				continue;
+			}
+
+			$statements = $this->all(schema: 'ConsolidatedIncomeStatement', filters: ['consolidationGroupId' => $groupId]);
+			if ($this->statementRevenue(statements: $statements, group: $group, year: ($fiscalYear - 1)) !== null) {
+				$due[] = $entity;
+			}
+		}
+
+		return $due;
+	}//end dueUltimateParents()
+
+	/**
 	 * Assess one group for one fiscal year and store the outcome.
 	 *
 	 * Revenue of a year comes from the group's consolidated income statement

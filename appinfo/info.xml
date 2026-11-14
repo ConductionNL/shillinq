@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261114134757</version>
+    <version>0.5.7-unstable.20261114134954</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -158,6 +158,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
              /api/v2/soft-close/{administrationId}/execute-now. Moved
              from lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
         <job>OCA\Shillinq\BackgroundJob\SoftCloseJob</job>
+        <!-- tax-cbcr-and-pillar2-returns task 3.2: weekly scope assessment of
+             every ultimate parent whose current fiscal year has none and whose
+             group has a consolidated income statement for the year before;
+             notifies the responsible owner when the outcome changes. -->
+        <job>OCA\Shillinq\BackgroundJob\GroupScopeAssessmentJob</job>
         <!-- add-shillinq-multi-currency REQ-MC-003 / Task 11: daily ECB FX-rate
              import. Delegates the rate fetch to TreasuryRateAdapterInterface
              (openconnector source slug `treasury-rates`) and upserts FxRate
