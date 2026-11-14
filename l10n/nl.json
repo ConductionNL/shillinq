@@ -7013,7 +7013,41 @@
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "After a number of appointments": "Na een aantal afspraken",
+        "Book the series": "Reeks boeken",
+        "Daily": "Dagelijks",
+        "Duration in minutes": "Duur in minuten",
+        "Ends": "Eindigt",
+        "Every how many": "Om de hoeveel",
+        "First appointment": "Eerste afspraak",
+        "How often": "Hoe vaak",
+        "Last date": "Laatste datum",
+        "New repeating appointment": "Nieuwe terugkerende afspraak",
+        "Number of appointments": "Aantal afspraken",
+        "On a date": "Op een datum",
+        "Repeat": "Herhalen",
+        "The series could not be booked.": "De reeks kon niet worden geboekt.",
+        "The services and resources could not be loaded.": "De diensten en resources konden niet worden geladen.",
+        "Choose a service and a resource.": "Kies een dienst en een resource.",
+        "Choose when the first appointment starts.": "Kies wanneer de eerste afspraak begint.",
+        "An appointment lasts at least 5 minutes.": "Een afspraak duurt minstens 5 minuten.",
+        "Repeat 2 to {max} times.": "Herhaal 2 tot {max} keer.",
+        "The last date is after the first appointment.": "De laatste datum ligt na de eerste afspraak.",
+        "Choose how often the appointment repeats and when it ends.": "Kies hoe vaak de afspraak terugkomt en wanneer de reeks eindigt.",
+        "Book an appointment that repeats daily, weekly or monthly, after a number of times or until a date, as one series (REQ-BRS-004).": "Boek een afspraak die dagelijks, wekelijks of maandelijks terugkomt, een aantal keer of tot een datum, als één reeks (REQ-BRS-004).",
+        "_{count} appointment was planned in the series._::_{count} appointments were planned in the series._": [
+            "{count} afspraak is in de reeks gepland.",
+            "{count} afspraken zijn in de reeks gepland."
+        ],
+        "{count} appointment was planned in the series.": "{count} afspraak is in de reeks gepland.",
+        "{count} appointments were planned in the series.": "{count} afspraken zijn in de reeks gepland.",
+        "_{count} time was skipped because it falls outside the opening hours or is already booked._::_{count} times were skipped because they fall outside the opening hours or are already booked._": [
+            "{count} tijdstip is overgeslagen omdat het buiten de openingstijden valt of al geboekt is.",
+            "{count} tijdstippen zijn overgeslagen omdat ze buiten de openingstijden vallen of al geboekt zijn."
+        ],
+        "{count} time was skipped because it falls outside the opening hours or is already booked.": "{count} tijdstip is overgeslagen omdat het buiten de openingstijden valt of al geboekt is.",
+        "{count} times were skipped because they fall outside the opening hours or are already booked.": "{count} tijdstippen zijn overgeslagen omdat ze buiten de openingstijden vallen of al geboekt zijn."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

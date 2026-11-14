@@ -13,6 +13,7 @@
 // `Handler "openImportWizard" not found in context.handlers` (live pass S4).
 // So every handler is registered in both, from this one list.
 
+import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
@@ -120,6 +121,9 @@ export const manifestActions = Object.freeze({
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
 	openVatPositionLines,
+	// bookings-messages-and-embedding 1.4: New repeating appointment on
+	// Appointments.
+	openRepeatAppointment,
 })
 
 /**
