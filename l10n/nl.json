@@ -6946,7 +6946,8 @@
         "Who proposed, confirmed and invoiced the run, and when.": "Wie de run heeft voorgesteld, bevestigd en gefactureerd, en wanneer.",
         "The customer this participant is invoiced as for its contributions.": "De klant waarop deze deelnemer voor zijn bijdragen wordt gefactureerd.",
         "Allocation run": "Verdeelrun",
-        "The joint arrangement allocation run this contribution invoice was written for.": "De verdeelrun van de gemeenschappelijke regeling waarvoor deze bijdragefactuur is gemaakt."
+        "The joint arrangement allocation run this contribution invoice was written for.": "De verdeelrun van de gemeenschappelijke regeling waarvoor deze bijdragefactuur is gemaakt.",
+        "Allocation runs": "Verdeelruns"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

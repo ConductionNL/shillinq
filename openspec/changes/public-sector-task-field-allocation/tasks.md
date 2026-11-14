@@ -11,7 +11,7 @@
 
 - [x] 2.1 `GRAllocationRun` fragment and `JointArrangementAllocation::propose` (REQ-GRC-007). Verify: PHPUnit red first; the payload validates against the real fragment; three participants at 50, 30 and 20 percent of EUR 100,000.01 add up to the cent. — `lib/Settings/register.d/public-sector-task-field-allocation.json` (GRAllocationRun draft/confirmed/invoiced; `GRDeelnemer.customerId`, `ARInvoice.allocationRunId`); `lib/Service/PublicSector/JointArrangementAllocation.php` behind `JointArrangementAllocationInterface`, run by `lib/Lifecycle/Action/JointArrangementAllocationAction.php` on the `propose` transition. `tests/Unit/PublicSector/JointArrangementAllocationTest.php`.
 - [x] 2.2 `confirm` and `invoice` (REQ-GRC-008). Verify: PHPUnit; each draft invoice validates against the real `ARInvoice` schema; a confirmed run cannot be proposed again for the same key and period. — the `confirm` and `invoice` transitions of GRAllocationRun through the same action; a participant without a customer stops the invoicing before any invoice is written, and a line with an invoice keeps it.
-- [ ] 2.3 Pages and nav (REQ-GRC-007). Verify: `check:manifest`, nav reachability, vitest on the propose action.
+- [x] 2.3 Pages and nav (REQ-GRC-007). Verify: `check:manifest`, nav reachability, vitest on the propose action. — `src/manifest.d/public-sector-task-field-allocation.json`: `GRAllocationRuns` (`/gr/verdeelruns`) after the allocation keys in the Bookkeeping menu, and `GRAllocationRunDetail` with Propose, Confirm and Invoice participants as lifecycle transitions. `tests/vitest/grAllocationRunManifest.spec.js`.
 
 ## 3. Market separation
 

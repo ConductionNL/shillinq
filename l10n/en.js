@@ -4749,7 +4749,8 @@ OC.L10N.register(
         "Who proposed, confirmed and invoiced the run, and when.": "Who proposed, confirmed and invoiced the run, and when.",
         "The customer this participant is invoiced as for its contributions.": "The customer this participant is invoiced as for its contributions.",
         "Allocation run": "Allocation run",
-        "The joint arrangement allocation run this contribution invoice was written for.": "The joint arrangement allocation run this contribution invoice was written for."
+        "The joint arrangement allocation run this contribution invoice was written for.": "The joint arrangement allocation run this contribution invoice was written for.",
+        "Allocation runs": "Allocation runs"
     },
     "nplurals=2; plural=(n != 1);"
 )
