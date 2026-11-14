@@ -1151,6 +1151,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\EnsiaCycleStepsInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\EnsiaCycleSteps'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ExceptionResolutionServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ExceptionResolutionService'"
         ]
@@ -1454,6 +1461,13 @@
         [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\LandedCostAllocationServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\LandedCostAllocationService'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\LawfulnessParagraphInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\LawfulnessParagraph'"
         ]
     ],
     [

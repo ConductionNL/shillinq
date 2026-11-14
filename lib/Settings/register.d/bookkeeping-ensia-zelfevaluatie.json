@@ -11,7 +11,7 @@
       "ENSIAJaarcyclus": {
         "slug": "ENSIAJaarcyclus",
         "icon": "ShieldCheckOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "ENSIA Jaarcyclus",
         "description": "Annual ENSIA self-evaluation cycle for a Dutch public-sector organisation. One record per (organisatie, jaar). Carries the six-state lifecycle gating cycle intake → answering → peer-review → college-akkoord → portal submission → closure. The vraagSetVersion stamp records which BIO question set version was loaded at cycle initialisation so external auditors can trace the source (second scenario). procesEigenaar owns the assignment + transitions; per-question beantwoorder and peerReviewer are recorded on Evaluatievraag children.",
         "x-spec": "openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md",
@@ -145,6 +145,20 @@
             "example": "docudesk://files/12345",
             "title": "Verklaring File"
           },
+          "declarationDocx": {
+            "type": "string",
+            "nullable": true,
+            "description": "The college statement DOCX rendered when the cycle moves to college approval, base64-encoded (REQ-ENSIA-011). Downloaded from /api/v1/public-sector/ensia/{id}/statement.",
+            "example": null,
+            "title": "Statement Document"
+          },
+          "submissionXml": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ENSIA submission XML produced when the cycle is submitted (REQ-ENSIA-012). Downloaded from /api/v1/public-sector/ensia/{id}/xml.",
+            "example": null,
+            "title": "Submission XML"
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
@@ -238,6 +252,13 @@
               "description": "Alle vragen zijn beantwoord; peer-reviewers krijgen toegang.",
               "roles": [
                 "proces-eigenaar"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\CreateEnsiaFindingsAction",
+                  "description": "Create a Bevinding for every question answered nee or scored below its norm that has none yet (REQ-ENSIA-011)."
+                }
               ]
             },
             "naarCollegeAkkoord": {
@@ -250,6 +271,13 @@
               ],
               "preconditions": [
                 "OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::collegeAkkoordAllowed"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RenderEnsiaStatementAction",
+                  "description": "Render the college statement into declarationDocx and name it in declarationFile when no file is named yet (REQ-ENSIA-011)."
+                }
               ]
             },
             "indienen": {
@@ -268,6 +296,11 @@
                   "actionParameters": {
                     "submittedAt": "@now"
                   }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ExportEnsiaSubmissionAction",
+                  "description": "Produce the submission XML into submissionXml; a cycle without its college statement is refused (REQ-ENSIA-012)."
                 }
               ]
             },

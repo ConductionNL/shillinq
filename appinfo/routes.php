@@ -651,6 +651,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
             // BADO accountantsdossier export (bookkeeping-bado-controleprotocol, REQ-010, Task 16).
             ['name' => 'badoControleprotocol#exportAccountantsdossier', 'url' => '/api/bado/controleprotocol/accountantsdossier', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-011/REQ-012: draw an
+            // audit sample from the protocol's posted ledger lines.
+            // #[NoAdminRequired], the protocol's administration checked in the
+            // controller (another administration's protocol is masked as 404).
+            ['name' => 'auditSample#draw', 'url' => '/api/bado/controleprotocol/samples', 'verb' => 'POST'],
 
             // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
             // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.
@@ -923,6 +928,12 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-ENSIA-012: download an
+            // ENSIA cycle's submission XML and its college statement. Both
+            // #[NoAdminRequired], administration checked in the controller
+            // (another administration's cycle is masked as 404).
+            ['name' => 'ensiaCycle#xml', 'url' => '/api/v1/public-sector/ensia/{id}/xml', 'verb' => 'GET'],
+            ['name' => 'ensiaCycle#statement', 'url' => '/api/v1/public-sector/ensia/{id}/statement', 'verb' => 'GET'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both

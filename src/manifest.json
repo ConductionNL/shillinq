@@ -19735,6 +19735,11 @@
 					}
 				],
 				"auditTrail": true,
+				"lifecycleActions": true,
+				"headerActions": [
+					{"id": "download-ensia-statement", "label": "Download statement", "type": "handler", "handler": "downloadEnsiaStatement", "icon": "Download", "visibleWhen": {"field": "declarationDocx", "op": "notEmpty"}, "description": "Download the college statement rendered when the cycle moved to college approval."},
+					{"id": "download-ensia-xml", "label": "Download XML", "type": "handler", "handler": "downloadEnsiaXml", "icon": "Download", "visibleWhen": {"field": "submissionXml", "op": "notEmpty"}, "description": "Download the ENSIA XML produced when the cycle was submitted."}
+				],
 				"schema": "ENSIAJaarcyclus",
 				"fields": [
 					{
