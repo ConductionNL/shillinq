@@ -91,15 +91,45 @@ class RetentionDueController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
+		$administrationId = $this->requestedAdministrationId();
+		if ($administrationId === '') {
+			return new JSONResponse(['administrationId' => null, 'results' => [], 'total' => 0]);
+		}
+
+		$refusal = $this->refusalFor(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->listDue(administrationId: $administrationId);
+	}//end index()
+
+	/**
+	 * The administration asked for, else the caller's active one, else ''.
+	 *
+	 * @return string The administration id, '' when there is none.
+	 *
+	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 */
+	private function requestedAdministrationId(): string {
 		$administrationId = trim((string) $this->request->getParam('administrationId', ''));
 		if ($administrationId === '') {
 			$administrationId = (string) ($this->context->buildContext()['activeAdministrationId'] ?? '');
 		}
 
-		if ($administrationId === '') {
-			return new JSONResponse(['administrationId' => null, 'results' => [], 'total' => 0]);
-		}
+		return $administrationId;
+	}//end requestedAdministrationId()
 
+	/**
+	 * The 400 for a malformed id or the 404 for an administration the caller may not read.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may read it.
+	 *
+	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 */
+	private function refusalFor(string $administrationId): ?JSONResponse {
 		if (preg_match(self::ID_PATTERN, $administrationId) !== 1) {
 			return new JSONResponse(['error' => 'administrationId must be a valid identifier'], Http::STATUS_BAD_REQUEST);
 		}
@@ -109,6 +139,19 @@ class RetentionDueController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return null;
+	}//end refusalFor()
+
+	/**
+	 * The records due for one readable administration, or a 500 without detail.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return JSONResponse 200 `{administrationId, results, total}`, or 500.
+	 *
+	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 */
+	private function listDue(string $administrationId): JSONResponse {
 		try {
 			$results = $this->due->dueFor(administrationId: $administrationId, today: $this->time->now());
 		} catch (Throwable $e) {
@@ -120,5 +163,5 @@ class RetentionDueController extends Controller {
 		}
 
 		return new JSONResponse(['administrationId' => $administrationId, 'results' => $results, 'total' => count($results)]);
-	}//end index()
+	}//end listDue()
 }//end class
