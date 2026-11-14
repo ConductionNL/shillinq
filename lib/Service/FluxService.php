@@ -37,10 +37,11 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FluxServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Variance calculation + driver decomposition for continuous-close (REQ-CLS-005..007).
@@ -53,7 +54,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class FluxService {
+class FluxService implements FluxServiceInterface {
 	/**
 	 * Auto-explanation coverage threshold (REQ-CLS-006).
 	 *

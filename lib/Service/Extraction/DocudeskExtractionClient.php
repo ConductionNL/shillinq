@@ -53,6 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
+use OCA\Shillinq\Kernel\Contracts\DocudeskExtractionClientInterface;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IURLGenerator;
@@ -64,7 +65,7 @@ use Throwable;
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
-class DocudeskExtractionClient {
+class DocudeskExtractionClient implements DocudeskExtractionClientInterface {
 	/**
 	 * Docudesk route name for the financial extraction endpoint (NC
 	 * `{appId}.{controller}.{method}` convention for

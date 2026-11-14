@@ -42,9 +42,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\OssPaymentReconciliation;
-use OCA\Shillinq\Service\OssRecordResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\OssPaymentReconciliationInterface;
+use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -76,15 +76,15 @@ class OssPaymentReconciliationListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param OssRecordResolver $resolver Reads/persists the OSS records.
-	 * @param OssPaymentReconciliation $reconciliation The pure-logic REQ-OSS-008 kernel.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param OssRecordResolverInterface $resolver Reads/persists the OSS records.
+	 * @param OssPaymentReconciliationInterface $reconciliation The pure-logic REQ-OSS-008 kernel.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly OssRecordResolver $resolver,
-		private readonly OssPaymentReconciliation $reconciliation,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly OssRecordResolverInterface $resolver,
+		private readonly OssPaymentReconciliationInterface $reconciliation,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

@@ -1,0 +1,72 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-digipoort-filing",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating.",
+    "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
+  },
+  "info": {
+    "version": "0.1.0-tax-digipoort-filing"
+  },
+  "components": {
+    "schemas": {
+      "XbrlInstance": {
+        "properties": {
+          "entryPoint": {
+            "enum": [
+              "belastingdienst-ob"
+            ]
+          },
+          "filingType": {
+            "type": "string",
+            "enum": [
+              "vat-return",
+              "kvk-deponering"
+            ],
+            "nullable": true,
+            "description": "What this instance files: a VAT return to the Belastingdienst (`vat-return`, entry point belastingdienst-ob) or the annual accounts to the KvK (`kvk-deponering`, entry point kvk-jaarrekening). Set by the builder that made the instance.",
+            "example": "vat-return",
+            "title": "Filing type"
+          },
+          "sourceReturnId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The BtwAangifte this VAT return instance was built from. Empty for an annual accounts instance, which names its statement in sourceStatementId.",
+            "example": "btw-2026-q3",
+            "title": "Source return"
+          }
+        }
+      },
+      "BtwAangifte": {
+        "properties": {
+          "xbrlInstanceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The XbrlInstance that files this return through Digipoort. The return mirrors that instance's state: submitted once the delivery is reported, accepted or rejected once the Belastingdienst's outcome is reported.",
+            "example": "xbrl-2026-0042",
+            "title": "XBRL instance"
+          }
+        }
+      },
+      "XBRLTaxonomy": {
+        "properties": {
+          "entryPoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The entry points this taxonomy version carries, such as belastingdienst-ob and kvk-jaarrekening. An instance is validated against the taxonomy effective for its period that lists its entry point.",
+            "example": [
+              "belastingdienst-ob",
+              "kvk-jaarrekening"
+            ],
+            "title": "Entry points"
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

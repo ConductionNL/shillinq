@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Service\Dunning;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
 /**
  * Dispatches a DunningRun through the channel adapter and records the truth.

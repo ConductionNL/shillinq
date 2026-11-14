@@ -79,7 +79,13 @@
     "libxmljs2": "^0.37.0",
     "apexcharts": "4.7.0",
     "@nextcloud/axios": "$@nextcloud/axios",
-    "axios": "1.21.0"
+    "axios": "1.21.0",
+    "webdav": {
+      "minimatch": "^11.0.1"
+    },
+    "@toast-ui/editor": {
+      "dompurify": "^3.4.16"
+    }
   },
   "devDependencies": {
     "@babel/core": "^8.0.6",

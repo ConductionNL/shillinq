@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Throwable;
 
@@ -42,11 +42,11 @@ final class ConcludedSubjectStore {
 	/**
 	 * Hold the settings and the object service.
 	 *
-	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ObjectServiceInterface $objectService   OpenRegister's published object surface (ADR-084).
 	 */
 	public function __construct(
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()

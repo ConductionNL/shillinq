@@ -42,12 +42,13 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StandardsPolicyServiceInterface;
 use Throwable;
 
 /**
  * Resolves the precedence-winning accounting framework from the StandardsPolicy.
  */
-class StandardsPolicyService {
+class StandardsPolicyService implements StandardsPolicyServiceInterface {
 
 	/**
 	 * OpenRegister register slug the StandardsPolicy object lives in.
