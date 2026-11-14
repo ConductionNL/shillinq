@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -5496,6 +5510,83 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Taxes",
+					"label": "Taxes",
+					"icon": "PercentOutline",
+					"order": 50,
+					"children": [
+						{
+							"id": "GroupEntities",
+							"label": "Group entities",
+							"icon": "SitemapOutline",
+							"route": "GroupEntities",
+							"order": 120
+						},
+						{
+							"id": "CbcrReturns",
+							"label": "Country-by-country reports",
+							"icon": "EarthBox",
+							"route": "CbcrReturns",
+							"order": 130
+						},
+						{
+							"id": "GlobeInformationReturns",
+							"label": "Minimum tax returns",
+							"icon": "ScaleBalance",
+							"route": "GlobeInformationReturns",
+							"order": 140
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GroupEntities",
+					"route": "/taxes/group-entities",
+					"type": "index",
+					"title": "Group entities"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GroupEntityDetail",
+					"route": "/taxes/group-entities/:id",
+					"type": "detail",
+					"title": "Group entity"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "CbcrReturns",
+					"route": "/taxes/cbc-reports",
+					"type": "index",
+					"title": "Country-by-country reports"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "CbcrReturnDetail",
+					"route": "/taxes/cbc-reports/:id",
+					"type": "detail",
+					"title": "Country-by-country report"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GlobeInformationReturns",
+					"route": "/taxes/minimum-tax",
+					"type": "index",
+					"title": "Minimum tax returns"
+				},
+				{
+					"_fragment": "tax-cbcr-and-pillar2-returns",
+					"id": "GlobeInformationReturnDetail",
+					"route": "/taxes/minimum-tax/:id",
+					"type": "detail",
+					"title": "Minimum tax return"
 				}
 			]
 		},

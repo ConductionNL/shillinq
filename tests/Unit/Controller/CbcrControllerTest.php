@@ -257,4 +257,21 @@ final class CbcrControllerTest extends TestCase {
 		$this->assertSame(['cbc-accounts-mapped'], $checks['blocking']);
 		$this->assertCount(2, $checks['checks']);
 	}//end testSafeHarbourQdmttAndChecksAnswerWithTheResults()
+	/**
+	 * The report-keyed actions take the group and year from the report, and refuse another group's report.
+	 *
+	 * @return void
+	 */
+	public function testTheReportActionsTakeTheGroupAndYearFromTheReport(): void {
+		$this->figures->expects($this->once())->method('summarise')->with('ge-holding', 2026)->willReturn(['summaries' => []]);
+		$this->safeHarbour->expects($this->never())->method('test');
+		$controller = $this->controller();
+
+		$this->assertSame(
+			['summaries' => [], 'notRead' => ['ge-ie' => "You have no access to this entity's administration."]],
+			$controller->prepareReturn('cbc-2026')->getData()
+		);
+		$this->assertSame(Http::STATUS_NOT_FOUND, $controller->safeHarbourReturn('gir-2026')->getStatus());
+		$this->assertSame(Http::STATUS_NOT_FOUND, $controller->prepareReturn('cbc-missing')->getStatus());
+	}//end testTheReportActionsTakeTheGroupAndYearFromTheReport()
 }//end class

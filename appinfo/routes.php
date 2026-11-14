@@ -78,6 +78,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'cbcr#prepare', 'url' => '/api/cbcr/entities/{entityId}/prepare', 'verb' => 'POST'],
             ['name' => 'cbcr#safeHarbour', 'url' => '/api/cbcr/entities/{entityId}/safe-harbour', 'verb' => 'POST'],
             ['name' => 'cbcr#qdmtt', 'url' => '/api/cbcr/computations/{computationId}/qdmtt', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepareReturn', 'url' => '/api/cbcr/returns/{returnId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbourReturn', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/safe-harbour', 'verb' => 'POST'],
             ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
             ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
 

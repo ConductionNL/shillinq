@@ -166,6 +166,52 @@ class CbcrController extends Controller {
 	}//end prepare()
 
 	/**
+	 * "Prepare from the books" on a CbC report: the report's group and year.
+	 *
+	 * @param string $returnId The CbcrReturn id.
+	 *
+	 * @return JSONResponse As prepare().
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-6.2
+	 */
+	#[NoAdminRequired]
+	public function prepareReturn(string $returnId): JSONResponse {
+		$return = $this->record(schema: 'CbcrReturn', id: $returnId);
+		$entity = $this->entityFor(id: (string)($return['reportingEntity'] ?? ''));
+		$upe    = $this->upeOf(entity: ($entity ?? []));
+		$year   = self::yearOf(period: (string)($return['period'] ?? ''));
+		if ($return === null || $entity === null || $this->canAccessBooks(entity: $upe) === false) {
+			return $this->notFound();
+		}
+
+		return $this->runForYear(year: $year, work: fn (int $fiscalYear): array => $this->prepareYear(upeId: (string)$upe['id'], year: $fiscalYear));
+	}//end prepareReturn()
+
+	/**
+	 * "Run safe harbour tests" on a minimum tax return: the return's group and year.
+	 *
+	 * @param string $returnId The GlobeInformationReturn id.
+	 *
+	 * @return JSONResponse As safeHarbour().
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-6.3
+	 */
+	#[NoAdminRequired]
+	public function safeHarbourReturn(string $returnId): JSONResponse {
+		$return = $this->record(schema: 'GlobeInformationReturn', id: $returnId);
+		$upeId  = (string)($return['ultimateParent'] ?? '');
+		$entity = $this->entityFor(id: $upeId);
+		if ($return === null || $entity === null || $this->canAccessBooks(entity: $entity) === false) {
+			return $this->notFound();
+		}
+
+		return $this->runForYear(
+			year: self::yearOf(period: (string)($return['period'] ?? '')),
+			work: fn (int $fiscalYear): array => ['jurisdictions' => $this->safeHarbour->test(upeId: $upeId, fiscalYear: $fiscalYear)]
+		);
+	}//end safeHarbourReturn()
+
+	/**
 	 * Run the safe harbour tests of a minimum tax year ("Run safe harbour tests").
 	 *
 	 * @param string $entityId The ultimate parent's GroupEntityRegistry id.
@@ -287,7 +333,18 @@ class CbcrController extends Controller {
 	 * @return JSONResponse
 	 */
 	private function run(callable $work): JSONResponse {
-		$year = (int)$this->request->getParam('fiscalYear', 0);
+		return $this->runForYear(year: (int)$this->request->getParam('fiscalYear', 0), work: $work);
+	}//end run()
+
+	/**
+	 * Run one action for a fiscal year and answer with its result.
+	 *
+	 * @param int                               $year The fiscal year.
+	 * @param callable(int):array<string,mixed> $work The action, given the fiscal year.
+	 *
+	 * @return JSONResponse
+	 */
+	private function runForYear(int $year, callable $work): JSONResponse {
 		if ($year < 2000 || $year > 2100) {
 			return new JSONResponse(['error' => $this->l10n->t('Give the fiscal year, for example 2026.')], Http::STATUS_BAD_REQUEST);
 		}
@@ -297,7 +354,7 @@ class CbcrController extends Controller {
 		} catch (Throwable $e) {
 			return $this->failed(error: $e);
 		}
-	}//end run()
+	}//end runForYear()
 
 	/**
 	 * The answer for a refused or failed action: the reason for a refusal, a generic line otherwise.
@@ -405,6 +462,21 @@ class CbcrController extends Controller {
 			return null;
 		}
 	}//end record()
+
+	/**
+	 * The fiscal year in a period such as FY2026.
+	 *
+	 * @param string $period The period.
+	 *
+	 * @return int 0 when it names none.
+	 */
+	private static function yearOf(string $period): int {
+		if (preg_match('/(\d{4})/', $period, $match) === 1) {
+			return (int)$match[1];
+		}
+
+		return 0;
+	}//end yearOf()
 
 	/**
 	 * The 404 every refusal answers with.

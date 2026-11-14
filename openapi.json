@@ -3554,6 +3554,54 @@
                 }
             }
         },
+        "/cbcr/minimum-tax-returns/{returnId}/safe-harbour": {
+            "post": {
+                "operationId": "cbcr-safe-harbour-return",
+                "summary": "Run the safe harbour tests of a minimum tax return",
+                "description": "Run the transitional CbCR safe harbour tests for the return's group and year. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GlobeInformationReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
         "/cbcr/returns/{returnId}/checks": {
             "get": {
                 "operationId": "cbcr-cbc-checks",
@@ -3592,6 +3640,54 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/cbcr/returns/{returnId}/prepare": {
+            "post": {
+                "operationId": "cbcr-prepare-return",
+                "summary": "Prepare a CbC report from the books",
+                "description": "Read the figures of every entity of the report's group that keeps its books here and sum them per jurisdiction, for the report's year. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The CbcrReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
                     }
                 }
             }

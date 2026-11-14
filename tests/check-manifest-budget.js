@@ -231,7 +231,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // fourth tab of the receivables tab strip and its payouts table):
 // development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
 // Raised to 1,259,400: 6,262 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_259_400
+//
+// Re-measured 2026-11-14 (tax-cbcr-and-pillar2-returns: Group entities,
+// Country-by-country reports and Minimum tax returns, six pages and three
+// Taxes menu entries in one fragment): development held 1,257,096 bytes. This
+// change adds 14,282 B. 1,271,378 in all.
+// Raised to 1,277,700: 6,322 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_277_700
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
