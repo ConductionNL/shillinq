@@ -138,19 +138,16 @@ class MandateEnforcer implements MandateEnforcerInterface {
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
 	public function resolveApplicableMandate(array $commitment): ?array {
-		$kind = (string)($commitment['kind'] ?? '');
+		$kind   = (string)($commitment['kind'] ?? '');
 		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
-		$admin = (string)($commitment['administrationId'] ?? '');
+		$admin  = (string)($commitment['administrationId'] ?? '');
 
 		$mandaten = $this->findMany(schema: 'SpendingMandate', filters: ['administrationId' => $admin]);
 
 		$best = null;
 		foreach ($mandaten as $mandate) {
-			if ($this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount) === false) {
-				continue;
-			}
-
-			if (self::isPreferredMandate(candidate: $mandate, best: $best) === true) {
+			$applies = $this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount);
+			if ($applies === true && self::isPreferredMandate(candidate: $mandate, best: $best) === true) {
 				$best = $mandate;
 			}
 		}//end foreach

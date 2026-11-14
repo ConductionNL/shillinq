@@ -953,13 +953,7 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 		// Find the supplier's earliest scorecard for this administration —
 		// VendorPerformance carries no createdAt by schema design, so the
 		// "first scorecard" is reconstructed by sorting on the period code.
-		$cards = $this->findAll(
-			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
-			filters: [
-				'supplierId' => $supplierId,
-				'administrationId' => $administrationId,
-			]
-		);
+		$cards = $this->findAll(schema: self::SCHEMA_VENDOR_PERFORMANCE, filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]);
 
 		$firstPeriod = self::earliestPeriod(cards: $cards);
 		if ($firstPeriod === '') {

@@ -160,8 +160,7 @@ class IntegralCostPriceCalculator {
 			$bucket = (string)($entry['bucket'] ?? $entry['category'] ?? 'other');
 			$ratio  = self::clampRatio(ratio: (float)($entry['ratio'] ?? 0));
 
-			$bucketCents = (int)round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
-			$buckets[$bucket] = ($buckets[$bucket] ?? 0) + $bucketCents;
+			$buckets[$bucket] = ($buckets[$bucket] ?? 0) + (int)round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
 		}//end foreach
 
 		return $buckets;
