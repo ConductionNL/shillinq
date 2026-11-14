@@ -24,7 +24,10 @@ namespace OCA\Shillinq\Tests\Unit\Mcp;
 
 use OCA\Shillinq\Mcp\McpAdministrationGate;
 use OCA\Shillinq\Mcp\McpArgumentValidator;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
+use OCA\Shillinq\Mcp\McpPeriodCloseTools;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
@@ -49,6 +52,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpArgumentValidator::class)]
 #[UsesClass(McpAdministrationGate::class)]
 #[UsesClass(McpPurchaseOrderTools::class)]
+#[UsesClass(McpPeriodCloseTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -99,7 +103,13 @@ class ShillinqToolProviderTest extends TestCase {
 			new McpArgumentValidator(),
 			$gate,
 			new McpInvocationAudit($dispatcher),
-			new McpPurchaseOrderTools($gate, $this->approvals, $this->createMock(LoggerInterface::class))
+			new McpPurchaseOrderTools($gate, $this->approvals, $this->createMock(LoggerInterface::class)),
+			new McpPeriodCloseTools(
+				$gate,
+				$this->createMock(PeriodCloseServiceInterface::class),
+				$this->createMock(PeriodCloseAssistantServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			)
 		);
 	}//end setUp()
 
@@ -159,6 +169,27 @@ class ShillinqToolProviderTest extends TestCase {
 			$this->assertSame('invalid_arguments', $result['error'], $tool['id']);
 		}
 	}//end testEveryCatalogueToolDispatches()
+
+	/**
+	 * Every catalogue tool, given well-formed arguments, reaches its handler:
+	 * the gate answers for an administration the caller may not reach, rather
+	 * than the dispatcher saying the tool has no handler.
+	 *
+	 * @return void
+	 */
+	public function testEveryCatalogueToolReachesItsHandler(): void {
+		$values = [
+			'administrationId' => 'adm-other',
+			'purchaseOrderId' => 'po-1',
+			'periodId' => '2026-10',
+			'decision' => 'approved',
+		];
+		foreach ($this->provider->getTools() as $tool) {
+			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));
+			$result = $this->provider->invokeTool($tool['id'], $args);
+			$this->assertSame('not_found', $result['error'], $tool['id']);
+		}
+	}//end testEveryCatalogueToolReachesItsHandler()
 
 	/**
 	 * A permitted decision runs the service and is audited as ok under the principal.
