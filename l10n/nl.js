@@ -6904,7 +6904,12 @@ OC.L10N.register(
         "The provider's id of the phone or terminal, entered from the provider's app.": "Het id van de telefoon of terminal bij de provider, overgenomen uit de app van de provider.",
         "A name the user recognises the phone by.": "Een naam waaraan de gebruiker de telefoon herkent.",
         "The administration the phone takes payments for; empty for every administration of the user.": "De administratie waarvoor de telefoon betalingen ontvangt; leeg voor elke administratie van de gebruiker.",
-        "Open lines": "Open regels"
+        "Open lines": "Open regels",
+        "Taken on the spot": "Ter plekke afgerekend",
+        "On the phone": "Op de telefoon",
+        "QR code": "QR-code",
+        "How a payment taken on the spot reached the customer: pushed to the phone, or shown as a QR code.": "Hoe een betaling ter plekke de klant bereikte: naar de telefoon gestuurd, of als QR-code getoond.",
+        "The provider's id of the phone the payment was taken on.": "Het id bij de provider van de telefoon waarop de betaling is ontvangen."
     },
     "nplurals=2; plural=(n != 1);"
 )

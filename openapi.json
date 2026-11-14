@@ -5037,6 +5037,45 @@
                 }
             }
         },
+        "/financial-documents/invoices/{id}/take-payment": {
+            "post": {
+                "operationId": "point-of-sale-payment-take-payment",
+                "summary": "Take payment now on an open invoice",
+                "description": "Take an open invoice's payment on the caller's registered phone through the payment provider, or as a checkout shown as a QR code when the phone cannot receive it. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "financial-document-action"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/financial-documents/payouts": {
             "post": {
                 "operationId": "financial-document-action-raise-payout",

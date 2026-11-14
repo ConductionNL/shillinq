@@ -4719,7 +4719,12 @@ OC.L10N.register(
         "The provider's id of the phone or terminal, entered from the provider's app.": "The provider's id of the phone or terminal, entered from the provider's app.",
         "A name the user recognises the phone by.": "A name the user recognises the phone by.",
         "The administration the phone takes payments for; empty for every administration of the user.": "The administration the phone takes payments for; empty for every administration of the user.",
-        "Open lines": "Open lines"
+        "Open lines": "Open lines",
+        "Taken on the spot": "Taken on the spot",
+        "On the phone": "On the phone",
+        "QR code": "QR code",
+        "How a payment taken on the spot reached the customer: pushed to the phone, or shown as a QR code.": "How a payment taken on the spot reached the customer: pushed to the phone, or shown as a QR code.",
+        "The provider's id of the phone the payment was taken on.": "The provider's id of the phone the payment was taken on."
     },
     "nplurals=2; plural=(n != 1);"
 )

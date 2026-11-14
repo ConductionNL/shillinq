@@ -798,6 +798,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // on the caller's administration.
             ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
+            // receivables-provider-payouts REQ-RPPO-005: take payment now on the caller's registered phone, or as a QR checkout.
+            ['name' => 'pointOfSalePayment#takePayment', 'url' => '/api/financial-documents/invoices/{id}/take-payment', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#createQuote', 'url' => '/api/financial-documents/quotes', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#creditInvoice', 'url' => '/api/financial-documents/invoices/{id}/credit', 'verb' => 'POST'],
             ['name' => 'financialDocumentAction#raisePayout', 'url' => '/api/financial-documents/payouts', 'verb' => 'POST'],
