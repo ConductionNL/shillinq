@@ -97,6 +97,24 @@ class ImportPosting {
 			return $this->failed(code: 'posting-refused', message: $e->getMessage(), findings: $findings);
 		}
 
+		$findings = $this->withMissingOpeningBalance(findings: $findings, entry: $entry, batch: $batch);
+
+		return $this->writePosting(customers: $customers, entry: $entry, findings: $findings);
+
+	}//end post()
+
+	/**
+	 * Add the no-opening-balance warning when the opening balance is in scope but absent.
+	 *
+	 * @param array<int,array<string,mixed>> $findings The findings so far.
+	 * @param array<string,mixed>|null $entry The opening entry, or null.
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @return array<int,array<string,mixed>> The findings.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function withMissingOpeningBalance(array $findings, array|null $entry, array $batch): array {
 		if ($entry === null && $this->inScope(batch: $batch, part: 'openingBalance') === true) {
 			$findings[] = $this->finding(
 				severity: ImportPipelineService::SEVERITY_WARNING,
@@ -105,6 +123,21 @@ class ImportPosting {
 			);
 		}
 
+		return $findings;
+	}//end withMissingOpeningBalance()
+
+	/**
+	 * Write the customers and post the opening entry, removing what was written when that is refused.
+	 *
+	 * @param array<int,array<string,mixed>> $customers The customers to write.
+	 * @param array<string,mixed>|null $entry The opening entry, or null.
+	 * @param array<int,array<string,mixed>> $findings The findings.
+	 *
+	 * @return array{failed:bool,postingRefs:array<string,mixed>|null,findings:array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	private function writePosting(array $customers, array|null $entry, array $findings): array {
 		$refs = ['openingJournalId' => null, 'masterIds' => [], 'linkedMasterIds' => []];
 		try {
 			$this->writeCustomers(customers: $customers, refs: $refs);
@@ -120,8 +153,7 @@ class ImportPosting {
 		}
 
 		return ['failed' => false, 'postingRefs' => $refs, 'findings' => $findings];
-
-	}//end post()
+	}//end writePosting()
 
 	/**
 	 * Post the reversing entry and remove the customers the import wrote.

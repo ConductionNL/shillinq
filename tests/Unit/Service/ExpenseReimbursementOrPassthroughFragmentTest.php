@@ -99,9 +99,9 @@ final class ExpenseReimbursementOrPassthroughFragmentTest extends TestCase {
 	}//end testFragmentDeclaresNewSchemas()
 
 	/**
-	 * The Receipt extension adds the settlement fields and declares the
-	 * markup-lookup declarative calculation that targets markupRuleId,
-	 * markupRateApplied and markupAmountCalculated (REQ-ERP-002 / REQ-ERP-005).
+	 * The Receipt extension adds the settlement fields; markupRuleId,
+	 * markupRateApplied and markupAmountCalculated are written at claim submit
+	 * by the lock-passthrough-markup action (REQ-ERP-002 / REQ-STEB-004).
 	 *
 	 * @return void
 	 */
@@ -117,13 +117,13 @@ final class ExpenseReimbursementOrPassthroughFragmentTest extends TestCase {
 		self::assertSame(['reimbursable', 'pass-through'], $props['settlementMode']['enum']);
 		self::assertArrayNotHasKey('required', $receipt, 'Receipt extension must not redeclare required[]');
 
-		// The markup lookup is declared declaratively under x-openregister-calculations
-		// and targets markupAmountCalculated (ADR-031 declarative computation).
-		self::assertArrayHasKey('x-openregister-calculations', $receipt);
-		$calculations = $receipt['x-openregister-calculations'];
-		self::assertArrayHasKey('markupLookup', $calculations);
-		self::assertArrayHasKey('markupAmountCalculated', $calculations['markupLookup']['targets']);
-		self::assertSame('ExpenseClaimEntry.submit', $calculations['markupLookup']['lockOn']);
+		// The markup is no longer a declared lookup(): the evaluator has no such
+		// operator, so the targets were never written. The claim's submit
+		// transition locks it instead (sales-time-and-expense-billing D3).
+		self::assertArrayNotHasKey('x-openregister-calculations', $receipt);
+		$submit = $this->fragment()['components']['schemas']['ExpenseClaimEntry']['x-openregister-lifecycle']['transitions']['submit'];
+		self::assertSame('lock-passthrough-markup', $submit['actions'][0]['name']);
+		self::assertSame('OCA\\Shillinq\\Lifecycle\\Action\\LockPassThroughMarkupAction', $submit['actions'][0]['action']);
 
 	}//end testReceiptExtensionAddsSettlementFields()
 

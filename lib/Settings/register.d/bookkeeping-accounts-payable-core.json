@@ -183,6 +183,12 @@
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
           },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
+          },
           "dunningPolicyRef": {
             "type": "string",
             "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Drives reminder cadence from the overdue state.",
@@ -492,6 +498,12 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "writeOffReason": {
             "type": "string",

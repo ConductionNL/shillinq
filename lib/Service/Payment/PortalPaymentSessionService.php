@@ -652,19 +652,38 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	private function mintOrReusePaymentRequest(object $objectService, array $invoice): array {
-		$invoiceKey = (string)($invoice['id'] ?? '');
+		$pending = $this->pendingPaymentRequest(objectService: $objectService, invoiceKey: (string)($invoice['id'] ?? ''));
+		if ($pending !== null) {
+			return $pending;
+		}
 
+		$paymentRequest = $this->withContribution(paymentRequest: $this->newPaymentRequest(invoice: $invoice), invoice: $invoice);
+
+		$saved = $objectService->saveObject(
+			object: $paymentRequest,
+			register: self::REGISTER,
+			schema: self::SCHEMA_PAYMENT_REQUEST,
+			_rbac: false,
+			_multitenancy: false,
+		);
+
+		return (array)$saved;
+	}//end mintOrReusePaymentRequest()
+
+	/**
+	 * The invoice's existing pending PaymentRequest, or null when there is none.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $invoiceKey    The ARInvoice id.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function pendingPaymentRequest(object $objectService, string $invoiceKey): array|null {
 		$pending = $objectService
 			->setRegister(self::REGISTER)
 			->setSchema(self::SCHEMA_PAYMENT_REQUEST)
 			->findAll(
-				config: [
-					'filters' => [
-						'invoiceReference' => $invoiceKey,
-						'state' => 'pending',
-					],
-					'limit' => 1,
-				],
+				config: ['filters' => ['invoiceReference' => $invoiceKey, 'state' => 'pending'], 'limit' => 1],
 				_rbac: false,
 				_multitenancy: false,
 			);
@@ -673,13 +692,46 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			return $pending[0];
 		}
 
-		// 🔴 NEVER MINT A REQUEST FOR AN AMOUNT NOBODY COULD READ. The cast
-		// below used to turn a missing or malformed `totalAmount` into 0.00,
-		// and the citizen was sent to a checkout for nothing. A payment page
-		// for zero euro is worse than a page that says the payment could not
-		// be started, because the person believes they have paid.
-		// ARInvoice declares `grossAmount`; `totalAmount` is kept first for the
-		// rows that carry it (REQ-SCON-010).
+		return null;
+	}//end pendingPaymentRequest()
+
+	/**
+	 * A new pending PaymentRequest for the invoice's server-side amount.
+	 *
+	 * @param array<string, mixed> $invoice The owned, payable ARInvoice row.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws RuntimeException When the invoice carries no chargeable amount.
+	 */
+	private function newPaymentRequest(array $invoice): array {
+		$amount = self::chargeableInvoiceAmount(invoice: $invoice);
+
+		return [
+			'invoiceReference' => (string)($invoice['id'] ?? ''),
+			'amount' => (float)$amount,
+			'currency' => (string)($invoice['currency'] ?? 'EUR'),
+			'paymentGateway' => self::GATEWAY,
+			'state' => 'pending',
+			'administrationId' => (string)($invoice['administrationId'] ?? ''),
+		];
+	}//end newPaymentRequest()
+
+	/**
+	 * 🔴 NEVER MINT A REQUEST FOR AN AMOUNT NOBODY COULD READ. A missing or
+	 * malformed `totalAmount` must not become 0.00 and send the citizen to a
+	 * checkout for nothing: a payment page for zero euro is worse than a page
+	 * that says the payment could not be started, because the person believes
+	 * they have paid. ARInvoice declares `grossAmount`; `totalAmount` is kept
+	 * first for the rows that carry it (REQ-SCON-010).
+	 *
+	 * @param array<string, mixed> $invoice The owned, payable ARInvoice row.
+	 *
+	 * @return mixed The numeric amount above zero.
+	 *
+	 * @throws RuntimeException When the invoice carries no chargeable amount.
+	 */
+	private static function chargeableInvoiceAmount(array $invoice): mixed {
 		$amount = ($invoice['totalAmount'] ?? ($invoice['grossAmount'] ?? null));
 		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
 			throw new RuntimeException(
@@ -687,18 +739,20 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			);
 		}
 
-		$paymentRequest = [
-			'invoiceReference' => $invoiceKey,
-			'amount' => (float)$amount,
-			'currency' => (string)($invoice['currency'] ?? 'EUR'),
-			'paymentGateway' => self::GATEWAY,
-			'state' => 'pending',
-			'administrationId' => (string)($invoice['administrationId'] ?? ''),
-		];
+		return $amount;
+	}//end chargeableInvoiceAmount()
 
-		// A fresh request for a school contribution (the raised one failed or
-		// expired) keeps the reference to the chargeable, or the settled signal
-		// would no longer name the owning app (REQ-SCON-010).
+	/**
+	 * A fresh request for a school contribution (the raised one failed or
+	 * expired) keeps the reference to the chargeable, or the settled signal
+	 * would no longer name the owning app (REQ-SCON-010).
+	 *
+	 * @param array<string, mixed> $paymentRequest The new PaymentRequest.
+	 * @param array<string, mixed> $invoice        The owned, payable ARInvoice row.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withContribution(array $paymentRequest, array $invoice): array {
 		$contribution = ($invoice['contribution'] ?? null);
 		if (is_array($contribution) === true && is_array($contribution['chargeable'] ?? null) === true) {
 			$paymentRequest += [
@@ -712,16 +766,8 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			];
 		}
 
-		$saved = $objectService->saveObject(
-			object: $paymentRequest,
-			register: self::REGISTER,
-			schema: self::SCHEMA_PAYMENT_REQUEST,
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		return (array)$saved;
-	}//end mintOrReusePaymentRequest()
+		return $paymentRequest;
+	}//end withContribution()
 
 	/**
 	 * Build the provider-facing session request — amount/currency/description

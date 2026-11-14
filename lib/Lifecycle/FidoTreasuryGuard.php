@@ -286,19 +286,37 @@ class FidoTreasuryGuard {
 			return false;
 		}
 
-		$mandates = $statuut['signingMandates'] ?? [];
+		return $this->anyMandateAuthorises(
+			mandates: ($statuut['signingMandates'] ?? []),
+			role: $role,
+			instrument: $instrument,
+			principal: (float)$principal
+		);
+	}//end isWithinSigningMandate()
+
+	/**
+	 * Whether any row of the signing-mandate matrix authorises the lening.
+	 *
+	 * @param mixed $mandates The statuut's signing mandates.
+	 * @param string $role The signer role.
+	 * @param string $instrument The lening instrument.
+	 * @param float $principal The lening principal.
+	 *
+	 * @return bool True when a matrix row authorises the lening.
+	 */
+	private function anyMandateAuthorises(mixed $mandates, string $role, string $instrument, float $principal): bool {
 		if (is_array($mandates) === false) {
 			return false;
 		}
 
 		foreach ($mandates as $mandate) {
-			if ($this->mandateAuthorises(mandate: $mandate, role: $role, instrument: $instrument, principal: (float)$principal) === true) {
+			if ($this->mandateAuthorises(mandate: $mandate, role: $role, instrument: $instrument, principal: $principal) === true) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end isWithinSigningMandate()
+	}//end anyMandateAuthorises()
 
 	/**
 	 * Returns true iff the lening carries the minimal shape needed to be matched

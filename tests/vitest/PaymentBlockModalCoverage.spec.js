@@ -101,13 +101,23 @@ describe('PaymentBlockModal template', () => {
 		expect(vnodeText(done.byTestId('payment-block-error'))).toBe('Give a reason for the payment block.')
 	})
 
-	it('releases a supplier with a confirmation only, and names a failed save', async () => {
+	it('refuses a release without a reason and saves nothing', async () => {
+		const view = await renderWithStandIns(PaymentBlockModal, { props: { open: true, schema: 'Payee', mode: 'release', objectId: 'p-2' } })
+
+		await view.byTestId('payment-block-submit').props.onClick()
+		const done = await view.rerender()
+
+		expect(http.patch).not.toHaveBeenCalled()
+		expect(vnodeText(done.byTestId('payment-block-error'))).toBe('Give a reason for releasing the payment block.')
+	})
+
+	it('releases a supplier with a reason, keeps the block reason, and names a failed save', async () => {
 		const onClose = vi.fn()
-		const view = await renderWithStandIns(PaymentBlockModal, { props: { open: true, schema: 'Payee', mode: 'release', objectId: 'p-2', onClose } })
+		const view = await renderWithStandIns(PaymentBlockModal, { props: { open: true, schema: 'Payee', mode: 'release', objectId: 'p-2', onClose }, data: { reason: ' IBAN verified ' } })
 
 		expect(view.standIns('NcDialog')[0].name).toBe('Release payment')
 		expect(view.html).toContain('Payment runs can pay this again from the next proposal on.')
-		expect(standInById(view, 'NcTextField', 'payment-block-reason')).toBeUndefined()
+		expect(standInById(view, 'NcTextField', 'payment-block-reason')).toBeDefined()
 		expect(slotText(view.byTestId('payment-block-submit'))).toBe('Release payment')
 
 		http.patch.mockRejectedValueOnce({ response: { data: { message: 'Locked' } } })
@@ -117,10 +127,10 @@ describe('PaymentBlockModal template', () => {
 
 		http.patch.mockResolvedValueOnce({ data: {} })
 		await view.byTestId('payment-block-submit').props.onClick()
-		expect(http.patch).toHaveBeenLastCalledWith('/index.php/apps/openregister/api/objects/shillinq/Payee/p-2', { paymentBlocked: false, paymentBlockReason: null })
+		expect(http.patch).toHaveBeenLastCalledWith('/index.php/apps/openregister/api/objects/shillinq/Payee/p-2', { paymentBlocked: false, paymentBlockReleaseReason: 'IBAN verified' })
 		expect(toast.showSuccess).toHaveBeenCalledWith('Payment released')
 		expect(bus.emit).toHaveBeenCalledWith('cn:widget:refresh', { widget: 'PayeeDetail' })
-		expect(onClose).toHaveBeenCalledWith({ paymentBlocked: false, paymentBlockReason: null })
+		expect(onClose).toHaveBeenCalledWith({ paymentBlocked: false, paymentBlockReleaseReason: 'IBAN verified' })
 	})
 
 	it('disables the submit while saving and closes without saving from Cancel and the dialog', async () => {
@@ -140,7 +150,7 @@ describe('PaymentBlockModal template', () => {
 		expect(release.html).toContain('Payment runs can pay this again from the next proposal on.')
 		expect(release.html).toMatch(/data-testid="payment-block-error"[^>]*>\s*Locked/)
 		expect(release.html).toMatch(/Cancel[\s\S]*Release payment/)
-		expect(release.html).not.toContain('payment-block-reason')
+		expect(release.standIns('NcTextField')[0]['data-testid']).toBe('payment-block-reason')
 
 		const block = await renderWithStandIns(PaymentBlockModal, { slots: 'ssr', props: { open: true, schema: 'Payee' } })
 		expect(block.html).toContain('No payment run pays this while the block is on.')
@@ -153,12 +163,13 @@ describe('PaymentBlockModal template', () => {
 		http.patch.mockResolvedValue({ data: {} })
 		const routed = await renderWithStandIns(PaymentBlockModal, {
 			props: { open: true, schema: 'APTransaction', mode: 'release' },
+			data: { reason: 'Creditnota ontvangen' },
 			globals: { $route: { params: { id: 'ap-9' } } },
 		})
 		await routed.byTestId('payment-block-submit').props.onClick()
-		expect(http.patch).toHaveBeenCalledWith('/index.php/apps/openregister/api/objects/shillinq/APTransaction/ap-9', { paymentBlocked: false, paymentBlockReason: null })
+		expect(http.patch).toHaveBeenCalledWith('/index.php/apps/openregister/api/objects/shillinq/APTransaction/ap-9', { paymentBlocked: false, paymentBlockReleaseReason: 'Creditnota ontvangen' })
 
-		const orphan = await renderWithStandIns(PaymentBlockModal, { props: { open: true, schema: 'APTransaction', mode: 'release' } })
+		const orphan = await renderWithStandIns(PaymentBlockModal, { props: { open: true, schema: 'APTransaction', mode: 'release' }, data: { reason: 'Creditnota ontvangen' } })
 		await orphan.byTestId('payment-block-submit').props.onClick()
 		expect(orphan.vm.error).toBe('The payment block could not be saved.')
 		expect(http.patch).toHaveBeenCalledTimes(1)
