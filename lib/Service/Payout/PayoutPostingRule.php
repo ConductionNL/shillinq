@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payout;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCP\IAppConfig;
 
