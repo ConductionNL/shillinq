@@ -13,7 +13,7 @@ import { renderTemplate, standIn } from './helpers/renderTemplate.js'
 
 vi.mock('@nextcloud/axios', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 vi.mock('@nextcloud/router', () => ({ generateUrl: (path) => `/index.php${path}` }))
-vi.mock('@nextcloud/vue', () => ({ NcButton: {} }))
+vi.mock('@nextcloud/vue', () => ({ NcButton: {}, NcSelect: {}, NcTextField: {} }))
 vi.mock('../../src/modals/ReopenPeriodDialog.vue', () => ({ default: {} }))
 
 const { default: PeriodCloseDetail } = await import('../../src/components/period-close/PeriodCloseDetail.vue')
@@ -69,7 +69,7 @@ describe('PeriodCloseDetail template', () => {
 		expect(shown).toContain('Fiscal year: 2026')
 		expect(shown).toContain('2026-01-01 – 2026-03-31')
 		expect(shown).not.toContain('Closed at')
-		expect(buttons(html)).toEqual(['Start close'])
+		expect(buttons(html)).toEqual(['Start close', 'Add item'])
 		expect(shown).toContain('No checklist items yet.')
 		expect(shown).toContain('No close assistant flags raised.')
 		expect(html).not.toContain('period-close-detail-history')
@@ -82,7 +82,7 @@ describe('PeriodCloseDetail template', () => {
 			transitionError: 'Transition failed.',
 			transitionNotice: 'Period closed.',
 		})
-		expect(buttons(await render({ period: { state: 'open' }, transitioning: true }))).toEqual(['Working…'])
+		expect(buttons(await render({ period: { state: 'open' }, transitioning: true }))).toEqual(['Working…', 'Add item'])
 		const shown = text(html)
 
 		expect(shown).toContain('2026-Q1')
@@ -132,7 +132,7 @@ describe('PeriodCloseDetail template', () => {
 		expect(shown).toContain('Close reason: Late invoice')
 		expect(shown).toContain('Original close: y — jan')
 		expect(html).toContain('data-testid="period-close-detail-history-1"')
-		expect(buttons(html)).toEqual(['Close period'])
+		expect(buttons(html)).toEqual(['Close period', 'Resolve', 'Resolve', 'Resolve', 'Resolve', 'Add item'])
 	})
 })
 
@@ -149,8 +149,8 @@ describe('PeriodCloseDetail formatting', () => {
 	})
 
 	it('names each checklist category', () => {
-		expect(['ap', 'ar', 'bank', 'expense', 'vat', undefined].map((c) => m.categoryLabel(c)))
-			.toEqual(['Accounts payable', 'Accounts receivable', 'Bank reconciliation', 'Expense claims', 'vat', 'Other'])
+		expect(['ap', 'ar', 'bank', 'expense', 'expense-claims', 'vat', 'accruals', 'other', 'payroll', undefined].map((c) => m.categoryLabel(c)))
+			.toEqual(['Accounts payable', 'Accounts receivable', 'Bank reconciliation', 'Expense claims', 'Expense claims', 'VAT', 'Accruals', 'Other', 'payroll', 'Other'])
 	})
 })
 

@@ -5,7 +5,7 @@
 ## 1. Checklist
 
 - [x] 1.1 Add `InstantiateCloseChecklistAction` and reference it on `FiscalPeriod.startClose`; extend the item category enum; mark `CloseChecklistInstance` deprecated (REQ-LPE-001). Verify: PHPUnit for empty list, non-empty list and missing template; `npm run check:registers`.
-- [ ] 1.2 Resolve, Reopen and Add item actions in `PeriodCloseDetail.vue`, read-only when closed or locked (REQ-LPE-002). Verify: vitest for the component states.
+- [x] 1.2 Resolve, Reopen and Add item actions in `PeriodCloseDetail.vue`, read-only when closed or locked (REQ-LPE-002). Verify: vitest for the component states.
 - [ ] 1.3 Close checklist templates index and detail pages in `src/manifest.d/bookkeeping-period-close.json` with a settings menu entry (REQ-LPE-003). Verify: `npm run check:manifest` and the nav reachability check.
 
 ## 2. Deferrals

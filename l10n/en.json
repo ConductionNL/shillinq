@@ -4716,7 +4716,12 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Accruals": "Accruals",
+        "Add item": "Add item",
+        "Reopen {item}": "Reopen {item}",
+        "Resolve {item}": "Resolve {item}",
+        "The checklist could not be changed.": "The checklist could not be changed."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -603,6 +603,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'periodClose#startClose', 'url' => '/api/period-close/{periodId}/start-close', 'verb' => 'POST'],
             ['name' => 'periodClose#close', 'url' => '/api/period-close/{periodId}/close', 'verb' => 'POST'],
             ['name' => 'periodClose#reopen', 'url' => '/api/period-close/{periodId}/reopen', 'verb' => 'POST'],
+            ['name' => 'periodClose#addItem', 'url' => '/api/period-close/{periodId}/checklist', 'verb' => 'POST'],
+            ['name' => 'periodClose#resolveItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/resolve', 'verb' => 'POST'],
+            ['name' => 'periodClose#reopenItem', 'url' => '/api/period-close/{periodId}/checklist/{itemId}/reopen', 'verb' => 'POST'],
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
 

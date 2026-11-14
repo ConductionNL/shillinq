@@ -14,7 +14,7 @@ import PeriodCloseDetail from '../../src/components/period-close/PeriodCloseDeta
 
 vi.mock('@nextcloud/axios', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 vi.mock('@nextcloud/router', () => ({ generateUrl: (path) => `/index.php${path}` }))
-vi.mock('@nextcloud/vue', () => ({ NcButton: {} }))
+vi.mock('@nextcloud/vue', () => ({ NcButton: {}, NcSelect: {}, NcTextField: {} }))
 vi.mock('../../src/modals/ReopenPeriodDialog.vue', () => ({ default: {} }))
 
 const URL = '/index.php/apps/shillinq/api/period-close/p%2F1'

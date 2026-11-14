@@ -6904,7 +6904,12 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Accruals": "Overlopende posten",
+        "Add item": "Item toevoegen",
+        "Reopen {item}": "{item} heropenen",
+        "Resolve {item}": "{item} afhandelen",
+        "The checklist could not be changed.": "De checklist kon niet worden gewijzigd."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

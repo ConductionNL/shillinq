@@ -7947,6 +7947,160 @@
                 }
             }
         },
+        "/period-close/{periodId}/checklist": {
+            "post": {
+                "operationId": "period-close-add-item",
+                "summary": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002)",
+                "description": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "description": "The category."
+                                    },
+                                    "description": {
+                                        "description": "The description."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/resolve": {
+            "post": {
+                "operationId": "period-close-resolve-item",
+                "summary": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002)",
+                "description": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/reopen": {
+            "post": {
+                "operationId": "period-close-reopen-item",
+                "summary": "POST reopen one resolved checklist item (REQ-LPE-002)",
+                "description": "POST reopen one resolved checklist item (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/period-close/{periodId}/close": {
             "post": {
                 "operationId": "period-close-close",
