@@ -135,7 +135,7 @@ class RetentionDueService {
 	public static function due(array $records, string $schema, string $dateField, array $rule, array $heldIds, DateTimeImmutable $today): array {
 		$years       = self::years(rule: $rule);
 		$disposition = (string) ($rule['disposition'] ?? '');
-		if ($years === null || in_array($disposition, self::NEVER_DUE, true) === true) {
+		if (self::isNeverDue(years: $years, disposition: $disposition) === true) {
 			return [];
 		}
 
@@ -144,11 +144,11 @@ class RetentionDueService {
 		foreach ($records as $record) {
 			$id  = (string) ($record['id'] ?? '');
 			$end = self::endDate(reference: ($record[$dateField] ?? null), years: $years);
-			if ($id === '' || $end === null || $end >= $day) {
+			if (self::hasNotEnded(id: $id, end: $end, day: $day) === true) {
 				continue;
 			}
 
-			if (($record['legalHold'] ?? false) === true || in_array($id, $heldIds, true) === true) {
+			if (self::isHeld(record: $record, id: $id, heldIds: $heldIds) === true) {
 				continue;
 			}
 
@@ -163,6 +163,50 @@ class RetentionDueService {
 
 		return $due;
 	}//end due()
+
+	/**
+	 * Whether a rule never makes a record due: no whole number of years, or a never-due disposition.
+	 *
+	 * @param int|null $years       The retention period in years.
+	 * @param string   $disposition The rule's disposition.
+	 *
+	 * @return bool True when nothing under the rule is ever due.
+	 *
+	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 */
+	private static function isNeverDue(int|null $years, string $disposition): bool {
+		return $years === null || in_array($disposition, self::NEVER_DUE, true) === true;
+	}//end isNeverDue()
+
+	/**
+	 * Whether a record has no id, no computable end date, or an end date not yet passed.
+	 *
+	 * @param string      $id  The record id.
+	 * @param string|null $end The retention end date (Y-m-d).
+	 * @param string      $day The day the list is drawn up (Y-m-d).
+	 *
+	 * @return bool True when the record is not due.
+	 *
+	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 */
+	private static function hasNotEnded(string $id, string|null $end, string $day): bool {
+		return $id === '' || $end === null || $end >= $day;
+	}//end hasNotEnded()
+
+	/**
+	 * Whether a record is under a legal hold.
+	 *
+	 * @param array<string, mixed> $record  The record.
+	 * @param string               $id      The record id.
+	 * @param array<int, string>   $heldIds Ids of records under a legal hold.
+	 *
+	 * @return bool True when held.
+	 *
+	 * @spec openspec/changes/ledger-retention-due-records/specs/bookkeeping-archiefwet-retention/spec.md#requirement-a-list-shows-the-records-whose-retention-period-has-ended-req-ret-015
+	 */
+	private static function isHeld(array $record, string $id, array $heldIds): bool {
+		return ($record['legalHold'] ?? false) === true || in_array($id, $heldIds, true) === true;
+	}//end isHeld()
 
 	/**
 	 * The rule with a Selectielijst code: the administration's own override when there is one, else the statutory rule.

@@ -65,15 +65,7 @@ trait ReadsSourceRowsInBatches {
 		$offset = 0;
 
 		while (true) {
-			$config = [
-				'limit' => self::READ_BATCH_SIZE,
-				'offset' => $offset,
-				'_rbac' => false,
-				'_multitenancy' => false,
-			];
-			if ($filters !== []) {
-				$config['filters'] = $filters;
-			}
+			$config = $this->batchConfig(offset: $offset, filters: $filters);
 
 			$page = $objectService
 				->setRegister($registerSlug)
@@ -84,9 +76,7 @@ trait ReadsSourceRowsInBatches {
 				break;
 			}
 
-			foreach ($page as $row) {
-				$rows[] = $row;
-			}
+			$rows = $this->appendRows(rows: $rows, page: $page);
 
 			if (count($page) < self::READ_BATCH_SIZE) {
 				break;
@@ -97,6 +87,44 @@ trait ReadsSourceRowsInBatches {
 
 		return $rows;
 	}//end readAllRows()
+
+	/**
+	 * The findAll() config for one batch.
+	 *
+	 * @param int                 $offset  The batch offset.
+	 * @param array<string,mixed> $filters Optional top-level filters.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function batchConfig(int $offset, array $filters): array {
+		$config = [
+			'limit' => self::READ_BATCH_SIZE,
+			'offset' => $offset,
+			'_rbac' => false,
+			'_multitenancy' => false,
+		];
+		if ($filters !== []) {
+			$config['filters'] = $filters;
+		}
+
+		return $config;
+	}//end batchConfig()
+
+	/**
+	 * Append a batch's rows to the rows read so far.
+	 *
+	 * @param array<int,mixed> $rows The rows read so far.
+	 * @param array<mixed>     $page One batch.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function appendRows(array $rows, array $page): array {
+		foreach ($page as $row) {
+			$rows[] = $row;
+		}
+
+		return $rows;
+	}//end appendRows()
 
 	/**
 	 * Resolve one findAll() result row to its schema-payload array.

@@ -173,14 +173,7 @@ class DBAController extends Controller {
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
-		$total = $this->scoreCalc->computeTotal($body);
-		$band = DBAConstants::bandFromScore($total);
-
-		$body['totalScore'] = $total;
-		$body['interpretation'] = $band;
-		$body['filledBy'] = (string)(($this->userSession->getUser()?->getUID()) ?? '');
-		$body['filledOn'] ??= (new DateTimeImmutable())->format('Y-m-d');
-		$body['administrationId'] = (string)($assignment['administrationId'] ?? '');
+		$body = $this->scoredIntake(body: $body, assignment: $assignment);
 
 		try {
 			$intake = $os->saveObject(object: $body, register: $register, schema: 'DBAIntake');
@@ -189,24 +182,60 @@ class DBAController extends Controller {
 			return $this->error(message: 'Opslaan intake mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		if (($body['abbreviatedType'] ?? false) === true) {
+		$assignment = $this->markIntakeCompleted(objectService: $os, register: $register, assignment: $assignment, intake: $body);
+
+		return new JSONResponse(['intake' => $intake, 'opdracht' => $assignment]);
+	}//end saveIntake()
+
+	/**
+	 * The intake body with its total score, risk band, filler, date and administration.
+	 *
+	 * @param array<string,mixed> $body       The intake body.
+	 * @param array<string,mixed> $assignment The parent opdracht.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function scoredIntake(array $body, array $assignment): array {
+		$total = $this->scoreCalc->computeTotal($body);
+		$band  = DBAConstants::bandFromScore($total);
+
+		$body['totalScore']       = $total;
+		$body['interpretation']   = $band;
+		$body['filledBy']         = (string)(($this->userSession->getUser()?->getUID()) ?? '');
+		$body['filledOn']       ??= (new DateTimeImmutable())->format('Y-m-d');
+		$body['administrationId'] = (string)($assignment['administrationId'] ?? '');
+
+		return $body;
+	}//end scoredIntake()
+
+	/**
+	 * Update the parent opdracht's intake status and risk from the saved intake, best effort.
+	 *
+	 * @param object              $objectService OpenRegister's ObjectService.
+	 * @param string              $register      The register slug.
+	 * @param array<string,mixed> $assignment    The parent opdracht.
+	 * @param array<string,mixed> $intake        The scored intake body.
+	 *
+	 * @return array<string,mixed> The updated opdracht.
+	 */
+	private function markIntakeCompleted(object $objectService, string $register, array $assignment, array $intake): array {
+		$riskLevel = $intake['interpretation'];
+		if (($intake['abbreviatedType'] ?? false) === true) {
 			$riskLevel = 'ABBREVIATED_LOW_THRESHOLD';
-		} else {
-			$riskLevel = $band;
 		}
 
-		$assignment['intakeStatus'] = 'INTAKE_COMPLETED';
-		$assignment['intakeDate'] = $body['filledOn'];
-		$assignment['actueleRisicoscore'] = $total;
-		$assignment['riskLevel'] = $riskLevel;
+		$assignment['intakeStatus']       = 'INTAKE_COMPLETED';
+		$assignment['intakeDate']         = $intake['filledOn'];
+		$assignment['actueleRisicoscore'] = $intake['totalScore'];
+		$assignment['riskLevel']          = $riskLevel;
 		try {
-			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$objectService->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
 		} catch (Throwable $e) {
 			$this->logger->error('DBA opdracht update failed', ['exception' => $e->getMessage()]);
 		}
 
-		return new JSONResponse(['intake' => $intake, 'opdracht' => $assignment]);
-	}//end saveIntake()
+		return $assignment;
+	}//end markIntakeCompleted()
 
 	/**
 	 * Run a VBAR uurtarief-toets on a single factuur line (REQ-DBA-016, T17).
@@ -258,7 +287,7 @@ class DBAController extends Controller {
 		$body = $this->jsonBody();
 		$assignmentId = (string)($body['assignmentId'] ?? '');
 		$result = (string)($body['wbaAssessmentResult'] ?? '');
-		if ($assignmentId === '' || $result === '') {
+		if (self::anyEmpty(values: [$assignmentId, $result]) === true) {
 			return $this->error(message: 'opdrachtId + wbaBeoordelingResultaat vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -299,7 +328,7 @@ class DBAController extends Controller {
 		$body = $this->jsonBody();
 		$assignmentId = (string)($body['assignmentId'] ?? '');
 		$endDate = (string)($body['actualEndDate'] ?? '');
-		if ($assignmentId === '' || $endDate === '') {
+		if (self::anyEmpty(values: [$assignmentId, $endDate]) === true) {
 			return $this->error(message: 'opdrachtId + feitelijkeEindDatum vereist', code: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -318,10 +347,8 @@ class DBAController extends Controller {
 
 		$assignment['intakeStatus'] = 'ENDED';
 		$assignment['actualEndDate'] = $endDate;
-		$retention = $this->assignmentGuard->computeRetentieDeadline($endDate);
-		if ($retention !== null) {
-			$assignment['retentionDeadline'] = $retention;
-		}
+		$retention  = $this->assignmentGuard->computeRetentieDeadline($endDate);
+		$assignment = self::withRetentionDeadline(assignment: $assignment, retention: $retention);
 
 		try {
 			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
@@ -438,10 +465,7 @@ class DBAController extends Controller {
 		}
 
 		$this->ensureAdministrationAccess(assignment: $dossier);
-		$dossier['emailArchiveOptIn'] = $optIn;
-		if ($optIn === true && $consentId !== '') {
-			$dossier['emailArchiveConsentRecordId'] = $consentId;
-		}
+		$dossier = self::withEmailArchiveConsent(dossier: $dossier, optIn: $optIn, consentId: $consentId);
 
 		try {
 			$updated = $os->saveObject(object: $dossier, register: $register, schema: 'DBAEvidenceDossier');
@@ -451,6 +475,51 @@ class DBAController extends Controller {
 
 		return new JSONResponse(['dossier' => $updated]);
 	}//end evidenceConsent()
+
+	/**
+	 * Whether any of the values is empty.
+	 *
+	 * @param list<string> $values The values.
+	 *
+	 * @return bool
+	 */
+	private static function anyEmpty(array $values): bool {
+		return in_array('', $values, true);
+	}//end anyEmpty()
+
+	/**
+	 * Stamp the retention deadline on the opdracht when one was computed.
+	 *
+	 * @param array<string,mixed> $assignment The opdracht.
+	 * @param mixed               $retention  The computed deadline, or null.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function withRetentionDeadline(array $assignment, mixed $retention): array {
+		if ($retention !== null) {
+			$assignment['retentionDeadline'] = $retention;
+		}
+
+		return $assignment;
+	}//end withRetentionDeadline()
+
+	/**
+	 * Record the email-archive opt-in, with its consent record when opted in.
+	 *
+	 * @param array<string,mixed> $dossier   The evidence dossier.
+	 * @param bool                $optIn     Whether the AVG opt-in is given.
+	 * @param string              $consentId The consent record id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function withEmailArchiveConsent(array $dossier, bool $optIn, string $consentId): array {
+		$dossier['emailArchiveOptIn'] = $optIn;
+		if ($optIn === true && $consentId !== '') {
+			$dossier['emailArchiveConsentRecordId'] = $consentId;
+		}
+
+		return $dossier;
+	}//end withEmailArchiveConsent()
 
 	/**
 	 * Save an opdrachtgever-side inhuur-intake (REQ-DBA-010, T25).
@@ -519,16 +588,27 @@ class DBAController extends Controller {
 
 		$this->ensureAdministrationAccess(assignment: $assignment);
 
-		$intake = $this->auditIntake(objectService: $os, register: $register, assignmentId: $assignmentId);
-		$flags = $this->auditFlags(objectService: $os, register: $register, assignmentId: $assignmentId);
+		$payload = $this->auditPayload(objectService: $os, register: $register, assignment: $assignment, assignmentId: $assignmentId);
 
-		$dossier = null;
-		$dossierId = (string)($assignment['evidenceDossierId'] ?? '');
-		if ($dossierId !== '') {
-			$dossier = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
-		}
+		return $this->auditResponse(payload: $payload, assignmentId: $assignmentId);
+	}//end auditReport()
 
-		$payload = [
+	/**
+	 * The audit report payload: opdracht, intake, flags, evidence dossier and legal basis.
+	 *
+	 * @param object              $objectService OpenRegister's ObjectService.
+	 * @param string              $register      The register slug.
+	 * @param array<string,mixed> $assignment    The opdracht.
+	 * @param string              $assignmentId  The opdracht id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function auditPayload(object $objectService, string $register, array $assignment, string $assignmentId): array {
+		$intake  = $this->auditIntake(objectService: $objectService, register: $register, assignmentId: $assignmentId);
+		$flags   = $this->auditFlags(objectService: $objectService, register: $register, assignmentId: $assignmentId);
+		$dossier = $this->auditDossier(objectService: $objectService, register: $register, assignment: $assignment);
+
+		return [
 			'opdracht' => $assignment,
 			'intake' => $intake,
 			'flags' => $flags,
@@ -537,6 +617,36 @@ class DBAController extends Controller {
 			'fiscaleGrondslag' => 'Wet DBA, BW art. 7:610, Deliveroo-arrest HR 24-3-2023, AWR art. 52, VBAR (peil '
 				. DBAConstants::VBAR_GRENS_PEILJAAR . ')',
 		];
+	}//end auditPayload()
+
+	/**
+	 * The opdracht's evidence dossier, or null when it has none.
+	 *
+	 * @param object              $objectService OpenRegister's ObjectService.
+	 * @param string              $register      The register slug.
+	 * @param array<string,mixed> $assignment    The opdracht.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function auditDossier(object $objectService, string $register, array $assignment): array|null {
+		$dossier   = null;
+		$dossierId = (string)($assignment['evidenceDossierId'] ?? '');
+		if ($dossierId !== '') {
+			$dossier = $this->findEntityOrNull(objectService: $objectService, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
+		}
+
+		return $dossier;
+	}//end auditDossier()
+
+	/**
+	 * Render the payload with its sha256, as a download when PDF is asked for, else as JSON.
+	 *
+	 * @param array<string,mixed> $payload      The audit report payload.
+	 * @param string              $assignmentId The opdracht id.
+	 *
+	 * @return JSONResponse|DataDownloadResponse
+	 */
+	private function auditResponse(array $payload, string $assignmentId): JSONResponse|DataDownloadResponse {
 		$json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 		if ($json === false) {
 			return $this->error(message: 'Rapport-rendering mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -548,15 +658,11 @@ class DBAController extends Controller {
 		// For now: emit JSON. T23 PDF-pipeline will land in the implementation cycle.
 		$accept = (string)$this->request->getHeader('Accept');
 		if (str_contains($accept, 'application/pdf') === true) {
-			return new DataDownloadResponse(
-				data: $json,
-				filename: 'dba-audit-' . $assignmentId . '.json',
-				contentType: 'application/json',
-			);
+			return new DataDownloadResponse(data: $json, filename: 'dba-audit-' . $assignmentId . '.json', contentType: 'application/json');
 		}
 
 		return new JSONResponse($payload);
-	}//end auditReport()
+	}//end auditResponse()
 
 	/**
 	 * Helper: the first intake of an opdracht for the audit-rapport.
@@ -740,6 +846,17 @@ class DBAController extends Controller {
 			return null;
 		}
 
+		return self::entityData(entity: $entity);
+	}//end findEntityOrNull()
+
+	/**
+	 * The entity's object data as an array, or null when it carries none.
+	 *
+	 * @param mixed $entity The found entity or array.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function entityData(mixed $entity): array|null {
 		if (is_array($entity) === true) {
 			/*
 			 * @var array<string,mixed> $entity
@@ -760,7 +877,7 @@ class DBAController extends Controller {
 		}
 
 		return null;
-	}//end findEntityOrNull()
+	}//end entityData()
 
 	/**
 	 * Guard per-object authorization. The currently active user MUST belong to the

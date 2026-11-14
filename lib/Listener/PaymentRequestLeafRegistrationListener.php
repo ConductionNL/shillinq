@@ -117,14 +117,24 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 			return;
 		}
 
+		$this->registerPaymentRequestLeaves(event: $event);
+		$this->registerContractAndDocumentProviders(event: $event);
+		$this->registerDocumentAndContractPanels(event: $event);
+	}//end handle()
+
+	/**
+	 * Register the payment-request data provider and its panel.
+	 *
+	 * @param RegisterLeafProvidersEvent $event The registration event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
+	 */
+	private function registerPaymentRequestLeaves(RegisterLeafProvidersEvent $event): void {
 		$event->registerLeaf(
 			new LeafDescriptor(
-				identity: new LeafIdentity(
-					id: PaymentRequestLeafProviderInterface::LEAF_ID,
-					label: 'Payment requests',
-					icon: 'CreditCardOutline',
-					group: 'Finance',
-				),
+				identity: $this->financeIdentity(id: PaymentRequestLeafProviderInterface::LEAF_ID, label: 'Payment requests', icon: 'CreditCardOutline'),
 				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
 				availability: new LeafAvailability(
 					requiredApp: 'shillinq',
@@ -134,91 +144,113 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 			$this->provider,
 		);
 
-		$event->registerLeaf(
-			new LeafDescriptor(
-				identity: new LeafIdentity(
-					id: self::PANEL_ID,
-					label: 'Payment requests',
-					icon: 'CreditCardOutline',
-					group: 'Finance',
-				),
-				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				availability: new LeafAvailability(requiredApp: 'shillinq'),
-				rendering: new LeafRendering(
-					surfaces: self::PANEL_SURFACES,
-					renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
-				),
-			),
-			null,
-		);
+		$event->registerLeaf($this->panelDescriptor(id: self::PANEL_ID, label: 'Payment requests', icon: 'CreditCardOutline'), null);
+	}//end registerPaymentRequestLeaves()
 
-		// Spec fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
-		// names the contract and reads its term, counterparty and remaining
-		// value from here, so no case ever carries a stale copy of an agreement.
+	/**
+	 * Register the contract and financial-documents data providers.
+	 *
+	 * Spec fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
+	 * names the contract and reads its term, counterparty and remaining
+	 * value from here, so no case ever carries a stale copy of an agreement.
+	 * Spec financial-documents-on-any-object REQ-FDO-002: every quote,
+	 * invoice, credit note, payment request and payout linked to the object.
+	 *
+	 * @param RegisterLeafProvidersEvent $event The registration event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
+	 */
+	private function registerContractAndDocumentProviders(RegisterLeafProvidersEvent $event): void {
 		$event->registerLeaf(
-			new LeafDescriptor(
-				identity: new LeafIdentity(
-					id: ContractLeafProviderInterface::LEAF_ID,
-					label: 'Contract',
-					icon: 'FileDocumentOutline',
-					group: 'Finance',
-				),
-				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				availability: new LeafAvailability(requiredApp: 'shillinq'),
-			),
+			$this->dataDescriptor(id: ContractLeafProviderInterface::LEAF_ID, label: 'Contract', icon: 'FileDocumentOutline'),
 			$this->contracts,
 		);
 
-		// Spec financial-documents-on-any-object REQ-FDO-002: every quote,
-		// invoice, credit note, payment request and payout linked to the object.
 		$event->registerLeaf(
-			new LeafDescriptor(
-				identity: new LeafIdentity(
-					id: FinancialDocumentLeafProviderInterface::LEAF_ID,
-					label: 'Financial documents',
-					icon: 'FileDocumentMultipleOutline',
-					group: 'Finance',
-				),
-				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				availability: new LeafAvailability(requiredApp: 'shillinq'),
-			),
+			$this->dataDescriptor(id: FinancialDocumentLeafProviderInterface::LEAF_ID, label: 'Financial documents', icon: 'FileDocumentMultipleOutline'),
 			$this->documents,
 		);
+	}//end registerContractAndDocumentProviders()
 
+	/**
+	 * Register the financial-documents and contract panels.
+	 *
+	 * @param RegisterLeafProvidersEvent $event The registration event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
+	 */
+	private function registerDocumentAndContractPanels(RegisterLeafProvidersEvent $event): void {
 		$event->registerLeaf(
-			new LeafDescriptor(
-				identity: new LeafIdentity(
-					id: self::DOCUMENTS_PANEL_ID,
-					label: 'Financial documents',
-					icon: 'FileDocumentMultipleOutline',
-					group: 'Finance',
-				),
-				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				availability: new LeafAvailability(requiredApp: 'shillinq'),
-				rendering: new LeafRendering(
-					surfaces: self::PANEL_SURFACES,
-					renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
-				),
-			),
+			$this->panelDescriptor(id: self::DOCUMENTS_PANEL_ID, label: 'Financial documents', icon: 'FileDocumentMultipleOutline'),
 			null,
 		);
 
-		$event->registerLeaf(
-			new LeafDescriptor(
-				identity: new LeafIdentity(
-					id: self::CONTRACT_PANEL_ID,
-					label: 'Contract',
-					icon: 'FileDocumentOutline',
-					group: 'Finance',
-				),
-				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				availability: new LeafAvailability(requiredApp: 'shillinq'),
-				rendering: new LeafRendering(
-					surfaces: self::PANEL_SURFACES,
-					renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
-				),
-			),
-			null,
+		$event->registerLeaf($this->panelDescriptor(id: self::CONTRACT_PANEL_ID, label: 'Contract', icon: 'FileDocumentOutline'), null);
+	}//end registerDocumentAndContractPanels()
+
+	/**
+	 * A leaf identity in the Finance group.
+	 *
+	 * @param string $id The leaf id.
+	 * @param string $label The leaf label.
+	 * @param string $icon The leaf icon.
+	 *
+	 * @return LeafIdentity
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
+	 */
+	private function financeIdentity(string $id, string $label, string $icon): LeafIdentity {
+		return new LeafIdentity(
+			id: $id,
+			label: $label,
+			icon: $icon,
+			group: 'Finance',
 		);
-	}//end handle()
+	}//end financeIdentity()
+
+	/**
+	 * A data-provider leaf that needs only shillinq.
+	 *
+	 * @param string $id The leaf id.
+	 * @param string $label The leaf label.
+	 * @param string $icon The leaf icon.
+	 *
+	 * @return LeafDescriptor
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
+	 */
+	private function dataDescriptor(string $id, string $label, string $icon): LeafDescriptor {
+		return new LeafDescriptor(
+			identity: $this->financeIdentity(id: $id, label: $label, icon: $icon),
+			kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
+			availability: new LeafAvailability(requiredApp: 'shillinq'),
+		);
+	}//end dataDescriptor()
+
+	/**
+	 * A render-surface panel leaf mounted on the panel surfaces.
+	 *
+	 * @param string $id The leaf id.
+	 * @param string $label The leaf label.
+	 * @param string $icon The leaf icon.
+	 *
+	 * @return LeafDescriptor
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003, REQ-SOPR-004)
+	 */
+	private function panelDescriptor(string $id, string $label, string $icon): LeafDescriptor {
+		return new LeafDescriptor(
+			identity: $this->financeIdentity(id: $id, label: $label, icon: $icon),
+			kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
+			availability: new LeafAvailability(requiredApp: 'shillinq'),
+			rendering: new LeafRendering(
+				surfaces: self::PANEL_SURFACES,
+				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+			),
+		);
+	}//end panelDescriptor()
 }//end class
