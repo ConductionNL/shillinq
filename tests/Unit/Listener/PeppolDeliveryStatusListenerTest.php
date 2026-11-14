@@ -157,6 +157,38 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	}//end testSentToDeliveredAdvancesAndPersistsDetail()
 
 	/**
+	 * REQ-SEIX-003 scenario: an invoice integriq accepted for transmission moves
+	 * from queued to sent on the id-stamped CloudEvent object integriq saves, and
+	 * takes the transmission id integriq assigned.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 */
+	public function testQueuedToSentTakesIntegriqsTransmissionId(): void {
+		$this->seedInvoice(deliveryStatus: 'queued');
+
+		$this->listener()->handle(
+			$this->deliveryStatus(
+				data: [
+					'objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID,
+					'transmissionId' => 'urn:uuid:5f0c1e2a-9b7d-4c3e-8a10-2b6f4d9e7c11',
+					'status' => 'sent',
+					'timestamp' => '2026-09-27T09:00:00+00:00',
+					'detail' => 'Handed to the access point',
+				]
+			)
+		);
+
+		$invoice = $this->invoice();
+		self::assertSame('sent', $invoice['deliveryStatus']);
+		self::assertSame('urn:uuid:5f0c1e2a-9b7d-4c3e-8a10-2b6f4d9e7c11', $invoice['transmissionId']);
+		self::assertSame('Handed to the access point', $invoice['deliveryDetail']);
+		self::assertSame([], $this->notifications, 'only a rejection notifies');
+
+	}//end testQueuedToSentTakesIntegriqsTransmissionId()
+
+	/**
 	 * REQ-AR-011 / REQ-EINV-005 scenario: an in-flight invoice rejected;
 	 * deliveryStatus -> rejected, detail persisted, receivables roles notified with
 	 * what EInvoiceNotifier needs to render and link it.

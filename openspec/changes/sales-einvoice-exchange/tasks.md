@@ -12,7 +12,8 @@
 
 ## 2. Status and rejection
 
-- [ ] 2.1 Add `lib/Listener/IntegriqCloudEventListener.php` on `ObjectCreatedEvent` with slug resolution for integriq's register, move the transition logic of `PeppolDeliveryStatusListener` into a service it calls, and remove the named-event registration (REQ-SEIX-003). Verify: PHPUnit that feeds a real `ObjectCreatedEvent` with an id-stamped entity and asserts the invoice moves from queued to sent.
+- [x] 2.1 Add `lib/Listener/IntegriqCloudEventListener.php` on `ObjectCreatedEvent` with slug resolution for integriq's register, move the transition logic of `PeppolDeliveryStatusListener` into a service it calls, and remove the named-event registration (REQ-SEIX-003). Verify: PHPUnit that feeds a real `ObjectCreatedEvent` with an id-stamped entity and asserts the invoice moves from queued to sent.
+  - Already on development (#1111): `PeppolDeliveryStatusListener` hears `ObjectCreatedEvent`, resolves integriq's register and schema ids to slugs through `ListenerSchemaResolver`, and the named-event registration is gone, so its transition table runs unchanged as its own `ObjectCreatedEvent` listener beside `IntegriqCloudEventListener` rather than behind it. Added `testQueuedToSentTakesIntegriqsTransmissionId`: an id-stamped entity moves the invoice from queued to sent with integriq's transmission id.
 - [x] 2.2 Add `lib/Notification/EInvoiceNotifier.php` for `einvoice_delivery_rejected` and register it (REQ-SEIX-004). Verify: PHPUnit that `prepare()` renders the subject with the reason and link, and throws for another subject.
 - [ ] 2.3 Add the Rejected e-invoices quick filter on `AccountsReceivable` (REQ-SEIX-004). Verify: `npm run check:manifest` and Playwright with a seeded rejected invoice.
 
