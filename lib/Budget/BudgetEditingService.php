@@ -368,7 +368,7 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 * @param list<array{fiscalYear:int,annualBudgetId:string,name:string,state:string}> $years   The shown years.
 	 * @param array<string,array<int,int>>                                               $totals  Totals by group id and fiscal year.
 	 *
-	 * @return array<string,int>
+	 * @return array<int,int> Amounts keyed by fiscal year.
 	 */
 	private function yearAmounts(string $groupId, array $years, array $totals): array {
 		$amounts = [];
