@@ -6873,7 +6873,27 @@ OC.L10N.register(
         "Invoice email": "Factuur-e-mailadres",
         "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.": "Hoeveel dagen na de factuurdatum een factuur voor deze klant vervalt. Een nieuwe factuur neemt er haar vervaldatum van over.",
         "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.": "Hoe een factuur deze klant bereikt: per e-mail, via Peppol, per post of helemaal niet.",
-        "The address invoices are mailed to. Empty uses the customer's email address.": "Het adres waar facturen naartoe gemaild worden. Leeg gebruikt het e-mailadres van de klant."
+        "The address invoices are mailed to. Empty uses the customer's email address.": "Het adres waar facturen naartoe gemaild worden. Leeg gebruikt het e-mailadres van de klant.",
+        "The letter is printed and posted by hand.": "De brief wordt met de hand geprint en verstuurd.",
+        "The customer has no email address to send the invoice to.": "De klant heeft geen e-mailadres om de factuur naar te sturen.",
+        "The invoice PDF could not be made.": "De pdf van de factuur kon niet worden gemaakt.",
+        "The invoice PDF is larger than 10 MB and is not mailed.": "De pdf van de factuur is groter dan 10 MB en wordt niet gemaild.",
+        "No Peppol participant was found for this customer, so the invoice was mailed.": "Voor deze klant is geen Peppol-deelnemer gevonden, dus de factuur is gemaild.",
+        "No Peppol participant was found for this customer. Send the invoice by email instead.": "Voor deze klant is geen Peppol-deelnemer gevonden. Verstuur de factuur in plaats daarvan per e-mail.",
+        "Invoice %s": "Factuur %s",
+        "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nKind regards": "Geachte klant,\n\nBijgaand ontvangt u factuur %1$s van %2$s %3$s, te betalen vóór %4$s.\n\nMet vriendelijke groet",
+        "The mail could not be sent: %s": "De e-mail kon niet worden verstuurd: %s",
+        "The mail server refused the address %s.": "De mailserver weigerde het adres %s.",
+        "Only an issued invoice can be sent.": "Alleen een uitgegeven factuur kan worden verstuurd.",
+        "Send invoice": "Factuur versturen",
+        "Send by email": "Per e-mail versturen",
+        "The invoice could not be sent: {error}": "De factuur kon niet worden verstuurd: {error}",
+        "Sent by email to {address} on {at}.": "Per e-mail verstuurd naar {address} op {at}.",
+        "Sent through Peppol on {at}.": "Via Peppol verstuurd op {at}.",
+        "Delivery method post: the letter is printed and posted by hand.": "Verzendwijze post: de brief wordt met de hand geprint en verstuurd.",
+        "Delivery method none: the invoice is not sent from here.": "Verzendwijze geen: de factuur wordt niet vanuit hier verstuurd.",
+        "The invoice is sent.": "De factuur is verstuurd.",
+        "The invoice could not be sent.": "De factuur kon niet worden verstuurd."
     },
     "nplurals=2; plural=(n != 1);"
 )

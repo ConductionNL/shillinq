@@ -11,9 +11,12 @@
 
 ## 2. Send one invoice
 
-- [ ] 2.1 Add the `sending` group to `ARInvoice` in the same fragment and `lib/Service/InvoiceSendingService.php` (PDF from `InvoicePdfGenerator`, mail through `IMailer`, outcome written after `send()` returns) (REQ-SIS-001). Verify: PHPUnit with a mailer double for success, refusal and a draft invoice.
-- [ ] 2.2 Add the delivery-method router, including the Peppol fallback to email (REQ-SIS-002). Verify: PHPUnit per delivery method, with `EInvoiceService` answering `fallback: true` for one case.
-- [ ] 2.3 Add `POST /api/ar-invoices/{id}/send` on a new `InvoiceSendingController` (administration check first, ADR-005) and the Send by email action in `AREInvoiceActions.vue`, replacing the "use PDF + email instead" notice with a button (REQ-SIS-001, REQ-SIS-002). Verify: controller PHPUnit including a cross-administration 404; Playwright on `ARInvoiceDetail`.
+- [x] 2.1 Add the `sending` group to `ARInvoice` in the same fragment and `lib/Service/InvoiceSendingService.php` (PDF from `InvoicePdfGenerator`, mail through `IMailer`, outcome written after `send()` returns) (REQ-SIS-001). Verify: PHPUnit with a mailer double for success, refusal and a draft invoice.
+  - Done: `InvoiceSendingService::send()` (PDF from `generateHybridPdf()` named `Factuur-<invoiceNumber>.pdf`, mail through `IMailer`, `sending` written after the mailer answered, a refused or failing mail recorded as `lastError` without `sentAt`). The `sending` group is in `sales-invoice-sending.json`; ARInvoice moves to 0.18.0 in `zz-financial-documents-linked-objects.json`, because `LinkedObjectsFragmentTest` requires that fragment to have the last word on the document versions (the precedent of #2109). `tests/Unit/Service/InvoiceSendingServiceTest.php`.
+- [x] 2.2 Add the delivery-method router, including the Peppol fallback to email (REQ-SIS-002). Verify: PHPUnit per delivery method, with `EInvoiceService` answering `fallback: true` for one case.
+  - Done: `email`, `peppol` (with the participant through `EInvoiceService::sendEInvoice()`; without one the answer is `fallback` and nothing is recorded, and `via: email` mails it), `post` and `none` (recorded, not mailed). An unattended send mails at once on the fallback and notes it.
+- [x] 2.3 Add `POST /api/ar-invoices/{id}/send` on a new `InvoiceSendingController` (administration check first, ADR-005) and the Send by email action in `AREInvoiceActions.vue`, replacing the "use PDF + email instead" notice with a button (REQ-SIS-001, REQ-SIS-002). Verify: controller PHPUnit including a cross-administration 404; Playwright on `ARInvoiceDetail`.
+  - Done: `POST /api/ar-invoices/{id}/send` on `InvoiceSendingController` (administration checked first, another administration 404, a draft 409), documented in `openapi.json`; Send invoice and Send by email on `AREInvoiceActions.vue`, disabled with the reason for a draft, the Peppol notice now offers Send by email, and a line says how the invoice went out. Controller PHPUnit and Vitest; the Playwright run on `ARInvoiceDetail` needs a live instance and was not run.
 
 ## 3. Batches
 
@@ -23,7 +26,8 @@
 
 ## 4. Recurring
 
-- [ ] 4.1 Call `InvoiceSendingService` from `RecurringInvoiceGenerator::generateForProfile()` for an auto-issued invoice on a profile with `deliveryChannel = email` (REQ-SIS-007). Verify: PHPUnit for auto-issue with email, auto-issue with none, and draft-for-review.
+- [x] 4.1 Call `InvoiceSendingService` from `RecurringInvoiceGenerator::generateForProfile()` for an auto-issued invoice on a profile with `deliveryChannel = email` (REQ-SIS-007). Verify: PHPUnit for auto-issue with email, auto-issue with none, and draft-for-review.
+  - Done: `RecurringInvoiceGenerator::generateForProfile()` sends an auto-issued invoice of a profile with `deliveryChannel = email` through `InvoiceSendingService::sendUnattended()` (no signed-in user in the run; a failed send keeps the invoice and the run). `tests/Unit/Service/RecurringInvoiceSendingTest.php`.
 
 ## 5. Docs
 

@@ -67,7 +67,7 @@
         }
       },
       "ARInvoice": {
-        "version": "0.17.0",
+        "version": "0.18.0",
         "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
         "properties": {
           "linkedObjects": {

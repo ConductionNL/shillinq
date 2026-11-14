@@ -4684,7 +4684,27 @@ OC.L10N.register(
         "Invoice email": "Invoice email",
         "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.": "How many days after the invoice date an invoice for this customer is due. A new invoice takes its due date from it.",
         "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.": "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.",
-        "The address invoices are mailed to. Empty uses the customer's email address.": "The address invoices are mailed to. Empty uses the customer's email address."
+        "The address invoices are mailed to. Empty uses the customer's email address.": "The address invoices are mailed to. Empty uses the customer's email address.",
+        "The letter is printed and posted by hand.": "The letter is printed and posted by hand.",
+        "The customer has no email address to send the invoice to.": "The customer has no email address to send the invoice to.",
+        "The invoice PDF could not be made.": "The invoice PDF could not be made.",
+        "The invoice PDF is larger than 10 MB and is not mailed.": "The invoice PDF is larger than 10 MB and is not mailed.",
+        "No Peppol participant was found for this customer, so the invoice was mailed.": "No Peppol participant was found for this customer, so the invoice was mailed.",
+        "No Peppol participant was found for this customer. Send the invoice by email instead.": "No Peppol participant was found for this customer. Send the invoice by email instead.",
+        "Invoice %s": "Invoice %s",
+        "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nKind regards": "Dear customer,\n\nAttached is invoice %1$s of %2$s %3$s, due on %4$s.\n\nKind regards",
+        "The mail could not be sent: %s": "The mail could not be sent: %s",
+        "The mail server refused the address %s.": "The mail server refused the address %s.",
+        "Only an issued invoice can be sent.": "Only an issued invoice can be sent.",
+        "Send invoice": "Send invoice",
+        "Send by email": "Send by email",
+        "The invoice could not be sent: {error}": "The invoice could not be sent: {error}",
+        "Sent by email to {address} on {at}.": "Sent by email to {address} on {at}.",
+        "Sent through Peppol on {at}.": "Sent through Peppol on {at}.",
+        "Delivery method post: the letter is printed and posted by hand.": "Delivery method post: the letter is printed and posted by hand.",
+        "Delivery method none: the invoice is not sent from here.": "Delivery method none: the invoice is not sent from here.",
+        "The invoice is sent.": "The invoice is sent.",
+        "The invoice could not be sent.": "The invoice could not be sent."
     },
     "nplurals=2; plural=(n != 1);"
 )

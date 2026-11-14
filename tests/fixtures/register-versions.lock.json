@@ -72,6 +72,10 @@
         {
             "appVersion": "0.5.7-unstable.20261113200000",
             "versionsSha256": "49773d5cf1057e4ec4abac27c09268e5ab325db2dc43523856e7b69adcf8d190"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114150000",
+            "versionsSha256": "dea8334249a7165b72efcbcd70531dd5a02d0c816b0c70925484e65af3d0a057"
         }
     ],
     "versions": {
@@ -80,7 +84,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.17.0",
+        "schema:ARInvoice": "0.18.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.2.0",

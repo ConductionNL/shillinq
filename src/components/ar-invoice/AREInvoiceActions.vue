@@ -42,6 +42,41 @@
 			data-testid="ar-einvoice-fallback-notice">
 			{{ fallbackNotice }}
 		</p>
+		<!-- Send by email (sales-invoice-sending REQ-SIS-001, REQ-SIS-002); the server routes by the customer's delivery method. -->
+		<NcButton
+			:disabled="!canMail || mailing"
+			:title="canMail ? '' : t('shillinq', 'Only an issued invoice can be sent.')"
+			data-testid="ar-invoice-send"
+			@click="onMail('')">
+			{{ mailing ? t('shillinq', 'Sending…') : t('shillinq', 'Send invoice') }}
+		</NcButton>
+		<NcButton
+			v-if="offerEmail || fallbackNotice"
+			:disabled="mailing"
+			data-testid="ar-invoice-send-email"
+			@click="onMail('email')">
+			{{ t('shillinq', 'Send by email') }}
+		</NcButton>
+		<p
+			v-if="!canMail"
+			class="ar-einvoice-actions__notice"
+			data-testid="ar-invoice-send-disabled-reason">
+			{{ t('shillinq', 'Only an issued invoice can be sent.') }}
+		</p>
+		<p
+			v-if="mailError"
+			class="ar-einvoice-actions__error"
+			role="alert"
+			data-testid="ar-invoice-send-error">
+			{{ mailError }}
+		</p>
+		<p
+			v-if="sentLine"
+			class="ar-einvoice-actions__notice"
+			role="status"
+			data-testid="ar-invoice-sent">
+			{{ sentLine }}
+		</p>
 	</div>
 </template>
 
@@ -53,10 +88,15 @@ import { NcButton } from '@nextcloud/vue'
 import DeliveryStatusChip from '../DeliveryStatusChip.vue'
 import {
 	canSendEInvoice,
+	canSendInvoice,
 	extractSendErrorMessage,
+	invoiceIdOf,
+	mapInvoiceSendResult,
 	mapSendResult,
 	resolveDeliveryStatus,
 	sendEInvoiceEndpoint,
+	sendingLine,
+	sendInvoiceEndpoint,
 } from './arEInvoiceActions.js'
 
 export default {
@@ -84,6 +124,11 @@ export default {
 			// Local override so the chip updates immediately on a successful
 			// send without waiting for the parent's object store to refetch.
 			localDeliveryStatus: null,
+			mailing: false,
+			mailError: '',
+			offerEmail: false,
+			// The sending group a send just stored, before the page refetches.
+			localSending: null,
 		}
 	},
 
@@ -106,6 +151,16 @@ export default {
 		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		invoiceNumber() {
 			return this.object?.invoiceNumber || ''
+		},
+
+		/** @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3 */
+		canMail() {
+			return canSendInvoice(this.object)
+		},
+
+		/** @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3 */
+		sentLine() {
+			return sendingLine(this.localSending || this.object?.sending, this.t)
 		},
 	},
 
@@ -137,6 +192,38 @@ export default {
 				this.sending = false
 			}
 		},
+
+		/**
+		 * Send the invoice by the customer's delivery method, or by email.
+		 *
+		 * @param {string} via '' for the customer's method, 'email' for the mail.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3
+		 */
+		async onMail(via) {
+			this.mailError = ''
+			this.mailing = true
+			try {
+				const response = await axios.post(
+					generateUrl(sendInvoiceEndpoint(invoiceIdOf(this.object))),
+					{ administrationId: this.administrationId, via },
+				)
+				const mapped = mapInvoiceSendResult(response.data || {})
+				this.offerEmail = mapped.offerEmail
+				this.mailError = mapped.error
+				if (mapped.sending) {
+					this.localSending = mapped.sending
+					this.fallbackNotice = ''
+				}
+				if (response.data?.status === 'sent') {
+					showSuccess(this.t('shillinq', 'The invoice is sent.'))
+				}
+			} catch (e) {
+				this.mailError = e?.response?.data?.error || this.t('shillinq', 'The invoice could not be sent.')
+			} finally {
+				this.mailing = false
+			}
+		},
 	},
 }
 </script>
@@ -144,6 +231,7 @@ export default {
 <style scoped>
 .ar-einvoice-actions {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 }

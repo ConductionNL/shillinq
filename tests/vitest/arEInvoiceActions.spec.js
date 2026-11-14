@@ -78,8 +78,9 @@ describe('arEInvoiceActions — mapSendResult', () => {
 			t,
 		)
 		expect(mapped.deliveryStatus).toBe('not-sent')
+		// The notice no longer sends the user away: the page offers Send by email beside it (sales-invoice-sending REQ-SIS-002).
 		expect(mapped.fallbackNotice).toBe(
-			'No Peppol participant found for this debtor — use PDF + email instead.',
+			'No Peppol participant was found for this customer. Send the invoice by email instead.',
 		)
 	})
 

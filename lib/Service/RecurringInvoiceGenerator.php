@@ -118,6 +118,7 @@ class RecurringInvoiceGenerator {
 	 *                                      swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR register slug.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
+	 * @param InvoiceSendingService|null $sending Mails an auto-issued invoice of a profile with email delivery (sales-invoice-sending task 4.1).
 	 *
 	 * @return void
 	 */
@@ -125,6 +126,7 @@ class RecurringInvoiceGenerator {
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ?InvoiceSendingService $sending = null,
 	) {
 
 	}//end __construct()
@@ -168,15 +170,62 @@ class RecurringInvoiceGenerator {
 		$period = self::periodFor(profile: $profile, billingPeriod: $billingPeriod);
 		$period->sequence = (count($generated) + 1);
 		$invoice = $this->saveGeneratedInvoice(period: $period);
+		$advanced = $this->saveObject(schema: 'RecurringInvoiceProfile', object: self::advancedProfile(period: $period));
+		// The send writes its own outcome onto the invoice's sending group.
+		$this->sendIssued(profile: $profile, invoice: $invoice);
 
 		return [
 			'invoice' => $invoice,
-			'profile' => $this->saveObject(schema: 'RecurringInvoiceProfile', object: self::advancedProfile(period: $period)),
+			'profile' => $advanced,
 			'created' => true,
 			'billingPeriod' => $billingPeriod,
 		];
 
 	}//end generateForProfile()
+
+	/**
+	 * Mail an auto-issued invoice of a profile whose delivery channel is
+	 * email (sales-invoice-sending REQ-SIS-007). A draft is never sent, and a
+	 * failed send does not undo the invoice: the run reports it and the
+	 * invoice records the error.
+	 *
+	 * @param array<string,mixed> $profile The RecurringInvoiceProfile.
+	 * @param array<string,mixed> $invoice The ARInvoice just generated.
+	 *
+	 * @return string The send's status (sent, recorded or failed), or '' when nothing was sent.
+	 *
+	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-4.1
+	 */
+	private function sendIssued(array $profile, array $invoice): string {
+		if ($this->sending === null
+			|| ($profile['issueMode'] ?? '') !== 'auto-issue'
+			|| ($profile['deliveryChannel'] ?? '') !== 'email'
+			|| ($invoice['lifecycleState'] ?? '') !== 'issued'
+		) {
+			return '';
+		}
+
+		$reference = (string)($invoice['id'] ?? ($invoice['uuid'] ?? ''));
+		if ($reference === '') {
+			$reference = (string)($invoice['invoiceNumber'] ?? '');
+		}
+
+		try {
+			$outcome = $this->sending->sendUnattended(
+				administrationId: (string)($invoice['administrationId'] ?? ''),
+				invoiceId: $reference,
+				via: 'email'
+			);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'RecurringInvoiceGenerator: the issued invoice was not sent',
+				['profileId' => (string)($profile['id'] ?? ''), 'exception' => $e->getMessage()]
+			);
+			return InvoiceSendingService::STATUS_FAILED;
+		}
+
+		return $outcome['status'];
+	}//end sendIssued()
 
 	/**
 	 * The period a profile generates for: its start, the clamped issue date,

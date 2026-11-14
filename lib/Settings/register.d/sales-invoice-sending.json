@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "sales-invoice-sending",
     "adr": "ADR-037 modular register fragment: never edit shillinq_register.json or other fragments. ADR-031: a customer's payment term and delivery method are plain data with defaults.",
-    "description": "Gives CustomerMaster the payment term, delivery method and invoice address every new invoice for that customer reads (REQ-SIS-005). The fragment moves CustomerMaster to 0.4.0; it sorts after billable-period-becomes-an-invoice, which set 0.3.0.",
+    "description": "Gives CustomerMaster the payment term, delivery method and invoice address every new invoice for that customer reads (REQ-SIS-005). The fragment moves CustomerMaster to 0.4.0; it sorts after billable-period-becomes-an-invoice, which set 0.3.0. It also gives ARInvoice the sending group the invoice send writes after the mailer or the Peppol send answered (REQ-SIS-001, REQ-SIS-002); ARInvoice's version moves in zz-financial-documents-linked-objects, which has the last word on it.",
     "spec": "openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md"
   },
   "components": {
@@ -23,7 +23,12 @@
           },
           "deliveryMethod": {
             "type": "string",
-            "enum": ["email", "peppol", "post", "none"],
+            "enum": [
+              "email",
+              "peppol",
+              "post",
+              "none"
+            ],
             "default": "email",
             "title": "Delivery method",
             "description": "How an invoice reaches this customer: by email, through Peppol, by post, or not at all.",
@@ -36,6 +41,56 @@
             "title": "Invoice email",
             "description": "The address invoices are mailed to. Empty uses the customer's email address.",
             "example": "facturen@dekorenaar.example"
+          }
+        }
+      },
+      "ARInvoice": {
+        "properties": {
+          "sending": {
+            "type": "object",
+            "title": "Sending",
+            "description": "How and when the invoice reached the customer. Written by the send only after the mailer or the Peppol send answered.",
+            "properties": {
+              "sentVia": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "peppol",
+                  "post",
+                  "none"
+                ],
+                "title": "Sent via",
+                "description": "The way the invoice went out, or post or none when nothing was sent from shillinq."
+              },
+              "sentTo": {
+                "type": "string",
+                "title": "Sent to",
+                "description": "The email address, or the Peppol transmission id."
+              },
+              "sentAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "title": "Sent at",
+                "description": "When the mailer or the Peppol send accepted the invoice. Empty for post and none."
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": 0,
+                "title": "Attempts",
+                "description": "How many times a send was tried."
+              },
+              "lastError": {
+                "type": "string",
+                "title": "Last error",
+                "description": "Why the last send failed; empty after a send that went out."
+              },
+              "note": {
+                "type": "string",
+                "title": "Note",
+                "description": "What the user is told besides: that a post invoice is printed by hand, or that Peppol fell back to email."
+              }
+            }
           }
         }
       }
