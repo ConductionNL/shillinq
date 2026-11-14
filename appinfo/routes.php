@@ -70,6 +70,18 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
+        // tax-cbcr-and-pillar2-returns tasks 6.1 to 6.3: the actions of the
+        // Group entities, Country-by-country reports and Minimum tax returns
+        // pages. Authorised per administration in CbcrController.
+            ['name' => 'cbcr#assessScope', 'url' => '/api/cbcr/entities/{entityId}/assess-scope', 'verb' => 'POST'],
+            ['name' => 'cbcr#readFigures', 'url' => '/api/cbcr/entities/{entityId}/read-figures', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepare', 'url' => '/api/cbcr/entities/{entityId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbour', 'url' => '/api/cbcr/entities/{entityId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#qdmtt', 'url' => '/api/cbcr/computations/{computationId}/qdmtt', 'verb' => 'POST'],
+            ['name' => 'cbcr#prepareReturn', 'url' => '/api/cbcr/returns/{returnId}/prepare', 'verb' => 'POST'],
+            ['name' => 'cbcr#safeHarbourReturn', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/safe-harbour', 'verb' => 'POST'],
+            ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
+            ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
         // banking-fx-at-booking task 3.1: the FX rates page's status line —
         // feed or typed, and the newest rate date per pair. Any signed-in
         // user; the rates are read with the caller's own register access.

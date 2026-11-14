@@ -2416,6 +2416,12 @@
         ]
     ],
     [
+        "registerNotifierService",
+        [
+            "'OCA\\\\Shillinq\\\\Notification\\\\GroupScopeChangedNotifier'"
+        ]
+    ],
+    [
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Guard\\\\Iv3XmlValidationGuard::requireValidXml'",

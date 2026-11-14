@@ -53,6 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Service\Cbcr\CbcrCheckRunner;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -260,6 +261,92 @@ class CbcrPillar2Guard {
 		}//end try
 
 	}//end canReconcileCbcrReturn()
+
+	/**
+	 * Returns true iff the CbcrReturn may be marked submitted.
+	 *
+	 * REQ-CBC-012: only a return with a stored, schema-valid file made from
+	 * the records as they are now, and no failing mandatory check, may be
+	 * submitted. A file whose fingerprint differs from the current records is
+	 * stale and denies, as does any error (fail-closed).
+	 *
+	 * @param string                   $returnId The CbcrReturn id.
+	 * @param array<string,mixed>|null $object   The return being transitioned.
+	 *
+	 * @return bool True when the return may be submitted.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.2
+	 */
+	public function canSubmitCbcrReturn(string $returnId, ?array $object = null): bool {
+		try {
+			$return = $this->resolveObject(schema: 'CbcrReturn', id: $returnId, object: $object);
+			if ($return === null || trim((string)($return['cbcrXmlSubmission'] ?? '')) === '') {
+				return false;
+			}
+
+			$runner = new CbcrCheckRunner(objectService: $this->objectService, appConfig: $this->appConfig);
+
+			return self::fileMatches(validation: $return['lastValidation'] ?? null, fingerprint: $runner->cbcFingerprint(return: $return))
+				&& CbcrCheckRunner::blockingFailures(results: $runner->runCbc(return: $return)) === [];
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'CbcrPillar2Guard: CbCR return submit check failed — denying transition (fail-closed)',
+				['returnId' => $returnId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+	}//end canSubmitCbcrReturn()
+
+	/**
+	 * Returns true iff the GlobeInformationReturn may be approved.
+	 *
+	 * REQ-CBC-012: only a return with a stored, schema-valid file made from
+	 * the safe harbour records and computations as they are now, no missing
+	 * element and no failing mandatory check, may be approved (fail-closed).
+	 *
+	 * @param string                   $returnId The GlobeInformationReturn id.
+	 * @param array<string,mixed>|null $object   The return being transitioned.
+	 *
+	 * @return bool True when the return may be approved.
+	 *
+	 * @spec openspec/changes/tax-cbcr-and-pillar2-returns/tasks.md#task-5.2
+	 */
+	public function canApproveGir(string $returnId, ?array $object = null): bool {
+		try {
+			$return = $this->resolveObject(schema: 'GlobeInformationReturn', id: $returnId, object: $object);
+			if ($return === null || trim((string)($return['globeXmlSubmission'] ?? '')) === '') {
+				return false;
+			}
+
+			$runner = new CbcrCheckRunner(objectService: $this->objectService, appConfig: $this->appConfig);
+
+			return self::fileMatches(validation: $return['lastValidation'] ?? null, fingerprint: $runner->girFingerprint(return: $return))
+				&& CbcrCheckRunner::blockingFailures(results: $runner->runGir(return: $return)) === [];
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'CbcrPillar2Guard: GIR approve check failed — denying transition (fail-closed)',
+				['returnId' => $returnId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+
+	}//end canApproveGir()
+
+	/**
+	 * Whether the last validation says the file was valid and made from these records.
+	 *
+	 * @param mixed  $validation  The return's lastValidation.
+	 * @param string $fingerprint The fingerprint of the records now.
+	 *
+	 * @return bool
+	 */
+	private static function fileMatches(mixed $validation, string $fingerprint): bool {
+		return is_array($validation) === true
+			&& ($validation['valid'] ?? null) === true
+			&& is_string($validation['fingerprint'] ?? null) === true
+			&& hash_equals($validation['fingerprint'], $fingerprint) === true;
+	}//end fileMatches()
 
 	/**
 	 * Resolve a register object, preferring the in-flight object payload and

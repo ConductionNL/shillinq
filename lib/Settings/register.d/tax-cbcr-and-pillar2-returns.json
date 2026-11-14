@@ -1,0 +1,606 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-cbcr-and-pillar2-returns",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "The stored scope assessment per group and fiscal year (design D1, REQ-CBC-001); what the country-by-country file needs on group entities, returns and accounts, and the per-entity figures (design D2, REQ-CBC-002)."
+  },
+  "components": {
+    "schemas": {
+      "GroupEntityRegistry": {
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The Shillinq administration that keeps this entity's books. On the ultimate parent it names the parentAdministrationId of the group's ConsolidationGroup, through which the scope assessment reads the consolidated revenue."
+          },
+          "tin": {
+            "type": "string",
+            "title": "Tax identification number",
+            "description": "The entity's tax identification number in its country of residence. For a Dutch entity it defaults to the administration's RSIN. Use NOTIN when the entity has none, and say why in the TIN reason."
+          },
+          "tinIssuedBy": {
+            "type": "string",
+            "title": "TIN issued by",
+            "description": "Two-letter ISO 3166 code of the country that issued the tax identification number.",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "tinMissingReason": {
+            "type": "string",
+            "title": "Reason for no TIN",
+            "description": "Why the entity has no tax identification number, when TIN is NOTIN."
+          },
+          "address": {
+            "type": "object",
+            "title": "Address",
+            "description": "The registered address, as the country-by-country file needs it.",
+            "properties": {
+              "street": {
+                "type": "string",
+                "title": "Street",
+                "description": "Street and house number."
+              },
+              "city": {
+                "type": "string",
+                "title": "City",
+                "description": "City or town."
+              },
+              "postalCode": {
+                "type": "string",
+                "title": "Postal code",
+                "description": "Postal code."
+              },
+              "country": {
+                "type": "string",
+                "title": "Country",
+                "description": "Two-letter ISO 3166 country code.",
+                "pattern": "^[A-Z]{2}$"
+              }
+            }
+          },
+          "incorporationCountry": {
+            "type": "string",
+            "title": "Country of incorporation",
+            "description": "Two-letter ISO 3166 code of the country the entity is incorporated in, when it differs from its tax residency.",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "bizActivities": {
+            "type": "array",
+            "title": "Business activities",
+            "description": "The entity's main business activities, as the OECD codes of the country-by-country report.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CBC501",
+                "CBC502",
+                "CBC503",
+                "CBC504",
+                "CBC505",
+                "CBC506",
+                "CBC507",
+                "CBC508",
+                "CBC509",
+                "CBC510",
+                "CBC511",
+                "CBC512",
+                "CBC513"
+              ],
+              "x-enum-labels": {
+                "CBC501": "Research and development",
+                "CBC502": "Holding or managing intellectual property",
+                "CBC503": "Purchasing or procurement",
+                "CBC504": "Manufacturing or production",
+                "CBC505": "Sales, marketing or distribution",
+                "CBC506": "Administrative, management or support services",
+                "CBC507": "Provision of services to unrelated parties",
+                "CBC508": "Internal group finance",
+                "CBC509": "Regulated financial services",
+                "CBC510": "Insurance",
+                "CBC511": "Holding shares or other equity instruments",
+                "CBC512": "Dormant",
+                "CBC513": "Other"
+              }
+            }
+          },
+          "counterpartyRefs": {
+            "type": "array",
+            "title": "Counterparty records",
+            "description": "The customer and payee records that stand for this entity in the other administrations of the group, so their ledger lines count as related-party revenue.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GroupScopeAssessment": {
+        "slug": "GroupScopeAssessment",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Group scope assessment",
+        "description": "Whether a group is in scope for country-by-country reporting and for the minimum tax (Pillar Two) in one fiscal year, with the revenue each year it rests on and the filing deadlines it gives. Stored so the outcome relied on stays readable after the books change (REQ-CBC-001).",
+        "x-spec": "openspec/changes/tax-cbcr-and-pillar2-returns/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "type": "object",
+        "required": [
+          "ultimateParentEntity",
+          "fiscalYear",
+          "cbcrInScope",
+          "pillar2InScope"
+        ],
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "A scope assessment decides which returns the group files; every change is kept for the tax director and the auditor."
+        },
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group's ultimate parent."
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "title": "Fiscal year",
+            "description": "The fiscal year assessed, named by the calendar year it ends in."
+          },
+          "fiscalYearStart": {
+            "type": "string",
+            "title": "Fiscal year start",
+            "description": "The first day of the fiscal year.",
+            "format": "date"
+          },
+          "fiscalYearEnd": {
+            "type": "string",
+            "title": "Fiscal year end",
+            "description": "The last day of the fiscal year.",
+            "format": "date"
+          },
+          "revenueByYear": {
+            "type": "array",
+            "title": "Revenue by year",
+            "description": "Consolidated revenue in EUR of the five years before the assessed year and of the year itself, each with where it came from.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "integer",
+                  "title": "Year",
+                  "description": "The fiscal year."
+                },
+                "amount": {
+                  "type": "number",
+                  "title": "Amount",
+                  "description": "Consolidated revenue in EUR; empty when not known.",
+                  "nullable": true
+                },
+                "source": {
+                  "type": "string",
+                  "title": "Source",
+                  "description": "Where the amount came from.",
+                  "enum": [
+                    "consolidated-statements",
+                    "entered",
+                    "none"
+                  ]
+                }
+              }
+            }
+          },
+          "cbcrInScope": {
+            "type": "boolean",
+            "title": "Country-by-country report in scope",
+            "description": "True when the consolidated revenue of the year before was EUR 750,000,000 or more."
+          },
+          "pillar2InScope": {
+            "type": "boolean",
+            "title": "Minimum tax in scope",
+            "description": "True when the consolidated revenue was EUR 750,000,000 or more in at least two of the four years before."
+          },
+          "firstCbcrYear": {
+            "type": "integer",
+            "title": "First country-by-country year",
+            "description": "The first fiscal year of the current run of years in scope for country-by-country reporting.",
+            "nullable": true
+          },
+          "firstPillar2Year": {
+            "type": "integer",
+            "title": "First minimum tax year",
+            "description": "The first fiscal year of the current run of years in scope for the minimum tax.",
+            "nullable": true
+          },
+          "cbcrFilingDeadline": {
+            "type": "string",
+            "title": "Country-by-country filing deadline",
+            "description": "12 months after the end of the fiscal year; empty when not in scope.",
+            "format": "date",
+            "nullable": true
+          },
+          "girFilingDeadline": {
+            "type": "string",
+            "title": "GloBE information return deadline",
+            "description": "15 months after the end of the fiscal year, 18 in the first minimum tax year; empty when not in scope.",
+            "format": "date",
+            "nullable": true
+          },
+          "bijheffingReturnDeadline": {
+            "type": "string",
+            "title": "Top-up tax return deadline",
+            "description": "17 months after the end of the fiscal year, 20 in the first minimum tax year; empty when not in scope.",
+            "format": "date",
+            "nullable": true
+          },
+          "fxRates": {
+            "type": "object",
+            "title": "Exchange rates",
+            "description": "The average and closing rate per currency for the year, used to convert the entity figures (design D2).",
+            "nullable": true
+          },
+          "assessedAt": {
+            "type": "string",
+            "title": "Assessed at",
+            "description": "When the assessment was made.",
+            "format": "date-time"
+          },
+          "assessedBy": {
+            "type": "string",
+            "title": "Assessed by",
+            "description": "The user who pressed Assess scope, or system for the weekly job."
+          }
+        }
+      },
+      "CbcrEntityFigures": {
+        "slug": "CbcrEntityFigures",
+        "icon": "TableLarge",
+        "version": "0.1.0",
+        "title": "Country-by-country entity figures",
+        "description": "The country-by-country figures of one group entity for one fiscal year, read from its books, entered or imported, kept per entity so they can be reviewed and corrected before they are summed per jurisdiction (REQ-CBC-002).",
+        "x-spec": "openspec/changes/tax-cbcr-and-pillar2-returns/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "type": "object",
+        "required": [
+          "entity",
+          "fiscalYear",
+          "source"
+        ],
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "The figures feed the country-by-country report; every change is kept for the tax director and the auditor."
+        },
+        "properties": {
+          "entity": {
+            "type": "string",
+            "title": "Entity",
+            "description": "The GroupEntityRegistry record the figures belong to."
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "title": "Fiscal year",
+            "description": "The fiscal year, named by the calendar year it ends in."
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Where the figures came from.",
+            "enum": [
+              "books",
+              "entered",
+              "imported"
+            ],
+            "x-enum-labels": {
+              "books": "Read from the books",
+              "entered": "Entered",
+              "imported": "Imported"
+            }
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "description": "Three-letter ISO 4217 code the amounts are in.",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "unrelatedPartyRevenue": {
+            "type": "number",
+            "title": "Revenue from unrelated parties",
+            "description": "Revenue from parties outside the group.",
+            "nullable": true
+          },
+          "relatedPartyRevenue": {
+            "type": "number",
+            "title": "Revenue from related parties",
+            "description": "Revenue from other entities of the group.",
+            "nullable": true
+          },
+          "profitBeforeTax": {
+            "type": "number",
+            "title": "Profit before tax",
+            "description": "Profit or loss before income tax.",
+            "nullable": true
+          },
+          "incomeTaxPaidCash": {
+            "type": "number",
+            "title": "Income tax paid",
+            "description": "Income tax paid in cash in the year.",
+            "nullable": true
+          },
+          "incomeTaxAccrued": {
+            "type": "number",
+            "title": "Income tax accrued",
+            "description": "Current-year income tax expense.",
+            "nullable": true
+          },
+          "statedCapital": {
+            "type": "number",
+            "title": "Stated capital",
+            "description": "Stated capital at year end.",
+            "nullable": true
+          },
+          "accumulatedEarnings": {
+            "type": "number",
+            "title": "Accumulated earnings",
+            "description": "Accumulated earnings at year end.",
+            "nullable": true
+          },
+          "tangibleAssetsOtherThanCash": {
+            "type": "number",
+            "title": "Tangible assets other than cash",
+            "description": "Net book value of tangible assets at year end, cash excluded.",
+            "nullable": true
+          },
+          "deferredTaxExpense": {
+            "type": "number",
+            "title": "Deferred tax expense",
+            "description": "Deferred tax expense of the year, for the simplified effective tax rate.",
+            "nullable": true
+          },
+          "eligiblePayroll": {
+            "type": "number",
+            "title": "Eligible payroll costs",
+            "description": "Payroll costs of the year that count for the substance-based income exclusion.",
+            "nullable": true
+          },
+          "numberOfEmployees": {
+            "type": "number",
+            "title": "Number of employees",
+            "description": "Employees at year end, as full-time equivalents or headcount.",
+            "nullable": true
+          },
+          "employeeMethod": {
+            "type": "string",
+            "title": "Employee count method",
+            "description": "How the number of employees was found: from humaniq, or entered."
+          },
+          "yearClosed": {
+            "type": "boolean",
+            "title": "Year closed",
+            "description": "False when the fiscal year was not closed when the figures were read, so accumulated earnings include the year's result."
+          },
+          "unmappedAccounts": {
+            "type": "array",
+            "title": "Unmapped accounts",
+            "description": "Account numbers with a movement or balance in the year and no country-by-country category.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "topCounterparties": {
+            "type": "array",
+            "title": "Largest counterparties",
+            "description": "The ten counterparties with the most revenue, so an intercompany customer missing from the counterparty records stands out.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "title": "Counterparty",
+                  "description": "The customer or payee record."
+                },
+                "amount": {
+                  "type": "number",
+                  "title": "Revenue",
+                  "description": "Revenue from this counterparty."
+                },
+                "related": {
+                  "type": "boolean",
+                  "title": "Related",
+                  "description": "Whether the counterparty is a group entity."
+                }
+              }
+            }
+          },
+          "computedAt": {
+            "type": "string",
+            "title": "Computed at",
+            "description": "When the figures were read from the books.",
+            "format": "date-time"
+          }
+        }
+      },
+      "CbcrReturn": {
+        "properties": {
+          "reportingRole": {
+            "type": "string",
+            "title": "Reporting role",
+            "description": "The role of the reporting entity in the country-by-country file.",
+            "enum": [
+              "CBC701",
+              "CBC702",
+              "CBC703",
+              "CBC704"
+            ],
+            "x-enum-labels": {
+              "CBC701": "Ultimate parent entity",
+              "CBC702": "Surrogate parent entity",
+              "CBC703": "Local filing",
+              "CBC704": "Local filing with incomplete information"
+            }
+          },
+          "correctsReturn": {
+            "type": "string",
+            "title": "Corrects return",
+            "description": "The submitted CbcrReturn this return corrects, empty for a first file."
+          },
+          "docRefIds": {
+            "type": "object",
+            "title": "Document references",
+            "description": "The DocRefId given to each record in the last file, keyed by record id, so a correction can point at it.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "lastValidation": {
+            "type": "object",
+            "title": "Last validation",
+            "description": "The outcome of the last file validation: valid, when, and the errors by line, element and message."
+          }
+        }
+      },
+      "GlobeInformationReturn": {
+        "properties": {
+          "docRefIds": {
+            "type": "object",
+            "title": "Document references",
+            "description": "The DocRefId given to each record in the last file, keyed by record id.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "lastValidation": {
+            "type": "object",
+            "title": "Last validation",
+            "description": "The outcome of the last file validation: valid, when, and the errors by line, element and message."
+          },
+          "missingElements": {
+            "type": "array",
+            "title": "Missing elements",
+            "description": "Mandatory elements of the GloBE information return the records cannot fill, per jurisdiction. The file is not made while this list is not empty.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "jurisdiction": {
+                  "type": "string",
+                  "title": "Jurisdiction",
+                  "description": "Two-letter ISO 3166 code."
+                },
+                "element": {
+                  "type": "string",
+                  "title": "Element",
+                  "description": "The element the records cannot fill."
+                }
+              }
+            }
+          }
+        }
+      },
+      "Account": {
+        "version": "0.4.0",
+        "properties": {
+          "cbcrCategory": {
+            "type": "string",
+            "title": "Country-by-country category",
+            "description": "Which country-by-country figure the account feeds. Suggested from the account type on first use and confirmed on the account mapping tab.",
+            "enum": [
+              "revenue",
+              "revenue-excluded",
+              "income-tax-current",
+              "income-tax-deferred",
+              "income-tax-payable",
+              "stated-capital",
+              "accumulated-earnings",
+              "tangible-asset",
+              "eligible-payroll",
+              "none"
+            ],
+            "nullable": true,
+            "x-enum-labels": {
+              "revenue": "Revenue",
+              "revenue-excluded": "Revenue excluded (distributions from group entities)",
+              "income-tax-current": "Income tax, current",
+              "income-tax-deferred": "Income tax, deferred",
+              "income-tax-payable": "Income tax payable",
+              "stated-capital": "Stated capital",
+              "accumulated-earnings": "Accumulated earnings",
+              "tangible-asset": "Tangible asset",
+              "eligible-payroll": "Eligible payroll",
+              "none": "None"
+            }
+          }
+        }
+      },
+      "CbcrJurisdictionSummary": {
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group whose figures this summary sums."
+          },
+          "deferredTaxExpense": {
+            "type": "number",
+            "title": "Deferred tax expense",
+            "description": "Deferred tax expense of the year, for the simplified effective tax rate.",
+            "nullable": true
+          },
+          "eligiblePayroll": {
+            "type": "number",
+            "title": "Eligible payroll costs",
+            "description": "Payroll costs of the year that count for the substance-based income exclusion.",
+            "nullable": true
+          }
+        }
+      },
+      "Pillar2SafeHarbour": {
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group's ultimate parent."
+          }
+        }
+      },
+      "Pillar2JurisdictionComputation": {
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group's ultimate parent."
+          }
+        }
+      }
+    }
+  }
+}

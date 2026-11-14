@@ -240,6 +240,7 @@ import VendorPerformanceIndex from './components/vendor-performance/VendorPerfor
 import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BankStatementWizard from './modals/BankStatementWizard.vue'
 import BillImportModal from './modals/BillImportModal.vue'
+import FiscalYearActionModal from './modals/FiscalYearActionModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
 // ribbons are now declarative `config.headerActions[]` (type:"open-modal");
@@ -407,6 +408,9 @@ export default {
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
 	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// tax-cbcr-and-pillar2-returns 6.1 to 6.3: Assess scope and Read figures
+	// from the books on GroupEntityDetail.
+	FiscalYearActionModal: { kind: 'modal', component: FiscalYearActionModal },
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },

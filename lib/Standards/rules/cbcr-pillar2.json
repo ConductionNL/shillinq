@@ -1,0 +1,114 @@
+{
+  "domain": "tax",
+  "version": "2026-11",
+  "rules": [
+    {
+      "id": "cbc-figures-every-entity",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), CbcReports/ConstEntities",
+      "statement": "Every constituent entity in scope has country-by-country figures for the fiscal year before the report is made.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
+      "id": "cbc-accounts-mapped",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), Summary",
+      "statement": "Every ledger account with a movement or balance in the year carries a country-by-country category, so no amount is left out of the summary figures.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
+      "id": "cbc-entity-tin",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), TIN",
+      "statement": "Every constituent entity has a tax identification number, or the value NOTIN with the reason it has none.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
+      "id": "cbc-jurisdiction-activity",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), BizActivities",
+      "statement": "Every jurisdiction reports at least one main business activity.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
+      "id": "cbc-revenue-total",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), Summary/Revenues",
+      "statement": "Total revenue of every jurisdiction equals its unrelated plus related party revenue.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
+      "id": "cbc-residual-explained",
+      "domain": "tax",
+      "jurisdiction": "NL",
+      "framework": "cbcnl",
+      "source": "Handleiding CbCNL deel 1, versie 4.1 (verify)",
+      "statement": "A difference of more than EUR 1,000,000 between the report and the consolidated statements is explained by reconciliation items.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://odb.belastingdienst.nl/wp-content/uploads/2025/10/HL_CBCNL_4.1_Deel_1_Algemeen.pdf"
+    },
+    {
+      "id": "cbc-figures-from-books",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-cbc",
+      "source": "OECD CbC XML Schema User Guide v2.0 (2019), AdditionalInfo",
+      "statement": "Figures are read from the books; figures entered or imported by hand are named in the additional information.",
+      "severity": "recommended",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://www.oecd.org/tax/beps/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-june-2019.pdf"
+    },
+    {
+      "id": "gir-jurisdiction-covered",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-gir",
+      "source": "OECD GloBE Information Return XML Schema User Guide (2025), JurisdictionSection",
+      "statement": "Every jurisdiction of the group has a passed safe harbour test or an approved jurisdiction computation.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://doi.org/10.1787/c594935a-en"
+    },
+    {
+      "id": "gir-no-missing-elements",
+      "domain": "tax",
+      "jurisdiction": "global",
+      "framework": "oecd-gir",
+      "source": "OECD GloBE Information Return XML Schema User Guide (2025)",
+      "statement": "No mandatory element of the GloBE information return is left without a value from the records.",
+      "severity": "mandatory",
+      "machineCheckable": true,
+      "effectiveDate": null,
+      "sourceUrl": "https://doi.org/10.1787/c594935a-en"
+    }
+  ]
+}
