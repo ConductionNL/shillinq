@@ -132,6 +132,10 @@
             "description": "PDF export endpoint for the 13-week cashflow forecast (REQ-CF-016)."
         },
         {
+            "name": "cbcr",
+            "description": "CbC and minimum tax page actions."
+        },
+        {
             "name": "commitment-year-end",
             "description": "Year-end carry-over and last-invoice endpoints."
         },
@@ -3200,6 +3204,394 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/cbcr/computations/{computationId}/qdmtt": {
+            "post": {
+                "operationId": "cbcr-qdmtt",
+                "summary": "Apply the Dutch QDMTT",
+                "description": "Apply the Dutch QDMTT to an NL jurisdiction computation below the minimum rate and update the QDMTT return. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "computationId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The Pillar2JurisdictionComputation id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/assess-scope": {
+            "post": {
+                "operationId": "cbcr-assess-scope",
+                "summary": "Assess the group's scope for a fiscal year",
+                "description": "Assess whether the group of this ultimate parent is in scope for the country-by-country report and the minimum tax in the fiscal year, and store the assessment. Body: fiscalYear, and enteredRevenue (year to EUR) for years without consolidated statements. Needs a member of the parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/prepare": {
+            "post": {
+                "operationId": "cbcr-prepare",
+                "summary": "Prepare the CbC figures of the group",
+                "description": "Read the figures of every group entity that keeps its books here and sum them per jurisdiction. Body: fiscalYear. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/read-figures": {
+            "post": {
+                "operationId": "cbcr-read-figures",
+                "summary": "Read an entity's figures from the books",
+                "description": "Read the country-by-country figures of the entity for the fiscal year from its administration's ledger and store them. Body: fiscalYear. Needs a member of the entity's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/entities/{entityId}/safe-harbour": {
+            "post": {
+                "operationId": "cbcr-safe-harbour",
+                "summary": "Run the safe harbour tests",
+                "description": "Run the transitional CbCR safe harbour tests per jurisdiction for the fiscal year and draft a computation where none passes. Body: fiscalYear. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "entityId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GroupEntityRegistry id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fiscalYear": {
+                                        "description": "The fiscal year, named by the calendar year it ends in."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/cbcr/minimum-tax-returns/{returnId}/checks": {
+            "get": {
+                "operationId": "cbcr-gir-checks",
+                "summary": "The checks of a GloBE information return",
+                "description": "Every check of the GloBE information return with pass or fail, and the blocking failures. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The GlobeInformationReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/cbcr/returns/{returnId}/checks": {
+            "get": {
+                "operationId": "cbcr-cbc-checks",
+                "summary": "The checks of a CbC report",
+                "description": "Every check of the country-by-country report with pass or fail, and the blocking failures. Needs a member of the ultimate parent's administration.",
+                "tags": [
+                    "cbcr"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The CbcrReturn id (path parameter).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
                     }
                 }
             }

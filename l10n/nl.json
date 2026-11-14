@@ -7040,7 +7040,10 @@
         "No country-by-country report is due.": "Er hoeft geen landenrapport te worden ingediend.",
         "The minimum tax applies.": "De minimumbelasting is van toepassing.",
         "The minimum tax does not apply.": "De minimumbelasting is niet van toepassing.",
-        "The GroupEntityRegistry record of the group whose figures this summary sums.": "Het GroupEntityRegistry-record van de groep waarvan deze samenvatting de cijfers optelt."
+        "The GroupEntityRegistry record of the group whose figures this summary sums.": "Het GroupEntityRegistry-record van de groep waarvan deze samenvatting de cijfers optelt.",
+        "You have no access to this entity's administration.": "U hebt geen toegang tot de administratie van deze entiteit.",
+        "Give the fiscal year, for example 2026.": "Geef het boekjaar op, bijvoorbeeld 2026.",
+        "The action could not be completed.": "De actie kon niet worden voltooid."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

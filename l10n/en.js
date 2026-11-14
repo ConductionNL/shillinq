@@ -4841,7 +4841,10 @@ OC.L10N.register(
         "No country-by-country report is due.": "No country-by-country report is due.",
         "The minimum tax applies.": "The minimum tax applies.",
         "The minimum tax does not apply.": "The minimum tax does not apply.",
-        "The GroupEntityRegistry record of the group whose figures this summary sums.": "The GroupEntityRegistry record of the group whose figures this summary sums."
+        "The GroupEntityRegistry record of the group whose figures this summary sums.": "The GroupEntityRegistry record of the group whose figures this summary sums.",
+        "You have no access to this entity's administration.": "You have no access to this entity's administration.",
+        "Give the fiscal year, for example 2026.": "Give the fiscal year, for example 2026.",
+        "The action could not be completed.": "The action could not be completed."
     },
     "nplurals=2; plural=(n != 1);"
 )
