@@ -6918,7 +6918,18 @@ OC.L10N.register(
         "The rate card that prices this person's hours on the project. Each hour gets the rate of the card's version in effect on its date.": "De tariefkaart die de uren van deze persoon op het project prijst. Elk uur krijgt het tarief van de versie van de kaart die op die datum geldt.",
         "The administration this assignment belongs to. Only rate cards of the same administration price its hours.": "De administratie waartoe deze toewijzing hoort. Alleen tariefkaarten van dezelfde administratie prijzen de uren.",
         "The rate this assignment bills at today, refreshed when the assignment or its rate card changes. An invoice uses the rate of each hour itself, not this value.": "Het tarief waartegen deze toewijzing vandaag factureert, bijgewerkt als de toewijzing of de tariefkaart verandert. Een factuur gebruikt het tarief van elk uur zelf, niet deze waarde.",
-        "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate.": "De rol waartegen deze persoon op het project factureert, zoals genoemd in de roltarieven van de tariefkaart. Laat leeg als de persoon geen roltarief heeft."
+        "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate.": "De rol waartegen deze persoon op het project factureert, zoals genoemd in de roltarieven van de tariefkaart. Laat leeg als de persoon geen roltarief heeft.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

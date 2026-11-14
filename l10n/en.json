@@ -4742,7 +4742,21 @@
         "The rate card that prices this person's hours on the project. Each hour gets the rate of the card's version in effect on its date.": "The rate card that prices this person's hours on the project. Each hour gets the rate of the card's version in effect on its date.",
         "The administration this assignment belongs to. Only rate cards of the same administration price its hours.": "The administration this assignment belongs to. Only rate cards of the same administration price its hours.",
         "The rate this assignment bills at today, refreshed when the assignment or its rate card changes. An invoice uses the rate of each hour itself, not this value.": "The rate this assignment bills at today, refreshed when the assignment or its rate card changes. An invoice uses the rate of each hour itself, not this value.",
-        "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate.": "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate."
+        "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate.": "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} of {total} rates · {feedStatus}",
+        "Booked lines": "Booked lines",
+        "Posted lines": "Posted lines",
+        "Exchange rate": "Exchange rate",
+        "Rate source": "Rate source",
+        "Rate date": "Rate date",
+        "Base amount": "Base amount",
+        "Transaction amount": "Transaction amount",
+        "Transaction currency": "Transaction currency",
+        "Base currency": "Base currency",
+        "Rates are entered by hand": "Rates are entered by hand",
+        "Rates arrive from the feed": "Rates arrive from the feed",
+        "%1$s to %2$s on %3$s": "%1$s to %2$s on %3$s",
+        "Newest rate: %s": "Newest rate: %s"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
