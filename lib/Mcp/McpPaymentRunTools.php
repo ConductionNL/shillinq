@@ -121,10 +121,11 @@ class McpPaymentRunTools {
 			return $refusal;
 		}
 
+		$paymentRunId = (string)$args['paymentRunId'];
 		try {
 			$paymentRun = ObjectIdentifier::findOne(
 				scoped: $this->objectService->setRegister('shillinq')->setSchema('PaymentRun'),
-				id: (string)$args['paymentRunId']
+				id: $paymentRunId
 			);
 			$refusal = $this->gate->recordRefusal(administrationId: $administrationId, record: $paymentRun, notFound: self::NOT_FOUND);
 			if ($refusal !== null) {

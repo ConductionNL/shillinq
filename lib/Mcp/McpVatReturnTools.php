@@ -79,15 +79,16 @@ class McpVatReturnTools {
 	 * @spec openspec/changes/mcp-action-tool-surface/specs/shillinq-mcp-tool-surface/spec.md
 	 */
 	public function create(array $args): array {
+		$period       = (string)$args['period'];
+		$periodYear   = (int)$args['periodYear'];
+		$periodNumber = (int)$args['periodNumber'];
+
 		$administrationId = (string)$args['administrationId'];
 		$refusal = $this->gate->refusal(administrationId: $administrationId, notFound: self::ADMINISTRATION_NOT_FOUND);
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
-		$period       = (string)$args['period'];
-		$periodYear   = (int)$args['periodYear'];
-		$periodNumber = (int)$args['periodNumber'];
 		$problem = self::periodProblem(period: $period, periodYear: $periodYear, periodNumber: $periodNumber, today: gmdate('Y-m-d'));
 		if ($problem !== null) {
 			return McpResult::error(code: 'invalid_arguments', message: $problem);
@@ -188,12 +189,13 @@ class McpVatReturnTools {
 	 * @spec openspec/changes/mcp-action-tool-surface/specs/shillinq-mcp-tool-surface/spec.md
 	 */
 	public static function periodProblem(string $period, int $periodYear, int $periodNumber, string $today): ?string {
-		if ($period === 'quarter' && $periodNumber > 4) {
-			return 'periodNumber must be 1..4 for quarter';
-		}
-
-		if ($period === 'month' && $periodNumber > 12) {
-			return 'periodNumber must be 1..12 for month';
+		$highest = match ($period) {
+			'quarter' => 4,
+			'month' => 12,
+			default => null,
+		};
+		if ($highest !== null && $periodNumber > $highest) {
+			return 'periodNumber must be 1..' . $highest . ' for ' . $period;
 		}
 
 		$currentYear  = (int)substr($today, 0, 4);
