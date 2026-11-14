@@ -465,8 +465,25 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 	private function find(string $periodId, string $administrationId): ?array {
 		$register = $this->register();
 
-		// Match on the business periodId within the administration first (the
-		// common case: the UI/route carries the business period identifier).
+		$found = $this->findByBusinessPeriod(register: $register, periodId: $periodId, administrationId: $administrationId);
+		if ($found !== null) {
+			return $found;
+		}
+
+		return $this->findByRecordId(register: $register, periodId: $periodId, administrationId: $administrationId);
+	}//end find()
+
+	/**
+	 * Match on the business periodId within the administration (the common
+	 * case: the UI/route carries the business period identifier).
+	 *
+	 * @param string $register The register slug.
+	 * @param string $periodId The business periodId.
+	 * @param string $administrationId The administration scope ('' for none).
+	 *
+	 * @return array<string,mixed>|null The record, or null when not found.
+	 */
+	private function findByBusinessPeriod(string $register, string $periodId, string $administrationId): array|null {
 		$filters = ['periodId' => $periodId];
 		if ($administrationId !== '') {
 			$filters['administrationId'] = $administrationId;
@@ -481,10 +498,22 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 			return $this->normaliseRow(row: $found[0]);
 		}
 
-		// Fall back to the record-id lookup, still scoped to the administration.
-		// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
-		// properties and the entity's `id` is not one, so this arm matched
-		// nothing for every value and the fallback never actually fell back.
+		return null;
+	}//end findByBusinessPeriod()
+
+	/**
+	 * Fall back to the record-id lookup, still scoped to the administration.
+	 * NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+	 * properties and the entity's `id` is not one, so this arm matched
+	 * nothing for every value and the fallback never actually fell back.
+	 *
+	 * @param string $register The register slug.
+	 * @param string $periodId The PeriodClose record id (uuid).
+	 * @param string $administrationId The administration scope ('' for none).
+	 *
+	 * @return array<string,mixed>|null The record, or null when not found or of another administration.
+	 */
+	private function findByRecordId(string $register, string $periodId, string $administrationId): array|null {
 		$record = ObjectIdentifier::findOne(
 			scoped: $this->objectService
 				->setRegister($register)
@@ -500,7 +529,7 @@ class PeriodCloseService implements PeriodCloseServiceInterface {
 		}
 
 		return null;
-	}//end find()
+	}//end findByRecordId()
 
 	/**
 	 * Normalise one OpenRegister result row into its data array.
