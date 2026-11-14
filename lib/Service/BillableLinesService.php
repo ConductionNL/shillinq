@@ -89,6 +89,25 @@ class BillableLinesService implements BillableLinesServiceInterface {
 			$projects = array_values(array_intersect($projects, [$projectId]));
 		}
 
+		$timeEntries = $this->billableTimeEntries(administrationId: $administrationId, projects: $projects, fromDate: $fromDate, toDate: $toDate);
+		$expenses = $this->passedOnExpenses(administrationId: $administrationId, customerId: $customerId, fromDate: $fromDate, toDate: $toDate);
+
+		return ['timeEntries' => $timeEntries, 'expenses' => $expenses];
+	}//end forCustomer()
+
+	/**
+	 * The time entries on the projects in the period, by date.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param list<string> $projects The project ids.
+	 * @param string $fromDate The first day (YYYY-MM-DD), or ''.
+	 * @param string $toDate The last day (YYYY-MM-DD), or ''.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+	 */
+	private function billableTimeEntries(string $administrationId, array $projects, string $fromDate, string $toDate): array {
 		$timeEntries = array_values(
 			array_filter(
 				$this->rows(schema: 'UrenRegistratie', administrationId: $administrationId),
@@ -102,6 +121,22 @@ class BillableLinesService implements BillableLinesServiceInterface {
 			$timeEntries
 		);
 
+		return $timeEntries;
+	}//end billableTimeEntries()
+
+	/**
+	 * The expense claims passed on to the customer in the period.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $customerId The customer.
+	 * @param string $fromDate The first day (YYYY-MM-DD), or ''.
+	 * @param string $toDate The last day (YYYY-MM-DD), or ''.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+	 */
+	private function passedOnExpenses(string $administrationId, string $customerId, string $fromDate, string $toDate): array {
 		$expenses = array_values(
 			array_filter(
 				$this->rows(schema: 'ExpenseClaimEntry', administrationId: $administrationId),
@@ -114,8 +149,8 @@ class BillableLinesService implements BillableLinesServiceInterface {
 			)
 		);
 
-		return ['timeEntries' => $timeEntries, 'expenses' => $expenses];
-	}//end forCustomer()
+		return $expenses;
+	}//end passedOnExpenses()
 
 	/**
 	 * The ids among those given that are not the customer's billable lines in

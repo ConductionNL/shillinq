@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
@@ -68,6 +69,12 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
+		// The supplementary VAT return files through this port
+		// (tax-vat-position-and-suppletie REQ-VPS-002).
+		'digipoort-sbr' => [
+			'interface' => DigipoortSbrAdapterInterface::class,
+			'consequence' => 'No filing reaches Digipoort; a supplementary return is downloaded to file by hand.',
+		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,
 			'consequence' => 'No rates are fetched from the ECB or a market data provider.',

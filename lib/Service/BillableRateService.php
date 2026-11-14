@@ -190,10 +190,7 @@ final class BillableRateService {
 			'administrationId' => trim((string)($hour['administrationId'] ?? '')),
 		];
 		$date = $lookup['date'];
-		$person = trim((string)($hour['personName'] ?? ''));
-		if ($person === '') {
-			$person = $lookup['personId'];
-		}
+		$person = $this->personLabel(hour: $hour, personId: $lookup['personId']);
 
 		$assignment = $this->assignment(lookup: $lookup);
 		if ($assignment === null) {
@@ -217,19 +214,57 @@ final class BillableRateService {
 			'client' => $this->clientOf(hour: $hour, lookup: $lookup),
 			'blended' => '',
 		];
-		$match = $this->schedule(version: $version, lookup: $lookup);
-		if ($match === null) {
+		$tierSchedule = $this->schedule(version: $version, lookup: $lookup);
+		if ($tierSchedule === null) {
 			return $this->noRate(reason: self::REASON_NO_SCHEDULE, message: "No rate of the rate card applies to {$person} on {$date}");
 		}
 
-		[$tier, $schedule] = $match;
+		$answer = $this->rated(hour: $hour, assignment: $assignment, tierSchedule: $tierSchedule);
+		if ($record === true) {
+			[$tier, $schedule] = $tierSchedule;
+			$answer['recordId'] = $this->record(hour: $hour, match: ['tier' => $tier, 'schedule' => $schedule, 'entities' => $lookup['entities']]);
+		}
+
+		return $answer;
+	}//end answer()
+
+	/**
+	 * The person named in reasons: the hour's personName, else its personId.
+	 *
+	 * @param array<string, mixed> $hour The hour.
+	 * @param string $personId The trimmed personId.
+	 *
+	 * @return string The person label.
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+	 */
+	private function personLabel(array $hour, string $personId): string {
+		$person = trim((string)($hour['personName'] ?? ''));
+		if ($person === '') {
+			$person = $personId;
+		}
+
+		return $person;
+	}//end personLabel()
+
+	/**
+	 * Value the hour at the matched schedule rate, with an empty `recordId`:
+	 * the caller records the resolution when it should.
+	 *
+	 * @param array<string, mixed> $hour The hour.
+	 * @param array<string, mixed> $assignment The person's assignment.
+	 * @param array{0: string, 1: array<string, mixed>} $tierSchedule The tier and schedule.
+	 *
+	 * @return array<string, mixed> The rated result.
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
+	 */
+	private function rated(array $hour, array $assignment, array $tierSchedule): array {
+		[$tier, $schedule] = $tierSchedule;
 		$rate = (float)($schedule['rate'] ?? 0);
 		$unit = (string)($schedule['unit'] ?? 'hourly');
 		$value = round($rate * ((float)($hour['hours'] ?? 0) / $this->hoursPerUnit(unit: $unit, assignment: $assignment)), 2);
 		$recordId = '';
-		if ($record === true) {
-			$recordId = $this->record(hour: $hour, match: ['tier' => $tier, 'schedule' => $schedule, 'entities' => $lookup['entities']]);
-		}
 
 		return [
 			'status' => self::STATUS_RATED,
@@ -240,7 +275,7 @@ final class BillableRateService {
 			'value' => $value,
 			'recordId' => $recordId,
 		];
-	}//end answer()
+	}//end rated()
 
 	/**
 	 * The client the client tier matches: the hour's own `clientId`, else the

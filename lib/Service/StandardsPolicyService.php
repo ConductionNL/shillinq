@@ -280,10 +280,7 @@ class StandardsPolicyService implements StandardsPolicyServiceInterface {
 	 */
 	private function loadFrameworks(?string $administrationId): array {
 		try {
-			$filters = [];
-			if ($administrationId !== null) {
-				$filters['administrationId'] = $administrationId;
-			}
+			$filters = $this->policyFilters(administrationId: $administrationId);
 
 			$rows = $this->objectService
 				->setRegister(self::REGISTER_SLUG)
@@ -298,6 +295,33 @@ class StandardsPolicyService implements StandardsPolicyServiceInterface {
 			return [];
 		}
 
+		return $this->firstPolicyFrameworks(rows: $rows);
+	}//end loadFrameworks()
+
+	/**
+	 * The StandardsPolicy filters, scoped to the administration when one is given.
+	 *
+	 * @param string|null $administrationId Optional administration scope.
+	 *
+	 * @return array<string, string>
+	 */
+	private function policyFilters(string|null $administrationId): array {
+		$filters = [];
+		if ($administrationId !== null) {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		return $filters;
+	}//end policyFilters()
+
+	/**
+	 * The frameworks of the first policy row, or an empty list.
+	 *
+	 * @param mixed $rows The findAll() result.
+	 *
+	 * @return array<int, array<string, mixed>> The frameworks list (possibly empty).
+	 */
+	private function firstPolicyFrameworks(mixed $rows): array {
 		if (empty($rows) === true) {
 			return [];
 		}
@@ -306,7 +330,7 @@ class StandardsPolicyService implements StandardsPolicyServiceInterface {
 		$frameworks = ($policy['frameworks'] ?? []);
 
 		return is_array($frameworks) === true ? $frameworks : [];
-	}//end loadFrameworks()
+	}//end firstPolicyFrameworks()
 
 	/**
 	 * Normalise an ObjectService row (ObjectEntity or array) to a plain array.

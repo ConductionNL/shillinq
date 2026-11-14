@@ -223,6 +223,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\ActuarialValuationApprovedListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\OrderFulfilmentTransitionListener'",
             "0"
         ]
@@ -288,6 +296,14 @@
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\LinkedObjectsLockListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\PaymentBlockReleaseListener'",
             "0"
         ]
     ],
@@ -452,6 +468,14 @@
         [
             "'OCA\\\\Shillinq\\\\Event\\\\BillablePeriodClosedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\BillablePeriodClosedListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\PeriodClosedDriftListener'",
             "0"
         ]
     ],

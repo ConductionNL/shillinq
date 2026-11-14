@@ -132,19 +132,40 @@ class AssignmentHoursListener implements IEventListener {
 		if ($slug === AssignmentHoursInterface::ASSIGNMENT_SCHEMA) {
 			// Without the old version there is no telling whether the estimate
 			// changed; the listener's own writes always carry it.
-			if ($oldEntity !== null
-				&& (string)($old['estimatedHours'] ?? '') !== (string)($new['estimatedHours'] ?? '')
-			) {
+			if ($oldEntity !== null && self::estimateChanged(old: $old, new: $new) === true) {
 				$this->hours->rearm(assignmentId: ObjectIdentifier::resolve(saved: $entity));
 			}
 
 			return;
 		}
 
-		if ($slug !== AssignmentHoursInterface::HOUR_SCHEMA) {
-			return;
+		if ($slug === AssignmentHoursInterface::HOUR_SCHEMA) {
+			$this->recalculateAssignments(old: $old, new: $new);
 		}
 
+	}//end onUpdated()
+
+	/**
+	 * Whether the assignment's estimated hours changed.
+	 *
+	 * @param array<string, mixed> $old The assignment before the update.
+	 * @param array<string, mixed> $new The assignment after the update.
+	 *
+	 * @return bool
+	 */
+	private static function estimateChanged(array $old, array $new): bool {
+		return (string)($old['estimatedHours'] ?? '') !== (string)($new['estimatedHours'] ?? '');
+	}//end estimateChanged()
+
+	/**
+	 * Recalculate the assignments an hours entry belonged to before and after the update.
+	 *
+	 * @param array<string, mixed> $old The hours entry before the update.
+	 * @param array<string, mixed> $new The hours entry after the update.
+	 *
+	 * @return void
+	 */
+	private function recalculateAssignments(array $old, array $new): void {
 		$assignments = array_unique(
 			array_filter(
 				[
@@ -157,6 +178,5 @@ class AssignmentHoursListener implements IEventListener {
 		foreach ($assignments as $assignmentId) {
 			$this->hours->recalculate(assignmentId: $assignmentId);
 		}
-
-	}//end onUpdated()
+	}//end recalculateAssignments()
 }//end class
