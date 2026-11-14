@@ -4716,7 +4716,13 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Accounts with postings but no task field": "Accounts with postings but no task field",
+        "Income": "Income",
+        "Loading task fields…": "Loading task fields…",
+        "Map to a task field": "Map to a task field",
+        "No posted lines on a mapped account this fiscal year.": "No posted lines on a mapped account this fiscal year.",
+        "Realisation per task field": "Realisation per task field"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

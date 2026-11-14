@@ -5,7 +5,7 @@
 ## 1. Task fields
 
 - [x] 1.1 `TaskFieldRealisation::forYear` and the dashboard payload (REQ-BBV-012). Verify: PHPUnit red first over real GL lines and mappings; an account without a mapping is listed, not dropped. — `lib/Service/PublicSector/TaskFieldRealisation.php` over posted `GLTransaction`/`GLLine` (through `LedgerActuals`) and `BbvAccountMapping`; `BBVDashboardController` adds `taskFieldRealisation` to the scoped envelope. `TaskFieldRealisationTest`, `BBVDashboardControllerTest::testTheScopedEnvelopeCarriesTheRealisationPerTaskField`.
-- [ ] 1.2 Dashboard table and unmapped list (REQ-BBV-012). Verify: vitest on the component; `npm run check:manifest`.
+- [x] 1.2 Dashboard table and unmapped list (REQ-BBV-012). Verify: vitest on the component; `npm run check:manifest`. — `src/components/Dashboard/BBVTaskFieldRealisation.vue` as the `bbv-task-fields` widget of `BBVComplianceDashboard`, reading `taskFieldRealisation` from `/api/bbv-dashboard`; each unmapped account links to `/overheid/bbv-mapping`. `tests/vitest/bbvTaskFieldRealisation.spec.js`.
 
 ## 2. Joint arrangement
 

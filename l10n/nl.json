@@ -6904,7 +6904,13 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Accounts with postings but no task field": "Rekeningen met boekingen maar zonder taakveld",
+        "Income": "Baten",
+        "Loading task fields…": "Taakvelden laden…",
+        "Map to a task field": "Aan een taakveld koppelen",
+        "No posted lines on a mapped account this fiscal year.": "Geen geboekte regels op een gekoppelde rekening in dit boekjaar.",
+        "Realisation per task field": "Realisatie per taakveld"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
