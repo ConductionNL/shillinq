@@ -50,17 +50,17 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Tick the retry pipeline for one queued timeline event.
@@ -97,7 +97,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 *
 	 * @param ITimeFactory $time Time factory (also passed to
 	 *                           QueuedJob parent for scheduling).
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  slug.
 	 * @param ContainerInterface $container DI container for the late-bound
 	 *                                      OR ObjectService lookup (the
@@ -111,7 +111,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly LoggerInterface $logger,
@@ -206,7 +206,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			}
 
 			$dto = $this->reconstructDto(entry: $entry);
-			$adapter = $this->container->get(PipelinqContactAdapter::class);
+			$adapter = $this->container->get(PipelinqContactAdapterInterface::class);
 
 			$ok = $adapter->publishTimelineEvent(event: $dto);
 			if ($ok === true) {

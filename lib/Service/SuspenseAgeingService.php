@@ -36,7 +36,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -46,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/payment-control-guards/spec.md
  */
-class SuspenseAgeingService {
+class SuspenseAgeingService implements SuspenseAgeingServiceInterface {
 	/**
 	 * BankStatementLine states that count as an open suspense item.
 	 *

@@ -50,10 +50,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InventoryValuationReportServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Ledger-replay valuation reporting (as-of-date / ageing / turnover).
@@ -66,7 +67,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
-class InventoryValuationReportService {
+class InventoryValuationReportService implements InventoryValuationReportServiceInterface {
 	/**
 	 * Construct the service.
 	 *

@@ -74,7 +74,30 @@
             "description": "Dutch KvK number (8 digits).",
             "nullable": true,
             "example": "24502797",
-            "title": "KvK Number"
+            "title": "KvK Number",
+            "x-openregister-property-source": {
+              "provider": "kvk",
+              "mode": "default",
+              "config": {
+                "fill": {
+                  "name": "naam",
+                  "tradingName": "handelsnamen[0].naam",
+                  "address.street": "_embedded.hoofdvestiging.adressen[0].straatnaam",
+                  "address.houseNumber": {
+                    "join": [
+                      "_embedded.hoofdvestiging.adressen[0].huisnummer",
+                      "_embedded.hoofdvestiging.adressen[0].huisletter",
+                      "_embedded.hoofdvestiging.adressen[0].huisnummerToevoeging"
+                    ]
+                  },
+                  "address.postcode": "_embedded.hoofdvestiging.adressen[0].postcode",
+                  "address.city": "_embedded.hoofdvestiging.adressen[0].plaats",
+                  "address.country": {
+                    "value": "NL"
+                  }
+                }
+              }
+            }
           },
           "vatNumber": {
             "type": "string",

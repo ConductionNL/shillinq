@@ -53,6 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\LotSellabilityGuardInterface;
 use OCA\Shillinq\Sort\FefoSort;
 
 /**
@@ -65,7 +66,7 @@ use OCA\Shillinq\Sort\FefoSort;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class LotSellabilityGuard {
+class LotSellabilityGuard implements LotSellabilityGuardInterface {
 	/**
 	 * The only lotStatus value that is sellable per REQ-LOT-006.
 	 */

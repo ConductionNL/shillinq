@@ -329,9 +329,9 @@ class ObjectRequestSettledListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListener(): void {
 		$root = __DIR__ . '/../../..';
-		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$reporting = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ObjectRequestSettlementRegistration.php');
+		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php') . (string)file_get_contents($root . '/lib/Listener/Registration/ListenerRegistrar.php');
+		$reporting = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ObjectRequestSettlementRegistration.php');
 
 		self::assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);
 		self::assertStringContainsString('(new ObjectRequestSettlementRegistration())->register(context: $context);', $reporting);

@@ -4,7 +4,7 @@
 
 ## 1. Retention end date
 
-- [ ] 1.1 `RetentionDueService` in `lib/Service/` that resolves each retention-bound record's rule and reference date and returns the records past their end date, skipping legal holds (REQ-RET-015). Verify: PHPUnit red first for the three scenarios.
+- [x] 1.1 `RetentionDueService` in `lib/Service/` that resolves each retention-bound record's rule and reference date and returns the records past their end date, skipping legal holds (REQ-RET-015). Verify: PHPUnit red first for the three scenarios.
 
 ## 2. Page
 

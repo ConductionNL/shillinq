@@ -22,10 +22,10 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\Platform\FieldRequirements;
-use OCA\Shillinq\Service\Platform\ObjectApiRequest;
-use OCA\Shillinq\Service\Platform\SchemaDefinitions;
+use OCA\Shillinq\Kernel\Contracts\FieldRequirementsInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectApiRequestInterface;
+use OCA\Shillinq\Kernel\Contracts\SchemaDefinitionsInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IL10N;
@@ -46,18 +46,18 @@ class FieldRequirementListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param FieldRequirements      $requirements   The administration's requirements.
-	 * @param SchemaDefinitions      $schemas        The saved object's schema.
-	 * @param ObjectApiRequest       $request        Tells a person's save from a system write.
-	 * @param ListenerSchemaResolver $schemaResolver Tells shillinq's register from others.
+	 * @param FieldRequirementsInterface      $requirements   The administration's requirements.
+	 * @param SchemaDefinitionsInterface      $schemas        The saved object's schema.
+	 * @param ObjectApiRequestInterface       $request        Tells a person's save from a system write.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Tells shillinq's register from others.
 	 * @param IL10N                  $l10n           Translator.
 	 * @param LoggerInterface        $logger         Logger for refusals.
 	 */
 	public function __construct(
-		private readonly FieldRequirements $requirements,
-		private readonly SchemaDefinitions $schemas,
-		private readonly ObjectApiRequest $request,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly FieldRequirementsInterface $requirements,
+		private readonly SchemaDefinitionsInterface $schemas,
+		private readonly ObjectApiRequestInterface $request,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
@@ -117,7 +117,7 @@ class FieldRequirementListener implements IEventListener {
 	 */
 	private function errors(array $definition, array $data, string $schemaId, string $uuid): array {
 		// A requirement is configuration: it is checked on every write, whoever makes it.
-		if (strcasecmp($definition['slug'], FieldRequirements::SCHEMA) === 0) {
+		if (strcasecmp($definition['slug'], FieldRequirementsInterface::SCHEMA) === 0) {
 			$refusal = $this->requirements->refusal(requirement: $data);
 			if ($refusal === []) {
 				return [];

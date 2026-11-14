@@ -50,10 +50,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Aggregates GL data into a CBS IV3-extended submission with declarative
@@ -61,7 +62,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
  */
-class CBSExportService {
+class CBSExportService implements CBSExportServiceInterface {
 	/**
 	 * IV3-extended file format identifier (REQ-CBS-006).
 	 *

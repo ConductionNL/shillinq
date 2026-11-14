@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Kernel\Contracts\DBAScoreCalculatorInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
  */
-class DBAScoreCalculator {
+class DBAScoreCalculator implements DBAScoreCalculatorInterface {
 	/**
 	 * Deliveroo-criteria duur-relatie point weights.
 	 */

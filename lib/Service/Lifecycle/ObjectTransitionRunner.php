@@ -28,7 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 
@@ -37,7 +38,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
-class ObjectTransitionRunner {
+class ObjectTransitionRunner implements ObjectTransitionRunnerInterface {
 	/**
 	 * The engine's container id.
 	 *

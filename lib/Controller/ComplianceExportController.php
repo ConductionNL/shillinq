@@ -46,8 +46,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ComplianceExportService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -83,7 +83,7 @@ class ComplianceExportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param ComplianceExportService $complianceExportService Read-filter-render service.
+	 * @param ComplianceExportServiceInterface $complianceExportService Read-filter-render service.
 	 * @param IUserSession $userSession Session guard.
 	 * @param IGroupManager $groupManager Group RBAC.
 		 * @param LoggerInterface $logger Logger (no PII).
@@ -93,7 +93,7 @@ class ComplianceExportController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ComplianceExportService $complianceExportService,
+		private readonly ComplianceExportServiceInterface $complianceExportService,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
 		private readonly LoggerInterface $logger,
@@ -134,8 +134,8 @@ class ComplianceExportController extends Controller {
 
 		$from = (string)$this->request->getParam('from', '');
 		$to = (string)$this->request->getParam('to', '');
-		$scope = (string)$this->request->getParam('scope', ComplianceExportService::SCOPE_ALL);
-		$format = (string)$this->request->getParam('format', ComplianceExportService::FORMAT_CSV);
+		$scope = (string)$this->request->getParam('scope', ComplianceExportServiceInterface::SCOPE_ALL);
+		$format = (string)$this->request->getParam('format', ComplianceExportServiceInterface::FORMAT_CSV);
 		$actor = $this->request->getParam('actor');
 		if (is_string($actor) === true && $actor !== '') {
 			$actorFilter = $actor;
@@ -176,7 +176,7 @@ class ComplianceExportController extends Controller {
 
 		$this->logExportRequest(envelope: $envelope, uid: $uid);
 
-		if ($format === ComplianceExportService::FORMAT_CSV) {
+		if ($format === ComplianceExportServiceInterface::FORMAT_CSV) {
 			$csv = $this->complianceExportService->renderCsv(envelope: $envelope);
 			return new DataDisplayResponse(
 				data:        $csv,

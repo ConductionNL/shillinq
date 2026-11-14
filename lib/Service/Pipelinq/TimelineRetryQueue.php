@@ -32,6 +32,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+
 /**
  * Port that consumes timeline events that failed synchronous publish.
  *

@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Service\Usage;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\MeterReadingRatingInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -37,7 +38,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
  */
-class MeterReadingRating {
+class MeterReadingRating implements MeterReadingRatingInterface {
 
 	/**
 	 * Constructor.

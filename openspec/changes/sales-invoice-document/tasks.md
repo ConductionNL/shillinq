@@ -16,7 +16,7 @@
 
 ## 3. Currency in generation
 
-- [ ] 3.1 Currency from order or customer in `InvoiceGenerationService` at the three fixed places (REQ-SID-004). Verify: PHPUnit for GBP.
+- [x] 3.1 Currency from order or customer in `InvoiceGenerationService` at the three fixed places (REQ-SID-004). Verify: PHPUnit for GBP.
 
 ## 4. Pages, end to end and strings
 

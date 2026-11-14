@@ -49,13 +49,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that backfills FiscalPeriod records for every distinct
@@ -71,12 +71,12 @@ class BackfillFiscalPeriods implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private RegisterLocation $settingsService,
+		private RegisterLocationInterface $settingsService,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

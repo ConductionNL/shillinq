@@ -43,11 +43,12 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates the nightly soft-close execution per administratie (ADR-031 exception).
@@ -67,13 +68,20 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
  */
-class SoftCloseExecutor {
+class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	/**
 	 * Marker used for the postedBy field on auto-postings (REQ-CLS-010).
 	 *
 	 * @var string
 	 */
 	public const SYSTEM_ACTOR = 'SYSTEM:SoftCloseExecutor';
+
+	/**
+	 * The match statuses that write an elimination entry (REQ-ICE-011).
+	 *
+	 * @var array<int,string>
+	 */
+	private const ELIMINATED_STATUSES = ['perfect-match', 'within-tolerance'];
 
 	/**
 	 * The totals a run report starts from, after its status, administration and period.
@@ -580,28 +588,91 @@ class SoftCloseExecutor {
 	}//end delegateLeasePostings()
 
 	/**
-	 * Run intercompany matching for the administratie + period.
+	 * Run intercompany matching for every relation of the administratie in the period.
 	 *
-	 * Reuses the existing IntercompanyMatchingService when available.
+	 * Each relation goes through IntercompanyMatchingService::matchRelationPeriod,
+	 * which writes the match and, for a match within tolerance, the elimination
+	 * entry. A relation already eliminated for the period is not matched again,
+	 * so a rerun of the nightly close writes no second elimination.
 	 *
 	 * @param string $administrationId The administration scope.
 	 * @param string $periodId The yyyy-mm period.
 	 *
-	 * @return int Match count.
+	 * @return int The relations eliminated for the period.
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
 	 */
 	private function runIntercompanyMatching(string $administrationId, string $periodId): int {
-		if ($this->container->has('OCA\Shillinq\Service\IntercompanyMatchingService') === false) {
+		if ($this->container->has(IntercompanyMatchingService::class) === false) {
 			return 0;
 		}
 
-		$delegate = $this->container->get('OCA\Shillinq\Service\IntercompanyMatchingService');
-		if (method_exists($delegate, 'matchForPeriod') === false) {
-			return 0;
+		$delegate = $this->container->get(IntercompanyMatchingService::class);
+		$matched  = 0;
+		foreach ($this->intercompanyRelationIds(administrationId: $administrationId) as $relationId) {
+			if ($this->isEliminated(relationId: $relationId, periodId: $periodId) === true) {
+				$matched++;
+				continue;
+			}
+
+			$match = (array)$delegate->matchRelationPeriod(relationId: $relationId, periodId: $periodId);
+			if (in_array((string)($match['matchStatus'] ?? ''), self::ELIMINATED_STATUSES, true) === true) {
+				$matched++;
+			}
 		}
 
-		$result = (array)$delegate->matchForPeriod($administrationId, $periodId);
-		return (int)($result['matchCount'] ?? 0);
+		return $matched;
 	}//end runIntercompanyMatching()
+
+	/**
+	 * The relation ids of the administratie's intercompany relations.
+	 *
+	 * @param string $administrationId The administration scope; '' for all.
+	 *
+	 * @return array<int,string> The distinct, non-empty relation ids.
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 */
+	private function intercompanyRelationIds(string $administrationId): array {
+		$filters = [];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
+
+		$found = $this->objectService
+			->setRegister($this->register())
+			->setSchema('IntercompanyRelation')
+			->findAll(['filters' => $filters]);
+
+		$ids = [];
+		foreach ($found as $relation) {
+			$relationId = (string)(((array)$relation)['relationId'] ?? '');
+			if ($relationId !== '') {
+				$ids[$relationId] = true;
+			}
+		}
+
+		return array_map('strval', array_keys($ids));
+	}//end intercompanyRelationIds()
+
+	/**
+	 * Whether the relation already has its elimination entry for the period.
+	 *
+	 * @param string $relationId The relation.
+	 * @param string $periodId The yyyy-mm period.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/ledger-group-close/specs/bookkeeping-intercompany-elimination/spec.md#requirement-the-nightly-soft-close-writes-the-elimination-entries-of-each-intercompany-relation-req-ice-011
+	 */
+	private function isEliminated(string $relationId, string $periodId): bool {
+		$found = $this->objectService
+			->setRegister($this->register())
+			->setSchema('EliminationJournal')
+			->findAll(['filters' => ['eliminationId' => 'elim-match-' . $relationId . '-' . $periodId]]);
+
+		return $found !== [];
+	}//end isEliminated()
 
 	/**
 	 * Generate the trial balance summary for the administratie + period.

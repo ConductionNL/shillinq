@@ -36,7 +36,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\EInvoice;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
@@ -45,14 +47,13 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates ARInvoice e-invoice generation, validation and Peppol dispatch.
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-final class EInvoiceService {
+final class EInvoiceService implements EInvoiceServiceInterface {
 	/**
 	 * CloudEvent type of the outbound request integriq's Peppol consumer reads
 	 * (REQ-SEIX-001).

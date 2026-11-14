@@ -6,10 +6,10 @@
 - [ ] Confirm hermiq's grant surface for a foreign app's tools: default-deny matrix (`ActionAuthService`), `scope`/`reach` keys read from the tool descriptor (`ToolReachResolver::REACH_KEY`), human-approval gating for `external`/`instance` writes.
 
 ## 2. Provider skeleton (decidesk reference shape)
-- [ ] `lib/Mcp/ShillinqToolProvider.php` — dispatcher + catalogue only; implements `OCA\OpenRegister\Mcp\IMcpToolProvider`; `getAppId(): 'shillinq'`; every id prefixed `shillinq.`; SPDX headers (hydra gate-1).
-- [ ] `lib/Mcp/McpAdministrationGate.php` — validate → load → not_found → authorise ladder per `decidesk/lib/Mcp/McpMeetingGate.php`; bool-returning helpers, no `catch(\Throwable)` swallow (hydra unsafe-auth-resolver gate), administration-scoped via the existing `AdministrationContextService`.
-- [ ] `lib/Mcp/McpArgumentValidator.php` — per-tool argument schemas, mirroring decidesk's validator.
-- [ ] Register the container alias `OCA\OpenRegister\Mcp\IMcpToolProvider::shillinq` in `lib/AppInfo/Application.php` with a string-name alias (no autoload trigger when OpenRegister is absent — decidesk ADR-083 pattern).
+- [x] `lib/Mcp/ShillinqToolProvider.php` — dispatcher + catalogue only; implements `OCA\OpenRegister\Mcp\IMcpToolProvider`; `getAppId(): 'shillinq'`; every id prefixed `shillinq.`; SPDX headers (hydra gate-1).
+- [x] `lib/Mcp/McpAdministrationGate.php` — validate → load → not_found → authorise ladder per `decidesk/lib/Mcp/McpMeetingGate.php`; bool-returning helpers, no `catch(\Throwable)` swallow (hydra unsafe-auth-resolver gate), administration-scoped via the existing `AdministrationContextService`. — refusals come back as structured results (`McpResult`), not exceptions
+- [x] `lib/Mcp/McpArgumentValidator.php` — per-tool argument schemas, mirroring decidesk's validator. — it also refuses argument names the tool does not declare
+- [x] Register the container alias `OCA\OpenRegister\Mcp\IMcpToolProvider::shillinq` in `lib/AppInfo/Application.php` with a string-name alias (no autoload trigger when OpenRegister is absent — decidesk ADR-083 pattern).
 
 ## 3. Tool handlers (one per catalogue row, REQ-MCP-004)
 - [ ] Invoicing: `invoice.draft` / `invoice.issue` / `invoice.render_pdf` / `invoice.send_einvoice` / `recurring_invoice.generate` — delegate to the exact service paths behind `InvoiceApiController` (`generate`/`post`/`pdf`), `ARInvoiceEInvoiceController`, `RecurringInvoiceGenerator`.
@@ -17,14 +17,14 @@
 - [ ] Payments + bank: `payment_run.export_sepa` / `payment_run.reconcile` (`PaymentRunController::export`/`reconcile`), `bank_statement.import` (`BankStatementImportController::import`), `bank_reconciliation.resolve` (`ReconciliationResolutionController::resolve`/`bulkResolve`).
 - [ ] VAT: `vat_return.create` / `vat_return.rebase` / `vat_return.submit` / `vat_return.destroy` (paths behind `VATReturnController`; destroy keeps the non-submitted-only constraint).
 - [ ] Expenses + time: `receipt.book` (receipt-extraction consume flow + `claimId` link), `expense_claim.approve` (`approvalState` transition), `hours.book` (`TimeIntakeService`).
-- [ ] Procurement + close: `requisition.create`/`submit`/`decide`/`convert` (`RequisitionController`), `purchase_order.decide` (`PurchaseOrderApprovalController::decide`), `period_close.status`/`start`/`close`/`reopen` (`PeriodCloseController`).
-- [ ] Annotate every write with `scope` + `reach` per the catalogue; every read with `readOnlyHint: true`; agent-facing descriptions in the zzz-fragment style (REQ-MCP-005).
-- [ ] Audit: every invocation (incl. refusals/failures) writes one immutable audit record — parity with `AuditTrailMapper::createToolInvocationEntry` (REQ-MCP-003).
+- [ ] Procurement + close: `requisition.create`/`submit`/`decide`/`convert` (`RequisitionController`), `purchase_order.decide` (`PurchaseOrderApprovalController::decide`), `period_close.status`/`start`/`close`/`reopen` (`PeriodCloseController`). — `purchase_order.decide` built (`McpPurchaseOrderTools`); requisition.* and period_close.* not yet
+- [ ] Annotate every write with `scope` + `reach` per the catalogue; every read with `readOnlyHint: true`; agent-facing descriptions in the zzz-fragment style (REQ-MCP-005). — done for the tools built so far; the catalogue test enforces it for every tool added later
+- [ ] Audit: every invocation (incl. refusals/failures) writes one immutable audit record — parity with `AuditTrailMapper::createToolInvocationEntry` (REQ-MCP-003). — built as one Nextcloud audit-log record per invocation (`McpInvocationAudit`, `CriticalActionPerformedEvent`: tool, principal, administration, outcome; refusals and failures included); not yet the OpenRegister hash-chained tool-invocation record
 
 ## 4. Tests
-- [ ] Unit: gate refusal parity — for at least `purchase_order.decide` and `vat_return.submit`, the gate refuses exactly where the controller twin would (subclass ObjectEntity-backed doubles; accessors are magic `__call` — subclass, don't mock).
-- [ ] Unit: catalogue invariants — every non-read tool declares both `scope` and `reach`; every read declares `readOnlyHint`; every id is `shillinq.`-prefixed; no CRUD-shaped tool duplicates a derived id.
-- [ ] Unit: validator rejects malformed arguments before any service call; a refused invocation still audits.
+- [ ] Unit: gate refusal parity — for at least `purchase_order.decide` and `vat_return.submit`, the gate refuses exactly where the controller twin would (subclass ObjectEntity-backed doubles; accessors are magic `__call` — subclass, don't mock). — done for `purchase_order.decide` (`McpPurchaseOrderDecideParityTest`, eight situations against the controller twin); `vat_return.submit` waits for its tool
+- [x] Unit: catalogue invariants — every non-read tool declares both `scope` and `reach`; every read declares `readOnlyHint`; every id is `shillinq.`-prefixed; no CRUD-shaped tool duplicates a derived id.
+- [x] Unit: validator rejects malformed arguments before any service call; a refused invocation still audits.
 
 ## 5. Live verification (shared :8080, both surfaces)
 - [ ] Enumerate tools after deploy: 24 derived + the catalogue count, no collisions, no duplicates.

@@ -29,8 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\SepaAuditService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SepaAuditServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,13 +50,13 @@ class SepaAuditController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request.
-	 * @param SepaAuditService $auditService The audit assembly service.
+	 * @param SepaAuditServiceInterface $auditService The audit assembly service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SepaAuditService $auditService,
+		private readonly SepaAuditServiceInterface $auditService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

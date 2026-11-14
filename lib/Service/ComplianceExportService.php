@@ -45,7 +45,8 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ListQuery;
 use OCA\OpenRegister\Db\RegisterMapper;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -67,7 +68,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
-class ComplianceExportService {
+class ComplianceExportService implements ComplianceExportServiceInterface {
 
 	/**
 	 * The export's columns, in order.
@@ -107,25 +108,11 @@ class ComplianceExportService {
 	];
 
 	/**
-	 * Default scope when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const SCOPE_ALL = 'all';
-
-	/**
 	 * GDPR subject-access scope per REQ-RAP-009.
 	 *
 	 * @var string
 	 */
 	public const SCOPE_SUBJECT = 'subject';
-
-	/**
-	 * Default format when the caller omits the parameter.
-	 *
-	 * @var string
-	 */
-	public const FORMAT_CSV = 'csv';
 
 	/**
 	 * JSON output format.

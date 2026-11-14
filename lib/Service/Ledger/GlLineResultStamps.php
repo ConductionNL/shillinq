@@ -34,14 +34,15 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Ledger;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Contracts\GlLineResultStampsInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Stamps accountClass and countsInResult on the lines of a transaction.
  */
-class GlLineResultStamps {
+class GlLineResultStamps implements GlLineResultStampsInterface {
 	use ReadsSourceRowsInBatches;
 
 	/**

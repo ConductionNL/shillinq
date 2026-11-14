@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\PublicSector\FidoQuarter;
+use OCA\Shillinq\Kernel\Contracts\FidoQuarterInterface;
 
 /**
  * The `compute` transition's executor.
@@ -40,10 +40,10 @@ class ComputeFidoQuarterAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param FidoQuarter $quarters Computes the Fido figures of a quarter.
+	 * @param FidoQuarterInterface $quarters Computes the Fido figures of a quarter.
 	 */
 	public function __construct(
-		private readonly FidoQuarter $quarters,
+		private readonly FidoQuarterInterface $quarters,
 	) {
 	}//end __construct()
 

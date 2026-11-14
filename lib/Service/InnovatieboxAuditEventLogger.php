@@ -40,7 +40,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxAuditEventLoggerInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -52,7 +53,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
-class InnovatieboxAuditEventLogger {
+class InnovatieboxAuditEventLogger implements InnovatieboxAuditEventLoggerInterface {
 
 	/**
 	 * The optional event fields, copied in this order when set.
@@ -60,20 +61,7 @@ class InnovatieboxAuditEventLogger {
 	 * @var array<int,string>
 	 */
 	private const OPTIONAL_FIELDS = ['financialYear', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'];
-	/**
-	 * Event type constants — mirror the enum on the InnovatieboxAuditEvent
-	 * schema (lib/Settings/register.d/bookkeeping-innovatiebox-administratie.json).
-	 *
-	 * @var string
-	 */
-	public const EVENT_NEXUS_CALCULATED = 'NexusCalculation.calculated';
-	public const EVENT_PROFIT_CREATED = 'IBProfitAttribution.created';
-	public const EVENT_PROFIT_FINALIZED = 'IBProfitAttribution.finalized';
-	public const EVENT_PROFIT_AMENDMENT_BLOCKED = 'IBProfitAttribution.amendment_attempt_blocked';
-	public const EVENT_LOSS_CREATED = 'CarryForwardLoss.created';
-	public const EVENT_LOSS_OFFSET_APPLIED = 'CarryForwardLoss.offset_applied';
 	public const EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN = 'cross_cutting_prohibition_check_run';
-	public const EVENT_FORFAITAIR_CAP_APPLIED = 'flatRateCapApplied';
 
 	/**
 	 * Construct the logger.

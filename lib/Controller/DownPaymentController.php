@@ -29,10 +29,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
-use OCA\Shillinq\Service\Sales\DownPaymentService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DownPaymentServiceInterface;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -71,15 +71,15 @@ class DownPaymentController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param DownPaymentService           $service The down-payment rules.
-	 * @param AdministrationContextService $context Administration access check.
+	 * @param DownPaymentServiceInterface           $service The down-payment rules.
+	 * @param AdministrationContextServiceInterface $context Administration access check.
 	 * @param IL10N                        $l10n    Translations for refusals.
 	 * @param LoggerInterface              $logger  Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly DownPaymentService $service,
-		private readonly AdministrationContextService $context,
+		private readonly DownPaymentServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {

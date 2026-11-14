@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUserSession;
@@ -41,20 +42,7 @@ use OCP\IUserSession;
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
  */
-final class PaymentActionAuthorizer {
-	/**
-	 * Raising a payment request on an object.
-	 *
-	 * @var string
-	 */
-	public const ACTION_REQUEST = 'payment.request';
-
-	/**
-	 * Administering a request: sending its link, settling it by other means.
-	 *
-	 * @var string
-	 */
-	public const ACTION_ADMINISTER = 'payment.administer';
+final class PaymentActionAuthorizer implements PaymentActionAuthorizerInterface {
 
 	/**
 	 * The app-config key mapping an action to the groups that carry it.

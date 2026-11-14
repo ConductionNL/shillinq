@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\Shillinq\Service\Vat\VatLineBackfill
  * @uses   \OCA\Shillinq\Service\Vat\VatLineStamper
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  */
 final class VatLineBackfillEdgeCaseTest extends TestCase {
 

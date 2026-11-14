@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
+use OCA\Shillinq\Kernel\Contracts\VoluntaryContributionPolicyInterface;
 use RuntimeException;
 
 /**
@@ -43,7 +44,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
  */
-final class VoluntaryContributionPolicy {
+final class VoluntaryContributionPolicy implements VoluntaryContributionPolicyInterface {
 	/**
 	 * The only stage a voluntary contribution may reach.
 	 *

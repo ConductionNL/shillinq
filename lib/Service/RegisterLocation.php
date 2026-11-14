@@ -23,7 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 
@@ -32,7 +33,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
  */
-class RegisterLocation {
+class RegisterLocation implements RegisterLocationInterface {
 
 	/**
 	 * Constructor.

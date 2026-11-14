@@ -36,6 +36,7 @@
 		"RecurringInvoicing": "Sales",
 		"PaymentRequests": "Sales",
 		"PaymentPlans": "Sales",
+		"InboundPayables": "BankingCashflow",
 		"RefundsToPay": "Sales",
 		"ARAging": "Sales",
 		"GoodsReceiptNotes": "Purchasing",

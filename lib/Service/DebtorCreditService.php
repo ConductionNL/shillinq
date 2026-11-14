@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -40,7 +41,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-003)
  */
-class DebtorCreditService {
+class DebtorCreditService implements DebtorCreditServiceInterface {
 
 	/**
 	 * App config key: the customer credit account.

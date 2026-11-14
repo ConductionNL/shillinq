@@ -28,7 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Schedule;
 
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCP\IGroupManager;
 
 /**
@@ -36,16 +37,16 @@ use OCP\IGroupManager;
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.8
  */
-class ReportRecipientPolicy {
+class ReportRecipientPolicy implements ReportRecipientPolicyInterface {
 
 	/**
 	 * Construct the policy.
 	 *
-	 * @param AdministrationContextService $administrations Who may read an administration.
+	 * @param AdministrationContextServiceInterface $administrations Who may read an administration.
 	 * @param IGroupManager|null           $groupManager    Group lookups; without it no group is allowed.
 	 */
 	public function __construct(
-		private readonly AdministrationContextService $administrations,
+		private readonly AdministrationContextServiceInterface $administrations,
 		private readonly ?IGroupManager $groupManager = null,
 	) {
 	}//end __construct()

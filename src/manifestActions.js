@@ -19,6 +19,11 @@ import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
+import {
+	approvePayable,
+	markPayablePaid,
+	rejectPayable,
+} from './utils/inboundPayableActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
@@ -55,6 +60,10 @@ export const manifestActions = Object.freeze({
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
+	// inbound-payable-from-another-app T2.1: the row actions on Payouts to pay.
+	approvePayable,
+	markPayablePaid,
+	rejectPayable,
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,

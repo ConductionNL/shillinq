@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\ObjectRequestSettlementRegistration;
+use OCA\Shillinq\Listener\Registration\ObjectRequestSettlementRegistration;
 use OCA\Shillinq\Controller\InboundPayableController;
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;

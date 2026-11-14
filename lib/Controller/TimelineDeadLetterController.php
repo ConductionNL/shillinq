@@ -42,9 +42,10 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -55,7 +56,6 @@ use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Admin endpoints over the timeline dead-letter queue.
@@ -67,7 +67,7 @@ class TimelineDeadLetterController extends Controller {
 	 * Construct the controller with its dependencies.
 	 *
 	 * @param IRequest $request The current HTTP request.
-	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService.
 	 * @param IJobList $jobList Background-job list for manual re-queue.
 	 * @param ITimeFactory $time Time factory for stamping dispatchedAt.
@@ -75,7 +75,7 @@ class TimelineDeadLetterController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly RegisterLocation $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly ITimeFactory $time,

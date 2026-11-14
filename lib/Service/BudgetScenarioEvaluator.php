@@ -70,6 +70,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioEvaluatorInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -79,7 +80,7 @@ use Throwable;
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
  */
-class BudgetScenarioEvaluator {
+class BudgetScenarioEvaluator implements BudgetScenarioEvaluatorInterface {
 	/**
 	 * The 12 monthly amount field names, in calendar order — matches
 	 * BudgetLine's own month01Amount..month12Amount fields.

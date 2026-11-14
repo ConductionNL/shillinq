@@ -4,9 +4,21 @@
 
 ## 1. Lines carry their box
 
-- [ ] 1.1 Add `vatTariffCode`, `vatReturnBox` and `vatAmountKind` to `GLLine`, and `returnBox` to `VATDeclaration` and `VATLine` (REQ-VBTW-004). Verify: `npm run check:registers`; re-import with no failed schemas.
-- [ ] 1.2 Stamp the three fields in the posting mappers from the line's tariff, including reverse charge to the owed box and 5b (REQ-VBTW-004). Verify: PHPUnit for a sale, a purchase, a split purchase and a reverse-charged purchase.
-- [ ] 1.3 Add a backfill repair step for posted lines from the tariff code, else the account's VAT settings, logging lines it cannot resolve (REQ-VBTW-004). Verify: repair run twice on a local instance stamps the seed lines once.
+- [x] 1.1 Add `vatTariffCode`, `vatReturnBox` and `vatAmountKind` to `GLLine`, and `returnBox` to `VATDeclaration` and `VATLine` (REQ-VBTW-004). Verify: `npm run check:registers`; re-import with no failed schemas.
+      DONE (b6fdad347): `lib/Settings/register.d/tax-vat-return-from-books.json` (GLLine, VATDeclaration and
+      VATLine at 0.2.0); `check:registers` passes. The live re-import is not re-run here.
+- [ ] 1.2 (sale, purchase and split purchase done and tested; the reverse-charged purchase is half done) Stamp the three fields in the posting mappers from the line's tariff, including reverse charge to the owed box and 5b (REQ-VBTW-004). Verify: PHPUnit for a sale, a purchase, a split purchase and a reverse-charged purchase.
+      State 2026-11-13: `VatLineStamper` plus `MaterialiseGlTransactionAction`, tested by
+      `testASaleAtTwoRatesBooksVatPerTariffWithItsBox`, `testAPurchaseInvoiceBooksExpenseVatAndPayables` and
+      `testASplitPurchaseBooksInputVatPerTariffInBox5b`. A reverse-charged purchase books its base in 2a, 4a or 4b
+      (`testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff`), but not the self-assessed VAT in the owed box
+      and 5b that design D1 asks for. That needs a rate: every reverse-charge tariff in
+      `lib/Settings/seeds/btw-tariffs-2026.json` has rate 0, and a purchase line carries only its tax code. Open
+      decision: where the rate of reverse-charged VAT comes from (a rate on the line, or a paired rate tariff).
+- [x] 1.3 Add a backfill repair step for posted lines from the tariff code, else the account's VAT settings, logging lines it cannot resolve (REQ-VBTW-004). Verify: repair run twice on a local instance stamps the seed lines once.
+      DONE (185ccd289): `lib/Repair/StampVatReturnBoxes.php` over `VatLineBackfill`, registered in info.xml;
+      `VatLineBackfillTest::testLinesWithATariffGetTheirBoxOnceAndASecondRunWritesNothing` covers the second run.
+      The run on a live instance is not repeated here.
 
 ## 2. One derivation
 

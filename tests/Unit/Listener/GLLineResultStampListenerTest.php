@@ -208,8 +208,8 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
-		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
+		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php') . (string)file_get_contents($root . '/lib/Listener/Registration/ListenerRegistrar.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
 		$this->assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);

@@ -42,6 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
 use OCA\Shillinq\Lifecycle\PaymentRunReconcileGuard;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use Psr\Container\ContainerInterface;
@@ -50,7 +51,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Matches CAMT.053 booked entries to a PaymentRun and drives exported → reconciled.
  */
-class PaymentRunReconciliationService {
+class PaymentRunReconciliationService implements PaymentRunReconciliationServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.

@@ -69,12 +69,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
+use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -87,7 +88,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
-class MaterialiseGlTransactionAction implements LifecycleActionInterface {
+class MaterialiseGlTransactionAction implements LifecycleActionInterface, MaterialiseGlTransactionActionInterface {
 
 	/**
 	 * App-config key: receivables control account (RGS 3.5 MKB 1100 Debiteuren).
@@ -104,25 +105,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	public const CFG_REVENUE_ACCOUNT = 'ledger_revenue_account';
 
 	/**
-	 * App-config key: output VAT account (RGS 3.5 MKB 2110 BTW-schuld).
-	 *
-	 * @var string
-	 */
-	public const CFG_OUTPUT_VAT_ACCOUNT = 'ledger_output_vat_account';
-
-	/**
 	 * App-config key: payables control account (RGS 3.5 MKB 2000 Crediteuren).
 	 *
 	 * @var string
 	 */
 	public const CFG_AP_CONTROL_ACCOUNT = 'ledger_ap_control_account';
-
-	/**
-	 * App-config key: input VAT account (RGS 3.5 MKB 1230 BTW-vordering).
-	 *
-	 * @var string
-	 */
-	public const CFG_INPUT_VAT_ACCOUNT = 'ledger_input_vat_account';
 
 	/**
 	 * App-config key: advances received (RGS 3.5 MKB 2310 Vooruitontvangen

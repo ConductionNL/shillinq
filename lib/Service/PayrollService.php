@@ -34,11 +34,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PayrollServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Period-scoped Dutch payroll processing over OpenRegister.
@@ -51,7 +52,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
-class PayrollService {
+class PayrollService implements PayrollServiceInterface {
 	/**
 	 * The journal totals (integer cents) before any payslip is added.
 	 *

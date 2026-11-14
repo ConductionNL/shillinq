@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Notification;
 
-use OCA\Shillinq\Listener\PosStockDecrementListener;
+use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
 use OCP\Notification\INotification;
 use OCP\Notification\UnknownNotificationException;
 
@@ -48,7 +48,7 @@ class PosStockUnmatchedLineNotifier extends AppNotifier {
 	 *
 	 * @var string
 	 */
-	protected const SUBJECT = PosStockDecrementListener::NOTIFICATION_SUBJECT_UNMATCHED;
+	protected const SUBJECT = PosStockDecrementListenerInterface::NOTIFICATION_SUBJECT_UNMATCHED;
 
 	/**
 	 * Prepare a `pos_stock_unmatched_line` notification for display.

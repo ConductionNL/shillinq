@@ -28,9 +28,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
-use OCA\Shillinq\Service\SoftCloseExecutor;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -59,14 +59,14 @@ class SoftCloseJob extends TimedJob {
 	 * Construct the cron job.
 	 *
 	 * @param ITimeFactory $time NC clock.
-	 * @param SoftCloseExecutor $executor Soft-close orchestration service.
+	 * @param SoftCloseExecutorInterface $executor Soft-close orchestration service.
 	 * @param ContainerInterface $container DI container for ObjectService lookup.
 	 * @param IAppConfig $appConfig App config for register slug.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SoftCloseExecutor $executor,
+		private readonly SoftCloseExecutorInterface $executor,
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,

@@ -27,9 +27,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Pivot\LedgerPivotService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\LedgerPivotServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,14 +48,14 @@ class LedgerPivotController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param AdministrationContextService $context The caller's administrations.
-	 * @param LedgerPivotService           $pivot   The pivot.
+	 * @param AdministrationContextServiceInterface $context The caller's administrations.
+	 * @param LedgerPivotServiceInterface           $pivot   The pivot.
 	 * @param LoggerInterface              $logger  The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly LedgerPivotService $pivot,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly LedgerPivotServiceInterface $pivot,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

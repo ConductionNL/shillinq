@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Budget;
 
 use OCA\Shillinq\Budget\BudgetEditingService;
-use OCA\Shillinq\Budget\BudgetEditRefusedException;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

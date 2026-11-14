@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\External\DepositPayment;
 
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;

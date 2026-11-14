@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -4410,6 +4424,26 @@
 					"route": "/overheid/fee-schedules/:id",
 					"type": "detail",
 					"title": "Fee schedule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InboundPayables",
+					"label": "Payouts to pay",
+					"icon": "CashFast",
+					"route": "InboundPayables",
+					"order": 26
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inbound-payable-from-another-app",
+					"id": "InboundPayables",
+					"route": "/banking/payouts-to-pay",
+					"type": "index",
+					"title": "Payouts to pay"
 				}
 			]
 		},

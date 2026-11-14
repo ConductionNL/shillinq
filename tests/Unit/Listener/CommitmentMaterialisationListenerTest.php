@@ -27,7 +27,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
-use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\MockObject\MockObject;

@@ -43,6 +43,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
-class InventoryMobileScannerService {
+class InventoryMobileScannerService implements InventoryMobileScannerServiceInterface {
 
 	/**
 	 * Dedup window in seconds. Re-uploads of the same transactionId within

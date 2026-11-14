@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\DownPaymentController;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
 use OCP\IL10N;
 use OCP\IRequest;

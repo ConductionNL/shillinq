@@ -32,13 +32,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use DateTimeImmutable;
+use OCA\Shillinq\Kernel\Contracts\DepreciationRunInterface;
 
 /**
  * One pass: post, refresh, release.
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
-class DepreciationRun {
+class DepreciationRun implements DepreciationRunInterface {
 
 	/**
 	 * Constructor.

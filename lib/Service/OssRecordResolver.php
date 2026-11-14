@@ -36,18 +36,19 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Reads OssReturn / OssPayment records through the real ObjectService API.
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class OssRecordResolver {
+class OssRecordResolver implements OssRecordResolverInterface {
 
 	/**
 	 * OssReturn schema slug.

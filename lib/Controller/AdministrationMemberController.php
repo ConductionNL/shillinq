@@ -27,10 +27,10 @@ namespace OCA\Shillinq\Controller;
 
 use DomainException;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\AdministrationManagementAccess;
-use OCA\Shillinq\Service\AdministrationMembershipService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationManagementAccessInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationMembershipServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,9 +51,9 @@ class AdministrationMemberController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request.
-	 * @param AdministrationMembershipService $memberships Membership writes.
-	 * @param AdministrationContextService $administrationContext The caller and their memberships.
-	 * @param AdministrationManagementAccess $managementAccess Owner or admin check.
+	 * @param AdministrationMembershipServiceInterface $memberships Membership writes.
+	 * @param AdministrationContextServiceInterface $administrationContext The caller and their memberships.
+	 * @param AdministrationManagementAccessInterface $managementAccess Owner or admin check.
 	 * @param IUserManager $userManager Existence check for the user to add.
 	 * @param IL10N $l10n Translated refusals.
 	 * @param LoggerInterface $logger Logger.
@@ -62,9 +62,9 @@ class AdministrationMemberController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationMembershipService $memberships,
-		private readonly AdministrationContextService $administrationContext,
-		private readonly AdministrationManagementAccess $managementAccess,
+		private readonly AdministrationMembershipServiceInterface $memberships,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly AdministrationManagementAccessInterface $managementAccess,
 		private readonly IUserManager $userManager,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

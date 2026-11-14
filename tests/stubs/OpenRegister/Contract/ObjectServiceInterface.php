@@ -1,46 +1,10 @@
 <?php
 
 /**
- * ObjectServiceInterface stub for unit tests that mock/typehint
- * OpenRegister's object service contract (ADR-084) without depending on the
- * OpenRegister app being autoloaded. Several controllers
- * (CBSSubmissionController, InvoiceApiController, and others) already
- * type-hint their constructor against this interface, and
- * `OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter` — wired
- * into 128 test classes per commit ef9c8fa5 ("wire the seeded OpenRegister
- * store back into 128 test classes") — already `implements` it. No
- * `Contract/` directory previously existed under tests/stubs/OpenRegister/,
- * so every one of those (and every test directly mocking this interface,
- * e.g. InvoiceApiControllerTest) fatal'd with "Interface ... not found"
- * before this file was added. When run inside a deployed Nextcloud tree
- * with OpenRegister installed, `lib/base.php` provides the real interface
- * and this stub is simply shadowed (same convention as the sibling stubs
- * registered in tests/bootstrap-unit.php).
+ * The data-access surface OpenRegister publishes to consuming apps.
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
- * The full 26-method surface (and every parameter name/type) is reverse
- * -derived from `DuckObjectServiceAdapter`'s own `implements
- * ObjectServiceInterface` — that adapter's docblock explicitly documents it
- * as "the published ADR-084 contract" and models every method the real
- * interface declares, throwing for the handful production never calls. This
- * stub's signatures are copied from that adapter verbatim so both it and
- * every duck-typed double it wraps stay assignment-compatible.
- *
- * `patchObject()` was added to the published contract in hydra-gates v1.8.1;
- * keep this stub's method count in step with the real interface, since this
- * stub — not the real one — is what the local unit suite loads, and a gap
- * here is invisible until a deployed-Nextcloud CI run fatals at class load.
- *
- * @category Test
- * @package  OCA\Shillinq\Tests
- *
- * @author    Conduction Development Team <info@conduction.nl>
- * @copyright 2026 Conduction B.V.
- * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * @link https://conduction.nl
+ * @license EUPL-1.2
+ * @copyright Conduction B.V.
  */
 
 declare(strict_types=1);
@@ -50,342 +14,370 @@ namespace OCA\OpenRegister\Contract;
 use OCP\IUser;
 
 /**
- * Stub for OCA\OpenRegister\Contract\ObjectServiceInterface used by shillinq tests.
+ * OpenRegister's object store, as a consuming app sees it (ADR-022, ADR-083).
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the real 26-method contract.
+ * ## Why this exists
  *
- * phpcs:disable CustomSniffs.Functions.NamedParameters
+ * A leaf app cannot mock what it cannot load. OpenRegister's concrete classes
+ * are absent from a leaf app's standalone composer test environment, so every
+ * consuming app either reaches through an untyped `ContainerInterface` --
+ * hiding the dependency from readers and tooling alike -- or hand-rolls a
+ * double.
+ *
+ * The doubles are not a hypothetical cost. Measured 2026-08-14, TEN of the
+ * sixteen consuming apps already ship one:
+ *
+ *     opencatalogi 13   docudesk 12   openbuild 12   openconnector 10
+ *     hermiq        8   pipelinq  7
+ *     softwarecatalog, zaakafhandelapp, scholiq, decidesk: 0
+ *
+ * Against a real class of 88 methods. Their UNION is 23 -- ten files, ten
+ * maintainers, and between them barely a quarter of the surface. The four
+ * declaring zero methods are empty shells: they satisfy a type-hint and
+ * nothing else, so any call through them is unchecked by construction.
+ *
+ * That is what this interface replaces: one definition, owned by the app that
+ * implements it, which cannot drift from the implementation without PHP
+ * refusing to declare the class.
+ *
+ * ## Scope is measured, not guessed
+ *
+ * The first draft of this file carried the eight most-called methods. Counted
+ * per CALL that looked convincing; counted per CLASS it was not, because a
+ * class can only type-hint the interface if EVERY method it calls is on it:
+ *
+ *     8 methods  ->  587 of 1001 consumer classes ( 58%)
+ *
+ * 414 classes -- the apps that would have had to keep their container hop --
+ * were invisible in the per-call ranking. Re-measured per class, resolving the
+ * receiver to OpenRegister's `ObjectService` (two apps ship a local class of
+ * the same name, which the first count silently folded in):
+ *
+ *     829 consumer classes call 28 distinct methods.
+ *
+ * This interface declared 25 of them, covering 819 of the 829 classes (98.8%).
+ * `patchObject()` was added afterwards and is the 26th. It is NOT part of that
+ * measurement — no consumer called it, because it was not reachable through
+ * this contract. It is published because `updateObject()` REPLACES, so a
+ * consumer holding a partial payload had no correct method to call and either
+ * hand-rolled read-merge-write or silently erased the fields it omitted.
+ * `appendObjectsRaw()` and `purgeExpiredObjectsRaw()` were added 2026-09-04
+ * for the traffic-analytics collector, which writes thousands of rows a
+ * minute that no person edits: the normal save path's per-row RBAC, audit,
+ * validation and events are exactly the cost it cannot pay. They are the raw
+ * bulk path made reachable through the contract, and they carry the same
+ * responsibility model as `_rbac: false`.
+ * The four it omits are omitted for a reason, and the ten classes they hold
+ * back are listed rather than left to be discovered:
+ *
+ *     renderEntity()     takes a concrete `ObjectEntity`. An interface
+ *                        parameter of `ObjectEntityInterface` would be WIDER
+ *                        than the implementation accepts, which PHP rejects.
+ *                        Widening the implementation instead is a real change
+ *                        with real risk, so it is a separate decision.
+ *                        Blocks 5: opencatalogi PublicationsController,
+ *                        openconnector SynchronizationService, zaakafhandelapp
+ *                        ZGWZaak{Lifecycle,Validation}Service and ZGWLogicService.
+ *     getMapper()        returns ObjectServiceMapperAdapter -- an OpenRegister
+ *                        type. It is an escape hatch that leaks the
+ *                        implementation whatever we do here. Blocks 3:
+ *                        openconnector EndpointService, LtiNrpsService,
+ *                        PdokConnector.
+ *     getOpenRegisters() is not ours. It is declared on zaakafhandelapp's OWN
+ *                        `ObjectService` -- a locator returning this service.
+ *                        Two apps ship a local class of that name, which is
+ *                        why receiver resolution matters here. Blocks 3
+ *                        openconnector classes, all of which mean their own.
+ *     getLockInfo()      is not a method of ObjectService at all; it lives on
+ *                        LockHandler. openbuild's VersionPromotionService
+ *                        calls it on an ObjectService-typed property and
+ *                        suppressed the resulting PHPStan `method.notFound`.
+ *                        Wrapped in `catch (Throwable)`, so it has been
+ *                        silently returning null rather than locking. Blocks 1,
+ *                        and wants fixing on its own terms.
+ *
+ * ## Types
+ *
+ * Parameters are narrowed to what a consumer can express -- identifiers, not
+ * OpenRegister entities. PHP's parameter contravariance lets the
+ * implementation go on accepting `Register|Schema` objects as well, so nothing
+ * inside OpenRegister changes.
+ *
+ * Returns are the entity INTERFACE, satisfied covariantly by the concrete
+ * `ObjectEntity`.
+ *
+ * `saveObject()` takes `array`, not `array|ObjectEntityInterface`. The
+ * implementation accepts `array|ObjectEntity`, and `array|ObjectEntity` is
+ * NARROWER than `array|ObjectEntityInterface` -- so declaring the union here
+ * makes OpenRegister's own class illegal. A compatibility probe caught that
+ * before this shipped.
+ *
+ * ## RBAC
+ *
+ * `$_rbac` and `$_multitenancy` are part of the contract, not an
+ * implementation detail. ADR-022 makes OpenRegister the authorisation boundary
+ * for object access; a consumer passing `_rbac: false` is declaring that
+ * OpenRegister is NOT authorising the call, and gate-7 reads it that way.
+ *
+ * ## Changing this file
+ *
+ * Widening the contract is a deliberate act and should follow a measurement,
+ * not a convenience. Narrowing it is a BC break for every consuming app.
+ *
+ * ## Suppressions
+ *
+ * The same three PHPMD rules `ObjectService` itself already suppresses, for the
+ * same reasons, because THIS FILE CANNOT DIFFER FROM THE SIGNATURES IT
+ * DESCRIBES. Splitting `saveObject()` into flag-free methods here would simply
+ * make the interface no longer implementable.
+ *
+ * `$_rbac` and `$_multitenancy` in particular are not incidental flags: ADR-022
+ * makes them the authorisation boundary, and gate-7 reads `_rbac: false` as a
+ * consumer declaring it has taken that responsibility on. They belong in the
+ * contract precisely because they are load-bearing.
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)   RBAC and multitenancy flags — see above.
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList) Mirrors ObjectService::saveObject().
+ * @SuppressWarnings(PHPMD.ExcessivePublicCount)  28 methods: 26 measured (see Scope above) plus the two raw entry points.
  */
 interface ObjectServiceInterface {
 
 	/**
+	 * Persist an object, creating or updating it.
+	 *
+	 * @param array           $object        The object to store.
+	 * @param ?array          $extend        Relations to expand on the result.
+	 * @param string|int|null $register      Register id, UUID or slug.
+	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param ?string         $uuid          The object UUID.
+	 * @param bool            $_rbac         Apply register RBAC.
+	 * @param bool            $_multitenancy Apply organisation scoping.
+	 * @param bool            $silent        Suppress events for this save.
+	 * @param bool            $_validation   Validate against the schema.
+	 * @param ?array          $uploadedFiles Files uploaded alongside the object.
+	 * @param ?IUser          $currentUser   Explicit acting user; null uses the session.
+	 * @param bool            $failIfExists  Fail instead of updating when the object already exists.
+	 *
+	 * @return ObjectEntityInterface The stored object.
+	 */
+	public function saveObject(
+		array $object,
+		?array $extend=[],
+		string|int|null $register=null,
+		string|int|null $schema=null,
+		?string $uuid=null,
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		bool $silent=false,
+		bool $_validation=true,
+		?array $uploadedFiles=null,
+		?IUser $currentUser=null,
+		bool $failIfExists=false
+	): ObjectEntityInterface;
+
+	/**
 	 * Scope subsequent calls to a register.
 	 *
-	 * @param string|int $register Register slug or id.
+	 * @param string|int $register Register id, UUID or slug.
 	 *
-	 * @return static
+	 * @return static This service, for chaining.
 	 */
 	public function setRegister(string|int $register): static;
 
 	/**
+	 * Find a single object by id, UUID or slug.
+	 *
+	 * @param int|string      $id            Object id, UUID or slug.
+	 * @param ?array          $_extend       Relations to expand on the result.
+	 * @param bool            $files         Include file metadata.
+	 * @param string|int|null $register      Register id, UUID or slug.
+	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param bool            $_rbac         Apply register RBAC.
+	 * @param bool            $_multitenancy Apply organisation scoping.
+	 * @param bool            $_render       Render the entity before returning it.
+	 * @param bool            $_audit        Write an audit-trail entry.
+	 *
+	 * @return ?ObjectEntityInterface The object, or null when absent or not permitted.
+	 */
+	public function find(
+		int|string $id,
+		?array $_extend=[],
+		bool $files=false,
+		string|int|null $register=null,
+		string|int|null $schema=null,
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		bool $_render=true,
+		bool $_audit=true
+	): ?ObjectEntityInterface;
+
+	/**
+	 * Find every object matching a configuration.
+	 *
+	 * @param array $config        Filters, limit, offset, sort and search.
+	 * @param bool  $_rbac         Apply register RBAC.
+	 * @param bool  $_multitenancy Apply organisation scoping.
+	 *
+	 * @return array The matching objects.
+	 */
+	public function findAll(
+		array $config=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true
+	): array;
+
+	/**
 	 * Scope subsequent calls to a schema.
 	 *
-	 * @param string|int $schema Schema slug or id.
+	 * @param string|int $schema Schema id, UUID or slug.
 	 *
-	 * @return static
+	 * @return static This service, for chaining.
 	 */
 	public function setSchema(string|int $schema): static;
 
 	/**
-	 * Drop the register/schema scope.
+	 * Search objects with a query.
+	 *
+	 * @param array   $query         The search query.
+	 * @param bool    $_rbac         Apply register RBAC.
+	 * @param bool    $_multitenancy Apply organisation scoping.
+	 * @param ?array  $ids           Restrict the search to these ids.
+	 * @param ?string $uses          Restrict to objects used by this one.
+	 * @param ?array  $views         Restrict the search to these views.
+	 *
+	 * @return array|int Results, or a count when the query asks for one.
+	 */
+	public function searchObjects(
+		array $query=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		?array $ids=null,
+		?string $uses=null,
+		?array $views=null
+	): array|int;
+
+	/**
+	 * Delete an object by UUID.
+	 *
+	 * @param string          $uuid            The object UUID.
+	 * @param string|int|null $register        Register id, UUID or slug.
+	 * @param string|int|null $schema          Schema id, UUID or slug.
+	 * @param bool            $_rbac           Apply register RBAC.
+	 * @param bool            $_multitenancy   Apply organisation scoping.
+	 * @param bool            $_retentionSweep Run as part of a retention sweep.
+	 * @param ?IUser          $currentUser     Explicit acting user; null uses the session.
+	 * @param bool            $permanent       Delete permanently instead of soft-deleting.
+	 *
+	 * @return bool True when the object was deleted.
+	 */
+	public function deleteObject(
+		string $uuid,
+		string|int|null $register=null,
+		string|int|null $schema=null,
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		bool $_retentionSweep=false,
+		?IUser $currentUser=null,
+		bool $permanent=false
+	): bool;
+
+	/**
+	 * Search objects and return a paginated result set.
+	 *
+	 * @param array   $query         The search query.
+	 * @param bool    $_rbac         Apply register RBAC.
+	 * @param bool    $_multitenancy Apply organisation scoping.
+	 * @param bool    $deleted       Include soft-deleted objects.
+	 * @param ?array  $ids           Restrict the search to these ids.
+	 * @param ?string $uses          Restrict to objects used by this one.
+	 * @param ?array  $views         Restrict the search to these views.
+	 *
+	 * @return array Results plus pagination metadata.
+	 */
+	public function searchObjectsPaginated(
+		array $query=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		bool $deleted=false,
+		?array $ids=null,
+		?string $uses=null,
+		?array $views=null
+	): array;
+
+	/**
+	 * Search objects by register and schema SLUG.
+	 *
+	 * Resolves the slugs to ids first. `findAll()` and `searchObjects()` take
+	 * NUMERIC ids and return nothing for a slug, silently -- which is why this
+	 * method exists and why it is on the contract.
+	 *
+	 * @param string $registerSlug  The register slug.
+	 * @param string $schemaSlug    The schema slug.
+	 * @param array  $filters       Equality filters.
+	 * @param bool   $_rbac         Apply register RBAC.
+	 * @param bool   $_multitenancy Apply organisation scoping.
+	 *
+	 * @return array|int The matching objects, or a count.
+	 */
+	public function searchObjectsBySlug(
+		string $registerSlug,
+		string $schemaSlug,
+		array $filters=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true
+	): array|int;
+
+	/**
+	 * Drop the register/schema scope set by setRegister()/setSchema().
 	 *
 	 * @return void
 	 */
 	public function clearCurrents(): void;
 
 	/**
-	 * List objects matching a filter/paging config.
+	 * Translate raw request parameters into a search query.
 	 *
-	 * @param array $config Filters, limit, offset, sort and search.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
+	 * @param array                 $requestParams Raw request parameters.
+	 * @param int|string|array|null $register      Register id, UUID or slug.
+	 * @param int|string|array|null $schema        Schema id, UUID or slug.
+	 * @param ?array                $ids           Restrict the search to these ids.
 	 *
-	 * @return array
-	 */
-	public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array;
-
-	/**
-	 * Fetch a single object by id.
-	 *
-	 * @param int|string $id Object id, UUID or slug.
-	 * @param ?array $_extend Relations to expand.
-	 * @param bool $files Include file metadata.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $_render Render the entity.
-	 * @param bool $_audit Write an audit entry.
-	 *
-	 * @return ?ObjectEntityInterface
-	 */
-	public function find(
-		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
-	): ?ObjectEntityInterface;
-
-	/**
-	 * Create or update an object.
-	 *
-	 * @param array $object Object payload.
-	 * @param ?array $extend Relations to expand.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
-	 * @param ?string $uuid Explicit UUID.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $silent Suppress events.
-	 * @param bool $_validation Validate against the schema.
-	 * @param ?array $uploadedFiles Files uploaded alongside.
-	 * @param ?IUser $currentUser Explicit acting user.
-	 * @param bool $failIfExists Fail instead of updating.
-	 *
-	 * @return ObjectEntityInterface
-	 */
-	public function saveObject(
-		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
-	): ObjectEntityInterface;
-
-	/**
-	 * Count rows the given query would return.
-	 *
-	 * @param array $config Filters, limit, offset, sort and search.
-	 *
-	 * @return int
-	 */
-	public function count(array $config = []): int;
-
-	/**
-	 * Scoped list query by register/schema slug.
-	 *
-	 * @param string $registerSlug The register slug.
-	 * @param string $schemaSlug The schema slug.
-	 * @param array $filters Equality filters.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 *
-	 * @return array|int
-	 */
-	public function searchObjectsBySlug(
-		string $registerSlug,
-		string $schemaSlug,
-		array $filters = [],
-		bool $_rbac = true,
-		bool $_multitenancy = true
-	): array|int;
-
-	/**
-	 * Apply a partial update to an object.
-	 *
-	 * @param string $objectId The object UUID or id.
-	 * @param array $data The fields to change.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 *
-	 * @return ObjectEntityInterface
-	 */
-	public function updateObject(
-		string $objectId,
-		array $data,
-		bool $_rbac = true,
-		bool $_multitenancy = true
-	): ObjectEntityInterface;
-
-	/**
-	 * Merge a partial update onto a stored object.
-	 *
-	 * Added to the published contract in hydra-gates v1.8.1 (@contract-shift,
-	 * openregister#2543). Every `implements ObjectServiceInterface` test
-	 * double must declare this method or fatal at class load in a deployed
-	 * Nextcloud tree, where the real OpenRegister interface — not this stub —
-	 * is the one that is actually loaded.
-	 *
-	 * @param string $objectId The object UUID or id.
-	 * @param array $data The partial data to merge. Omitted keys are preserved.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?IUser $currentUser Explicit acting user; null uses the session.
-	 *
-	 * @return ObjectEntityInterface
-	 */
-	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
-	): ObjectEntityInterface;
-
-	/**
-	 * Find without audit or read events.
-	 *
-	 * @param string $id Object id, UUID or slug.
-	 * @param ?array $_extend Relations to expand.
-	 * @param bool $files Include file metadata.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 *
-	 * @return ObjectEntityInterface
-	 */
-	public function findSilent(
-		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		bool $_rbac = true,
-		bool $_multitenancy = true
-	): ObjectEntityInterface;
-
-	/**
-	 * Run an operation with system privileges.
-	 *
-	 * No return type is declared — mirrors
-	 * `DuckObjectServiceAdapter::runAsSystem()`, the reference implementer,
-	 * which also declares none (an explicit `: mixed` here would be
-	 * incompatible with an implementation that omits the return type
-	 * entirely).
-	 *
-	 * @param callable $operation The operation to run.
-	 *
-	 * @return mixed
-	 */
-	public function runAsSystem(callable $operation);
-
-	/**
-	 * The currently-held context object, if any.
-	 *
-	 * @return ?ObjectEntityInterface
-	 */
-	public function getObject(): ?ObjectEntityInterface;
-
-	/**
-	 * Full-text/faceted object search.
-	 *
-	 * @param array $query The search query.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?array $ids Restrict to these ids.
-	 * @param ?string $uses Restrict to objects used by this one.
-	 * @param ?array $views Restrict to these views.
-	 *
-	 * @return array|int
-	 */
-	public function searchObjects(
-		array $query = [],
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null
-	): array|int;
-
-	/**
-	 * Delete an object by id.
-	 *
-	 * @param string $uuid The object UUID.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $_retentionSweep Run as part of a retention sweep.
-	 * @param ?IUser $currentUser Explicit acting user.
-	 * @param bool $permanent Delete permanently.
-	 *
-	 * @return bool
-	 */
-	public function deleteObject(
-		string $uuid,
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_retentionSweep = false,
-		?IUser $currentUser = null,
-		bool $permanent = false
-	): bool;
-
-	/**
-	 * Paginated full-text/faceted object search.
-	 *
-	 * @param array $query The search query.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $deleted Include soft-deleted objects.
-	 * @param ?array $ids Restrict to these ids.
-	 * @param ?string $uses Restrict to objects used by this one.
-	 * @param ?array $views Restrict to these views.
-	 *
-	 * @return array
-	 */
-	public function searchObjectsPaginated(
-		array $query = [],
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $deleted = false,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null
-	): array;
-
-	/**
-	 * Build a search query from raw request parameters.
-	 *
-	 * @param array $requestParams Raw request parameters.
-	 * @param int|string|array|null $register Register id, UUID or slug.
-	 * @param int|string|array|null $schema Schema id, UUID or slug.
-	 * @param ?array $ids Restrict to these ids.
-	 *
-	 * @return array
+	 * @return array The search query.
 	 */
 	public function buildSearchQuery(
 		array $requestParams,
-		int|string|array|null $register = null,
-		int|string|array|null $schema = null,
-		?array $ids = null
+		int|string|array|null $register=null,
+		int|string|array|null $schema=null,
+		?array $ids=null
 	): array;
 
 	/**
-	 * Bulk-persist objects.
+	 * Persist many objects in one bulk operation.
 	 *
-	 * @param array $objects The objects to store.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $validation Validate against the schema.
-	 * @param bool $events Emit events for each object.
-	 * @param bool $deduplicateIds Drop duplicate ids.
-	 * @param bool $enrich Enrich each object.
-	 * @param bool $_audit Write an audit-trail entry.
+	 * @param array           $objects        The objects to store.
+	 * @param string|int|null $register       Register id, UUID or slug.
+	 * @param string|int|null $schema         Schema id, UUID or slug.
+	 * @param bool            $_rbac          Apply register RBAC.
+	 * @param bool            $_multitenancy  Apply organisation scoping.
+	 * @param bool            $validation     Validate against the schema.
+	 * @param bool            $events         Emit events for each object.
+	 * @param bool            $deduplicateIds Drop duplicate ids within the batch.
+	 * @param bool            $enrich         Enrich each object with derived metadata.
+	 * @param bool            $_audit         Write an audit-trail entry.
 	 *
-	 * @return array
+	 * @return array The stored objects.
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $_audit = true
+		string|int|null $register=null,
+		string|int|null $schema=null,
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		bool $validation=false,
+		bool $events=false,
+		bool $deduplicateIds=true,
+		bool $enrich=true,
+		bool $_audit=true
 	): array;
 
 	/**
@@ -444,116 +436,268 @@ interface ObjectServiceInterface {
 	public function purgeExpiredObjectsRaw(string|int $register, string|int $schema): int;
 
 	/**
-	 * Release an advisory lock.
+	 * Run an operation with system privileges, bypassing user scoping.
 	 *
-	 * @param string|int $identifier The object id or UUID.
-	 * @param bool $advisory Take an advisory lock.
+	 * @param callable $operation The operation to run.
 	 *
-	 * @return bool
+	 * @return mixed Whatever the operation returns.
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool;
+	public function runAsSystem(callable $operation);
 
 	/**
-	 * Take an advisory lock.
+	 * Count objects in the current register/schema context.
 	 *
-	 * @param string $identifier The object id or UUID.
-	 * @param ?string $process A label for the holding process.
-	 * @param ?int $duration Lock duration in seconds.
-	 * @param bool $advisory Take an advisory lock.
+	 * @param array $config Filters, limit, offset, sort and search.
 	 *
-	 * @return array
+	 * @return int The number of matching objects.
+	 */
+	public function count(array $config=[]): int;
+
+	/**
+	 * Release a lock on an object.
+	 *
+	 * @param string|int $identifier The object id or UUID.
+	 * @param bool       $advisory   Take an advisory (non-blocking) lock.
+	 * @param ?string    $runUuid    The flow run releasing the lock, for a run-scoped lock.
+	 *
+	 * @return bool True when the lock was released.
+	 */
+	public function unlockObject(string|int $identifier, bool $advisory=false, ?string $runUuid=null): bool;
+
+	/**
+	 * Take a lock on an object.
+	 *
+	 * @param string  $identifier The object id or UUID.
+	 * @param ?string $process    A label for the process holding the lock.
+	 * @param ?int    $duration   Lock duration in seconds.
+	 * @param bool    $advisory   Take an advisory (non-blocking) lock.
+	 * @param ?string $runUuid    The flow run taking the lock. A run-scoped lock
+	 *                            refuses every other caller, the run's own runAs
+	 *                            user included.
+	 * @param ?string $nodeId     The flow node that took it, recorded for the sweep.
+	 *
+	 * @return array The resulting lock state.
 	 */
 	public function lockObject(
 		string $identifier,
-		?string $process = null,
-		?int $duration = null,
-		bool $advisory = false
+		?string $process=null,
+		?int $duration=null,
+		bool $advisory=false,
+		?string $runUuid=null,
+		?string $nodeId=null
 	): array;
 
 	/**
-	 * Bulk-delete objects.
+	 * Delete many objects by UUID.
 	 *
-	 * @param array $uuids The object UUIDs.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
+	 * @param array $uuids         The object UUIDs.
+	 * @param bool  $_rbac         Apply register RBAC.
+	 * @param bool  $_multitenancy Apply organisation scoping.
 	 *
-	 * @return array
+	 * @return array Per-UUID delete results.
 	 */
-	public function deleteObjects(array $uuids = [], bool $_rbac = true, bool $_multitenancy = true): array;
+	public function deleteObjects(
+		array $uuids=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true
+	): array;
 
 	/**
-	 * Fetch an object's audit log.
+	 * The audit-trail rows for an object.
 	 *
-	 * @param string $uuid The object UUID.
-	 * @param array $filters Equality filters.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
+	 * @param string $uuid          The object UUID.
+	 * @param array  $filters       Equality filters.
+	 * @param bool   $_rbac         Apply register RBAC.
+	 * @param bool   $_multitenancy Apply organisation scoping.
 	 *
-	 * @return array
+	 * @return array The audit-trail rows.
 	 */
-	public function getLogs(string $uuid, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): array;
+	public function getLogs(
+		string $uuid,
+		array $filters=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true
+	): array;
 
 	/**
-	 * Objects the given object uses (outgoing relations).
+	 * REPLACE an existing object's data wholesale. This does NOT merge.
 	 *
-	 * @param string $objectId The object UUID.
-	 * @param array $query The search query.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
+	 * `$data` becomes the object's data in full. It is PUT semantics: a property
+	 * that is stored but absent from `$data` is NOT left alone — it is written
+	 * away. Sending `['status' => 'withdrawn']` for an object that also holds a
+	 * title, a summary and three dates stores an object with a status and
+	 * nothing else, and returns successfully while doing it.
 	 *
-	 * @return array
+	 * This docblock previously read "apply a partial update", which is the
+	 * opposite of what the method does. A caller who migrated a one-key update
+	 * onto that description silently erased every field it did not send. If you
+	 * want partial-update semantics, call `patchObject()` — it reads, merges and
+	 * saves, and it is on this contract for exactly that reason.
+	 *
+	 * Replace semantics are deliberate and unchanged: existing callers pass a
+	 * complete object and depend on an omitted property being cleared.
+	 *
+	 * @param string $objectId      The object UUID.
+	 * @param array  $data          The object's COMPLETE new data. Anything omitted is dropped.
+	 * @param bool   $_rbac         Apply register RBAC.
+	 * @param bool   $_multitenancy Apply organisation scoping.
+	 *
+	 * @return ObjectEntityInterface The replaced object.
+	 *
+	 * @see self::patchObject() for the merging counterpart.
+	 */
+	public function updateObject(
+		string $objectId,
+		array $data,
+		bool $_rbac=true,
+		bool $_multitenancy=true
+	): ObjectEntityInterface;
+
+	/**
+	 * MERGE a partial payload onto an existing object, leaving the rest intact.
+	 *
+	 * This is the PATCH-semantic counterpart to `updateObject()`, and the one a
+	 * caller holding an incomplete payload wants. The read-merge-save cycle
+	 * lives here, once, rather than being reimplemented by every consumer.
+	 *
+	 * MERGE RULES (RFC 7386 shaped):
+	 *  - a key present with a non-null value overwrites the stored value;
+	 *  - a key ABSENT from the payload leaves the stored value untouched;
+	 *  - a key present with an explicit `null` clears the stored value, so
+	 *    "unset this" stays expressible and distinct from "not mentioned";
+	 *  - two associative arrays merge recursively on the same three rules;
+	 *  - lists (JSON arrays) are replaced wholesale, never element-merged.
+	 *
+	 * The merged result goes through the same save path as `saveObject()`, so
+	 * schema validation, the audit trail and event dispatch all still apply.
+	 *
+	 * @param string          $objectId      Object id, UUID or slug.
+	 * @param array           $data          The partial data to merge. Omitted keys are PRESERVED.
+	 * @param string|int|null $register      Register id, UUID or slug.
+	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param bool            $_rbac         Apply register RBAC.
+	 * @param bool            $_multitenancy Apply organisation scoping.
+	 * @param ?IUser          $currentUser   Explicit acting user; null uses the session.
+	 *                                       Non-HTTP callers (cron, flow runs, imports)
+	 *                                       should pass one to avoid a default-deny.
+	 *
+	 * @return ObjectEntityInterface The patched object.
+	 *
+	 * @see self::updateObject() for the replacing counterpart.
+	 *
+	 * @contract-shift announced — openregister#2543 sweeps every fleet app for
+	 * `implements ObjectServiceInterface` and names the THREE test doubles that
+	 * must declare this method or fatal at class load: pipelinq
+	 * tests/Stubs/Service/ObjectService.php (with its paired
+	 * tests/Stubs/Contract/ObjectServiceInterface.php), and shillinq
+	 * tests/Unit/Service/Support/{InMemoryObjectServiceStub,DuckObjectServiceAdapter}.php.
+	 * docudesk tests/stubs/OpenRegisterStubs.php wants the same for parity but
+	 * implements nothing, so it cannot fatal. All 239 createMock() sites are
+	 * unaffected — a generated mock tracks whatever the interface declares. The
+	 * break lands on a `conduction/hydra-gates` RELEASE carrying this contract,
+	 * not on this merge, because leaf apps read it from vendor/: land those
+	 * three doubles before the release, or pin.
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register=null,
+		string|int|null $schema=null,
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		?IUser $currentUser=null
+	): ObjectEntityInterface;
+
+	/**
+	 * The objects this object refers to.
+	 *
+	 * @param string $objectId      The object UUID.
+	 * @param array  $query         The search query.
+	 * @param bool   $_rbac         Apply register RBAC.
+	 * @param bool   $_multitenancy Apply organisation scoping.
+	 *
+	 * @return array The referenced objects.
 	 */
 	public function getObjectUses(
 		string $objectId,
-		array $query = [],
-		bool $_rbac = true,
-		bool $_multitenancy = true
+		array $query=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true
 	): array;
 
 	/**
-	 * Objects that use the given object (incoming relations).
+	 * The objects that refer to this object.
 	 *
-	 * @param string $objectId The object UUID.
-	 * @param array $query The search query.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
+	 * @param string $objectId      The object UUID.
+	 * @param array  $query         The search query.
+	 * @param bool   $_rbac         Apply register RBAC.
+	 * @param bool   $_multitenancy Apply organisation scoping.
 	 *
-	 * @return array
+	 * @return array The referring objects.
 	 */
 	public function getObjectUsedBy(
 		string $objectId,
-		array $query = [],
-		bool $_rbac = true,
-		bool $_multitenancy = true
+		array $query=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true
 	): array;
 
 	/**
-	 * Find objects by a relation term.
+	 * Find objects that relate to a given search term.
 	 *
-	 * @param string $search The term to match relations against.
-	 * @param bool $partialMatch Match relations partially.
+	 * @param string $search       The term to match relations against.
+	 * @param bool   $partialMatch Match relations partially.
 	 *
-	 * @return array
+	 * @return array The related objects.
 	 */
-	public function findByRelations(string $search, bool $partialMatch = true): array;
+	public function findByRelations(string $search, bool $partialMatch=true): array;
 
 	/**
-	 * Count a search query's results without fetching them.
+	 * Find an object without emitting audit or read events.
 	 *
-	 * @param array $query The search query.
-	 * @param bool $_rbac Apply register RBAC.
-	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?array $ids Restrict to these ids.
-	 * @param ?string $uses Restrict to objects used by this one.
+	 * @param string          $id            Object id, UUID or slug.
+	 * @param ?array          $_extend       Relations to expand on the result.
+	 * @param bool            $files         Include file metadata.
+	 * @param string|int|null $register      Register id, UUID or slug.
+	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param bool            $_rbac         Apply register RBAC.
+	 * @param bool            $_multitenancy Apply organisation scoping.
 	 *
-	 * @return int
+	 * @return ObjectEntityInterface The object.
+	 */
+	public function findSilent(
+		string $id,
+		?array $_extend=[],
+		bool $files=false,
+		string|int|null $register=null,
+		string|int|null $schema=null,
+		bool $_rbac=true,
+		bool $_multitenancy=true
+	): ObjectEntityInterface;
+
+	/**
+	 * Count the objects a search query would return.
+	 *
+	 * @param array   $query         The search query.
+	 * @param bool    $_rbac         Apply register RBAC.
+	 * @param bool    $_multitenancy Apply organisation scoping.
+	 * @param ?array  $ids           Restrict the search to these ids.
+	 * @param ?string $uses          Restrict to objects used by this one.
+	 *
+	 * @return int The number of matching objects.
 	 */
 	public function countSearchObjects(
-		array $query = [],
-		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null
+		array $query=[],
+		bool $_rbac=true,
+		bool $_multitenancy=true,
+		?array $ids=null,
+		?string $uses=null
 	): int;
 
-}//end interface
+	/**
+	 * The object currently held as context, if any.
+	 *
+	 * @return ?ObjectEntityInterface The context object, or null when none is set.
+	 */
+	public function getObject(): ?ObjectEntityInterface;
+}

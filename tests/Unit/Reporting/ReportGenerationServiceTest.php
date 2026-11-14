@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCP\Files\IRootFolder;

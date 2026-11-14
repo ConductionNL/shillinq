@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Event\BillablePeriodClosedEvent;
-use OCA\Shillinq\Service\BillablePeriodInvoiceService;
+use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -42,12 +42,12 @@ class BillablePeriodClosedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param BillablePeriodInvoiceService $ingest Drafts or refuses.
+	 * @param BillablePeriodInvoiceServiceInterface $ingest Drafts or refuses.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly BillablePeriodInvoiceService $ingest,
+		private readonly BillablePeriodInvoiceServiceInterface $ingest,
 	) {
 	}//end __construct()
 

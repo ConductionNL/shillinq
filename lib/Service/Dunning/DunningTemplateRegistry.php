@@ -30,7 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 
 /**

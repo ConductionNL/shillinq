@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Import\ImportBatchSteps;
+use OCA\Shillinq\Kernel\Contracts\ImportBatchStepsInterface;
 use RuntimeException;
 
 /**
@@ -45,10 +45,10 @@ class ImportBatchAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ImportBatchSteps $steps The import steps.
+	 * @param ImportBatchStepsInterface $steps The import steps.
 	 */
 	public function __construct(
-		private readonly ImportBatchSteps $steps,
+		private readonly ImportBatchStepsInterface $steps,
 	) {
 	}//end __construct()
 

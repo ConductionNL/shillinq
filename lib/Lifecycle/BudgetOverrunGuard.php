@@ -36,11 +36,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\BegrotingswijzigingStacker;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
@@ -52,13 +52,13 @@ class BudgetOverrunGuard {
 	 * Construct the guard with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param BegrotingswijzigingStacker $stacker Computes the stacked authorized lasten.
+	 * @param BegrotingswijzigingStackerInterface $stacker Computes the stacked authorized lasten.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly BegrotingswijzigingStacker $stacker,
+		private readonly BegrotingswijzigingStackerInterface $stacker,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

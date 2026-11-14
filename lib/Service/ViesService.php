@@ -40,11 +40,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Validates EU VAT-IDs against VIES and persists immutable evidence records.
@@ -56,7 +57,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class ViesService {
+class ViesService implements ViesServiceInterface {
 	/**
 	 * VIES REST proxy endpoint (per-country, per-number).
 	 *

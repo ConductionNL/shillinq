@@ -31,7 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionGuardInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/purchase-requisition/spec.md
  */
-class RequisitionConversionGuard {
+class RequisitionConversionGuard implements RequisitionConversionGuardInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *

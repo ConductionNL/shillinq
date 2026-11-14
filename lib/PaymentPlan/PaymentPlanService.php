@@ -40,20 +40,22 @@ namespace OCA\Shillinq\PaymentPlan;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\DunningRunService;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 
 /**
  * The payment plan flow.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
-class PaymentPlanService {
+class PaymentPlanService implements PaymentPlanServiceInterface {
 	/**
 	 * The dunning pause reason a plan writes.
 	 *
@@ -65,22 +67,22 @@ class PaymentPlanService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentPlanSchedule    $schedule      Draws up the instalments.
 	 * @param PaymentPlanAllocator   $allocator     Allocates payments.
-	 * @param DunningRunService      $dunning       Pauses and resumes dunning.
-	 * @param ObjectTransitionRunner $transitions   Runs the declared transitions.
+	 * @param DunningRunServiceInterface      $dunning       Pauses and resumes dunning.
+	 * @param ObjectTransitionRunnerInterface $transitions   Runs the declared transitions.
 	 * @param PaymentPlanMailer      $mailer        Mails the customer.
 	 * @param ITimeFactory           $time          Today.
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly PaymentPlanSchedule $schedule,
 		private readonly PaymentPlanAllocator $allocator,
-		private readonly DunningRunService $dunning,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly DunningRunServiceInterface $dunning,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly PaymentPlanMailer $mailer,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,

@@ -21,23 +21,19 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Platform;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Contracts\FieldRequirementsInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\RegisterLocation;
-use OCP\IL10N;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\IL10N;
 
 /**
  * Reads the active FieldRequirement records of an administration and checks objects and requirements against them.
  *
  * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
  */
-class FieldRequirements {
+class FieldRequirements implements FieldRequirementsInterface {
 	use ReadsSourceRowsInBatches;
-
-	/**
-	 * The schema holding one requirement.
-	 */
-	public const SCHEMA = 'FieldRequirement';
 
 	/**
 	 * Active requirements read in this request, by administration.

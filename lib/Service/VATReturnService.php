@@ -47,14 +47,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Service\Vat\VatReturnBox;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Composes VAT returns from GL transactions using the real OpenRegister API.
@@ -70,7 +71,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class VATReturnService {
+class VATReturnService implements VATReturnServiceInterface {
 	/**
 	 * The totals a KOR return carries: KOR exempts both collected and paid VAT (REQ-VAT-004).
 	 *
@@ -266,6 +267,51 @@ class VATReturnService {
 
 		return $result;
 	}//end computeCurrentDeclarations()
+
+	/**
+	 * The running VAT position of a period per return box, read from the same
+	 * stamped lines a prepared return reads (REQ-VPS-001).
+	 *
+	 * Each box carries its base and VAT as booked so far and the ledger lines
+	 * behind it; the totals carry the VAT collected, the VAT paid and the
+	 * amount payable (collected minus paid; negative is a refund). Because it
+	 * runs the one derivation `deriveVATLines()` runs, the position of a
+	 * closed period equals the return prepared for it.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $startDate Period start (inclusive, ISO-8601).
+	 * @param string $endDate Period end (inclusive, ISO-8601).
+	 *
+	 * @return array{boxes:list<array{returnBox:string,type:string,taxRate:float,base:float,vat:float,lineCount:int,lines:list<array<string,mixed>>}>,totalVATCollected:float,totalVATPaid:float,totalTaxableAmount:float,payable:float}
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 */
+	public function positionByBox(string $administrationId, string $startDate, string $endDate): array {
+		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+
+		$boxes = [];
+		foreach ($scan['declarationsByKey'] as $group) {
+			$boxes[] = [
+				'returnBox' => $group['returnBox'],
+				'type' => $group['type'],
+				'taxRate' => $group['taxRate'],
+				'base' => $this->fromCents(cents: $group['totalTaxableCents']),
+				'vat' => $this->fromCents(cents: $group['totalVATAmountCents']),
+				'lineCount' => $group['lineCount'],
+				'lines' => $group['pendingLines'],
+			];
+		}
+
+		$totals = $this->scanTotals(scan: $scan);
+
+		return [
+			'boxes' => $boxes,
+			'totalVATCollected' => $totals['totalVATCollected'],
+			'totalVATPaid' => $totals['totalVATPaid'],
+			'totalTaxableAmount' => $totals['totalTaxableAmount'],
+			'payable' => $this->fromCents(cents: ($scan['totalVATCollectedCt'] - $scan['totalVATPaidCt'])),
+		];
+	}//end positionByBox()
 
 	/**
 	 * Fetch the persisted (as-filed) `VATDeclaration` rows for a return, grouped

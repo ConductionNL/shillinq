@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
+use OCA\Shillinq\Kernel\PurchaseOrderApprovalEntry;
 
 /**
  * Lets a purchase order become approved only through its approval chain.
@@ -69,7 +69,7 @@ final class PurchaseOrderApprovalGuard extends ServerWriteGrantGuard {
 	 *
 	 * @return GuardResult
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry() is the one reading of a signed entry.
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalEntry::isApproved() is the one reading of a signed entry.
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
 	 *
@@ -86,7 +86,7 @@ final class PurchaseOrderApprovalGuard extends ServerWriteGrantGuard {
 		}
 
 		foreach ($chain as $entry) {
-			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
+			if (PurchaseOrderApprovalEntry::isApproved(entry: $entry) === false) {
 				return GuardResult::deny(self::MESSAGE_CHAIN_INCOMPLETE);
 			}
 		}

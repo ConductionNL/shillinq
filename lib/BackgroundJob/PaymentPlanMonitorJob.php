@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\PaymentPlan\PaymentPlanService;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -53,12 +53,12 @@ class PaymentPlanMonitorJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory       $time   Time factory for the TimedJob base.
-	 * @param PaymentPlanService $plans  The plan flow.
+	 * @param PaymentPlanServiceInterface $plans  The plan flow.
 	 * @param LoggerInterface    $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly PaymentPlanService $plans,
+		private readonly PaymentPlanServiceInterface $plans,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

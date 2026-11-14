@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
-use OCA\Shillinq\Reporting\GeneratedFile;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCP\Files\File;
@@ -187,7 +187,7 @@ final class LookupWarnings extends AbstractLogger {
  * Tests ReportGenerationService's lookups and fail-soft paths.
  *
  * @covers \OCA\Shillinq\Reporting\ReportGenerationService
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  * @uses   \OCA\Shillinq\Reporting\ReportCatalogue
  * @uses   \OCA\Shillinq\Reporting\SystemTagAssigner
  * @uses   \OCA\Shillinq\Reporting\TaggedFileStore

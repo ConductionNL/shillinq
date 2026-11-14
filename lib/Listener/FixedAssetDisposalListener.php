@@ -48,7 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\FixedAssetDisposalService;
+use OCA\Shillinq\Kernel\Contracts\FixedAssetDisposalServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -80,11 +80,11 @@ class FixedAssetDisposalListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param FixedAssetDisposalService $disposalService The disposal posting orchestrator.
+	 * @param FixedAssetDisposalServiceInterface $disposalService The disposal posting orchestrator.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly FixedAssetDisposalService $disposalService,
+		private readonly FixedAssetDisposalServiceInterface $disposalService,
 		private readonly LoggerInterface $logger,
 	) {
 

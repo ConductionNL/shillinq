@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\MilestoneTemplateServiceInterface;
 use RuntimeException;
 
 /**
@@ -49,7 +50,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
  */
-class MilestoneTemplateService {
+class MilestoneTemplateService implements MilestoneTemplateServiceInterface {
 
 	/**
 	 * Absolute path to the milestone-templates seed file.

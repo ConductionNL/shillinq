@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Commitment;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 
 /**
@@ -45,7 +46,7 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentInvoicing {
+class CommitmentInvoicing implements CommitmentInvoicingInterface {
 	/**
 	 * States from which `factureren` moves a commitment to partially invoiced.
 	 *

@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
 use Psr\Log\LoggerInterface;

@@ -48,9 +48,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceIntake;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\PaymentReconciliationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -109,14 +109,14 @@ class IntegriqCloudEventListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's register and schema ids to slugs.
-	 * @param PaymentReconciliationService $reconciliation Applies a payment outcome to its request.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
+	 * @param PaymentReconciliationServiceInterface $reconciliation Applies a payment outcome to its request.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 * @param SelfBilledInvoiceIntake $inboundInvoices Takes a received Peppol invoice.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
-		private readonly PaymentReconciliationService $reconciliation,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
+		private readonly PaymentReconciliationServiceInterface $reconciliation,
 		private readonly LoggerInterface $logger,
 		private readonly SelfBilledInvoiceIntake $inboundInvoices,
 	) {

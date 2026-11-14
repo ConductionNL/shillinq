@@ -35,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Dunning;
 
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 
 /**
  * Default log-backed channel adapter.

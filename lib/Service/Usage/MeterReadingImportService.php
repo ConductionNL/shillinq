@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Usage;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\MeterReadingImportServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
@@ -38,7 +39,7 @@ use Throwable;
  *
  * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
  */
-class MeterReadingImportService {
+class MeterReadingImportService implements MeterReadingImportServiceInterface {
 
 	/**
 	 * The text columns a row may carry, besides quantity and the dates.
