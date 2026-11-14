@@ -5251,7 +5251,7 @@
 						{
 							"id": "SepaMandates",
 							"label": "Direct debit mandates",
-							"icon": "FileSignOutline",
+							"icon": "FileDocumentEditOutline",
 							"route": "SepaMandates",
 							"order": 42
 						},
