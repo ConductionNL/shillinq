@@ -43,10 +43,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Import;
 
-use OCA\Shillinq\Lifecycle\ImportBatchGuard;
+use OCA\Shillinq\Kernel\Contracts\ImportBatchGuardInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Staged XAF/CSV import pipeline (REQ-AIM-005 .. REQ-AIM-009).
@@ -91,14 +91,14 @@ class ImportPipelineService {
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for diagnostics + graceful-degrade findings.
 	 * @param AuditfileParser $parser Deterministic XAF parser.
-	 * @param ImportBatchGuard $guard Fail-closed lifecycle guard.
+	 * @param ImportBatchGuardInterface $guard Fail-closed lifecycle guard.
 	 * @param ImportPosting $posting Writes and unwinds the opening entry and customers.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 		private readonly AuditfileParser $parser,
-		private readonly ImportBatchGuard $guard,
+		private readonly ImportBatchGuardInterface $guard,
 		private readonly ImportPosting $posting,
 	) {
 	}//end __construct()

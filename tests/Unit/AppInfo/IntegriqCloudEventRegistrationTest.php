@@ -49,7 +49,7 @@ final class IntegriqCloudEventRegistrationTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->source = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$this->source = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php') . (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ListenerRegistrar.php');
 	}//end setUp()
 
 	/**

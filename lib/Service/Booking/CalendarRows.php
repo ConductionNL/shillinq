@@ -30,13 +30,14 @@ namespace OCA\Shillinq\Service\Booking;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\CalendarRowsInterface;
 
 /**
  * Range selection, formatting and payload building for Calendar and Booking rows.
  *
  * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
  */
-final class CalendarRows {
+final class CalendarRows implements CalendarRowsInterface {
 
 	/**
 	 * Days a range runs when the caller gives no end.

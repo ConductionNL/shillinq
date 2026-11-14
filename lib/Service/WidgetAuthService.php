@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -50,19 +51,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class WidgetAuthService {
-
-	/**
-	 * Default rate limit (requests per minute) when the WidgetAccessKey
-	 * record does not specify one. Mirrors REQ-WSW-001.
-	 */
-	public const DEFAULT_RATE_LIMIT = 100;
-
-	/**
-	 * Rate-limit window in seconds. Reset every minute per the rate-limit
-	 * policy in tasks.md.
-	 */
-	public const RATE_LIMIT_WINDOW_SECONDS = 60;
+class WidgetAuthService implements WidgetAuthServiceInterface {
 
 	/**
 	 * Bcrypt cost factor used when hashing new API keys.

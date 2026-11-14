@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
-use OCA\Shillinq\Service\DBAVbarMonitorService;
+use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -52,11 +52,11 @@ class DbaInvoiceMonitorListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param DBAVbarMonitorService $vbarMonitor VBAR monitoring service.
+	 * @param DBAVbarMonitorServiceInterface $vbarMonitor VBAR monitoring service.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly DBAVbarMonitorService $vbarMonitor,
+		private readonly DBAVbarMonitorServiceInterface $vbarMonitor,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -116,7 +116,7 @@ class DbaInvoiceMonitorListener implements IEventListener {
 			hours: $facts->hours,
 			administrationId: $facts->administrationId,
 		);
-		if ($result['result'] !== DBAVbarMonitorService::RESULT_OK
+		if ($result['result'] !== DBAVbarMonitorServiceInterface::RESULT_OK
 			&& $facts->invoiceId !== ''
 		) {
 			$this->vbarMonitor->emitFlag(

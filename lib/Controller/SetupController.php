@@ -34,9 +34,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\DemoDataService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DemoDataServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -86,15 +86,15 @@ class SetupController extends Controller {
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App-config reader/writer.
-	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
-	 * @param SettingsService $settingsService OR availability + config import + seeders.
+	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
+	 * @param SettingsServiceInterface $settingsService OR availability + config import + seeders.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
 		private readonly IAppConfig $appConfig,
-		private readonly DemoDataService $demoDataService,
-		private readonly SettingsService $settingsService,
+		private readonly DemoDataServiceInterface $demoDataService,
+		private readonly SettingsServiceInterface $settingsService,
 	) {
 		parent::__construct($appName, $request);
 	}//end __construct()
@@ -299,7 +299,7 @@ class SetupController extends Controller {
 		// an older manifest, a runbook or a script that posts it keeps working.
 		return match ($actionId) {
 			'load-demo-data' => $this->loadDataset(),
-			'install-demo-data' => $this->installDemoData(dataset: DemoDataService::DEMO_DATASET),
+			'install-demo-data' => $this->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET),
 			'skip-demo-data' => $this->skipDemoData(),
 			'init-administration' => $this->initAdministration(),
 			'seed' => $this->seedReferenceData(),
@@ -423,8 +423,8 @@ class SetupController extends Controller {
 			return new DataResponse(['success' => false, 'message' => 'Pick a dataset first.']);
 		}
 
-		if ($picked === DemoDataService::NONE_DATASET) {
-			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		if ($picked === DemoDataServiceInterface::NONE_DATASET) {
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new DataResponse(['success' => true, 'message' => 'No example data was loaded.']);
@@ -544,7 +544,7 @@ class SetupController extends Controller {
 	private function skipDemoData(): DataResponse {
 		// Skipping IS choosing "None", so both keys are written: an older
 		// runbook may read either one.
-		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new DataResponse(['success' => true, 'message' => 'Demo data skipped.']);

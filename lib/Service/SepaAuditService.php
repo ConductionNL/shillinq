@@ -33,18 +33,19 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SepaAuditServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use ZipArchive;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Builds the SEPA mandate audit dossier ZIP (REQ-SDD-010).
  *
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
-class SepaAuditService {
+class SepaAuditService implements SepaAuditServiceInterface {
 
 	/**
 	 * The collections CSV columns, in order.

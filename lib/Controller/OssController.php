@@ -39,10 +39,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\OssRateResolver;
-use OCA\Shillinq\Service\OssReturnGenerator;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\OssRateResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\OssReturnGeneratorInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,21 +62,21 @@ class OssController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param OssRateResolver $rateResolver Destination-country VAT-rate resolver.
-	 * @param OssReturnGenerator $returnGenerator Quarterly return draft generator.
+	 * @param OssRateResolverInterface $rateResolver Destination-country VAT-rate resolver.
+	 * @param OssReturnGeneratorInterface $returnGenerator Quarterly return draft generator.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IUserSession $userSession The user session.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly OssRateResolver $rateResolver,
-		private readonly OssReturnGenerator $returnGenerator,
+		private readonly OssRateResolverInterface $rateResolver,
+		private readonly OssReturnGeneratorInterface $returnGenerator,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

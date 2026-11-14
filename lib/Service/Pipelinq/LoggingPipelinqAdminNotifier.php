@@ -35,8 +35,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
 /**
  * ERROR-level logging fallback for the admin-notifier port.

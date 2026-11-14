@@ -32,13 +32,14 @@ namespace OCA\Shillinq\Service\Relation;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\RelationLinkServiceInterface;
 
 /**
  * Suggests, confirms, dismisses and removes customer-supplier links.
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
-class RelationLinkService {
+class RelationLinkService implements RelationLinkServiceInterface {
 
 	/**
 	 * Constructor.

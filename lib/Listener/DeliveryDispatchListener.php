@@ -42,7 +42,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\SalesDispatchStockIssueService;
+use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -59,11 +59,11 @@ class DeliveryDispatchListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param SalesDispatchStockIssueService $dispatchService The issue/reversal service.
+	 * @param SalesDispatchStockIssueServiceInterface $dispatchService The issue/reversal service.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly SalesDispatchStockIssueService $dispatchService,
+		private readonly SalesDispatchStockIssueServiceInterface $dispatchService,
 		private readonly LoggerInterface $logger,
 	) {
 
