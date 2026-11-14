@@ -3,19 +3,131 @@
   "spdx-license": "EUPL-1.2",
   "spdx-copyright": "2026 Conduction B.V.",
   "change": "sales-cancellation",
-  "description": "RecurringInvoiceProfile learns the CustomerMaster it bills (customerMasterId, design D2). Every generated invoice copies it into customerId; the LinkRecurringProfilesToCustomers repair step fills it on existing profiles. Version bumped past recurring-invoicing (0.1.0) so the import writes the change."
+  "description": "RecurringInvoiceProfile learns the CustomerMaster it bills (customerMasterId, design D2) and records why it ended (cancellation, design D1). Every generated invoice copies customerMasterId into customerId; the LinkRecurringProfilesToCustomers repair step fills it on existing profiles. Both end transitions ask for a reason code: CancellationReasonGuard refuses a staff end without one, RecordCancellationAction writes the cancellation record. Version bumped past recurring-invoicing (0.1.0) so the import writes the change."
  },
  "components": {
   "schemas": {
    "RecurringInvoiceProfile": {
     "slug": "RecurringInvoiceProfile",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "properties": {
      "customerMasterId": {
       "type": "string",
       "nullable": true,
       "title": "Customer record",
       "description": "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice."
+     },
+     "cancellationReasonCode": {
+      "type": "string",
+      "nullable": true,
+      "enum": [
+       "too-expensive",
+       "not-using",
+       "switched-provider",
+       "missing-feature",
+       "service-quality",
+       "business-closed",
+       "other",
+       "not-given"
+      ],
+      "title": "Cancellation reason",
+      "description": "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out."
+     },
+     "cancellationReasonText": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 1000,
+      "title": "Cancellation note",
+      "description": "Optional free text with the cancellation reason."
+     },
+     "cancellation": {
+      "type": "object",
+      "nullable": true,
+      "title": "Cancellation",
+      "description": "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.",
+      "properties": {
+       "reasonCode": {
+        "type": "string",
+        "enum": [
+         "too-expensive",
+         "not-using",
+         "switched-provider",
+         "missing-feature",
+         "service-quality",
+         "business-closed",
+         "other",
+         "not-given"
+        ],
+        "title": "Reason"
+       },
+       "reasonText": {
+        "type": "string",
+        "nullable": true,
+        "title": "Note"
+       },
+       "cancelledBy": {
+        "type": "string",
+        "enum": [
+         "staff",
+         "customer"
+        ],
+        "title": "Cancelled by"
+       },
+       "requestedAt": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Requested at"
+       },
+       "effectiveDate": {
+        "type": "string",
+        "format": "date",
+        "title": "Effective date"
+       }
+      }
+     }
+    },
+    "x-openregister-lifecycle": {
+     "transitions": {
+      "endFromActive": {
+       "inputs": [
+        {
+         "field": "cancellationReasonCode",
+         "required": true
+        },
+        {
+         "field": "cancellationReasonText",
+         "required": false
+        }
+       ],
+       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard::requireReason",
+       "actions": [
+        {
+         "trigger": "x-openregister-lifecycle-action",
+         "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCancellationAction",
+         "description": "Write the cancellation record: reason, note, who ended it, when it was asked and when it takes effect (RecordCancellationAction)."
+        }
+       ]
+      },
+      "endFromPaused": {
+       "inputs": [
+        {
+         "field": "cancellationReasonCode",
+         "required": true
+        },
+        {
+         "field": "cancellationReasonText",
+         "required": false
+        }
+       ],
+       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard::requireReason",
+       "actions": [
+        {
+         "trigger": "x-openregister-lifecycle-action",
+         "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCancellationAction",
+         "description": "Write the cancellation record: reason, note, who ended it, when it was asked and when it takes effect (RecordCancellationAction)."
+        }
+       ]
+      }
      }
     }
    }

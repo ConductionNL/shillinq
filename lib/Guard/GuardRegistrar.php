@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Lifecycle\CancellationReasonGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Log\LoggerInterface;
@@ -223,6 +224,20 @@ final class GuardRegistrar {
 					guard: $c->get(BudgetScenarioModifierGuard::class),
 					method: 'validateOnSave',
 					denyMessage: 'This modifier conflicts with an existing modifier in the same scenario, or is missing a required field for its type.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+
+		// Ending a subscription asks why (sales-cancellation REQ-SCX-001):
+		// staff choose a reason code; a customer end from the portal may not.
+		$context->registerService(
+			'OCA\Shillinq\Lifecycle\CancellationReasonGuard::requireReason',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(CancellationReasonGuard::class),
+					method: 'requireReason',
+					denyMessage: 'A cancellation reason is required to end this subscription.',
 					logger: $c->get(LoggerInterface::class),
 				);
 			}
