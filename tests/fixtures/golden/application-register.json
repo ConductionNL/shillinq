@@ -1743,6 +1743,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReceiptCostLayerBackfillInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Inventory\\\\ReceiptCostLayerBackfill'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ReconciliationResolutionServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\ReconciliationResolutionService'"
         ]
