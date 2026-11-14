@@ -154,38 +154,41 @@ final class BillableRateService {
 	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
 	 */
 	public function resolve(array $hour): array {
-		$personId = trim((string)($hour['personId'] ?? ''));
-		$projectId = trim((string)($hour['projectId'] ?? ''));
-		$date = trim((string)($hour['date'] ?? ''));
-		$administrationId = trim((string)($hour['administrationId'] ?? ''));
+		$lookup = [
+			'personId' => trim((string)($hour['personId'] ?? '')),
+			'projectId' => trim((string)($hour['projectId'] ?? '')),
+			'date' => trim((string)($hour['date'] ?? '')),
+			'administrationId' => trim((string)($hour['administrationId'] ?? '')),
+		];
+		$date = $lookup['date'];
 		$person = trim((string)($hour['personName'] ?? ''));
 		if ($person === '') {
-			$person = $personId;
+			$person = $lookup['personId'];
 		}
 
-		$assignment = $this->assignment(personId: $personId, projectId: $projectId, date: $date, administrationId: $administrationId);
+		$assignment = $this->assignment(lookup: $lookup);
 		if ($assignment === null) {
 			return $this->noRate(reason: self::REASON_NO_ASSIGNMENT, message: "{$person} is not assigned to this project");
 		}
 
-		$template = $this->template(rateCardId: trim((string)($assignment['rateCardId'] ?? '')), administrationId: $administrationId);
+		$template = $this->template(rateCardId: trim((string)($assignment['rateCardId'] ?? '')), administrationId: $lookup['administrationId']);
 		if ($template === null) {
 			return $this->noRate(reason: self::REASON_NO_RATE_CARD, message: "The assignment of {$person} names no rate card");
 		}
 
-		$version = $this->version(template: $template, date: $date, administrationId: $administrationId);
+		$version = $this->version(template: $template, lookup: $lookup);
 		if ($version === null) {
 			return $this->noRate(reason: self::REASON_NO_VERSION, message: "The rate card has no version effective on {$date}");
 		}
 
-		$entities = [
-			'user' => $personId,
+		$lookup['entities'] = [
+			'user' => $lookup['personId'],
 			'role' => trim((string)($assignment['billingRoleId'] ?? '')),
-			'project' => $projectId,
+			'project' => $lookup['projectId'],
 			'client' => trim((string)($hour['clientId'] ?? '')),
 			'blended' => '',
 		];
-		$match = $this->schedule(version: $version, date: $date, administrationId: $administrationId, entities: $entities);
+		$match = $this->schedule(version: $version, lookup: $lookup);
 		if ($match === null) {
 			return $this->noRate(reason: self::REASON_NO_SCHEDULE, message: "No rate of the rate card applies to {$person} on {$date}");
 		}
@@ -193,8 +196,8 @@ final class BillableRateService {
 		[$tier, $schedule] = $match;
 		$rate = (float)($schedule['rate'] ?? 0);
 		$unit = (string)($schedule['unit'] ?? 'hourly');
-		$value = round($rate * $this->units(hours: (float)($hour['hours'] ?? 0), unit: $unit, assignment: $assignment), 2);
-		$recordId = $this->record(hour: $hour, entities: $entities, tier: $tier, schedule: $schedule);
+		$value = round($rate * ((float)($hour['hours'] ?? 0) / $this->hoursPerUnit(unit: $unit, assignment: $assignment)), 2);
+		$recordId = $this->record(hour: $hour, match: ['tier' => $tier, 'schedule' => $schedule, 'entities' => $lookup['entities']]);
 
 		return [
 			'status' => self::STATUS_RATED,
@@ -210,14 +213,14 @@ final class BillableRateService {
 	/**
 	 * The person's assignment to the project that covers the date.
 	 *
-	 * @param string $personId         The person.
-	 * @param string $projectId        The project.
-	 * @param string $date             The hour's date.
-	 * @param string $administrationId The administration.
+	 * @param array<string, string> $lookup The hour's `personId`, `projectId`, `date` and `administrationId`.
 	 *
 	 * @return array<string, mixed>|null The assignment.
 	 */
-	private function assignment(string $personId, string $projectId, string $date, string $administrationId): ?array {
+	private function assignment(array $lookup): ?array {
+		$personId = $lookup['personId'];
+		$projectId = $lookup['projectId'];
+		$administrationId = $lookup['administrationId'];
 		if ($personId === '' || $projectId === '' || $administrationId === '') {
 			return null;
 		}
@@ -229,7 +232,7 @@ final class BillableRateService {
 		foreach ($rows as $row) {
 			if ((string)($row['personId'] ?? '') === $personId
 				&& (string)($row['projectId'] ?? '') === $projectId
-				&& $this->covers(start: (string)($row['startDate'] ?? ''), end: (string)($row['endDate'] ?? ''), date: $date) === true
+				&& $this->covers(window: [(string)($row['startDate'] ?? ''), (string)($row['endDate'] ?? '')], date: $lookup['date']) === true
 			) {
 				return $row;
 			}
@@ -263,19 +266,18 @@ final class BillableRateService {
 	/**
 	 * The template's version effective on the date: the latest one whose window covers it.
 	 *
-	 * @param array<string, mixed> $template         The template.
-	 * @param string               $date             The hour's date.
-	 * @param string               $administrationId The administration.
+	 * @param array<string, mixed> $template The template.
+	 * @param array<string, mixed> $lookup   The hour's `date` and `administrationId`.
 	 *
 	 * @return array<string, mixed>|null The version.
 	 */
-	private function version(array $template, string $date, string $administrationId): ?array {
+	private function version(array $template, array $lookup): ?array {
 		$keys = $this->keysOf(row: $template, key: 'templateId');
 		$best = null;
-		foreach ($this->read(schema: 'RateCardVersion', filters: ['administrationId' => $administrationId]) as $row) {
+		foreach ($this->read(schema: 'RateCardVersion', filters: ['administrationId' => $lookup['administrationId']]) as $row) {
 			if (in_array((string)($row['templateId'] ?? ''), $keys, true) === false
 				|| in_array((string)($row['status'] ?? ''), self::PRICING_VERSION_STATES, true) === false
-				|| $this->covers(start: (string)($row['effectiveDate'] ?? ''), end: (string)($row['expiryDate'] ?? ''), date: $date) === false
+				|| $this->covers(window: [(string)($row['effectiveDate'] ?? ''), (string)($row['expiryDate'] ?? '')], date: $lookup['date']) === false
 			) {
 				continue;
 			}
@@ -291,25 +293,23 @@ final class BillableRateService {
 	/**
 	 * The first active schedule of the version that matches the hour, by tier.
 	 *
-	 * @param array<string, mixed>  $version          The version.
-	 * @param string                $date             The hour's date.
-	 * @param string                $administrationId The administration.
-	 * @param array<string, string> $entities         The entity each tier matches.
+	 * @param array<string, mixed> $version The version.
+	 * @param array<string, mixed> $lookup  The hour's `date`, `administrationId` and `entities` (the entity each tier matches).
 	 *
 	 * @return array{0: string, 1: array<string, mixed>}|null The tier and the schedule.
 	 */
-	private function schedule(array $version, string $date, string $administrationId, array $entities): ?array {
+	private function schedule(array $version, array $lookup): ?array {
 		$keys = $this->keysOf(row: $version, key: 'versionId');
 		$candidates = array_filter(
-			$this->read(schema: 'RateSchedule', filters: ['administrationId' => $administrationId]),
+			$this->read(schema: 'RateSchedule', filters: ['administrationId' => $lookup['administrationId']]),
 			fn (array $row): bool => in_array((string)($row['versionId'] ?? ''), $keys, true) === true
 				&& (string)($row['status'] ?? '') === 'active'
 				&& in_array((string)($row['unit'] ?? ''), self::HOUR_UNITS, true) === true
-				&& $this->covers(start: (string)($row['effectiveDate'] ?? ''), end: (string)($row['expiryDate'] ?? ''), date: $date) === true
+				&& $this->covers(window: [(string)($row['effectiveDate'] ?? ''), (string)($row['expiryDate'] ?? '')], date: $lookup['date']) === true
 		);
 
 		foreach (self::TIERS as $tier) {
-			$entity = $entities[$tier];
+			$entity = $lookup['entities'][$tier];
 			if ($tier !== 'blended' && $entity === '') {
 				continue;
 			}
@@ -325,17 +325,16 @@ final class BillableRateService {
 	}//end schedule()
 
 	/**
-	 * The quantity a rate multiplies: hours, or days of the assignment's working day.
+	 * The hours in one unit a rate is priced per: one hour, or the assignment's working day.
 	 *
-	 * @param float                $hours      The hours.
 	 * @param string               $unit       The schedule's unit.
 	 * @param array<string, mixed> $assignment The assignment.
 	 *
-	 * @return float The quantity.
+	 * @return float The hours per unit.
 	 */
-	private function units(float $hours, string $unit, array $assignment): float {
+	private function hoursPerUnit(string $unit, array $assignment): float {
 		if ($unit !== 'daily') {
-			return $hours;
+			return 1.0;
 		}
 
 		$perDay = self::HOURS_PER_DAY;
@@ -344,20 +343,21 @@ final class BillableRateService {
 			$perDay = ($capacity / 5);
 		}
 
-		return ($hours / $perDay);
-	}//end units()
+		return $perDay;
+	}//end hoursPerUnit()
 
 	/**
 	 * Write the audit record of this resolution.
 	 *
-	 * @param array<string, mixed>  $hour     The hour.
-	 * @param array<string, string> $entities The entity each tier matched against.
-	 * @param string                $tier     The winning tier.
-	 * @param array<string, mixed>  $schedule The winning schedule.
+	 * @param array<string, mixed> $hour  The hour.
+	 * @param array<string, mixed> $match The winning `tier` and `schedule`, and the `entities` each tier matched against.
 	 *
 	 * @return string The record id.
 	 */
-	private function record(array $hour, array $entities, string $tier, array $schedule): string {
+	private function record(array $hour, array $match): string {
+		$tier = $match['tier'];
+		$schedule = $match['schedule'];
+		$entities = $match['entities'];
 		$recordId = 'rr-' . bin2hex(random_bytes(8));
 		$expiry = trim((string)($schedule['expiryDate'] ?? ''));
 		if ($expiry === '') {
@@ -419,19 +419,18 @@ final class BillableRateService {
 	/**
 	 * Whether a date lies in an inclusive window; an empty end is open.
 	 *
-	 * @param string $start The first day, empty for none.
-	 * @param string $end   The last day, empty for open-ended.
-	 * @param string $date  The date.
+	 * @param array{0: string, 1: string} $window The first day (empty for none) and the last day (empty for open-ended).
+	 * @param string                      $date   The date.
 	 *
 	 * @return bool True when the date is inside.
 	 */
-	private function covers(string $start, string $end, string $date): bool {
+	private function covers(array $window, string $date): bool {
 		if ($date === '') {
 			return false;
 		}
 
-		$start = substr(trim($start), 0, 10);
-		$end = substr(trim($end), 0, 10);
+		$start = substr(trim($window[0]), 0, 10);
+		$end = substr(trim($window[1]), 0, 10);
 
 		return ($start === '' || $start <= $date) && ($end === '' || $date <= $end);
 	}//end covers()
