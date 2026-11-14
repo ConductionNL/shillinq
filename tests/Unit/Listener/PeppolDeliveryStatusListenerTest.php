@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Service\ListenerSlugContract;
@@ -564,6 +565,8 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 				logger: new NullLogger(),
 			),
 		];
+
+		$byType[ListenerSchemaResolverInterface::class] = $byType[ListenerSchemaResolver::class];
 
 		$arguments = [];
 		foreach ((new ReflectionClass(PeppolDeliveryStatusListener::class))->getConstructor()->getParameters() as $parameter) {

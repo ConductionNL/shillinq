@@ -30,6 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\OssPaymentReconciliationInterface;
+
 /**
  * Matches OSS payments to returns and surfaces per-country distribution discrepancies.
  *
@@ -38,7 +40,7 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssPaymentReconciliation {
+class OssPaymentReconciliation implements OssPaymentReconciliationInterface {
 	/**
 	 * Convert a money amount to integer cents.
 	 *

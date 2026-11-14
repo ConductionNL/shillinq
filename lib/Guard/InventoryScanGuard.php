@@ -47,7 +47,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;

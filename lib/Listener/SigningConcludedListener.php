@@ -44,8 +44,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
-use OCA\Shillinq\Service\Signing\SigningDelegationService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SigningDelegationServiceInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -88,8 +88,8 @@ final class SigningConcludedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
-	 * @param SigningDelegationService $signingService The document-signing consumer service.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param SigningDelegationServiceInterface $signingService The document-signing consumer service.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's published object
 	 *                                              surface (ADR-084), aliased in
@@ -98,8 +98,8 @@ final class SigningConcludedListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly RegisterLocation $registerLocation,
-		private readonly SigningDelegationService $signingService,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly SigningDelegationServiceInterface $signingService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {

@@ -33,9 +33,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -72,12 +72,12 @@ class BudgetBBVMappingController extends Controller {
 	 * @param IL10N $l10n Translation service used to
 	 *                    localise response messages
 	 *                    (ADR-007 / slice 10 i18n).
-	 * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+	 * @param AdministrationContextServiceInterface $administrationContext Admin RBAC + accessibility
 	 *                                                            checks (slice 09, ADR-005)
 	 *                                                            — every mapping read is
 	 *                                                            scoped to an administration
 	 *                                                            the user is a member of.
-	 * @param FiscalYearContextService $fiscalYearContext Active fiscal-year resolver
+	 * @param FiscalYearContextServiceInterface $fiscalYearContext Active fiscal-year resolver
 	 *                                                    (slice 09, REQ-BBVW-006).
 	 *
 	 * @return void
@@ -86,8 +86,8 @@ class BudgetBBVMappingController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly AdministrationContextService $administrationContext,
-		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

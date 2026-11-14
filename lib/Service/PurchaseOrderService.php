@@ -45,7 +45,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PurchaseOrderServiceInterface;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -58,7 +60,6 @@ use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 02 of bookkeeping-purchase-order-3way: PO creation + approval routing.
@@ -82,7 +83,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): broad domain surface area; variable
  * renames deferred pending a dedicated pass.
  */
-class PurchaseOrderService {
+class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
 	 * Approval-chain threshold for the single-approver tier (Teamleider only).
 	 * A PO with a total strictly below this amount needs ONE approver.
