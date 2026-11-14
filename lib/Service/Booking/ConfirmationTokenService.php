@@ -180,6 +180,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 			confirmUrl: $confirmUrl,
 			ics: $ics,
 		);
+		$this->recordRequest(appointment: $appointment, sent: $sent);
 
 		return [
 			'tokenId' => $issued['tokenId'],
@@ -342,6 +343,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 			confirmUrl: $confirmUrl,
 			ics: $ics,
 		);
+		$this->recordRequest(appointment: $appointment, sent: $sent);
 
 		return [
 			'tokenId' => $issued['tokenId'],
@@ -440,6 +442,62 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 		}
 
 	}//end saveToken()
+
+	/**
+	 * Record on the appointment whether the confirmation request reached the
+	 * mail server, so a failed send shows and can be resent (REQ-BCF-013).
+	 *
+	 * Only a stored appointment (one with an id) is written. Best-effort: a
+	 * failed write is logged, because the request itself was already tried.
+	 *
+	 * @param array<string, mixed> $appointment The appointment as stored.
+	 * @param bool                 $sent        Whether the mailer accepted the request.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 */
+	private function recordRequest(array $appointment, bool $sent): void {
+		$id = (string)($appointment['id'] ?? ($appointment['uuid'] ?? ''));
+		if ($id === '' || $this->settings->isOpenRegisterAvailable() === false) {
+			return;
+		}
+
+		$status = 'failed';
+		if ($sent === true) {
+			$status = 'sent';
+		}
+
+		$appointment['confirmationRequestStatus'] = $status;
+		$appointment['confirmationRequestAt'] = $this->nowIso();
+		$this->saveRequestStatus(appointment: $appointment);
+
+	}//end recordRequest()
+
+	/**
+	 * Save the appointment with its request status, logging a failed write.
+	 *
+	 * @param array<string, mixed> $appointment The appointment with its request status.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 */
+	private function saveRequestStatus(array $appointment): void {
+		try {
+			$this->container->get('OCA\\OpenRegister\\Service\\ObjectService')->saveObject(
+				object: $appointment,
+				register: $this->settings->getRegisterSlug(),
+				schema: 'Appointment',
+				_rbac: false,
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'ConfirmationTokenService: the send could not be recorded on the appointment',
+				['appointmentId' => (string)($appointment['appointmentId'] ?? ''), 'exception' => $e->getMessage()]
+			);
+		}
+	}//end saveRequestStatus()
 
 	/**
 	 * Send the confirmation request through Nextcloud's mailer: the confirm
