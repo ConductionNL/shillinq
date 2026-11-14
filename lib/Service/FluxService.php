@@ -621,7 +621,10 @@ class FluxService implements FluxServiceInterface {
 		array $summary,
 	): void {
 		try {
+			// The run carries its own id, so its FluxItem rows (which hold
+			// fluxRunId) can be listed from it (ledger-group-close, REQ-CLS-011).
 			$run = [
+				'fluxRunId' => $fluxRunId,
 				'administrationId' => $administrationId,
 				'periodId' => $periodId,
 				'scope' => $scope,

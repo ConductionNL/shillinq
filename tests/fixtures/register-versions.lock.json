@@ -80,6 +80,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114150000",
             "versionsSha256": "c9d22233dfaee51c0c3663208b6fa7f2b54a4ebfb865146ebefe3f9188305824"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114160000",
+            "versionsSha256": "2dd5ac3cdac050ed042878a7792c4f47addd60cfa237c593a745a5768d285e8a"
         }
     ],
     "versions": {
@@ -209,7 +213,7 @@
         "schema:ConsolidatedReport": "0.1.0",
         "schema:ConsolidationGroup": "0.1.1",
         "schema:ConsolidationMapping": "0.1.0",
-        "schema:ConsolidationPeriod": "0.1.1",
+        "schema:ConsolidationPeriod": "0.2.0",
         "schema:ContingentLiability": "0.1.0",
         "schema:ContinuousCloseAlert": "0.1.0",
         "schema:Contract": "0.1.0",
@@ -286,7 +290,7 @@
         "schema:FixedAsset": "0.1.0",
         "schema:FluxAttribution": "0.1.0",
         "schema:FluxItem": "0.1.0",
-        "schema:FluxRun": "0.1.0",
+        "schema:FluxRun": "0.2.0",
         "schema:FrameworkAgreement": "0.1.0",
         "schema:FrameworkElection": "0.1.0",
         "schema:FundsTransfer": "0.1.0",

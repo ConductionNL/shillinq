@@ -388,7 +388,7 @@
       "ConsolidationPeriod": {
         "slug": "ConsolidationPeriod",
         "icon": "CalendarSync",
-        "version": "0.1.1",
+        "version": "0.2.0",
         "title": "Consolidation Period",
         "description": "A consolidation run for a specific period. Container for the elimination werkpapier; carries the workflow state (open → eliminationPhase → review → closed → archived), the executor, computed elimination totals and the exception queue of out-of-tolerance mismatches (design D3). Snapshot is immutable once closed.",
         "x-schema-org": "schema:Action",
@@ -572,6 +572,19 @@
               "label": "Start elimination phase",
               "description": "Begin matching once every active entity's source GL is confirmed complete.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canStartElimination"
+            },
+            "runConsolidation": {
+              "from": "eliminationPhase",
+              "to": "eliminationPhase",
+              "label": "Run consolidation",
+              "description": "Sum the parent and every active member administration for the period, mapped onto the parent's chart, apply the period's eliminations and store the outcome on the consolidated balance and income statement (REQ-CONS-011). Run again after an elimination changes.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RunConsolidationAction",
+                  "description": "Run the consolidation of the period (RunConsolidationAction)."
+                }
+              ]
             },
             "submitForReview": {
               "from": "eliminationPhase",

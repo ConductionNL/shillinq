@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\BackgroundJob\SoftCloseJob;
+use OCA\Shillinq\Service\SoftCloseSwingCheck;
 use OCA\Shillinq\Service\SoftCloseExecutor;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -129,7 +130,10 @@ class SoftCloseJobGoldenTest extends TestCase {
 			);
 		}
 
-		$job    = new SoftCloseJob($this->createMock(ITimeFactory::class), $executor, $container, $appConfig, $logger);
+		// The statuses above are not 'completed', so the swing check never runs here.
+		$swingCheck = $this->createMock(SoftCloseSwingCheck::class);
+		$swingCheck->expects($this->never())->method('run');
+		$job    = new SoftCloseJob($this->createMock(ITimeFactory::class), $executor, $container, $appConfig, $logger, $swingCheck);
 		$method = new ReflectionMethod(SoftCloseJob::class, 'runAsJob');
 		$method->setAccessible(true);
 		$method->invoke($job, null);
