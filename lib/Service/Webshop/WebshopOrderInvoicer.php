@@ -395,7 +395,7 @@ class WebshopOrderInvoicer {
 			}
 		}
 
-		return $this->createCustomer(buyer: $buyer, administrationId: $administrationId);
+		return $this->createCustomer(buyer: $buyer, administrationId: $administrationId, channelId: ObjectIdentifier::resolve(saved: $channel));
 	}//end debtorId()
 
 	/**
@@ -410,16 +410,20 @@ class WebshopOrderInvoicer {
 	}//end normalised()
 
 	/**
-	 * Create the CustomerMaster of a business buyer.
+	 * Create the CustomerMaster of a business buyer, marked as created by the
+	 * web shop channel so a bookkeeper can find and review it (REQ-SWO-002).
 	 *
 	 * @param array<string,mixed> $buyer            The buyer.
 	 * @param string              $administrationId The administration.
+	 * @param string              $channelId        The web shop channel the order came from.
 	 *
 	 * @return string The new customer's id.
 	 *
 	 * @throws RuntimeException When the save answers without an id.
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.2
 	 */
-	private function createCustomer(array $buyer, string $administrationId): string {
+	private function createCustomer(array $buyer, string $administrationId, string $channelId): string {
 		$legalName = trim((string)($buyer['companyName'] ?? ''));
 		if ($legalName === '') {
 			$legalName = trim((string)($buyer['name'] ?? ''));
@@ -432,6 +436,10 @@ class WebshopOrderInvoicer {
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'active',
 		];
+		if ($channelId !== '') {
+			$customer['createdByWebshopChannelId'] = $channelId;
+		}
+
 		foreach (['vatId', 'kvkNumber'] as $key) {
 			$value = trim((string)($buyer[$key] ?? ''));
 			if ($value !== '') {

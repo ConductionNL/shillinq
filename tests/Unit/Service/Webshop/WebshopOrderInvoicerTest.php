@@ -341,8 +341,53 @@ final class WebshopOrderInvoicerTest extends TestCase {
 		self::assertCount(1, $created);
 		self::assertSame(['Hotel De Linde', 'inkoop@hotel.nl', 'adm-1', 'active', '12345678'], [$created[0][1]['legalName'], $created[0][1]['email'], $created[0][1]['administrationId'], $created[0][1]['lifecycleState'], $created[0][1]['kvkNumber']]);
 		self::assertStringStartsWith('WEB-', $created[0][1]['customerId']);
+		self::assertSame(self::CHANNEL, $created[0][1]['createdByWebshopChannelId']);
 		self::assertSame('customermaster-1', $this->savesOf(schema: 'ARInvoice')[0][1]['customerId']);
 	}//end testANewBusinessBuyerIsCreated()
+
+	/**
+	 * A business buyer without a VAT id is matched by KvK number before email,
+	 * ignoring spaces and dots, within the channel's administration only.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.2
+	 */
+	public function testABusinessBuyerWithoutAVatIdIsMatchedByKvkNumber(): void {
+		$this->seedChannel();
+		$this->store['CustomerMaster'] = [
+			['id' => 'cm-email', 'administrationId' => 'adm-1', 'email' => 'inkoop@hotel.nl'],
+			['id' => 'cm-kvk-other-admin', 'administrationId' => 'adm-2', 'kvkNumber' => '12345678'],
+			['id' => 'cm-kvk', 'administrationId' => 'adm-1', 'kvkNumber' => '1234 5678'],
+		];
+		$order = self::order(overrides: ['buyer' => ['type' => 'business', 'companyName' => 'Hotel De Linde', 'kvkNumber' => '12345678', 'email' => 'inkoop@hotel.nl']]);
+
+		self::assertSame('invoiced', $this->invoicer()->handle(order: $order, orderId: self::ORDER, today: '2026-11-12'));
+
+		self::assertSame('cm-kvk', $this->savesOf(schema: 'ARInvoice')[0][1]['customerId']);
+		self::assertSame([], $this->savesOf(schema: 'CustomerMaster'));
+	}//end testABusinessBuyerWithoutAVatIdIsMatchedByKvkNumber()
+
+	/**
+	 * A business buyer with only an email is matched by it, whatever its case.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.2
+	 */
+	public function testABusinessBuyerWithOnlyAnEmailIsMatchedByIt(): void {
+		$this->seedChannel();
+		$this->store['CustomerMaster'] = [
+			['id' => 'cm-kvk', 'administrationId' => 'adm-1', 'kvkNumber' => '87654321'],
+			['id' => 'cm-email', 'administrationId' => 'adm-1', 'email' => 'Inkoop@Hotel.nl'],
+		];
+		$order = self::order(overrides: ['buyer' => ['type' => 'business', 'companyName' => 'Hotel De Linde', 'kvkNumber' => '12345678', 'email' => 'inkoop@hotel.nl']]);
+
+		$this->invoicer()->handle(order: $order, orderId: self::ORDER, today: '2026-11-12');
+
+		self::assertSame('cm-email', $this->savesOf(schema: 'ARInvoice')[0][1]['customerId']);
+		self::assertSame([], $this->savesOf(schema: 'CustomerMaster'));
+	}//end testABusinessBuyerWithOnlyAnEmailIsMatchedByIt()
 
 	/**
 	 * The listener hands a created WebshopOrder, stamped with a numeric schema id and its uuid, to the invoicer.

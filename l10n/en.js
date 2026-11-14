@@ -4862,7 +4862,9 @@ OC.L10N.register(
         "Correction posting": "Correction posting",
         "Filed on": "Filed on",
         "Digipoort reference": "Digipoort reference",
-        "File supplementary return": "File supplementary return"
+        "File supplementary return": "File supplementary return",
+        "Created by web shop channel": "Created by web shop channel",
+        "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.": "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq."
     },
     "nplurals=2; plural=(n != 1);"
 )

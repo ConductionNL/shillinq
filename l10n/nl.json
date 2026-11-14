@@ -7059,7 +7059,9 @@
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "Created by web shop channel": "Aangemaakt door webwinkelkanaal",
+        "The web shop channel that created this customer from a business order, so a bookkeeper can find and review customers nobody entered by hand. Empty for customers entered in shillinq.": "Het webwinkelkanaal dat deze klant uit een zakelijke bestelling aanmaakte, zodat een boekhouder klanten die niemand met de hand invoerde kan vinden en nakijken. Leeg voor klanten die in shillinq zijn ingevoerd."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

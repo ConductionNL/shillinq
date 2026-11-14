@@ -88,6 +88,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114190000",
             "versionsSha256": "b6318eb2982bdafd95228b4a6fe1ac17be097fc52db71fea64dbda0373762cfb"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114214000",
+            "versionsSha256": "680d3c18ca6fdae7d4b85636117587bc8acf3facb608ed25b26e80e396489bc1"
         }
     ],
     "versions": {
@@ -232,7 +236,7 @@
         "schema:CreditNote": "0.1.0",
         "schema:CreditScore": "0.1.0",
         "schema:CurrencyBalance": "0.1.0",
-        "schema:CustomerMaster": "0.3.0",
+        "schema:CustomerMaster": "0.4.0",
         "schema:DBAEvidenceDossier": "0.1.0",
         "schema:DBAIntake": "0.1.0",
         "schema:DBAModelovereenkomst": "0.1.0",
