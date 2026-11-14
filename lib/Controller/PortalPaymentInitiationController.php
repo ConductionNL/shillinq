@@ -96,6 +96,11 @@ class PortalPaymentInitiationController extends Controller {
 	 * `{"paymentRequestId": "<uuid>"}` instead (action `pay-request`), for a
 	 * payment request that stands without an invoice (REQ-SPPI-008).
 	 *
+	 * portaliq's guest page sends `{"payToken": "<token>"}` from an invoice's
+	 * signed pay link instead, with no assertion header: the token is then the
+	 * credential, and a paid invoice answers 200 `{status: "paid"}` with no
+	 * checkout (REQ-RPL-006).
+	 *
 	 * Response contract: 200 `{checkoutUrl}` on success; 401 missing/invalid
 	 * assertion; 403 wrong audience OR the target is foreign-owned,
 	 * non-payable, non-existent or malformed (identical response — no
@@ -115,8 +120,21 @@ class PortalPaymentInitiationController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function initiate(): JSONResponse {
-		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).
-		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
+		$assertion = (string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER);
+
+		// 0. A guest has no subject assertion: portaliq's guest page forwards
+		// the signed pay link of an invoice instead, and that token is the
+		// credential, verified by the session service before any read
+		// (REQ-RPL-006). Without either, the 401 below.
+		if ($assertion === '') {
+			$payToken = $this->request->getParam('payToken');
+			if (is_string($payToken) === true && $payToken !== '') {
+				return $this->payTokenAnswer(token: $payToken);
+			}
+		}
+
+		// 1. Verify — the assertion is the credential of a subject (fail-closed 401).
+		$claims = $this->verifier->verify($assertion);
 		if ($claims === null) {
 			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -177,6 +195,29 @@ class PortalPaymentInitiationController extends Controller {
 	}//end sessionAnswer()
 
 	/**
+	 * Open the checkout a signed pay link names, or the logged 502.
+	 *
+	 * @param string $token The pay token.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	private function payTokenAnswer(string $token): JSONResponse {
+		try {
+			$result = $this->sessionService->initiateForPayToken(token: $token);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'Shillinq: portal payment initiation controller caught an unexpected failure',
+				['exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY);
+		}
+
+		return self::outcomeResponse(result: $result);
+	}//end payTokenAnswer()
+
+	/**
 	 * The answer for a session outcome; anything unknown is the uniform 403.
 	 *
 	 * @param PortalPaymentSessionResult $result The outcome.
@@ -186,6 +227,7 @@ class PortalPaymentInitiationController extends Controller {
 	private static function outcomeResponse(PortalPaymentSessionResult $result): JSONResponse {
 		return match ($result->status) {
 			'ok' => new JSONResponse(['checkoutUrl' => $result->checkoutUrl]),
+			'paid' => new JSONResponse(['status' => 'paid', 'message' => 'This invoice has been paid.']),
 			'deferred' => new JSONResponse(['status' => 'deferred'], Http::STATUS_SERVICE_UNAVAILABLE),
 			'downstream_error' => new JSONResponse(['error' => 'downstream_error'], Http::STATUS_BAD_GATEWAY),
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),

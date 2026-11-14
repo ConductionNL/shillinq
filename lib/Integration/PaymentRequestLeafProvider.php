@@ -48,6 +48,8 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCP\IAppConfig;
@@ -81,6 +83,8 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 	 * @param PaymentRequestPortalScopeInterface $portalScope Gives a request without an invoice its portal scope.
 	 * @param ?ObjectRequestInvoiceServiceInterface $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
 	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
+	 * @param ?MolliePaymentAdapterInterface $paymentAdapter The bound payment adapter; dormant or absent means online payment is not set up.
+	 * @param ?PaymentLinkCreator $linkCreator Creates the checkout link of a raised request (receivables-payment-links D2).
 	 *
 	 * @return void
 	 */
@@ -96,6 +100,8 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
 		private readonly ?ObjectRequestInvoiceServiceInterface $invoices = null,
 		private readonly ?DebtorCreditServiceInterface $credits = null,
+		private readonly ?MolliePaymentAdapterInterface $paymentAdapter = null,
+		private readonly ?PaymentLinkCreator $linkCreator = null,
 	) {
 	}//end __construct()
 
@@ -252,8 +258,26 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			'total' => count($projected),
 			'nextCursor' => null,
 			'fee' => $this->feeFor(register: $register, schema: $schema, objectId: $objectId),
+			'onlinePayment' => $this->onlinePayment(),
 		];
 	}//end list()
+
+	/**
+	 * Whether a payment link can be created: a live payment adapter is bound.
+	 * The panel disables Send payment link with the reason otherwise
+	 * (receivables-payment-links D5, REQ-RPL-002).
+	 *
+	 * @return array{live: bool, reason: string} `reason` is `not-set-up` when not live, else ''.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+	 */
+	private function onlinePayment(): array {
+		if ($this->paymentAdapter === null || $this->paymentAdapter->isDormant() === true) {
+			return ['live' => false, 'reason' => 'not-set-up'];
+		}
+
+		return ['live' => true, 'reason' => ''];
+	}//end onlinePayment()
 
 	/**
 	 * The published fee for the host object's type, or null when it carries none.
@@ -531,8 +555,50 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
 		}
 
-		return $this->saveRequest(request: $request, asSystem: $asSystem);
+		return $this->withPaymentLink(created: $this->saveRequest(request: $request, asSystem: $asSystem), asSystem: $asSystem);
 	}//end finaliseRequest()
+
+	/**
+	 * Give a raised, still pending request its checkout link from the
+	 * provider, and store it with the provider payment id and the checkout
+	 * expiry (REQ-RPL-001). Without a live provider the request stays without
+	 * a link.
+	 *
+	 * @param array<string, mixed> $created  The saved request, with its id.
+	 * @param bool                 $asSystem Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The request, with its link fields when it got a link.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	private function withPaymentLink(array $created, bool $asSystem): array {
+		if ($this->linkCreator === null) {
+			return $created;
+		}
+
+		$fields = $this->linkCreator->linkFieldsFor(request: $created);
+		if ($fields === []) {
+			return $created;
+		}
+
+		$data = [];
+		foreach ($created as $key => $value) {
+			if ($key !== 'id' && str_starts_with((string)$key, '@') === false) {
+				$data[$key] = $value;
+			}
+		}
+
+		$this->objectService->saveObject(
+			object: array_merge($data, $fields),
+			register: $this->registerSlug(),
+			schema: self::SCHEMA,
+			uuid: (string)$created['id'],
+			_rbac: ($asSystem === false),
+			_multitenancy: ($asSystem === false),
+		);
+
+		return array_merge($created, $fields);
+	}//end withPaymentLink()
 
 	/**
 	 * An invoice asked for at create stands behind the request, so a

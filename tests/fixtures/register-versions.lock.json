@@ -88,6 +88,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114190000",
             "versionsSha256": "b6318eb2982bdafd95228b4a6fe1ac17be097fc52db71fea64dbda0373762cfb"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114212000",
+            "versionsSha256": "1b547e8e16b167132ee250455d3d2be6e5e59f546a99563477c7c1201940e23d"
         }
     ],
     "versions": {
@@ -434,7 +438,7 @@
         "schema:Payment": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.10.0",
+        "schema:PaymentRequest": "0.11.0",
         "schema:PaymentRun": "0.3.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",

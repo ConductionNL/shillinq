@@ -7042,7 +7042,8 @@ OC.L10N.register(
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "Online payment is not set up: configure a payment source in integriq.": "Online betalen is niet ingesteld: stel een betaalbron in integriq in."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -25,6 +25,11 @@ namespace OCA\Shillinq\Tests\Unit\Integration;
 use InvalidArgumentException;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\DebtorCreditService;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\PaymentLinkCreator;
+use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
+use OCA\Shillinq\Service\Payment\PaymentSessionResult;
+use OCP\IURLGenerator;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
@@ -151,6 +156,8 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		?object $inner = null,
 		array $appGrants = [],
 		array $enabledApps = [],
+		?MolliePaymentAdapterInterface $paymentAdapter = null,
+		?PaymentLinkCreator $linkCreator = null,
 	): PaymentRequestLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -205,6 +212,8 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			),
 			settlements: new PaymentSettlementService(),
 			appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $appManager),
+			paymentAdapter: $paymentAdapter,
+			linkCreator: $linkCreator,
 		);
 	}//end makeProvider()
 
@@ -262,6 +271,93 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame('https://pay.example/pr-1', $listed['items'][0]['paymentLink']);
 		self::assertArrayHasKey('fee', $listed);
 	}//end testListIsScopedToTheHostObject()
+
+	/**
+	 * The list says whether online payment is live: a live adapter yes, a
+	 * dormant or absent one no, with the reason the panel shows
+	 * (receivables-payment-links task 3.3, REQ-RPL-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.3
+	 */
+	public function testListSaysWhetherOnlinePaymentIsLive(): void {
+		$stored = [$this->storedRequest('pr-1', 'zaak-7')];
+		foreach ([[false, ['live' => true, 'reason' => '']], [true, ['live' => false, 'reason' => 'not-set-up']]] as [$dormant, $expected]) {
+			$adapter = $this->createMock(MolliePaymentAdapterInterface::class);
+			$adapter->method('isDormant')->willReturn($dormant);
+			$listed = $this->makeProvider(stored: $stored, paymentAdapter: $adapter)->list('dossiq', 'Zaak', 'zaak-7');
+			self::assertSame($expected, $listed['onlinePayment']);
+		}
+
+		self::assertSame(['live' => false, 'reason' => 'not-set-up'], $this->makeProvider(stored: $stored)->list('dossiq', 'Zaak', 'zaak-7')['onlinePayment']);
+	}//end testListSaysWhetherOnlinePaymentIsLive()
+
+	/**
+	 * A request raised on a case gets its checkout link from a live provider,
+	 * stored with the provider payment id and the expiry (task 1.3); with a
+	 * dormant provider it is saved once, without a link.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
+	 */
+	public function testARaisedRequestStoresItsCheckoutLink(): void {
+		foreach ([false, true] as $dormant) {
+			$provider    = $this->createMock(PaymentProviderInterface::class);
+			$provider->method('createSession')->willReturn(new PaymentSessionResult(dormant: $dormant, checkoutUrl: $dormant ? '' : 'https://www.mollie.com/checkout/tr_case7', paymentIntentId: $dormant ? '' : 'tr_case7'));
+			$urls = $this->createMock(IURLGenerator::class);
+			$urls->method('linkToRouteAbsolute')->willReturn('https://instance.example/webhook');
+			$urls->method('getAbsoluteURL')->willReturn('https://instance.example/');
+			$creator = new PaymentLinkCreator(provider: $provider, urlGenerator: $urls, appConfig: $this->createMock(IAppConfig::class), logger: $this->createMock(LoggerInterface::class));
+
+			$inner = new class {
+				/**
+				 * Every save, with the uuid it updated.
+				 *
+				 * @var list<array{object: array<string, mixed>, uuid: string|null}>
+				 */
+				public array $saves = [];
+
+				public function setRegister(string $register): static {
+					return $this;
+				}
+
+				public function setSchema(string $schema): static {
+					return $this;
+				}
+
+				public function findAll(array $params = [], bool $_rbac = true): array {
+					return [];
+				}
+
+				public function saveObject(array $object, string $register = '', string $schema = '', ?string $uuid = null, bool $_rbac = true): array {
+					$this->saves[] = ['object' => $object, 'uuid' => $uuid];
+					return $object + ['id' => ($uuid ?? 'pr-new')];
+				}
+			};
+
+			$leaf    = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance'], inner: $inner, linkCreator: $creator);
+			$created = $leaf->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'leges', 'amount' => 97.5, 'description' => 'Omgevingsvergunning kappen, 1 boom']);
+
+			if ($dormant === true) {
+				self::assertCount(1, $inner->saves);
+				self::assertArrayNotHasKey('providerPaymentId', $created);
+				continue;
+			}
+
+			self::assertCount(2, $inner->saves);
+			$update = $inner->saves[1];
+			self::assertSame('pr-new', $update['uuid']);
+			self::assertArrayNotHasKey('id', $update['object']);
+			self::assertSame('https://www.mollie.com/checkout/tr_case7', $update['object']['paymentLink']);
+			self::assertSame('tr_case7', $update['object']['providerPaymentId']);
+			self::assertSame('tr_case7', $update['object']['paymentIntentId']);
+			self::assertSame('leges', $update['object']['requestType']);
+			self::assertSame('https://www.mollie.com/checkout/tr_case7', $created['paymentLink']);
+			self::assertIsString($created['checkoutExpiresAt']);
+		}
+	}//end testARaisedRequestStoresItsCheckoutLink()
 
 	/**
 	 * A caller whose groups do not carry `payment.request` is refused, and NOTHING
