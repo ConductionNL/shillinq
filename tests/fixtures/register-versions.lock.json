@@ -74,6 +74,10 @@
             "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
         },
         {
+            "appVersion": "0.5.7-unstable.20261113191000",
+            "versionsSha256": "8099c6e403c779783b69676750c4215d0e6f00224a4feba34aa57b382003e761"
+        },
+        {
             "appVersion": "0.5.7-unstable.20261114150000",
             "versionsSha256": "9c0e0b1698f5136870b193265f455c4369e75e41d98ecab0f291ad3b458c7780"
         }
