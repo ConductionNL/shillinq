@@ -236,6 +236,10 @@
             "description": "GET /api/inventory/valuation-report — value-as-of-date (+ optional ageing)."
         },
         {
+            "name": "invoice-sending",
+            "description": "Sending issued ARInvoices by the customer's delivery method (email with PDF, Peppol, post), one at a time or as a queued batch."
+        },
+        {
             "name": "invoice-api",
             "description": "HTTP API for BillableInvoice drafting + posting."
         },
