@@ -143,8 +143,34 @@ class WidgetService implements WidgetServiceInterface {
 			return [];
 		}
 
+		$services = $this->publicServiceRecords(objectService: $objectService, administrationId: $administrationId);
+
+		$result = [];
+		foreach ($services as $service) {
+			$service = $this->toArray(record: $service);
+			if ($service === null || (bool)($service['isPublic'] ?? false) === false) {
+				continue;
+			}
+
+			$result[] = $this->publicServiceView(service: $service);
+		}
+
+		return $result;
+	}//end listPublicServices()
+
+	/**
+	 * The administration's Service records flagged isPublic, or none (logged) when the lookup fails.
+	 *
+	 * @param object $objectService    OR ObjectService.
+	 * @param string $administrationId The owning administration (tenant scope).
+	 *
+	 * @return iterable<mixed> The Service records.
+	 *
+	 * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-001
+	 */
+	private function publicServiceRecords(object $objectService, string $administrationId): iterable {
 		try {
-			$services = $objectService
+			return $objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('Service')
 				->findAll(
@@ -164,45 +190,46 @@ class WidgetService implements WidgetServiceInterface {
 				['exception' => $e->getMessage()]
 			);
 			return [];
+		}//end try
+	}//end publicServiceRecords()
+
+	/**
+	 * The public-safe view of one public service; the price only when priceVisible.
+	 *
+	 * @param array<string,mixed> $service The Service record.
+	 *
+	 * @return array<string,mixed> The public fields.
+	 *
+	 * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-001
+	 */
+	private function publicServiceView(array $service): array {
+		$public = [
+			'serviceSlug' => (string)($service['@self']['slug'] ?? ($service['slug'] ?? '')),
+			'name' => (string)($service['name'] ?? ''),
+			'description' => ($service['description'] ?? null),
+			'durationMinutes' => (int)($service['duration'] ?? 0),
+		];
+
+		if ((bool)($service['priceVisible'] ?? false) === true) {
+			// `basePrice` is the property the Service schema actually
+			// DECLARES — and it is in its `required` list
+			// (bookings-service-catalog.json). `price` is declared by NO
+			// fragment, and OpenRegister's MagicMapper discards undeclared
+			// properties, so no stored Service can ever carry it. Reading
+			// `price` first therefore published 0.00 for EVERY service with
+			// priceVisible=true. Measured on a live instance: a Service
+			// saved with basePrice=125.50 renders `basePrice => 125.5` and
+			// `price => ABSENT`.
+			//
+			// `price` is retained only as a fallback for any object stored
+			// under an older schema revision that did declare it; it must
+			// stay SECOND, because the whole defect was ordering.
+			$public['price'] = (float)($service['basePrice'] ?? $service['price'] ?? 0);
+			$public['currency'] = (string)($service['currency'] ?? 'EUR');
 		}
 
-		$result = [];
-		foreach ($services as $service) {
-			$service = $this->toArray(record: $service);
-			if ($service === null || (bool)($service['isPublic'] ?? false) === false) {
-				continue;
-			}
-
-			$public = [
-				'serviceSlug' => (string)($service['@self']['slug'] ?? ($service['slug'] ?? '')),
-				'name' => (string)($service['name'] ?? ''),
-				'description' => ($service['description'] ?? null),
-				'durationMinutes' => (int)($service['duration'] ?? 0),
-			];
-
-			if ((bool)($service['priceVisible'] ?? false) === true) {
-				// `basePrice` is the property the Service schema actually
-				// DECLARES — and it is in its `required` list
-				// (bookings-service-catalog.json). `price` is declared by NO
-				// fragment, and OpenRegister's MagicMapper discards undeclared
-				// properties, so no stored Service can ever carry it. Reading
-				// `price` first therefore published 0.00 for EVERY service with
-				// priceVisible=true. Measured on a live instance: a Service
-				// saved with basePrice=125.50 renders `basePrice => 125.5` and
-				// `price => ABSENT`.
-				//
-				// `price` is retained only as a fallback for any object stored
-				// under an older schema revision that did declare it; it must
-				// stay SECOND, because the whole defect was ordering.
-				$public['price'] = (float)($service['basePrice'] ?? $service['price'] ?? 0);
-				$public['currency'] = (string)($service['currency'] ?? 'EUR');
-			}
-
-			$result[] = $public;
-		}//end foreach
-
-		return $result;
-	}//end listPublicServices()
+		return $public;
+	}//end publicServiceView()
 
 	/**
 	 * Validate an email address against RFC 5322 (REQ-WSW-006).
@@ -588,28 +615,52 @@ class WidgetService implements WidgetServiceInterface {
 		}
 
 		foreach ($records as $record) {
-			$row = $this->toArray(record: $record);
-			if ($row === null) {
-				return null;
-			}
-
-			if ((bool)($row['isPublic'] ?? false) !== true) {
-				return null;
-			}
-
-			if ((string)($row['status'] ?? '') !== 'active') {
-				return null;
-			}
-
-			if ($administrationId === '' || (string)($row['administrationId'] ?? '') !== $administrationId) {
-				return null;
-			}
-
-			return $row;
+			return $this->bookableRow(record: $record, administrationId: $administrationId);
 		}
 
 		return null;
 	}//end findPublicService()
+
+	/**
+	 * The service row when it is public, active and of the given administration.
+	 *
+	 * @param mixed  $record           One Service record.
+	 * @param string $administrationId The administration the service must belong to.
+	 *
+	 * @return array<string,mixed>|null The service row, or null when not bookable.
+	 */
+	private function bookableRow(mixed $record, string $administrationId): array|null {
+		$row = $this->toArray(record: $record);
+		if ($row === null) {
+			return null;
+		}
+
+		if ((bool)($row['isPublic'] ?? false) !== true) {
+			return null;
+		}
+
+		if ($this->isActiveServiceOf(row: $row, administrationId: $administrationId) === false) {
+			return null;
+		}
+
+		return $row;
+	}//end bookableRow()
+
+	/**
+	 * Whether the service row is active and belongs to the given (non-empty) administration.
+	 *
+	 * @param array<string,mixed> $row              The Service row.
+	 * @param string              $administrationId The administration the service must belong to.
+	 *
+	 * @return bool True when bookable for that administration.
+	 */
+	private function isActiveServiceOf(array $row, string $administrationId): bool {
+		if ((string)($row['status'] ?? '') !== 'active') {
+			return false;
+		}
+
+		return $administrationId !== '' && (string)($row['administrationId'] ?? '') === $administrationId;
+	}//end isActiveServiceOf()
 
 	/**
 	 * Whether SlotService currently offers exactly this interval.

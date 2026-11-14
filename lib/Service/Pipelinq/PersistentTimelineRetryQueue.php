@@ -104,50 +104,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 	 */
 	public function enqueue(TimelineEventDto $event): void {
 		try {
-			if ($this->settings->isOpenRegisterAvailable() === false) {
-				$this->logger->warning(
-					'PersistentTimelineRetryQueue: OR not available, falling back to logging',
-					[
-						'app' => AppIdentity::APP_ID,
-						'type' => $event->type(),
-						'externalId' => $event->externalId(),
-					]
-				);
-				return;
-			}
-
-			$entryId = $this->persistEntry(event: $event);
-			if ($entryId === null) {
-				return;
-			}
-
-			try {
-				$this->jobList->add(
-					PipelinqTimelineRetryJob::class,
-					['entryId' => $entryId]
-				);
-			} catch (Throwable $e) {
-				$this->logger->warning(
-					'PersistentTimelineRetryQueue: failed to schedule retry job',
-					[
-						'app' => AppIdentity::APP_ID,
-						'entryId' => $entryId,
-						'exception' => $e->getMessage(),
-					]
-				);
-				return;
-			}
-
-			$this->logger->info(
-				'PersistentTimelineRetryQueue: event queued for async retry',
-				[
-					'app' => AppIdentity::APP_ID,
-					'entryId' => $entryId,
-					'type' => $event->type(),
-					'externalId' => $event->externalId(),
-					'contactId' => $event->contactId(),
-				]
-			);
+			$this->enqueueEntry(event: $event);
 		} catch (Throwable $e) {
 			// Outer safety net — enqueue() MUST NEVER raise (the booking
 			// commit already happened).
@@ -163,6 +120,89 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 		}//end try
 
 	}//end enqueue()
+
+	/**
+	 * Persist the retry entry and schedule its tick, falling back to logging without OpenRegister.
+	 *
+	 * @param TimelineEventDto $event Event the synchronous publish failed for.
+	 *
+	 * @return void
+	 *
+	 * @throws Throwable When the settings or the event fail.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function enqueueEntry(TimelineEventDto $event): void {
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			$this->logger->warning(
+				'PersistentTimelineRetryQueue: OR not available, falling back to logging',
+				['app' => AppIdentity::APP_ID, 'type' => $event->type(), 'externalId' => $event->externalId()]
+			);
+			return;
+		}
+
+		$entryId = $this->persistEntry(event: $event);
+		if ($entryId === null) {
+			return;
+		}
+
+		if ($this->scheduleRetry(entryId: $entryId) === false) {
+			return;
+		}
+
+		$this->logQueued(entryId: $entryId, event: $event);
+	}//end enqueueEntry()
+
+	/**
+	 * Log that an event is queued for async retry.
+	 *
+	 * @param string           $entryId The retry entry id.
+	 * @param TimelineEventDto $event   The queued event.
+	 *
+	 * @return void
+	 */
+	private function logQueued(string $entryId, TimelineEventDto $event): void {
+		$this->logger->info(
+			'PersistentTimelineRetryQueue: event queued for async retry',
+			[
+				'app' => AppIdentity::APP_ID,
+				'entryId' => $entryId,
+				'type' => $event->type(),
+				'externalId' => $event->externalId(),
+				'contactId' => $event->contactId(),
+			]
+		);
+	}//end logQueued()
+
+	/**
+	 * Add the retry job tick for an entry; a failure is logged.
+	 *
+	 * @param string $entryId The retry entry id.
+	 *
+	 * @return bool True when the tick was added.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function scheduleRetry(string $entryId): bool {
+		try {
+			$this->jobList->add(
+				PipelinqTimelineRetryJob::class,
+				['entryId' => $entryId]
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'PersistentTimelineRetryQueue: failed to schedule retry job',
+				[
+					'app' => AppIdentity::APP_ID,
+					'entryId' => $entryId,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}
+
+		return true;
+	}//end scheduleRetry()
 
 	/**
 	 * Write the TimelinePublishRetryEntry row and return its id.
@@ -237,33 +277,90 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 		}
 
 		if (is_object($result) === true) {
-			if (method_exists($result, 'getUuid') === true) {
-				$uuid = (string)$result->getUuid();
-				if ($uuid !== '') {
-					return $uuid;
-				}
-			}
+			return $this->extractObjectId(result: $result);
+		}
 
-			if (method_exists($result, 'jsonSerialize') === true) {
-				$payload = $result->jsonSerialize();
-				if (is_array($payload) === true) {
-					$id = (string)($payload['id'] ?? ($payload['@self']['id'] ?? ''));
-					if ($id !== '') {
-						return $id;
-					}
-				}
-			}
+		return null;
+	}//end extractId()
 
-			if (method_exists($result, 'getId') === true) {
-				$id = (string)$result->getId();
+	/**
+	 * Pull a string id out of an object saveObject() return value.
+	 *
+	 * Tries getUuid(), then the serialised payload, then getId().
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function extractObjectId(object $result): string|null {
+		$id = $this->uuidIdOf(result: $result);
+		if ($id === null) {
+			$id = $this->payloadIdOf(result: $result);
+		}
+
+		if ($id === null) {
+			$id = $this->getIdOf(result: $result);
+		}
+
+		return $id;
+	}//end extractObjectId()
+
+	/**
+	 * Non-empty getUuid() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function uuidIdOf(object $result): string|null {
+		if (method_exists($result, 'getUuid') === true) {
+			$uuid = (string)$result->getUuid();
+			if ($uuid !== '') {
+				return $uuid;
+			}
+		}
+
+		return null;
+	}//end uuidIdOf()
+
+	/**
+	 * Non-empty id from an object's jsonSerialize() payload.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function payloadIdOf(object $result): string|null {
+		if (method_exists($result, 'jsonSerialize') === true) {
+			$payload = $result->jsonSerialize();
+			if (is_array($payload) === true) {
+				$id = (string)($payload['id'] ?? ($payload['@self']['id'] ?? ''));
 				if ($id !== '') {
 					return $id;
 				}
 			}
-		}//end if
+		}
 
 		return null;
-	}//end extractId()
+	}//end payloadIdOf()
+
+	/**
+	 * Non-empty getId() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function getIdOf(object $result): string|null {
+		if (method_exists($result, 'getId') === true) {
+			$id = (string)$result->getId();
+			if ($id !== '') {
+				return $id;
+			}
+		}
+
+		return null;
+	}//end getIdOf()
 
 	/**
 	 * Current UTC time as ISO-8601.

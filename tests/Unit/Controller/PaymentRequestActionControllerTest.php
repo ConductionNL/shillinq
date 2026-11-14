@@ -61,6 +61,27 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	private array $sent = [];
 
 	/**
+	 * Whether the mailer double refuses to send.
+	 *
+	 * @var bool
+	 */
+	private bool $mailerFails = false;
+
+	/**
+	 * The configured register slug served by the app config double.
+	 *
+	 * @var string
+	 */
+	private string $registerSetting = 'shillinq';
+
+	/**
+	 * Register slugs the object-service double was pointed at, in order.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $registersSeen = [];
+
+	/**
 	 * One stored pending request on a case.
 	 *
 	 * @param array<string, mixed> $overrides Fields to change.
@@ -100,7 +121,8 @@ final class PaymentRequestActionControllerTest extends TestCase {
 		bool $mayRequest = true,
 	): PaymentRequestActionController {
 		$saved = &$this->saved;
-		$double = new class($stored, $saved) {
+		$registersSeen = &$this->registersSeen;
+		$double = new class($stored, $saved, $registersSeen) {
 			/**
 			 * The schema the fluent chain last selected.
 			 *
@@ -111,14 +133,17 @@ final class PaymentRequestActionControllerTest extends TestCase {
 			/**
 			 * @param array<string, array<int, array<string, mixed>>> $stored Rows per schema slug.
 			 * @param array<int, array<string, mixed>> $saved Sink.
+			 * @param array<int, string> $registersSeen Register sink.
 			 */
 			public function __construct(
 				private array $stored,
 				private array &$saved,
+				private array &$registersSeen,
 			) {
 			}
 
 			public function setRegister(string $register): static {
+				$this->registersSeen[] = $register;
 				return $this;
 			}
 
@@ -150,8 +175,9 @@ final class PaymentRequestActionControllerTest extends TestCase {
 		};
 
 		$appConfig = $this->createMock(IAppConfig::class);
+		$registerSetting = $this->registerSetting;
 		$appConfig->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use ($mayAdminister, $mayRequest): string {
+			static function (string $app, string $key, string $default = '') use ($mayAdminister, $mayRequest, $registerSetting): string {
 				if ($key === PaymentActionAuthorizer::CONFIG_ACTION_GROUPS) {
 					return json_encode(
 						[
@@ -162,7 +188,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 					);
 				}
 
-				return ($key === 'register' ? 'shillinq' : $default);
+				return ($key === 'register' ? $registerSetting : $default);
 			}
 		);
 
@@ -181,6 +207,10 @@ final class PaymentRequestActionControllerTest extends TestCase {
 		$mailer->method('createMessage')->willReturnCallback(fn (): IMessage => $this->createMock(IMessage::class));
 		$mailer->method('send')->willReturnCallback(
 			function (IMessage $message): array {
+				if ($this->mailerFails === true) {
+					throw new \RuntimeException('smtp refused the message');
+				}
+
 				$this->sent[] = $message;
 				return [];
 			}
@@ -572,4 +602,159 @@ final class PaymentRequestActionControllerTest extends TestCase {
 		self::assertSame('indeterminate', $report['state']);
 		self::assertNull($report['due']);
 	}//end testANamedAmountStillSettlesAgainstAnUnreadableRequest()
+
+	/**
+	 * Sending the link for an unknown request is a 404 and mails nothing.
+	 *
+	 * @return void
+	 */
+	public function testSendingAnUnknownRequestIsNotFound(): void {
+		$controller = $this->makeController(['PaymentRequest' => []], mayAdminister: true);
+
+		$response = $controller->send('pr-nope');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'No payment request with that id.'], $response->getData());
+		self::assertSame([], $this->sent);
+	}//end testSendingAnUnknownRequestIsNotFound()
+
+	/**
+	 * A stored row that is not an array reads as no request.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableStoredRowIsNotFound(): void {
+		$controller = $this->makeController(['PaymentRequest' => ['not-a-row']], mayAdminister: true);
+
+		$response = $controller->send('pr-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame([], $this->sent);
+	}//end testAnUnreadableStoredRowIsNotFound()
+
+	/**
+	 * A request without a payment link (anything but pending) is refused with
+	 * 400 rather than mailing a link-less message.
+	 *
+	 * @return void
+	 */
+	public function testARequestWithoutAPaymentLinkIsNotSent(): void {
+		$controller = $this->makeController(
+			['PaymentRequest' => [$this->storedRequest(['paymentLink' => ''])]],
+			mayAdminister: true
+		);
+
+		$response = $controller->send('pr-1');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(
+			['error' => 'This request has no payment link; only a pending request carries one.'],
+			$response->getData()
+		);
+		self::assertSame([], $this->sent);
+		self::assertSame([], $this->saved);
+	}//end testARequestWithoutAPaymentLinkIsNotSent()
+
+	/**
+	 * A mailer failure answers 500 with a generic message and records no
+	 * sent-at stamp.
+	 *
+	 * @return void
+	 */
+	public function testAMailerFailureRecordsNothing(): void {
+		$this->mailerFails = true;
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
+
+		$response = $controller->send('pr-1');
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'The payment link could not be sent.'], $response->getData());
+		self::assertSame([], $this->saved);
+	}//end testAMailerFailureRecordsNothing()
+
+	/**
+	 * A blanked register setting falls back to the default register rather
+	 * than reading from the empty one.
+	 *
+	 * @return void
+	 */
+	public function testABlankRegisterSettingFallsBackToTheDefault(): void {
+		$this->registerSetting = '';
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
+
+		$response = $controller->send('pr-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('shillinq', $this->registersSeen[0]);
+		self::assertNotContains('', $this->registersSeen);
+	}//end testABlankRegisterSettingFallsBackToTheDefault()
+
+	/**
+	 * Raising leges on an object that does not exist, or whose stored row is
+	 * unreadable, is a 404 and writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testRaisingLegesOnAMissingObjectIsNotFound(): void {
+		foreach ([[], ['not-a-row']] as $rows) {
+			$controller = $this->makeController(
+				['Zaak' => $rows, 'FeeSchedule' => [$this->feeSchedule()]],
+				mayAdminister: true,
+			);
+
+			$response = $controller->raiseLeges('dossiq', 'Zaak', 'zaak-7');
+
+			self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+			self::assertSame(['error' => 'No such object.'], $response->getData());
+		}
+
+		self::assertSame([], $this->saved);
+	}//end testRaisingLegesOnAMissingObjectIsNotFound()
+
+	/**
+	 * A published fee whose amount is zero is a 409, never a zero-amount
+	 * request.
+	 *
+	 * @return void
+	 */
+	public function testAFeeWithoutAReadableAmountIsAConflict(): void {
+		$controller = $this->makeController(
+			[
+				'Zaak' => [['id' => 'zaak-7', 'caseType' => 'bouwvergunning']],
+				'FeeSchedule' => [
+					$this->feeSchedule(['amounts' => [['intakeChannel' => '', 'amount' => 0, 'currency' => 'EUR']]]),
+				],
+			],
+			mayAdminister: true,
+		);
+
+		$response = $controller->raiseLeges('dossiq', 'Zaak', 'zaak-7');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		self::assertSame(
+			['error' => 'A fee is published for this type but no amount can be read for it.'],
+			$response->getData()
+		);
+		self::assertSame([], $this->saved);
+	}//end testAFeeWithoutAReadableAmountIsAConflict()
+
+	/**
+	 * A fee published without a legal basis is described by its type alone.
+	 *
+	 * @return void
+	 */
+	public function testAFeeWithoutALegalBasisIsDescribedByItsType(): void {
+		$controller = $this->makeController(
+			[
+				'Zaak' => [['id' => 'zaak-7', 'caseType' => 'bouwvergunning']],
+				'FeeSchedule' => [$this->feeSchedule(['legalBasis' => null])],
+			],
+			mayAdminister: true,
+		);
+
+		$response = $controller->raiseLeges('dossiq', 'Zaak', 'zaak-7');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('Leges bouwvergunning', $response->getData()['request']['description']);
+	}//end testAFeeWithoutALegalBasisIsDescribedByItsType()
 }//end class

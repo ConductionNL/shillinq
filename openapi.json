@@ -156,6 +156,10 @@
             "description": "Per-user deadline-calendar category toggles (REQ-CDC-006)."
         },
         {
+            "name": "direct-debit-batch",
+            "description": "SEPA direct debit batches: propose the draft batches and download their pain.008 file."
+        },
+        {
             "name": "down-payment",
             "description": "Down-payment endpoints."
         },
@@ -190,6 +194,10 @@
         {
             "name": "fx-rate-admin",
             "description": "Read-only admin endpoint for the FxRate import status."
+        },
+        {
+            "name": "fx-rate-feed-status",
+            "description": "The FX rates page status line: feed or typed, and the newest rate per currency pair."
         },
         {
             "name": "g-rir-reconciliation",
@@ -352,6 +360,10 @@
             "description": "The multi-year reserve overview endpoint."
         },
         {
+            "name": "retention-due",
+            "description": "The records whose retention period has ended and are due for destruction."
+        },
+        {
             "name": "revenue",
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
         },
@@ -438,6 +450,14 @@
         {
             "name": "vat-number-check",
             "description": "Checks the VAT number of one customer or supplier the caller can see."
+        },
+        {
+            "name": "vat-position",
+            "description": "The running VAT position of a period per return box (REQ-VPS-001)."
+        },
+        {
+            "name": "vat-suppletie",
+            "description": "Check a filed VAT return for corrections and prepare its supplementary return (REQ-VPS-002)."
         },
         {
             "name": "wbso-account-api",
@@ -5342,6 +5362,34 @@
                 }
             }
         },
+        "/fx-rates/feed-status": {
+            "get": {
+                "operationId": "fx-rate-feed-status-status",
+                "summary": "Return the feed status envelope",
+                "description": "Return the feed status envelope for the FX rates page: whether rates arrive from the feed or are entered by hand, and the newest rate date per currency pair, read with the caller's own register access. Needs a signed-in user.",
+                "tags": [
+                    "fx-rate-feed-status"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/goods-receipt-notes": {
             "post": {
                 "operationId": "goods-receipt-note-create",
@@ -7844,6 +7892,119 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/direct-debit-batches/propose": {
+            "post": {
+                "operationId": "direct-debit-batch-propose",
+                "summary": "Propose the draft direct debit batches for a collection date",
+                "description": "Propose the draft direct debit batches for a collection date. Request: administrationId, collectionDate (YYYY-MM-DD). 201 with the batches and the skipped invoices; 422 with the skipped invoices when nothing can be collected; 400 on a malformed date; 403 outside the caller's administrations. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "direct-debit-batch"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration id.",
+                                        "type": "string"
+                                    },
+                                    "collectionDate": {
+                                        "description": "The requested collection date, YYYY-MM-DD.",
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "required": [
+                                    "administrationId",
+                                    "collectionDate"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/direct-debit-batches/{id}/file": {
+            "get": {
+                "operationId": "direct-debit-batch-file",
+                "summary": "Download the pain.008 file of a generated direct debit batch",
+                "description": "Download the pain.008.001.02 file of a generated direct debit batch as an XML attachment. 404 for a missing batch or one of another administration; 409 when the batch has no file yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "direct-debit-batch"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The DirectDebitBatch id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The pain.008 file.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "text/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
                     }
                 }
             }
@@ -12137,6 +12298,327 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/vat-returns/{returnId}/detect-drift": {
+            "post": {
+                "operationId": "vat-suppletie-detect-drift",
+                "summary": "Check a filed VAT return for corrections (REQ-VPS-002)",
+                "description": "Compares a filed VAT return with the books and writes a draft VatCorrection when they drifted (201), or answers drift false (200). Needs a signed-in Nextcloud user who is a member of the return's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The filed VATReturn id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "A correction was written.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-corrections/{correctionId}/prepare": {
+            "post": {
+                "operationId": "vat-suppletie-prepare",
+                "summary": "Prepare the supplementary VAT return of a detected correction (REQ-VPS-002)",
+                "description": "Compiles the per-box differences, decides against the EUR 1,000 threshold and stages the correction posting. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The detected VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-corrections/{correctionId}/supplementary-return": {
+            "get": {
+                "operationId": "vat-suppletie-download",
+                "summary": "Download the prepared supplementary VAT return (REQ-VPS-002)",
+                "description": "The prepared correction as a JSON document: the return it corrects, the per-box differences, the net correction and the threshold decision. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The prepared VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-corrections/{correctionId}/file": {
+            "post": {
+                "operationId": "vat-suppletie-file",
+                "summary": "File the prepared supplementary VAT return through Digipoort (REQ-VPS-002)",
+                "description": "Hands the supplementary return to the Digipoort port and marks the correction submitted. While Digipoort is not connected it answers 409 with the download address. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The prepared VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-position": {
+            "get": {
+                "operationId": "vat-position-show",
+                "summary": "The running VAT position of a period per return box (REQ-VPS-001)",
+                "description": "Per box the base and VAT of the lines posted so far, the lines behind each box, and the amount payable (negative: refundable). Needs a signed-in Nextcloud user who is a member of the administration.",
+                "tags": [
+                    "vat-position"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration; the caller's active administration when left out.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "description": "YYYY-Qn, YYYY-MM or YYYY; the quarter of today when left out.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/retention/due": {
+            "get": {
+                "operationId": "retention-due-index",
+                "summary": "The records whose retention period has ended",
+                "description": "The records whose retention period has ended, oldest end date first, with the register, the record, the retention rule, the end date and the disposition. Records under a legal hold are left out. Query: `administrationId` (optional): one administration; without it, the caller's active administration. An administration the caller may not read answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "retention-due"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"

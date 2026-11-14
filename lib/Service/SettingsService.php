@@ -299,10 +299,33 @@ class SettingsService implements SettingsServiceInterface {
 			return ['error' => ['success' => false, 'message' => 'Unknown RGS template variant: ' . $templateVariant]];
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/' . $fileMap[$templateVariant];
+		$seed = $this->readRgsSeed(fileName: $fileMap[$templateVariant]);
+		if (isset($seed['error']) === true) {
+			return $seed;
+		}
+
+		$data = $seed['data'];
+
+		$accounts = ($data['accounts'] ?? []);
+		if (empty($accounts) === true) {
+			return ['error' => ['success' => false, 'message' => 'Seed file contains no accounts.']];
+		}
+
+		return ['accounts' => $accounts];
+	}//end loadSeedAccounts()
+
+	/**
+	 * Read and decode one RGS seed file.
+	 *
+	 * @param string $fileName The seed file name under Settings/seeds/.
+	 *
+	 * @return array{data: mixed}|array{error: array<string,mixed>}
+	 */
+	private function readRgsSeed(string $fileName): array {
+		$seedPath = __DIR__ . '/../Settings/seeds/' . $fileName;
 		if (file_exists($seedPath) === false) {
 			$this->logger->error('Shillinq: seed file not found at ' . $seedPath);
-			return ['error' => ['success' => false, 'message' => 'Seed file not found: ' . $fileMap[$templateVariant]]];
+			return ['error' => ['success' => false, 'message' => 'Seed file not found: ' . $fileName]];
 		}
 
 		$content = file_get_contents($seedPath);
@@ -315,13 +338,8 @@ class SettingsService implements SettingsServiceInterface {
 			return ['error' => ['success' => false, 'message' => 'Failed to parse seed file: ' . json_last_error_msg()]];
 		}
 
-		$accounts = ($data['accounts'] ?? []);
-		if (empty($accounts) === true) {
-			return ['error' => ['success' => false, 'message' => 'Seed file contains no accounts.']];
-		}
-
-		return ['accounts' => $accounts];
-	}//end loadSeedAccounts()
+		return ['data' => $data];
+	}//end readRgsSeed()
 
 	/**
 	 * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
@@ -426,61 +444,7 @@ class SettingsService implements SettingsServiceInterface {
 		$userId = $user->getUID();
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			// Confirm the administration exists before granting anything, by the
-			// administrationCode — a real JSON property, and therefore filterable.
-			// Filtering on `id` here would match nothing (see findAdministration()).
-			$administrations = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => ['administrationCode' => $administrationCode],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($administrations) === true) {
-				return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
-			}
-
-			// The code is the id space the rest of the system runs on — see the
-			// docblock. Deliberately not the uuid.
-			$administrationId = $administrationCode;
-
-			$existing = $objectService
-				->setRegister($registerSlug)
-				->setSchema('AdministrationMembership')
-				->findAll(
-					[
-						'filters' => [
-							'userId' => $userId,
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($existing) === false) {
-				return ['granted' => false, 'reason' => 'already a member', 'administrationId' => $administrationId];
-			}
-
-			$objectService->saveObject(
-				object: [
-					'userId' => $userId,
-					'administrationId' => $administrationId,
-					'role' => 'eigenaar',
-					'mayPostJournalEntries' => true,
-					'mayCloseFiscalYear' => true,
-					'validFrom' => date('Y-m-d'),
-					'validUntil' => null,
-					'grantedBy' => $userId,
-				],
-				register: $registerSlug,
-				schema: 'AdministrationMembership',
-			);
+			$refusal = $this->saveDefaultAdministrationMembership(userId: $userId, administrationCode: $administrationCode);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SettingsService: failed to grant default administration membership',
@@ -489,6 +453,12 @@ class SettingsService implements SettingsServiceInterface {
 			return ['granted' => false, 'reason' => 'exception: ' . $e->getMessage()];
 		}//end try
 
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$administrationId = $administrationCode;
+
 		$this->logger->info(
 			'SettingsService: granted default administration membership',
 			['userId' => $userId, 'administrationId' => $administrationId]
@@ -496,6 +466,81 @@ class SettingsService implements SettingsServiceInterface {
 
 		return ['granted' => true, 'administrationId' => $administrationId];
 	}//end grantDefaultAdministrationMembership()
+
+	/**
+	 * Save the owner membership of the default administration, unless it is missing or already granted.
+	 *
+	 * @param string $userId             The user to grant the membership to.
+	 * @param string $administrationCode The administrationCode of the seeded administration.
+	 *
+	 * @return array<string,mixed>|null The refusal result, or null when the membership was saved.
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+	 */
+	private function saveDefaultAdministrationMembership(string $userId, string $administrationCode): array|null {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->getRegisterSlug();
+
+		// Confirm the administration exists before granting anything, by the
+		// administrationCode — a real JSON property, and therefore filterable.
+		// Filtering on `id` here would match nothing (see findAdministration()).
+		$administrations = $this->findOneRecord(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			schema: 'Administration',
+			filters: ['administrationCode' => $administrationCode]
+		);
+
+		if (empty($administrations) === true) {
+			return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
+		}
+
+		// The code is the id space the rest of the system runs on — see the
+		// docblock. Deliberately not the uuid.
+		$administrationId = $administrationCode;
+
+		$filters = ['userId' => $userId, 'administrationId' => $administrationId];
+		$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'AdministrationMembership', filters: $filters);
+
+		if (empty($existing) === false) {
+			return ['granted' => false, 'reason' => 'already a member', 'administrationId' => $administrationId];
+		}
+
+		$this->saveOwnerMembership(objectService: $objectService, registerSlug: $registerSlug, userId: $userId, administrationId: $administrationId);
+
+		return null;
+	}//end saveDefaultAdministrationMembership()
+
+	/**
+	 * Save an owner (`eigenaar`) AdministrationMembership valid from today.
+	 *
+	 * @param mixed  $objectService    OpenRegister's ObjectService.
+	 * @param string $registerSlug     The register to write to.
+	 * @param string $userId           The member, also recorded as the granter.
+	 * @param string $administrationId The administration the membership is for.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+	 */
+	private function saveOwnerMembership(mixed $objectService, string $registerSlug, string $userId, string $administrationId): void {
+		$objectService->saveObject(
+			object: [
+				'userId' => $userId,
+				'administrationId' => $administrationId,
+				'role' => 'eigenaar',
+				'mayPostJournalEntries' => true,
+				'mayCloseFiscalYear' => true,
+				'validFrom' => date('Y-m-d'),
+				'validUntil' => null,
+				'grantedBy' => $userId,
+			],
+			register: $registerSlug,
+			schema: 'AdministrationMembership',
+		);
+	}//end saveOwnerMembership()
 
 	/**
 	 * Read the `administrationCode` of the bundled default-administration seed.
@@ -581,141 +626,265 @@ class SettingsService implements SettingsServiceInterface {
 			return ['success' => false, 'message' => 'administrationId must not be empty.'];
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/fixed-assets-demo.json';
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: fixed-assets-demo.json'];
+		$seedResult = $this->loadFixedAssetsDemoSeed();
+		if (isset($seedResult['error']) === true) {
+			return $seedResult['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read fixed-assets-demo.json'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse fixed-assets-demo.json: ' . json_last_error_msg(),
-			];
-		}
+		$data = $seedResult['data'];
 
 		$fixedAssets = ($data['fixedAssets'] ?? []);
 		$depreciationSchedules = ($data['depreciationSchedules'] ?? []);
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seededAssets = 0;
-			$skippedAssets = 0;
-			$seededSchedules = 0;
-			$skippedSchedules = 0;
-			$assetUuidByNumber = [];
-
-			foreach ($fixedAssets as $asset) {
-				$asset['administrationId'] = $administrationId;
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('FixedAsset')
-					->findAll(
-						[
-							'filters' => [
-								'assetNumber' => $asset['assetNumber'],
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skippedAssets++;
-					// Cache the existing UUID for schedule linking.
-					$firstRow = $existing[0];
-					$existingUuid = ObjectIdentifier::resolve(saved: $firstRow);
-					if ($existingUuid !== '') {
-						$assetUuidByNumber[$asset['assetNumber']] = $existingUuid;
-					}
-
-					continue;
-				}
-
-				$saved = $objectService->saveObject(
-					object: $asset,
-					register: $registerSlug,
-					schema: 'FixedAsset',
-				);
-				$seededAssets++;
-
-				$savedUuid = ObjectIdentifier::resolve(saved: $saved);
-				if ($savedUuid !== '') {
-					$assetUuidByNumber[$asset['assetNumber']] = $savedUuid;
-				}
-			}//end foreach
-
-			foreach ($depreciationSchedules as $schedule) {
-				$schedule['administrationId'] = $administrationId;
-
-				// Resolve assetNumber → assetRef UUID.
-				$assetNumber = (string)($schedule['assetNumber'] ?? '');
-				if ($assetNumber !== '' && isset($assetUuidByNumber[$assetNumber]) === true) {
-					$schedule['assetRef'] = $assetUuidByNumber[$assetNumber];
-				}
-
-				unset($schedule['assetNumber']);
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('DepreciationSchedule')
-					->findAll(
-						[
-							'filters' => [
-								'scheduleNumber' => $schedule['scheduleNumber'],
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skippedSchedules++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $schedule,
-					register: $registerSlug,
-					schema: 'DepreciationSchedule',
-				);
-				$seededSchedules++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: fixed-assets demo seeded',
-				[
-					'seededAssets' => $seededAssets,
-					'skippedAssets' => $skippedAssets,
-					'seededSchedules' => $seededSchedules,
-					'skippedSchedules' => $skippedSchedules,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
-				'seededAssets' => $seededAssets,
-				'skippedAssets' => $skippedAssets,
-				'seededSchedules' => $seededSchedules,
-				'skippedSchedules' => $skippedSchedules,
-			];
+			return $this->importFixedAssetsDemo(administrationId: $administrationId, fixedAssets: $fixedAssets, schedules: $depreciationSchedules);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: fixed-assets demo seeding failed',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('Shillinq: fixed-assets demo seeding failed', ['exception' => $e->getMessage()]);
 			return ['success' => false, 'message' => $e->getMessage()];
 		}//end try
 
 	}//end seedFixedAssetsDemo()
+
+	/**
+	 * Read and decode `lib/Settings/seeds/fixed-assets-demo.json`.
+	 *
+	 * Returns `['data' => mixed]` on success, or `['error' => array]` with a
+	 * failure result array when the file is missing, unreadable or invalid JSON.
+	 *
+	 * @return array{data: mixed}|array{error: array<string,mixed>}
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function loadFixedAssetsDemoSeed(): array {
+		$seedPath = __DIR__ . '/../Settings/seeds/fixed-assets-demo.json';
+		if (file_exists($seedPath) === false) {
+			return ['error' => ['success' => false, 'message' => 'Seed file not found: fixed-assets-demo.json']];
+		}
+
+		$content = file_get_contents($seedPath);
+		if ($content === false) {
+			return ['error' => ['success' => false, 'message' => 'Failed to read fixed-assets-demo.json']];
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			return [
+				'error' => [
+					'success' => false,
+					'message' => 'Failed to parse fixed-assets-demo.json: ' . json_last_error_msg(),
+				],
+			];
+		}
+
+		return ['data' => $data];
+	}//end loadFixedAssetsDemoSeed()
+
+	/**
+	 * Seed the demo FixedAssets and their DepreciationSchedules, then log and report the counts.
+	 *
+	 * @param string       $administrationId The administrationId to stamp on seeded records.
+	 * @param array<mixed> $fixedAssets      FixedAsset rows from the seed file.
+	 * @param array<mixed> $schedules        DepreciationSchedule rows from the seed file.
+	 *
+	 * @return array<string,mixed> Result with success flag and seeded/skipped counts.
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function importFixedAssetsDemo(string $administrationId, array $fixedAssets, array $schedules): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->getRegisterSlug();
+		$assets = $this->seedDemoFixedAssets(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			fixedAssets: $fixedAssets,
+			administrationId: $administrationId
+		);
+		$seededSchedules = 0;
+		$skippedSchedules = 0;
+
+		foreach ($schedules as $schedule) {
+			$schedule['administrationId'] = $administrationId;
+			$schedule = $this->linkDemoScheduleToAsset(schedule: $schedule, assetUuidByNumber: $assets['uuids']);
+
+			if ($this->seedDemoSchedule(objectService: $objectService, registerSlug: $registerSlug, schedule: $schedule) === false) {
+				$skippedSchedules++;
+				continue;
+			}
+
+			$seededSchedules++;
+		}
+
+		return $this->reportFixedAssetsDemo(
+			counts: [
+				'seededAssets' => $assets['seeded'],
+				'skippedAssets' => $assets['skipped'],
+				'seededSchedules' => $seededSchedules,
+				'skippedSchedules' => $skippedSchedules,
+			]
+		);
+	}//end importFixedAssetsDemo()
+
+	/**
+	 * Seed every demo FixedAsset and collect the asset UUIDs by assetNumber.
+	 *
+	 * @param mixed        $objectService    OpenRegister's ObjectService.
+	 * @param string       $registerSlug     The register to write to.
+	 * @param array<mixed> $fixedAssets      FixedAsset rows from the seed file.
+	 * @param string       $administrationId The administrationId to stamp on seeded records.
+	 *
+	 * @return array{seeded: int, skipped: int, uuids: array<string,string>}
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function seedDemoFixedAssets(mixed $objectService, string $registerSlug, array $fixedAssets, string $administrationId): array {
+		$result = ['seeded' => 0, 'skipped' => 0, 'uuids' => []];
+
+		foreach ($fixedAssets as $asset) {
+			$asset['administrationId'] = $administrationId;
+
+			$outcome = $this->seedDemoFixedAsset(objectService: $objectService, registerSlug: $registerSlug, asset: $asset);
+			if ($outcome['seeded'] === true) {
+				$result['seeded']++;
+			} else {
+				$result['skipped']++;
+			}
+
+			if ($outcome['uuid'] !== '') {
+				$result['uuids'][$asset['assetNumber']] = $outcome['uuid'];
+			}
+		}
+
+		return $result;
+	}//end seedDemoFixedAssets()
+
+	/**
+	 * Resolve a demo schedule's assetNumber to the assetRef UUID and drop the assetNumber.
+	 *
+	 * @param array<string,mixed>  $schedule          The schedule row.
+	 * @param array<string,string> $assetUuidByNumber Asset UUIDs keyed by assetNumber.
+	 *
+	 * @return array<string,mixed> The schedule row with assetRef set when resolvable.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function linkDemoScheduleToAsset(array $schedule, array $assetUuidByNumber): array {
+		// Resolve assetNumber → assetRef UUID.
+		$assetNumber = (string)($schedule['assetNumber'] ?? '');
+		if ($assetNumber !== '' && isset($assetUuidByNumber[$assetNumber]) === true) {
+			$schedule['assetRef'] = $assetUuidByNumber[$assetNumber];
+		}
+
+		unset($schedule['assetNumber']);
+
+		return $schedule;
+	}//end linkDemoScheduleToAsset()
+
+	/**
+	 * Log the fixed-assets demo counts and build the success result.
+	 *
+	 * @param array<string,int> $counts The seeded and skipped counts per schema.
+	 *
+	 * @return array<string,mixed> Result with success flag and the counts.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function reportFixedAssetsDemo(array $counts): array {
+		$this->logger->info('Shillinq: fixed-assets demo seeded', $counts);
+
+		return array_merge(
+			[
+				'success' => true,
+				'message' => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
+			],
+			$counts
+		);
+	}//end reportFixedAssetsDemo()
+
+	/**
+	 * Find the one record of a schema that matches the given filters.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to search.
+	 * @param string              $schema        The schema to search.
+	 * @param array<string,mixed> $filters       The deduplication filters.
+	 *
+	 * @return mixed The findAll result, at most one row.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function findOneRecord(mixed $objectService, string $registerSlug, string $schema, array $filters): mixed {
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema($schema)
+			->findAll(['filters' => $filters, 'limit' => 1]);
+	}//end findOneRecord()
+
+	/**
+	 * Save one demo FixedAsset unless a record with its assetNumber already exists.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to write to.
+	 * @param array<string,mixed> $asset         The asset row, already stamped with its administrationId.
+	 *
+	 * @return array{seeded: bool, uuid: string} Whether it was saved, and the UUID of the saved or existing record.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function seedDemoFixedAsset(mixed $objectService, string $registerSlug, array $asset): array {
+		$filters = ['assetNumber' => $asset['assetNumber'], 'administrationId' => $asset['administrationId']];
+		$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'FixedAsset', filters: $filters);
+
+		if (empty($existing) === false) {
+			// Cache the existing UUID for schedule linking.
+			$firstRow = $existing[0];
+			return ['seeded' => false, 'uuid' => ObjectIdentifier::resolve(saved: $firstRow)];
+		}
+
+		$saved = $objectService->saveObject(
+			object: $asset,
+			register: $registerSlug,
+			schema: 'FixedAsset',
+		);
+
+		return ['seeded' => true, 'uuid' => ObjectIdentifier::resolve(saved: $saved)];
+	}//end seedDemoFixedAsset()
+
+	/**
+	 * Save one demo DepreciationSchedule unless a record with its scheduleNumber already exists.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to write to.
+	 * @param array<string,mixed> $schedule      The schedule row, already stamped with its administrationId.
+	 *
+	 * @return bool True when the schedule was saved, false when it already existed.
+	 *
+	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+	 */
+	private function seedDemoSchedule(mixed $objectService, string $registerSlug, array $schedule): bool {
+		$filters = ['scheduleNumber' => $schedule['scheduleNumber'], 'administrationId' => $schedule['administrationId']];
+		$existing = $this->findOneRecord(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			schema: 'DepreciationSchedule',
+			filters: $filters
+		);
+
+		if (empty($existing) === false) {
+			return false;
+		}
+
+		$objectService->saveObject(
+			object: $schedule,
+			register: $registerSlug,
+			schema: 'DepreciationSchedule',
+		);
+
+		return true;
+	}//end seedDemoSchedule()
 
 	/**
 	 * The per-administration BBV seeds, run with this service's register settings.
@@ -859,6 +1028,34 @@ class SettingsService implements SettingsServiceInterface {
 	 *                             or ['success' => false, 'message' => string]
 	 */
 	private function loadRegisterConfigData(): array {
+		$base = $this->readBaseRegisterConfig();
+		if (isset($base['success']) === true) {
+			return $base;
+		}
+
+		$merged = $this->mergeRegisterFragments(configData: $base['data']);
+		$configData = $merged['data'];
+		$fragmentSig = $merged['signature'];
+
+		// Fold the fragment signature into the version so OpenRegister's
+		// version-gated importFromApp re-imports whenever fragments change.
+		$version = ($configData['info']['version'] ?? '0.0.0');
+		if ($fragmentSig !== '') {
+			$version .= '+frag.' . substr(md5($fragmentSig), 0, 8);
+		}
+
+		return [
+			'data' => $configData,
+			'version' => $version,
+		];
+	}//end loadRegisterConfigData()
+
+	/**
+	 * Read and parse the base shillinq_register.json file.
+	 *
+	 * @return array<string,mixed> Either ['data' => mixed] or ['success' => false, 'message' => string]
+	 */
+	private function readBaseRegisterConfig(): array {
 		$configPath = __DIR__ . '/../Settings/shillinq_register.json';
 		if (file_exists($configPath) === false) {
 			$this->logger->error('Shillinq: shillinq_register.json not found at ' . $configPath);
@@ -886,6 +1083,17 @@ class SettingsService implements SettingsServiceInterface {
 			];
 		}
 
+		return ['data' => $configData];
+	}//end readBaseRegisterConfig()
+
+	/**
+	 * Merge the register fragments from Settings/register.d/*.json over the base configuration.
+	 *
+	 * @param mixed $configData The parsed base configuration.
+	 *
+	 * @return array{data: mixed, signature: string} The merged configuration and the fragment signature.
+	 */
+	private function mergeRegisterFragments(mixed $configData): array {
 		// ADR-037: merge modular register fragments from Settings/register.d/*.json.
 		// Each OpenSpec change drops its own fragment file instead of editing this
 		// monolith, so concurrent builds touch disjoint files (no merge conflicts).
@@ -897,38 +1105,43 @@ class SettingsService implements SettingsServiceInterface {
 			$fragmentFiles = glob($fragmentDir . '/*.json');
 			sort($fragmentFiles);
 			foreach ($fragmentFiles as $fragmentFile) {
-				$fragmentContent = file_get_contents($fragmentFile);
-				if ($fragmentContent === false) {
+				$fragment = $this->readRegisterFragment(fragmentFile: $fragmentFile);
+				if ($fragment === null) {
 					continue;
 				}
 
-				$fragmentData = json_decode($fragmentContent, true);
-				if (json_last_error() !== JSON_ERROR_NONE) {
-					$this->logger->warning(
-						'Shillinq: skipping malformed register fragment ' . basename($fragmentFile)
-						. ': ' . json_last_error_msg()
-					);
-					continue;
-				}
-
-				$configData = self::deepMergeConfig(base: $configData, overlay: $fragmentData);
-				$fragmentSig .= basename($fragmentFile) . ':' . md5($fragmentContent) . ';';
+				$configData = self::deepMergeConfig(base: $configData, overlay: $fragment['data']);
+				$fragmentSig .= basename($fragmentFile) . ':' . md5($fragment['content']) . ';';
 			}
-		}//end if
-
-		// Fold the fragment signature into the version so OpenRegister's
-		// version-gated importFromApp re-imports whenever fragments change.
-		$version = ($configData['info']['version'] ?? '0.0.0');
-		if ($fragmentSig !== '') {
-			$version .= '+frag.' . substr(md5($fragmentSig), 0, 8);
 		}
 
-		return [
-			'data' => $configData,
-			'version' => $version,
-		];
+		return ['data' => $configData, 'signature' => $fragmentSig];
+	}//end mergeRegisterFragments()
 
-	}//end loadRegisterConfigData()
+	/**
+	 * Read and parse one register fragment file.
+	 *
+	 * @param string $fragmentFile The fragment file path.
+	 *
+	 * @return array{data: mixed, content: string}|null The parsed fragment and its raw content, or null when unusable.
+	 */
+	private function readRegisterFragment(string $fragmentFile): array|null {
+		$fragmentContent = file_get_contents($fragmentFile);
+		if ($fragmentContent === false) {
+			return null;
+		}
+
+		$fragmentData = json_decode($fragmentContent, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: skipping malformed register fragment ' . basename($fragmentFile)
+				. ': ' . json_last_error_msg()
+			);
+			return null;
+		}
+
+		return ['data' => $fragmentData, 'content' => $fragmentContent];
+	}//end readRegisterFragment()
 
 	/**
 	 * Deep-merge a register fragment onto the base config (ADR-037).
@@ -980,107 +1193,7 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		try {
-			$configLoad = $this->loadRegisterConfigData();
-			if (isset($configLoad['success']) === true && $configLoad['success'] === false) {
-				return $configLoad;
-			}
-
-			$configData = $configLoad['data'];
-			$configVersion = $configLoad['version'];
-
-			$configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
-			$result = $configurationService->importFromApp(
-				appId: AppIdentity::APP_ID,
-				data: $configData,
-				version: $configVersion,
-				force: $force
-			);
-
-			if (empty($result) === false) {
-				$errors = ($result['errors'] ?? []);
-				$warnings = ($result['warnings'] ?? []);
-
-				// A seed object that fails its schema's `required` list is skipped
-				// ONE BY ONE by OpenRegister's ImportHandler (per-entity resilience):
-				// it increments $result['skipped'] and logs a WARNING, then keeps
-				// going. It does NOT raise an error, so every branch below used to
-				// report `success: true` over a partially-imported register — and
-				// `occ app:enable` exits 0. That is why a broken seed stayed
-				// invisible until an endpoint merely LOOKED empty:
-				// GET /api/v2/calendars returned 200 {"calendars":[]} and the whole
-				// bookings collection failed against calendar code that was never
-				// wrong. Surface the count and the names instead of discarding them.
-				//
-				// Deliberately NOT fatal: flipping success to false here would make
-				// `occ app:enable` / `occ upgrade` fail on EXISTING installs that
-				// already carry these seeds, which would brick an upgrade for a
-				// data defect that is not new. The count is reported, logged at
-				// error level and returned to the admin UI; the ratchet in
-				// tests/validate-seeds.js is what actually stops new ones landing.
-				$skipped = ($result['skipped'] ?? []);
-				$skippedSeeds = (int)($skipped['objects'] ?? 0) + (int)($skipped['seedObjects'] ?? 0);
-
-				if (empty($errors) === false) {
-					$this->logger->error(
-						'Shillinq: register configuration imported with errors',
-						['errors' => $errors]
-					);
-					return [
-						'success' => false,
-						'message' => 'Configuration import completed with errors.',
-						'errors' => $errors,
-						'warnings' => $warnings,
-						'version' => ($result['version'] ?? 'unknown'),
-					];
-				}
-
-				if (empty($warnings) === false) {
-					$this->logger->warning(
-						'Shillinq: register configuration imported with warnings',
-						['warnings' => $warnings]
-					);
-				}
-
-				if ($skippedSeeds > 0) {
-					$this->logger->error(
-						'Shillinq: register configuration imported, but ' . $skippedSeeds . ' seed object(s) could NOT be imported '
-						. '— they do not satisfy their own schema\'s required list. Affected endpoints will return empty '
-						. 'collections that look like a working-but-empty install. Run `node tests/validate-seeds.js` for the '
-						. 'per-schema breakdown of which objects failed and which fields they are missing.',
-						['skippedSeedObjects' => $skippedSeeds, 'skipped' => $skipped]
-					);
-
-					return [
-						'success' => true,
-						'message' => 'Configuration imported, but ' . $skippedSeeds . ' seed object(s) could not be imported.',
-						'skippedSeedObjects' => $skippedSeeds,
-						'skipped' => $skipped,
-						'warnings' => $warnings,
-						'version' => ($result['version'] ?? 'unknown'),
-					];
-				}
-
-				$this->logger->info('Shillinq: register configuration imported successfully');
-				return [
-					'success' => true,
-					'message' => 'Configuration imported successfully.',
-					'skippedSeedObjects' => 0,
-					'warnings' => $warnings,
-					'version' => ($result['version'] ?? 'unknown'),
-				];
-			}//end if
-
-			// C8: OR's importFromApp returns an all-empty result on the version-unchanged
-			// idempotent-skip path (force=false, same version as previously imported).
-			// This is not a failure — it means the register is already up-to-date.
-			// Classifying it as failure caused every routine `occ upgrade` to log
-			// "schema import failed, skipping account seed" even when nothing was wrong.
-			$this->logger->info('Shillinq: register configuration already up-to-date (version-unchanged skip)');
-			return [
-				'success' => true,
-				'skipped' => true,
-				'message' => 'Configuration already up-to-date (version-unchanged skip).',
-			];
+			return $this->importRegisterConfiguration(force: $force);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: configuration import failed',
@@ -1092,6 +1205,159 @@ class SettingsService implements SettingsServiceInterface {
 			];
 		}//end try
 	}//end runLoadConfiguration()
+
+	/**
+	 * Import the register configuration through OpenRegister and classify the outcome.
+	 *
+	 * @param bool $force Force re-import even if already configured.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \Throwable When loading or importing the configuration fails.
+	 */
+	private function importRegisterConfiguration(bool $force): array {
+		$configLoad = $this->loadRegisterConfigData();
+		if (isset($configLoad['success']) === true && $configLoad['success'] === false) {
+			return $configLoad;
+		}
+
+		$configData = $configLoad['data'];
+		$configVersion = $configLoad['version'];
+
+		$configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
+		$result = $configurationService->importFromApp(
+			appId: AppIdentity::APP_ID,
+			data: $configData,
+			version: $configVersion,
+			force: $force
+		);
+
+		if (empty($result) === false) {
+			return $this->classifyConfigurationImport(result: $result);
+		}
+
+		// C8: OR's importFromApp returns an all-empty result on the version-unchanged
+		// idempotent-skip path (force=false, same version as previously imported).
+		// This is not a failure — it means the register is already up-to-date.
+		// Classifying it as failure caused every routine `occ upgrade` to log
+		// "schema import failed, skipping account seed" even when nothing was wrong.
+		$this->logger->info('Shillinq: register configuration already up-to-date (version-unchanged skip)');
+		return [
+			'success' => true,
+			'skipped' => true,
+			'message' => 'Configuration already up-to-date (version-unchanged skip).',
+		];
+	}//end importRegisterConfiguration()
+
+	/**
+	 * Turn a non-empty importFromApp result into the load result, logging errors, warnings and skipped seeds.
+	 *
+	 * @param array<string,mixed> $result The importFromApp result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function classifyConfigurationImport(array $result): array {
+		$errors = ($result['errors'] ?? []);
+		$warnings = ($result['warnings'] ?? []);
+
+		// A seed object that fails its schema's `required` list is skipped
+		// ONE BY ONE by OpenRegister's ImportHandler (per-entity resilience):
+		// it increments $result['skipped'] and logs a WARNING, then keeps
+		// going. It does NOT raise an error, so every branch below used to
+		// report `success: true` over a partially-imported register — and
+		// `occ app:enable` exits 0. That is why a broken seed stayed
+		// invisible until an endpoint merely LOOKED empty:
+		// GET /api/v2/calendars returned 200 {"calendars":[]} and the whole
+		// bookings collection failed against calendar code that was never
+		// wrong. Surface the count and the names instead of discarding them.
+		//
+		// Deliberately NOT fatal: flipping success to false here would make
+		// `occ app:enable` / `occ upgrade` fail on EXISTING installs that
+		// already carry these seeds, which would brick an upgrade for a
+		// data defect that is not new. The count is reported, logged at
+		// error level and returned to the admin UI; the ratchet in
+		// tests/validate-seeds.js is what actually stops new ones landing.
+		$skipped = ($result['skipped'] ?? []);
+		$skippedSeeds = (int)($skipped['objects'] ?? 0) + (int)($skipped['seedObjects'] ?? 0);
+
+		if (empty($errors) === false) {
+			return $this->configurationImportFailed(result: $result);
+		}
+
+		if (empty($warnings) === false) {
+			$this->logger->warning(
+				'Shillinq: register configuration imported with warnings',
+				['warnings' => $warnings]
+			);
+		}
+
+		if ($skippedSeeds > 0) {
+			return $this->configurationImportSkippedSeeds(result: $result, skippedSeeds: $skippedSeeds);
+		}
+
+		$this->logger->info('Shillinq: register configuration imported successfully');
+		return [
+			'success' => true,
+			'message' => 'Configuration imported successfully.',
+			'skippedSeedObjects' => 0,
+			'warnings' => $warnings,
+			'version' => ($result['version'] ?? 'unknown'),
+		];
+	}//end classifyConfigurationImport()
+
+	/**
+	 * Log and report a configuration import that returned errors.
+	 *
+	 * @param array<string,mixed> $result The importFromApp result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function configurationImportFailed(array $result): array {
+		$errors = ($result['errors'] ?? []);
+		$warnings = ($result['warnings'] ?? []);
+
+		$this->logger->error(
+			'Shillinq: register configuration imported with errors',
+			['errors' => $errors]
+		);
+		return [
+			'success' => false,
+			'message' => 'Configuration import completed with errors.',
+			'errors' => $errors,
+			'warnings' => $warnings,
+			'version' => ($result['version'] ?? 'unknown'),
+		];
+	}//end configurationImportFailed()
+
+	/**
+	 * Log and report a configuration import that skipped seed objects failing their schema.
+	 *
+	 * @param array<string,mixed> $result       The importFromApp result.
+	 * @param int                 $skippedSeeds The number of seed objects that could not be imported.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function configurationImportSkippedSeeds(array $result, int $skippedSeeds): array {
+		$skipped = ($result['skipped'] ?? []);
+		$warnings = ($result['warnings'] ?? []);
+
+		$this->logger->error(
+			'Shillinq: register configuration imported, but ' . $skippedSeeds . ' seed object(s) could NOT be imported '
+			. '— they do not satisfy their own schema\'s required list. Affected endpoints will return empty '
+			. 'collections that look like a working-but-empty install. Run `node tests/validate-seeds.js` for the '
+			. 'per-schema breakdown of which objects failed and which fields they are missing.',
+			['skippedSeedObjects' => $skippedSeeds, 'skipped' => $skipped]
+		);
+
+		return [
+			'success' => true,
+			'message' => 'Configuration imported, but ' . $skippedSeeds . ' seed object(s) could not be imported.',
+			'skippedSeedObjects' => $skippedSeeds,
+			'skipped' => $skipped,
+			'warnings' => $warnings,
+			'version' => ($result['version'] ?? 'unknown'),
+		];
+	}//end configurationImportSkippedSeeds()
 
 	/**
 	 * The template and reference-rule seeds, run with this service's register settings.
@@ -1275,40 +1541,81 @@ class SettingsService implements SettingsServiceInterface {
 				continue;
 			}
 
-			$manifestPath = __DIR__ . '/../Settings/statements/' . $fileName;
-			if (file_exists($manifestPath) === false) {
-				$this->logger->warning('Shillinq: statement manifest not found: ' . $fileName);
+			$manifest = $this->readStatementManifest(fileName: $fileName);
+			if ($manifest === null) {
 				continue;
 			}
 
-			$content = file_get_contents($manifestPath);
-			if ($content === false) {
-				$this->logger->warning('Shillinq: failed to read statement manifest: ' . $fileName);
-				continue;
-			}
-
-			$decoded = json_decode($content, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				$this->logger->warning(
-					'Shillinq: failed to parse statement manifest ' . $fileName . ': ' . json_last_error_msg()
-				);
-				continue;
-			}
-
-			// Stamp the import timestamp so a future presentation-standard migration
-			// (BBV — T3; IFRS full — T5) can tell template-sourced from operator-authored.
-			if (isset($decoded['_meta']) === true && is_array($decoded['_meta']) === true) {
-				$decoded['_meta']['imported'] = gmdate('Y-m-d\TH:i:s\Z');
-			}
-
-			$this->appConfig->setValueString(
-				AppIdentity::APP_ID,
-				$configKey,
-				(string)json_encode($decoded)
-			);
+			$this->storeStatementManifest(configKey: $configKey, decoded: $manifest['decoded']);
 			$imported++;
 		}//end foreach
 
+		return $this->reportStatementManifests(imported: $imported, skipped: $skipped);
+
+	}//end seedStatementManifests()
+
+	/**
+	 * Read and decode one bundled statement manifest.
+	 *
+	 * @param string $fileName The manifest file name under Settings/statements/.
+	 *
+	 * @return array{decoded: mixed}|null The decoded manifest, or null when missing, unreadable or invalid JSON.
+	 */
+	private function readStatementManifest(string $fileName): array|null {
+		$manifestPath = __DIR__ . '/../Settings/statements/' . $fileName;
+		if (file_exists($manifestPath) === false) {
+			$this->logger->warning('Shillinq: statement manifest not found: ' . $fileName);
+			return null;
+		}
+
+		$content = file_get_contents($manifestPath);
+		if ($content === false) {
+			$this->logger->warning('Shillinq: failed to read statement manifest: ' . $fileName);
+			return null;
+		}
+
+		$decoded = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: failed to parse statement manifest ' . $fileName . ': ' . json_last_error_msg()
+			);
+			return null;
+		}
+
+		return ['decoded' => $decoded];
+	}//end readStatementManifest()
+
+	/**
+	 * Stamp the import time on a statement manifest and persist it in app config.
+	 *
+	 * @param string $configKey The app config key to store the manifest under.
+	 * @param mixed  $decoded   The decoded manifest.
+	 *
+	 * @return void
+	 */
+	private function storeStatementManifest(string $configKey, mixed $decoded): void {
+		// Stamp the import timestamp so a future presentation-standard migration
+		// (BBV — T3; IFRS full — T5) can tell template-sourced from operator-authored.
+		if (isset($decoded['_meta']) === true && is_array($decoded['_meta']) === true) {
+			$decoded['_meta']['imported'] = gmdate('Y-m-d\TH:i:s\Z');
+		}
+
+		$this->appConfig->setValueString(
+			AppIdentity::APP_ID,
+			$configKey,
+			(string)json_encode($decoded)
+		);
+	}//end storeStatementManifest()
+
+	/**
+	 * Log the statement manifest counts and build the success result.
+	 *
+	 * @param int $imported Manifests imported.
+	 * @param int $skipped  Manifests already persisted.
+	 *
+	 * @return array<string,mixed> Result with success flag and the counts.
+	 */
+	private function reportStatementManifests(int $imported, int $skipped): array {
 		$this->logger->info(
 			'Shillinq: statement manifests imported',
 			['imported' => $imported, 'skipped' => $skipped]
@@ -1320,8 +1627,7 @@ class SettingsService implements SettingsServiceInterface {
 			'imported' => $imported,
 			'skipped' => $skipped,
 		];
-
-	}//end seedStatementManifests()
+	}//end reportStatementManifests()
 
 	/**
 	 * Seed the WMO (Wet Markt en Overheid) example records, idempotently per administration.
@@ -1372,90 +1678,8 @@ class SettingsService implements SettingsServiceInterface {
 			];
 		}
 
-		$totalSeeded = 0;
-		$totalSkipped = 0;
-
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			$files = [
-				'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
-				'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
-				'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
-				'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
-			];
-
-			foreach ($files as $filename => [$schema, $arrayKey, $dedupeKey]) {
-				$seedPath = $seedDir . '/' . $filename;
-				if (file_exists($seedPath) === false) {
-					continue;
-				}
-
-				$content = file_get_contents($seedPath);
-				if ($content === false) {
-					continue;
-				}
-
-				$data = json_decode($content, true);
-				if (json_last_error() !== JSON_ERROR_NONE) {
-					$this->logger->warning(
-						'Shillinq: failed to parse WMO seed file: ' . $filename,
-						['error' => json_last_error_msg()]
-					);
-					continue;
-				}
-
-				$records = ($data[$arrayKey] ?? []);
-				foreach ($records as $record) {
-					// Drop _meta-only keys that aren't schema properties.
-					unset($record['_meta']);
-					$record['administrationId'] = $administrationId;
-
-					// Build the dedupe filter per schema.
-					$filter = ['administrationId' => $administrationId];
-					if ($dedupeKey === '__ikpKey') {
-						$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
-						$filter['period'] = ($record['period'] ?? '');
-					} elseif (isset($record[$dedupeKey]) === true) {
-						$filter[$dedupeKey] = $record[$dedupeKey];
-					}
-
-					$existing = $objectService
-						->setRegister($registerSlug)
-						->setSchema($schema)
-						->findAll(
-							[
-								'filters' => $filter,
-								'limit' => 1,
-							]
-						);
-
-					if (empty($existing) === false) {
-						$totalSkipped++;
-						continue;
-					}
-
-					$objectService->saveObject(
-						object: $record,
-						register: $registerSlug,
-						schema: $schema,
-					);
-					$totalSeeded++;
-				}//end foreach
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: WMO commercial activities seeded',
-				['seeded' => $totalSeeded, 'skipped' => $totalSkipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'WMO commercial activities seeded.',
-				'seeded' => $totalSeeded,
-				'skipped' => $totalSkipped,
-			];
+			return $this->importWmoSeeds(seedDir: $seedDir, administrationId: $administrationId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: WMO seeding failed',
@@ -1468,4 +1692,170 @@ class SettingsService implements SettingsServiceInterface {
 		}//end try
 
 	}//end seedWmoCommercialActivities()
+
+	/**
+	 * Seed the records of every WMO seed file, then log and report the totals.
+	 *
+	 * @param string $seedDir          The commercial-activities seed directory.
+	 * @param string $administrationId The administrationId to stamp on seeded records.
+	 *
+	 * @return array<string,mixed> Result with success flag and seeded/skipped totals.
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function importWmoSeeds(string $seedDir, string $administrationId): array {
+		$totalSeeded = 0;
+		$totalSkipped = 0;
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->getRegisterSlug();
+
+		foreach ($this->wmoSeedFiles() as $filename => $spec) {
+			$records = $this->readWmoSeedRecords(seedPath: $seedDir . '/' . $filename, filename: $filename, arrayKey: $spec[1]);
+			if ($records === null) {
+				continue;
+			}
+
+			foreach ($records as $record) {
+				// Drop _meta-only keys that aren't schema properties.
+				unset($record['_meta']);
+				$record['administrationId'] = $administrationId;
+
+				if ($this->seedWmoRecord(objectService: $objectService, registerSlug: $registerSlug, spec: $spec, record: $record) === false) {
+					$totalSkipped++;
+					continue;
+				}
+
+				$totalSeeded++;
+			}
+		}//end foreach
+
+		return $this->reportWmoSeeds(seeded: $totalSeeded, skipped: $totalSkipped);
+	}//end importWmoSeeds()
+
+	/**
+	 * The WMO seed files, each mapped to [schema, records key, dedupe key].
+	 *
+	 * @return array<string,array{0: string, 1: string, 2: string}>
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function wmoSeedFiles(): array {
+		return [
+			'sportaccommodaties-municipality.json' => ['CommercialActivity', 'activities', 'code'],
+			'waterschap-slibruimte.json' => ['CommercialActivity', 'activities', 'code'],
+			'abb-example-municipality.json' => ['AlgemeenBelangBesluit', 'besluiten', 'reference'],
+			'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
+		];
+	}//end wmoSeedFiles()
+
+	/**
+	 * Read one WMO seed file and return its records, or null when it cannot be used.
+	 *
+	 * @param string $seedPath The seed file path.
+	 * @param string $filename The seed file name, for the warning log.
+	 * @param string $arrayKey The key that holds the records.
+	 *
+	 * @return mixed The records, or null when the file is missing, unreadable or invalid JSON.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function readWmoSeedRecords(string $seedPath, string $filename, string $arrayKey): mixed {
+		if (file_exists($seedPath) === false) {
+			return null;
+		}
+
+		$content = file_get_contents($seedPath);
+		if ($content === false) {
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: failed to parse WMO seed file: ' . $filename,
+				['error' => json_last_error_msg()]
+			);
+			return null;
+		}
+
+		return ($data[$arrayKey] ?? []);
+	}//end readWmoSeedRecords()
+
+	/**
+	 * Save one WMO record unless a record with the same natural key already exists.
+	 *
+	 * @param mixed                $objectService OpenRegister's ObjectService.
+	 * @param string               $registerSlug  The register to write to.
+	 * @param array<int,string>    $spec          The seed file's [schema, records key, dedupe key].
+	 * @param array<string,mixed>  $record        The record, already stamped with its administrationId.
+	 *
+	 * @return bool True when the record was saved, false when it already existed.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function seedWmoRecord(mixed $objectService, string $registerSlug, array $spec, array $record): bool {
+		$schema = $spec[0];
+		$filter = $this->wmoDedupeFilter(record: $record, dedupeKey: $spec[2]);
+		$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, filters: $filter);
+
+		if (empty($existing) === false) {
+			return false;
+		}
+
+		$objectService->saveObject(
+			object: $record,
+			register: $registerSlug,
+			schema: $schema,
+		);
+
+		return true;
+	}//end seedWmoRecord()
+
+	/**
+	 * Build the dedupe filter for one WMO record.
+	 *
+	 * @param array<string,mixed> $record    The record, already stamped with its administrationId.
+	 * @param string              $dedupeKey The natural key, or `__ikpKey` for (commercialActivityId, period).
+	 *
+	 * @return array<string,mixed> The findAll filters.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function wmoDedupeFilter(array $record, string $dedupeKey): array {
+		$filter = ['administrationId' => $record['administrationId']];
+		if ($dedupeKey === '__ikpKey') {
+			$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
+			$filter['period'] = ($record['period'] ?? '');
+		} elseif (isset($record[$dedupeKey]) === true) {
+			$filter[$dedupeKey] = $record[$dedupeKey];
+		}
+
+		return $filter;
+	}//end wmoDedupeFilter()
+
+	/**
+	 * Log the WMO seed totals and build the success result.
+	 *
+	 * @param int $seeded  Records saved.
+	 * @param int $skipped Records that already existed.
+	 *
+	 * @return array<string,mixed> Result with success flag and the totals.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+	 */
+	private function reportWmoSeeds(int $seeded, int $skipped): array {
+		$this->logger->info(
+			'Shillinq: WMO commercial activities seeded',
+			['seeded' => $seeded, 'skipped' => $skipped]
+		);
+
+		return [
+			'success' => true,
+			'message' => 'WMO commercial activities seeded.',
+			'seeded' => $seeded,
+			'skipped' => $skipped,
+		];
+	}//end reportWmoSeeds()
 }//end class

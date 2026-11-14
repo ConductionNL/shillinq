@@ -21,11 +21,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Dunning;
 
-use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \OCA\Shillinq\Service\Dunning\DunningChannelSendResult
+ * @covers \OCA\Shillinq\Kernel\Model\DunningChannelSendResult
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

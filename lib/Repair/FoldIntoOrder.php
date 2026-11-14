@@ -340,6 +340,19 @@ class FoldIntoOrder implements IRepairStep {
 			return [];
 		}
 
+		$data = $this->entityPayload(row: $row);
+
+		return $this->withEntityUuid(row: $row, data: $data);
+	}//end normaliseRow()
+
+	/**
+	 * The payload of an OR entity, or the public properties of any other object.
+	 *
+	 * @param object $row One findAll() result object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function entityPayload(object $row): array {
 		$data = [];
 
 		try {
@@ -356,6 +369,18 @@ class FoldIntoOrder implements IRepairStep {
 			$data = get_object_vars($row);
 		}
 
+		return $data;
+	}//end entityPayload()
+
+	/**
+	 * Add the entity's uuid when the payload carries neither an id nor a uuid.
+	 *
+	 * @param object              $row  One findAll() result object.
+	 * @param array<string,mixed> $data Its payload.
+	 *
+	 * @return array<string,mixed> The payload, with a uuid when the entity has one.
+	 */
+	private function withEntityUuid(object $row, array $data): array {
 		// Guarantee a stable identifier even when the payload omits one.
 		if ((string)($data['id'] ?? '') === '' && (string)($data['uuid'] ?? '') === '') {
 			try {
@@ -369,7 +394,7 @@ class FoldIntoOrder implements IRepairStep {
 		}
 
 		return $data;
-	}//end normaliseRow()
+	}//end withEntityUuid()
 
 	/**
 	 * Derive the stable migration key for a source row.

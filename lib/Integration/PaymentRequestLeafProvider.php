@@ -409,13 +409,45 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 		string $requestedBy,
 		bool $asSystem,
 	): array {
-		$subject = [
+		$subject = $this->subjectOf(register: $register, schema: $schema, objectId: $objectId, payload: $payload);
+		$request = $this->newRequest(subject: $subject, payload: $payload, requestedBy: $requestedBy);
+
+		$existing = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem);
+		$holders  = $this->finder()->withReference(reference: trim((string)($payload['paymentReference'] ?? '')), asSystem: true);
+		$this->validator->validate(request: $request, existing: $existing, referenceHolders: $holders);
+
+		return $this->finaliseRequest(request: $request, payload: $payload, requestedBy: $requestedBy, asSystem: $asSystem);
+	}//end append()
+
+	/**
+	 * The request's subject: the host object.
+	 *
+	 * @param string               $register The host object's register.
+	 * @param string               $schema   The host object's schema.
+	 * @param string               $objectId The host object's id.
+	 * @param array<string, mixed> $payload  The request fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function subjectOf(string $register, string $schema, string $objectId, array $payload): array {
+		return [
 			'type' => (string)($payload['subjectType'] ?? 'object'),
 			'register' => $register,
 			'schema' => $schema,
 			'id' => $objectId,
 		];
+	}//end subjectOf()
 
+	/**
+	 * The new, pending request built from the payload, stamped with its portal scope.
+	 *
+	 * @param array<string, mixed> $subject     The request's subject.
+	 * @param array<string, mixed> $payload     The request fields.
+	 * @param string               $requestedBy Who asked: a user id, or `app:<appId>`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function newRequest(array $subject, array $payload, string $requestedBy): array {
 		$request = [
 			'subjectKind' => 'object',
 			'subject' => $subject,
@@ -429,6 +461,20 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			'requestedBy' => $requestedBy,
 		];
 
+		// The customer portal lists a request without an invoice by its
+		// debtor's customer (REQ-SPPI-008).
+		return $this->portalScope->stamp(request: $this->withOptionalFields(request: $request, payload: $payload));
+	}//end newRequest()
+
+	/**
+	 * Copy the optional debtor and due date onto the request.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 * @param array<string, mixed> $payload The request fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withOptionalFields(array $request, array $payload): array {
 		if (isset($payload['debtor']) === true && is_array($payload['debtor']) === true) {
 			$request['debtor'] = $payload['debtor'];
 		}
@@ -437,8 +483,19 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			$request['dueAt'] = (string)$payload['dueAt'];
 		}
 
-		// The transfer reference the payer quotes, and whether an invoice is
-		// wanted behind the request (REQ-ORS-002).
+		return $this->withReferenceFields(request: $request, payload: $payload);
+	}//end withOptionalFields()
+
+	/**
+	 * The transfer reference the payer quotes, and whether an invoice is
+	 * wanted behind the request (REQ-ORS-002), plus the administration.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 * @param array<string, mixed> $payload The request fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withReferenceFields(array $request, array $payload): array {
 		$reference = trim((string)($payload['paymentReference'] ?? ''));
 		if ($reference !== '') {
 			$request['paymentReference'] = $reference;
@@ -453,20 +510,44 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			$request['administrationId'] = $administrationId;
 		}
 
-		// The customer portal lists a request without an invoice by its
-		// debtor's customer (REQ-SPPI-008).
-		$request = $this->portalScope->stamp(request: $request);
+		return $request;
+	}//end withReferenceFields()
 
-		$this->validator->validate(
-			request: $request,
-			existing: $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem),
-			referenceHolders: $this->finder()->withReference(reference: $reference, asSystem: true),
-		);
+	/**
+	 * Issue a requested invoice, apply open credit and save the validated request.
+	 *
+	 * @param array<string, mixed> $request     The validated request.
+	 * @param array<string, mixed> $payload     The request fields.
+	 * @param string               $requestedBy Who asked: a user id, or `app:<appId>`.
+	 * @param bool                 $asSystem    Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The created request.
+	 */
+	private function finaliseRequest(array $request, array $payload, string $requestedBy, bool $asSystem): array {
+		$request = $this->withRequestedInvoice(request: $request, administrationId: trim((string)($payload['administrationId'] ?? '')));
 
-		// An invoice asked for at create stands behind the request, so a
-		// capture settles it and books the income once (REQ-ORS-006). It is
-		// issued after the request is validated, so a refused request never
-		// leaves an invoice behind.
+		// The debtor's open credit pays the new request first (REQ-ORC-004).
+		if ($this->credits !== null) {
+			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
+		}
+
+		return $this->saveRequest(request: $request, asSystem: $asSystem);
+	}//end finaliseRequest()
+
+	/**
+	 * An invoice asked for at create stands behind the request, so a
+	 * capture settles it and books the income once (REQ-ORS-006). It is
+	 * issued after the request is validated, so a refused request never
+	 * leaves an invoice behind.
+	 *
+	 * @param array<string, mixed> $request          The validated request.
+	 * @param string               $administrationId The administration the invoice is issued in.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws RuntimeException When an invoice is requested but no invoice service is available.
+	 */
+	private function withRequestedInvoice(array $request, string $administrationId): array {
 		if (($request['invoiceRequested'] ?? false) === true) {
 			if ($this->invoices === null) {
 				throw new RuntimeException('An invoice was requested, but no invoice service is available.');
@@ -479,11 +560,18 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 			);
 		}
 
-		// The debtor's open credit pays the new request first (REQ-ORC-004).
-		if ($this->credits !== null) {
-			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
-		}
+		return $request;
+	}//end withRequestedInvoice()
 
+	/**
+	 * Save the request and return it as an array.
+	 *
+	 * @param array<string, mixed> $request  The request.
+	 * @param bool                 $asSystem Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The created request.
+	 */
+	private function saveRequest(array $request, bool $asSystem): array {
 		$saved = $this->objectService->saveObject(
 			object: $request,
 			register: $this->registerSlug(),
@@ -501,7 +589,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRe
 		}
 
 		return $created;
-	}//end append()
+	}//end saveRequest()
 
 	/**
 	 * The leaf appends; it never rewrites a request in place. A request changes

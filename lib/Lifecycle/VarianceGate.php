@@ -312,19 +312,13 @@ class VarianceGate implements VarianceGateInterface {
 		$countedQty = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
 		$unitCost = $this->numericOrNull(value: $line['unitCost'] ?? null);
 
-		if ($expectedQty !== null && $unitCost !== null) {
-			$line['expectedValue'] = $this->fromCents(cents: $this->valueCents(quantity: $expectedQty, unitCost: $unitCost));
-		}
+		$line = $this->withExpectedValue(line: $line, expectedQty: $expectedQty, unitCost: $unitCost);
 
-		if ($countedQty === null || $unitCost === null || $expectedQty === null) {
+		if ($this->isIncomplete(countedQty: $countedQty, unitCost: $unitCost, expectedQty: $expectedQty) === true) {
 			return self::withoutVariance(line: $line);
 		}
 
-		$line['countedValue'] = $this->fromCents(cents: $this->valueCents(quantity: $countedQty, unitCost: $unitCost));
-		$line['quantityVariance'] = $this->fromCents(cents: ($this->cents(value: $countedQty) - $this->cents(value: $expectedQty)));
-		$line['valueVariance'] = $this->fromCents(
-			cents: ($this->valueCents(quantity: $countedQty, unitCost: $unitCost) - $this->valueCents(quantity: $expectedQty, unitCost: $unitCost))
-		);
+		$line = $this->withVariances(line: $line, countedQty: $countedQty, expectedQty: $expectedQty, unitCost: $unitCost);
 		$line['requiresReason'] = $this->isFlagged(
 			line: $line,
 			qtyThresholdPct: ($qtyThresholdPct ?? self::DEFAULT_QTY_THRESHOLD_PCT),
@@ -333,6 +327,62 @@ class VarianceGate implements VarianceGateInterface {
 
 		return $line;
 	}//end recalculateLine()
+
+	/**
+	 * The line with its expectedValue, when the expected quantity and unit cost are known.
+	 *
+	 * @param array<string,mixed> $line        The InventoryCycleCountLine.
+	 * @param float|null          $expectedQty The expected quantity.
+	 * @param float|null          $unitCost    The unit cost.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+	 */
+	private function withExpectedValue(array $line, float|null $expectedQty, float|null $unitCost): array {
+		if ($expectedQty !== null && $unitCost !== null) {
+			$line['expectedValue'] = $this->fromCents(cents: $this->valueCents(quantity: $expectedQty, unitCost: $unitCost));
+		}
+
+		return $line;
+	}//end withExpectedValue()
+
+	/**
+	 * Whether the counted quantity, unit cost or expected quantity is missing.
+	 *
+	 * @param float|null $countedQty  The counted quantity.
+	 * @param float|null $unitCost    The unit cost.
+	 * @param float|null $expectedQty The expected quantity.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+	 */
+	private function isIncomplete(float|null $countedQty, float|null $unitCost, float|null $expectedQty): bool {
+		return ($countedQty === null || $unitCost === null || $expectedQty === null);
+	}//end isIncomplete()
+
+	/**
+	 * The line with its countedValue, quantityVariance and valueVariance.
+	 *
+	 * @param array<string,mixed> $line        The InventoryCycleCountLine.
+	 * @param float               $countedQty  The counted quantity.
+	 * @param float               $expectedQty The expected quantity.
+	 * @param float               $unitCost    The unit cost.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/inventory-cycle-count/tasks.md#task-9
+	 */
+	private function withVariances(array $line, float $countedQty, float $expectedQty, float $unitCost): array {
+		$line['countedValue'] = $this->fromCents(cents: $this->valueCents(quantity: $countedQty, unitCost: $unitCost));
+		$line['quantityVariance'] = $this->fromCents(cents: ($this->cents(value: $countedQty) - $this->cents(value: $expectedQty)));
+		$line['valueVariance'] = $this->fromCents(
+			cents: ($this->valueCents(quantity: $countedQty, unitCost: $unitCost) - $this->valueCents(quantity: $expectedQty, unitCost: $unitCost))
+		);
+
+		return $line;
+	}//end withVariances()
 
 	/**
 	 * A line that is not fully entered: no counted value or variances, and

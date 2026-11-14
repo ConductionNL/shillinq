@@ -6,8 +6,8 @@
             "title": "Digipoort SBR",
             "description": "SBR and XBRL filings, such as the VAT return and annual accounts, sent to the Belastingdienst.",
             "order": 10,
-            "available": false,
-            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches Digipoort."
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
         },
         {
             "key": "salarisbureau",
@@ -60,10 +60,10 @@
         {
             "key": "mollie",
             "title": "Mollie payments",
-            "description": "iDEAL, Bancontact and SEPA payments started from the portal's pay now button.",
+            "description": "iDEAL, Bancontact and SEPA payments for payment requests and invoices, created by Integriq's payment source.",
             "order": 80,
-            "reportedOnly": true,
-            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
+            "unconfiguredMessage": "Not set up yet. Link the Mollie payments source in Integriq to give payment requests and invoices a pay link.",
+            "sourceTemplate": "mollie-payments"
         },
         {
             "key": "bunq",
@@ -78,8 +78,7 @@
             "title": "KvK Handelsregister",
             "description": "Company lookups in the chamber of commerce register.",
             "order": 100,
-            "available": false,
-            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the KvK.",
+            "unconfiguredMessage": "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.",
             "sourceTemplate": "kvk"
         },
         {

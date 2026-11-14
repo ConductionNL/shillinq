@@ -99,17 +99,33 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 	 * @spec openspec/specs/purchase-requisition/spec.md
 	 */
 	public function convertToPurchaseOrder(string $administrationId, string $requisitionId): array {
+		$requisition = $this->convertibleRequisition(administrationId: $administrationId, requisitionId: $requisitionId);
+		$supplierId  = $this->preferredSupplierId(requisition: $requisition);
+		$poLines     = $this->purchaseOrderLines(lines: $this->requisitionLines(administrationId: $administrationId, requisitionId: $requisitionId));
+
+		$payload       = $this->purchaseOrderPayload(requisition: $requisition, requisitionId: $requisitionId, supplierId: $supplierId, poLines: $poLines);
+		$purchaseOrder = $this->purchaseOrderService->createPurchaseOrder(administrationId: $administrationId, payload: $payload);
+
+		return $this->markConverted(requisition: $requisition, purchaseOrder: $purchaseOrder);
+
+	}//end convertToPurchaseOrder()
+
+	/**
+	 * The requisition, refused when it is outside the administration, missing, or not convertible.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $requisitionId    Requisition id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException When the requisition is missing or not approved.
+	 */
+	private function convertibleRequisition(string $administrationId, string $requisitionId): array {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			throw new RuntimeException('Requisition not found');
 		}
 
-		$requisition = $this->findOne(
-			schema: 'Requisition',
-			filters: [
-				'id' => $requisitionId,
-				'administrationId' => $administrationId,
-			]
-		);
+		$requisition = $this->findOne(schema: 'Requisition', filters: ['id' => $requisitionId, 'administrationId' => $administrationId]);
 		if ($requisition === null) {
 			throw new RuntimeException('Requisition not found');
 		}
@@ -120,6 +136,20 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 			throw new RuntimeException('Requisition must be approved before it can be converted to a purchase order');
 		}
 
+		return $requisition;
+
+	}//end convertibleRequisition()
+
+	/**
+	 * The requisition's preferred supplier, refused when none is assigned.
+	 *
+	 * @param array<string,mixed> $requisition The requisition.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the requisition has no preferred supplier.
+	 */
+	private function preferredSupplierId(array $requisition): string {
 		$supplierId = trim((string)($requisition['preferredSupplierId'] ?? ''));
 		if ($supplierId === '') {
 			throw new RuntimeException(
@@ -127,17 +157,38 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 			);
 		}
 
-		$lines = $this->findAll(
-			schema: 'RequisitionLine',
-			filters: [
-				'requisitionId' => $requisitionId,
-				'administrationId' => $administrationId,
-			]
-		);
+		return $supplierId;
+
+	}//end preferredSupplierId()
+
+	/**
+	 * The requisition's lines, refused when there are none.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $requisitionId    Requisition id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @throws \RuntimeException When the requisition has no lines.
+	 */
+	private function requisitionLines(string $administrationId, string $requisitionId): array {
+		$lines = $this->findAll(schema: 'RequisitionLine', filters: ['requisitionId' => $requisitionId, 'administrationId' => $administrationId]);
 		if ($lines === []) {
 			throw new RuntimeException('Requisition has no lines to convert');
 		}
 
+		return $lines;
+
+	}//end requisitionLines()
+
+	/**
+	 * Map requisition lines onto purchase order lines.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The requisition lines.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function purchaseOrderLines(array $lines): array {
 		$poLines = [];
 		foreach ($lines as $line) {
 			$poLines[] = [
@@ -151,22 +202,45 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 			];
 		}
 
-		$purchaseOrder = $this->purchaseOrderService->createPurchaseOrder(
-			administrationId: $administrationId,
-			payload: [
-				'supplierId' => $supplierId,
-				'costCenter' => (string)($requisition['programme'] ?? ''),
-				'requisitionId' => $requisitionId,
-				'lines' => $poLines,
-				'notes' => 'Converted from requisition ' . ($requisition['requisitionNumber'] ?? $requisitionId),
-			]
-		);
+		return $poLines;
 
+	}//end purchaseOrderLines()
+
+	/**
+	 * The purchase order payload, carrying a traceability link back to the requisition.
+	 *
+	 * @param array<string,mixed>       $requisition   The requisition.
+	 * @param string                    $requisitionId Requisition id.
+	 * @param string                    $supplierId    The preferred supplier.
+	 * @param list<array<string,mixed>> $poLines       The purchase order lines.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function purchaseOrderPayload(array $requisition, string $requisitionId, string $supplierId, array $poLines): array {
+		return [
+			'supplierId' => $supplierId,
+			'costCenter' => (string)($requisition['programme'] ?? ''),
+			'requisitionId' => $requisitionId,
+			'lines' => $poLines,
+			'notes' => 'Converted from requisition ' . ($requisition['requisitionNumber'] ?? $requisitionId),
+		];
+
+	}//end purchaseOrderPayload()
+
+	/**
+	 * Persist the requisition as converted to the new purchase order.
+	 *
+	 * @param array<string,mixed> $requisition   The requisition.
+	 * @param array<string,mixed> $purchaseOrder The created purchase order.
+	 *
+	 * @return array{requisition:array<string,mixed>,purchaseOrder:array<string,mixed>}
+	 */
+	private function markConverted(array $requisition, array $purchaseOrder): array {
 		$poId = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
 
-		$requisition['statusCode'] = 'converted';
+		$requisition['statusCode']               = 'converted';
 		$requisition['convertedPurchaseOrderId'] = $poId;
-		$requisition['convertedAt'] = date('c');
+		$requisition['convertedAt']              = date('c');
 
 		$updatedRequisition = $this->saveObject(schema: 'Requisition', object: $requisition);
 
@@ -175,7 +249,7 @@ class RequisitionConversionService implements RequisitionConversionServiceInterf
 			'purchaseOrder' => $purchaseOrder,
 		];
 
-	}//end convertToPurchaseOrder()
+	}//end markConverted()
 
 	/**
 	 * Persist an object via OpenRegister's real ObjectService API (saveObject).

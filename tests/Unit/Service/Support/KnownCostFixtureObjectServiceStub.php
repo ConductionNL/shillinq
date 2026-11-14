@@ -636,10 +636,11 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 *
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
 		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
@@ -651,6 +652,8 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * @param ?string $process A label for the holding process.
 	 * @param ?int $duration Lock duration in seconds.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -658,7 +661,7 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
 		$this->unsupported(method: 'lockObject');
 

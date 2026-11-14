@@ -104,65 +104,131 @@ class LeaseTransitionWizard {
 		}
 
 		$expedients = $this->normaliseExpedients(elections: $practicalExpedients);
+		$totals     = $this->recogniseAll(leases: $leases, method: $method, expedients: $expedients);
 
-		$recognitions = [];
-		$totalRouCents = 0;
-		$totalLiabCents = 0;
-		$catchUpCents = 0;
+		return $this->transitionResult(method: $method, transitionDate: $transitionDate, expedients: $expedients, totals: $totals);
 
+	}//end compute()
+
+	/**
+	 * Recognise every lease in scope and total the RoU asset, liability and catch-up in cents.
+	 *
+	 * @param array<int,mixed>   $leases     Lease records.
+	 * @param string             $method     The transition method.
+	 * @param array<string,bool> $expedients Normalised elections.
+	 *
+	 * @return array{recognitions: list<array<string,mixed>>, rouCents: int, liabCents: int, catchUpCents: int}
+	 */
+	private function recogniseAll(array $leases, string $method, array $expedients): array {
+		$totals = ['recognitions' => [], 'rouCents' => 0, 'liabCents' => 0, 'catchUpCents' => 0];
 		foreach ($leases as $lease) {
-			if (is_array($lease) === false) {
+			if ($this->isOutOfScope(lease: $lease, expedients: $expedients) === true) {
 				continue;
 			}
 
-			// Filter exempt leases unless the customer elected to include them.
-			$classification = (string)($lease['classification'] ?? '');
-			if ($expedients['short-term-exempt-at-transition'] === true
-				&& $classification === 'short-term-exempt'
-			) {
-				continue;
-			}
-
-			$recognition = $this->recognitionService->recognise(lease: $lease);
-
-			$rouCents = $this->calculator->toCents(amount: $recognition['rouAsset']);
-			$liabCents = $this->calculator->toCents(amount: $recognition['liability']);
-			$totalRouCents += $rouCents;
-			$totalLiabCents += $liabCents;
-			$catchUpCents += ($rouCents - $liabCents);
-
-			$recognitions[] = [
-				'leaseNumber' => (string)($lease['leaseNumber'] ?? ''),
-				'method' => $method,
-				'recognition' => $recognition,
-			];
-		}//end foreach
-
-		// Modified-retrospective sets RoU = liability adjusted for prepaid /
-		// accrued rent so the opening retained-earnings adjustment is zero per
-		// lease unless the customer elected the C8(b)(ii) adjustment.
-		$openingRetainedEarningsAdjustment = 0;
-		if ($method === 'full-retrospective') {
-			$openingRetainedEarningsAdjustment = -$catchUpCents;
+			$totals = $this->addRecognition(totals: $totals, lease: $lease, method: $method);
 		}
+
+		return $totals;
+
+	}//end recogniseAll()
+
+	/**
+	 * Whether a lease is skipped: not a record, or an exempt lease the customer did not elect to include.
+	 *
+	 * @param mixed              $lease      One lease record.
+	 * @param array<string,bool> $expedients Normalised elections.
+	 *
+	 * @return bool
+	 */
+	private function isOutOfScope(mixed $lease, array $expedients): bool {
+		if (is_array($lease) === false) {
+			return true;
+		}
+
+		// Filter exempt leases unless the customer elected to include them.
+		$classification = (string)($lease['classification'] ?? '');
+		return ($expedients['short-term-exempt-at-transition'] === true
+			&& $classification === 'short-term-exempt');
+
+	}//end isOutOfScope()
+
+	/**
+	 * Recognise one lease and add it to the totals.
+	 *
+	 * @param array{recognitions: list<array<string,mixed>>, rouCents: int, liabCents: int, catchUpCents: int} $totals The totals so far.
+	 * @param array<string,mixed>                                                                               $lease  The lease record.
+	 * @param string                                                                                            $method The transition method.
+	 *
+	 * @return array{recognitions: list<array<string,mixed>>, rouCents: int, liabCents: int, catchUpCents: int}
+	 */
+	private function addRecognition(array $totals, array $lease, string $method): array {
+		$recognition = $this->recognitionService->recognise(lease: $lease);
+
+		$rouCents  = $this->calculator->toCents(amount: $recognition['rouAsset']);
+		$liabCents = $this->calculator->toCents(amount: $recognition['liability']);
+		$totals['rouCents']     += $rouCents;
+		$totals['liabCents']    += $liabCents;
+		$totals['catchUpCents'] += ($rouCents - $liabCents);
+
+		$totals['recognitions'][] = [
+			'leaseNumber' => (string)($lease['leaseNumber'] ?? ''),
+			'method' => $method,
+			'recognition' => $recognition,
+		];
+
+		return $totals;
+
+	}//end addRecognition()
+
+	/**
+	 * The transition result with totals, retained-earnings adjustment and disclosure seed.
+	 *
+	 * @param string                                                                                            $method         The transition method.
+	 * @param string                                                                                            $transitionDate ISO date.
+	 * @param array<string,bool>                                                                                $expedients     Normalised elections.
+	 * @param array{recognitions: list<array<string,mixed>>, rouCents: int, liabCents: int, catchUpCents: int} $totals         The totals.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function transitionResult(string $method, string $transitionDate, array $expedients, array $totals): array {
+		$openingRetainedEarningsAdjustment = self::openingAdjustmentCents(method: $method, catchUpCents: $totals['catchUpCents']);
+
+		$leaseCount = count($totals['recognitions']);
+		$seed       = $this->buildDisclosureSeed(method: $method, transitionDate: $transitionDate, leaseCount: $leaseCount, expedients: $expedients);
 
 		return [
 			'method' => $method,
 			'transitionDate' => $transitionDate,
 			'practicalExpedients' => $expedients,
-			'recognitions' => $recognitions,
-			'totalRouAsset' => $this->calculator->fromCents(cents: $totalRouCents),
-			'totalLeaseLiability' => $this->calculator->fromCents(cents: $totalLiabCents),
+			'recognitions' => $totals['recognitions'],
+			'totalRouAsset' => $this->calculator->fromCents(cents: $totals['rouCents']),
+			'totalLeaseLiability' => $this->calculator->fromCents(cents: $totals['liabCents']),
 			'openingRetainedEarningsAdjustment' => $this->calculator->fromCents(cents: $openingRetainedEarningsAdjustment),
-			'disclosureNoteSeed' => $this->buildDisclosureSeed(
-				method: $method,
-				transitionDate: $transitionDate,
-				leaseCount: count($recognitions),
-				expedients: $expedients,
-			),
+			'disclosureNoteSeed' => $seed,
 		];
 
-	}//end compute()
+	}//end transitionResult()
+
+	/**
+	 * Modified-retrospective sets RoU = liability adjusted for prepaid /
+	 * accrued rent so the opening retained-earnings adjustment is zero per
+	 * lease unless the customer elected the C8(b)(ii) adjustment.
+	 *
+	 * @param string $method       The transition method.
+	 * @param int    $catchUpCents The summed RoU minus liability, in cents.
+	 *
+	 * @return int The opening retained-earnings adjustment in cents.
+	 */
+	private static function openingAdjustmentCents(string $method, int $catchUpCents): int {
+		$openingRetainedEarningsAdjustment = 0;
+		if ($method === 'full-retrospective') {
+			$openingRetainedEarningsAdjustment = -$catchUpCents;
+		}
+
+		return $openingRetainedEarningsAdjustment;
+
+	}//end openingAdjustmentCents()
 
 	/**
 	 * Normalise the IFRS 16.C3 / C10 practical-expedient elections.

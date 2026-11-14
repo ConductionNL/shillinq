@@ -195,14 +195,47 @@ class ExtractionCompletedListener implements IEventListener {
 		}
 
 		$existing = $this->findBySourceDocumentUri(schema: $schema, documentUri: $documentUri);
+		if ($this->refreshRefused(schema: $schema, existing: $existing, payload: $payload, documentUri: $documentUri) === true) {
+			return;
+		}
+
+		$this->persistDraft(schema: $schema, payload: $payload, existing: $existing, documentUri: $documentUri);
+
+	}//end apply()
+
+	/**
+	 * Whether an existing record may not be refreshed by this requester (logged).
+	 *
+	 * @param string                    $schema      The draft schema.
+	 * @param array<string, mixed>|null $existing    The record for the document, if any.
+	 * @param array<string, mixed>      $payload     The normalised event payload.
+	 * @param string                    $documentUri The trimmed document URI.
+	 *
+	 * @return bool
+	 */
+	private function refreshRefused(string $schema, array|null $existing, array $payload, string $documentUri): bool {
 		if ($existing !== null && $this->mayRefresh(schema: $schema, existing: $existing, requestedBy: $payload['requestedBy']) === false) {
 			$this->logger->info(
 				'ExtractionCompletedListener: existing record is not a draft of the requester, not refreshed',
 				['schema' => $schema, 'documentUri' => $documentUri, 'requestedBy' => $payload['requestedBy']]
 			);
-			return;
+			return true;
 		}
 
+		return false;
+	}//end refreshRefused()
+
+	/**
+	 * Save the draft and, for a new one, notify the requester.
+	 *
+	 * @param string                    $schema      The draft schema.
+	 * @param array<string, mixed>      $payload     The normalised event payload.
+	 * @param array<string, mixed>|null $existing    The record for the document, if any.
+	 * @param string                    $documentUri The trimmed document URI.
+	 *
+	 * @return void
+	 */
+	private function persistDraft(string $schema, array $payload, array|null $existing, string $documentUri): void {
 		$saved = $this->saveObject(schema: $schema, object: $this->draftFor(payload: $payload, existing: $existing));
 
 		$this->logger->info(
@@ -224,8 +257,7 @@ class ExtractionCompletedListener implements IEventListener {
 				draft: $saved
 			);
 		}
-
-	}//end apply()
+	}//end persistDraft()
 
 	/**
 	 * The draft schema for a docType; an unknown docType is logged and skipped.
