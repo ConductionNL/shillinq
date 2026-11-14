@@ -34,6 +34,8 @@ use PHPUnit\Framework\TestCase;
  * REQ-SDD-011: a draft batch from the open invoices with a mandate.
  *
  * @covers \OCA\Shillinq\Service\Receivables\DirectDebitBatchService
+ * @uses   \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Service\SettingsService
  */
 class DirectDebitBatchServiceTest extends TestCase {
 
@@ -147,11 +149,13 @@ class DirectDebitBatchServiceTest extends TestCase {
 	/**
 	 * The service over the fixture, with the clock at 2026-10-01 09:30 UTC.
 	 *
+	 * @param array<string, list<array<string, mixed>>>|null $records The store's records; the default fixture when null.
+	 *
 	 * @return DirectDebitBatchService
 	 */
-	private function service(): DirectDebitBatchService {
+	private function service(?array $records=null): DirectDebitBatchService {
 		$this->saved = [];
-		$store = new InMemoryObjectServiceStub(data: self::records(), saveSink: $this->saved, findAllRendersEntities: true);
+		$store = new InMemoryObjectServiceStub(data: ($records ?? self::records()), saveSink: $this->saved, findAllRendersEntities: true);
 		$location = $this->createConfiguredMock(originalClassName: RegisterLocation::class, configuration: ['getRegisterSlug' => 'shillinq']);
 		$time = $this->createMock(originalClassName: ITimeFactory::class);
 		$time->method('getDateTime')->willReturn(new DateTime('2026-10-01T09:30:00+00:00'));
@@ -242,6 +246,53 @@ class DirectDebitBatchServiceTest extends TestCase {
 		}
 
 	}//end testEveryWrittenBatchAndCollectionIsValidAgainstTheRegister()
+
+	/**
+	 * A mandate an earlier collection already used is collected as recurring, even when its own lastUsedAt is empty.
+	 *
+	 * @return void
+	 */
+	public function testAMandateUsedByAnEarlierCollectionIsCollectedAsRecurring(): void {
+		$records = [
+			'SepaMandate' => [
+				self::mandate(id: 'm-a'),
+				self::mandate(id: 'm-b'),
+			],
+			'CustomerMaster' => [],
+			'ARInvoice' => [
+				self::invoice(id: '201', fields: ['directDebitMandateId' => 'm-a', 'grossAmount' => 40.0]),
+				self::invoice(id: '202', fields: ['directDebitMandateId' => 'm-b', 'grossAmount' => 60.0]),
+			],
+			'DirectDebitCollection' => [
+				// Succeeded on another invoice: m-a has been used.
+				['id' => 'dc-1', 'invoiceId' => '190', 'mandateId' => 'm-a', 'status' => 'succeeded', 'administrationId' => self::ADMIN],
+				// Rejected collections do not count as a use of m-b.
+				['id' => 'dc-2', 'invoiceId' => '191', 'mandateId' => 'm-b', 'status' => 'rejected', 'administrationId' => self::ADMIN],
+				// A used state without a mandate id marks nothing.
+				['id' => 'dc-3', 'invoiceId' => '192', 'mandateId' => ' ', 'status' => 'submitted', 'administrationId' => self::ADMIN],
+			],
+		];
+
+		$result = $this->service(records: $records)->propose(administrationId: self::ADMIN, collectionDate: '2026-10-15');
+
+		$this->assertSame([], $result['skipped']);
+		$this->assertCount(2, $result['batches']);
+
+		$byType = [];
+		foreach ($result['batches'] as $batch) {
+			$byType[$batch['sequenceType']] = $batch;
+		}
+
+		ksort($byType);
+		$this->assertSame(['FRST', 'RCUR'], array_keys($byType));
+		$this->assertSame(['202'], array_column($byType['FRST']['collections'], 'invoiceId'));
+		$this->assertSame(['m-b'], array_column($byType['FRST']['collections'], 'mandateId'));
+		$this->assertSame(['201'], array_column($byType['RCUR']['collections'], 'invoiceId'));
+		$this->assertSame(['m-a'], array_column($byType['RCUR']['collections'], 'mandateId'));
+		$this->assertSame(40.0, $byType['RCUR']['controlSum']);
+		$this->assertSame('DD-20261001093000-CORE-RCUR', $byType['RCUR']['messageId']);
+
+	}//end testAMandateUsedByAnEarlierCollectionIsCollectedAsRecurring()
 
 	/**
 	 * Nothing to collect writes nothing and answers no batch.
