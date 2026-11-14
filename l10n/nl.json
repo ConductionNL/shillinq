@@ -6959,7 +6959,18 @@
         "When the acknowledgement e-mail was sent.": "Wanneer de bevestigingsmail is verstuurd.",
         "Where the consumer withdrew: the portal, or the signed link from the confirmation.": "Waar de consument herriep: in het portaal, of via de ondertekende link uit de bevestiging.",
         "Withdrawal record": "Herroepingsrecord",
-        "none: nothing was paid; initiated: the payment adapter started the refund; due: staff must pay it by refundDueBy; failed: the adapter refused, staff must pay it.": "none: er is niets betaald; initiated: de betaalkoppeling is de terugbetaling gestart; due: medewerkers moeten haar uiterlijk op refundDueBy betalen; failed: de betaalkoppeling weigerde, medewerkers moeten haar betalen."
+        "none: nothing was paid; initiated: the payment adapter started the refund; due: staff must pay it by refundDueBy; failed: the adapter refused, staff must pay it.": "none: er is niets betaald; initiated: de betaalkoppeling is de terugbetaling gestart; due: medewerkers moeten haar uiterlijk op refundDueBy betalen; failed: de betaalkoppeling weigerde, medewerkers moeten haar betalen.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

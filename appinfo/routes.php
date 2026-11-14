@@ -70,6 +70,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
+        // banking-fx-at-booking task 3.1: the FX rates page's status line —
+        // feed or typed, and the newest rate date per pair. Any signed-in
+        // user; the rates are read with the caller's own register access.
+            ['name' => 'fxRateFeedStatus#status', 'url' => '/api/fx-rates/feed-status', 'verb' => 'GET'],
+
         // No external-adapters roster route: adopt-connection-registry moved
         // the External Connections page onto integriq's app_connection rows,
         // declared in lib/Settings/connections.json.
