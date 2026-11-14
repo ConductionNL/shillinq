@@ -26,10 +26,10 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PaymentPlanController;
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCP\IL10N;
 use OCP\IRequest;

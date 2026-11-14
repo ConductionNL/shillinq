@@ -4,12 +4,12 @@
 
 ## 1. Markup
 
-- [ ] 1.1 Add `lib/Service/PassThroughMarkupResolver.php` with the priority rule taken from `SettlementGuard::matchMarkupRule()`, and make `SettlementGuard::computeMarkupAmount()` delegate to it (REQ-STEB-004, REQ-STEB-005). Verify: PHPUnit for each priority tier, percentage, fixed and no rule.
+- [x] 1.1 Add `lib/Service/PassThroughMarkupResolver.php` with the priority rule taken from `SettlementGuard::matchMarkupRule()`, and make `SettlementGuard::computeMarkupAmount()` delegate to it (REQ-STEB-004, REQ-STEB-005). Verify: PHPUnit for each priority tier, percentage, fixed and no rule. (`lib/Service/PassThroughMarkupResolver.php`: `select`, `markup`, `resolve`, `filters`; `SettlementGuard::matchMarkupRule()` and `computeMarkupAmount()` delegate to it, the existing Settlement tests and golden unchanged; `PassThroughMarkupResolverTest`.)
 - [ ] 1.2 Add the lifecycle action `lock-passthrough-markup` on `ExpenseClaimEntry.submit`, register it under that name, and remove the three `markupLookup` declarations from `expense-reimbursement-or-passthrough.json` (REQ-STEB-004). Verify: `npm run check:registers`; PHPUnit that a submitted claim's items carry the rule, rate and amount and that a later rule change leaves them.
 
 ## 2. Billable work
 
-- [ ] 2.1 Add the `BillableHoursSource` interface and an unbound default that reports hours as unavailable (REQ-STEB-001). Verify: PHPUnit for the unavailable answer.
+- [x] 2.1 Add the `BillableHoursSource` interface and an unbound default that reports hours as unavailable (REQ-STEB-001). Verify: PHPUnit for the unavailable answer. (`lib/Service/Billing/BillableHoursSource.php` and `UnavailableBillableHours`, bound as the default in `Application`; `UnavailableBillableHoursTest`.)
 - [ ] 2.2 Add `BillableWorkService` and `GET /api/v1/invoices/billable-work` with the administration check first and the dedup rule of `InvoiceDeduplicationService` (REQ-STEB-001, REQ-STEB-002). Verify: controller PHPUnit including a cross-administration refusal, and a service test that billed hours and items are left out.
 - [ ] 2.3 Bind the humaniq hours read from `hours-to-humaniq` task 3.3 as the `BillableHoursSource` implementation (REQ-STEB-001). Verify: PHPUnit against a humaniq read double; a live check on an instance with humaniq, recorded in the PR body.
 

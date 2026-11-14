@@ -78,8 +78,7 @@
             "title": "KvK Handelsregister",
             "description": "Company lookups in the chamber of commerce register.",
             "order": 100,
-            "available": false,
-            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the KvK.",
+            "unconfiguredMessage": "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.",
             "sourceTemplate": "kvk"
         },
         {

@@ -10,7 +10,7 @@
 
 ## 2. Status
 
-- [ ] 2.1 Take `nl.conduction.payment.status` CloudEvents from integriq's event register (slug-resolved) into `PaymentReconciliationService::reconcile()` (REQ-RPL-003). Verify: PHPUnit with a real `ObjectCreatedEvent` carrying an id-stamped entity for captured, failed and a repeat.
+- [x] 2.1 Take `nl.conduction.payment.status` CloudEvents from integriq's event register (slug-resolved) into `PaymentReconciliationService::reconcile()` (REQ-RPL-003). Verify: PHPUnit with a real `ObjectCreatedEvent` carrying an id-stamped entity for captured, failed and a repeat.
 - [ ] 2.2 Update `connections.json` so the Mollie row reports integriq's payment source instead of `reportedOnly` (REQ-RPL-002). Verify: the External connections page shows the source state on a seeded instance.
 
 ## 3. Pay link

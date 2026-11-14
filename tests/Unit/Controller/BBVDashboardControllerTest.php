@@ -33,6 +33,7 @@ use OCA\Shillinq\Dashboard\BBVComplianceWidget;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ComplianceService;
 use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\ICache;
@@ -103,6 +104,7 @@ final class BBVDashboardControllerTest extends TestCase {
 		BBVComplianceWidget $widget,
 		AdministrationContextService&MockObject $administrationContext,
 		FiscalYearContextService&MockObject $fiscalYearContext,
+		?TaskFieldRealisation $realisation = null,
 	): BBVDashboardController {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
@@ -114,6 +116,7 @@ final class BBVDashboardControllerTest extends TestCase {
 			widget: $widget,
 			administrationContext: $administrationContext,
 			fiscalYearContext: $fiscalYearContext,
+			realisation: $realisation,
 		);
 
 	}//end buildController()
@@ -209,6 +212,40 @@ final class BBVDashboardControllerTest extends TestCase {
 		self::assertSame('2027-01-01', $data['scope']['endDate']);
 
 	}//end testServerDerivesAdministrationFromSession()
+
+	/**
+	 * public-sector-task-field-allocation REQ-BBV-012: the scoped envelope
+	 * carries the year per task field for the session's administration and
+	 * its active window; the empty envelope does not ask for it.
+	 *
+	 * @return void
+	 */
+	public function testTheScopedEnvelopeCarriesTheRealisationPerTaskField(): void {
+		$request = $this->createMock(IRequest::class);
+		$userSession = $this->createMock(IUserSession::class);
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$fiscalYearContext = $this->createMock(FiscalYearContextService::class);
+		$this->authenticate($userSession);
+		$request->method('getParam')->willReturn(null);
+		$administrationContext->method('buildContext')->willReturn(['userId' => 'controller', 'administrations' => [], 'activeAdministrationId' => 'adm-werk-001']);
+		$administrationContext->method('canAccess')->with('adm-werk-001')->willReturn(true);
+		$fiscalYearContext->method('resolveActiveWindow')->willReturn(['administrationId' => 'adm-werk-001', 'fiscalYear' => 2026, 'startDate' => '2026-01-01', 'endDate' => '2027-01-01']);
+
+		$year = ['fiscalYear' => '2026', 'taskFields' => [['taskField' => '0.1', 'expenses' => 40000.0, 'income' => 0.0]], 'unmapped' => []];
+		$realisation = $this->createMock(TaskFieldRealisation::class);
+		$realisation->expects(self::once())->method('forYear')->with('adm-werk-001', '2026', '2026-01-01', '2027-01-01')->willReturn($year);
+
+		$data = $this->buildController($request, $userSession, $this->buildWidgetStub(), $administrationContext, $fiscalYearContext, $realisation)->index()->getData();
+		self::assertSame($year, $data['taskFieldRealisation']);
+
+		$unscoped = $this->createMock(AdministrationContextService::class);
+		$unscoped->method('buildContext')->willReturn(['userId' => 'controller', 'administrations' => [], 'activeAdministrationId' => null]);
+		$none = $this->createMock(TaskFieldRealisation::class);
+		$none->expects(self::never())->method('forYear');
+		$empty = $this->buildController($request, $userSession, $this->buildWidgetStub(), $unscoped, $fiscalYearContext, $none)->index()->getData();
+		self::assertArrayNotHasKey('taskFieldRealisation', $empty);
+
+	}//end testTheScopedEnvelopeCarriesTheRealisationPerTaskField()
 
 	/**
 	 * Cross-tenant administrationId values resolve to an empty envelope —

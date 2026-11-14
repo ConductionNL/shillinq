@@ -218,6 +218,19 @@ final class ConnectionsDeclarationTest extends TestCase {
 	public function testTheReportedFamiliesAreTheAvailableOnes(): void {
 		$available = [];
 		foreach ($this->declaration()['connections'] as $connection) {
+			if ($this->isLinkedInIntegriq(connection: $connection) === true) {
+				// Available through an integriq source, not a shillinq port: no
+				// report is sent, so it is not reportedOnly, and its message says
+				// what to link (contacts-kvk-lookup REQ-KVKL-003).
+				$this->assertArrayNotHasKey(key: 'reportedOnly', array: $connection, message: $connection['key'] . ' gets no report');
+				$this->assertStringContainsString(
+					needle: 'Link the',
+					haystack: (string)($connection['unconfiguredMessage'] ?? ''),
+					message: $connection['key'] . ' must say which source to link'
+				);
+				continue;
+			}
+
 			if (($connection['available'] ?? true) === true) {
 				$available[] = $connection['key'];
 				// Only shillinq can see which class DI bound, so integriq must
@@ -277,6 +290,12 @@ final class ConnectionsDeclarationTest extends TestCase {
 				continue;
 			}
 
+			// The lookup of a family linked in integriq goes through integriq's
+			// source, not through shillinq's port, so no caller is expected.
+			if ($this->isLinkedInIntegriq(connection: $connection) === true) {
+				continue;
+			}
+
 			$this->assertNotSame(expected: [], actual: $callers, message: 'the control failed: no caller found for ' . $port);
 		}
 	}//end testAnUnavailableFamilyHasNoCallerInLib()
@@ -311,6 +330,44 @@ final class ConnectionsDeclarationTest extends TestCase {
 
 		$this->assertSame(expected: ['treasury-rates'], actual: $linked);
 	}//end testEverySettingsLinkOpensADeclaredPage()
+
+	/**
+	 * Whether a family is available through a source integriq creates from a
+	 * template, rather than through an adapter shillinq calls and reports.
+	 *
+	 * @param array<string, mixed> $connection The declared connection.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/contacts-kvk-lookup/tasks.md#2-connection
+	 */
+	private function isLinkedInIntegriq(array $connection): bool {
+		return ($connection['available'] ?? true) === true
+			&& array_key_exists('sourceTemplate', $connection) === true
+			&& ($connection['reportedOnly'] ?? false) === false;
+	}//end isLinkedInIntegriq()
+
+	/**
+	 * The KvK is available, linked through integriq's kvk template, and tells
+	 * the admin to link it (contacts-kvk-lookup REQ-KVKL-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contacts-kvk-lookup/tasks.md#2-connection
+	 */
+	public function testTheKvkIsAvailableThroughItsIntegriqSource(): void {
+		$kvk = array_values(array_filter($this->declaration()['connections'], static fn (array $c): bool => $c['key'] === 'kvk'))[0];
+
+		$this->assertTrue(condition: $this->isLinkedInIntegriq(connection: $kvk));
+		$this->assertArrayNotHasKey(key: 'available', array: $kvk);
+		$this->assertArrayNotHasKey(key: 'unavailableMessage', array: $kvk);
+		$this->assertSame(expected: 'kvk', actual: $kvk['sourceTemplate']);
+		$this->assertSame(
+			expected: 'Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.',
+			actual: $kvk['unconfiguredMessage']
+		);
+		$this->assertArrayNotHasKey(key: 'kvk', array: ConnectionReportService::FAMILIES);
+	}//end testTheKvkIsAvailableThroughItsIntegriqSource()
 
 	/**
 	 * A source template is one integriq ships.
