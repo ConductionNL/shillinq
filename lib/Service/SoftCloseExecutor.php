@@ -46,6 +46,9 @@ use DateTimeInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SoftCloseExecutorInterface;
+use OCA\Shillinq\Service\Accrual\AccrualBooking;
+use OCA\Shillinq\Service\Deferral\DeferralService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -91,6 +94,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	private const NEW_REPORT_TOTALS = [
 		'postingCount' => 0,
 		'accrualPostings' => 0,
+		'deferralReleases' => 0,
 		'fxPostings' => 0,
 		'revenuePostings' => 0,
 		'leasePostings' => 0,
@@ -107,12 +111,17 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for orchestration diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AccrualBooking|null $accrualBooking Writes and posts the accrual and reversal entries (ledger-period-end REQ-LPE-006);
+	 *                                            without it accruals are only recorded.
+	 * @param DeferralService|null $deferrals Releases the deferral schedules of ended periods (REQ-LPE-005).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?AccrualBooking $accrualBooking = null,
+		private readonly ?DeferralService $deferrals = null,
 	) {
 	}//end __construct()
 
@@ -129,6 +138,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 *   periodId: string,
 	 *   postingCount: int,
 	 *   accrualPostings: int,
+	 *   deferralReleases: int,
 	 *   fxPostings: int,
 	 *   revenuePostings: int,
 	 *   leasePostings: int,
@@ -183,6 +193,7 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	private function closeSteps(SoftCloseRun $run): array {
 		return [
 			'accruals' => fn (array $report): array => $this->accrualStep(run: $run, report: $report),
+			'deferral-releases' => fn (array $report): array => $this->deferralStep(run: $run, report: $report),
 			'fx-revaluation' => fn (array $report): array => $this->fxRevaluationStep(run: $run, report: $report),
 			'revenue-cutoff' => fn (array $report): array => $this->revenueCutoffStep(run: $run, report: $report),
 			'lease-postings' => fn (array $report): array => $this->leaseStep(run: $run, report: $report),
@@ -201,11 +212,36 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 	 * @return array<string,mixed>
 	 */
 	private function accrualStep(SoftCloseRun $run, array $report): array {
+		$reversals = 0;
+		if ($this->accrualBooking !== null) {
+			$reversals = $this->accrualBooking->reverseDue(administrationId: $run->administrationId, periodId: $run->periodId, asOf: $run->asOf);
+		}
+
 		$accrualResult = $this->runAccrualRules(run: $run);
-		$report['accrualPostings'] = $accrualResult['postingCount'];
-		$report['postingCount'] += $accrualResult['postingCount'];
+		$report['accrualPostings'] = ($accrualResult['postingCount'] + $reversals);
+		$report['postingCount'] += $report['accrualPostings'];
 		return $report;
 	}//end accrualStep()
+
+	/**
+	 * Step 1b: release the deferral schedules of every ended period (ledger-period-end REQ-LPE-005).
+	 *
+	 * @param SoftCloseRun $run The run.
+	 * @param array<string,mixed> $report The report so far.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-continuous-close/spec.md#requirement-the-nightly-close-releases-each-ended-period-req-lpe-005
+	 */
+	private function deferralStep(SoftCloseRun $run, array $report): array {
+		if ($this->deferrals === null) {
+			return $report;
+		}
+
+		$report['deferralReleases'] = $this->deferrals->releaseEnded(administrationId: $run->administrationId, asOf: $run->asOf);
+		$report['postingCount'] += $report['deferralReleases'];
+		return $report;
+	}//end deferralStep()
 
 	/**
 	 * Step 2: delegate to treasury for FX revaluation + interest accruals.
@@ -426,6 +462,17 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 			return false;
 		}
 
+		// Book the entry the posting names, once per rule, period and version (REQ-LPE-006).
+		if ($this->accrualBooking !== null) {
+			return $this->accrualBooking->book(
+				rule: $rule,
+				periodId: $run->periodId,
+				amountCents: $amountCents,
+				asOf: $run->asOf,
+				journalNumber: $this->journalEntryId(rule: $rule, periodId: $run->periodId, asOf: $run->asOf)
+			);
+		}
+
 		// Persist an AutoAccrualPosting record per execution (REQ-CLS-010).
 		$this->persistAccrualPosting(
 			rule: $rule,
@@ -468,7 +515,9 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 			->setSchema('AutoAccrualRule')
 			->findAll(['filters' => $filters]);
 
-		return array_values(array_map(static fn ($r): array => (array)$r, $found));
+		// The record of an ObjectEntity row: a bare (array) cast of one yields
+		// its private properties, not the rule.
+		return array_values(array_map(static fn ($r): array => (ObjectIdentifier::recordWithId(candidate: $r) ?? (array)$r), $found));
 	}//end findActiveRules()
 
 	/**

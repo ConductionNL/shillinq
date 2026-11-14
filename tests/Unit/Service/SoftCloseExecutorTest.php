@@ -657,6 +657,7 @@ final class SoftCloseExecutorTest extends TestCase {
 				'periodId' => '2026-03',
 				'postingCount' => 11,
 				'accrualPostings' => 2,
+				'deferralReleases' => 0,
 				'fxPostings' => 2,
 				'revenuePostings' => 3,
 				'leasePostings' => 4,

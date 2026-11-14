@@ -37,6 +37,7 @@ use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
+use OCA\Shillinq\Service\PeriodChecklistService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -75,6 +76,7 @@ class PeriodCloseController extends Controller {
 	 * @param AdministrationContextServiceInterface $context Membership guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 * @param PeriodChecklistService|null $checklist Resolves, reopens and adds checklist items (REQ-LPE-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -83,6 +85,7 @@ class PeriodCloseController extends Controller {
 		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ?PeriodChecklistService $checklist = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -229,6 +232,121 @@ class PeriodCloseController extends Controller {
 		);
 
 	}//end lockAudit()
+
+	/**
+	 * POST resolve one checklist item, recording the user and the time (REQ-LPE-002).
+	 *
+	 * @param string $periodId The PeriodClose id or business periodId (path).
+	 * @param string $itemId   The checklist item id (path).
+	 *
+	 * @return JSONResponse 200 with the updated record; 400/401/403/404/409 on refusal.
+	 *
+	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 */
+	#[NoAdminRequired]
+	public function resolveItem(string $periodId, string $itemId): JSONResponse {
+		if ($this->requireUser() === false) {
+			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$itemId = trim($itemId);
+		if ($this->validId(value: $itemId) === false) {
+			return $this->error(message: 'item_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->checklistChange(
+			periodId: $periodId,
+			action: static fn (PeriodChecklistService $s, string $pid, string $adm, string $uid): array
+				=> $s->resolveItem(periodId: $pid, administrationId: $adm, itemId: $itemId, userId: $uid)
+		);
+
+	}//end resolveItem()
+
+	/**
+	 * POST reopen one resolved checklist item (REQ-LPE-002).
+	 *
+	 * @param string $periodId The PeriodClose id or business periodId (path).
+	 * @param string $itemId   The checklist item id (path).
+	 *
+	 * @return JSONResponse 200 with the updated record; 400/401/403/404/409 on refusal.
+	 *
+	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 */
+	#[NoAdminRequired]
+	public function reopenItem(string $periodId, string $itemId): JSONResponse {
+		if ($this->requireUser() === false) {
+			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$itemId = trim($itemId);
+		if ($this->validId(value: $itemId) === false) {
+			return $this->error(message: 'item_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->checklistChange(
+			periodId: $periodId,
+			action: static fn (PeriodChecklistService $s, string $pid, string $adm, string $uid): array
+				=> $s->reopenItem(periodId: $pid, administrationId: $adm, itemId: $itemId, userId: $uid)
+		);
+
+	}//end reopenItem()
+
+	/**
+	 * POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002).
+	 *
+	 * @param string $periodId The PeriodClose id or business periodId (path).
+	 *
+	 * @return JSONResponse 200 with the updated record; 400/401/403/404/409/422 on refusal.
+	 *
+	 * @spec openspec/changes/ledger-period-end/specs/bookkeeping-period-close/spec.md#requirement-a-person-resolves-reopens-and-adds-checklist-items-req-lpe-002
+	 */
+	#[NoAdminRequired]
+	public function addItem(string $periodId): JSONResponse {
+		if ($this->requireUser() === false) {
+			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$category    = (string)$this->request->getParam('category', '');
+		$description = (string)$this->request->getParam('description', '');
+
+		return $this->checklistChange(
+			periodId: $periodId,
+			action: static fn (PeriodChecklistService $s, string $pid, string $adm, string $uid): array
+				=> $s->addItem(periodId: $pid, administrationId: $adm, category: $category, description: $description, userId: $uid)
+		);
+
+	}//end addItem()
+
+	/**
+	 * Shared checklist wrapper: validate, resolve scope + user, run, map errors.
+	 *
+	 * @param string   $periodId The PeriodClose id or business periodId.
+	 * @param callable $action   fn(PeriodChecklistService, periodId, administrationId, userId): array.
+	 *
+	 * @return JSONResponse The mapped response.
+	 */
+	private function checklistChange(string $periodId, callable $action): JSONResponse {
+		$periodId = trim($periodId);
+		if ($this->validId(value: $periodId) === false) {
+			return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
+		}
+
+		$actor = $this->actor();
+		if ($actor instanceof JSONResponse) {
+			return $actor;
+		}
+
+		if ($this->checklist === null) {
+			return $this->serverError(action: 'checklist', e: new \LogicException('PeriodChecklistService is not available'));
+		}
+
+		try {
+			return new JSONResponse(['data' => $action($this->checklist, $periodId, $actor->administrationId, $actor->userId)], Http::STATUS_OK);
+		} catch (\Throwable $e) {
+			return $this->transitionFailure(failure: $e);
+		}
+
+	}//end checklistChange()
 
 	/**
 	 * Shared transition wrapper: validate, resolve scope + user, run, map errors.

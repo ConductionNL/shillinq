@@ -343,6 +343,14 @@
               "op": "eq",
               "value": "overdue"
             }
+          },
+          {
+            "id": "spread-over-periods",
+            "label": "Spread over periods",
+            "type": "open-modal",
+            "target": "SpreadOverPeriodsModal",
+            "icon": "CalendarRange",
+            "props": {"open": true, "side": "ar"}
           }
         ],
         "_boardNote": "Board ShVerkoopfactuur. The four totals tiles read 0 (a sum over a filter on the invoice id); the Money card keeps the amounts and the Reminders tab the count. Agree a payment plan is restored: this fragment replaces the base page whole."

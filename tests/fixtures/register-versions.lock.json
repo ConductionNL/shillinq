@@ -74,8 +74,20 @@
             "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
         },
         {
+            "appVersion": "0.5.7-unstable.20261114100000",
+            "versionsSha256": "55e1eeda6149ad447a0eb1f0d7beb532df5f96c45e9ad0df92673edf923a9cef"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114110000",
+            "versionsSha256": "5e9837d5e191c2b5c72fd4899a673c394f85e10f63fd71a6b7116e127b2ba887"
+        },
+        {
             "appVersion": "0.5.7-unstable.20261114130000",
             "versionsSha256": "f728fb4065a5615f8629d79c69e3d11cbf1db0b4ba3b8305afd429c23c581636"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114151000",
+            "versionsSha256": "19d9273095b19548074822d33f842183beb45b0e9cd9f8f52e7f114d66a26f8e"
         }
     ],
     "versions": {
@@ -186,8 +198,8 @@
         "schema:CddRecord": "0.1.0",
         "schema:ChartOfAccountsMapping": "0.1.0",
         "schema:ClaimsVoorzieningDetail": "0.1.0",
-        "schema:CloseChecklistInstance": "0.1.0",
-        "schema:CloseChecklistTemplate": "0.1.0",
+        "schema:CloseChecklistInstance": "0.2.0",
+        "schema:CloseChecklistTemplate": "0.2.0",
         "schema:CloseMetrics": "0.1.0",
         "schema:ClosingAccount": "0.1.0",
         "schema:ClosingEntry": "0.1.0",
@@ -231,6 +243,7 @@
         "schema:DebtorCredit": "0.1.0",
         "schema:Deduction": "0.1.0",
         "schema:Deelneming": "0.1.0",
+        "schema:DeferralSchedule": "0.1.0",
         "schema:DeferredTaxMovement": "0.1.0",
         "schema:DefinitieveAanslag": "0.1.0",
         "schema:Delivery": "0.1.0",
@@ -275,7 +288,7 @@
         "schema:FeeSchedule": "0.3.0",
         "schema:FieldRequirement": "0.2.0",
         "schema:FinancialStatement": "0.1.0",
-        "schema:FiscalPeriod": "0.3.0",
+        "schema:FiscalPeriod": "0.4.0",
         "schema:FiscalYear": "0.1.0",
         "schema:FiscaleCorrectie": "0.1.0",
         "schema:FiscaleEenheid": "0.1.0",

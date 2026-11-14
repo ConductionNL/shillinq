@@ -474,6 +474,10 @@
         {
             "name": "widget-settings",
             "description": "Admin endpoints to generate, rotate, and revoke widget API keys."
+        },
+        {
+            "name": "deferral-schedules",
+            "description": "Spread a prepaid cost or deferred revenue over its periods (ledger-period-end)."
         }
     ],
     "paths": {
@@ -7979,6 +7983,160 @@
                 }
             }
         },
+        "/period-close/{periodId}/checklist": {
+            "post": {
+                "operationId": "period-close-add-item",
+                "summary": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002)",
+                "description": "POST add an open item to the checklist; body `category`, `description` (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "description": "The category."
+                                    },
+                                    "description": {
+                                        "description": "The description."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/resolve": {
+            "post": {
+                "operationId": "period-close-resolve-item",
+                "summary": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002)",
+                "description": "POST resolve one checklist item, recording the user and the time (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/period-close/{periodId}/checklist/{itemId}/reopen": {
+            "post": {
+                "operationId": "period-close-reopen-item",
+                "summary": "POST reopen one resolved checklist item (REQ-LPE-002)",
+                "description": "POST reopen one resolved checklist item (REQ-LPE-002). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "period-close"
+                ],
+                "parameters": [
+                    {
+                        "name": "periodId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The PeriodClose id or business periodId (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The checklist item id (path).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/period-close/{periodId}/close": {
             "post": {
                 "operationId": "period-close-close",
@@ -12281,6 +12439,144 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/deferral-schedules": {
+            "post": {
+                "operationId": "deferral-schedules-create",
+                "summary": "POST create the schedule and post its opening entry",
+                "description": "POST create the schedule and post its opening entry. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "deferral-schedules"
+                ],
+                "parameters": [],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration."
+                                    },
+                                    "sourceReference": {
+                                        "description": "The invoice line reference."
+                                    },
+                                    "description": {
+                                        "description": "What is spread."
+                                    },
+                                    "kind": {
+                                        "description": "prepaid-cost or deferred-revenue."
+                                    },
+                                    "resultAccount": {
+                                        "description": "The cost or revenue account."
+                                    },
+                                    "balanceAccount": {
+                                        "description": "The balance sheet account."
+                                    },
+                                    "totalCents": {
+                                        "description": "The amount in cents."
+                                    },
+                                    "periodFrom": {
+                                        "description": "The first day of the service period."
+                                    },
+                                    "periodTo": {
+                                        "description": "The last day of the service period."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/deferral-schedules/preview": {
+            "post": {
+                "operationId": "deferral-schedules-preview",
+                "summary": "POST the releases a request would create, without writing anything",
+                "description": "POST the releases a request would create, without writing anything. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "deferral-schedules"
+                ],
+                "parameters": [],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "administrationId": {
+                                        "description": "The administration."
+                                    },
+                                    "sourceReference": {
+                                        "description": "The invoice line reference."
+                                    },
+                                    "description": {
+                                        "description": "What is spread."
+                                    },
+                                    "kind": {
+                                        "description": "prepaid-cost or deferred-revenue."
+                                    },
+                                    "resultAccount": {
+                                        "description": "The cost or revenue account."
+                                    },
+                                    "balanceAccount": {
+                                        "description": "The balance sheet account."
+                                    },
+                                    "totalCents": {
+                                        "description": "The amount in cents."
+                                    },
+                                    "periodFrom": {
+                                        "description": "The first day of the service period."
+                                    },
+                                    "periodTo": {
+                                        "description": "The last day of the service period."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }

@@ -172,6 +172,9 @@
 							<th scope="col">{{ t('shillinq', 'Status') }}</th>
 							<th scope="col">{{ t('shillinq', 'Resolved at') }}</th>
 							<th scope="col">{{ t('shillinq', 'Resolved by') }}</th>
+							<th v-if="checklistEditable" scope="col">
+								{{ t('shillinq', 'Actions') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -199,6 +202,26 @@
 								}}
 							</td>
 							<td>{{ item.resolvedBy || '—' }}</td>
+							<td v-if="checklistEditable">
+								<NcButton
+									v-if="!item.resolved"
+									variant="secondary"
+									:disabled="checklistBusy"
+									:aria-label="t('shillinq', 'Resolve {item}', { item: item.description })"
+									:data-testid="`period-close-detail-checklist-resolve-${item.id}`"
+									@click="resolveItem(item)">
+									{{ t('shillinq', 'Resolve') }}
+								</NcButton>
+								<NcButton
+									v-else
+									variant="tertiary"
+									:disabled="checklistBusy"
+									:aria-label="t('shillinq', 'Reopen {item}', { item: item.description })"
+									:data-testid="`period-close-detail-checklist-reopen-${item.id}`"
+									@click="reopenItem(item)">
+									{{ t('shillinq', 'Reopen') }}
+								</NcButton>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -207,6 +230,37 @@
 					class="period-close-detail__empty"
 					data-testid="period-close-detail-checklist-empty">
 					{{ t('shillinq', 'No checklist items yet.') }}
+				</p>
+				<form
+					v-if="checklistEditable"
+					class="period-close-detail__add-item"
+					data-testid="period-close-detail-checklist-add"
+					@submit.prevent="addItem">
+					<NcSelect
+						v-model="newItemCategory"
+						class="period-close-detail__add-category"
+						:options="categoryOptions"
+						:inputLabel="t('shillinq', 'Category')"
+						:clearable="false"
+						data-testid="period-close-detail-checklist-add-category" />
+					<NcTextField
+						v-model="newItemDescription"
+						class="period-close-detail__add-description"
+						:label="t('shillinq', 'Description')"
+						data-testid="period-close-detail-checklist-add-description" />
+					<NcButton
+						type="submit"
+						variant="secondary"
+						:disabled="checklistBusy || newItemDescription.trim() === ''"
+						data-testid="period-close-detail-checklist-add-submit">
+						{{ t('shillinq', 'Add item') }}
+					</NcButton>
+				</form>
+				<p
+					v-if="checklistError"
+					class="period-close-detail__error"
+					data-testid="period-close-detail-checklist-error">
+					{{ checklistError }}
 				</p>
 			</section>
 
@@ -303,18 +357,21 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton } from '@nextcloud/vue'
+import { NcButton, NcSelect, NcTextField } from '@nextcloud/vue'
 import ReopenPeriodDialog from '../../modals/ReopenPeriodDialog.vue'
 
 const STATE_OPEN = 'open'
 const STATE_CLOSING = 'closing'
 const STATE_CLOSED = 'closed'
 const STATE_AUDIT_LOCKED = 'audit-locked'
+const CHECKLIST_CATEGORIES = ['ap', 'ar', 'bank', 'expense-claims', 'vat', 'accruals', 'other']
 
 export default {
 	name: 'PeriodCloseDetail',
 	components: {
 		NcButton,
+		NcSelect,
+		NcTextField,
 		ReopenPeriodDialog,
 	},
 
@@ -343,6 +400,10 @@ export default {
 			reopenDialogOpen: false,
 			reopenSubmitting: false,
 			reopenError: '',
+			checklistBusy: false,
+			checklistError: '',
+			newItemCategory: null,
+			newItemDescription: '',
 		}
 	},
 
@@ -385,6 +446,20 @@ export default {
 
 		canLockAudit() {
 			return this.period && this.period.state === STATE_CLOSED
+		},
+
+		/**
+		 * Items can change while the period is open or closing, never once it
+		 * is closed or locked for audit (REQ-LPE-002).
+		 *
+		 * @return {boolean}
+		 */
+		checklistEditable() {
+			return !!this.period && [STATE_OPEN, STATE_CLOSING].includes(this.period.state || STATE_OPEN)
+		},
+
+		categoryOptions() {
+			return CHECKLIST_CATEGORIES.map((value) => ({ value, label: this.categoryLabel(value) }))
 		},
 
 		checklistItems() {
@@ -533,7 +608,14 @@ export default {
 				case 'bank':
 					return t('shillinq', 'Bank reconciliation')
 				case 'expense':
+				case 'expense-claims':
 					return t('shillinq', 'Expense claims')
+				case 'vat':
+					return t('shillinq', 'VAT')
+				case 'accruals':
+					return t('shillinq', 'Accruals')
+				case 'other':
+					return t('shillinq', 'Other')
 				default:
 					return category || t('shillinq', 'Other')
 			}
@@ -570,6 +652,66 @@ export default {
 				this.transitionError = this.extractErrorMessage(err, t('shillinq', 'Transition failed.'))
 			} finally {
 				this.transitioning = false
+			}
+		},
+
+		/**
+		 * Resolve one item; the server records who and when.
+		 *
+		 * @param {object} item The checklist item.
+		 * @return {Promise<void>}
+		 */
+		async resolveItem(item) {
+			await this.changeChecklist(`/checklist/${encodeURIComponent(item.id)}/resolve`, {})
+		},
+
+		/**
+		 * Reopen one resolved item.
+		 *
+		 * @param {object} item The checklist item.
+		 * @return {Promise<void>}
+		 */
+		async reopenItem(item) {
+			await this.changeChecklist(`/checklist/${encodeURIComponent(item.id)}/reopen`, {})
+		},
+
+		/**
+		 * Add the typed item, then clear the form.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async addItem() {
+			const description = this.newItemDescription.trim()
+			if (description === '') {
+				return
+			}
+			const category = this.newItemCategory?.value || 'other'
+			if (await this.changeChecklist('/checklist', { category, description })) {
+				this.newItemDescription = ''
+				this.newItemCategory = null
+			}
+		},
+
+		/**
+		 * Post a checklist change and take the period the server returns.
+		 *
+		 * @param {string} suffix The checklist path.
+		 * @param {object} body The request body.
+		 * @return {Promise<boolean>} Whether the change was stored.
+		 */
+		async changeChecklist(suffix, body) {
+			if (!this.recordId) return false
+			this.checklistBusy = true
+			this.checklistError = ''
+			try {
+				const response = await axios.post(this.periodUrl(suffix), body)
+				await this.takePeriod(response?.data?.data)
+				return true
+			} catch (err) {
+				this.checklistError = this.extractErrorMessage(err, t('shillinq', 'The checklist could not be changed.'))
+				return false
+			} finally {
+				this.checklistBusy = false
 			}
 		},
 
@@ -725,6 +867,22 @@ export default {
 	padding: 6px 8px;
 	border-bottom: 1px solid var(--color-border);
 	text-align: left;
+}
+
+.period-close-detail__add-item {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: flex-end;
+	margin-top: 12px;
+}
+
+.period-close-detail__add-category {
+	min-width: 200px;
+}
+
+.period-close-detail__add-description {
+	flex: 1 1 240px;
 }
 
 .period-close-detail__flag-list {

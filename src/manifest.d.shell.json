@@ -2832,6 +2832,14 @@
 							"order": 65
 						}
 					]
+				},
+				{
+					"id": "CloseChecklistTemplates",
+					"label": "Close checklist templates",
+					"icon": "FormatListChecks",
+					"route": "CloseChecklistTemplates",
+					"section": "settings",
+					"order": 94
 				}
 			],
 			"pages": [
@@ -2848,6 +2856,20 @@
 					"route": "/bookkeeping/period-close/:id",
 					"type": "custom",
 					"title": "Period Close"
+				},
+				{
+					"_fragment": "bookkeeping-period-close",
+					"id": "CloseChecklistTemplates",
+					"route": "/settings/close-checklist-templates",
+					"type": "index",
+					"title": "Close checklist templates"
+				},
+				{
+					"_fragment": "bookkeeping-period-close",
+					"id": "CloseChecklistTemplateDetail",
+					"route": "/settings/close-checklist-templates/:id",
+					"type": "detail",
+					"title": "Close checklist template"
 				}
 			]
 		},
