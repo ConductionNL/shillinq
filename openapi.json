@@ -1345,7 +1345,7 @@
         },
         "/investment-deductions/{year}/calculate": {
             "post": {
-                "operationId": "investment_deduction-calculate",
+                "operationId": "investment-deduction-calculate",
                 "summary": "Recalculate a year's investment deduction claims",
                 "description": "Work out the year's KIA, EIA and MIA deduction from the eligible assets acquired in that year and that year's tables, and write them as draft claims; a claim already used in a tax return is left as it is (REQ-IDC-002). Takes the administrationId from the body, else the active administration. Needs the right to post in that administration; anyone else receives a masked 404. A year without KIA tiers is refused with 422. Needs a signed-in Nextcloud user.",
                 "tags": [
