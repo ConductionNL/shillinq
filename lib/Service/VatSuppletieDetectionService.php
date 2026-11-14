@@ -63,7 +63,7 @@ namespace OCA\Shillinq\Service;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -921,6 +921,29 @@ class VatSuppletieDetectionService {
 
 		return $correction->jsonSerialize();
 	}//end fetchCorrection()
+
+	/**
+	 * A VatCorrection by id, or null when there is none, for a caller that
+	 * has to check the correction's administration before acting on it.
+	 *
+	 * @param string $vatCorrectionId The VatCorrection id.
+	 *
+	 * @return array<string,mixed>|null The correction, or null when it does not exist.
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-2.1
+	 */
+	public function findCorrection(string $vatCorrectionId): ?array {
+		$correction = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('VatCorrection'),
+			id: $vatCorrectionId
+		);
+
+		if ($correction === null) {
+			return null;
+		}
+
+		return $correction->jsonSerialize();
+	}//end findCorrection()
 
 	/**
 	 * Persist a record via the real OR ObjectService API.

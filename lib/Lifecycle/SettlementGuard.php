@@ -45,7 +45,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Service\PassThroughMarkupResolver;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -298,14 +299,8 @@ class SettlementGuard {
 			return null;
 		}
 
-		$amount = (float)($receipt['amountInBaseCurrency'] ?? 0.0);
-		$value = (float)($rule['markupValue'] ?? 0.0);
-
-		if (($rule['markupType'] ?? '') === 'fixedAmount') {
-			return round(num: $value, precision: 2);
-		}
-
-		return round(num: ($amount * $value), precision: 2);
+		// One rule with the submit-time lock (sales-time-and-expense-billing D3).
+		return (new PassThroughMarkupResolver())->markup(rule: $rule, cost: (float)($receipt['amountInBaseCurrency'] ?? 0.0));
 	}//end computeMarkupAmount()
 
 	/**
@@ -338,7 +333,7 @@ class SettlementGuard {
 			$rules = $objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'PassThroughMarkupRule')
-				->findAll(['filters' => self::markupRuleFilters(administrationId: $administrationId, fiscalYear: $fiscalYear)]);
+				->findAll(['filters' => PassThroughMarkupResolver::filters(administrationId: $administrationId, fiscalYear: $fiscalYear)]);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'SettlementGuard: markup-rule lookup failed',
@@ -351,99 +346,8 @@ class SettlementGuard {
 			return null;
 		}
 
-		return $this->selectByPriority(rules: $rules, customerId: $customerId, category: $category);
+		return (new PassThroughMarkupResolver())->select(rules: $rules, customerId: $customerId, category: $category);
 	}//end matchMarkupRule()
-
-	/**
-	 * The markup-rule filters: the administration, and for a known fiscal
-	 * year only the rules effective from that year or earlier.
-	 *
-	 * @param string $administrationId The administration id.
-	 * @param int    $fiscalYear       The fiscal year, 0 or less when unknown.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private static function markupRuleFilters(string $administrationId, int $fiscalYear): array {
-		$filters = ['administrationId' => $administrationId];
-		if ($fiscalYear > 0) {
-			$filters['effectiveFromYear'] = ['lte' => $fiscalYear];
-		}
-
-		return $filters;
-
-	}//end markupRuleFilters()
-
-	/**
-	 * Score a single rule against a target by specificity (REQ-ERP-005).
-	 *
-	 * Returns the priority tier (lower = more specific) or null when the rule
-	 * does not apply to the target:
-	 *   0 = customer + category, 1 = customer only, 2 = category-global,
-	 *   3 = global default.
-	 *
-	 * @param array<string, mixed> $rule The candidate rule.
-	 * @param string $customerId The target customer id.
-	 * @param string $category The target category.
-	 *
-	 * @return int|null The tier, or null when the rule does not match.
-	 */
-	private function ruleTier(array $rule, string $customerId, string $category): ?int {
-		$ruleCustomer = (string)($rule['targetCustomerId'] ?? '');
-		$ruleCategory = (string)($rule['targetCategory'] ?? '');
-		$customerMatches = ($ruleCustomer !== '' && $ruleCustomer === $customerId);
-		$categoryMatches = ($ruleCategory !== '' && $ruleCategory === $category);
-
-		// A rule scoped to a different customer never applies.
-		if ($ruleCustomer !== '' && $customerMatches === false) {
-			return null;
-		}
-
-		// A rule scoped to a different category never applies.
-		if ($ruleCategory !== '' && $categoryMatches === false) {
-			return null;
-		}
-
-		// Both narrowed to the target (or wildcard) — score by specificity:
-		// customer-wildcard adds 2, category-wildcard adds 1 (lower = more specific).
-		$tier = 0;
-		if ($customerMatches === false) {
-			$tier += 2;
-		}
-
-		if ($categoryMatches === false) {
-			$tier += 1;
-		}
-
-		return $tier;
-	}//end ruleTier()
-
-	/**
-	 * Pick the most specific applicable rule from a candidate list (REQ-ERP-005).
-	 *
-	 * @param array<int, array<string, mixed>> $rules Candidate rules.
-	 * @param string $customerId The target customer id.
-	 * @param string $category The target category.
-	 *
-	 * @return array<string, mixed>|null The best-matching rule, or null.
-	 */
-	private function selectByPriority(array $rules, string $customerId, string $category): ?array {
-		$best = null;
-		$bestTier = null;
-
-		foreach ($rules as $rule) {
-			$tier = $this->ruleTier(rule: $rule, customerId: $customerId, category: $category);
-			if ($tier === null) {
-				continue;
-			}
-
-			if ($bestTier === null || $tier < $bestTier) {
-				$best = $rule;
-				$bestTier = $tier;
-			}
-		}
-
-		return $best;
-	}//end selectByPriority()
 
 	/**
 	 * Aggregate dual-path totals over a claim's child receipts (REQ-ERP-003).

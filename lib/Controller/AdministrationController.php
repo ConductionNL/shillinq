@@ -40,9 +40,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationArchivalService;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationArchivalServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -61,16 +61,16 @@ class AdministrationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param AdministrationContextService $context The administratie-aware RBAC context service.
-	 * @param AdministrationArchivalService $archival Archival write-block enforcement.
+	 * @param AdministrationContextServiceInterface $context The administratie-aware RBAC context service.
+	 * @param AdministrationArchivalServiceInterface $archival Archival write-block enforcement.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly AdministrationArchivalService $archival,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly AdministrationArchivalServiceInterface $archival,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

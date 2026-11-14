@@ -274,7 +274,7 @@ final class PaymentRefundRequestedListenerTest extends TestCase {
 	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function testTheAppWiresBothListeners(): void {
-		$registration = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/ObjectRequestSettlementRegistration.php');
+		$registration = (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ObjectRequestSettlementRegistration.php');
 		self::assertMatchesRegularExpression('/event: PaymentRefundRequestedEvent::class,\s+listener: PaymentRefundRequestedListener::class/', $registration);
 		self::assertMatchesRegularExpression('/event: PaymentCreditRequestedEvent::class,\s+listener: PaymentCreditRequestedListener::class/', $registration);
 	}//end testTheAppWiresBothListeners()

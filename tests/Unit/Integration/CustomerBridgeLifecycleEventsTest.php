@@ -50,7 +50,7 @@ use DateTimeZone;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Tests\Integration\Pipelinq\PipelinqMockServer;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;

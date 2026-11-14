@@ -31,7 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ChartOfAccountsCandidateServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -42,7 +43,7 @@ use Throwable;
  *
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
-class ChartOfAccountsCandidateService {
+class ChartOfAccountsCandidateService implements ChartOfAccountsCandidateServiceInterface {
 	/**
 	 * The `Account` OR schema slug (bookkeeping-chart-of-accounts, REQ-CoA-001).
 	 *

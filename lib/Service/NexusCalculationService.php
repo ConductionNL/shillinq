@@ -36,18 +36,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\NexusCalculationServiceInterface;
+
 /**
  * Side-effect-free modified-nexus arithmetic helper (REQ-IBA-002).
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
  */
-class NexusCalculationService {
-	/**
-	 * The fixed OECD BEPS Action 5 uplift factor.
-	 *
-	 * @var float
-	 */
-	public const UPLIFT_FACTOR = 1.3;
+class NexusCalculationService implements NexusCalculationServiceInterface {
 
 	/**
 	 * Compute the modified-nexus break for one asset/year (REQ-IBA-002).

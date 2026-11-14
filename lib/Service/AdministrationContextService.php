@@ -36,20 +36,21 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Resolves the administratie-aware RBAC context and enforces tenant isolation.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
  */
-class AdministrationContextService {
+class AdministrationContextService implements AdministrationContextServiceInterface {
 	/**
 	 * The user preference that holds the chosen administration.
 	 */
