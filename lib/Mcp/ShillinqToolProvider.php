@@ -708,6 +708,175 @@ class ShillinqToolProvider implements IMcpToolProvider {
 				'required' => ['administrationId', 'reconId', 'matchIds', 'resolutionStatus', 'resolutionReason'],
 			],
 		],
+		[
+			'id' => 'shillinq.invoice.draft',
+			'name' => 'Draft an invoice',
+			'description' => 'Draft a billable invoice for a customer of an administration from logged time, expenses, a fixed fee, '
+				. 'a milestone, a retainer or usage, for a period. Use it when the user asks to invoice a customer for '
+				. 'work; the draft gets no number and is not sent. Issue it with shillinq.invoice.issue.',
+			'scope' => 'create',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'billingModel' => [
+						'type' => 'string',
+						'enum' => ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed', 'usage'],
+						'description' => 'How the invoice is priced.',
+					],
+					'customerId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The customer invoiced.'],
+					'fromDate' => [
+						'type' => 'string',
+						'pattern' => '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+						'description' => 'The first day of the period, YYYY-MM-DD.',
+					],
+					'toDate' => [
+						'type' => 'string',
+						'pattern' => '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+						'description' => 'The last day of the period, YYYY-MM-DD.',
+					],
+					'timeEntryIds' => [
+						'type' => 'array',
+						'maxItems' => 500,
+						'items' => ['type' => 'string', 'pattern' => self::ID_PATTERN],
+						'description' => 'The time entries to bill; all billable ones in the period when empty.',
+					],
+					'expenseIds' => [
+						'type' => 'array',
+						'maxItems' => 500,
+						'items' => ['type' => 'string', 'pattern' => self::ID_PATTERN],
+						'description' => 'The expenses to bill.',
+					],
+					'meterReadingIds' => [
+						'type' => 'array',
+						'maxItems' => 500,
+						'items' => ['type' => 'string', 'pattern' => self::ID_PATTERN],
+						'description' => 'The meter readings to bill, for usage.',
+					],
+					'rateCardId' => [
+						'type' => ['string', 'null'],
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The rate card, for time and materials.',
+					],
+					'retainerScheduleId' => [
+						'type' => ['string', 'null'],
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The retainer schedule, for a retainer.',
+					],
+					'fixedFeeCents' => ['type' => ['integer', 'null'], 'minimum' => 1, 'description' => 'The fee in cents, for a fixed fee.'],
+					'milestoneId' => [
+						'type' => ['string', 'null'],
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The milestone, for a milestone invoice.',
+					],
+					'usageRatePlanId' => ['type' => ['string', 'null'], 'pattern' => self::ID_PATTERN, 'description' => 'The rate plan, for usage.'],
+					'projectId' => [
+						'type' => ['string', 'null'],
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The project, to bill only its work.',
+					],
+					'notes' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'A note printed on the invoice.'],
+				],
+				'required' => ['administrationId', 'billingModel', 'customerId', 'fromDate', 'toDate'],
+			],
+		],
+		[
+			'id' => 'shillinq.invoice.issue',
+			'name' => 'Issue a draft invoice',
+			'description' => 'Post a draft billable invoice of an administration: it gets its sequential invoice number and is '
+				. 'booked, and can no longer be edited. Use it only when the user explicitly asks to issue or finalise that '
+				. 'invoice. An invoice already posted is refused.',
+			'scope' => 'update',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The billable invoice.'],
+				],
+				'required' => ['administrationId', 'invoiceId'],
+			],
+		],
+		[
+			'id' => 'shillinq.invoice.render_pdf',
+			'name' => 'Render an invoice',
+			'description' => 'Render a billable invoice of an administration as its printable document, with its lines. Use it '
+				. 'when the user wants to see or check how the invoice reads before or after issuing it. Changes nothing '
+				. 'and sends nothing.',
+			'scope' => 'read',
+			'readOnlyHint' => true,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The billable invoice.'],
+				],
+				'required' => ['administrationId', 'invoiceId'],
+			],
+		],
+		[
+			'id' => 'shillinq.invoice.send_einvoice',
+			'name' => 'Send an invoice as an e-invoice',
+			'description' => 'Send an issued sales invoice of an administration to the customer as a structured e-invoice over '
+				. 'the e-invoicing network. Use it only when the user explicitly asks to send that invoice electronically; '
+				. 'it leaves the instance. Find the invoice number with shillinq.ARInvoice.search.',
+			'scope' => 'update',
+			'reach' => 'external',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceNumber' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The sales invoice number.'],
+				],
+				'required' => ['administrationId', 'invoiceNumber'],
+			],
+		],
+		[
+			'id' => 'shillinq.recurring_invoice.generate',
+			'name' => 'Generate a recurring invoice',
+			'description' => 'Generate the due invoice of an active recurring-invoice profile of an administration and move the '
+				. 'profile to its next period. Use it when the user asks to run a subscription or recurring invoice now. A '
+				. 'period already invoiced answers the existing invoice instead of a second one.',
+			'scope' => 'create',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the profile belongs to.',
+					],
+					'profileId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The recurring-invoice profile.'],
+				],
+				'required' => ['administrationId', 'profileId'],
+			],
+		],
 	];
 
 	/**
@@ -723,6 +892,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpRequisitionTools   $requisitions   The requisition handlers.
 	 * @param McpPaymentRunTools    $paymentRuns    The payment-run handlers.
 	 * @param McpBankTools          $bank           The bank-statement and reconciliation handlers.
+	 * @param McpInvoiceTools       $invoices       The invoicing handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
@@ -735,6 +905,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpRequisitionTools $requisitions,
 		private readonly McpPaymentRunTools $paymentRuns,
 		private readonly McpBankTools $bank,
+		private readonly McpInvoiceTools $invoices,
 	) {
 	}//end __construct()
 
@@ -827,6 +998,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'shillinq.payment_run.reconcile' => $this->paymentRuns->reconcile(args: $arguments),
 			'shillinq.bank_statement.import' => $this->bank->importStatement(args: $arguments),
 			'shillinq.bank_reconciliation.resolve' => $this->bank->resolve(args: $arguments),
+			'shillinq.invoice.draft' => $this->invoices->draft(args: $arguments),
+			'shillinq.invoice.issue' => $this->invoices->issue(args: $arguments),
+			'shillinq.invoice.render_pdf' => $this->invoices->renderPdf(args: $arguments),
+			'shillinq.invoice.send_einvoice' => $this->invoices->sendEInvoice(args: $arguments),
+			'shillinq.recurring_invoice.generate' => $this->invoices->generateRecurring(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()

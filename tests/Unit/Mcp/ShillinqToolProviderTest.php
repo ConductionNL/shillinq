@@ -35,6 +35,10 @@ use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
@@ -44,6 +48,8 @@ use OCA\Shillinq\Mcp\McpDunningTools;
 use OCA\Shillinq\Mcp\McpRequisitionTools;
 use OCA\Shillinq\Mcp\McpPaymentRunTools;
 use OCA\Shillinq\Mcp\McpBankTools;
+use OCA\Shillinq\Mcp\McpInvoiceTools;
+use OCA\Shillinq\Service\RecurringInvoiceGenerator;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
@@ -76,6 +82,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpRequisitionTools::class)]
 #[UsesClass(McpPaymentRunTools::class)]
 #[UsesClass(McpBankTools::class)]
+#[UsesClass(McpInvoiceTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -167,6 +174,16 @@ class ShillinqToolProviderTest extends TestCase {
 				$this->createMock(ReconciliationResolutionServiceInterface::class),
 				$this->createMock(ObjectServiceInterface::class),
 				$this->createMock(IAppConfig::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpInvoiceTools(
+				$gate,
+				$this->createMock(InvoiceGenerationServiceInterface::class),
+				$this->createMock(BillableLinesServiceInterface::class),
+				$this->createMock(InvoicePdfGeneratorInterface::class),
+				$this->createMock(EInvoiceServiceInterface::class),
+				$this->createMock(RecurringInvoiceGenerator::class),
+				$this->createMock(ObjectServiceInterface::class),
 				$this->createMock(LoggerInterface::class)
 			)
 		);
@@ -267,6 +284,11 @@ class ShillinqToolProviderTest extends TestCase {
 			'matchIds' => ['m-1'],
 			'resolutionStatus' => 'matched',
 			'resolutionReason' => 'Paid',
+			'billingModel' => 'fixed_fee',
+			'fromDate' => '2026-10-01',
+			'toDate' => '2026-10-31',
+			'invoiceNumber' => 'F-1',
+			'profileId' => 'p-1',
 		];
 		foreach ($this->provider->getTools() as $tool) {
 			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));
