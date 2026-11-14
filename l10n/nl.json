@@ -6904,7 +6904,19 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "The books of this period could not be read: %s": "De boekhouding van deze periode kon niet worden gelezen: %s",
+        "Passed": "Geslaagd",
+        "These transactions have a VAT line without a box: %s": "Deze boekingen hebben een btw-regel zonder rubriek: %s",
+        "The VAT posted differs from the base times the rate on: %s": "De geboekte btw wijkt af van grondslag maal tarief bij: %s",
+        "account %1$s moved %2$s, the return says %3$s": "rekening %1$s muteerde %2$s, de aangifte zegt %3$s",
+        "The VAT accounts do not match the return: %s": "De btw-rekeningen sluiten niet aan op de aangifte: %s",
+        "These documents in the period are not posted: %s": "Deze documenten in de periode zijn niet geboekt: %s",
+        "The return %s of the previous period is not filed yet.": "De aangifte %s van de vorige periode is nog niet ingediend.",
+        "There is no return for the period ending %s.": "Er is geen aangifte voor de periode die eindigt op %s.",
+        "Reverse-charged VAT is not both owed and deducted on: %s": "Verlegde btw is niet zowel verschuldigd als afgetrokken bij: %s",
+        "The checks of this return could not run, so it cannot be submitted.": "De controles van deze aangifte konden niet worden uitgevoerd, dus de aangifte kan niet worden ingediend.",
+        "The check \"%1$s\" failed: %2$s": "De controle \"%1$s\" is niet geslaagd: %2$s"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

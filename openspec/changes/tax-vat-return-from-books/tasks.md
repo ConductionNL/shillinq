@@ -28,8 +28,19 @@
 
 ## 3. Checks
 
-- [ ] 3.1 Add `lib/Standards/Checks/VatReturnChecks.php` with the six checks and their severities, registered for `BtwAangifte` (REQ-TVRB-001). Verify: PHPUnit per check, pass and fail.
-- [ ] 3.2 Add `VatReturnChecksGuard` as the `requires` of `BtwAangifte.submit`, registered in `Application.php` (REQ-TVRB-001). Verify: PHPUnit with the real guard interface; a live submit with a failing check is refused.
+- [x] 3.1 Add `lib/Standards/Checks/VatReturnChecks.php` with the six checks and their severities, registered for `BtwAangifte` (REQ-TVRB-001). Verify: PHPUnit per check, pass and fail.
+      DONE 2026-11-14: a ledger-reading service rather than a RuleEngine provider, because the engine's checks see one
+      object and these read the period's lines, the VAT accounts and the previous return. `VatReturnChecks::run()`
+      answers id, severity, passed and message for `vat-line-has-box` (blocking), `vat-equals-base-times-rate`
+      (warning), `vat-accounts-match-return` (blocking), `no-unposted-documents` (warning), `previous-return-filed`
+      (warning) and `reverse-charge-owed-and-deductible` (blocking); books that cannot be read fail every check.
+      Messages in English and Dutch. Tests: `tests/Unit/Standards/Checks/VatReturnChecksTest.php` (8).
+- [x] 3.2 Add `VatReturnChecksGuard` as the `requires` of `BtwAangifte.submit`, registered in `Application.php` (REQ-TVRB-001). Verify: PHPUnit with the real guard interface; a live submit with a failing check is refused.
+      DONE 2026-11-14 (code and PHPUnit; the live submit is not run here): `VatReturnChecksGuard` implements
+      `LifecycleGuardInterface` and denies naming the first failing blocking check, or when the checks cannot run;
+      `BtwAangifte.submit` declares `requires: OCA\\Shillinq\\Lifecycle\\VatReturnChecksGuard::check`, bound by
+      `VatReturnGuardServices` through `GuardTagServices` (called from `Application::register()`); BtwAangifte 0.1.1.
+      Tests: `tests/Unit/Lifecycle/VatReturnChecksGuardTest.php` (4).
 - [ ] 3.3 Add the Checks tab on `VATReturnDetail` (REQ-TVRB-001). Verify: Playwright shows a failed and a passed check on seed data.
 
 ## 4. Broken year

@@ -4716,7 +4716,19 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "The books of this period could not be read: %s": "The books of this period could not be read: %s",
+        "Passed": "Passed",
+        "These transactions have a VAT line without a box: %s": "These transactions have a VAT line without a box: %s",
+        "The VAT posted differs from the base times the rate on: %s": "The VAT posted differs from the base times the rate on: %s",
+        "account %1$s moved %2$s, the return says %3$s": "account %1$s moved %2$s, the return says %3$s",
+        "The VAT accounts do not match the return: %s": "The VAT accounts do not match the return: %s",
+        "These documents in the period are not posted: %s": "These documents in the period are not posted: %s",
+        "The return %s of the previous period is not filed yet.": "The return %s of the previous period is not filed yet.",
+        "There is no return for the period ending %s.": "There is no return for the period ending %s.",
+        "Reverse-charged VAT is not both owed and deducted on: %s": "Reverse-charged VAT is not both owed and deducted on: %s",
+        "The checks of this return could not run, so it cannot be submitted.": "The checks of this return could not run, so it cannot be submitted.",
+        "The check \"%1$s\" failed: %2$s": "The check \"%1$s\" failed: %2$s"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

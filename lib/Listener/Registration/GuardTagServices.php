@@ -47,6 +47,7 @@ final class GuardTagServices {
 		(new CommitmentGuardServices())->register(context: $context);
 		(new ImportBatchServices())->register(context: $context);
 		(new AdministrationConfigGuardServices())->register(context: $context);
+		(new VatReturnGuardServices())->register(context: $context);
 
 	}//end register()
 }//end class

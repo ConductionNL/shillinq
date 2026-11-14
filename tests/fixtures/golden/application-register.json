@@ -640,6 +640,14 @@
         ]
     ],
     [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\VatReturnChecksGuard::check'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
