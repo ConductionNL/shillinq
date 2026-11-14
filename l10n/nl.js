@@ -7078,7 +7078,18 @@ OC.L10N.register(
         "Payment due": "Uiterste betaaldatum",
         "Done for {year}.": "Uitgevoerd voor {year}.",
         "Left as they were (reconciled or locked): {list}.": "Ongewijzigd gelaten (aangesloten of vergrendeld): {list}.",
-        "Not read: {list}.": "Niet gelezen: {list}."
+        "Not read: {list}.": "Niet gelezen: {list}.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

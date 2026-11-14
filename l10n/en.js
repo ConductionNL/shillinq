@@ -4890,7 +4890,21 @@ OC.L10N.register(
         "Payment due": "Payment due",
         "Done for {year}.": "Done for {year}.",
         "Left as they were (reconciled or locked): {list}.": "Left as they were (reconciled or locked): {list}.",
-        "Not read: {list}.": "Not read: {list}."
+        "Not read: {list}.": "Not read: {list}.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} of {total} rates · {feedStatus}",
+        "Booked lines": "Booked lines",
+        "Posted lines": "Posted lines",
+        "Exchange rate": "Exchange rate",
+        "Rate source": "Rate source",
+        "Rate date": "Rate date",
+        "Base amount": "Base amount",
+        "Transaction amount": "Transaction amount",
+        "Transaction currency": "Transaction currency",
+        "Base currency": "Base currency",
+        "Rates are entered by hand": "Rates are entered by hand",
+        "Rates arrive from the feed": "Rates arrive from the feed",
+        "%1$s to %2$s on %3$s": "%1$s to %2$s on %3$s",
+        "Newest rate: %s": "Newest rate: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

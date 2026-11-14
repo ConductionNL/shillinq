@@ -82,6 +82,10 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'cbcr#safeHarbourReturn', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/safe-harbour', 'verb' => 'POST'],
             ['name' => 'cbcr#cbcChecks', 'url' => '/api/cbcr/returns/{returnId}/checks', 'verb' => 'GET'],
             ['name' => 'cbcr#girChecks', 'url' => '/api/cbcr/minimum-tax-returns/{returnId}/checks', 'verb' => 'GET'],
+        // banking-fx-at-booking task 3.1: the FX rates page's status line —
+        // feed or typed, and the newest rate date per pair. Any signed-in
+        // user; the rates are read with the caller's own register access.
+            ['name' => 'fxRateFeedStatus#status', 'url' => '/api/fx-rates/feed-status', 'verb' => 'GET'],
 
         // No external-adapters roster route: adopt-connection-registry moved
         // the External Connections page onto integriq's app_connection rows,
