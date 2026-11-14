@@ -73,4 +73,25 @@ class McpArgumentValidatorTest extends TestCase {
 			$validator->problems(self::SCHEMA, ['id' => 7, 'decision' => null])
 		);
 	}//end testEachProblemIsNamed()
+
+	/**
+	 * An integer argument must be an int within its bounds; a numeric string is refused.
+	 *
+	 * @return void
+	 */
+	public function testIntegerArgumentsAreBounded(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => ['year' => ['type' => 'integer', 'minimum' => 2020, 'maximum' => 2099]],
+			'required' => ['year'],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['year' => 2020]));
+		$this->assertSame([], $validator->problems($schema, ['year' => 2099]));
+		$this->assertSame(['year must be at least 2020'], $validator->problems($schema, ['year' => 2019]));
+		$this->assertSame(['year must be at most 2099'], $validator->problems($schema, ['year' => 2100]));
+		$this->assertSame(['year must be an integer'], $validator->problems($schema, ['year' => '2024']));
+		$this->assertSame(['year must be an integer'], $validator->problems($schema, ['year' => 2024.0]));
+	}//end testIntegerArgumentsAreBounded()
 }//end class

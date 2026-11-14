@@ -27,8 +27,9 @@ namespace OCA\Shillinq\Mcp;
 
 /**
  * Validates arguments against the subset of JSON Schema the catalogue uses:
- * an object with `required` keys and string properties carrying `pattern`,
- * `enum` and `maxLength`. Unknown keys are refused, so a model cannot slip a
+ * an object with `required` keys, string properties carrying `pattern`,
+ * `enum` and `maxLength`, and integer properties carrying `minimum` and
+ * `maximum`. Unknown keys are refused, so a model cannot slip a
  * field past the tool (the controller ignores body fields it does not read;
  * a tool names every field it reads).
  *
@@ -86,6 +87,10 @@ class McpArgumentValidator {
 			return null;
 		}
 
+		if (in_array('integer', (array)($property['type'] ?? []), true) === true) {
+			return $this->integerProblem(name: $name, property: $property, value: $value);
+		}
+
 		if (is_string($value) === false) {
 			return $name . ' must be a string';
 		}
@@ -104,4 +109,29 @@ class McpArgumentValidator {
 
 		return null;
 	}//end propertyProblem()
+
+	/**
+	 * The problem with an integer argument, or null.
+	 *
+	 * @param string               $name     The argument name.
+	 * @param array<string, mixed> $property Its schema.
+	 * @param mixed                $value    Its value.
+	 *
+	 * @return string|null
+	 */
+	private function integerProblem(string $name, array $property, mixed $value): ?string {
+		if (is_int($value) === false) {
+			return $name . ' must be an integer';
+		}
+
+		if (isset($property['minimum']) === true && $value < (int)$property['minimum']) {
+			return $name . ' must be at least ' . (int)$property['minimum'];
+		}
+
+		if (isset($property['maximum']) === true && $value > (int)$property['maximum']) {
+			return $name . ' must be at most ' . (int)$property['maximum'];
+		}
+
+		return null;
+	}//end integerProblem()
 }//end class

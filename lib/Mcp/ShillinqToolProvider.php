@@ -154,6 +154,85 @@ class ShillinqToolProvider implements IMcpToolProvider {
 				'required' => ['administrationId', 'periodId'],
 			],
 		],
+		[
+			'id' => 'shillinq.vat_return.create',
+			'name' => 'Create a VAT return',
+			'description' => 'Create a draft VAT return for an administration for a past or current quarter, month or year, '
+				. 'with its lines derived from the bookings. Use it when the user asks to prepare a VAT return; it files '
+				. 'nothing. A future period is refused. Submit the draft later with shillinq.vat_return.submit.',
+			'scope' => 'create',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return is for.'],
+					'period' => ['type' => 'string', 'enum' => ['quarter', 'month', 'year'], 'description' => 'The kind of period.'],
+					'periodYear' => ['type' => 'integer', 'minimum' => 2020, 'maximum' => 2099, 'description' => 'The fiscal year.'],
+					'periodNumber' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 12, 'description' => 'The quarter (1-4), month (1-12) or 1 for a year.'],
+					'regime' => ['type' => 'string', 'enum' => ['standard', 'kor', 'reverse-charge'], 'description' => 'The VAT regime.'],
+				],
+				'required' => ['administrationId', 'period', 'periodYear', 'periodNumber', 'regime'],
+			],
+		],
+		[
+			'id' => 'shillinq.vat_return.rebase',
+			'name' => 'Rebase a VAT return to draft',
+			'description' => 'Move a submitted VAT return of an administration back to draft and derive its lines again from the '
+				. 'current bookings, as the signed-in user. Use it when the user asks to correct a submitted return '
+				. 'before it is filed. The service refuses a return that is not submitted.',
+			'scope' => 'update',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return belongs to.'],
+					'returnId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The VAT return; find it with shillinq.VatReturn.search.'],
+				],
+				'required' => ['administrationId', 'returnId'],
+			],
+		],
+		[
+			'id' => 'shillinq.vat_return.submit',
+			'name' => 'Submit a VAT return',
+			'description' => 'Submit a draft VAT return of an administration for filing with the tax authority, as the signed-in '
+				. 'user. Use it only when the user explicitly asks to submit or file that return; the filing leaves '
+				. 'the instance. The service refuses a return that is not a draft or has negative totals.',
+			'scope' => 'update',
+			'reach' => 'external',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return belongs to.'],
+					'returnId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The VAT return; find it with shillinq.VatReturn.search.'],
+				],
+				'required' => ['administrationId', 'returnId'],
+			],
+		],
+		[
+			'id' => 'shillinq.vat_return.destroy',
+			'name' => 'Delete a draft VAT return',
+			'description' => 'Delete a draft VAT return of an administration. Use it only when the user explicitly asks to discard '
+				. 'that draft. A submitted return is never deleted: it is refused, and corrected with '
+				. 'shillinq.vat_return.rebase instead.',
+			'scope' => 'delete',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => true,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return belongs to.'],
+					'returnId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The VAT return; find it with shillinq.VatReturn.search.'],
+				],
+				'required' => ['administrationId', 'returnId'],
+			],
+		],
 	];
 
 	/**
@@ -164,6 +243,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpInvocationAudit    $audit          Records every invocation.
 	 * @param McpPurchaseOrderTools $purchaseOrders The purchase-order handlers.
 	 * @param McpPeriodCloseTools   $periodClose    The period-close handlers.
+	 * @param McpVatReturnTools     $vatReturns     The VAT-return handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
@@ -171,6 +251,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpInvocationAudit $audit,
 		private readonly McpPurchaseOrderTools $purchaseOrders,
 		private readonly McpPeriodCloseTools $periodClose,
+		private readonly McpVatReturnTools $vatReturns,
 	) {
 	}//end __construct()
 
@@ -246,6 +327,10 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'shillinq.period_close.start' => $this->periodClose->start(args: $arguments),
 			'shillinq.period_close.close' => $this->periodClose->close(args: $arguments),
 			'shillinq.period_close.reopen' => $this->periodClose->reopen(args: $arguments),
+			'shillinq.vat_return.create' => $this->vatReturns->create(args: $arguments),
+			'shillinq.vat_return.rebase' => $this->vatReturns->rebase(args: $arguments),
+			'shillinq.vat_return.submit' => $this->vatReturns->submit(args: $arguments),
+			'shillinq.vat_return.destroy' => $this->vatReturns->destroy(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()

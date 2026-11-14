@@ -26,8 +26,10 @@ use OCA\Shillinq\Mcp\McpAdministrationGate;
 use OCA\Shillinq\Mcp\McpArgumentValidator;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
 use OCA\Shillinq\Mcp\McpPeriodCloseTools;
+use OCA\Shillinq\Mcp\McpVatReturnTools;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
@@ -41,6 +43,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,6 +56,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpAdministrationGate::class)]
 #[UsesClass(McpPurchaseOrderTools::class)]
 #[UsesClass(McpPeriodCloseTools::class)]
+#[UsesClass(McpVatReturnTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -108,6 +112,12 @@ class ShillinqToolProviderTest extends TestCase {
 				$gate,
 				$this->createMock(PeriodCloseServiceInterface::class),
 				$this->createMock(PeriodCloseAssistantServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpVatReturnTools(
+				$gate,
+				$this->createMock(VATReturnServiceInterface::class),
+				$this->createMock(ContainerInterface::class),
 				$this->createMock(LoggerInterface::class)
 			)
 		);
@@ -183,6 +193,11 @@ class ShillinqToolProviderTest extends TestCase {
 			'purchaseOrderId' => 'po-1',
 			'periodId' => '2026-10',
 			'decision' => 'approved',
+			'returnId' => 'ret-1',
+			'period' => 'quarter',
+			'periodYear' => 2024,
+			'periodNumber' => 1,
+			'regime' => 'standard',
 		];
 		foreach ($this->provider->getTools() as $tool) {
 			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));
