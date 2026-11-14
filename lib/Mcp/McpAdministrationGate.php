@@ -76,6 +76,35 @@ class McpAdministrationGate {
 	}//end refusal()
 
 	/**
+	 * The refusal for a call on a loaded record, or null when it may run.
+	 *
+	 * The record must exist, belong to the administration the call names, and
+	 * that administration must be one the caller may access; every miss is
+	 * the same masked `not_found`, so a record in a foreign administration is
+	 * indistinguishable from a missing one.
+	 *
+	 * @param string                    $administrationId The administration the call names.
+	 * @param array<string, mixed>|null $record           The loaded record, or null when absent.
+	 * @param string                    $notFound         The masked message the REST twin answers.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec openspec/changes/mcp-action-tool-surface/tasks.md
+	 */
+	public function recordRefusal(string $administrationId, ?array $record, string $notFound): ?array {
+		$refusal = $this->refusal(administrationId: $administrationId, notFound: $notFound);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		if ($record === null || (string)($record['administrationId'] ?? '') !== $administrationId) {
+			return McpResult::error(code: 'not_found', message: $notFound);
+		}
+
+		return null;
+	}//end recordRefusal()
+
+	/**
 	 * The signed-in user's id, or '' without a session.
 	 *
 	 * @return string
