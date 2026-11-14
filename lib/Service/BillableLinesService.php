@@ -89,7 +89,10 @@ class BillableLinesService implements BillableLinesServiceInterface {
 			$projects = array_values(array_intersect($projects, [$projectId]));
 		}
 
-		$timeEntries = $this->billableTimeEntries(administrationId: $administrationId, projects: $projects, fromDate: $fromDate, toDate: $toDate);
+		$timeEntries = array_map(
+			fn (array $entry): array => $entry + ['rate' => $this->rateOf(entry: $entry, administrationId: $administrationId, customerId: $customerId)],
+			$this->billableTimeEntries(administrationId: $administrationId, projects: $projects, fromDate: $fromDate, toDate: $toDate)
+		);
 		$expenses = $this->passedOnExpenses(administrationId: $administrationId, customerId: $customerId, fromDate: $fromDate, toDate: $toDate);
 
 		return ['timeEntries' => $timeEntries, 'expenses' => $expenses];
@@ -116,10 +119,6 @@ class BillableLinesService implements BillableLinesServiceInterface {
 			)
 		);
 		usort($timeEntries, static fn (array $a, array $b): int => strcmp((string)($a['date'] ?? ''), (string)($b['date'] ?? '')));
-		$timeEntries = array_map(
-			fn (array $entry): array => $entry + ['rate' => $this->rateOf(entry: $entry, administrationId: $administrationId, customerId: $customerId)],
-			$timeEntries
-		);
 
 		return $timeEntries;
 	}//end billableTimeEntries()
