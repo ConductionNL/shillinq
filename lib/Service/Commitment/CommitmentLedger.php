@@ -435,9 +435,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 			return [];
 		}
 
-		$matching = array_keys(
-			array_filter($lines, static fn (array $line): bool => $costCentre !== '' && (string)($line['costCentre'] ?? '') === $costCentre)
-		);
+		$matching = self::linesOnCostCentre(lines: $lines, costCentre: $costCentre);
 		if (count($matching) === 1) {
 			return [$matching[0] => $amount];
 		}
@@ -451,6 +449,20 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 		return self::proportionalShares(weights: $weights, amount: $amount, last: array_key_last($lines));
 
 	}//end allocate()
+
+	/**
+	 * The keys of the lines booked on the cost centre; none when no cost centre is given.
+	 *
+	 * @param array<int|string, array<string, mixed>> $lines      The commitment lines.
+	 * @param string                                  $costCentre The cost centre.
+	 *
+	 * @return list<int|string>
+	 */
+	private static function linesOnCostCentre(array $lines, string $costCentre): array {
+		return array_keys(
+			array_filter($lines, static fn (array $line): bool => $costCentre !== '' && (string)($line['costCentre'] ?? '') === $costCentre)
+		);
+	}//end linesOnCostCentre()
 
 	/**
 	 * Split the amount over the weights, rounding down; the last line takes the remainder.

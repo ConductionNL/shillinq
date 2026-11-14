@@ -124,10 +124,7 @@ class IntegriqCloudEventListener implements IEventListener {
 
 			$this->reconcilePaymentStatus(data: $cloudEvent['data'] ?? null);
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'IntegriqCloudEventListener: failed to apply an integriq CloudEvent; skipped',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->warning('IntegriqCloudEventListener: failed to apply an integriq CloudEvent; skipped', ['exception' => $e->getMessage()]);
 		}//end try
 	}//end handle()
 

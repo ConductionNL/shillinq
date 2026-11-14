@@ -1089,16 +1089,9 @@ class VendorPerformanceAggregation implements VendorPerformanceAggregationInterf
 			return [];
 		}
 
-		$window = $this->resolvePeriodWindow(period: $period);
-		$invoices = $this->filterByDate(
-			rows:  $this->findAll(
-				schema:  self::SCHEMA_SUPPLIER_INVOICE,
-				filters: ['administrationId' => $administrationId]
-			),
-			field: 'invoiceDate',
-			from:  $window['from'],
-			to:    $window['to']
-		);
+		$window   = $this->resolvePeriodWindow(period: $period);
+		$rows     = $this->findAll(schema: self::SCHEMA_SUPPLIER_INVOICE, filters: ['administrationId' => $administrationId]);
+		$invoices = $this->filterByDate(rows: $rows, field: 'invoiceDate', from: $window['from'], to: $window['to']);
 
 		return $this->scorecardsFor(administrationId: $administrationId, period: $period, supplierIds: self::supplierIdsOf(invoices: $invoices));
 	}//end aggregateAdministrationForPeriod()
