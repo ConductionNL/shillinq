@@ -326,6 +326,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'downPayment#show', 'url' => '/api/ar-invoices/{id}/down-payments', 'verb' => 'GET'],
             ['name' => 'downPayment#deduct', 'url' => '/api/ar-invoices/{id}/down-payment-deductions', 'verb' => 'POST'],
 
+            // Sales-quote-and-order-to-invoice (REQ-QTI-001, REQ-QTI-003): an accepted
+            // quote becomes a sales order; a confirmed sales order becomes a draft invoice.
+            ['name' => 'salesOrder#fromQuote', 'url' => '/api/quotes/{id}/order', 'verb' => 'POST'],
+            ['name' => 'salesOrder#invoice', 'url' => '/api/orders/{id}/invoice', 'verb' => 'POST'],
+
         // Goods Receipt Note (slice 04 of bookkeeping-purchase-order-3way):
         // server-authoritative create / add-line / quality-check / accept /
         // upload-photos endpoints. The accept transition posts a StockMove

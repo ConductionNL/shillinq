@@ -356,6 +356,10 @@
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
         },
         {
+            "name": "sales-order",
+            "description": "Quote-to-order and order-to-invoice endpoints."
+        },
+        {
             "name": "sepa-audit",
             "description": "Audit-dossier export endpoint for SEPA mandates (REQ-SDD-010)."
         },
@@ -7020,6 +7024,45 @@
                 }
             }
         },
+        "/orders/{id}/invoice": {
+            "post": {
+                "operationId": "sales-order-invoice",
+                "summary": "Write a draft sales invoice for what a confirmed sales order has not invoiced yet (REQ-QTI-003)",
+                "description": "Write a draft sales invoice for what a confirmed sales order has not invoiced yet (REQ-QTI-003). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "sales-order"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order uuid or number.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/oss/rate": {
             "get": {
                 "operationId": "oss-resolve-rate",
@@ -8812,6 +8855,45 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/quotes/{id}/order": {
+            "post": {
+                "operationId": "sales-order-from-quote",
+                "summary": "Turn an accepted quote into a draft sales order (REQ-QTI-001)",
+                "description": "Turn an accepted quote into a draft sales order (REQ-QTI-001). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "sales-order"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote uuid or number.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
                         "description": "The request succeeded.",
                         "headers": {
                             "API-Version": {

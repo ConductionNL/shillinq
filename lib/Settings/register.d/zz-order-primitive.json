@@ -11,7 +11,7 @@
       "OrderPrimitive": {
         "slug": "OrderPrimitive",
         "icon": "ClipboardListOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Order",
         "x-schema-org": "schema:Order",
         "type": "object",
@@ -41,7 +41,7 @@
               "quote",
               "blanket"
             ],
-            "description": "Discriminator. Only `purchase`, `subsidie` and `engagement` are populated by this change's migration; the others are reserved for future folds.",
+            "description": "Kind of order: purchase, subsidy, engagement or sales (a customer order, for example from an accepted quote). The other values are reserved.",
             "example": "subsidy",
             "title": "Order Type"
           },
@@ -144,11 +144,20 @@
               "INTAKE_REQUIRED",
               "INTAKE_COMPLETED",
               "ACTIVE",
-              "ENDED"
+              "ENDED",
+              "confirmed",
+              "partly-invoiced"
             ],
             "description": "Lifecycle state. The legal subset and transitions depend on `orderType`: see x-openregister-lifecycle.initialStateByType and.transitions.*.orderType. Subsidie: request.handled (identical to the retired Subsidie schema). Purchase: draft.cancelled (identical to PurchaseOrder.statusCode). Engagement: DRAFT.ENDED (identical to DBAOpdracht.intakeStatus).",
             "example": "request",
             "title": "State"
+          },
+          "sourceQuote": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "title": "Source quote",
+            "description": "The accepted quote this sales order was made from."
           },
           "subsidy": {
             "type": "object",
@@ -636,7 +645,8 @@
           "initialStateByType": {
             "subsidy": "request",
             "purchase": "draft",
-            "engagement": "DRAFT"
+            "engagement": "DRAFT",
+            "sales": "draft"
           },
           "states": {
             "request": {
@@ -670,7 +680,10 @@
               "description": "Subsidie-dossier gesloten."
             },
             "draft": {
-              "orderType": "purchase",
+              "orderType": [
+                "purchase",
+                "sales"
+              ],
               "label": "Concept",
               "description": "Order is editable; not yet submitted for approval."
             },
@@ -695,7 +708,10 @@
               "description": "All line quantities have been receipted."
             },
             "invoiced": {
-              "orderType": "purchase",
+              "orderType": [
+                "purchase",
+                "sales"
+              ],
               "label": "Gefactureerd",
               "description": "Supplier invoice matched and approved against this order."
             },
@@ -705,7 +721,10 @@
               "description": "Order is closed; no further activity expected."
             },
             "cancelled": {
-              "orderType": "purchase",
+              "orderType": [
+                "purchase",
+                "sales"
+              ],
               "label": "Geannuleerd",
               "description": "Order cancelled before completion (terminal state)."
             },
@@ -733,6 +752,16 @@
               "orderType": "engagement",
               "label": "Beeindigd",
               "description": "Engagement closed; evidence trail closed, retention clock running."
+            },
+            "confirmed": {
+              "orderType": "sales",
+              "label": "Bevestigd",
+              "description": "Sales order confirmed with the customer; it can be invoiced."
+            },
+            "partly-invoiced": {
+              "orderType": "sales",
+              "label": "Deels gefactureerd",
+              "description": "Some but not all ordered quantities have been invoiced."
             }
           },
           "transitions": {
@@ -894,6 +923,45 @@
               ],
               "to": "ENDED",
               "label": "Beeindigen"
+            },
+            "confirmSales": {
+              "orderType": "sales",
+              "from": "draft",
+              "to": "confirmed",
+              "label": "Bevestigen"
+            },
+            "invoiceSalesPartly": {
+              "orderType": "sales",
+              "from": "confirmed",
+              "to": "partly-invoiced",
+              "label": "Deels factureren",
+              "description": "Set by \"Invoice order\" (SalesOrderInvoicingService) when quantities remain to invoice."
+            },
+            "invoiceSales": {
+              "orderType": "sales",
+              "from": "confirmed",
+              "to": "invoiced",
+              "label": "Factureren",
+              "description": "Set by \"Invoice order\" (SalesOrderInvoicingService) when every ordered quantity is invoiced."
+            },
+            "invoiceSalesRest": {
+              "orderType": "sales",
+              "from": "partly-invoiced",
+              "to": "invoiced",
+              "label": "Restant factureren",
+              "description": "Set by \"Invoice order\" when the remaining quantities are invoiced."
+            },
+            "cancelSalesDraft": {
+              "orderType": "sales",
+              "from": "draft",
+              "to": "cancelled",
+              "label": "Annuleren"
+            },
+            "cancelSalesConfirmed": {
+              "orderType": "sales",
+              "from": "confirmed",
+              "to": "cancelled",
+              "label": "Annuleren"
             }
           }
         },

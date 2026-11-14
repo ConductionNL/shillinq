@@ -32,6 +32,7 @@
 		"AccountsReceivable": "Sales",
 		"Communicatie": "Sales",
 		"Orders": "Sales",
+		"Quotes": "Sales",
 		"RecurringInvoicing": "Sales",
 		"PaymentRequests": "Sales",
 		"PaymentPlans": "Sales",

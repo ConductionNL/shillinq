@@ -72,6 +72,10 @@
         {
             "appVersion": "0.5.7-unstable.20261113190000",
             "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114133000",
+            "versionsSha256": "2d0f4aa31095879ff13ec93d6e7a13432e898f400b3689154a68f2a3801470bf"
         }
     ],
     "versions": {
@@ -80,7 +84,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.4.0",
-        "schema:ARInvoice": "0.17.0",
+        "schema:ARInvoice": "0.18.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.2.0",
@@ -405,9 +409,9 @@
         "schema:OninbaarAfschrijving": "0.1.0",
         "schema:OpdrachtgeversVerklaring": "0.1.0",
         "schema:OrderFulfilment": "0.1.0",
-        "schema:OrderLine": "0.1.0",
+        "schema:OrderLine": "0.2.0",
         "schema:OrderPick": "0.1.0",
-        "schema:OrderPrimitive": "0.1.0",
+        "schema:OrderPrimitive": "0.2.0",
         "schema:OssPayment": "0.1.0",
         "schema:OssRegistration": "0.1.0",
         "schema:OssReturn": "0.1.0",
