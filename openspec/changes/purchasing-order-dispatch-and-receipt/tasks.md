@@ -33,5 +33,6 @@
 ## 6. Docs
 
 - [ ] 6.1 Release note: orders marked sent before this change were not delivered, and what now needs integriq. Verify: the note is in the PR body.
+  - Written in `CHANGELOG.md` under Unreleased (orders marked sent before were not delivered; what now needs integriq). Left unticked: its verify is the PR body, which this pass cannot edit.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-N` on every new method, Dutch and English strings for every label and message.
