@@ -114,4 +114,40 @@ class McpArgumentValidatorTest extends TestCase {
 		$this->assertSame(['amount must be at least 0'], $validator->problems($schema, ['amount' => -0.5]));
 		$this->assertSame(['amount must be a number'], $validator->problems($schema, ['amount' => '12.5']));
 	}//end testNumberArgumentsTakeIntsAndFloats()
+
+	/**
+	 * A list argument is bounded, and each object item is validated as arguments are, named by position.
+	 *
+	 * @return void
+	 */
+	public function testListArgumentsValidateTheirItems(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => [
+				'lines' => [
+					'type' => 'array',
+					'minItems' => 1,
+					'maxItems' => 2,
+					'items' => [
+						'type' => 'object',
+						'properties' => ['text' => ['type' => 'string'], 'qty' => ['type' => 'number', 'minimum' => 0]],
+						'required' => ['text'],
+					],
+				],
+			],
+			'required' => ['lines'],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['lines' => [['text' => 'a', 'qty' => 1.5], ['text' => 'b']]]));
+		$this->assertSame(['lines must have at least 1 items'], $validator->problems($schema, ['lines' => []]));
+		$this->assertSame(['lines must have at most 2 items'], $validator->problems($schema, ['lines' => [['text' => 'a'], ['text' => 'b'], ['text' => 'c']]]));
+		$this->assertSame(['lines must be a list'], $validator->problems($schema, ['lines' => ['a' => ['text' => 'x']]]));
+		$this->assertSame(['lines must be a list'], $validator->problems($schema, ['lines' => 'x']));
+		$this->assertSame(
+			['lines[0].text is required; lines[0].qty must be at least 0; lines[1] must be an object'],
+			$validator->problems($schema, ['lines' => [['qty' => -1], 'x']])
+		);
+		$this->assertSame(['lines[0].note is not an argument of this tool'], $validator->problems($schema, ['lines' => [['text' => 'a', 'note' => 'x']]]));
+	}//end testListArgumentsValidateTheirItems()
 }//end class

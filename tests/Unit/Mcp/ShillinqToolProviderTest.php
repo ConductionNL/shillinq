@@ -28,12 +28,15 @@ use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
 use OCA\Shillinq\Mcp\McpPeriodCloseTools;
 use OCA\Shillinq\Mcp\McpVatReturnTools;
 use OCA\Shillinq\Mcp\McpDunningTools;
+use OCA\Shillinq\Mcp\McpRequisitionTools;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
@@ -63,6 +66,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpPeriodCloseTools::class)]
 #[UsesClass(McpVatReturnTools::class)]
 #[UsesClass(McpDunningTools::class)]
+#[UsesClass(McpRequisitionTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -132,6 +136,12 @@ class ShillinqToolProviderTest extends TestCase {
 				$this->createMock(IncassoDossierComposerInterface::class),
 				$this->createMock(ObjectServiceInterface::class),
 				$this->createMock(IAppConfig::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpRequisitionTools(
+				$gate,
+				$this->createMock(RequisitionServiceInterface::class),
+				$this->createMock(RequisitionConversionServiceInterface::class),
 				$this->createMock(LoggerInterface::class)
 			)
 		);
@@ -218,6 +228,13 @@ class ShillinqToolProviderTest extends TestCase {
 			'pauseId' => 'pause-1',
 			'principalDepreciated' => 10.0,
 			'art29OBDeclaration' => 'Bankrupt',
+			'requisitionId' => 'req-1',
+			'programme' => 'ICT',
+			'financialYear' => 2026,
+			'neededByDate' => '2026-12-01',
+			'justification' => 'New starters',
+			'kind' => 'goods',
+			'lines' => [['description' => 'Laptop', 'glAccountSuggestion' => '4100', 'quantity' => 1, 'unitPrice' => 900]],
 		];
 		foreach ($this->provider->getTools() as $tool) {
 			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));

@@ -28,8 +28,9 @@ namespace OCA\Shillinq\Mcp;
 /**
  * Validates arguments against the subset of JSON Schema the catalogue uses:
  * an object with `required` keys, string properties carrying `pattern`,
- * `enum` and `maxLength`, and integer or number properties carrying
- * `minimum` and `maximum`. Unknown keys are refused, so a model cannot slip a
+ * `enum` and `maxLength`, integer or number properties carrying
+ * `minimum` and `maximum`, and list properties carrying `minItems`,
+ * `maxItems` and object `items`. Unknown keys are refused, so a model cannot slip a
  * field past the tool (the controller ignores body fields it does not read;
  * a tool names every field it reads).
  *
@@ -88,6 +89,10 @@ class McpArgumentValidator {
 		}
 
 		$types = (array)($property['type'] ?? []);
+		if (in_array('array', $types, true) === true) {
+			return $this->arrayProblem(name: $name, property: $property, value: $value);
+		}
+
 		if (in_array('integer', $types, true) === true || in_array('number', $types, true) === true) {
 			return $this->numberProblem(name: $name, property: $property, value: $value);
 		}
@@ -110,6 +115,55 @@ class McpArgumentValidator {
 
 		return null;
 	}//end propertyProblem()
+
+	/**
+	 * The problem with a list argument, or null: a list within `minItems` and
+	 * `maxItems` whose object items are validated as arguments are, each
+	 * problem named by its position.
+	 *
+	 * @param string               $name     The argument name.
+	 * @param array<string, mixed> $property Its schema.
+	 * @param mixed                $value    Its value.
+	 *
+	 * @return string|null
+	 */
+	private function arrayProblem(string $name, array $property, mixed $value): ?string {
+		if (is_array($value) === false || array_is_list($value) === false) {
+			return $name . ' must be a list';
+		}
+
+		if (isset($property['minItems']) === true && count($value) < (int)$property['minItems']) {
+			return $name . ' must have at least ' . (int)$property['minItems'] . ' items';
+		}
+
+		if (isset($property['maxItems']) === true && count($value) > (int)$property['maxItems']) {
+			return $name . ' must have at most ' . (int)$property['maxItems'] . ' items';
+		}
+
+		$items = (array)($property['items'] ?? []);
+		if (($items['type'] ?? null) !== 'object') {
+			return null;
+		}
+
+		$problems = [];
+		foreach ($value as $index => $item) {
+			$prefix = $name . '[' . $index . '].';
+			if (is_array($item) === false || ($item !== [] && array_is_list($item) === true)) {
+				$problems[] = $name . '[' . $index . '] must be an object';
+				continue;
+			}
+
+			foreach ($this->problems(schema: $items, arguments: $item) as $problem) {
+				$problems[] = $prefix . $problem;
+			}
+		}
+
+		if ($problems === []) {
+			return null;
+		}
+
+		return implode('; ', $problems);
+	}//end arrayProblem()
 
 	/**
 	 * The problem with an integer or number argument, or null. A number

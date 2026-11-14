@@ -460,6 +460,133 @@ class ShillinqToolProvider implements IMcpToolProvider {
 				'required' => ['administrationId', 'invoiceId', 'principalDepreciated', 'art29OBDeclaration'],
 			],
 		],
+		[
+			'id' => 'shillinq.requisition.create',
+			'name' => 'Create a purchase requisition',
+			'description' => 'Create a draft purchase requisition in an administration, as the signed-in requester, with what is '
+				. 'needed, why, by when and on which budget programme, line by line. Use it when the user asks to request '
+				. 'a purchase; nothing is ordered. Submit it for approval with shillinq.requisition.submit.',
+			'scope' => 'create',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the requisition belongs to.',
+					],
+					'programme' => ['type' => 'string', 'maxLength' => 200, 'description' => 'The budget programme it is charged to.'],
+					'financialYear' => ['type' => 'integer', 'minimum' => 2000, 'maximum' => 2099, 'description' => 'The financial year.'],
+					'neededByDate' => [
+						'type' => 'string',
+						'pattern' => '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+						'description' => 'When it is needed, as YYYY-MM-DD.',
+					],
+					'justification' => ['type' => 'string', 'maxLength' => 2000, 'description' => 'Why it is needed.'],
+					'kind' => ['type' => 'string', 'maxLength' => 100, 'description' => 'The kind of purchase, such as goods or services.'],
+					'preferredSupplierId' => [
+						'type' => ['string', 'null'],
+						'pattern' => self::ID_PATTERN,
+						'description' => 'A preferred supplier, if any.',
+					],
+					'lines' => [
+						'type' => 'array',
+						'minItems' => 1,
+						'maxItems' => 100,
+						'description' => 'What is requested, one line per item.',
+						'items' => [
+							'type' => 'object',
+							'properties' => [
+								'description' => ['type' => 'string', 'maxLength' => 500, 'description' => 'What the line is for.'],
+								'glAccountSuggestion' => [
+									'type' => 'string',
+									'pattern' => self::ID_PATTERN,
+									'description' => 'The ledger account it is likely booked on.',
+								],
+								'quantity' => ['type' => 'number', 'minimum' => 0, 'description' => 'How many, more than zero.'],
+								'unitPrice' => ['type' => 'number', 'minimum' => 0, 'description' => 'The price per unit, excluding VAT.'],
+							],
+							'required' => ['description', 'glAccountSuggestion', 'quantity', 'unitPrice'],
+						],
+					],
+				],
+				'required' => ['administrationId', 'programme', 'financialYear', 'neededByDate', 'justification', 'kind', 'lines'],
+			],
+		],
+		[
+			'id' => 'shillinq.requisition.submit',
+			'name' => 'Submit a requisition for approval',
+			'description' => 'Submit a draft purchase requisition of an administration for approval. Use it when the user asks to '
+				. 'send their requisition on; the approvers then see it. A requisition without a positive total or not '
+				. 'in draft is refused.',
+			'scope' => 'update',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the requisition belongs to.',
+					],
+					'requisitionId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The purchase requisition.'],
+				],
+				'required' => ['administrationId', 'requisitionId'],
+			],
+		],
+		[
+			'id' => 'shillinq.requisition.decide',
+			'name' => 'Approve or reject a requisition',
+			'description' => 'Approve or reject a submitted purchase requisition of an administration, as the signed-in approver, '
+				. 'with a reason when rejecting. Use it only when the user explicitly asks to approve or reject that '
+				. 'requisition; the decision binds the administration.',
+			'scope' => 'update',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the requisition belongs to.',
+					],
+					'requisitionId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The purchase requisition.'],
+					'decision' => ['type' => 'string', 'enum' => ['approved', 'rejected'], 'description' => 'The decision.'],
+					'reason' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'Why it is rejected.'],
+				],
+				'required' => ['administrationId', 'requisitionId', 'decision'],
+			],
+		],
+		[
+			'id' => 'shillinq.requisition.convert',
+			'name' => 'Turn a requisition into a purchase order',
+			'description' => 'Convert an approved purchase requisition of an administration into a purchase order for its '
+				. 'supplier. Use it when the user asks to order what an approved requisition requests; the order then '
+				. 'goes through its own approval with shillinq.purchase_order.decide.',
+			'scope' => 'create',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the requisition belongs to.',
+					],
+					'requisitionId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The purchase requisition.'],
+				],
+				'required' => ['administrationId', 'requisitionId'],
+			],
+		],
 	];
 
 	/**
@@ -472,6 +599,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpPeriodCloseTools   $periodClose    The period-close handlers.
 	 * @param McpVatReturnTools     $vatReturns     The VAT-return handlers.
 	 * @param McpDunningTools       $dunning        The dunning handlers.
+	 * @param McpRequisitionTools   $requisitions   The requisition handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
@@ -481,6 +609,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpPeriodCloseTools $periodClose,
 		private readonly McpVatReturnTools $vatReturns,
 		private readonly McpDunningTools $dunning,
+		private readonly McpRequisitionTools $requisitions,
 	) {
 	}//end __construct()
 
@@ -565,6 +694,10 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'shillinq.dunning.pause' => $this->dunning->pause(args: $arguments),
 			'shillinq.dunning.resume' => $this->dunning->resume(args: $arguments),
 			'shillinq.dunning.write_off' => $this->dunning->writeOff(args: $arguments),
+			'shillinq.requisition.create' => $this->requisitions->create(args: $arguments),
+			'shillinq.requisition.submit' => $this->requisitions->submit(args: $arguments),
+			'shillinq.requisition.decide' => $this->requisitions->decide(args: $arguments),
+			'shillinq.requisition.convert' => $this->requisitions->convert(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()
