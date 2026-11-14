@@ -106,6 +106,7 @@ class SetupController extends Controller {
 	 *
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
 	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function status(): DataResponse {
@@ -124,6 +125,9 @@ class SetupController extends Controller {
 				// `optionsSource: datasets` and no options of its own, so a
 				// dataset missing from this list is a dataset nobody can pick.
 				'datasets' => $this->demoDataService->listChoices(),
+				// The chart-of-accounts step reads its options from here: the
+				// shipped RGS variants and the office's own templates.
+				'chartTemplates' => $this->settingsService->chartTemplateChoices(),
 				'steps' => $this->stepReport(done: $done, requiredDone: $requiredDone),
 			]
 		);

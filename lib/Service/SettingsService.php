@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Service;
 use InvalidArgumentException;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
+use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
@@ -226,7 +227,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * records via OpenRegister's ObjectService. Already-existing records (matched
 	 * by accountNumber + administrationId) are skipped, preserving operator edits.
 	 *
-	 * @param string $templateVariant Template to seed: 'mkb', 'zzp', or 'bbv'.
+	 * @param string $templateVariant Template to seed: 'mkb', 'zzp', 'bbv', or 'office:<id>' for an office template.
 	 * @param string $administrationId The administrationId to stamp on seeded records.
 	 *                                 Must be a non-empty tenant-specific identifier;
 	 *                                 callers must always supply an explicit value (C2).
@@ -250,6 +251,13 @@ class SettingsService implements SettingsServiceInterface {
 				'success' => false,
 				'message' => 'administrationId must not be empty.',
 			];
+		}
+
+		if (str_starts_with($templateVariant, self::OFFICE_TEMPLATE_PREFIX) === true) {
+			return $this->seedOfficeTemplate(
+				templateId: substr($templateVariant, strlen(self::OFFICE_TEMPLATE_PREFIX)),
+				administrationId: $administrationId
+			);
 		}
 
 		$accountsResult = $this->loadSeedAccounts(templateVariant: $templateVariant);
@@ -322,6 +330,90 @@ class SettingsService implements SettingsServiceInterface {
 
 		return ['accounts' => $accounts];
 	}//end loadSeedAccounts()
+
+	/**
+	 * The chart templates the setup wizard's template step offers: the shipped
+	 * RGS variants, then every active office template as `office:<id>`.
+	 *
+	 * An office template that cannot be read leaves the shipped variants, so
+	 * the step is never empty.
+	 *
+	 * @return array<int, array<string, mixed>> Options with `value` and `label`.
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function chartTemplateChoices(): array {
+		$choices = [
+			['value' => 'mkb', 'label' => 'MKB'],
+			['value' => 'zzp', 'label' => 'ZZP'],
+			['value' => 'bbv', 'label' => 'BBV (government)'],
+		];
+		if ($this->isOpenRegisterAvailable() === false) {
+			return $choices;
+		}
+
+		try {
+			$templates = $this->chartTemplates()->activeTemplates();
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: office templates could not be listed', ['exception' => $e]);
+			return $choices;
+		}
+
+		foreach ($templates as $template) {
+			if ($template['id'] === '') {
+				continue;
+			}
+
+			$choices[] = [
+				'value' => self::OFFICE_TEMPLATE_PREFIX.$template['id'],
+				'label' => $template['name'],
+				'office' => true,
+				'version' => $template['version'],
+				'accounts' => $template['accounts'],
+				'dimensions' => $template['dimensions'],
+			];
+		}
+
+		return $choices;
+	}//end chartTemplateChoices()
+
+	/**
+	 * Seed an administration from an office template: its accounts and
+	 * dimensions the administration does not have yet.
+	 *
+	 * @param string $templateId       The office template.
+	 * @param string $administrationId The administration to seed.
+	 *
+	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	private function seedOfficeTemplate(string $templateId, string $administrationId): array {
+		try {
+			$report = $this->chartTemplates()->seedFromTemplate(templateId: $templateId, administrationId: $administrationId);
+		} catch (InvalidArgumentException $e) {
+			return ['success' => false, 'message' => $e->getMessage()];
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: office template seeding failed', ['exception' => $e, 'template' => $templateId]);
+			return ['success' => false, 'message' => 'Office template seeding failed.'];
+		}
+
+		return [
+			'success' => true,
+			'seeded' => count($report['added']),
+			'skipped' => count($report['skipped']),
+			'message' => 'Office template seeded successfully.',
+		];
+	}//end seedOfficeTemplate()
+
+	/**
+	 * The office template service, resolved when a template is listed or seeded.
+	 *
+	 * @return ChartTemplateService
+	 */
+	private function chartTemplates(): ChartTemplateService {
+		return $this->container->get(ChartTemplateService::class);
+	}//end chartTemplates()
 
 	/**
 	 * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.

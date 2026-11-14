@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\ChartTemplate\ChartTemplateService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
@@ -897,4 +898,145 @@ class SettingsServiceTest extends TestCase {
 		}//end foreach
 
 	}//end testBbvTaakveldSeedFileHasSchemaRequiredProperties()
+
+	/**
+	 * An `office:<id>` variant seeds from that office template, not from an RGS file.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAnOfficeVariantSeedsFromThatTemplate(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->expects($this->once())
+			->method('seedFromTemplate')
+			->with('tpl-1', 'adm-plein')
+			->willReturn(['added' => ['8050', '4150', 'WINKEL'], 'updated' => [], 'skipped' => ['1000']]);
+		$this->container->method('get')->with(ChartTemplateService::class)->willReturn($templates);
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:tpl-1', administrationId: 'adm-plein');
+
+		self::assertSame(
+			['success' => true, 'seeded' => 3, 'skipped' => 1, 'message' => 'Office template seeded successfully.'],
+			$result
+		);
+	}//end testAnOfficeVariantSeedsFromThatTemplate()
+
+	/**
+	 * An office template that does not exist is a failure with the service's words.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAMissingOfficeTemplateFails(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('seedFromTemplate')->willThrowException(new \InvalidArgumentException('Template not found.'));
+		$this->container->method('get')->willReturn($templates);
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:gone', administrationId: 'adm-plein');
+
+		self::assertSame(['success' => false, 'message' => 'Template not found.'], $result);
+	}//end testAMissingOfficeTemplateFails()
+
+	/**
+	 * A failure while writing is logged and reported without the exception's text.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAFailingOfficeSeedIsLoggedAndReported(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('seedFromTemplate')->willThrowException(new \RuntimeException('db down'));
+		$this->container->method('get')->willReturn($templates);
+		$this->logger->expects($this->once())->method('error')->with('Shillinq: office template seeding failed');
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:tpl-1', administrationId: 'adm-plein');
+
+		self::assertSame(['success' => false, 'message' => 'Office template seeding failed.'], $result);
+	}//end testAFailingOfficeSeedIsLoggedAndReported()
+
+	/**
+	 * An office variant without an administration is refused before any template is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testAnOfficeVariantWithoutAdministrationIsRefused(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$this->container->expects($this->never())->method('get');
+
+		$result = $this->service->seedRgsTemplate(templateVariant: 'office:tpl-1', administrationId: '');
+
+		self::assertFalse($result['success']);
+	}//end testAnOfficeVariantWithoutAdministrationIsRefused()
+
+	/**
+	 * The template step lists the shipped variants, then each active office template.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testTheTemplateStepListsShippedThenOfficeTemplates(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('activeTemplates')->willReturn(
+			[
+				['id' => 'tpl-1', 'name' => 'Kantoor De Boer MKB', 'version' => 2, 'accounts' => 40, 'dimensions' => 2],
+				['id' => '', 'name' => 'No id', 'version' => 1, 'accounts' => 0, 'dimensions' => 0],
+			]
+		);
+		$this->container->method('get')->with(ChartTemplateService::class)->willReturn($templates);
+
+		$choices = $this->service->chartTemplateChoices();
+
+		self::assertSame(['mkb', 'zzp', 'bbv', 'office:tpl-1'], array_column($choices, 'value'));
+		self::assertSame(
+			['value' => 'office:tpl-1', 'label' => 'Kantoor De Boer MKB', 'office' => true, 'version' => 2, 'accounts' => 40, 'dimensions' => 2],
+			$choices[3]
+		);
+	}//end testTheTemplateStepListsShippedThenOfficeTemplates()
+
+	/**
+	 * Office templates that cannot be read leave the shipped variants.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testUnreadableOfficeTemplatesLeaveTheShippedVariants(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$templates = $this->createMock(ChartTemplateService::class);
+		$templates->method('activeTemplates')->willThrowException(new \RuntimeException('no schema'));
+		$this->container->method('get')->willReturn($templates);
+		$this->logger->expects($this->once())->method('warning');
+
+		self::assertSame(['mkb', 'zzp', 'bbv'], array_column($this->service->chartTemplateChoices(), 'value'));
+	}//end testUnreadableOfficeTemplatesLeaveTheShippedVariants()
+
+	/**
+	 * Without OpenRegister only the shipped variants are offered and no template is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-multi-administration/specs/bookkeeping-multi-administratie/spec.md#requirement-a-new-administration-starts-from-an-office-template-req-lma-004
+	 */
+	public function testWithoutOpenRegisterOnlyShippedVariantsAreOffered(): void {
+		$this->appManager->method('isInstalled')->willReturn(false);
+		$this->container->expects($this->never())->method('get');
+
+		self::assertSame(['mkb', 'zzp', 'bbv'], array_column($this->service->chartTemplateChoices(), 'value'));
+	}//end testWithoutOpenRegisterOnlyShippedVariantsAreOffered()
 }//end class

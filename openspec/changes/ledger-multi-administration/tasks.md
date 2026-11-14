@@ -15,9 +15,9 @@
 
 - [x] 3.1 Add `AdministrationTemplate` and the `followsTemplateId`, `followedTemplateVersion` and `deviatesFromTemplate` fields in `register.d/bookkeeping-multi-administratie.json` (REQ-LMA-003, REQ-LMA-005). Verify: `npm run check:registers`, `npm run check:seeds`.
 - [x] 3.2 Save as template action on the administration detail page (REQ-LMA-003). Verify: PHPUnit that no postings, relations or balances are copied.
-  Backend built: `ChartTemplateService::saveAsTemplate()` and `POST /api/administrations/{id}/template` (`AdministrationTemplateController::saveAs`). Not built yet: the action on the administration detail page.
-- [ ] 3.3 Office templates in the setup wizard template step and in `SettingsService` seeding (REQ-LMA-004). Verify: PHPUnit seeding from an office template.
-  Backend built: `GET /api/administration-templates` and `POST /api/administrations/{id}/seed-template` over `ChartTemplateService::seedFromTemplate()`. Not built yet: the office templates in the setup wizard's template step.
+  Built: `ChartTemplateService::saveAsTemplate()`, `POST /api/administrations/{id}/template` and the Save as template action (`SaveAdministrationTemplateModal.vue`) on the administration detail page.
+- [x] 3.3 Office templates in the setup wizard template step and in `SettingsService` seeding (REQ-LMA-004). Verify: PHPUnit seeding from an office template.
+  Built: `GET /api/administration-templates`, `POST /api/administrations/{id}/seed-template`, and the wizard's template step reading `chartTemplates` from the setup status (shipped RGS variants plus `office:<id>`), which `SettingsService::seedRgsTemplate()` seeds through `ChartTemplateService::seedFromTemplate()`.
 - [x] 3.4 Follower sync job in `lib/BackgroundJob/` queued on a template version change, recording on `AdministrationMigration` (REQ-LMA-005). Verify: PHPUnit for add, update and skip; `npm run check:job-registration`.
 
 ## 4. End to end and strings
