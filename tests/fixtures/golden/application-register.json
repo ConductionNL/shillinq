@@ -231,6 +231,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\DualGaapPostedTransactionListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\OrderFulfilmentTransitionListener'",
             "0"
         ]
