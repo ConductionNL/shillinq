@@ -68,7 +68,6 @@ final class InvoiceGenerationRequestValidationTest extends TestCase {
 			'no to date'              => ['a-1', array_merge($base, ['toDate' => '']), 'fromDate and toDate are required.'],
 			'dates reversed'          => ['a-1', array_merge($base, ['fromDate' => '2026-02-01']), 'fromDate must be <= toDate.'],
 			'dates before model rule' => ['a-1', ['billingModel' => 'usage', 'customerId' => 'c', 'fromDate' => '2', 'toDate' => '1'], 'fromDate must be <= toDate.'],
-			't_and_m without card'    => ['a-1', array_merge($base, ['rateCardId' => null]), 'rateCardId is required for t_and_m model.'],
 			'retainer no schedule'    => ['a-1', array_merge($base, ['billingModel' => 'retainer']), 'retainerScheduleId is required for retainer model.'],
 			'mixed no schedule'       => ['a-1', array_merge($base, ['billingModel' => 'mixed']), 'retainerScheduleId is required for mixed model.'],
 			'fixed fee missing'       => ['a-1', array_merge($base, ['billingModel' => 'fixed_fee']), 'fixedFeeCents > 0 is required for fixed_fee model.'],
@@ -106,6 +105,7 @@ final class InvoiceGenerationRequestValidationTest extends TestCase {
 		$base = self::body();
 		return [
 			't_and_m'           => [$base],
+			't_and_m no card'   => [array_merge($base, ['rateCardId' => null])],
 			'same day'          => [array_merge($base, ['toDate' => '2026-01-01'])],
 			'retainer'          => [array_merge($base, ['billingModel' => 'retainer', 'rateCardId' => null, 'retainerScheduleId' => 'rs'])],
 			'mixed'             => [array_merge($base, ['billingModel' => 'mixed', 'retainerScheduleId' => 'rs'])],

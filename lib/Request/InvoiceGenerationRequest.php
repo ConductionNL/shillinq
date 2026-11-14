@@ -47,7 +47,6 @@ final class InvoiceGenerationRequest {
 	 * @var array<string,string>
 	 */
 	private const MODEL_INPUT_MESSAGES = [
-		't_and_m' => 'rateCardId is required for t_and_m model.',
 		'retainer' => 'retainerScheduleId is required for retainer model.',
 		'mixed' => 'retainerScheduleId is required for mixed model.',
 		'fixed_fee' => 'fixedFeeCents > 0 is required for fixed_fee model.',
@@ -67,7 +66,7 @@ final class InvoiceGenerationRequest {
 	 *                       source-record period.
 	 * @param array<int,string> $timeEntryIds FKs to UrenRegistratie rows.
 	 * @param array<int,string> $expenseIds FKs to ExpenseClaimEntry rows.
-	 * @param string|null $rateCardId Required for t_and_m / mixed / retainer overage.
+	 * @param string|null $rateCardId An old RateCard to price hours by; a time and material invoice needs none, each hour carries its own rate.
 	 * @param string|null $retainerScheduleId Required for retainer / mixed.
 	 * @param int|null $fixedFeeCents Required for fixed_fee / mixed setup fee.
 	 * @param string|null $milestoneId Required for milestone.
@@ -226,7 +225,6 @@ final class InvoiceGenerationRequest {
 	 */
 	private function hasModelInputs(): bool {
 		return match ($this->billingModel) {
-			't_and_m' => $this->rateCardId !== null,
 			'retainer', 'mixed' => $this->retainerScheduleId !== null,
 			'fixed_fee' => $this->fixedFeeCents !== null && $this->fixedFeeCents > 0,
 			'milestone' => $this->milestoneId !== null,

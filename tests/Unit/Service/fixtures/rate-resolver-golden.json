@@ -138,12 +138,7 @@
         ]
     },
     "cardDefault": {
-        "result": {
-            "rateCents": 10000,
-            "currency": "EUR",
-            "rateCardVersion": "v1",
-            "effectiveDate": "2026-02-01"
-        },
+        "result": null,
         "events": [
             [
                 "find",
@@ -169,16 +164,15 @@
                     "id": "card-x",
                     "administrationId": "a1"
                 }
+            ],
+            [
+                "warning",
+                "RateCardResolver: no rate found for card-x\/sr on 2026-02-01"
             ]
         ]
     },
     "foreignRecord": {
-        "result": {
-            "rateCents": 10000,
-            "currency": "EUR",
-            "rateCardVersion": "fallback",
-            "effectiveDate": "2026-02-01"
-        },
+        "result": null,
         "events": [
             [
                 "find",
@@ -207,31 +201,21 @@
             ],
             [
                 "warning",
-                "RateCardResolver: no rate found for rc\/sr on 2026-02-01, falling back to €100\/hr"
+                "RateCardResolver: no rate found for rc\/sr on 2026-02-01"
             ]
         ]
     },
     "unscoped": {
-        "result": {
-            "rateCents": 10000,
-            "currency": "EUR",
-            "rateCardVersion": "fallback",
-            "effectiveDate": "2026-02-01"
-        },
+        "result": null,
         "events": [
             [
                 "warning",
-                "RateCardResolver: refusing unscoped lookup for rc\/sr on 2026-02-01 (no administrationId), falling back to €100\/hr"
+                "RateCardResolver: refusing unscoped lookup for rc\/sr on 2026-02-01 (no administrationId)"
             ]
         ]
     },
     "failing": {
-        "result": {
-            "rateCents": 10000,
-            "currency": "EUR",
-            "rateCardVersion": "fallback",
-            "effectiveDate": "2026-02-01"
-        },
+        "result": null,
         "events": [
             [
                 "find",
@@ -264,7 +248,7 @@
             ],
             [
                 "warning",
-                "RateCardResolver: no rate found for rc\/sr on 2026-02-01, falling back to €100\/hr"
+                "RateCardResolver: no rate found for rc\/sr on 2026-02-01"
             ]
         ]
     }

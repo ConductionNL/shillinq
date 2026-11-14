@@ -34,13 +34,14 @@ use PHPUnit\Framework\TestCase;
 final class InvoiceGenerationRequestTest extends TestCase {
 
 	/**
-	 * t_and_m without a rateCardId is rejected.
+	 * t_and_m needs no rateCardId: each hour carries its own rate (REQ-BRPH-005).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
-	public function testTAndMRequiresRateCard(): void {
-		$this->expectException(InvalidArgumentException::class);
-		new InvoiceGenerationRequest(
+	public function testTAndMNeedsNoRateCard(): void {
+		$request = new InvoiceGenerationRequest(
 			administrationId: 'a1',
 			billingModel: 't_and_m',
 			customerId: 'c1',
@@ -48,7 +49,10 @@ final class InvoiceGenerationRequestTest extends TestCase {
 			toDate: '2026-05-31',
 		);
 
-	}//end testTAndMRequiresRateCard()
+		self::assertSame('t_and_m', $request->billingModel);
+		self::assertNull($request->rateCardId);
+
+	}//end testTAndMNeedsNoRateCard()
 
 	/**
 	 * retainer model requires retainerScheduleId.

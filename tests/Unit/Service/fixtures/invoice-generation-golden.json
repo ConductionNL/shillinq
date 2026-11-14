@@ -546,7 +546,7 @@
      "rateApplied": {
       "rateCents": 10000,
       "currency": "EUR",
-      "rateCardVersion": "fallback",
+      "rateCardVersion": "override",
       "effectiveDate": "2026-03-10"
      },
      "markup": 0,
