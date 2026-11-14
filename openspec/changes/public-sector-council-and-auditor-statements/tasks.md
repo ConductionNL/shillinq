@@ -8,7 +8,7 @@
 
 ## 2. Audit protocol
 
-- [ ] 2.1 `AuditSampleDrawer::draw` (REQ-011 of bookkeeping-bado-controleprotocol). Verify: PHPUnit red first; the same seed gives the same sample; the `AuditSample` payload validates.
+- [x] 2.1 `AuditSampleDrawer::draw` (REQ-011 of bookkeeping-bado-controleprotocol). Verify: PHPUnit red first; the same seed gives the same sample; the `AuditSample` payload validates.
 - [ ] 2.2 Draw action and aggregation panel on the protocol page (REQ-012). Verify: vitest; `check:manifest`.
 
 ## 3. ENSIA

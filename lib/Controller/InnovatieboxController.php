@@ -32,11 +32,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
-use OCA\Shillinq\Service\InnovatieboxAggregationService;
-use OCA\Shillinq\Service\InnovatieboxSbrExportService;
-use OCA\Shillinq\Service\NexusCalculationService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DoorsnijdingsVerbodValidatorInterface;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxAggregationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxSbrExportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\NexusCalculationServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,10 +62,10 @@ class InnovatieboxController extends Controller {
 	 * Constructor for the InnovatieboxController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param InnovatieboxAggregationService $aggregation The per-asset Vpb roll-up service.
-	 * @param NexusCalculationService $nexus The nexus arithmetic helper (scenario).
-	 * @param DoorsnijdingsVerbodValidator $doorsnijden The doorsnijdingsverbod validator.
-	 * @param InnovatieboxSbrExportService $sbrExport The SBR export service.
+	 * @param InnovatieboxAggregationServiceInterface $aggregation The per-asset Vpb roll-up service.
+	 * @param NexusCalculationServiceInterface $nexus The nexus arithmetic helper (scenario).
+	 * @param DoorsnijdingsVerbodValidatorInterface $doorsnijden The doorsnijdingsverbod validator.
+	 * @param InnovatieboxSbrExportServiceInterface $sbrExport The SBR export service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
@@ -73,10 +73,10 @@ class InnovatieboxController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly InnovatieboxAggregationService $aggregation,
-		private readonly NexusCalculationService $nexus,
-		private readonly DoorsnijdingsVerbodValidator $doorsnijden,
-		private readonly InnovatieboxSbrExportService $sbrExport,
+		private readonly InnovatieboxAggregationServiceInterface $aggregation,
+		private readonly NexusCalculationServiceInterface $nexus,
+		private readonly DoorsnijdingsVerbodValidatorInterface $doorsnijden,
+		private readonly InnovatieboxSbrExportServiceInterface $sbrExport,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

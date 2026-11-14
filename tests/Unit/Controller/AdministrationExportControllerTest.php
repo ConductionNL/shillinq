@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\AdministrationExportController;
+use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Http;
@@ -154,7 +155,7 @@ final class AdministrationExportControllerTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static function ($id) use ($generator, $emptyObjectService) {
-				if ($id === XafAuditfileGenerator::class) {
+				if (($id === XafAuditfileGenerator::class || $id === XafAuditfileGeneratorInterface::class)) {
 					return $generator;
 				}
 

@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\Shillinq\Service\Dunning\LogPostNLAdapter
  * @covers \OCA\Shillinq\Service\Dunning\LogIncassoBureauAdapter
  * @covers \OCA\Shillinq\Service\Dunning\LogCreditScoreFetchAdapter
- * @uses   \OCA\Shillinq\Service\Dunning\DunningChannelSendResult
+ * @uses   \OCA\Shillinq\Kernel\Model\DunningChannelSendResult
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

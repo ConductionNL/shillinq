@@ -29,12 +29,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
+
 /**
  * Pure calculator that stacks vastgestelde wijzigingen onto the basis taakvelden.
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-26
  */
-class BegrotingswijzigingStacker {
+class BegrotingswijzigingStacker implements BegrotingswijzigingStackerInterface {
 	/**
 	 * Compute the current stand of the begroting per taakveldCode.
 	 *

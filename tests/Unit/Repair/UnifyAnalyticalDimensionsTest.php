@@ -41,7 +41,7 @@ use RuntimeException;
  * Tests for UnifyAnalyticalDimensions.
  *
  * @covers \OCA\Shillinq\Repair\UnifyAnalyticalDimensions
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  * @uses   \OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity
  */
 class UnifyAnalyticalDimensionsTest extends TestCase {

@@ -26,10 +26,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DomainException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Asset\AssetRecords;
-use OCA\Shillinq\Service\Tax\VatNumberCheck;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AssetRecordsInterface;
+use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -46,17 +46,17 @@ class VatNumberCheckController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param AdministrationContextService $context The caller's administrations.
-	 * @param AssetRecords                 $records Reads a record from the register.
-	 * @param VatNumberCheck               $check   The VIES check.
+	 * @param AdministrationContextServiceInterface $context The caller's administrations.
+	 * @param AssetRecordsInterface                 $records Reads a record from the register.
+	 * @param VatNumberCheckInterface               $check   The VIES check.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly AssetRecords $records,
-		private readonly VatNumberCheck $check,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly AssetRecordsInterface $records,
+		private readonly VatNumberCheckInterface $check,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -117,12 +117,12 @@ class VatNumberCheckController extends Controller {
 	 * @return array<string, mixed>|null
 	 */
 	private function recordOrNull(string $type, string $id): array|null {
-		if (isset(VatNumberCheck::RECORDS[$type]) === false) {
+		if (isset(VatNumberCheckInterface::RECORDS[$type]) === false) {
 			return null;
 		}
 
 		try {
-			return $this->records->find(schema: VatNumberCheck::RECORDS[$type]['schema'], id: $id);
+			return $this->records->find(schema: VatNumberCheckInterface::RECORDS[$type]['schema'], id: $id);
 		} catch (Throwable $e) {
 			return null;
 		}
