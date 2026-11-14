@@ -440,13 +440,27 @@
               "from": "submitted",
               "to": "rejected",
               "label": "Rejected (pain.002)",
-              "description": "pain.002 RJCT ingestion with reason code."
+              "description": "pain.002 RJCT ingestion, or marked by hand, with its reason code (pain002ReasonCode). The invoice stays open.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordDirectDebitRejectAction",
+                  "description": "Require the four-character reason code and keep the invoice open."
+                }
+              ]
             },
             "succeed": {
               "from": "accepted_by_bank",
               "to": "succeeded",
               "label": "Settled (camt.054)",
-              "description": "camt.054 debit confirmation."
+              "description": "camt.054 debit confirmation, or marked by hand. Registers the payment on the collection's invoice, which then shows paid.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\SettleDirectDebitCollectionAction",
+                  "description": "Register the payment on the collection's invoice through the invoice settlement service."
+                }
+              ]
             },
             "refund": {
               "from": "succeeded",
@@ -632,7 +646,14 @@
               "from": "draft",
               "to": "generated",
               "label": "Generate pain.008",
-              "description": "Generate and XSD-validate the pain.008 payload; gated by pre-notification and submission-window preconditions."
+              "description": "Generate and XSD-validate the pain.008.001.02 payload into pain008Xml. A file with errors (an invalid IBAN, a missing creditor identifier, an XSD error) is not stored and the batch stays draft with the errors.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\GenerateDirectDebitFileAction",
+                  "description": "Write the batch's pain.008.001.02 file with the administration's creditor identifier, validated against the XSD, and set collectionCount and controlSum."
+                }
+              ]
             },
             "submit": {
               "from": "generated",
@@ -891,6 +912,26 @@
             "description": "Optional FK to the ARInvoice whose line item carried the SEPA pre-notification text for this collection (design D3 invoice-line channel). When set, this invoice's pre-notification proof is sourced from the linked invoice's issue date + line text; the `PreNotification` register entry references the same invoice via `recipientAddress`.",
             "title": "Direct Debit Pre Notification Invoice ID",
             "$ref": "ARInvoice"
+          }
+        }
+      },
+      "Administration": {
+        "description": "The administration's SEPA creditor details for direct debit files.",
+        "x-spec": "openspec/changes/receivables-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "properties": {
+          "sepaCreditorIdentifier": {
+            "type": "string",
+            "nullable": true,
+            "title": "SEPA creditor identifier",
+            "description": "The creditor identifier (Incassant ID) the bank issued to this administration, written into every pain.008 file. Without one, the identifier the mandates copied at signing is used.",
+            "example": "NL98ZZZ123456780000"
+          },
+          "primaryBic": {
+            "type": "string",
+            "nullable": true,
+            "title": "BIC of the primary account",
+            "description": "The BIC of the primary IBAN, optional in a SEPA direct debit file.",
+            "example": "ABNANL2A"
           }
         }
       }

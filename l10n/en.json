@@ -4716,7 +4716,11 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "SEPA creditor identifier": "SEPA creditor identifier",
+        "The creditor identifier (Incassant ID) the bank issued to this administration, written into every pain.008 file. Without one, the identifier the mandates copied at signing is used.": "The creditor identifier (Incassant ID) the bank issued to this administration, written into every pain.008 file. Without one, the identifier the mandates copied at signing is used.",
+        "BIC of the primary account": "BIC of the primary account",
+        "The BIC of the primary IBAN, optional in a SEPA direct debit file.": "The BIC of the primary IBAN, optional in a SEPA direct debit file."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -6904,7 +6904,11 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "SEPA creditor identifier": "SEPA-incassant-ID",
+        "The creditor identifier (Incassant ID) the bank issued to this administration, written into every pain.008 file. Without one, the identifier the mandates copied at signing is used.": "Het incassant-ID dat de bank aan deze administratie heeft uitgegeven; het staat in elk pain.008-bestand. Zonder ID wordt het ID gebruikt dat de machtigingen bij ondertekening hebben overgenomen.",
+        "BIC of the primary account": "BIC van de hoofdrekening",
+        "The BIC of the primary IBAN, optional in a SEPA direct debit file.": "De BIC van de hoofd-IBAN; optioneel in een SEPA-incassobestand."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
