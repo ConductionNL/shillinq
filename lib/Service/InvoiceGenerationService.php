@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Exception\UnratedHoursException;
 use OCA\Shillinq\Kernel\Contracts\InvoiceGenerationServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\Usage\BilledReadings;
@@ -60,6 +61,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param BilledReadings $billedReadings Refuses an unbillable reading and marks billed ones invoiced.
+	 * @param BillableRateService $billableRates Prices each hour from the assignment's rate card.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -72,6 +74,7 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 		private readonly UsageRatingCalculator $usageRating,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly BilledReadings $billedReadings,
+		private readonly BillableRateService $billableRates,
 	) {
 	}//end __construct()
 
@@ -158,7 +161,8 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			ids: $request->timeEntryIds,
 			rateCardId: $request->rateCardId,
 			administrationId: $request->administrationId,
-			currency: $draft->currency
+			currency: $draft->currency,
+			customerId: $request->customerId
 		);
 		$draft->expenses    = $this->loadExpenses(ids: $request->expenseIds, administrationId: $request->administrationId);
 		$draft->hoursLogged = array_sum(array_column($draft->timeEntries, 'hours'));
@@ -243,11 +247,9 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			}
 		}
 
+		// A time and material invoice names no rate card: each hour carries its
+		// own rate (REQ-BRPH-005).
 		$model = (string)($invoice['billingModel'] ?? '');
-		if ($model === 't_and_m' && empty($invoice['rateCardId']) === true) {
-			$errors[] = 'rateCardId is required for t_and_m model.';
-		}
-
 		if (in_array($model, ['retainer', 'mixed'], true) === true && empty($invoice['retainerScheduleId']) === true) {
 			$errors[] = sprintf('retainerScheduleId is required for %s model.', $model);
 		}
@@ -548,6 +550,14 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	/**
 	 * Load time entries and attach rate snapshots.
 	 *
+	 * Each hour is priced by its own rate (REQ-BRPH-002, REQ-BRPH-005): the
+	 * `RateCard` the request names when it is one of the old cards and prices
+	 * the hour, else an explicit `hourlyRateOverride` on the entry, else the
+	 * rate card on the person's assignment to the project
+	 * ({@see BillableRateService}). An hour
+	 * that none of these prices is never billed at a default: the draft is
+	 * refused, naming every such hour's person and date.
+	 *
 	 * Each id is client-supplied on the request; the lookup itself is scoped
 	 * to $administrationId (compound id+administrationId filter, matching
 	 * GoodsReceiptNoteService's findOne() pattern) so a cross-tenant
@@ -555,21 +565,32 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * unknown id (REQ-001).
 	 *
 	 * @param array<int,string> $ids UrenRegistratie ids.
-	 * @param string|null $rateCardId Rate card to resolve against.
+	 * @param string|null $rateCardId An old RateCard to resolve against, when the request names one.
 	 * @param string $administrationId Caller's server-resolved administration scope.
 	 * @param string $currency The invoice currency, for an override rate.
+	 * @param string $customerId The invoice's customer, for the client tier.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
+	 * @throws UnratedHoursException When an hour has no rate.
+	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
 	 */
-	private function loadTimeEntries(array $ids, ?string $rateCardId, string $administrationId, string $currency = 'EUR'): array {
+	private function loadTimeEntries(
+		array $ids,
+		?string $rateCardId,
+		string $administrationId,
+		string $currency = 'EUR',
+		string $customerId = ''
+	): array {
 		if (count($ids) === 0) {
 			return [];
 		}
 
 		$entries = [];
+		$unrated = [];
 		foreach ($ids as $id) {
 			$loaded = $this->findScoped(schema: 'UrenRegistratie', id: $id, administrationId: $administrationId);
 			if ($loaded === null) {
@@ -580,20 +601,14 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			$hours = (float)($loaded['hours'] ?? ($loaded['duration'] ?? 0));
 			$date = (string)($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
 
-			if ($rateCardId !== null) {
-				$rate = $this->rateCards->resolveRate(
-					rateCardId: $rateCardId,
-					resourceType: $resourceType,
-					date: $date,
-					administrationId: $administrationId
-				);
-			} else {
-				$rate = [
-					'rateCents' => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
-					'currency' => $currency,
-					'rateCardVersion' => 'override',
-					'effectiveDate' => $date,
-				];
+			$rate = $this->hourRate(
+				entry: ['hours' => $hours, 'date' => $date, 'resourceType' => $resourceType, 'timeEntryId' => $id] + $loaded,
+				rateCardId: $rateCardId,
+				scope: ['administrationId' => $administrationId, 'currency' => $currency, 'customerId' => $customerId]
+			);
+			if (isset($rate['noRate']) === true) {
+				$unrated[] = $rate['noRate'];
+				continue;
 			}
 
 			$entries[] = [
@@ -605,8 +620,86 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			];
 		}//end foreach
 
+		if ($unrated !== []) {
+			throw new UnratedHoursException(hours: $unrated);
+		}
+
 		return $entries;
 	}//end loadTimeEntries()
+
+	/**
+	 * The rate snapshot of one hour, or `noRate` with its person, date and reason.
+	 *
+	 * @param array<string,mixed> $entry      The time entry, with its `hours`, `date` and `resourceType` resolved.
+	 * @param string|null         $rateCardId An old RateCard the request names, or null.
+	 * @param array<string,string> $scope     The `administrationId`, the invoice `currency` and its `customerId`.
+	 *
+	 * @return array<string,mixed> The snapshot (`rateCents`, `currency`, `rateCardVersion`, `effectiveDate`, ...), or `['noRate' => [...]]`.
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-3.1
+	 */
+	private function hourRate(array $entry, ?string $rateCardId, array $scope): array {
+		$date = (string)$entry['date'];
+		if ($rateCardId !== null) {
+			$legacy = $this->rateCards->resolveRate(
+				rateCardId: $rateCardId,
+				resourceType: (string)$entry['resourceType'],
+				date: $date,
+				administrationId: $scope['administrationId']
+			);
+			if ($legacy !== null) {
+				return $legacy;
+			}
+		}
+
+		$override = ($entry['hourlyRateOverride'] ?? null);
+		if ($override !== null && $override !== '') {
+			return [
+				'rateCents' => $this->toCents(value: $override),
+				'currency' => $scope['currency'],
+				'rateCardVersion' => 'override',
+				'effectiveDate' => $date,
+			];
+		}
+
+		$person = trim((string)($entry['personId'] ?? ''));
+		$answer = $this->billableRates->resolve(
+			hour: [
+				'personId' => $person,
+				'projectId' => (string)($entry['projectId'] ?? ''),
+				'date' => $date,
+				'hours' => (float)$entry['hours'],
+				'administrationId' => $scope['administrationId'],
+				'clientId' => $scope['customerId'],
+			]
+		);
+		if (($answer['status'] ?? '') !== BillableRateService::STATUS_RATED) {
+			if ($person === '') {
+				$person = 'time entry ' . (string)$entry['timeEntryId'];
+			}
+
+			return ['noRate' => ['person' => $person, 'date' => $date, 'reason' => (string)($answer['message'] ?? '')]];
+		}
+
+		// A daily rate is billed per hour at the day rate over the working day.
+		$hours = (float)$entry['hours'];
+		$rateCents = (int)round(((float)$answer['rate'] * 100));
+		if ($hours > 0 && ($answer['unit'] ?? 'hourly') !== 'hourly') {
+			$rateCents = (int)round(((float)$answer['value'] * 100) / $hours);
+		}
+
+		return [
+			'rateCents' => $rateCents,
+			'currency' => $scope['currency'],
+			'rateCardVersion' => (string)($answer['scheduleId'] ?? ''),
+			'effectiveDate' => $date,
+			'rate' => (float)$answer['rate'],
+			'unit' => (string)($answer['unit'] ?? 'hourly'),
+			'tier' => (string)($answer['tier'] ?? ''),
+			'scheduleId' => (string)($answer['scheduleId'] ?? ''),
+			'rateRecordId' => (string)($answer['recordId'] ?? ''),
+		];
+	}//end hourRate()
 
 	/**
 	 * Load expense records into engine input shape.

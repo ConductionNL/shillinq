@@ -55,9 +55,11 @@ class RateCardResolver {
 	 * Resolve a rate snapshot for a (rateCardId, resourceType, date) tuple.
 	 *
 	 * The lookup prefers a RateRecord matching (rateCardId, resourceType,
-	 * effectiveDate <= $date, expiresAt >= $date OR null); falls back to a
-	 * RateCardVersion default rate; and finally to a sensible default
-	 * encoded on the RateCard itself.
+	 * effectiveDate <= $date, expiresAt >= $date OR null), then the default
+	 * rate the RateCard itself carries. When neither resolves the answer is
+	 * null: no rate, never a default amount (REQ-BRPH-002). This path only
+	 * serves requests that still name a `RateCard` id; an hour is otherwise
+	 * priced by {@see BillableRateService} from the assignment's rate card.
 	 *
 	 * Tenant scope (REQ-001, ADR-005 Rule 3): $rateCardId is client-supplied,
 	 * so every lookup below compounds the caller's server-resolved
@@ -65,20 +67,20 @@ class RateCardResolver {
 	 * findAll(), mirroring InvoiceGenerationService::findScoped() /
 	 * GoodsReceiptNoteService::findOne()) rather than fetching by id and then
 	 * checking. A rate card belonging to another administration therefore can
-	 * never resolve — it is indistinguishable from an unknown id and falls
-	 * through to the generic fallback, this file's pre-existing convention for
-	 * an unresolvable reference.
+	 * never resolve: it is indistinguishable from an unknown id and answers
+	 * null.
 	 *
 	 * @param string $rateCardId FK to RateCard.
 	 * @param string $resourceType e.g. 'senior_consultant', 'junior_consultant'.
 	 * @param string $date ISO date the rate should apply on.
 	 * @param string $administrationId Caller's server-resolved administration scope.
 	 *
-	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}
+	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}|null Null when no rate resolves.
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
-	public function resolveRate(string $rateCardId, string $resourceType, string $date, string $administrationId): array {
+	public function resolveRate(string $rateCardId, string $resourceType, string $date, string $administrationId): ?array {
 		$query = new RateQuery();
 		$query->rateCardId = $rateCardId;
 		$query->resourceType = $resourceType;
@@ -90,10 +92,16 @@ class RateCardResolver {
 		// read at all (mirrors AdministrationContextService::canAccess(),
 		// which fails closed on '').
 		if ($administrationId === '') {
-			return $this->fallbackRate(query: $query, reason: 'refusing unscoped lookup for %s/%s on %s (no administrationId)');
+			$this->logNoRate(query: $query, reason: 'refusing unscoped lookup for %s/%s on %s (no administrationId)');
+			return null;
 		}
 
-		return ($this->scopedRate(query: $query) ?? $this->fallbackRate(query: $query, reason: 'no rate found for %s/%s on %s'));
+		$rate = $this->scopedRate(query: $query);
+		if ($rate === null) {
+			$this->logNoRate(query: $query, reason: 'no rate found for %s/%s on %s');
+		}
+
+		return $rate;
 
 	}//end resolveRate()
 
@@ -115,11 +123,11 @@ class RateCardResolver {
 		}
 
 		$card = $this->findRateCard(rateCardId: $query->rateCardId, administrationId: $query->administrationId);
-		if ($card !== null) {
-			return $this->cardRate(card: $card, date: $query->date);
+		if ($card === null) {
+			return null;
 		}
 
-		return null;
+		return $this->cardRate(card: $card, date: $query->date);
 
 	}//end scopedRate()
 
@@ -147,11 +155,16 @@ class RateCardResolver {
 	 * @param array<string,mixed> $card The RateCard.
 	 * @param string              $date ISO date the rate applies on.
 	 *
-	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}
+	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}|null Null when the card carries no rate.
 	 */
-	private function cardRate(array $card, string $date): array {
+	private function cardRate(array $card, string $date): ?array {
+		$rate = ($card['defaultHourlyRate'] ?? ($card['hourlyRate'] ?? null));
+		if ($rate === null || $rate === '') {
+			return null;
+		}
+
 		return [
-			'rateCents' => (new StoredMoney())->cents(value: $card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
+			'rateCents' => (new StoredMoney())->cents(value: $rate),
 			'currency' => (string)($card['currency'] ?? 'EUR'),
 			'rateCardVersion' => (string)($card['version'] ?? 'v1'),
 			'effectiveDate' => $date,
@@ -187,31 +200,22 @@ class RateCardResolver {
 	}//end findRateCard()
 
 	/**
-	 * The generic €100/hr snapshot returned when no rate resolves.
-	 *
-	 * Shared by the "nothing matched" path and the "no administration scope"
-	 * fail-closed path so a cross-tenant / unscoped id is indistinguishable
-	 * from an unknown one.
-	 *
-	 * Logs why, then answers the generic snapshot.
+	 * Log why a lookup has no rate. The "nothing matched" path and the
+	 * "no administration scope" fail-closed path both answer null, so a
+	 * cross-tenant or unscoped id is indistinguishable from an unknown one.
 	 *
 	 * @param RateQuery $query  The lookup that did not resolve.
 	 * @param string    $reason Why, as a sprintf format over card, resource type and date.
 	 *
-	 * @return array{rateCents:int,currency:string,rateCardVersion:string,effectiveDate:string}
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
-	private function fallbackRate(RateQuery $query, string $reason): array {
+	private function logNoRate(RateQuery $query, string $reason): void {
 		$this->logger->warning(
-			sprintf('RateCardResolver: ' . $reason . ', falling back to €100/hr', $query->rateCardId, $query->resourceType, $query->date)
+			sprintf('RateCardResolver: ' . $reason, $query->rateCardId, $query->resourceType, $query->date)
 		);
-
-		return [
-			'rateCents' => 10000,
-			'currency' => 'EUR',
-			'rateCardVersion' => 'fallback',
-			'effectiveDate' => $query->date,
-		];
-	}//end fallbackRate()
+	}//end logNoRate()
 
 	/**
 	 * Find all matching records via the real OR ObjectService API (findAll).

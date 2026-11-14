@@ -26,6 +26,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -59,8 +62,15 @@ final class InvoiceGenerationCurrencyTest extends TestCase {
 				'CustomerMaster' => $customers,
 				'Administration' => $administrations,
 				'UrenRegistratie' => [
-					['id' => 'te-1', 'administrationId' => 'adm-1', 'hours' => 40, 'date' => '2026-03-10', 'resourceType' => 'consultant'],
+					['id' => 'te-1', 'administrationId' => 'adm-1', 'personId' => 'user-a', 'projectId' => 'p-1', 'hours' => 40, 'date' => '2026-03-10', 'resourceType' => 'consultant'],
 				],
+				// The hour is priced at the blended EUR 100 of the assignment's rate card.
+				'ProjectAssignment' => [
+					['id' => 'pa-1', 'administrationId' => 'adm-1', 'personId' => 'user-a', 'projectId' => 'p-1', 'rateCardId' => 'rct-1', 'startDate' => '2026-01-01'],
+				],
+				'RateCardTemplate' => [['id' => 'rct-1', 'administrationId' => 'adm-1']],
+				'RateCardVersion' => [['id' => 'rcv-1', 'templateId' => 'rct-1', 'status' => 'active', 'effectiveDate' => '2026-01-01', 'administrationId' => 'adm-1']],
+				'RateSchedule' => [['id' => 'rs-1', 'versionId' => 'rcv-1', 'tier' => 'blended', 'rate' => 100, 'unit' => 'hourly', 'status' => 'active', 'effectiveDate' => '2026-01-01', 'administrationId' => 'adm-1']],
 			]
 		);
 		$container = $this->createMock(ContainerInterface::class);
@@ -80,12 +90,13 @@ final class InvoiceGenerationCurrencyTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: $store,
 			billedReadings: $this->createMock(BilledReadings::class),
+			billableRates: new BillableRateService($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 
 	}//end service()
 
 	/**
-	 * Forty hours for the customer, from logged time, at the rate card's fallback rate.
+	 * Forty hours for the customer, from logged time, at the assignment's rate card rate.
 	 *
 	 * @return InvoiceGenerationRequest
 	 */
@@ -97,7 +108,6 @@ final class InvoiceGenerationCurrencyTest extends TestCase {
 			fromDate: '2026-03-01',
 			toDate: '2026-03-31',
 			timeEntryIds: ['te-1'],
-			rateCardId: 'rc-none',
 		);
 
 	}//end request()

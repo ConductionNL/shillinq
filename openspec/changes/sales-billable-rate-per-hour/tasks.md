@@ -9,12 +9,12 @@
 ## 2. Resolver
 
 - [x] 2.1 Add `lib/Service/BillableRateService.php`: assignment lookup, effective `RateCardVersion`, tier match over `RateSchedule` per design D3, the `no-rate` answer with its four reasons, and a `RateRecord` write per resolution (REQ-BRPH-001, REQ-BRPH-002). Verify: PHPUnit for each tier, the mid-month change, each no-rate reason, a cross-administration card that never resolves, and the RateRecord fields.
-- [ ] 2.2 Remove `RateCardResolver::fallbackRate()`; keep the `RateCard` read only for an existing `BillableInvoice` that names a `RateCard` id (REQ-BRPH-002). Verify: PHPUnit that an unknown card returns no rate, not 10000 cents.
+- [x] 2.2 Remove `RateCardResolver::fallbackRate()`; keep the `RateCard` read only for an existing `BillableInvoice` that names a `RateCard` id (REQ-BRPH-002). Verify: PHPUnit that an unknown card returns no rate, not 10000 cents.
 - [ ] 2.3 Fill `ProjectAssignment.recognisedRate` from `BillableRateService` on assignment create and update and on `RateCardVersion` activation (REQ-BRPH-004). Verify: PHPUnit with a real `ObjectUpdatedEvent` (never a faked event) for the role change of the scenario.
 
 ## 3. Billing
 
-- [ ] 3.1 Make `InvoiceGenerationService::loadTimeEntries()` rate each hour through `BillableRateService`, refuse a draft holding an unrated hour with 422 naming person and date, and write `rateApplied` per line (REQ-BRPH-002, REQ-BRPH-005). Verify: PHPUnit for the EUR 1,320 two-rate invoice and the refused draft; controller test through the real middleware that the status is 422.
+- [x] 3.1 Make `InvoiceGenerationService::loadTimeEntries()` rate each hour through `BillableRateService`, refuse a draft holding an unrated hour with 422 naming person and date, and write `rateApplied` per line (REQ-BRPH-002, REQ-BRPH-005). Verify: PHPUnit for the EUR 1,320 two-rate invoice and the refused draft; controller test through the real middleware that the status is 422.
 - [ ] 3.2 Let the `BillableHoursSource` rows of `sales-time-and-expense-billing` carry the resolution (rate, tier, value or no-rate reason), and hide the rate card select on `InvoiceGenerator.vue` for the time and material model (REQ-BRPH-005). Verify: Vitest for the payload and the hidden select.
 
 ## 4. Project page

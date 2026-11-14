@@ -42,6 +42,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCA\Shillinq\Service\RegisterLocation;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
@@ -224,7 +227,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 5.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 				[
 					'id' => 'ure-victim-1',
@@ -232,7 +235,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'resourceType' => 'consultant',
 					'hours' => 8.0,
 					'date' => '2026-03-10',
-					'hourlyRateOverride' => 100,
+					'hourlyRateOverride' => 100.0,
 				],
 			],
 			'ExpenseClaimEntry' => [
@@ -352,6 +355,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
 			billedReadings: $this->createMock(BilledReadings::class),
+			billableRates: new BillableRateService(new DuckObjectServiceAdapter($this->objectService), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 	}//end setUp()
 
@@ -370,13 +374,12 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			fromDate: '2026-03-01',
 			toDate: '2026-03-31',
 			timeEntryIds: ['ure-attacker-1', 'ure-victim-1'],
-			rateCardId: 'rc-none',
 		);
 
 		$invoice = $this->service->draftInvoice($request);
 
-		// Only the attacker's own 5 hours @ €100/hr (RateCardResolver's
-		// no-match fallback) = €500.00 net. If the victim's 8 hours had
+		// Only the attacker's own 5 hours @ €100/hr (the entry's own rate
+		// override) = €500.00 net. If the victim's 8 hours had
 		// leaked in, this would be €1300.00 (13 hours combined).
 		self::assertSame(500.00, $invoice['netAmount']);
 

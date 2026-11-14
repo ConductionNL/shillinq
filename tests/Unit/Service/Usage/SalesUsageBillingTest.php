@@ -26,6 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Usage;
 
+use OCA\Shillinq\Service\BillableRateService;
+use OCP\AppFramework\Utility\ITimeFactory;
 use DomainException;
 use OCA\Shillinq\Lifecycle\Action\RateMeterReadingAction;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
@@ -322,6 +324,7 @@ class SalesUsageBillingTest extends TestCase {
 			new UsageRatingCalculator(),
 			objectService: $this->store,
 			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
+			billableRates: new BillableRateService($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->createMock(ITimeFactory::class)),
 		);
 
 	}//end generator()

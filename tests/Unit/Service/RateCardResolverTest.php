@@ -242,22 +242,40 @@ final class RateCardResolverTest extends TestCase {
 	}//end testFallbackToRateCardDefault()
 
 	/**
-	 * Hard fallback when no RateRecord and no RateCard matches:
-	 * 10000 cents / EUR / 'fallback' + warning log.
+	 * No RateRecord and no RateCard matches: no rate (null) and a warning
+	 * log, never 10000 cents (REQ-BRPH-002).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
 	 */
-	public function testHardFallbackWhenNothingMatches(): void {
+	public function testAnUnknownCardHasNoRate(): void {
 		$this->logger->expects(self::once())->method('warning')
-			->with(self::stringContains('falling back to'));
+			->with(self::stringContains('no rate found for rc-missing/t on 2026-03-15'));
 
 		$result = $this->svc([])->resolveRate('rc-missing', 't', '2026-03-15', self::ADMIN_A);
 
-		self::assertSame(10000, $result['rateCents']);
-		self::assertSame('EUR', $result['currency']);
-		self::assertSame('fallback', $result['rateCardVersion']);
+		self::assertNull($result);
 
-	}//end testHardFallbackWhenNothingMatches()
+	}//end testAnUnknownCardHasNoRate()
+
+	/**
+	 * A RateCard without a default rate has no rate, not 10000 cents.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.2
+	 */
+	public function testACardWithoutARateHasNoRate(): void {
+		$rows = [
+			'RateCard' => [
+				['id' => 'rc-1', 'scheduleId' => 'rc-1', 'administrationId' => self::ADMIN_A, 'currency' => 'EUR'],
+			],
+		];
+
+		self::assertNull($this->svc($rows)->resolveRate('rc-1', 't', '2026-03-15', self::ADMIN_A));
+
+	}//end testACardWithoutARateHasNoRate()
 
 	/**
 	 * Integer hourlyRate is treated as already-cents (toCents() passthrough).
@@ -278,12 +296,11 @@ final class RateCardResolverTest extends TestCase {
 	}//end testIntegerHourlyRateIsTreatedAsCents()
 
 	/**
-	 * ObjectService throwing → resolver swallows + logs error + falls back to
-	 * hard default.
+	 * ObjectService throwing → resolver swallows + logs error + answers no rate.
 	 *
 	 * @return void
 	 */
-	public function testObjectServiceFailureFallsThroughToHardDefault(): void {
+	public function testObjectServiceFailureAnswersNoRate(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
 
 		$this->logger->expects(self::atLeastOnce())->method('error');
@@ -292,10 +309,9 @@ final class RateCardResolverTest extends TestCase {
 		$svc = new RateCardResolver($this->container, $this->appConfig, $this->logger);
 		$result = $svc->resolveRate('rc-1', 't', '2026-03-15', self::ADMIN_A);
 
-		self::assertSame(10000, $result['rateCents']);
-		self::assertSame('fallback', $result['rateCardVersion']);
+		self::assertNull($result);
 
-	}//end testObjectServiceFailureFallsThroughToHardDefault()
+	}//end testObjectServiceFailureAnswersNoRate()
 
 	/**
 	 * RateCard fallback lookup also tries the `id` key when `scheduleId`
@@ -360,7 +376,7 @@ final class RateCardResolverTest extends TestCase {
 	 * administration B. Before the fix the lookup filtered on
 	 * (rateCardId, resourceType) alone, so B's negotiated €999/hr record was
 	 * returned and snapshotted onto A's invoice line. It must now resolve to
-	 * the generic fallback — indistinguishable from an unknown id — while B
+	 * no rate — indistinguishable from an unknown id — while B
 	 * asking for its OWN card still gets the real rate (the positive control
 	 * that proves the guard did not simply break the feature).
 	 *
@@ -387,9 +403,7 @@ final class RateCardResolverTest extends TestCase {
 		// Attacker (administration A) references administration B's rate card.
 		$leaked = $svc->resolveRate('rc-victim', 'senior_consultant', '2026-03-15', self::ADMIN_A);
 
-		self::assertSame(10000, $leaked['rateCents'], "administration B's rate leaked into administration A");
-		self::assertSame('fallback', $leaked['rateCardVersion']);
-		self::assertNotSame('victim-v9', $leaked['rateCardVersion']);
+		self::assertNull($leaked, "administration B's rate leaked into administration A");
 
 		// Positive control: the owner still resolves its own rate.
 		$owned = $svc->resolveRate('rc-victim', 'senior_consultant', '2026-03-15', self::ADMIN_B);
@@ -430,9 +444,7 @@ final class RateCardResolverTest extends TestCase {
 
 		$leaked = $svc->resolveRate('rc-victim', 't', '2026-03-15', self::ADMIN_A);
 
-		self::assertSame(10000, $leaked['rateCents'], "administration B's default rate leaked into administration A");
-		self::assertSame('EUR', $leaked['currency']);
-		self::assertSame('fallback', $leaked['rateCardVersion']);
+		self::assertNull($leaked, "administration B's default rate leaked into administration A");
 
 		// Positive control: the owner still resolves its own default rate.
 		$owned = $svc->resolveRate('rc-victim', 't', '2026-03-15', self::ADMIN_B);
@@ -447,7 +459,7 @@ final class RateCardResolverTest extends TestCase {
 	 * REQ-001 — an empty administration scope fails closed.
 	 *
 	 * No register is read at all: an unscoped call can never be proven
-	 * tenant-safe, so it yields the generic fallback rather than whatever the
+	 * tenant-safe, so it yields no rate rather than whatever the
 	 * unfiltered query would have matched.
 	 *
 	 * @return void
@@ -470,8 +482,7 @@ final class RateCardResolverTest extends TestCase {
 
 		$result = $this->svc($rows)->resolveRate('rc-victim', 't', '2026-03-15', '');
 
-		self::assertSame(10000, $result['rateCents']);
-		self::assertSame('fallback', $result['rateCardVersion']);
+		self::assertNull($result);
 
 	}//end testEmptyAdministrationScopeFailsClosed()
 
