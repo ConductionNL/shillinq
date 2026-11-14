@@ -426,61 +426,7 @@ class SettingsService implements SettingsServiceInterface {
 		$userId = $user->getUID();
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			// Confirm the administration exists before granting anything, by the
-			// administrationCode — a real JSON property, and therefore filterable.
-			// Filtering on `id` here would match nothing (see findAdministration()).
-			$administrations = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => ['administrationCode' => $administrationCode],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($administrations) === true) {
-				return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
-			}
-
-			// The code is the id space the rest of the system runs on — see the
-			// docblock. Deliberately not the uuid.
-			$administrationId = $administrationCode;
-
-			$existing = $objectService
-				->setRegister($registerSlug)
-				->setSchema('AdministrationMembership')
-				->findAll(
-					[
-						'filters' => [
-							'userId' => $userId,
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($existing) === false) {
-				return ['granted' => false, 'reason' => 'already a member', 'administrationId' => $administrationId];
-			}
-
-			$objectService->saveObject(
-				object: [
-					'userId' => $userId,
-					'administrationId' => $administrationId,
-					'role' => 'eigenaar',
-					'mayPostJournalEntries' => true,
-					'mayCloseFiscalYear' => true,
-					'validFrom' => date('Y-m-d'),
-					'validUntil' => null,
-					'grantedBy' => $userId,
-				],
-				register: $registerSlug,
-				schema: 'AdministrationMembership',
-			);
+			$refusal = $this->saveDefaultAdministrationMembership(userId: $userId, administrationCode: $administrationCode);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SettingsService: failed to grant default administration membership',
@@ -489,6 +435,12 @@ class SettingsService implements SettingsServiceInterface {
 			return ['granted' => false, 'reason' => 'exception: ' . $e->getMessage()];
 		}//end try
 
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$administrationId = $administrationCode;
+
 		$this->logger->info(
 			'SettingsService: granted default administration membership',
 			['userId' => $userId, 'administrationId' => $administrationId]
@@ -496,6 +448,81 @@ class SettingsService implements SettingsServiceInterface {
 
 		return ['granted' => true, 'administrationId' => $administrationId];
 	}//end grantDefaultAdministrationMembership()
+
+	/**
+	 * Save the owner membership of the default administration, unless it is missing or already granted.
+	 *
+	 * @param string $userId             The user to grant the membership to.
+	 * @param string $administrationCode The administrationCode of the seeded administration.
+	 *
+	 * @return array<string,mixed>|null The refusal result, or null when the membership was saved.
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+	 */
+	private function saveDefaultAdministrationMembership(string $userId, string $administrationCode): array|null {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->getRegisterSlug();
+
+		// Confirm the administration exists before granting anything, by the
+		// administrationCode — a real JSON property, and therefore filterable.
+		// Filtering on `id` here would match nothing (see findAdministration()).
+		$administrations = $this->findOneRecord(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			schema: 'Administration',
+			filters: ['administrationCode' => $administrationCode]
+		);
+
+		if (empty($administrations) === true) {
+			return ['granted' => false, 'reason' => 'administration not found: ' . $administrationCode];
+		}
+
+		// The code is the id space the rest of the system runs on — see the
+		// docblock. Deliberately not the uuid.
+		$administrationId = $administrationCode;
+
+		$filters = ['userId' => $userId, 'administrationId' => $administrationId];
+		$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'AdministrationMembership', filters: $filters);
+
+		if (empty($existing) === false) {
+			return ['granted' => false, 'reason' => 'already a member', 'administrationId' => $administrationId];
+		}
+
+		$this->saveOwnerMembership(objectService: $objectService, registerSlug: $registerSlug, userId: $userId, administrationId: $administrationId);
+
+		return null;
+	}//end saveDefaultAdministrationMembership()
+
+	/**
+	 * Save an owner (`eigenaar`) AdministrationMembership valid from today.
+	 *
+	 * @param mixed  $objectService    OpenRegister's ObjectService.
+	 * @param string $registerSlug     The register to write to.
+	 * @param string $userId           The member, also recorded as the granter.
+	 * @param string $administrationId The administration the membership is for.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+	 */
+	private function saveOwnerMembership(mixed $objectService, string $registerSlug, string $userId, string $administrationId): void {
+		$objectService->saveObject(
+			object: [
+				'userId' => $userId,
+				'administrationId' => $administrationId,
+				'role' => 'eigenaar',
+				'mayPostJournalEntries' => true,
+				'mayCloseFiscalYear' => true,
+				'validFrom' => date('Y-m-d'),
+				'validUntil' => null,
+				'grantedBy' => $userId,
+			],
+			register: $registerSlug,
+			schema: 'AdministrationMembership',
+		);
+	}//end saveOwnerMembership()
 
 	/**
 	 * Read the `administrationCode` of the bundled default-administration seed.
@@ -771,12 +798,12 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
 	 */
-	private function findDemoRecord(mixed $objectService, string $registerSlug, string $schema, array $filters): mixed {
+	private function findOneRecord(mixed $objectService, string $registerSlug, string $schema, array $filters): mixed {
 		return $objectService
 			->setRegister($registerSlug)
 			->setSchema($schema)
 			->findAll(['filters' => $filters, 'limit' => 1]);
-	}//end findDemoRecord()
+	}//end findOneRecord()
 
 	/**
 	 * Save one demo FixedAsset unless a record with its assetNumber already exists.
@@ -791,7 +818,7 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	private function seedDemoFixedAsset(mixed $objectService, string $registerSlug, array $asset): array {
 		$filters = ['assetNumber' => $asset['assetNumber'], 'administrationId' => $asset['administrationId']];
-		$existing = $this->findDemoRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'FixedAsset', filters: $filters);
+		$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'FixedAsset', filters: $filters);
 
 		if (empty($existing) === false) {
 			// Cache the existing UUID for schedule linking.
@@ -821,7 +848,7 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	private function seedDemoSchedule(mixed $objectService, string $registerSlug, array $schedule): bool {
 		$filters = ['scheduleNumber' => $schedule['scheduleNumber'], 'administrationId' => $schedule['administrationId']];
-		$existing = $this->findDemoRecord(
+		$existing = $this->findOneRecord(
 			objectService: $objectService,
 			registerSlug: $registerSlug,
 			schema: 'DepreciationSchedule',
@@ -983,6 +1010,34 @@ class SettingsService implements SettingsServiceInterface {
 	 *                             or ['success' => false, 'message' => string]
 	 */
 	private function loadRegisterConfigData(): array {
+		$base = $this->readBaseRegisterConfig();
+		if (isset($base['success']) === true) {
+			return $base;
+		}
+
+		$merged = $this->mergeRegisterFragments(configData: $base['data']);
+		$configData = $merged['data'];
+		$fragmentSig = $merged['signature'];
+
+		// Fold the fragment signature into the version so OpenRegister's
+		// version-gated importFromApp re-imports whenever fragments change.
+		$version = ($configData['info']['version'] ?? '0.0.0');
+		if ($fragmentSig !== '') {
+			$version .= '+frag.' . substr(md5($fragmentSig), 0, 8);
+		}
+
+		return [
+			'data' => $configData,
+			'version' => $version,
+		];
+	}//end loadRegisterConfigData()
+
+	/**
+	 * Read and parse the base shillinq_register.json file.
+	 *
+	 * @return array<string,mixed> Either ['data' => mixed] or ['success' => false, 'message' => string]
+	 */
+	private function readBaseRegisterConfig(): array {
 		$configPath = __DIR__ . '/../Settings/shillinq_register.json';
 		if (file_exists($configPath) === false) {
 			$this->logger->error('Shillinq: shillinq_register.json not found at ' . $configPath);
@@ -1010,6 +1065,17 @@ class SettingsService implements SettingsServiceInterface {
 			];
 		}
 
+		return ['data' => $configData];
+	}//end readBaseRegisterConfig()
+
+	/**
+	 * Merge the register fragments from Settings/register.d/*.json over the base configuration.
+	 *
+	 * @param mixed $configData The parsed base configuration.
+	 *
+	 * @return array{data: mixed, signature: string} The merged configuration and the fragment signature.
+	 */
+	private function mergeRegisterFragments(mixed $configData): array {
 		// ADR-037: merge modular register fragments from Settings/register.d/*.json.
 		// Each OpenSpec change drops its own fragment file instead of editing this
 		// monolith, so concurrent builds touch disjoint files (no merge conflicts).
@@ -1021,38 +1087,43 @@ class SettingsService implements SettingsServiceInterface {
 			$fragmentFiles = glob($fragmentDir . '/*.json');
 			sort($fragmentFiles);
 			foreach ($fragmentFiles as $fragmentFile) {
-				$fragmentContent = file_get_contents($fragmentFile);
-				if ($fragmentContent === false) {
+				$fragment = $this->readRegisterFragment(fragmentFile: $fragmentFile);
+				if ($fragment === null) {
 					continue;
 				}
 
-				$fragmentData = json_decode($fragmentContent, true);
-				if (json_last_error() !== JSON_ERROR_NONE) {
-					$this->logger->warning(
-						'Shillinq: skipping malformed register fragment ' . basename($fragmentFile)
-						. ': ' . json_last_error_msg()
-					);
-					continue;
-				}
-
-				$configData = self::deepMergeConfig(base: $configData, overlay: $fragmentData);
-				$fragmentSig .= basename($fragmentFile) . ':' . md5($fragmentContent) . ';';
+				$configData = self::deepMergeConfig(base: $configData, overlay: $fragment['data']);
+				$fragmentSig .= basename($fragmentFile) . ':' . md5($fragment['content']) . ';';
 			}
-		}//end if
-
-		// Fold the fragment signature into the version so OpenRegister's
-		// version-gated importFromApp re-imports whenever fragments change.
-		$version = ($configData['info']['version'] ?? '0.0.0');
-		if ($fragmentSig !== '') {
-			$version .= '+frag.' . substr(md5($fragmentSig), 0, 8);
 		}
 
-		return [
-			'data' => $configData,
-			'version' => $version,
-		];
+		return ['data' => $configData, 'signature' => $fragmentSig];
+	}//end mergeRegisterFragments()
 
-	}//end loadRegisterConfigData()
+	/**
+	 * Read and parse one register fragment file.
+	 *
+	 * @param string $fragmentFile The fragment file path.
+	 *
+	 * @return array{data: mixed, content: string}|null The parsed fragment and its raw content, or null when unusable.
+	 */
+	private function readRegisterFragment(string $fragmentFile): array|null {
+		$fragmentContent = file_get_contents($fragmentFile);
+		if ($fragmentContent === false) {
+			return null;
+		}
+
+		$fragmentData = json_decode($fragmentContent, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$this->logger->warning(
+				'Shillinq: skipping malformed register fragment ' . basename($fragmentFile)
+				. ': ' . json_last_error_msg()
+			);
+			return null;
+		}
+
+		return ['data' => $fragmentData, 'content' => $fragmentContent];
+	}//end readRegisterFragment()
 
 	/**
 	 * Deep-merge a register fragment onto the base config (ADR-037).
@@ -1104,107 +1175,7 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		try {
-			$configLoad = $this->loadRegisterConfigData();
-			if (isset($configLoad['success']) === true && $configLoad['success'] === false) {
-				return $configLoad;
-			}
-
-			$configData = $configLoad['data'];
-			$configVersion = $configLoad['version'];
-
-			$configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
-			$result = $configurationService->importFromApp(
-				appId: AppIdentity::APP_ID,
-				data: $configData,
-				version: $configVersion,
-				force: $force
-			);
-
-			if (empty($result) === false) {
-				$errors = ($result['errors'] ?? []);
-				$warnings = ($result['warnings'] ?? []);
-
-				// A seed object that fails its schema's `required` list is skipped
-				// ONE BY ONE by OpenRegister's ImportHandler (per-entity resilience):
-				// it increments $result['skipped'] and logs a WARNING, then keeps
-				// going. It does NOT raise an error, so every branch below used to
-				// report `success: true` over a partially-imported register — and
-				// `occ app:enable` exits 0. That is why a broken seed stayed
-				// invisible until an endpoint merely LOOKED empty:
-				// GET /api/v2/calendars returned 200 {"calendars":[]} and the whole
-				// bookings collection failed against calendar code that was never
-				// wrong. Surface the count and the names instead of discarding them.
-				//
-				// Deliberately NOT fatal: flipping success to false here would make
-				// `occ app:enable` / `occ upgrade` fail on EXISTING installs that
-				// already carry these seeds, which would brick an upgrade for a
-				// data defect that is not new. The count is reported, logged at
-				// error level and returned to the admin UI; the ratchet in
-				// tests/validate-seeds.js is what actually stops new ones landing.
-				$skipped = ($result['skipped'] ?? []);
-				$skippedSeeds = (int)($skipped['objects'] ?? 0) + (int)($skipped['seedObjects'] ?? 0);
-
-				if (empty($errors) === false) {
-					$this->logger->error(
-						'Shillinq: register configuration imported with errors',
-						['errors' => $errors]
-					);
-					return [
-						'success' => false,
-						'message' => 'Configuration import completed with errors.',
-						'errors' => $errors,
-						'warnings' => $warnings,
-						'version' => ($result['version'] ?? 'unknown'),
-					];
-				}
-
-				if (empty($warnings) === false) {
-					$this->logger->warning(
-						'Shillinq: register configuration imported with warnings',
-						['warnings' => $warnings]
-					);
-				}
-
-				if ($skippedSeeds > 0) {
-					$this->logger->error(
-						'Shillinq: register configuration imported, but ' . $skippedSeeds . ' seed object(s) could NOT be imported '
-						. '— they do not satisfy their own schema\'s required list. Affected endpoints will return empty '
-						. 'collections that look like a working-but-empty install. Run `node tests/validate-seeds.js` for the '
-						. 'per-schema breakdown of which objects failed and which fields they are missing.',
-						['skippedSeedObjects' => $skippedSeeds, 'skipped' => $skipped]
-					);
-
-					return [
-						'success' => true,
-						'message' => 'Configuration imported, but ' . $skippedSeeds . ' seed object(s) could not be imported.',
-						'skippedSeedObjects' => $skippedSeeds,
-						'skipped' => $skipped,
-						'warnings' => $warnings,
-						'version' => ($result['version'] ?? 'unknown'),
-					];
-				}
-
-				$this->logger->info('Shillinq: register configuration imported successfully');
-				return [
-					'success' => true,
-					'message' => 'Configuration imported successfully.',
-					'skippedSeedObjects' => 0,
-					'warnings' => $warnings,
-					'version' => ($result['version'] ?? 'unknown'),
-				];
-			}//end if
-
-			// C8: OR's importFromApp returns an all-empty result on the version-unchanged
-			// idempotent-skip path (force=false, same version as previously imported).
-			// This is not a failure — it means the register is already up-to-date.
-			// Classifying it as failure caused every routine `occ upgrade` to log
-			// "schema import failed, skipping account seed" even when nothing was wrong.
-			$this->logger->info('Shillinq: register configuration already up-to-date (version-unchanged skip)');
-			return [
-				'success' => true,
-				'skipped' => true,
-				'message' => 'Configuration already up-to-date (version-unchanged skip).',
-			];
+			return $this->importRegisterConfiguration(force: $force);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: configuration import failed',
@@ -1216,6 +1187,159 @@ class SettingsService implements SettingsServiceInterface {
 			];
 		}//end try
 	}//end runLoadConfiguration()
+
+	/**
+	 * Import the register configuration through OpenRegister and classify the outcome.
+	 *
+	 * @param bool $force Force re-import even if already configured.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \Throwable When loading or importing the configuration fails.
+	 */
+	private function importRegisterConfiguration(bool $force): array {
+		$configLoad = $this->loadRegisterConfigData();
+		if (isset($configLoad['success']) === true && $configLoad['success'] === false) {
+			return $configLoad;
+		}
+
+		$configData = $configLoad['data'];
+		$configVersion = $configLoad['version'];
+
+		$configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
+		$result = $configurationService->importFromApp(
+			appId: AppIdentity::APP_ID,
+			data: $configData,
+			version: $configVersion,
+			force: $force
+		);
+
+		if (empty($result) === false) {
+			return $this->classifyConfigurationImport(result: $result);
+		}
+
+		// C8: OR's importFromApp returns an all-empty result on the version-unchanged
+		// idempotent-skip path (force=false, same version as previously imported).
+		// This is not a failure — it means the register is already up-to-date.
+		// Classifying it as failure caused every routine `occ upgrade` to log
+		// "schema import failed, skipping account seed" even when nothing was wrong.
+		$this->logger->info('Shillinq: register configuration already up-to-date (version-unchanged skip)');
+		return [
+			'success' => true,
+			'skipped' => true,
+			'message' => 'Configuration already up-to-date (version-unchanged skip).',
+		];
+	}//end importRegisterConfiguration()
+
+	/**
+	 * Turn a non-empty importFromApp result into the load result, logging errors, warnings and skipped seeds.
+	 *
+	 * @param array<string,mixed> $result The importFromApp result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function classifyConfigurationImport(array $result): array {
+		$errors = ($result['errors'] ?? []);
+		$warnings = ($result['warnings'] ?? []);
+
+		// A seed object that fails its schema's `required` list is skipped
+		// ONE BY ONE by OpenRegister's ImportHandler (per-entity resilience):
+		// it increments $result['skipped'] and logs a WARNING, then keeps
+		// going. It does NOT raise an error, so every branch below used to
+		// report `success: true` over a partially-imported register — and
+		// `occ app:enable` exits 0. That is why a broken seed stayed
+		// invisible until an endpoint merely LOOKED empty:
+		// GET /api/v2/calendars returned 200 {"calendars":[]} and the whole
+		// bookings collection failed against calendar code that was never
+		// wrong. Surface the count and the names instead of discarding them.
+		//
+		// Deliberately NOT fatal: flipping success to false here would make
+		// `occ app:enable` / `occ upgrade` fail on EXISTING installs that
+		// already carry these seeds, which would brick an upgrade for a
+		// data defect that is not new. The count is reported, logged at
+		// error level and returned to the admin UI; the ratchet in
+		// tests/validate-seeds.js is what actually stops new ones landing.
+		$skipped = ($result['skipped'] ?? []);
+		$skippedSeeds = (int)($skipped['objects'] ?? 0) + (int)($skipped['seedObjects'] ?? 0);
+
+		if (empty($errors) === false) {
+			return $this->configurationImportFailed(result: $result);
+		}
+
+		if (empty($warnings) === false) {
+			$this->logger->warning(
+				'Shillinq: register configuration imported with warnings',
+				['warnings' => $warnings]
+			);
+		}
+
+		if ($skippedSeeds > 0) {
+			return $this->configurationImportSkippedSeeds(result: $result, skippedSeeds: $skippedSeeds);
+		}
+
+		$this->logger->info('Shillinq: register configuration imported successfully');
+		return [
+			'success' => true,
+			'message' => 'Configuration imported successfully.',
+			'skippedSeedObjects' => 0,
+			'warnings' => $warnings,
+			'version' => ($result['version'] ?? 'unknown'),
+		];
+	}//end classifyConfigurationImport()
+
+	/**
+	 * Log and report a configuration import that returned errors.
+	 *
+	 * @param array<string,mixed> $result The importFromApp result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function configurationImportFailed(array $result): array {
+		$errors = ($result['errors'] ?? []);
+		$warnings = ($result['warnings'] ?? []);
+
+		$this->logger->error(
+			'Shillinq: register configuration imported with errors',
+			['errors' => $errors]
+		);
+		return [
+			'success' => false,
+			'message' => 'Configuration import completed with errors.',
+			'errors' => $errors,
+			'warnings' => $warnings,
+			'version' => ($result['version'] ?? 'unknown'),
+		];
+	}//end configurationImportFailed()
+
+	/**
+	 * Log and report a configuration import that skipped seed objects failing their schema.
+	 *
+	 * @param array<string,mixed> $result       The importFromApp result.
+	 * @param int                 $skippedSeeds The number of seed objects that could not be imported.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function configurationImportSkippedSeeds(array $result, int $skippedSeeds): array {
+		$skipped = ($result['skipped'] ?? []);
+		$warnings = ($result['warnings'] ?? []);
+
+		$this->logger->error(
+			'Shillinq: register configuration imported, but ' . $skippedSeeds . ' seed object(s) could NOT be imported '
+			. '— they do not satisfy their own schema\'s required list. Affected endpoints will return empty '
+			. 'collections that look like a working-but-empty install. Run `node tests/validate-seeds.js` for the '
+			. 'per-schema breakdown of which objects failed and which fields they are missing.',
+			['skippedSeedObjects' => $skippedSeeds, 'skipped' => $skipped]
+		);
+
+		return [
+			'success' => true,
+			'message' => 'Configuration imported, but ' . $skippedSeeds . ' seed object(s) could not be imported.',
+			'skippedSeedObjects' => $skippedSeeds,
+			'skipped' => $skipped,
+			'warnings' => $warnings,
+			'version' => ($result['version'] ?? 'unknown'),
+		];
+	}//end configurationImportSkippedSeeds()
 
 	/**
 	 * The template and reference-rule seeds, run with this service's register settings.
@@ -1616,7 +1740,7 @@ class SettingsService implements SettingsServiceInterface {
 	private function seedWmoRecord(mixed $objectService, string $registerSlug, array $spec, array $record): bool {
 		$schema = $spec[0];
 		$filter = $this->wmoDedupeFilter(record: $record, dedupeKey: $spec[2]);
-		$existing = $this->findDemoRecord(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, filters: $filter);
+		$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, filters: $filter);
 
 		if (empty($existing) === false) {
 			return false;
