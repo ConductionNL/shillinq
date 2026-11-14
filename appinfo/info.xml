@@ -26,7 +26,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261113200000</version>
+    <version>0.5.7-unstable.20261114140000</version>
+    <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -403,6 +404,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              (The option name is not spelled here: a double hyphen is illegal
              inside an XML comment and makes info.xml unparseable.) -->
         <command>OCA\Shillinq\Command\ReferencesAuditCommand</command>
+        <!-- Count, per administration, the UrenRegistratie entries that still
+             carry subjectApp / subjectId before that overlay is retired
+             (hours-to-humaniq task 2.1). Read-only. -->
+        <command>OCA\Shillinq\Command\HoursSubjectAuditCommand</command>
     </commands>
 
     <settings>

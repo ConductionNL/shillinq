@@ -179,7 +179,7 @@ final class SeamsDocumentReportGenerator extends AbstractDocumentReportGenerator
  *
  * @covers \OCA\Shillinq\Reporting\Generator\AbstractDocumentReportGenerator
  * @uses   \OCA\Shillinq\Reporting\Generator\DocudeskTemplateSelection
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  * @uses   \OCA\Shillinq\Reporting\ReportSection
  * @uses   \OCA\Shillinq\Reporting\ReportCatalogue
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier

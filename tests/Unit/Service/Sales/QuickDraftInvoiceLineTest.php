@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
 use OCA\Shillinq\Service\Sales\QuickDraftInvoiceService;
-use OCA\Shillinq\Service\Sales\QuickDraftRefusedException;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
