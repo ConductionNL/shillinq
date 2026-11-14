@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -4352,6 +4366,33 @@
 					"route": "/passthrough-markup-rules/:id",
 					"type": "detail",
 					"title": "Pass-through Markup Rule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ExpenseCategories",
+					"label": "Expense categories",
+					"icon": "TagMultipleOutline",
+					"route": "ExpenseCategories",
+					"order": 85
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "expenses-category-mapping",
+					"id": "ExpenseCategories",
+					"route": "/expense-categories",
+					"type": "index",
+					"title": "Expense categories"
+				},
+				{
+					"_fragment": "expenses-category-mapping",
+					"id": "ExpenseCategoryDetail",
+					"route": "/expense-categories/:id",
+					"type": "detail",
+					"title": "Expense category"
 				}
 			]
 		},

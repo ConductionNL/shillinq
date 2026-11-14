@@ -42,6 +42,7 @@ use OCP\Util;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Guard\GuardRegistrar;
+use OCA\Shillinq\Lifecycle\ExpenseClaimRegistration;
 use OCA\Shillinq\Lifecycle\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\LifecycleRegistrar;
 use OCA\Shillinq\Repair\RepairRegistrar;
@@ -174,6 +175,9 @@ class Application extends App implements IBootstrap {
 		);
 		// #516/#1103: the ledger posting guards; then the reporting listeners.
 		(new LedgerPostingRegistration())->register(context: $context);
+		// Expenses-category-mapping 3.4: the settlement, markup-threshold, cost
+		// centre and open-period guards the expense claim transitions declare.
+		(new ExpenseClaimRegistration())->register(context: $context);
 
 		// Compliance-deadline-calendar REQ-CDC-007 — render the
 		// `deadline_reminder` notifications raised by

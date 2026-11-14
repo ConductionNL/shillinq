@@ -474,6 +474,22 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\ExpenseCategoryAccountListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\ExpenseCategoryAccountListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\AnnualReportSignoffRequestListener'",
             "0"
@@ -2355,6 +2371,54 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\BalanceGuard::isInvoiceBalanced'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requireSettlementModeConsistency'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requireMarkupApprovalIfThreshold'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requirePassThroughMode'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseReimbursementGuard::requireGlReversalForModeChange'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseClaimGuard::requireCostCentresAndItems'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Lifecycle\\\\ExpenseClaimGuard::requireOpenPeriodAndCostCentres'",
             "Closure",
             "true"
         ]

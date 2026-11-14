@@ -155,15 +155,12 @@
 				</div>
 			</div>
 
+			<!-- expenses-category-mapping REQ-ECM-002: the category is picked
+			     from the administration's active expense categories, never typed. -->
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-category">{{
-					t('shillinq', 'Category')
-				}}</label>
-				<input
-					id="rc-category"
+				<ExpenseCategoryPicker
 					v-model="form.category"
-					type="text"
-					class="receipt-capture__input"
+					:administrationId="record?.administrationId || ''"
 					data-testid="rc-category" />
 			</div>
 
@@ -346,6 +343,7 @@ import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
+import ExpenseCategoryPicker from '../components/expenses/ExpenseCategoryPicker.vue'
 import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
 	confidenceForField,
@@ -371,7 +369,7 @@ const RECEIPT_SCHEMA = 'Receipt'
 
 export default {
 	name: 'ReceiptCapture',
-	components: { FieldConfidenceBadge, GlAccountPicker },
+	components: { ExpenseCategoryPicker, FieldConfidenceBadge, GlAccountPicker },
 	props: {
 		/** Receipt OR object id, supplied by the manifest router (props: true on `/receipts/:id`). */
 		id: {

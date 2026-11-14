@@ -120,7 +120,10 @@
 					{ "key": "backupSchedule", "label": "Backup schedule", "type": "string" },
 					{ "key": "dataRetentionYears", "label": "Data retention (years)", "type": "number" },
 					{ "key": "defaultLanguage", "label": "Default language", "type": "string" },
-					{ "key": "dunningEnabled", "label": "Automatic payment reminders", "type": "boolean" }
+					{ "key": "dunningEnabled", "label": "Automatic payment reminders", "type": "boolean" },
+					{ "key": "mileageAccount", "label": "Mileage account", "type": "string" },
+					{ "key": "perDiemAccount", "label": "Per diem account", "type": "string" },
+					{ "key": "expensePayableAccount", "label": "Expense payable account", "type": "string" }
 				],
 				"headerActions": [
 					{

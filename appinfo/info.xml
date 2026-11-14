@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261111150000</version>
+    <version>0.5.7-unstable.20261114120000</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -362,6 +362,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  After InitializeSettings, which seeds the tariffs. Logs the lines
                  it cannot resolve. Idempotent, fail-soft. -->
             <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
+            <!-- expenses-category-mapping tasks 1.1 and 2.2: seeds the expense
+                 categories and the mileage, per diem and expense payable
+                 accounts for every administration on the RGS template, then
+                 maps the free text in Receipt.category onto a category code
+                 (exact code, Dutch or English name, known alias). Text that
+                 matches nothing becomes `uncategorised` and is listed for a
+                 bookkeeper. After InitializeSettings, which imports the
+                 ExpenseCategory schema. Idempotent, fail-soft. -->
+            <step>OCA\Shillinq\Repair\MapExpenseCategories</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

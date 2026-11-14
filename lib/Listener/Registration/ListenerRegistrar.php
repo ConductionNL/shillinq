@@ -36,6 +36,7 @@ use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
+use OCA\Shillinq\Listener\ExpenseCategoryAccountListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
@@ -325,6 +326,17 @@ final class ListenerRegistrar {
 			$context->registerEventListener(
 				event: $preSaveEvent,
 				listener: FeeScheduleValidationListener::class
+			);
+		}
+
+		// REQ-ECM-001: an expense category is refused on save when its account
+		// is not an expense account of its administration's chart. Categories
+		// are written straight into OpenRegister, so the pre-save veto is the
+		// only place the rule can run.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: ExpenseCategoryAccountListener::class
 			);
 		}
 

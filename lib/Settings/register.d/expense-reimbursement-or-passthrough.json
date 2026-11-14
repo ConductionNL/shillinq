@@ -341,13 +341,18 @@
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.settlementMode == 'reimbursable'",
-                  "description": "Reimbursable path: debit per expense line credit to expense-payable account (Account.controlAccountFor=expense-claims); sets glReimbursableTransactionId. Identical to expense-capture-core pattern but selected only when claim.settlementMode = reimbursable.",
+                  "description": "Reimbursable path: debit per expense line, credit to the administration's expense payable account, every account from ExpenseAccountResolver (expenses-category-mapping); sets glReimbursableTransactionId. Identical to expense-capture-core pattern but selected only when claim.settlementMode = reimbursable.",
                   "actionParameters": {
                     "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "settlementMode": "reimbursable",
                     "backReferenceField": "glReimbursableTransactionId",
+                    "resolver": "expense-account",
+                    "creditMapping": {
+                      "resolver": "expense-account",
+                      "setting": "expensePayableAccount"
+                    },
                     "subLedgerType": "expense-reimbursement",
                     "subLedgerRefField": "id",
                     "metadataFields": [

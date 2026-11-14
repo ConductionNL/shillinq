@@ -1,0 +1,79 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "openspec/changes/expenses-category-mapping/design.md Seed Data",
+		"change": "expenses-category-mapping",
+		"description": "Expense categories and expense account settings for an administration on the RGS 3.5 MKB template (lib/Settings/seeds/rgs-3.5-mkb.json). Seeded per administration by the MapExpenseCategories repair step, only where the administration's chart has the account as an expense account (settings: where the account exists). Existing categories and settings are never overwritten. `aliases` are the free-text values the repair step maps onto a code, compared case-insensitively."
+	},
+	"settings": {
+		"mileageAccount": "4530",
+		"perDiemAccount": "4060",
+		"expensePayableAccount": "2200"
+	},
+	"categories": [
+		{
+			"code": "travel-public",
+			"name": {"nl": "Openbaar vervoer", "en": "Public transport"},
+			"expenseAccount": "4510",
+			"vatDeductionRule": "full",
+			"aliases": ["travel", "reiskosten", "reis", "trein", "train", "bus", "tram", "metro", "ov", "public transport"]
+		},
+		{
+			"code": "travel-abroad",
+			"name": {"nl": "Buitenlandse reis", "en": "Travel abroad"},
+			"expenseAccount": "4520",
+			"vatDeductionRule": "full",
+			"aliases": ["buitenland", "abroad", "foreign travel", "vlucht", "flight"]
+		},
+		{
+			"code": "fuel",
+			"name": {"nl": "Brandstof", "en": "Fuel"},
+			"expenseAccount": "4210",
+			"vatDeductionRule": "full",
+			"aliases": ["brandstof", "benzine", "diesel", "tanken", "petrol"]
+		},
+		{
+			"code": "meals",
+			"name": {"nl": "Maaltijden en representatie", "en": "Meals and entertainment"},
+			"expenseAccount": "4440",
+			"vatDeductionRule": "none",
+			"aliases": ["meals", "meal", "lunch", "diner", "dinner", "maaltijd", "maaltijden", "representatie", "entertainment", "horeca"]
+		},
+		{
+			"code": "office",
+			"name": {"nl": "Kantoorartikelen", "en": "Office supplies"},
+			"expenseAccount": "4310",
+			"vatDeductionRule": "full",
+			"aliases": ["supplies", "office", "office supplies", "kantoor", "kantoorartikelen", "kantoorbenodigdheden"]
+		},
+		{
+			"code": "phone",
+			"name": {"nl": "Telefoon en internet", "en": "Phone and internet"},
+			"expenseAccount": "4330",
+			"vatDeductionRule": "full",
+			"aliases": ["phone", "telefoon", "mobiel", "internet", "telecom"]
+		},
+		{
+			"code": "software",
+			"name": {"nl": "Software en abonnementen", "en": "Software and subscriptions"},
+			"expenseAccount": "4340",
+			"vatDeductionRule": "full",
+			"aliases": ["software", "saas", "abonnement", "abonnementen", "subscription", "subscriptions", "licentie", "license"]
+		},
+		{
+			"code": "training",
+			"name": {"nl": "Opleiding en cursus", "en": "Training and courses"},
+			"expenseAccount": "4050",
+			"vatDeductionRule": "full",
+			"aliases": ["training", "opleiding", "cursus", "course", "courses", "seminar", "congres", "conference"]
+		},
+		{
+			"code": "other",
+			"name": {"nl": "Overige personeelskosten", "en": "Other staff expenses"},
+			"expenseAccount": "4060",
+			"vatDeductionRule": "full",
+			"aliases": ["other", "overig", "overige", "diversen", "misc", "miscellaneous", "parking", "parkeren", "parkeerkosten"]
+		}
+	]
+}

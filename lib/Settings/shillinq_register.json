@@ -9816,7 +9816,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
-                  "description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.controlAccountFor=expense-claims). Sets glTransactionId back-reference.",
+                  "description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to the administration's expense payable account. Every account comes from ExpenseAccountResolver (expenses-category-mapping): a receipt takes its confirmed glAccount, else its category's account; mileage and per diem take the administration's settings. A line without an account refuses the post, naming the line. Sets glTransactionId back-reference.",
                   "actionParameters": {
                     "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
@@ -9827,24 +9827,27 @@
                         "idField": "receiptIds",
                         "amountField": "amountInBaseCurrency",
                         "costCentreField": "costCentreCode",
-                        "accountLookup": "Account[category=@receipt.category].accountNumber"
+                        "resolver": "expense-account"
                       },
                       {
                         "schema": "MileageEntry",
                         "idField": "mileageIds",
                         "amountField": "totalAmount",
                         "costCentreField": "costCentreCode",
-                        "accountLookup": "Account[isExpenseMileageAccount=true].accountNumber"
+                        "resolver": "expense-account"
                       },
                       {
                         "schema": "PerDiem",
                         "idField": "perDiemIds",
                         "amountField": "allowanceAmount",
                         "costCentreField": "costCentreCode",
-                        "accountLookup": "Account[isExpensePerDiemAccount=true].accountNumber"
+                        "resolver": "expense-account"
                       }
                     ],
-                    "creditMapping": "Account[controlAccountFor=expense-claims].accountNumber",
+                    "creditMapping": {
+                      "resolver": "expense-account",
+                      "setting": "expensePayableAccount"
+                    },
                     "subLedgerType": "expense",
                     "subLedgerRefField": "id",
                     "keepBalanced": true

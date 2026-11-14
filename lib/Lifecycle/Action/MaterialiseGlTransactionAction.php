@@ -43,10 +43,14 @@
  *   - APInvoice: debit each line's account, debit input VAT for `taxAmount`,
  *     credit the payables control account for `totalAmount`.
  *
- * ExpenseClaimEntry declares this action too. Its mapper needs the
- * ExpenseAccountResolver of expenses-category-mapping (task 3.2 there), so
- * until that change lands the declaration is refused by name. The
- * InventoryValuation declarations were removed: sale dispatch is booked per
+ *   - ExpenseClaimEntry: ExpenseClaimPosting debits each receipt, mileage and
+ *     per diem line on the account ExpenseAccountResolver answers and credits
+ *     the expense payable account; a line without an account refuses the post,
+ *     naming the line (expenses-category-mapping REQ-ECM-003). A pass-through
+ *     claim is left to its own declaration, which is refused: it has no
+ *     mapper yet.
+ *
+ * The InventoryValuation declarations were removed: sale dispatch is booked per
  * stock move by CogsPosterService, and a running valuation snapshot cannot
  * key one posting per event.
  *
@@ -75,6 +79,7 @@ use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
+use OCA\Shillinq\Service\ExpenseAccountResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -150,7 +155,14 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 *
 	 * @var list<string>
 	 */
-	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
+	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction', 'ExpenseClaimEntry'];
+
+	/**
+	 * The settlement mode whose claims this handler does not post.
+	 *
+	 * @var string
+	 */
+	private const PASS_THROUGH = 'pass-through';
 
 	/**
 	 * The tariff, box and VAT split, built on first use.
@@ -166,12 +178,14 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	 * @param IAppConfig $appConfig Register slug and account numbers.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param IUserSession|null $userSession The posting user, for the audit trail; none outside a session.
+	 * @param ExpenseAccountResolver|null $expenseAccounts The account of each expense claim line; an expense claim is refused without it.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ?IUserSession $userSession = null,
+		private readonly ?ExpenseAccountResolver $expenseAccounts = null,
 	) {
 	}//end __construct()
 
@@ -203,8 +217,17 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			);
 		}
 
-		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+		if ($sourceSchema === 'ExpenseClaimEntry' && $this->postsClaim(claim: $objectData, parameters: $parameters) === false) {
 			return $objectData;
+		}
+
+		if ((string)($objectData['glTransactionId'] ?? '') !== '') {
+			return $this->withBackReference(
+				schema: $sourceSchema,
+				source: $objectData,
+				parameters: $parameters,
+				transactionId: (string)$objectData['glTransactionId']
+			);
 		}
 
 		$sourceId = (string)($objectData['id'] ?? ($objectData['@self']['id'] ?? ''));
@@ -216,12 +239,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$existing = $this->findExistingTransaction(sourceReference: $sourceReference);
 		if ($existing !== '') {
 			$objectData['glTransactionId'] = $existing;
-			return $objectData;
+			return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $existing);
 		}
 
 		$posting = match ($sourceSchema) {
 			'JournalEntry' => $this->mapJournalEntry(entry: $objectData, sourceId: $sourceId),
 			'ARInvoice' => $this->mapArInvoice(invoice: $objectData, sourceId: $sourceId),
+			'ExpenseClaimEntry' => $this->expenseClaimPosting()->map(claim: $objectData, sourceId: $sourceId),
 			default => $this->mapApInvoice(invoice: $objectData, sourceId: $sourceId),
 		};
 		$lines = $this->normaliseLines(lines: $posting['lines']);
@@ -242,8 +266,87 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
-		return $objectData;
+		return $this->withBackReference(schema: $sourceSchema, source: $objectData, parameters: $parameters, transactionId: $objectData['glTransactionId']);
 	}//end execute()
+
+	/**
+	 * Whether this declaration posts the claim. A claim's settlement mode
+	 * picks its declaration: a reimbursable claim (or one without a mode) is
+	 * posted by the declaration without a mode and the reimbursable one, the
+	 * second finding the first's transaction; a pass-through claim only by
+	 * the pass-through declaration, which is refused because no mapper books
+	 * it yet.
+	 *
+	 * @param array<string,mixed> $claim      The ExpenseClaimEntry.
+	 * @param array<string,mixed> $parameters The declared actionParameters.
+	 *
+	 * @return bool
+	 *
+	 * @throws RuntimeException For a pass-through claim on the pass-through declaration.
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function postsClaim(array $claim, array $parameters): bool {
+		$claimIsPassThrough = ((string)($claim['settlementMode'] ?? '') === self::PASS_THROUGH);
+		$declaredPassThrough = ((string)($parameters['settlementMode'] ?? '') === self::PASS_THROUGH);
+		if ($claimIsPassThrough !== $declaredPassThrough) {
+			return false;
+		}
+
+		if ($claimIsPassThrough === true) {
+			throw new RuntimeException('A pass-through expense claim cannot be posted to the ledger yet: no posting is defined for it.');
+		}
+
+		return true;
+	}//end postsClaim()
+
+	/**
+	 * The source with the declared `backReferenceField` set as well. Only an
+	 * expense claim honours it: the other sources keep their existing shape.
+	 *
+	 * @param string              $schema        The source schema.
+	 * @param array<string,mixed> $source        The source.
+	 * @param array<string,mixed> $parameters    The declared actionParameters.
+	 * @param string              $transactionId The GLTransaction id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function withBackReference(string $schema, array $source, array $parameters, string $transactionId): array {
+		if ($schema !== 'ExpenseClaimEntry') {
+			return $source;
+		}
+
+		$field = (string)($parameters['backReferenceField'] ?? '');
+		if ($field !== '' && $field !== 'glTransactionId') {
+			$source[$field] = $transactionId;
+		}
+
+		return $source;
+	}//end withBackReference()
+
+	/**
+	 * The expense claim mapper over the resolver.
+	 *
+	 * @return ExpenseClaimPosting
+	 *
+	 * @throws RuntimeException When no resolver was injected.
+	 *
+	 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.2
+	 */
+	private function expenseClaimPosting(): ExpenseClaimPosting {
+		if ($this->expenseAccounts === null) {
+			throw new RuntimeException('An expense claim cannot be posted: no expense account resolver is available.');
+		}
+
+		return new ExpenseClaimPosting(
+			objectService: $this->objectService,
+			register: $this->register(),
+			accounts: $this->expenseAccounts,
+			inputVatAccount: $this->account(key: self::CFG_INPUT_VAT_ACCOUNT)
+		);
+	}//end expenseClaimPosting()
 
 	/**
 	 * JournalEntry: its `lines` already carry account, side and amount.
