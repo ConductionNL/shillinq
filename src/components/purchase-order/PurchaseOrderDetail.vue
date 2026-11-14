@@ -320,12 +320,6 @@ export default {
 
 	computed: {
 		/**
-		 * The channels the server says cannot take an order, in button order.
-		 *
-		 * @return {string[]}
-		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
-		 */
-		/**
 		 * Whether the order holds a service line, so a delivery can be confirmed.
 		 *
 		 * @return {boolean}
@@ -335,6 +329,12 @@ export default {
 			return (this.purchaseOrder?.lines || []).some(isServiceLine)
 		},
 
+		/**
+		 * The channels the server says cannot take an order, in button order.
+		 *
+		 * @return {string[]}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
 		unavailableChannels() {
 			return ['peppol', 'email'].filter((channel) => !this.channelAvailable(channel))
 		},

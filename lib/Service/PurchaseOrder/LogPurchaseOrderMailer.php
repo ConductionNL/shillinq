@@ -64,6 +64,8 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 * @return bool Always true: the development binding records the attempt as sent.
 	 *
 	 * @inheritDoc
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
 	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 		$this->logger->info(

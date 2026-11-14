@@ -91,7 +91,7 @@
 						"url": "/apps/shillinq/api/service-receipts/@objectId/accept",
 						"method": "POST",
 						"params": { "administrationId": "@object.administrationId" },
-						"icon": "CheckAll",
+						"icon": "CheckDecagramOutline",
 						"variant": "primary",
 						"successMessage": "Service receipt accepted; the order is updated.",
 						"errorMessage": "Could not accept the service receipt.",
