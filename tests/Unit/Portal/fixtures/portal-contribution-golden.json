@@ -252,6 +252,52 @@
                     "field": "dueAt",
                     "direction": "desc"
                 }
+            },
+            {
+                "id": "subscriptions",
+                "register": "shillinq",
+                "schema": "RecurringInvoiceProfile",
+                "scopeField": "customerMasterId",
+                "scopeClaim": "customerMasterId",
+                "label": "Mijn abonnementen",
+                "listable": true,
+                "rowAction": "cancel-subscription",
+                "fields": [
+                    "name",
+                    "status",
+                    "frequency",
+                    "startDate",
+                    "nextRunDate",
+                    "currency"
+                ],
+                "columns": [
+                    {
+                        "field": "name",
+                        "label": "Abonnement",
+                        "render": "text"
+                    },
+                    {
+                        "field": "nextRunDate",
+                        "label": "Volgende factuur",
+                        "render": "date"
+                    },
+                    {
+                        "field": "status",
+                        "label": "Status",
+                        "render": "badge"
+                    }
+                ],
+                "detail": {
+                    "layout": "card",
+                    "fields": [
+                        "name",
+                        "status",
+                        "frequency",
+                        "startDate",
+                        "nextRunDate",
+                        "currency"
+                    ]
+                }
             }
         ],
         "actions": [
@@ -286,6 +332,26 @@
                         "pending"
                     ]
                 }
+            },
+            {
+                "id": "cancel-subscription",
+                "label": "Abonnement opzeggen",
+                "type": "endpoint-forward",
+                "endpoint": "/apps/shillinq/api/portal/subscriptions/cancel",
+                "method": "POST",
+                "minTrust": "low",
+                "rowField": "profileId",
+                "rowWhen": {
+                    "field": "status",
+                    "in": [
+                        "active",
+                        "paused"
+                    ]
+                },
+                "fields": [
+                    "reasonCode",
+                    "reasonText"
+                ]
             }
         ],
         "notifications": [],
@@ -407,6 +473,21 @@
                     {
                         "type": "detail",
                         "collection": "requestPayments"
+                    }
+                ]
+            },
+            {
+                "id": "subscriptions",
+                "label": "Mijn abonnementen",
+                "group": "Bestellingen en facturen",
+                "blocks": [
+                    {
+                        "type": "collection",
+                        "collection": "subscriptions"
+                    },
+                    {
+                        "type": "detail",
+                        "collection": "subscriptions"
                     }
                 ]
             }

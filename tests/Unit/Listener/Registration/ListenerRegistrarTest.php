@@ -43,6 +43,7 @@ use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\InvestmentAssetListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -364,6 +365,8 @@ final class ListenerRegistrarTest extends TestCase {
 				[ObjectCreatedEvent::class, ReconciliationMatchToReportListener::class],
 				[ObjectCreatedEvent::class, TenderNedAwardDetectedListener::class],
 				[ObjectCreatedEvent::class, CommitmentTransitionListener::class],
+				[ObjectCreatedEvent::class, WebshopOrderListener::class],
+				[ObjectUpdatedEvent::class, WebshopOrderListener::class],
 			],
 			$this->dispatched
 		);
