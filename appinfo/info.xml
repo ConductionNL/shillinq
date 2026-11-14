@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.7-unstable.20261114134157</version>
+    <version>0.5.7-unstable.20261114134757</version>
     <!-- @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-005 -->
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
@@ -362,6 +362,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  After InitializeSettings, which seeds the tariffs. Logs the lines
                  it cannot resolve. Idempotent, fail-soft. -->
             <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
+            <!-- tax-cbcr-and-pillar2-returns task 1.2: maps a group entity's old
+                 mainBusinessActivity onto the OECD bizActivities codes and fills
+                 tin (issued by NL) from its administration's RSIN, only where the
+                 new field is empty. After InitializeSettings, which imports the
+                 fields. Idempotent, fail-soft. -->
+            <step>OCA\Shillinq\Repair\BackfillGroupEntityCbcFields</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
