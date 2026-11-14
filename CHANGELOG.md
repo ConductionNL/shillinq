@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Purchase orders reach the supplier (`purchasing-order-dispatch-and-receipt`).
+  **Orders marked sent before this change were not delivered**: the send only
+  logged the Peppol message or the email and then marked the order sent. Peppol
+  now goes through integriq's Peppol connector (pending until integriq reports
+  the delivery) and email through integriq's mail channel (sent only when it
+  accepts the message); without integriq both send buttons are disabled with
+  the reason. Re-send any order that must reach its supplier. The order's state
+  now lives in `statusCode` only; a repair step aligns orders still marked sent
+  in the old `lifecycleState` field. Service receipts get their own pages under
+  Purchasing, and Confirm service on an order with service lines.
 - Automatic payment reminders (`receivables-automatic-dunning`). A daily job
   marks issued invoices past their due date as overdue and sends each overdue
   invoice the stage that is due on its customer's ladder, by email with the

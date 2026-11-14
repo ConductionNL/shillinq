@@ -60,6 +60,15 @@ interface PurchaseOrderServiceInterface {
 	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array;
 
 	/**
+	 * Which dispatch channels can take an order, and why one cannot.
+	 *
+	 * @return array{peppol: array{available: bool, reason: string|null}, email: array{available: bool, reason: string|null}}
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 */
+	public function dispatchChannels(): array;
+
+	/**
 	 * Create a purchase order with a materialised approval chain (REQ-PO3W-001).
 	 *
 	 * Server-authoritative:

@@ -291,6 +291,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // approval-chain preview + send-block guard. Static segments precede the
         // {id} wildcard so they are matched first (Symfony route ordering).
             ['name' => 'purchaseOrder#previewApprovalChain', 'url' => '/api/purchase-orders/approval-chain', 'verb' => 'GET'],
+            ['name' => 'purchaseOrder#dispatchChannels', 'url' => '/api/purchase-orders/dispatch-channels', 'verb' => 'GET'],
             ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
             ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 

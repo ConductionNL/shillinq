@@ -182,6 +182,26 @@
 								: '—'
 						}}
 					</dd>
+					<template v-if="purchaseOrder.dispatchChannel">
+						<dt>{{ t('shillinq', 'Dispatch channel') }}</dt>
+						<dd data-testid="po-detail-dispatch-channel">
+							{{ channelLabel(purchaseOrder.dispatchChannel) }}
+						</dd>
+						<dt>{{ t('shillinq', 'Dispatch status') }}</dt>
+						<dd
+							:class="`po-detail__dispatch po-detail__dispatch--${purchaseOrder.dispatchStatus || 'none'}`"
+							data-testid="po-detail-dispatch-status">
+							{{ dispatchStatusLabel(purchaseOrder.dispatchStatus) }}
+						</dd>
+					</template>
+					<template v-if="purchaseOrder.dispatchError">
+						<dt>{{ t('shillinq', 'Dispatch error') }}</dt>
+						<dd
+							class="po-detail__error"
+							data-testid="po-detail-dispatch-error">
+							{{ purchaseOrder.dispatchError }}
+						</dd>
+					</template>
 					<template v-if="purchaseOrder.peppolFallbackReason">
 						<dt>{{ t('shillinq', 'Fallback reason') }}</dt>
 						<dd data-testid="po-detail-fallback-reason">
@@ -194,7 +214,8 @@
 			<footer class="po-detail__actions">
 				<NcButton
 					variant="primary"
-					:disabled="!canSend || sending"
+					:disabled="!canSend || sending || !channelAvailable('peppol')"
+					:title="channelReason('peppol')"
 					data-testid="po-detail-send-peppol"
 					@click="onSendPeppol">
 					{{
@@ -205,7 +226,8 @@
 				</NcButton>
 				<NcButton
 					variant="secondary"
-					:disabled="!canSend || sending"
+					:disabled="!canSend || sending || !channelAvailable('email')"
+					:title="channelReason('email')"
 					data-testid="po-detail-send-email"
 					@click="onSendEmail">
 					{{
@@ -214,6 +236,20 @@
 							: t('shillinq', 'Send via PDF+email')
 					}}
 				</NcButton>
+				<NcButton
+					v-if="hasServiceLines"
+					variant="secondary"
+					data-testid="po-detail-confirm-service"
+					@click="onConfirmService">
+					{{ t('shillinq', 'Confirm service') }}
+				</NcButton>
+				<p
+					v-for="channel in unavailableChannels"
+					:key="channel"
+					class="po-detail__send-hint"
+					:data-testid="`po-detail-channel-unavailable-${channel}`">
+					{{ channelReason(channel) }}
+				</p>
 				<p
 					v-if="!canSend && purchaseOrder.statusCode !== 'sent'"
 					class="po-detail__send-hint">
@@ -247,6 +283,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
+import { isServiceLine } from '../../utils/serviceReceiptLines.js'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -276,10 +313,32 @@ export default {
 			sending: false,
 			sendingChannel: '',
 			sendError: '',
+			// Which channels the server can send through; null until read.
+			channels: null,
 		}
 	},
 
 	computed: {
+		/**
+		 * Whether the order holds a service line, so a delivery can be confirmed.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 */
+		hasServiceLines() {
+			return (this.purchaseOrder?.lines || []).some(isServiceLine)
+		},
+
+		/**
+		 * The channels the server says cannot take an order, in button order.
+		 *
+		 * @return {string[]}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
+		unavailableChannels() {
+			return ['peppol', 'email'].filter((channel) => !this.channelAvailable(channel))
+		},
+
 		/**
 		 * Whether the "Send" action is allowed from the client. The server
 		 * re-checks (ADR-005 server-authoritative) so this only governs the
@@ -306,7 +365,7 @@ export default {
 	},
 
 	async created() {
-		await this.loadPurchaseOrder()
+		await Promise.all([this.loadPurchaseOrder(), this.loadChannels()])
 	},
 
 	methods: {
@@ -360,6 +419,89 @@ export default {
 			} catch (e) {
 				this.matches = []
 			}
+		},
+
+		/**
+		 * Read which dispatch channels the server can send through.
+		 *
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
+		async loadChannels() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/purchase-orders/dispatch-channels'),
+				)
+				this.channels = response.data || null
+			} catch {
+				// Unknown availability leaves the buttons as they were; the
+				// server still refuses a send it cannot make.
+				this.channels = null
+			}
+		},
+
+		/**
+		 * Whether a channel can take an order. Unknown counts as available.
+		 *
+		 * @param {string} channel peppol or email
+		 * @return {boolean}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
+		channelAvailable(channel) {
+			return this.channels?.[channel]?.available !== false
+		},
+
+		/**
+		 * Why a channel cannot take an order, translated, or '' when it can.
+		 *
+		 * @param {string} channel peppol or email
+		 * @return {string}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
+		channelReason(channel) {
+			if (this.channelAvailable(channel)) {
+				return ''
+			}
+			const reasons = {
+				peppol: this.t('shillinq', 'Peppol sending is not configured'),
+				email: this.t('shillinq', 'Email sending is not configured'),
+			}
+			return reasons[channel] || ''
+		},
+
+		/**
+		 * @param {string} channel peppol or email
+		 * @return {string}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
+		channelLabel(channel) {
+			const labels = {
+				peppol: this.t('shillinq', 'Peppol'),
+				email: this.t('shillinq', 'PDF and email'),
+			}
+			return labels[channel] || channel
+		},
+
+		/**
+		 * @param {string|null} status pending, sent or failed
+		 * @return {string}
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+		 */
+		dispatchStatusLabel(status) {
+			const labels = {
+				pending: this.t('shillinq', 'Waiting for delivery'),
+				sent: this.t('shillinq', 'Delivered'),
+				failed: this.t('shillinq', 'Not delivered'),
+			}
+			return labels[status] || '—'
+		},
+
+		/**
+		 * Open the service receipt form for this order.
+		 *
+		 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-4.2
+		 */
+		onConfirmService() {
+			this.$router.push({ name: 'ServiceReceiptForm', query: { poId: this.id } })
 		},
 
 		async onSendPeppol() {
@@ -493,6 +635,18 @@ export default {
 	color: #fff;
 	padding: 8px;
 	margin: 8px 0;
+}
+
+.po-detail__dispatch--pending {
+	color: var(--color-warning-text);
+}
+
+.po-detail__dispatch--sent {
+	color: var(--color-success-text);
+}
+
+.po-detail__dispatch--failed {
+	color: var(--color-error-text);
 }
 
 .po-detail__send-hint {

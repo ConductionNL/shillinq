@@ -61,11 +61,13 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 	 * @param string $administrationId The administration identifier.
 	 * @param array $purchaseOrder The purchase order payload.
 	 *
-	 * @return void
+	 * @return bool Always true: the development binding records the attempt as sent.
 	 *
 	 * @inheritDoc
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
 	 */
-	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void {
+	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 		$this->logger->info(
 			'shillinq.purchase_order.mailer.dispatch',
 			[
@@ -75,5 +77,17 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface {
 			]
 		);
 
+		return true;
 	}//end sendPurchaseOrderEmail()
+
+	/**
+	 * The log mailer is the development binding: it always takes the order.
+	 *
+	 * @return bool Always true.
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.1
+	 */
+	public function isAvailable(): bool {
+		return true;
+	}//end isAvailable()
 }//end class

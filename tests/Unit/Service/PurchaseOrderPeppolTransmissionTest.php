@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
@@ -56,127 +57,105 @@ use Psr\Log\NullLogger;
 final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 
 	/**
-	 * sendToPeppol path: registered participant → peppolMessageId persisted,
-	 * lifecycle transitions to "sent".
+	 * Transitions the recording runner ran, as [objectId, action, asSystem].
 	 *
-	 * @return void
+	 * @var array<int,array{0:string,1:string,2:bool}>
 	 */
-	public function testSendToPeppolRecordsMessageIdOnRegisteredParticipant(): void {
-		$saved = [];
-		$data = [
-			'PurchaseOrder' => [$this->approvedPo()],
-		];
-		$adapter = new class implements PeppolTransmissionAdapterInterface {
-
-			/**
-			 * Captured lookup arguments.
-			 *
-			 * @var array<string,string>
-			 */
-			public array $lastLookup = [];
-
-			/**
-			 * Captured submit XML.
-			 *
-			 * @var string
-			 */
-			public string $lastUbl = '';
-
-			/**
-			 * @inheritDoc
-			 */
-			public function lookupParticipant(string $administrationId, string $partyId): ?string {
-				$this->lastLookup = ['adm' => $administrationId, 'sup' => $partyId];
-				return '0192:1234567890';
-			}
-
-			/**
-			 * @inheritDoc
-			 */
-			public function submitOrder(string $participantId, string $ublOrderXml): string {
-				$this->lastUbl = $ublOrderXml;
-				return 'urn:uuid:dead-beef-cafe';
-			}
-
-			/**
-			 * Not exercised by sendToPeppol() (which calls submitOrder()) — present
-			 * only to satisfy the generalised PeppolTransmissionPortInterface
-			 * (REQ-EINV-004) that PeppolTransmissionAdapterInterface now extends.
-			 *
-			 * @inheritDoc
-			 */
-			public function submit(string $participantId, string $documentType, string $payloadFileUri): string {
-				unset($participantId, $documentType, $payloadFileUri);
-				return 'urn:uuid:not-used-by-po-path';
-			}
-		};
-
-		$mailer = $this->stubMailer(failOnSend: true);
-		$service = $this->buildService(
-			data: $data,
-			saved: $saved,
-			adapter: $adapter,
-			mailer: $mailer
-		);
-
-		$result = $service->sendToPeppol(
-			administrationId: 'adm-1',
-			purchaseOrderId: 'po-1'
-		);
-
-		self::assertSame('sent', $result['statusCode']);
-		self::assertSame('urn:uuid:dead-beef-cafe', $result['peppolMessageId']);
-		self::assertNotEmpty($result['peppolSentAt']);
-		self::assertNotEmpty($result['sentAt']);
-		self::assertNull($result['peppolFallbackReason']);
-		self::assertSame(['adm' => 'adm-1', 'sup' => 'sup-1'], $adapter->lastLookup);
-		self::assertStringContainsString('urn:fdc:peppol.eu:poacc:bis:order_only:3', $adapter->lastUbl);
-
-		// The persisted record reflects the transition.
-		$persisted = $this->findSaved($saved, 'PurchaseOrder');
-		self::assertSame('sent', $persisted['statusCode']);
-		self::assertSame('urn:uuid:dead-beef-cafe', $persisted['peppolMessageId']);
-
-	}//end testSendToPeppolRecordsMessageIdOnRegisteredParticipant()
+	private array $transitions = [];
 
 	/**
-	 * Fallback path: supplier not registered → peppolFallbackReason recorded,
-	 * lifecycle transitions to "sent".
+	 * A participant supplier: the order is handed off and shows the dispatch
+	 * pending via Peppol; it stays approved until integriq reports delivery.
 	 *
 	 * @return void
 	 */
-	public function testSendToPeppolFallsBackWhenSupplierNotRegistered(): void {
+	public function testSendToPeppolHandsTheOrderOffAndShowsItPending(): void {
 		$saved = [];
-		$data = [
-			'PurchaseOrder' => [$this->approvedPo()],
-		];
-		$adapter = $this->stubAdapter(participant: null, failOnSubmit: true);
-		$mailer = $this->stubMailer(failOnSend: false);
+		$adapter = $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: false);
+		$mailer = $this->stubMailer();
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->expects(self::never())->method('run');
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $adapter, mailer: $mailer, runner: $runner);
 
-		$service = $this->buildService(
-			data: $data,
-			saved: $saved,
-			adapter: $adapter,
-			mailer: $mailer
-		);
+		$result = $service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
 
-		$result = $service->sendToPeppol(
-			administrationId: 'adm-1',
-			purchaseOrderId: 'po-1'
-		);
+		self::assertSame('approved', $result['statusCode']);
+		self::assertSame('peppol', $result['dispatchChannel']);
+		self::assertSame('pending', $result['dispatchStatus']);
+		self::assertNull($result['dispatchError']);
+		self::assertSame('urn:uuid:test-message-id', $result['peppolMessageId']);
+		self::assertArrayNotHasKey('sentAt', $result);
+		self::assertSame('po-1', $adapter->lastOrderId);
+		self::assertSame(['adm' => 'adm-1', 'sup' => 'sup-1'], $adapter->lastLookup);
+		self::assertStringContainsString('urn:fdc:peppol.eu:poacc:bis:order_only:3', $adapter->lastUbl);
+		self::assertSame(0, $mailer->callCount);
+		self::assertSame('pending', $this->findSaved($saved, 'PurchaseOrder')['dispatchStatus']);
 
-		self::assertSame('sent', $result['statusCode']);
+	}//end testSendToPeppolHandsTheOrderOffAndShowsItPending()
+
+	/**
+	 * A supplier that is not a participant: the failure is recorded, the order
+	 * stays approved and nothing is mailed behind the buyer's back.
+	 *
+	 * @return void
+	 */
+	public function testANonParticipantSupplierIsOfferedEmailInstead(): void {
+		$saved = [];
+		$mailer = $this->stubMailer();
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $mailer);
+
+		$result = $service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+
+		self::assertSame('approved', $result['statusCode']);
+		self::assertSame('failed', $result['dispatchStatus']);
+		self::assertSame('The supplier is not a Peppol participant.', $result['dispatchError']);
 		self::assertSame('supplier_not_peppol_participant', $result['peppolFallbackReason']);
-		self::assertArrayNotHasKey('peppolMessageId', $result, 'fallback path must NOT set peppolMessageId');
-		self::assertNotEmpty($result['sentAt']);
+		self::assertArrayNotHasKey('peppolMessageId', $result);
+		self::assertSame(0, $mailer->callCount);
 
-		// Mailer was called exactly once for the fallback dispatch.
-		self::assertSame(1, $mailer->callCount, 'PDF+email mailer must be invoked exactly once for the fallback');
+	}//end testANonParticipantSupplierIsOfferedEmailInstead()
 
-		$persisted = $this->findSaved($saved, 'PurchaseOrder');
-		self::assertSame('supplier_not_peppol_participant', $persisted['peppolFallbackReason']);
+	/**
+	 * A refused hand-off and an unconfigured adapter are recorded, never claimed.
+	 *
+	 * @return void
+	 */
+	public function testAFailedHandOffIsRecordedNotClaimed(): void {
+		$saved = [];
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: true), mailer: $this->stubMailer());
+		$result = $service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+		self::assertSame(['approved', 'failed', 'The order could not be handed to the Peppol access point.', 'peppol_send_failed'], [$result['statusCode'], $result['dispatchStatus'], $result['dispatchError'], $result['peppolFallbackReason']]);
 
-	}//end testSendToPeppolFallsBackWhenSupplierNotRegistered()
+		$saved = [];
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $this->stubAdapter(participant: '', failOnSubmit: false, failOnLookup: true), mailer: $this->stubMailer());
+		$result = $service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+		self::assertSame(['approved', 'failed', 'Peppol sending is not available: Peppol sending is not configured'], [$result['statusCode'], $result['dispatchStatus'], $result['dispatchError']]);
+
+	}//end testAFailedHandOffIsRecordedNotClaimed()
+
+	/**
+	 * A dispatch already pending is not sent a second time.
+	 *
+	 * @return void
+	 */
+	public function testAPendingDispatchIsNotSentAgain(): void {
+		$po = $this->approvedPo();
+		$po['dispatchStatus'] = 'pending';
+		$saved = [];
+		$service = $this->buildService(data: ['PurchaseOrder' => [$po]], saved: $saved, adapter: $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: false), mailer: $this->stubMailer());
+
+		foreach (['sendToPeppol', 'sendToPDFEmail'] as $method) {
+			try {
+				$service->$method(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+				self::fail($method . ' sent a pending order again');
+			} catch (\RuntimeException $e) {
+				self::assertSame('Purchase order cannot be sent: a dispatch is already pending', $e->getMessage());
+			}
+		}
+
+		self::assertSame([], $this->savesForSchema($saved, 'PurchaseOrder'));
+
+	}//end testAPendingDispatchIsNotSentAgain()
 
 	/**
 	 * The send-block precondition (slice 02) is reused — neither
@@ -189,20 +168,8 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 		$po = $this->approvedPo();
 		$po['approvalChain'][1]['decision'] = 'pending';
 		$po['approvalChain'][1]['decidedAt'] = '';
-		$data = [
-			'PurchaseOrder' => [$po],
-		];
-
 		$saved = [];
-		$adapter = $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: true);
-		$mailer = $this->stubMailer(failOnSend: true);
-
-		$service = $this->buildService(
-			data: $data,
-			saved: $saved,
-			adapter: $adapter,
-			mailer: $mailer
-		);
+		$service = $this->buildService(data: ['PurchaseOrder' => [$po]], saved: $saved, adapter: $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: true), mailer: $this->stubMailer());
 
 		try {
 			$service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
@@ -211,44 +178,127 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
 		}
 
-		// Nothing was persisted — no PurchaseOrder save touched the store.
 		self::assertSame([], $this->savesForSchema($saved, 'PurchaseOrder'));
 
 	}//end testSendToPeppolRefusesWhenApprovalIncomplete()
 
 	/**
-	 * sendToPDFEmail directly (no Peppol attempt) records the operator-chosen
-	 * fallback reason and transitions the PO to "sent".
+	 * An accepted email moves the order to sent through the declared `send` transition.
 	 *
 	 * @return void
 	 */
-	public function testSendToPDFEmailRecordsFallbackReason(): void {
+	public function testAnAcceptedEmailRunsTheSendTransition(): void {
 		$saved = [];
-		$data = [
-			'PurchaseOrder' => [$this->approvedPo()],
-		];
-		$adapter = $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: true);
-		$mailer = $this->stubMailer(failOnSend: false);
+		$runner = null;
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $mailer = $this->stubMailer(), runner: $runner);
 
-		$service = $this->buildService(
-			data: $data,
-			saved: $saved,
-			adapter: $adapter,
-			mailer: $mailer
-		);
+		$result = $service->sendToPDFEmail(administrationId: 'adm-1', purchaseOrderId: 'po-1', fallbackReason: 'supplier_request_pdf');
 
-		$result = $service->sendToPDFEmail(
-			administrationId: 'adm-1',
-			purchaseOrderId: 'po-1',
-			fallbackReason: 'supplier_request_pdf'
-		);
-
+		self::assertSame([['po-1', 'send', false]], $this->transitions);
 		self::assertSame('sent', $result['statusCode']);
+		self::assertSame('email', $result['dispatchChannel']);
+		self::assertSame('sent', $result['dispatchStatus']);
 		self::assertSame('supplier_request_pdf', $result['peppolFallbackReason']);
 		self::assertNotEmpty($result['sentAt']);
-		self::assertSame(1, $mailer->callCount, 'mailer is the only dispatch surface on the explicit fallback path');
+		self::assertSame(1, $mailer->callCount);
 
-	}//end testSendToPDFEmailRecordsFallbackReason()
+	}//end testAnAcceptedEmailRunsTheSendTransition()
+
+	/**
+	 * A refused email is recorded and the order stays approved.
+	 *
+	 * @return void
+	 */
+	public function testARefusedEmailKeepsTheOrderApproved(): void {
+		$saved = [];
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $this->stubMailer(accepts: false));
+
+		$result = $service->sendToPDFEmail(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+
+		self::assertSame([], $this->transitions);
+		self::assertSame(['approved', 'email', 'failed', 'The email channel did not accept the message.'], [$result['statusCode'], $result['dispatchChannel'], $result['dispatchStatus'], $result['dispatchError']]);
+
+	}//end testARefusedEmailKeepsTheOrderApproved()
+
+	/**
+	 * Without a mail channel the send is refused and nothing is written or claimed.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAMailChannelNothingIsClaimed(): void {
+		$saved = [];
+		$mailer = $this->stubMailer(available: false);
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo()]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $mailer);
+
+		try {
+			$service->sendToPDFEmail(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+			self::fail('an order was sent without a mail channel');
+		} catch (\RuntimeException $e) {
+			self::assertSame('Email sending is not configured', $e->getMessage());
+		}
+
+		self::assertSame(0, $mailer->callCount);
+		self::assertSame([], $this->savesForSchema($saved, 'PurchaseOrder'));
+		self::assertSame([], $this->transitions);
+
+	}//end testWithoutAMailChannelNothingIsClaimed()
+
+	/**
+	 * integriq's delivery status sent moves a pending Peppol order to sent as the system.
+	 *
+	 * @return void
+	 */
+	public function testADeliveredPeppolOrderIsSent(): void {
+		$po = array_merge($this->approvedPo(), ['dispatchChannel' => 'peppol', 'dispatchStatus' => 'pending']);
+		$saved = [];
+		$service = $this->buildService(data: ['PurchaseOrder' => [$po]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $this->stubMailer());
+
+		self::assertTrue($service->applyPeppolDeliveryStatus(purchaseOrderId: 'po-1', status: 'sent', detail: ''));
+
+		self::assertSame([['po-1', 'send', true]], $this->transitions);
+		$persisted = $this->findSaved($saved, 'PurchaseOrder');
+		self::assertSame('sent', $persisted['dispatchStatus']);
+		self::assertNotEmpty($persisted['peppolSentAt']);
+		self::assertFalse($service->applyPeppolDeliveryStatus(purchaseOrderId: 'po-1', status: 'sent', detail: ''), 'a sent order is not sent again');
+
+	}//end testADeliveredPeppolOrderIsSent()
+
+	/**
+	 * A failed delivery is shown with its reason and the order stays approved.
+	 *
+	 * @return void
+	 */
+	public function testAFailedPeppolDeliveryIsShownNotHidden(): void {
+		$po = array_merge($this->approvedPo(), ['dispatchChannel' => 'peppol', 'dispatchStatus' => 'pending']);
+		$saved = [];
+		$service = $this->buildService(data: ['PurchaseOrder' => [$po]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $this->stubMailer());
+
+		self::assertTrue($service->applyPeppolDeliveryStatus(purchaseOrderId: 'po-1', status: 'failed', detail: 'receiver unreachable'));
+
+		$persisted = $this->findSaved($saved, 'PurchaseOrder');
+		self::assertSame(['approved', 'failed', 'receiver unreachable'], [$persisted['statusCode'], $persisted['dispatchStatus'], $persisted['dispatchError']]);
+		self::assertSame([], $this->transitions);
+
+	}//end testAFailedPeppolDeliveryIsShownNotHidden()
+
+	/**
+	 * A status for an order without a Peppol dispatch, an unknown order or an
+	 * in-between status changes nothing.
+	 *
+	 * @return void
+	 */
+	public function testAStatusThatDoesNotApplyChangesNothing(): void {
+		$saved = [];
+		$pending = array_merge($this->approvedPo(), ['id' => 'po-2', 'dispatchChannel' => 'peppol', 'dispatchStatus' => 'pending']);
+		$service = $this->buildService(data: ['PurchaseOrder' => [$this->approvedPo(), $pending]], saved: $saved, adapter: $this->stubAdapter(participant: null, failOnSubmit: true), mailer: $this->stubMailer());
+
+		self::assertFalse($service->applyPeppolDeliveryStatus(purchaseOrderId: 'po-1', status: 'sent', detail: ''));
+		self::assertFalse($service->applyPeppolDeliveryStatus(purchaseOrderId: 'missing', status: 'sent', detail: ''));
+		self::assertFalse($service->applyPeppolDeliveryStatus(purchaseOrderId: 'po-2', status: 'queued', detail: ''));
+		self::assertSame([], $saved);
+		self::assertSame([], $this->transitions);
+
+	}//end testAStatusThatDoesNotApplyChangesNothing()
 
 	/**
 	 * Cross-tenant IDOR: the service refuses to transmit a PO scoped to
@@ -262,7 +312,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			'PurchaseOrder' => [$this->approvedPo()],
 		];
 		$adapter = $this->stubAdapter(participant: '0192:1234567890', failOnSubmit: true);
-		$mailer = $this->stubMailer(failOnSend: true);
+		$mailer = $this->stubMailer();
 
 		$service = $this->buildService(
 			data: $data,
@@ -296,7 +346,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			'projectCode' => 'P-FAC',
 			'totalAmount' => 18500.00,
 			'notes' => 'Coffee machine refresh.',
-			'statusCode' => 'draft',
+			'statusCode' => 'approved',
 			'lines' => [
 				[
 					'lineNumber' => 1,
@@ -335,20 +385,44 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 	 *
 	 * @param string|null $participant Lookup return value.
 	 * @param bool $failOnSubmit Whether submit() should throw.
+	 * @param bool $failOnLookup Whether the lookup should throw.
 	 *
 	 * @return PeppolTransmissionAdapterInterface
 	 */
-	private function stubAdapter(?string $participant, bool $failOnSubmit): PeppolTransmissionAdapterInterface {
-		return new class($participant, $failOnSubmit) implements PeppolTransmissionAdapterInterface {
+	private function stubAdapter(?string $participant, bool $failOnSubmit, bool $failOnLookup = false): object {
+		return new class($participant, $failOnSubmit, $failOnLookup) implements PeppolTransmissionAdapterInterface {
+			/**
+			 * Captured lookup arguments.
+			 *
+			 * @var array<string,string>
+			 */
+			public array $lastLookup = [];
+
+			/**
+			 * Captured UBL.
+			 *
+			 * @var string
+			 */
+			public string $lastUbl = '';
+
+			/**
+			 * Captured order id.
+			 *
+			 * @var string
+			 */
+			public string $lastOrderId = '';
+
 			/**
 			 * Constructor.
 			 *
 			 * @param string|null $participant Lookup return value.
-			 * @param bool $failOnSubmit Whether submit() should throw.
+			 * @param bool $failOnSubmit Whether submitOrder() should throw.
+			 * @param bool $failOnLookup Whether lookupParticipant() should throw.
 			 */
 			public function __construct(
 				private readonly ?string $participant,
 				private readonly bool $failOnSubmit,
+				private readonly bool $failOnLookup,
 			) {
 			}
 
@@ -356,26 +430,30 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			 * @inheritDoc
 			 */
 			public function lookupParticipant(string $administrationId, string $partyId): ?string {
-				unset($administrationId, $partyId);
+				if ($this->failOnLookup === true) {
+					throw new \RuntimeException('Peppol sending is not configured');
+				}
+
+				$this->lastLookup = ['adm' => $administrationId, 'sup' => $partyId];
 				return $this->participant;
 			}
 
 			/**
 			 * @inheritDoc
 			 */
-			public function submitOrder(string $participantId, string $ublOrderXml): string {
-				unset($participantId, $ublOrderXml);
+			public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string {
+				unset($participantId);
 				if ($this->failOnSubmit === true) {
 					throw new \RuntimeException('Peppol AP unreachable');
 				}
 
+				$this->lastUbl = $ublOrderXml;
+				$this->lastOrderId = (string)($purchaseOrder['id'] ?? '');
 				return 'urn:uuid:test-message-id';
 			}
 
 			/**
-			 * Not exercised by sendToPeppol() (which calls submitOrder()) — present
-			 * only to satisfy the generalised PeppolTransmissionPortInterface
-			 * (REQ-EINV-004) that PeppolTransmissionAdapterInterface now extends.
+			 * Not exercised by sendToPeppol().
 			 *
 			 * @inheritDoc
 			 */
@@ -390,12 +468,13 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 	/**
 	 * Stub a mailer that counts dispatches (and optionally fails them).
 	 *
-	 * @param bool $failOnSend Whether sendPurchaseOrderEmail() should throw.
+	 * @param bool $available What isAvailable() answers.
+	 * @param bool $accepts   Whether the channel accepts the message.
 	 *
 	 * @return PurchaseOrderMailerInterface
 	 */
-	private function stubMailer(bool $failOnSend): object {
-		return new class($failOnSend) implements PurchaseOrderMailerInterface {
+	private function stubMailer(bool $available = true, bool $accepts = true): object {
+		return new class($available, $accepts) implements PurchaseOrderMailerInterface {
 			/**
 			 * Number of times sendPurchaseOrderEmail was invoked.
 			 *
@@ -406,22 +485,29 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			/**
 			 * Constructor.
 			 *
-			 * @param bool $failOnSend Whether send should throw.
+			 * @param bool $available What isAvailable() answers.
+			 * @param bool $accepts   What sendPurchaseOrderEmail() answers.
 			 */
 			public function __construct(
-				private readonly bool $failOnSend,
+				private readonly bool $available,
+				private readonly bool $accepts,
 			) {
 			}
 
 			/**
 			 * @inheritDoc
 			 */
-			public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void {
+			public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): bool {
 				unset($administrationId, $purchaseOrder);
 				$this->callCount++;
-				if ($this->failOnSend === true) {
-					throw new \RuntimeException('Mailer down');
-				}
+				return $this->accepts;
+			}
+
+			/**
+			 * @inheritDoc
+			 */
+			public function isAvailable(): bool {
+				return $this->available;
 			}
 		};
 
@@ -444,6 +530,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 		PeppolTransmissionAdapterInterface $adapter,
 		PurchaseOrderMailerInterface $mailer,
 		array $accessibleAdministrations = ['adm-1'],
+		?ObjectTransitionRunner $runner = null,
 	): PurchaseOrderService {
 		$stub = new class($data, $saved) {
 
@@ -534,6 +621,24 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			}
 
 			/**
+			 * Set one field on a stored row, as the transition engine would.
+			 *
+			 * @param string $schema Schema slug.
+			 * @param string $id     Row id.
+			 * @param string $field  Field.
+			 * @param mixed  $value  Value.
+			 *
+			 * @return void
+			 */
+			public function setField(string $schema, string $id, string $field, mixed $value): void {
+				foreach (($this->data[$schema] ?? []) as $idx => $row) {
+					if (($row['id'] ?? null) === $id) {
+						$this->data[$schema][$idx][$field] = $value;
+					}
+				}
+			}
+
+			/**
 			 * Capture a saved object — also overwrite the matching row by id so
 			 * subsequent findAll calls observe the transition.
 			 *
@@ -593,9 +698,38 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			purchaseOrderMailer: $mailer,
 			peppolMapper: new PeppolBisOrderMapper(),
 			objectService: new DuckObjectServiceAdapter($stub),
+			transitionRunner: ($runner ?? $this->recordingRunner(stub: $stub)),
 		);
 
 	}//end buildService()
+
+	/**
+	 * A transition runner that records each run and moves the stored order to sent.
+	 *
+	 * @param object $stub The in-memory object store.
+	 *
+	 * @return ObjectTransitionRunner
+	 */
+	private function recordingRunner(object $stub): ObjectTransitionRunner {
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$record = function (string $objectId, string $action, bool $asSystem) use ($stub): void {
+			$this->transitions[] = [$objectId, $action, $asSystem];
+			$stub->setField(schema: 'PurchaseOrder', id: $objectId, field: 'statusCode', value: 'sent');
+		};
+		$runner->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use ($record): void {
+				$record($objectId, $action, false);
+			}
+		);
+		$runner->method('runAsSystem')->willReturnCallback(
+			static function (string $objectId, string $action) use ($record): mixed {
+				$record($objectId, $action, true);
+				return null;
+			}
+		);
+
+		return $runner;
+	}//end recordingRunner()
 
 	/**
 	 * Return the most recent saved object for a given schema.

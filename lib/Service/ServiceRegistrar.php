@@ -67,6 +67,10 @@ use OCA\Shillinq\Service\Payment\MolliePaymentProvider;
 use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
+use OCA\Shillinq\Service\PurchaseOrder\IntegriqPeppolOrderAdapter;
+use OCA\Shillinq\Service\PurchaseOrder\IntegriqPurchaseOrderMailer;
+use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
+use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -74,8 +78,11 @@ use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Service\Sms\LogSmsProviderAdapter;
 use OCA\Shillinq\Service\Sms\SmsProviderAdapterInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Files\IRootFolder;
 use OCP\IAppConfig;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Container bindings of the Service component.
@@ -181,6 +188,22 @@ final class ServiceRegistrar {
 		// tests/Unit/AppInfo/ContainerResolvableConstructorsTest.php, which
 		// fails when a required in-app interface dependency has no binding.
 		$context->registerServiceAlias(PeppolTransmissionPortInterface::class, LogPeppolTransmissionAdapter::class);
+
+		// Change purchasing-order-dispatch-and-receipt (REQ-PODR-001/002): a purchase
+		// order is handed to integriq's Peppol connector and email channel. The
+		// adapters refuse, and the order stays approved, when integriq is absent;
+		// rebinding these two to the Log* adapters is the rollback.
+		$context->registerService(
+			PeppolTransmissionAdapterInterface::class,
+			static fn (ContainerInterface $c): IntegriqPeppolOrderAdapter => new IntegriqPeppolOrderAdapter(
+				partyDirectory: $c->get(LogPeppolTransmissionAdapter::class),
+				container: $c,
+				rootFolder: $c->get(IRootFolder::class),
+				userSession: $c->get(IUserSession::class),
+				logger: $c->get(LoggerInterface::class),
+			)
+		);
+		$context->registerServiceAlias(PurchaseOrderMailerInterface::class, IntegriqPurchaseOrderMailer::class);
 
 		$context->registerServiceAlias(SmsProviderAdapterInterface::class, LogSmsProviderAdapter::class);
 

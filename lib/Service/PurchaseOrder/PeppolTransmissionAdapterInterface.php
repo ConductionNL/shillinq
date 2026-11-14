@@ -64,12 +64,15 @@ interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInter
 	 * @param string $participantId Peppol participant id resolved earlier
 	 *                              (`scheme:identifier`).
 	 * @param string $ublOrderXml The UBL 2.1 Order document XML.
+	 * @param array<string,mixed> $purchaseOrder The order being sent, so an adapter
+	 *                                           can name it in what it hands on.
 	 *
-	 * @return string The Peppol message id (URN).
+	 * @return string The Peppol message id (URN), or the reference the
+	 *                delivery status will name.
 	 *
 	 * @throws \RuntimeException When the access point refuses or fails.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 	 */
-	public function submitOrder(string $participantId, string $ublOrderXml): string;
+	public function submitOrder(string $participantId, string $ublOrderXml, array $purchaseOrder = []): string;
 }//end interface
