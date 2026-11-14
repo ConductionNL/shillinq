@@ -164,6 +164,34 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testAJournalLinesCostCentreAndProjectReachTheGlLine()
 
 	/**
+	 * REQ-LJD-001: a line carrying all three codes hands each to its GL line;
+	 * a line carrying none hands on none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-journal-entry-lines-carry-dimension-codes-onto-the-ledger-req-ljd-001
+	 */
+	public function testAJournalLinesThreeCodesReachTheGlLine(): void {
+		$entry = $this->journalEntry();
+		$entry['lines'][0]['costCenterCode'] = 'CC-100';
+		$entry['lines'][0]['costCarrierCode'] = 'KD-200';
+		$entry['lines'][0]['projectCode'] = 'PRJ-2026-001';
+		$entry['lines'][1]['costCarrierCode'] = '';
+		$this->action()->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+
+		$lines = $this->store->savedOf('GLLine');
+		self::assertSame(
+			['costCenterCode' => 'CC-100', 'costCarrierCode' => 'KD-200', 'projectCode' => 'PRJ-2026-001'],
+			array_intersect_key($lines[0], array_flip(['costCenterCode', 'costCarrierCode', 'projectCode']))
+		);
+		self::assertSame([], array_intersect_key($lines[1], array_flip(['costCenterCode', 'costCarrierCode', 'projectCode'])));
+		$row = $lines[0];
+		unset($row['id']);
+		$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+		self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+	}//end testAJournalLinesThreeCodesReachTheGlLine()
+
+	/**
 	 * An unbalanced entry is refused and nothing is written.
 	 *
 	 * @return void

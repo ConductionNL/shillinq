@@ -74,8 +74,16 @@
             "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114120000",
-            "versionsSha256": "2d12b52185302c8b182434cf7806cd71f1dd188d2eb1bf9b3a6e814a57b5fa6c"
+            "appVersion": "0.5.7-unstable.20261114130000",
+            "versionsSha256": "f728fb4065a5615f8629d79c69e3d11cbf1db0b4ba3b8305afd429c23c581636"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114150000",
+            "versionsSha256": "c9d22233dfaee51c0c3663208b6fa7f2b54a4ebfb865146ebefe3f9188305824"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114170000",
+            "versionsSha256": "e753069daf5aa1586050f158cafc77ec1508b30108e9a8fbb3a157eadbdb1c69"
         }
     ],
     "versions": {
@@ -361,7 +369,7 @@
         "schema:IroRecord": "0.1.0",
         "schema:IrregularityReport": "0.1.0",
         "schema:Iv3Export": "0.1.0",
-        "schema:JournalEntry": "0.1.0",
+        "schema:JournalEntry": "0.2.0",
         "schema:JubileumvoorzieningDetail": "0.1.0",
         "schema:KIATier": "0.1.0",
         "schema:KORAnnualTurnover": "0.1.0",
@@ -596,6 +604,8 @@
         "schema:WaterschapHeffingPosting": "0.1.0",
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
+        "schema:WebshopChannel": "0.1.0",
+        "schema:WebshopOrder": "0.1.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",
