@@ -492,15 +492,7 @@ class InitializeSettings implements IRepairStep {
 	private function seedProjectData(IOutput $output): void {
 		$output->info('Seeding RJ-270 stages...');
 		$rj270Result = $this->settingsService->seedRj270Stages();
-		if (($rj270Result['success'] ?? false) === true) {
-			$output->info(
-				'RJ-270 stages seeded: ' . ($rj270Result['seeded'] ?? 0) . ' created, ' . ($rj270Result['skipped'] ?? 0) . ' skipped.'
-			);
-		}
-
-		if (($rj270Result['success'] ?? false) !== true) {
-			$output->warning('RJ-270 stages seeding issue: ' . ($rj270Result['message'] ?? 'unknown error'));
-		}
+		$this->reportProjectSeedResult(output: $output, result: $rj270Result, label: 'RJ-270 stages');
 
 		$settings = $this->settingsService->getSettings();
 		$administrationId = ($settings['administration_id'] ?? '');
@@ -525,6 +517,29 @@ class InitializeSettings implements IRepairStep {
 		}
 
 	}//end seedProjectData()
+
+	/**
+	 * Report a project-data seed result whose success flag may be absent: the counts on success, the message otherwise.
+	 *
+	 * @param IOutput             $output The output interface for progress reporting.
+	 * @param array<string,mixed> $result The seed result.
+	 * @param string              $label  What was seeded.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+	 */
+	private function reportProjectSeedResult(IOutput $output, array $result, string $label): void {
+		if (($result['success'] ?? false) === true) {
+			$output->info(
+				$label . ' seeded: ' . ($result['seeded'] ?? 0) . ' created, ' . ($result['skipped'] ?? 0) . ' skipped.'
+			);
+		}
+
+		if (($result['success'] ?? false) !== true) {
+			$output->warning($label . ' seeding issue: ' . ($result['message'] ?? 'unknown error'));
+		}
+	}//end reportProjectSeedResult()
 
 	/**
 	 * Seed the consultancy-project-accounting templates (CostProject + CostCenter)
@@ -1473,11 +1488,7 @@ class InitializeSettings implements IRepairStep {
 	 */
 	private function seedChartOfAccounts(IOutput $output): void {
 		$settings = $this->settingsService->getSettings();
-		$templateRaw = ($settings['rgs_template'] ?? '');
-		$template = 'mkb';
-		if ($templateRaw !== '') {
-			$template = $templateRaw;
-		}
+		$template = $this->rgsTemplate(settings: $settings);
 
 		$administrationId = ($settings['administration_id'] ?? '');
 
@@ -1503,35 +1514,55 @@ class InitializeSettings implements IRepairStep {
 			administrationId: $administrationId
 		);
 
-		if ($seedResult['success'] === true) {
-			$seeded = ($seedResult['seeded'] ?? 0);
-			$skipped = ($seedResult['skipped'] ?? 0);
-			$output->info(
-				'Chart of accounts seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
-			);
-		}
-
-		if ($seedResult['success'] !== true) {
-			$message = ($seedResult['message'] ?? 'unknown error');
-			$output->warning('Chart of accounts seeding issue: ' . $message);
-		}
+		$this->reportSeedResult(output: $output, result: $seedResult, seededLabel: 'Chart of accounts', issueLabel: 'Chart of accounts');
 
 		$allocationResult = $this->settingsService->seedAllocationRules(administrationId: $administrationId);
 
-		if ($allocationResult['success'] === true) {
-			$seeded = ($allocationResult['seeded'] ?? 0);
-			$skipped = ($allocationResult['skipped'] ?? 0);
+		$this->reportSeedResult(output: $output, result: $allocationResult, seededLabel: 'AllocationRule examples', issueLabel: 'AllocationRule');
+
+	}//end seedChartOfAccounts()
+
+	/**
+	 * The configured RGS template variant, `mkb` when none is configured.
+	 *
+	 * @param array<string,mixed> $settings The app settings.
+	 *
+	 * @return string The template variant.
+	 */
+	private function rgsTemplate(array $settings): string {
+		$templateRaw = ($settings['rgs_template'] ?? '');
+		$template = 'mkb';
+		if ($templateRaw !== '') {
+			$template = $templateRaw;
+		}
+
+		return $template;
+	}//end rgsTemplate()
+
+	/**
+	 * Report a seed result: the counts on success, the message otherwise.
+	 *
+	 * @param IOutput             $output      The output interface for progress reporting.
+	 * @param array<string,mixed> $result      The seed result with success flag and counts.
+	 * @param string              $seededLabel What was seeded, in the success line.
+	 * @param string              $issueLabel  What was seeded, in the issue line.
+	 *
+	 * @return void
+	 */
+	private function reportSeedResult(IOutput $output, array $result, string $seededLabel, string $issueLabel): void {
+		if ($result['success'] === true) {
+			$seeded = ($result['seeded'] ?? 0);
+			$skipped = ($result['skipped'] ?? 0);
 			$output->info(
-				'AllocationRule examples seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
+				$seededLabel . ' seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
 			);
 		}
 
-		if ($allocationResult['success'] !== true) {
-			$message = ($allocationResult['message'] ?? 'unknown error');
-			$output->warning('AllocationRule seeding issue: ' . $message);
+		if ($result['success'] !== true) {
+			$message = ($result['message'] ?? 'unknown error');
+			$output->warning($issueLabel . ' seeding issue: ' . $message);
 		}
-
-	}//end seedChartOfAccounts()
+	}//end reportSeedResult()
 
 	/**
 	 * Seed the ReimbursementPolicy master-data records from
