@@ -455,11 +455,12 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	/**
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run releasing a run-scoped lock.
 	 *
 	 * @return bool
 	 */
-	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
-		return $this->inner->unlockObject($identifier, $advisory);
+	public function unlockObject(string|int $identifier, bool $advisory = false, ?string $runUuid = null): bool {
+		return $this->inner->unlockObject($identifier, $advisory, $runUuid);
 
 	}//end unlockObject()
 
@@ -468,6 +469,8 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @param ?string $process A label for the holding process.
 	 * @param ?int $duration Lock duration in seconds.
 	 * @param bool $advisory Take an advisory lock.
+	 * @param ?string $runUuid The flow run taking a run-scoped lock.
+	 * @param ?string $nodeId  The flow node that took it.
 	 *
 	 * @return array
 	 */
@@ -475,9 +478,9 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 		string $identifier,
 		?string $process = null,
 		?int $duration = null,
-		bool $advisory = false
+		bool $advisory = false, ?string $runUuid = null, ?string $nodeId = null
 	): array {
-		return $this->inner->lockObject($identifier, $process, $duration, $advisory);
+		return $this->inner->lockObject($identifier, $process, $duration, $advisory, $runUuid, $nodeId);
 
 	}//end lockObject()
 

@@ -434,8 +434,8 @@ class AssignmentHoursListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
-		$reporting = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ProjectHoursRegistration.php');
+		$reporting = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ProjectHoursRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
 		$this->assertStringContainsString('(new ProjectHoursRegistration())->register(context: $context);', $reporting);

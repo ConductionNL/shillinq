@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeZone;
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCA\Shillinq\Util\ObjectIdentifier;

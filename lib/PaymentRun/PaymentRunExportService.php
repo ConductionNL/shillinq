@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRunExportServiceInterface;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
 use OCA\Shillinq\Reporting\SystemTagAssigner;
 use OCA\Shillinq\Reporting\TaggedFileStore;
@@ -57,7 +58,7 @@ use ReflectionClass;
  * Discovers generators, validates + renders the run, stores + tags the files,
  * writes back the file reference, and drives approved → exported.
  */
-class PaymentRunExportService {
+class PaymentRunExportService implements PaymentRunExportServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.

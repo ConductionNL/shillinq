@@ -76,7 +76,7 @@ final class BillableInvoiceRecords {
 	 */
 	public function invoicePayload(InvoiceDraft $draft): array {
 		$request = $draft->request;
-		$amounts = $this->amountsInEuros(totals: $draft->totals);
+		$amounts = $this->amountsInEuros(totals: $draft->totals, currency: $draft->currency);
 
 		return [
 			'administrationId' => $request->administrationId,
@@ -96,8 +96,13 @@ final class BillableInvoiceRecords {
 			'netAmount' => $amounts['netAmount'],
 			'vatAmount' => $amounts['vatAmount'],
 			'grossAmount' => $amounts['grossAmount'],
+<<<<<<< HEAD
 			'currency' => 'EUR',
 			'paymentTerms' => 'net ' . $draft->paymentTermDays,
+=======
+			'currency' => $draft->currency,
+			'paymentTerms' => 'net 30',
+>>>>>>> origin/development
 			'status' => 'draft',
 			'posted' => false,
 			'obligationId' => null,
@@ -188,18 +193,21 @@ final class BillableInvoiceRecords {
 
 
 	/**
-	 * Net, VAT and gross in euros, and the currency.
+	 * Net, VAT and gross in the invoice currency's units, and the currency.
 	 *
-	 * @param array<string,mixed> $totals The VAT totals in cents.
+	 * @param array<string,mixed> $totals   The VAT totals in cents.
+	 * @param string              $currency The invoice currency.
 	 *
 	 * @return array{netAmount: float, vatAmount: float, grossAmount: float, currency: string}
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
 	 */
-	private function amountsInEuros(array $totals): array {
+	private function amountsInEuros(array $totals, string $currency = 'EUR'): array {
 		return [
 			'netAmount' => round($totals['netCents'] / 100, 2),
 			'vatAmount' => round($totals['vatCents'] / 100, 2),
 			'grossAmount' => round($totals['grossCents'] / 100, 2),
-			'currency' => 'EUR',
+			'currency' => $currency,
 		];
 	}//end amountsInEuros()
 

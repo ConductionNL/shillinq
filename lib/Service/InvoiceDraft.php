@@ -94,4 +94,11 @@ final class InvoiceDraft {
 	 * @var string
 	 */
 	public string $invoiceId = '';
+
+	/**
+	 * The invoice currency: the customer's, else the administration's functional currency.
+	 *
+	 * @var string
+	 */
+	public string $currency = 'EUR';
 }//end class

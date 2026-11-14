@@ -440,6 +440,14 @@
             "description": "Checks the VAT number of one customer or supplier the caller can see."
         },
         {
+            "name": "vat-position",
+            "description": "The running VAT position of a period per return box (REQ-VPS-001)."
+        },
+        {
+            "name": "vat-suppletie",
+            "description": "Check a filed VAT return for corrections and prepare its supplementary return (REQ-VPS-002)."
+        },
+        {
             "name": "wbso-account-api",
             "description": "Account REST API (REQ-WBSO-001 / REQ-WBSO-005 / REQ-WBSO-006)."
         },
@@ -12120,6 +12128,178 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/vat-returns/{returnId}/detect-drift": {
+            "post": {
+                "operationId": "vat-suppletie-detect-drift",
+                "summary": "Check a filed VAT return for corrections (REQ-VPS-002)",
+                "description": "Compares a filed VAT return with the books and writes a draft VatCorrection when they drifted (201), or answers drift false (200). Needs a signed-in Nextcloud user who is a member of the return's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The filed VATReturn id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "A correction was written.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-corrections/{correctionId}/prepare": {
+            "post": {
+                "operationId": "vat-suppletie-prepare",
+                "summary": "Prepare the supplementary VAT return of a detected correction (REQ-VPS-002)",
+                "description": "Compiles the per-box differences, decides against the EUR 1,000 threshold and stages the correction posting. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The detected VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-position": {
+            "get": {
+                "operationId": "vat-position-show",
+                "summary": "The running VAT position of a period per return box (REQ-VPS-001)",
+                "description": "Per box the base and VAT of the lines posted so far, the lines behind each box, and the amount payable (negative: refundable). Needs a signed-in Nextcloud user who is a member of the administration.",
+                "tags": [
+                    "vat-position"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The administration.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": true,
+                        "description": "YYYY-Qn, YYYY-MM or YYYY.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
                     }
                 }
             }

@@ -70,12 +70,16 @@
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
         },
         {
+            "appVersion": "0.5.7-unstable.20261113190000",
+            "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
+        },
+        {
             "appVersion": "0.5.7-unstable.20261113200000",
             "versionsSha256": "49773d5cf1057e4ec4abac27c09268e5ab325db2dc43523856e7b69adcf8d190"
         },
         {
             "appVersion": "0.5.7-unstable.20261114150000",
-            "versionsSha256": "dea8334249a7165b72efcbcd70531dd5a02d0c816b0c70925484e65af3d0a057"
+            "versionsSha256": "6ffa1d4662c58c3f73481f49968a8d15cc110ae859500c3c39ff37e377c2f0d6"
         }
     ],
     "versions": {
@@ -114,7 +118,7 @@
         "schema:AuditorStatement": "0.1.0",
         "schema:AutoAccrualPosting": "0.1.0",
         "schema:AutoAccrualRule": "0.1.0",
-        "schema:AvailabilityRule": "0.1.0",
+        "schema:AvailabilityRule": "0.2.0",
         "schema:BBVProgramma": "0.1.0",
         "schema:BBVProgramme": "0.3.0",
         "schema:BalanceSheet": "0.1.0",
@@ -144,7 +148,7 @@
         "schema:BookingCancellation": "0.1.0",
         "schema:BookingCancellationTemplate": "0.1.0",
         "schema:BookingConfirmationTemplate": "0.1.0",
-        "schema:BookingConstraint": "0.1.0",
+        "schema:BookingConstraint": "0.2.0",
         "schema:BookingNotificationTrigger": "0.1.0",
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",

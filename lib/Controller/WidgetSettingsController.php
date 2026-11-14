@@ -28,8 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\WidgetAuthService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -47,12 +47,12 @@ class WidgetSettingsController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param WidgetAuthService $authService API-key lifecycle service.
+	 * @param WidgetAuthServiceInterface $authService API-key lifecycle service.
 	 * @param IUserSession $userSession Session for the acting admin user id (audit-trail actor).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WidgetAuthService $authService,
+		private readonly WidgetAuthServiceInterface $authService,
 		private readonly IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

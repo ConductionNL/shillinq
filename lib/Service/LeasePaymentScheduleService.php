@@ -30,10 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\LeasePaymentScheduleServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Materialises the LeasePaymentSchedule rows for an active lease (REQ-LA-002).
@@ -45,7 +46,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
-class LeasePaymentScheduleService {
+class LeasePaymentScheduleService implements LeasePaymentScheduleServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
