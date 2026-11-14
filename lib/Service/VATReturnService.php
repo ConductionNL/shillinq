@@ -269,6 +269,51 @@ class VATReturnService implements VATReturnServiceInterface {
 	}//end computeCurrentDeclarations()
 
 	/**
+	 * The running VAT position of a period per return box, read from the same
+	 * stamped lines a prepared return reads (REQ-VPS-001).
+	 *
+	 * Each box carries its base and VAT as booked so far and the ledger lines
+	 * behind it; the totals carry the VAT collected, the VAT paid and the
+	 * amount payable (collected minus paid; negative is a refund). Because it
+	 * runs the one derivation `deriveVATLines()` runs, the position of a
+	 * closed period equals the return prepared for it.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $startDate Period start (inclusive, ISO-8601).
+	 * @param string $endDate Period end (inclusive, ISO-8601).
+	 *
+	 * @return array{boxes:list<array{returnBox:string,type:string,taxRate:float,base:float,vat:float,lineCount:int,lines:list<array<string,mixed>>}>,totalVATCollected:float,totalVATPaid:float,totalTaxableAmount:float,payable:float}
+	 *
+	 * @spec openspec/changes/tax-vat-position-and-suppletie/tasks.md#task-1.1
+	 */
+	public function positionByBox(string $administrationId, string $startDate, string $endDate): array {
+		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+
+		$boxes = [];
+		foreach ($scan['declarationsByKey'] as $group) {
+			$boxes[] = [
+				'returnBox' => $group['returnBox'],
+				'type' => $group['type'],
+				'taxRate' => $group['taxRate'],
+				'base' => $this->fromCents(cents: $group['totalTaxableCents']),
+				'vat' => $this->fromCents(cents: $group['totalVATAmountCents']),
+				'lineCount' => $group['lineCount'],
+				'lines' => $group['pendingLines'],
+			];
+		}
+
+		$totals = $this->scanTotals(scan: $scan);
+
+		return [
+			'boxes' => $boxes,
+			'totalVATCollected' => $totals['totalVATCollected'],
+			'totalVATPaid' => $totals['totalVATPaid'],
+			'totalTaxableAmount' => $totals['totalTaxableAmount'],
+			'payable' => $this->fromCents(cents: ($scan['totalVATCollectedCt'] - $scan['totalVATPaidCt'])),
+		];
+	}//end positionByBox()
+
+	/**
 	 * Fetch the persisted (as-filed) `VATDeclaration` rows for a return, grouped
 	 * the same shape `computeCurrentDeclarations()` returns, so callers can diff
 	 * the two directly (REQ-VBTW-013).

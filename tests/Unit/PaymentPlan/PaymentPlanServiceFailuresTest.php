@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 use DateTime;
 use OCA\Shillinq\PaymentPlan\PaymentPlanAllocator;
 use OCA\Shillinq\PaymentPlan\PaymentPlanMailer;
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanSchedule;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use OCA\Shillinq\Service\DunningRunService;
