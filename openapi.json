@@ -12344,8 +12344,8 @@
                     {
                         "name": "administrationId",
                         "in": "query",
-                        "required": true,
-                        "description": "The administration.",
+                        "required": false,
+                        "description": "The administration; the caller's active administration when left out.",
                         "schema": {
                             "type": "string"
                         }
@@ -12353,8 +12353,8 @@
                     {
                         "name": "period",
                         "in": "query",
-                        "required": true,
-                        "description": "YYYY-Qn, YYYY-MM or YYYY.",
+                        "required": false,
+                        "description": "YYYY-Qn, YYYY-MM or YYYY; the quarter of today when left out.",
                         "schema": {
                             "type": "string"
                         }
