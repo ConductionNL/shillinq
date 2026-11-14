@@ -563,6 +563,11 @@
                 },
                 {
                   "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\SelfBillingAgreementGuard",
+                  "description": "Before anything is booked: refuse a self-billed invoice whose customer has no self-billing agreement covering the invoice date, or that was rejected (requireSelfBillingAgreement, sales-einvoice-exchange REQ-SEIX-007). A no-op for an invoice that is not self-billed."
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Book the issued invoice: debit the receivables control account for grossAmount, credit revenue per invoice line and output VAT for vatAmount, in one balanced GLTransaction, and write glTransactionId (REQ-LPP-007). A down payment credits the advances account instead of revenue, and a deduction line debits it (REQ-SDP-002, REQ-SDP-003).",
                   "actionParameters": {

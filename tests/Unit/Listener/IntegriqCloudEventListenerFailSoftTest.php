@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
+use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceIntake;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\PaymentReconciliationService;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -82,6 +83,7 @@ final class IntegriqCloudEventListenerFailSoftTest extends TestCase {
 			schemaResolver: $this->resolver,
 			reconciliation: $this->reconciliation,
 			logger: $this->logger,
+			inboundInvoices: $this->createMock(originalClassName: SelfBilledInvoiceIntake::class),
 		);
 	}//end setUp()
 

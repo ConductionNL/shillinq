@@ -48,22 +48,41 @@ export function sendEInvoiceEndpoint(invoiceNumber) {
 
 /**
  * Map a successful `send-einvoice` response into the UI state the component
- * needs: the new chip status and, when the server offered the null-Peppol-
- * participant fallback (REQ-EINV-003), a human-readable notice.
+ * needs: the new chip status and, when the server fell back to email, a
+ * human-readable notice. Peppol being unavailable on the instance
+ * (REQ-SEIX-001) and an e-invoice file that could not be stored
+ * (REQ-SEIX-002) each have their own notice; otherwise the fallback is the
+ * null-Peppol-participant one (REQ-EINV-003).
  *
- * @param {object} result The parsed response body ({ deliveryStatus, fallback, ... }).
+ * @param {object} result The parsed response body ({ deliveryStatus, fallback, warnings, ... }).
  * @param {(app: string, text: string) => string} t The translate function.
  * @return {{deliveryStatus: string, fallbackNotice: string}}
  */
 export function mapSendResult(result, t) {
 	const deliveryStatus = result?.deliveryStatus || 'queued'
-	const fallbackNotice =
-		result?.fallback === true
-			? t(
-					'shillinq',
-					'No Peppol participant found for this debtor — use PDF + email instead.',
-				)
-			: ''
+	if (result?.fallback !== true) {
+		return { deliveryStatus, fallbackNotice: '' }
+	}
+
+	const codes = (Array.isArray(result?.warnings) ? result.warnings : []).map(
+		(warning) => warning?.code,
+	)
+	let fallbackNotice = t(
+		'shillinq',
+		'No Peppol participant found for this debtor — use PDF + email instead.',
+	)
+	if (codes.includes('peppol_unavailable')) {
+		fallbackNotice = t(
+			'shillinq',
+			'Peppol sending is not available on this instance — send the invoice by email instead.',
+		)
+	} else if (codes.includes('peppol_payload_not_stored')) {
+		fallbackNotice = t(
+			'shillinq',
+			'The e-invoice file could not be stored — send the invoice by email instead.',
+		)
+	}
+
 	return { deliveryStatus, fallbackNotice }
 }
 

@@ -1,8 +1,11 @@
 <?php
 
 /**
- * Unit tests for EInvoiceService's failure paths: storage and query errors,
- * fail-soft event dispatch and logging, and the object URI it announces.
+ * Unit tests for EInvoiceService's hand-off to integriq and its failure
+ * paths: integriq absent, a failed event save, an unstored payload, a failed
+ * invoice save and query, and the object URI it announces.
+ *
+ * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,13 +30,13 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper;
+use OCA\Shillinq\Service\EInvoice\EInvoiceArtefactStore;
 use OCA\Shillinq\Service\EInvoice\EInvoiceService;
 use OCA\Shillinq\Service\EInvoice\EInvoiceValidationService;
+use OCA\Shillinq\Service\IntegriqCloudEventPublisher;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\ViesService;
-use OCP\EventDispatcher\GenericEvent;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -50,27 +53,24 @@ use RuntimeException;
  */
 final class EInvoiceServiceFailureTest extends TestCase {
 
-	/** @var ObjectServiceInterface&MockObject The OpenRegister object store. */
+	private const STORED = '/jan/files/Shillinq/adm-1/e-invoices/2026/invoice-2026-0042.xml';
+
 	private ObjectServiceInterface&MockObject $objects;
 
-	/** @var LoggerInterface&MockObject Receives the service's log lines. */
 	private LoggerInterface&MockObject $logger;
 
-	/** @var IEventDispatcher&MockObject Receives the outbound-requested event. */
-	private IEventDispatcher&MockObject $dispatcher;
+	private EInvoiceArtefactStore&MockObject $store;
+
+	private IntegriqCloudEventPublisher&MockObject $publisher;
 
 	protected function setUp(): void {
-		$this->objects    = $this->createMock(ObjectServiceInterface::class);
-		$this->logger     = $this->createMock(LoggerInterface::class);
-		$this->dispatcher = $this->createMock(IEventDispatcher::class);
+		$this->objects   = $this->createMock(ObjectServiceInterface::class);
+		$this->logger    = $this->createMock(LoggerInterface::class);
+		$this->store     = $this->createMock(EInvoiceArtefactStore::class);
+		$this->publisher = $this->createMock(IntegriqCloudEventPublisher::class);
 		$this->objects->method('setSchema')->willReturnSelf();
 	}
 
-	/**
-	 * An issued B2G invoice ready to send.
-	 *
-	 * @return array<string, mixed>
-	 */
 	private function issuedInvoice(): array {
 		return [
 			'id' => 'invoice-obj-1',
@@ -92,6 +92,12 @@ final class EInvoiceServiceFailureTest extends TestCase {
 		];
 	}
 
+	private function entity(array $data): ObjectEntityInterface {
+		$entity = $this->createMock(ObjectEntityInterface::class);
+		$entity->method('jsonSerialize')->willReturn($data);
+		return $entity;
+	}
+
 	private function service(string $register = 'shillinq'): EInvoiceService {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn($register);
@@ -104,38 +110,26 @@ final class EInvoiceServiceFailureTest extends TestCase {
 
 		$port = $this->createMock(PeppolTransmissionPortInterface::class);
 		$port->method('lookupParticipant')->willReturn('0106:00000000');
-		$port->method('submit')->willReturn('urn:uuid:tx-1');
+		$port->expects(self::never())->method('submit');
 
 		return new EInvoiceService(
 			appConfig: $appConfig,
 			administrationContext: $administrations,
 			logger: $this->logger,
-			eventDispatcher: $this->dispatcher,
 			ublMapper: new ArInvoiceUblMapper(),
 			pdfGenerator: new InvoicePdfGenerator(),
 			validationService: new EInvoiceValidationService(vies: $vies, peppolPort: $port),
 			objectService: $this->objects,
-			peppolPort: $port,
+			artefactStore: $this->store,
+			publisher: $this->publisher,
 		);
-	}
-
-	/**
-	 * Persisted entity whose serialisation is the given array.
-	 *
-	 * @param array<string, mixed> $data The serialised object.
-	 *
-	 * @return ObjectEntityInterface
-	 */
-	private function entity(array $data): ObjectEntityInterface {
-		$entity = $this->createMock(ObjectEntityInterface::class);
-		$entity->method('jsonSerialize')->willReturn($data);
-		return $entity;
 	}
 
 	public function testAFailingInvoiceQueryIsLoggedAndReadsAsNotFound(): void {
 		$this->objects->method('setRegister')->willReturnSelf();
 		$this->objects->method('findAll')->willThrowException(new RuntimeException('db down'));
 		$this->objects->expects(self::never())->method('saveObject');
+		$this->publisher->expects(self::never())->method('publish');
 		$this->logger->expects(self::once())->method('error')
 			->with('EInvoiceService: failed to query OpenRegister', ['schema' => 'ARInvoice', 'exception' => 'db down']);
 
@@ -145,11 +139,70 @@ final class EInvoiceServiceFailureTest extends TestCase {
 		$this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 	}
 
-	public function testAFailingSaveIsLoggedAndRaisedWithoutAnnouncingTheSend(): void {
+	public function testWithoutIntegriqNothingIsStoredHandedOverOrQueued(): void {
+		$this->objects->method('setRegister')->willReturnSelf();
+		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
+		$this->objects->expects(self::never())->method('saveObject');
+		$this->publisher->method('isAvailable')->willReturn(false);
+		$this->publisher->expects(self::never())->method('publish');
+		$this->store->expects(self::never())->method('store');
+
+		$result = $this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+
+		self::assertSame(['not-sent', null, null, true], [$result['deliveryStatus'], $result['transmissionId'], $result['payloadFileUri'], $result['fallback']]);
+		self::assertSame(
+			['field' => 'transmission', 'code' => 'peppol_unavailable', 'message' => 'Peppol sending is not available on this instance'],
+			end($result['warnings'])
+		);
+	}
+
+	public function testAFailedHandOffLeavesTheInvoiceNotSent(): void {
+		$this->objects->method('setRegister')->willReturnSelf();
+		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
+		$this->objects->expects(self::never())->method('saveObject');
+		$this->publisher->method('isAvailable')->willReturn(true);
+		$this->store->method('store')->willReturn(self::STORED);
+		$this->publisher->expects(self::once())->method('publish')->willReturn(false);
+
+		$result = $this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+
+		self::assertSame('not-sent', $result['deliveryStatus']);
+		self::assertNull($result['payloadFileUri']);
+		self::assertTrue($result['fallback']);
+		self::assertSame(EInvoiceService::UNAVAILABLE_WARNING, end($result['warnings']));
+	}
+
+	public function testAnUnstoredPayloadIsNeverHandedOver(): void {
+		$this->objects->method('setRegister')->willReturnSelf();
+		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
+		$this->objects->expects(self::never())->method('saveObject');
+		$this->publisher->method('isAvailable')->willReturn(true);
+		$this->publisher->expects(self::never())->method('publish');
+		$this->store->expects(self::once())->method('store')
+			->with(
+				'adm-1',
+				self::callback(static fn (array $invoice): bool => $invoice['invoiceNumber'] === '2026-0042'),
+				self::stringStartsWith('%PDF'),
+				self::stringContains('<cbc:ID>2026-0042</cbc:ID>')
+			)
+			->willReturn(null);
+
+		$result = $this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+
+		self::assertSame('not-sent', $result['deliveryStatus']);
+		self::assertSame(
+			['field' => 'transmission', 'code' => 'peppol_payload_not_stored', 'message' => 'The e-invoice file could not be stored'],
+			end($result['warnings'])
+		);
+	}
+
+	public function testAFailingInvoiceSaveAfterTheHandOffIsLoggedAndRaised(): void {
 		$this->objects->method('setRegister')->willReturnSelf();
 		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
 		$this->objects->method('saveObject')->willThrowException(new RuntimeException('constraint'));
-		$this->dispatcher->expects(self::never())->method('dispatch');
+		$this->publisher->method('isAvailable')->willReturn(true);
+		$this->store->method('store')->willReturn(self::STORED);
+		$this->publisher->expects(self::once())->method('publish')->willReturn(true);
 		$this->logger->expects(self::once())->method('error')
 			->with('EInvoiceService: failed to persist object', ['schema' => 'ARInvoice', 'exception' => 'constraint']);
 
@@ -159,61 +212,43 @@ final class EInvoiceServiceFailureTest extends TestCase {
 		$this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 	}
 
-	public function testAFailingDispatchIsLoggedAndTheInvoiceStillQueues(): void {
-		$this->objects->method('setRegister')->willReturnSelf();
-		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
-		$this->objects->method('saveObject')->willReturn($this->entity($this->issuedInvoice()));
-		$this->dispatcher->method('dispatch')->willThrowException(new RuntimeException('listener broke'));
-
-		$infos = [];
-		$this->logger->method('info')->willReturnCallback(
-			function (string $message, array $context) use (&$infos): void {
-				$infos[$message] = $context;
-			}
-		);
-
-		$result = $this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
-
-		self::assertSame('queued', $result['deliveryStatus']);
-		self::assertSame('urn:uuid:tx-1', $result['transmissionId']);
-		self::assertFalse($result['fallback']);
-		self::assertSame(
-			['exception' => 'listener broke'],
-			$infos['EInvoiceService: outbound-requested dispatch failed — fail-soft']
-		);
-	}
-
-	public function testAFailingLoggerDoesNotLoseTheArtefactReference(): void {
-		$this->objects->method('setRegister')->willReturnSelf();
-		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
-		$this->objects->method('saveObject')->willReturn($this->entity($this->issuedInvoice()));
-		$this->logger->method('info')->willThrowException(new RuntimeException('log disk full'));
-
-		$result = $this->service()->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
-
-		self::assertSame('queued', $result['deliveryStatus']);
-		self::assertMatchesRegularExpression('#^docudesk://file/[0-9a-f]{16}$#', (string)$result['payloadFileUri']);
-	}
-
-	public function testAPersistedInvoiceWithoutIdIsAnnouncedByItsNumberInTheDefaultRegister(): void {
+	public function testAnInvoiceWithoutIdIsHandedOverByItsNumberInTheDefaultRegister(): void {
 		$withoutId = $this->issuedInvoice();
 		unset($withoutId['id']);
 
 		$this->objects->expects(self::atLeastOnce())->method('setRegister')->with('shillinq')->willReturnSelf();
-		$this->objects->method('findAll')->willReturn([$this->issuedInvoice()]);
+		$this->objects->method('findAll')->willReturn([$withoutId]);
 		$this->objects->method('saveObject')->willReturn($this->entity($withoutId));
+		$this->publisher->method('isAvailable')->willReturn(true);
+		$this->store->method('store')->willReturn(self::STORED);
 
-		$announced = null;
-		$this->dispatcher->expects(self::once())->method('dispatch')->willReturnCallback(
-			function (string $name, GenericEvent $event) use (&$announced): void {
-				$announced = $event->getArguments();
+		$published = [];
+		$this->publisher->expects(self::once())->method('publish')->willReturnCallback(
+			static function (string $type, string $source, string $subject, array $data) use (&$published): bool {
+				$published = [$type, $source, $subject, $data];
+				return true;
 			}
 		);
 
-		$this->service(register: '')->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
+		$result = $this->service(register: '')->sendEInvoice(administrationId: 'adm-1', invoiceNumber: '2026-0042');
 
-		self::assertSame('openregister://shillinq/ARInvoice/2026-0042', $announced['objectUri']);
-		self::assertSame('0106:00000000', $announced['recipientPeppolId']);
-		self::assertSame('adm-1', $announced['administrationId']);
+		self::assertSame('queued', $result['deliveryStatus']);
+		self::assertSame(
+			[
+				'nl.conduction.peppol.outbound.requested',
+				'/apps/shillinq/ar-invoices',
+				'2026-0042',
+				[
+					'sourceApp' => 'shillinq',
+					'objectType' => 'ar-invoice',
+					'objectUri' => 'openregister://shillinq/ARInvoice/2026-0042',
+					'recipientPeppolId' => '0106:00000000',
+					'documentType' => 'ubl-invoice-2.1',
+					'payloadFileUri' => self::STORED,
+					'administrationId' => 'adm-1',
+				],
+			],
+			$published
+		);
 	}
 }
