@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -5187,6 +5201,38 @@
 					"route": "/overheid/interest-allocation/:id",
 					"type": "detail",
 					"title": "Interest allocation run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "GRAllocationRuns",
+							"label": "Allocation runs",
+							"icon": "ScaleBalance",
+							"route": "GRAllocationRuns",
+							"order": 65
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRuns",
+					"route": "/gr/verdeelruns",
+					"type": "index",
+					"title": "Allocation runs"
+				},
+				{
+					"_fragment": "public-sector-task-field-allocation",
+					"id": "GRAllocationRunDetail",
+					"route": "/gr/verdeelruns/:id",
+					"type": "detail",
+					"title": "Allocation run"
 				}
 			]
 		},
