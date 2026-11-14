@@ -374,7 +374,7 @@ class RecurringInvoiceGenerator {
 		return [
 			'invoiceNumber' => self::provisionalNumber(period: $period),
 			'periodId' => $period->billingPeriod,
-			'customerId' => (string)($profile['customerReference'] ?? ''),
+			'customerId' => self::customerIdOf(profile: $profile),
 			'administrationId' => ($profile['administrationId'] ?? null),
 			'invoiceDate' => $period->issueDate,
 			'dueDate' => $period->dueDate,
@@ -388,6 +388,26 @@ class RecurringInvoiceGenerator {
 			'invoiceLines' => $lines['lines'],
 		];
 	}//end arInvoicePayload()
+
+	/**
+	 * The customer a generated invoice bills: the profile's CustomerMaster
+	 * once it has one (sales-cancellation, REQ-SCX-003), else its contact
+	 * reference as before.
+	 *
+	 * @param array<string, mixed> $profile The recurring profile.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 */
+	private static function customerIdOf(array $profile): string {
+		$customerMasterId = trim((string)($profile['customerMasterId'] ?? ''));
+		if ($customerMasterId !== '') {
+			return $customerMasterId;
+		}
+
+		return (string)($profile['customerReference'] ?? '');
+	}//end customerIdOf()
 
 	/**
 	 * ARInvoice requires an invoice number and a period. The number is
