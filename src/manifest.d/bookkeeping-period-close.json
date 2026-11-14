@@ -14,6 +14,14 @@
 					"order": 65
 				}
 			]
+		},
+		{
+			"id": "CloseChecklistTemplates",
+			"label": "Close checklist templates",
+			"icon": "FormatListChecks",
+			"route": "CloseChecklistTemplates",
+			"section": "settings",
+			"order": 94
 		}
 	],
 	"pages": [
@@ -227,6 +235,80 @@
 					}
 				],
 				"indexRoute": "PeriodClose"
+			}
+		},
+		{
+			"id": "CloseChecklistTemplates",
+			"route": "/settings/close-checklist-templates",
+			"type": "index",
+			"title": "Close checklist templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "CloseChecklistTemplate",
+				"columns": [
+					{
+						"key": "templateName",
+						"label": "Template",
+						"sortable": true
+					},
+					{
+						"key": "administrationTypeId",
+						"label": "Legal form",
+						"sortable": true
+					}
+				],
+				"defaultSort": "templateName",
+				"detailRoute": "CloseChecklistTemplateDetail"
+			}
+		},
+		{
+			"id": "CloseChecklistTemplateDetail",
+			"route": "/settings/close-checklist-templates/:id",
+			"type": "detail",
+			"title": "Close checklist template",
+			"config": {
+				"register": "shillinq",
+				"schema": "CloseChecklistTemplate",
+				"_note": "CONFIG: the tasks a period's close checklist is filled with when it starts closing (ledger-period-end REQ-LPE-001, REQ-LPE-003). Edits apply to periods that start closing afterwards.",
+				"fields": [
+					{
+						"key": "templateName",
+						"label": "Template",
+						"type": "string"
+					},
+					{
+						"key": "administrationTypeId",
+						"label": "Legal form",
+						"type": "string"
+					},
+					{
+						"key": "tasks",
+						"label": "Tasks",
+						"type": "array"
+					}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"indexRoute": "CloseChecklistTemplates"
 			}
 		}
 	]

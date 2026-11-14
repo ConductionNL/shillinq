@@ -6909,7 +6909,12 @@
         "Add item": "Item toevoegen",
         "Reopen {item}": "{item} heropenen",
         "Resolve {item}": "{item} afhandelen",
-        "The checklist could not be changed.": "De checklist kon niet worden gewijzigd."
+        "The checklist could not be changed.": "De checklist kon niet worden gewijzigd.",
+        "The checklist category a period's item for this task gets; `other` when absent.": "De checklistcategorie die het item van een periode voor deze taak krijgt; `other` als die ontbreekt.",
+        "What the item is about: accounts payable, accounts receivable, bank, expense claims, VAT, accruals, or other.": "Waar het item over gaat: crediteuren, debiteuren, bank, declaraties, btw, overlopende posten of overig.",
+        "Close checklist templates": "Sjablonen afsluitchecklist",
+        "Close checklist template": "Sjabloon afsluitchecklist",
+        "Tasks": "Taken"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

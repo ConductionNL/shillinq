@@ -4710,7 +4710,12 @@ OC.L10N.register(
         "Add item": "Add item",
         "Reopen {item}": "Reopen {item}",
         "Resolve {item}": "Resolve {item}",
-        "The checklist could not be changed.": "The checklist could not be changed."
+        "The checklist could not be changed.": "The checklist could not be changed.",
+        "The checklist category a period's item for this task gets; `other` when absent.": "The checklist category a period's item for this task gets; `other` when absent.",
+        "What the item is about: accounts payable, accounts receivable, bank, expense claims, VAT, accruals, or other.": "What the item is about: accounts payable, accounts receivable, bank, expense claims, VAT, accruals, or other.",
+        "Close checklist templates": "Close checklist templates",
+        "Close checklist template": "Close checklist template",
+        "Tasks": "Tasks"
     },
     "nplurals=2; plural=(n != 1);"
 )
