@@ -408,6 +408,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              carry subjectApp / subjectId before that overlay is retired
              (hours-to-humaniq task 2.1). Read-only. -->
         <command>OCA\Shillinq\Command\HoursSubjectAuditCommand</command>
+        <!-- List the invoices paid through a payment provider whose capture has
+             no booking yet, and on request book each at its capture date
+             (receivables-provider-payouts task 2.3). Read-only by default. -->
+        <command>OCA\Shillinq\Command\BookCapturesCommand</command>
     </commands>
 
     <settings>
