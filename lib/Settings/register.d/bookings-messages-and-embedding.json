@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookings-messages-and-embedding",
 		"adr": "ADR-037 modular register fragment, never edit shillinq_register.json",
-		"description": "kind: feature. REQ-BCF-013: the appointment records whether the confirmation request reached the mail server, so a failed send can be shown and resent. Written by ConfirmationTokenService after each send or resend, never by a user. REQ-BET-011: a booking records when its last reminder was sent and on which channel, written by BookingNotificationService after the reminder left. REQ-SMS-021: an SMS channel shows whether a real provider is bound (connectionState), and an appointment records its SMS reminder outcome, written by SmsReminderRunner."
+		"description": "kind: feature. REQ-BCF-013: the appointment records whether the confirmation request reached the mail server, so a failed send can be shown and resent. Written by ConfirmationTokenService after each send or resend, never by a user. REQ-BET-011: a booking records when its last reminder was sent and on which channel, written by BookingNotificationService after the reminder left. REQ-SMS-021: an SMS channel shows whether a real provider is bound (connectionState), and an appointment records its SMS reminder outcome, written by SmsReminderRunner. REQ-WSW-011: the key-lifecycle audit trail records a change of a key's allowed origins (origins-changed; lists merge, so this extends the action enum)."
 	},
 	"components": {
 		"schemas": {
@@ -71,6 +71,16 @@
 						"nullable": true,
 						"title": "Provider connection",
 						"description": "Whether an SMS provider is bound that can send (connected) or not (not-connected); while not connected no reminder is sent. Written by the reminder job."
+					}
+				}
+			},
+			"WidgetAccessKeyAuditEntry": {
+				"properties": {
+					"action": {
+						"type": "string",
+						"title": "Action",
+						"description": "The lifecycle action that triggered the audit entry.",
+						"enum": ["origins-changed"]
 					}
 				}
 			}

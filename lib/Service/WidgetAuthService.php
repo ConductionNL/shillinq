@@ -353,6 +353,42 @@ class WidgetAuthService implements WidgetAuthServiceInterface {
 	}//end rotateApiKey()
 
 	/**
+	 * Replace the browser origins the active key of a business allows (REQ-WSW-011).
+	 *
+	 * The origins arrive validated and normalised by WidgetCorsPolicy; the
+	 * change is written to the key-lifecycle audit trail.
+	 *
+	 * @param string             $businessId Partner business id.
+	 * @param array<int, string> $origins    The normalised origins.
+	 * @param string             $actor      Nextcloud user id making the change.
+	 *
+	 * @return array{success: bool, message?: string, businessId?: string, allowedOrigins?: array<int, string>}
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 */
+	public function updateAllowedOrigins(string $businessId, array $origins, string $actor): array {
+		$existing = $this->findActiveKeyByBusinessId(businessId: $businessId);
+		$id = (string)($existing['id'] ?? '');
+		if ($existing === null || $id === '') {
+			return ['success' => false, 'message' => 'No active key found for businessId.'];
+		}
+
+		$existing['allowedOrigins'] = $origins;
+		if ($this->updateObject(schema: 'WidgetAccessKey', id: $id, data: $existing) === null) {
+			return ['success' => false, 'message' => 'Failed to persist the allowed origins.'];
+		}
+
+		$this->writeAudit(
+			administrationId: (string)($existing['administrationId'] ?? ''),
+			businessId: $businessId,
+			action: 'origins-changed',
+			actor: $actor
+		);
+
+		return ['success' => true, 'businessId' => $businessId, 'allowedOrigins' => $origins];
+	}//end updateAllowedOrigins()
+
+	/**
 	 * Administratively revoke an API key.
 	 *
 	 * Idempotent: re-revoking an already-revoked key is a no-op success.

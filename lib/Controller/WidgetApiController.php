@@ -36,12 +36,14 @@ use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
+use OCA\Shillinq\Service\WidgetCorsPolicy;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -82,6 +84,13 @@ class WidgetApiController extends Controller {
 	];
 
 	/**
+	 * How long a browser may cache a preflight answer, in seconds.
+	 *
+	 * @var int
+	 */
+	private const PREFLIGHT_MAX_AGE = 600;
+
+	/**
 	 * The administration of the widget key guard() accepted; every read and
 	 * write of the request is scoped to it.
 	 *
@@ -99,6 +108,7 @@ class WidgetApiController extends Controller {
 	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param WidgetCorsPolicy|null $corsPolicy The browser origins a widget key allows (REQ-WSW-011); without it no CORS headers are sent.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -108,6 +118,7 @@ class WidgetApiController extends Controller {
 		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly ?WidgetCorsPolicy $corsPolicy = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -131,6 +142,16 @@ class WidgetApiController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function services(): JSONResponse {
+		return $this->withCors(response: $this->servicesAnswer());
+	}//end services()
+
+	/**
+	 * The answer of services(), before the CORS headers.
+	 *
+	 *
+	 * @return JSONResponse
+	 */
+	private function servicesAnswer(): JSONResponse {
 		$authResult = $this->guard();
 		if ($authResult instanceof JSONResponse) {
 			return $authResult;
@@ -146,7 +167,7 @@ class WidgetApiController extends Controller {
 		}
 
 		return new JSONResponse(data: ['services' => $this->publicServices(records: $records)]);
-	}//end services()
+	}//end servicesAnswer()
 
 	/**
 	 * The active Service records of the key's administration, or null when the lookup fails.
@@ -248,6 +269,19 @@ class WidgetApiController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function slots(string $serviceId = '', string $resourceId = '', string $date = ''): JSONResponse {
+		return $this->withCors(response: $this->slotsAnswer(serviceId: $serviceId, resourceId: $resourceId, date: $date));
+	}//end slots()
+
+	/**
+	 * The answer of slots(), before the CORS headers.
+	 *
+	 * @param string $serviceId  The service.
+	 * @param string $resourceId The resource.
+	 * @param string $date       The date.
+	 *
+	 * @return JSONResponse
+	 */
+	private function slotsAnswer(string $serviceId = '', string $resourceId = '', string $date = ''): JSONResponse {
 		$authResult = $this->guard();
 		if ($authResult instanceof JSONResponse) {
 			return $authResult;
@@ -264,7 +298,7 @@ class WidgetApiController extends Controller {
 
 		$result = $this->slots->getAvailableSlots(serviceId: $serviceId, resourceId: $resourceId, date: $date);
 		return $this->slotsResponse(date: $date, result: $result);
-	}//end slots()
+	}//end slotsAnswer()
 
 	/**
 	 * Refuse a slot query that is incomplete, malformed, or for a service that is not publicly bookable.
@@ -373,6 +407,44 @@ class WidgetApiController extends Controller {
 		?string $phone = null,
 		?string $notes = null,
 	): JSONResponse {
+		return $this->withCors(
+			response: $this->appointmentsAnswer(
+				serviceId: $serviceId,
+				resourceId: $resourceId,
+				startTime: $startTime,
+				endTime: $endTime,
+				customerName: $customerName,
+				email: $email,
+				phone: $phone,
+				notes: $notes,
+			)
+		);
+	}//end appointments()
+
+	/**
+	 * The answer of appointments(), before the CORS headers.
+	 *
+	 * @param string      $serviceId    The service.
+	 * @param string      $resourceId   The resource.
+	 * @param string      $startTime    The start.
+	 * @param string      $endTime      The end.
+	 * @param string      $customerName The customer's name.
+	 * @param string      $email        The customer's email.
+	 * @param string|null $phone        The customer's phone.
+	 * @param string|null $notes        The notes.
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentsAnswer(
+		string $serviceId = '',
+		string $resourceId = '',
+		string $startTime = '',
+		string $endTime = '',
+		string $customerName = '',
+		string $email = '',
+		?string $phone = null,
+		?string $notes = null,
+	): JSONResponse {
 		$payload = [
 			'serviceId' => $serviceId,
 			'resourceId' => $resourceId,
@@ -409,7 +481,81 @@ class WidgetApiController extends Controller {
 
 		return $this->appointmentResponse(result: $result);
 
-	}//end appointments()
+	}//end appointmentsAnswer()
+
+	/**
+	 * OPTIONS on the widget API — the CORS preflight of a browser on another website (REQ-WSW-011).
+	 *
+	 * Answers 204 with the CORS headers when the widget key of `businessId`
+	 * allows the request's Origin, else 403 without them, so the browser
+	 * refuses the cross-origin call. The preflight carries no API key; it only
+	 * reveals whether that origin is registered for that business.
+	 *
+	 * @return Response
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-self-service-widget/spec.md#requirement-the-widget-books-from-another-website-req-wsw-011
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function preflight(): Response {
+		$origin = $this->allowedOrigin();
+		if ($origin === null) {
+			return new Response(status: Http::STATUS_FORBIDDEN);
+		}
+
+		$response = new Response(status: Http::STATUS_NO_CONTENT);
+		$response->addHeader('Access-Control-Allow-Origin', $origin);
+		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+		$response->addHeader('Access-Control-Max-Age', (string)self::PREFLIGHT_MAX_AGE);
+		$response->addHeader('Vary', 'Origin');
+
+		return $response;
+	}//end preflight()
+
+	/**
+	 * Add the CORS headers when the request's Origin is allowed for its business; otherwise none.
+	 *
+	 * @param JSONResponse $response The answer.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 */
+	private function withCors(JSONResponse $response): JSONResponse {
+		$origin = $this->allowedOrigin();
+		if ($origin !== null) {
+			$response->addHeader('Access-Control-Allow-Origin', $origin);
+			$response->addHeader('Access-Control-Expose-Headers', 'Retry-After');
+			$response->addHeader('Vary', 'Origin');
+		}
+
+		return $response;
+	}//end withCors()
+
+	/**
+	 * The request's Origin when the widget key of its business allows it, else null.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.5
+	 */
+	private function allowedOrigin(): ?string {
+		if ($this->corsPolicy === null) {
+			return null;
+		}
+
+		$origin = (string)$this->request->getHeader('Origin');
+		if ($origin === '') {
+			return null;
+		}
+
+		return $this->corsPolicy->allowedOrigin(
+			businessId: (string)$this->request->getParam('businessId', ''),
+			origin: $origin
+		);
+	}//end allowedOrigin()
 
 	/**
 	 * Authenticate + rate-limit the current request.

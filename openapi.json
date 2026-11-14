@@ -12147,6 +12147,34 @@
                         "$ref": "#/components/responses/Problem429"
                     }
                 }
+            },
+            "options": {
+                "operationId": "widget-api-preflight-appointments",
+                "summary": "OPTIONS /api/widget/appointments — CORS preflight of an embed on another website",
+                "description": "The CORS preflight of the booking widget on another website (REQ-WSW-011). Answers 204 with the CORS headers when the widget key of `businessId` allows the request's Origin, else 403 without them. Public: it needs no login.",
+                "tags": [
+                    "widget-api"
+                ],
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "businessId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The business id of the widget key.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The origin is allowed; the CORS headers are set."
+                    },
+                    "403": {
+                        "description": "The origin is not allowed for this business."
+                    }
+                }
             }
         },
         "/widget/services": {
@@ -12171,6 +12199,34 @@
                                 "schema": {}
                             }
                         }
+                    }
+                }
+            },
+            "options": {
+                "operationId": "widget-api-preflight-services",
+                "summary": "OPTIONS /api/widget/services — CORS preflight of an embed on another website",
+                "description": "The CORS preflight of the booking widget on another website (REQ-WSW-011). Answers 204 with the CORS headers when the widget key of `businessId` allows the request's Origin, else 403 without them. Public: it needs no login.",
+                "tags": [
+                    "widget-api"
+                ],
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "businessId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The business id of the widget key.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The origin is allowed; the CORS headers are set."
+                    },
+                    "403": {
+                        "description": "The origin is not allowed for this business."
                     }
                 }
             }
@@ -12230,6 +12286,34 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            },
+            "options": {
+                "operationId": "widget-api-preflight-slots",
+                "summary": "OPTIONS /api/widget/slots — CORS preflight of an embed on another website",
+                "description": "The CORS preflight of the booking widget on another website (REQ-WSW-011). Answers 204 with the CORS headers when the widget key of `businessId` allows the request's Origin, else 403 without them. Public: it needs no login.",
+                "tags": [
+                    "widget-api"
+                ],
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "businessId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The business id of the widget key.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The origin is allowed; the CORS headers are set."
+                    },
+                    "403": {
+                        "description": "The origin is not allowed for this business."
                     }
                 }
             }
@@ -12551,6 +12635,63 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/widget/admin/keys/origins": {
+            "post": {
+                "operationId": "widget-settings-origins",
+                "summary": "Set the websites that may embed the widget of a business (REQ-WSW-011)",
+                "description": "Set the websites that may embed the widget of a business (REQ-WSW-011). Takes `businessId` and `allowedOrigins`, a list of origins such as `https://www.example.com`; an empty list closes the API to every other website again. A wildcard, a path or an invalid origin refuses the whole list. Needs an administrator, or a user the matching admin setting is delegated to.",
+                "tags": [
+                    "widget-settings"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "businessId": {
+                                        "description": "The business id."
+                                    },
+                                    "allowedOrigins": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "The allowed origins."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    },
+                    "400": {
+                        "description": "A parameter is missing or an origin is invalid."
                     }
                 }
             }
