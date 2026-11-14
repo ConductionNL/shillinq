@@ -1813,15 +1813,8 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
 	 */
 	private function seedSbrMappings(IOutput $output): void {
-		$seedDir = __DIR__ . '/../Settings/seeds/sbr-mappings';
-		if (is_dir($seedDir) === false) {
-			$output->info('Shillinq: SBR/XBRL mapping seed dir not present, skipping');
-			return;
-		}
-
-		$files = glob($seedDir . '/*.json');
-		if ($files === false || empty($files) === true) {
-			$output->info('Shillinq: SBR/XBRL mapping seed dir empty, skipping');
+		$files = $this->sbrMappingSeedFiles(output: $output);
+		if ($files === null) {
 			return;
 		}
 
@@ -1837,82 +1830,137 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
-		$seeded = 0;
-		$skipped = 0;
-		$failed = 0;
+		$counts = ['seeded' => 0, 'skipped' => 0, 'failed' => 0];
 
 		foreach ($files as $file) {
-			$content = file_get_contents($file);
-			if ($content === false) {
-				$output->warning('Shillinq: failed to read SBR mapping seed ' . basename($file));
-				$failed++;
+			$mapping = $this->readSbrMappingSeed(output: $output, file: $file);
+			if ($mapping === null) {
+				$counts['failed']++;
 				continue;
 			}
 
-			$data = json_decode($content, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				$output->warning(
-					'Shillinq: failed to parse SBR mapping seed ' . basename($file) . ': ' . json_last_error_msg()
-				);
-				$failed++;
-				continue;
-			}
-
-			$mapping = ($data['mapping'] ?? null);
-			if (is_array($mapping) === false) {
-				$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no `mapping` block, skipping');
-				$failed++;
-				continue;
-			}
-
-			$slug = ($mapping['slug'] ?? null);
-			if ($slug === null || $slug === '') {
-				$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no slug, skipping');
-				$failed++;
-				continue;
-			}
-
-			try {
-				// Dedupe on the slug/reference — operator-edited mappings persist.
-				$existing = $mappingMapper->findByRef($slug);
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$mappingMapper->createFromArray(
-					[
-						'reference' => $slug,
-						'name' => ($mapping['name'] ?? $slug),
-						'description' => 'SBR/XBRL line→concept mapping seeded by '
-							. 'add-shillinq-sbr-xbrl-reporting for entry point '
-							. ($mapping['entryPoint'] ?? 'unknown') . ' taxonomy '
-							. ($mapping['taxonomyVersion'] ?? 'unknown') . '.',
-						'mapping' => ($mapping['records'] ?? []),
-					]
-				);
-				$seeded++;
-			} catch (\Throwable $e) {
-				$output->warning(
-					'Shillinq: SBR mapping seed ' . basename($file) . ' import failed: ' . $e->getMessage()
-				);
-				$this->logger->warning(
-					'Shillinq: SBR mapping seed import failed',
-					[
-						'file' => basename($file),
-						'exception' => $e->getMessage(),
-					]
-				);
-				$failed++;
-			}//end try
-		}//end foreach
+			$outcome = $this->importSbrMapping(output: $output, mappingMapper: $mappingMapper, file: $file, mapping: $mapping);
+			$counts[$outcome]++;
+		}
 
 		$output->info(
-			'Shillinq: SBR/XBRL mappings seeded: ' . $seeded . ' created, ' . $skipped
-			. ' skipped (already exist), ' . $failed . ' failed.'
+			'Shillinq: SBR/XBRL mappings seeded: ' . $counts['seeded'] . ' created, ' . $counts['skipped']
+			. ' skipped (already exist), ' . $counts['failed'] . ' failed.'
 		);
 
 	}//end seedSbrMappings()
+
+	/**
+	 * The SBR/XBRL mapping seed files, or null (reported) when the seed dir is absent or empty.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return array<int,string>|null The seed file paths.
+	 *
+	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+	 */
+	private function sbrMappingSeedFiles(IOutput $output): array|null {
+		$seedDir = __DIR__ . '/../Settings/seeds/sbr-mappings';
+		if (is_dir($seedDir) === false) {
+			$output->info('Shillinq: SBR/XBRL mapping seed dir not present, skipping');
+			return null;
+		}
+
+		$files = glob($seedDir . '/*.json');
+		if ($files === false || empty($files) === true) {
+			$output->info('Shillinq: SBR/XBRL mapping seed dir empty, skipping');
+			return null;
+		}
+
+		return $files;
+	}//end sbrMappingSeedFiles()
+
+	/**
+	 * Read one SBR mapping seed file and return its `mapping` block, or null (reported) when unusable.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 * @param string  $file   The seed file path.
+	 *
+	 * @return array<string,mixed>|null The mapping block.
+	 *
+	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+	 */
+	private function readSbrMappingSeed(IOutput $output, string $file): array|null {
+		$content = file_get_contents($file);
+		if ($content === false) {
+			$output->warning('Shillinq: failed to read SBR mapping seed ' . basename($file));
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$output->warning(
+				'Shillinq: failed to parse SBR mapping seed ' . basename($file) . ': ' . json_last_error_msg()
+			);
+			return null;
+		}
+
+		$mapping = ($data['mapping'] ?? null);
+		if (is_array($mapping) === false) {
+			$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no `mapping` block, skipping');
+			return null;
+		}
+
+		return $mapping;
+	}//end readSbrMappingSeed()
+
+	/**
+	 * Create one SBR mapping through the MappingMapper unless its slug already exists.
+	 *
+	 * @param IOutput             $output        The output interface for progress reporting.
+	 * @param mixed               $mappingMapper OpenRegister's MappingMapper.
+	 * @param string              $file          The seed file path, for messages.
+	 * @param array<string,mixed> $mapping       The seed file's `mapping` block.
+	 *
+	 * @return string One of `seeded`, `skipped` or `failed`.
+	 *
+	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+	 */
+	private function importSbrMapping(IOutput $output, mixed $mappingMapper, string $file, array $mapping): string {
+		$slug = ($mapping['slug'] ?? null);
+		if ($slug === null || $slug === '') {
+			$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no slug, skipping');
+			return 'failed';
+		}
+
+		try {
+			// Dedupe on the slug/reference — operator-edited mappings persist.
+			$existing = $mappingMapper->findByRef($slug);
+			if (empty($existing) === false) {
+				return 'skipped';
+			}
+
+			$mappingMapper->createFromArray(
+				[
+					'reference' => $slug,
+					'name' => ($mapping['name'] ?? $slug),
+					'description' => 'SBR/XBRL line→concept mapping seeded by '
+						. 'add-shillinq-sbr-xbrl-reporting for entry point '
+						. ($mapping['entryPoint'] ?? 'unknown') . ' taxonomy '
+						. ($mapping['taxonomyVersion'] ?? 'unknown') . '.',
+					'mapping' => ($mapping['records'] ?? []),
+				]
+			);
+			return 'seeded';
+		} catch (\Throwable $e) {
+			$output->warning(
+				'Shillinq: SBR mapping seed ' . basename($file) . ' import failed: ' . $e->getMessage()
+			);
+			$this->logger->warning(
+				'Shillinq: SBR mapping seed import failed',
+				[
+					'file' => basename($file),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return 'failed';
+		}//end try
+	}//end importSbrMapping()
 
 	/**
 	 * Seed FixedAsset + DepreciationSchedule demo records idempotently
