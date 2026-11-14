@@ -27,7 +27,7 @@ use InvalidArgumentException;
 use OCA\Shillinq\Controller\ObjectRequestRefundController;
 use OCA\Shillinq\Service\ObjectRequestRefundService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
-use OCA\Shillinq\Service\RefundStepForbiddenException;
+use OCA\Shillinq\Kernel\Exception\RefundStepForbiddenException;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
