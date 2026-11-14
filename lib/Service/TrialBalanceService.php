@@ -44,9 +44,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TrialBalanceServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a period-scoped, per-account trial balance from the general ledger.
@@ -70,7 +71,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * requirement the code violates reports conformance; a dangling one reports
  * work to do.
  */
-class TrialBalanceService {
+class TrialBalanceService implements TrialBalanceServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

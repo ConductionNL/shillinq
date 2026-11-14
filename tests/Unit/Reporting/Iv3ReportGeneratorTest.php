@@ -24,13 +24,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\CostSource\ClassifiedSubjectCostSource;
 use OCA\Shillinq\Reporting\CostSource\ReportPeriod;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostGrouping;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostSourceConfiguration;
 use OCA\Shillinq\Reporting\CostSource\TaskFieldRollup;
-use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\Generator\Iv3ReportGenerator;
 use OCA\Shillinq\Service\SubjectCostAggregator;
 use OCA\Shillinq\Service\SubjectCostService;

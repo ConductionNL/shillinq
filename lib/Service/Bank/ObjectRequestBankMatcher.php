@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Bank;
 
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankMatcherInterface;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentSettlementService;
 
@@ -40,20 +41,7 @@ use OCA\Shillinq\Service\PaymentSettlementService;
  *
  * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
  */
-class ObjectRequestBankMatcher {
-	/**
-	 * The line settles the one request it quotes.
-	 *
-	 * @var string
-	 */
-	public const DECISION_CONFIRM = 'confirm';
-
-	/**
-	 * The line quotes a request but the bookkeeper decides.
-	 *
-	 * @var string
-	 */
-	public const DECISION_CANDIDATE = 'candidate';
+class ObjectRequestBankMatcher implements ObjectRequestBankMatcherInterface {
 
 	/**
 	 * The line quotes no request.

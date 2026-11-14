@@ -46,8 +46,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\PaymentReconciliationService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -60,6 +60,7 @@ use Psr\Log\LoggerInterface;
  * Signature-verified shared payment webhook endpoint (REQ-APL-004).
  *
  * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	/**
@@ -73,12 +74,12 @@ class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	 * @var array<string,string>
 	 */
 	protected const STRIPE_OUTCOMES = [
-		'payment_intent.amount_capturable_updated' => PaymentReconciliationService::OUTCOME_AUTHORIZED,
-		'payment_intent.succeeded' => PaymentReconciliationService::OUTCOME_CAPTURED,
-		'charge.captured' => PaymentReconciliationService::OUTCOME_CAPTURED,
-		'payment_intent.payment_failed' => PaymentReconciliationService::OUTCOME_FAILED,
-		'charge.refunded' => PaymentReconciliationService::OUTCOME_VOIDED,
-		'payment_intent.canceled' => PaymentReconciliationService::OUTCOME_VOIDED,
+		'payment_intent.amount_capturable_updated' => PaymentReconciliationServiceInterface::OUTCOME_AUTHORIZED,
+		'payment_intent.succeeded' => PaymentReconciliationServiceInterface::OUTCOME_CAPTURED,
+		'charge.captured' => PaymentReconciliationServiceInterface::OUTCOME_CAPTURED,
+		'payment_intent.payment_failed' => PaymentReconciliationServiceInterface::OUTCOME_FAILED,
+		'charge.refunded' => PaymentReconciliationServiceInterface::OUTCOME_VOIDED,
+		'payment_intent.canceled' => PaymentReconciliationServiceInterface::OUTCOME_VOIDED,
 	];
 
 	/**
@@ -87,10 +88,10 @@ class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	 * @var array<string,string>
 	 */
 	protected const MOLLIE_OUTCOMES = [
-		'paid' => PaymentReconciliationService::OUTCOME_CAPTURED,
-		'failed' => PaymentReconciliationService::OUTCOME_FAILED,
-		'expired' => PaymentReconciliationService::OUTCOME_FAILED,
-		'canceled' => PaymentReconciliationService::OUTCOME_VOIDED,
+		'paid' => PaymentReconciliationServiceInterface::OUTCOME_CAPTURED,
+		'failed' => PaymentReconciliationServiceInterface::OUTCOME_FAILED,
+		'expired' => PaymentReconciliationServiceInterface::OUTCOME_FAILED,
+		'canceled' => PaymentReconciliationServiceInterface::OUTCOME_VOIDED,
 	];
 
 	/**
@@ -98,7 +99,7 @@ class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param IAppConfig $appConfig App config for the per-gateway shared secrets.
-	 * @param PaymentReconciliationService $reconciliation Shared idempotent reconciliation service
+	 * @param PaymentReconciliationServiceInterface $reconciliation Shared idempotent reconciliation service
 	 *                                                     (handles BOTH PaymentRequest and
 	 *                                                     DepositPayment — REQ-APL-004).
 	 * @param LoggerInterface $logger Logger (never receives raw payment data).
@@ -108,7 +109,7 @@ class PaymentRequestWebhookController extends PaymentWebhookReceiver {
 	public function __construct(
 		IRequest $request,
 		private IAppConfig $appConfig,
-		private PaymentReconciliationService $reconciliation,
+		private PaymentReconciliationServiceInterface $reconciliation,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

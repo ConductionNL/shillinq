@@ -29,8 +29,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\Service\ContributionRaiseService;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,8 +52,8 @@ class ContributionController extends Controller {
 	 *
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
-	 * @param ContributionRaiseService $raiser The raise.
-	 * @param PaymentActionAuthorizer $authorizer The payment action matrix.
+	 * @param ContributionRaiseServiceInterface $raiser The raise.
+	 * @param PaymentActionAuthorizerInterface $authorizer The payment action matrix.
 	 * @param IUserSession $userSession The calling user.
 	 * @param LoggerInterface $logger Logger.
 	 *
@@ -62,8 +62,8 @@ class ContributionController extends Controller {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly ContributionRaiseService $raiser,
-		private readonly PaymentActionAuthorizer $authorizer,
+		private readonly ContributionRaiseServiceInterface $raiser,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -88,7 +88,7 @@ class ContributionController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_REQUEST) === false) {
+		if ($this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_REQUEST) === false) {
 			return new JSONResponse(
 				['error' => 'Raising school contributions needs the payment.request action.'],
 				Http::STATUS_FORBIDDEN

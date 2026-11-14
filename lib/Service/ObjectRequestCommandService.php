@@ -33,6 +33,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Event\PaymentSettlementCommandEvent;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestCommandServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ use Throwable;
  *
  * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
  */
-class ObjectRequestCommandService {
+class ObjectRequestCommandService implements ObjectRequestCommandServiceInterface {
 
 	/**
 	 * States a request cannot be refunded or credited from again.

@@ -40,6 +40,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use LogicException;
+use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -59,12 +60,7 @@ use RuntimeException;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class ConflictDetectionService {
-
-	/**
-	 * Minimum booking duration in minutes (REQ-007 of bookings-resource-calendar).
-	 */
-	public const MIN_DURATION_MINUTES = 15;
+class ConflictDetectionService implements ConflictDetectionServiceInterface {
 
 	/**
 	 * Construct the service with DI dependencies.

@@ -27,19 +27,21 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Sales;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\QuickDraftInvoiceServiceInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
-use DateTimeImmutable;
 use OCP\Security\ISecureRandom;
 use Throwable;
+use OCA\Shillinq\Kernel\Exception\QuickDraftRefusedException;
 
 /**
  * Drafts an ARInvoice on the server.
  *
  * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
  */
-class QuickDraftInvoiceService {
+class QuickDraftInvoiceService implements QuickDraftInvoiceServiceInterface {
 
 	/**
 	 * How often a provisional number is drawn before giving up.
@@ -83,22 +85,22 @@ class QuickDraftInvoiceService {
 	 */
 	public function draft(string $administrationId, array $request): array {
 		if ($administrationId === '') {
-			throw new QuickDraftRefusedException('Choose an administration before drafting an invoice.');
+			throw new QuickDraftRefusedException(message: 'Choose an administration before drafting an invoice.');
 		}
 
 		$customer = $this->customer(administrationId: $administrationId, customerId: trim((string)($request['customerId'] ?? '')));
 		if ($customer === null) {
-			throw new QuickDraftRefusedException('This customer is not part of your administration.');
+			throw new QuickDraftRefusedException(message: 'This customer is not part of your administration.');
 		}
 
 		$invoiceDate = trim((string)($request['invoiceDate'] ?? ''));
 		if (self::isDate(value: $invoiceDate) === false) {
-			throw new QuickDraftRefusedException('Enter a valid invoice date.');
+			throw new QuickDraftRefusedException(message: 'Enter a valid invoice date.');
 		}
 
 		$lines = self::lines(given: $request['lines'] ?? [], glAccount: trim((string)($request['glAccount'] ?? '')));
 		if ($lines === []) {
-			throw new QuickDraftRefusedException('Add at least one line with a description and a price.');
+			throw new QuickDraftRefusedException(message: 'Add at least one line with a description and a price.');
 		}
 
 		$dueDate = trim((string)($request['dueDate'] ?? ''));
@@ -237,7 +239,7 @@ class QuickDraftInvoiceService {
 		$price = $line['unitPrice'] ?? 0;
 		$rate = $line['vatRate'] ?? 0;
 		if (is_numeric($quantity) === false || is_numeric($price) === false || is_numeric($rate) === false) {
-			throw new QuickDraftRefusedException('Every line needs a number for quantity, price and VAT rate.');
+			throw new QuickDraftRefusedException(message: 'Every line needs a number for quantity, price and VAT rate.');
 		}
 
 		return [$quantity, $price, $rate];
@@ -254,7 +256,7 @@ class QuickDraftInvoiceService {
 	 */
 	private static function assertVatRate(float $rate): void {
 		if ($rate < 0 || $rate > 100) {
-			throw new QuickDraftRefusedException('A VAT rate lies between 0 and 100 percent.');
+			throw new QuickDraftRefusedException(message: 'A VAT rate lies between 0 and 100 percent.');
 		}
 	}//end assertVatRate()
 
@@ -357,7 +359,7 @@ class QuickDraftInvoiceService {
 			}
 		}
 
-		throw new QuickDraftRefusedException('No free draft number was found. Try again.');
+		throw new QuickDraftRefusedException(message: 'No free draft number was found. Try again.');
 	}//end provisionalNumber()
 
 	/**

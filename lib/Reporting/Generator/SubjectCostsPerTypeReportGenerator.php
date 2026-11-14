@@ -25,8 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCA\Shillinq\Reporting\CostSource\SubjectCostReport;
-use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 
 /**
