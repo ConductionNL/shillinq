@@ -85,6 +85,8 @@ describe('PurchaseOrderDetail loading', () => {
 
 		expect(calls).toEqual([
 			['/index.php/apps/openregister/api/objects/shillinq/PurchaseOrder/po-1', undefined],
+			// Which send channels the server can use is read beside the order (task 3.2).
+			['/index.php/apps/shillinq/api/purchase-orders/dispatch-channels', undefined],
 			['/index.php/apps/openregister/api/objects/shillinq/GoodsReceiptNote', { params: { filter: { poIds: 'po-1' } } }],
 			['/index.php/apps/openregister/api/objects/shillinq/ThreeWayMatch', { params: { filter: { matchedPoIds: 'po-1' } } }],
 		])

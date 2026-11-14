@@ -8658,6 +8658,34 @@
                 }
             }
         },
+        "/purchase-orders/dispatch-channels": {
+            "get": {
+                "operationId": "purchase-order-dispatch-channels",
+                "summary": "Which dispatch channels can take an order, and why one cannot",
+                "description": "Which dispatch channels can take an order, and why one cannot. GET /api/purchase-orders/dispatch-channels The detail page disables a channel that is not there and shows the reason, instead of offering a send that would only be logged. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "purchase-order"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/purchase-orders/{id}/approval-decision": {
             "post": {
                 "operationId": "purchase-order-approval-decide",

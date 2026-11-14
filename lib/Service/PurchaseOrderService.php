@@ -563,13 +563,19 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
 	 */
 	public function dispatchChannels(): array {
-		$peppol = ($this->peppolAdapter instanceof LogPeppolTransmissionAdapter) === false;
-		$email  = $this->purchaseOrderMailer->isAvailable();
-
-		return [
-			'peppol' => ['available' => $peppol, 'reason' => ($peppol === true ? null : 'Peppol sending is not configured')],
-			'email' => ['available' => $email, 'reason' => ($email === true ? null : 'Email sending is not configured')],
+		$channels = [
+			'peppol' => ['available' => true, 'reason' => null],
+			'email' => ['available' => true, 'reason' => null],
 		];
+		if ($this->peppolAdapter instanceof LogPeppolTransmissionAdapter) {
+			$channels['peppol'] = ['available' => false, 'reason' => 'Peppol sending is not configured'];
+		}
+
+		if ($this->purchaseOrderMailer->isAvailable() === false) {
+			$channels['email'] = ['available' => false, 'reason' => 'Email sending is not configured'];
+		}
+
+		return $channels;
 	}//end dispatchChannels()
 
 	/**
