@@ -214,8 +214,7 @@ class ENSIAValidationGuard {
 			return true;
 		}
 
-		$supportingDocuments = $question['supportingDocuments'] ?? [];
-		if (is_array($supportingDocuments) === false || count($supportingDocuments) === 0) {
+		if (self::hasSupportingDocuments(question: $question) === false) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires evidence',
 				[
@@ -240,6 +239,18 @@ class ENSIAValidationGuard {
 
 		return true;
 	}//end maturityEvidenceSatisfied()
+
+	/**
+	 * Whether the question carries at least one supporting document.
+	 *
+	 * @param array<string, mixed> $question The ENSIA question.
+	 *
+	 * @return bool
+	 */
+	private static function hasSupportingDocuments(array $question): bool {
+		$supportingDocuments = $question['supportingDocuments'] ?? [];
+		return (is_array($supportingDocuments) === true && count($supportingDocuments) !== 0);
+	}//end hasSupportingDocuments()
 
 	/**
 	 * Precondition enforcing REQ-ENSIA-008 post-peer-review reden requirement
