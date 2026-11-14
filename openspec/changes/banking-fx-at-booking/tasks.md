@@ -13,8 +13,8 @@
 
 ## 3. Pages
 
-- [ ] 3.1 Add the newest-rate aggregation on `FxRate` and the feed status line on `FXRates` (REQ-BFX-004). Verify: Playwright reads the status and the newest date on seed data.
-- [ ] 3.2 Show rate, source and rate date on the line table of `GeneralLedgerDetail` and `JournalDetail` (REQ-BFX-001). Verify: Playwright on a posted USD entry.
+- [x] 3.1 Add the newest-rate aggregation on `FxRate` and the feed status line on `FXRates` (REQ-BFX-004). Verify: Playwright reads the status and the newest date on seed data.
+- [x] 3.2 Show rate, source and rate date on the line table of `GeneralLedgerDetail` and `JournalDetail` (REQ-BFX-001). Verify: Playwright on a posted USD entry.
 
 ## 4. End to end
 

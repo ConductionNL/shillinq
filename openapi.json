@@ -192,6 +192,10 @@
             "description": "Read-only admin endpoint for the FxRate import status."
         },
         {
+            "name": "fx-rate-feed-status",
+            "description": "The FX rates page status line: feed or typed, and the newest rate per currency pair."
+        },
+        {
             "name": "g-rir-reconciliation",
             "description": "GR/IR period-end reconciliation endpoint (REQ-GLTAX-003)."
         },
@@ -5275,6 +5279,34 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/Problem422"
+                    }
+                }
+            }
+        },
+        "/fx-rates/feed-status": {
+            "get": {
+                "operationId": "fx-rate-feed-status-status",
+                "summary": "Return the feed status envelope",
+                "description": "Return the feed status envelope for the FX rates page: whether rates arrive from the feed or are entered by hand, and the newest rate date per currency pair, read with the caller's own register access. Needs a signed-in user.",
+                "tags": [
+                    "fx-rate-feed-status"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }

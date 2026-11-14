@@ -53,7 +53,20 @@
 					{ "key": "baseCurrency", "label": "To currency" },
 					{ "key": "source", "label": "Source" }
 				],
-				"detailRoute": "FXRateDetail"
+				"detailRoute": "FXRateDetail",
+				"_note": "banking-fx-at-booking REQ-BFX-004: the count line says whether rates arrive from the feed or are typed, and the footer names the newest rate date per currency pair. Both come from /api/fx-rates/feed-status, which reads FxRate with the viewer's own register access.",
+				"countValues": {
+					"feedStatus": {
+						"endpoint": "/index.php/apps/shillinq/api/fx-rates/feed-status",
+						"path": "statusLine"
+					},
+					"newestRates": {
+						"endpoint": "/index.php/apps/shillinq/api/fx-rates/feed-status",
+						"path": "newestLine"
+					}
+				},
+				"countText": "{shown} of {total} rates · {feedStatus}",
+				"footerNote": "{newestRates}"
 			}
 		},
 		{
