@@ -30,6 +30,11 @@ use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionConversionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\RequisitionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunExportServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRunReconciliationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReconciliationResolutionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StatementIntakeServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
 use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
@@ -37,6 +42,8 @@ use OCA\Shillinq\Mcp\McpPeriodCloseTools;
 use OCA\Shillinq\Mcp\McpVatReturnTools;
 use OCA\Shillinq\Mcp\McpDunningTools;
 use OCA\Shillinq\Mcp\McpRequisitionTools;
+use OCA\Shillinq\Mcp\McpPaymentRunTools;
+use OCA\Shillinq\Mcp\McpBankTools;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
@@ -67,6 +74,8 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpVatReturnTools::class)]
 #[UsesClass(McpDunningTools::class)]
 #[UsesClass(McpRequisitionTools::class)]
+#[UsesClass(McpPaymentRunTools::class)]
+#[UsesClass(McpBankTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -142,6 +151,22 @@ class ShillinqToolProviderTest extends TestCase {
 				$gate,
 				$this->createMock(RequisitionServiceInterface::class),
 				$this->createMock(RequisitionConversionServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpPaymentRunTools(
+				$gate,
+				$this->createMock(PaymentRunExportServiceInterface::class),
+				$this->createMock(PaymentRunReconciliationServiceInterface::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpBankTools(
+				$gate,
+				$this->createMock(StatementParserInterface::class),
+				$this->createMock(StatementIntakeServiceInterface::class),
+				$this->createMock(ReconciliationResolutionServiceInterface::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(IAppConfig::class),
 				$this->createMock(LoggerInterface::class)
 			)
 		);
@@ -235,6 +260,13 @@ class ShillinqToolProviderTest extends TestCase {
 			'justification' => 'New starters',
 			'kind' => 'goods',
 			'lines' => [['description' => 'Laptop', 'glAccountSuggestion' => '4100', 'quantity' => 1, 'unitPrice' => 900]],
+			'paymentRunId' => 'run-1',
+			'contents' => 'statement',
+			'format' => 'camt053',
+			'reconId' => 'rec-1',
+			'matchIds' => ['m-1'],
+			'resolutionStatus' => 'matched',
+			'resolutionReason' => 'Paid',
 		];
 		foreach ($this->provider->getTools() as $tool) {
 			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));

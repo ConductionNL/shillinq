@@ -141,8 +141,12 @@ class McpArgumentValidator {
 		}
 
 		$items = (array)($property['items'] ?? []);
-		if (($items['type'] ?? null) !== 'object') {
+		if ($items === []) {
 			return null;
+		}
+
+		if (($items['type'] ?? null) !== 'object') {
+			return $this->itemProblems(name: $name, items: $items, value: $value);
 		}
 
 		$problems = [];
@@ -164,6 +168,31 @@ class McpArgumentValidator {
 
 		return implode('; ', $problems);
 	}//end arrayProblem()
+
+	/**
+	 * The problems with the scalar items of a list, each named by its position, or null.
+	 *
+	 * @param string               $name  The argument name.
+	 * @param array<string, mixed> $items The items' schema.
+	 * @param list<mixed>          $value The list.
+	 *
+	 * @return string|null
+	 */
+	private function itemProblems(string $name, array $items, array $value): ?string {
+		$problems = [];
+		foreach ($value as $index => $item) {
+			$problem = $this->propertyProblem(name: $name . '[' . $index . ']', property: $items, value: $item);
+			if ($problem !== null) {
+				$problems[] = $problem;
+			}
+		}
+
+		if ($problems === []) {
+			return null;
+		}
+
+		return implode('; ', $problems);
+	}//end itemProblems()
 
 	/**
 	 * The problem with an integer or number argument, or null. A number

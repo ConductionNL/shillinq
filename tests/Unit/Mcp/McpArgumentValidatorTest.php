@@ -150,4 +150,21 @@ class McpArgumentValidatorTest extends TestCase {
 		);
 		$this->assertSame(['lines[0].note is not an argument of this tool'], $validator->problems($schema, ['lines' => [['text' => 'a', 'note' => 'x']]]));
 	}//end testListArgumentsValidateTheirItems()
+
+	/**
+	 * A list of strings validates each string against the item schema.
+	 *
+	 * @return void
+	 */
+	public function testListsOfStringsValidateEachString(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => ['ids' => ['type' => 'array', 'items' => ['type' => 'string', 'pattern' => '^[a-z0-9-]{1,8}$']]],
+			'required' => ['ids'],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['ids' => ['m-1', 'm-2']]));
+		$this->assertSame(['ids[1] is not well-formed; ids[2] must be a string'], $validator->problems($schema, ['ids' => ['m-1', '../x', 7]]));
+	}//end testListsOfStringsValidateEachString()
 }//end class

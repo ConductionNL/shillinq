@@ -587,6 +587,127 @@ class ShillinqToolProvider implements IMcpToolProvider {
 				'required' => ['administrationId', 'requisitionId'],
 			],
 		],
+		[
+			'id' => 'shillinq.payment_run.export_sepa',
+			'name' => 'Export a payment run as a SEPA file',
+			'description' => 'Export an approved payment run of an administration as a SEPA credit-transfer file for the bank, '
+				. 'and mark the run exported. Use it only when the user explicitly asks to export or pay that run; the '
+				. 'file is meant to leave the instance for the bank. A run that is not approved is refused.',
+			'scope' => 'update',
+			'reach' => 'external',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the run belongs to.',
+					],
+					'paymentRunId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The payment run.'],
+				],
+				'required' => ['administrationId', 'paymentRunId'],
+			],
+		],
+		[
+			'id' => 'shillinq.payment_run.reconcile',
+			'name' => 'Reconcile a payment run with a bank statement',
+			'description' => 'Match an exported payment run of an administration against the bank statement that shows its '
+				. 'payments, and mark the paid lines. Use it when the user provides the statement after the bank executed '
+				. 'the run. A run that was not exported is refused.',
+			'scope' => 'update',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the run belongs to.',
+					],
+					'paymentRunId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The payment run.'],
+					'contents' => [
+						'type' => 'string',
+						'maxLength' => 5000000,
+						'description' => 'The bank statement, as its file text (camt.053 or MT940).',
+					],
+				],
+				'required' => ['administrationId', 'paymentRunId', 'contents'],
+			],
+		],
+		[
+			'id' => 'shillinq.bank_statement.import',
+			'name' => 'Import a bank statement',
+			'description' => 'Import a bank statement file into an administration: its transactions are added as unmatched '
+				. 'statement lines, skipping lines already on file for the account. Use it when the user provides a '
+				. 'camt.053, MT940 or CSV export from their bank. Matching happens afterwards.',
+			'scope' => 'create',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the statement is for.',
+					],
+					'format' => ['type' => 'string', 'enum' => ['camt053', 'mt940', 'csv'], 'description' => 'The file format.'],
+					'contents' => ['type' => 'string', 'maxLength' => 5000000, 'description' => 'The statement, as its file text.'],
+					'bankAccountIban' => [
+						'type' => ['string', 'null'],
+						'pattern' => '^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$',
+						'description' => 'The IBAN of the account, when the file does not name it.',
+					],
+					'glAccountId' => [
+						'type' => ['string', 'null'],
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The ledger account of the bank account.',
+					],
+				],
+				'required' => ['administrationId', 'format', 'contents'],
+			],
+		],
+		[
+			'id' => 'shillinq.bank_reconciliation.resolve',
+			'name' => 'Resolve bank reconciliation matches',
+			'description' => 'Resolve one or more matches of a bank reconciliation of an administration, as the signed-in user: '
+				. 'mark them matched, a timing difference, pending or an adjustment, with the reason kept in the audit '
+				. 'trail. Use it when the user explains unmatched lines. A closed reconciliation is refused per match.',
+			'scope' => 'update',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the reconciliation belongs to.',
+					],
+					'reconId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The bank reconciliation.'],
+					'matchIds' => [
+						'type' => 'array',
+						'minItems' => 1,
+						'maxItems' => 200,
+						'items' => ['type' => 'string', 'pattern' => self::ID_PATTERN],
+						'description' => 'The matches to resolve.',
+					],
+					'resolutionStatus' => [
+						'type' => 'string',
+						'enum' => ['matched', 'timing', 'pending', 'adjustment'],
+						'description' => 'How they are resolved.',
+					],
+					'resolutionReason' => ['type' => 'string', 'maxLength' => 2000, 'description' => 'Why, for the audit trail.'],
+				],
+				'required' => ['administrationId', 'reconId', 'matchIds', 'resolutionStatus', 'resolutionReason'],
+			],
+		],
 	];
 
 	/**
@@ -600,6 +721,8 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpVatReturnTools     $vatReturns     The VAT-return handlers.
 	 * @param McpDunningTools       $dunning        The dunning handlers.
 	 * @param McpRequisitionTools   $requisitions   The requisition handlers.
+	 * @param McpPaymentRunTools    $paymentRuns    The payment-run handlers.
+	 * @param McpBankTools          $bank           The bank-statement and reconciliation handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
@@ -610,6 +733,8 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpVatReturnTools $vatReturns,
 		private readonly McpDunningTools $dunning,
 		private readonly McpRequisitionTools $requisitions,
+		private readonly McpPaymentRunTools $paymentRuns,
+		private readonly McpBankTools $bank,
 	) {
 	}//end __construct()
 
@@ -698,6 +823,10 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'shillinq.requisition.submit' => $this->requisitions->submit(args: $arguments),
 			'shillinq.requisition.decide' => $this->requisitions->decide(args: $arguments),
 			'shillinq.requisition.convert' => $this->requisitions->convert(args: $arguments),
+			'shillinq.payment_run.export_sepa' => $this->paymentRuns->exportSepa(args: $arguments),
+			'shillinq.payment_run.reconcile' => $this->paymentRuns->reconcile(args: $arguments),
+			'shillinq.bank_statement.import' => $this->bank->importStatement(args: $arguments),
+			'shillinq.bank_reconciliation.resolve' => $this->bank->resolve(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()
