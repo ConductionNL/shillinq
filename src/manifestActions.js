@@ -49,6 +49,7 @@ import {
 } from './utils/vatNumberCheck.js'
 import { openPrepareVatReturn } from './utils/vatReturnActions.js'
 import {
+	checkVatFiscalYearCorrections,
 	checkVatReturnForCorrections,
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
@@ -116,6 +117,8 @@ export const manifestActions = Object.freeze({
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
 	// Prepare / Download / File on a correction, and the position's lines.
 	checkVatReturnForCorrections,
+	// tax-vat-return-from-books 4.1: Check fiscal year on a broken fiscal year.
+	checkVatFiscalYearCorrections,
 	prepareSupplementaryReturn,
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,

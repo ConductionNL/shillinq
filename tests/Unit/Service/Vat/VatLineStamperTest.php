@@ -137,6 +137,28 @@ final class VatLineStamperTest extends TestCase {
 	}//end testTariffFacts()
 
 	/**
+	 * A reverse-charged line self-assesses at its own rate, else at the
+	 * general (high) rate; a line that is not reverse-charged has none, and
+	 * without tariff records no rate is guessed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testSelfAssessedRate(): void {
+		$stamper = $this->stamper();
+
+		$this->assertSame(expected: 21.0, actual: $stamper->selfAssessedRate(line: ['taxCode' => 'reverse-charge-purchase']));
+		$this->assertSame(expected: 21.0, actual: $stamper->selfAssessedRate(line: ['taxCode' => 'reverse-charge-purchase', 'vatRate' => 0]));
+		$this->assertSame(expected: 9.0, actual: $stamper->selfAssessedRate(line: ['taxCode' => 'reverse-charge-purchase', 'vatRate' => '0.09']));
+		$this->assertNull(actual: $stamper->selfAssessedRate(line: ['taxCode' => 'high', 'vatRate' => 21]));
+		$this->assertNull(actual: $stamper->selfAssessedRate(line: ['taxCode' => 'unknown']));
+
+		$empty = new VatLineStamper(objectService: new InMemoryObjectServiceStub(data: [], findAllRendersEntities: true), register: 'shillinq');
+		$this->assertNull(actual: $empty->selfAssessedRate(line: ['taxCode' => 'reverse-charge-purchase', 'vatRate' => 21]));
+	}//end testSelfAssessedRate()
+
+	/**
 	 * Tariffs are read once; a store that cannot be read gives no tariffs, so
 	 * lines are stamped without a box.
 	 *

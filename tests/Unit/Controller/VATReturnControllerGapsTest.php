@@ -31,12 +31,14 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use LogicException;
 use OCA\Shillinq\Controller\VATReturnController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Vat\VatFiscalUnityMemberException;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -49,6 +51,7 @@ use RuntimeException;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 #[CoversClass(VATReturnController::class)]
+#[UsesClass(VatFiscalUnityMemberException::class)]
 final class VATReturnControllerGapsTest extends TestCase {
 
 	/**
@@ -351,6 +354,26 @@ final class VATReturnControllerGapsTest extends TestCase {
 		self::assertSame(500, $response->getStatus());
 		self::assertSame(['error' => 'Failed to create VAT return'], $response->getData());
 	}//end testCreateFailureIsALogged500()
+
+	/**
+	 * create() for a member of a VAT fiscal unity answers 409 naming the unity, and logs nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	public function testCreateForAFiscalUnityMemberIsA409NamingTheUnity(): void {
+		$this->params = ['administrationId' => 'adm-1', 'period' => 'year', 'periodYear' => 2024, 'periodNumber' => 1];
+		$this->service->expects($this->once())->method('createReturn')
+			->willThrowException(new VatFiscalUnityMemberException(unityName: 'Fiscale eenheid Holding Voorbeeld'));
+		$this->logger->expects($this->never())->method('error');
+
+		$response = $this->controller()->create();
+
+		self::assertSame(409, $response->getStatus());
+		self::assertSame('vat-fiscal-unity-member', $response->getData()['error']);
+		self::assertStringContainsString('VAT fiscal unity %s', $response->getData()['message']);
+	}//end testCreateForAFiscalUnityMemberIsA409NamingTheUnity()
 
 	/**
 	 * create() for the current year: quarter 1, month 1 and the year are accepted; a later month is not.

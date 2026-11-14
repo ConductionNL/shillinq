@@ -58,6 +58,12 @@
                 }
             ],
             [
+                "VatFiscalUnity",
+                {
+                    "limit": 500
+                }
+            ],
+            [
                 "GLTransaction",
                 {
                     "filters": {
@@ -153,6 +159,12 @@
                     "filters": {
                         "administrationId": "adm-1"
                     }
+                }
+            ],
+            [
+                "VatFiscalUnity",
+                {
+                    "limit": 500
                 }
             ],
             [

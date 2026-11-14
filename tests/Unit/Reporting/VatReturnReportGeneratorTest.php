@@ -319,4 +319,30 @@ final class VatReturnReportGeneratorTest extends TestCase {
 		self::assertSame(['9z', '5a', '5b', '5g'], array_slice($codes[1], -4));
 		self::assertStringContainsString('Rubriek 9z', $content);
 	}//end testABoxOffTheFormKeepsItsCodeAndCountsAsOwed()
+	/**
+	 * REQ-TVRB-003: a VAT fiscal unity's return carries the unity's VAT
+	 * number; a return of one administration has none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	public function testAFiscalUnitysFileCarriesTheUnitysVatNumber(): void {
+		$rows = $this->korenbloemBooks();
+		$this->prepare($rows);
+		$alone = $this->generator()->generate(['period' => '2026-Q3', 'administrationId' => 'adm-kb'], 'xml')->content;
+		self::assertStringNotContainsString('btwNummer', $alone);
+
+		$rows['VatFiscalUnity'] = [
+			[
+				'id' => 'vfu-kb', 'name' => 'Fiscale eenheid Korenbloem', 'administrationId' => 'adm-kb', 'memberAdministrationIds' => [],
+				'vatNumber' => 'NL001234567B01', 'startDate' => '2026-01-01',
+			],
+		];
+		$this->prepare($rows);
+		$unity = $this->generator()->generate(['period' => '2026-Q3', 'administrationId' => 'adm-kb'], 'xml')->content;
+
+		self::assertStringContainsString(' btwNummer="NL001234567B01"', $unity);
+		self::assertSame(['10000.00', '900.00'], $this->rubriek($unity, '1b'));
+	}//end testAFiscalUnitysFileCarriesTheUnitysVatNumber()
 }//end class

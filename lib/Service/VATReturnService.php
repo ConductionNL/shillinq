@@ -50,6 +50,8 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Service\Vat\VatFiscalUnityMemberException;
+use OCA\Shillinq\Service\Vat\VatFiscalUnityResolver;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Service\Vat\VatReturnBox;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -109,7 +111,10 @@ class VATReturnService implements VATReturnServiceInterface {
 	 *
 	 * @return array<string,mixed> The created VATReturn record (incl. id).
 	 *
+	 * @throws VatFiscalUnityMemberException When the administration is a member of a VAT fiscal unity that covers the period.
+	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
 	 */
 	public function createReturn(
 		string $administrationId,
@@ -119,6 +124,12 @@ class VATReturnService implements VATReturnServiceInterface {
 		string $regime,
 	): array {
 		[$startDate, $endDate] = $this->resolvePeriodBounds(period: $period, periodYear: $periodYear, periodNumber: $periodNumber);
+
+		// REQ-TVRB-003: a member of a VAT fiscal unity files no return of its own in a period the unity covers.
+		$unity = $this->unityResolver()->covering(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+		if ($unity !== null && $unity['role'] === VatFiscalUnityResolver::ROLE_MEMBER) {
+			throw new VatFiscalUnityMemberException(unityName: VatFiscalUnityResolver::nameOf(unity: $unity['unity']));
+		}
 
 		$returnNumber = $this->buildReturnNumber(periodYear: $periodYear, periodNumber: $periodNumber, period: $period, regime: $regime);
 		$vatReturn = [
@@ -140,6 +151,10 @@ class VATReturnService implements VATReturnServiceInterface {
 			'totalTaxableAmount' => 0.0,
 			'notes' => null,
 		];
+		if ($unity !== null) {
+			$vatReturn['fiscalUnityId'] = ObjectIdentifier::resolve(saved: $unity['unity']);
+			$vatReturn['vatNumber'] = (string)($unity['unity']['vatNumber'] ?? '');
+		}
 
 		$persisted = $this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
 		$returnId = (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? ''));
@@ -227,7 +242,7 @@ class VATReturnService implements VATReturnServiceInterface {
 		}
 
 		$totals = $this->scanTotals(scan: $scan);
-		$this->updateReturnTotals(returnId: $scope->returnId, totals: $totals);
+		$this->updateReturnTotals(returnId: $scope->returnId, totals: $totals, memberSubtotals: $scan['memberSubtotals']);
 
 		return ['lineCount' => $scan['lineNumber']] + $totals;
 	}//end persistScan()
@@ -403,23 +418,41 @@ class VATReturnService implements VATReturnServiceInterface {
 	 * @return array{declarationsByKey:array<string,array<string,mixed>>,totalVATCollectedCt:int,totalVATPaidCt:int,totalTaxableCt:int,lineNumber:int}
 	 */
 	private function scanRubrieken(string $administrationId, string $startDate, string $endDate): array {
-		$transactions = $this->fetchBookedTransactions(
-			administrationId: $administrationId,
-			startDate: $startDate,
-			endDate: $endDate
-		);
+		// REQ-TVRB-003: the representative of a VAT fiscal unity reads the lines of every member too.
+		$unity = $this->unityResolver()->covering(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+		$administrationIds = [$administrationId];
+		if ($unity !== null && $unity['role'] === VatFiscalUnityResolver::ROLE_REPRESENTATIVE) {
+			$administrationIds = $unity['administrationIds'];
+		}
+
+		$transactions = [];
+		$stampedLines = [];
+		foreach ($administrationIds as $scanned) {
+			$transactions += $this->fetchBookedTransactions(
+				administrationId: $scanned,
+				startDate: $startDate,
+				endDate: $endDate
+			);
+			foreach ($this->fetchStampedLines(administrationId: $scanned) as $line) {
+				$stampedLines[] = ['administrationId' => $scanned] + $line;
+			}
+		}
+
 		$tariffs = new VatLineStamper(objectService: $this->objectService, register: $this->register());
 		$boxes = new VatReturnBox();
 
 		$declarationsByKey = [];
 		$totals = ['collected' => 0, 'paid' => 0, 'taxable' => 0];
+		$byAdministration = array_fill_keys($administrationIds, ['collected' => 0, 'paid' => 0, 'taxable' => 0]);
 		$lineNumber = 0;
 
-		foreach ($this->fetchStampedLines(administrationId: $administrationId) as $line) {
+		foreach ($stampedLines as $line) {
 			$transactionId = (string)($line['transactionId'] ?? '');
 			if (isset($transactions[$transactionId]) === false) {
 				continue;
 			}
+
+			$source = (string)$line['administrationId'];
 
 			$box = (string)$line['vatReturnBox'];
 			$type = $boxes->type(box: $box);
@@ -441,6 +474,8 @@ class VATReturnService implements VATReturnServiceInterface {
 			$lineNumber++;
 			$totals['taxable'] += $baseCt;
 			$totals[$boxes->totalOf(box: $box)] += $vatCt;
+			$byAdministration[$source]['taxable'] += $baseCt;
+			$byAdministration[$source][$boxes->totalOf(box: $box)] += $vatCt;
 
 			$declarationsByKey[$box]['pendingLines'][] = [
 				'lineNumber' => $lineNumber,
@@ -453,6 +488,7 @@ class VATReturnService implements VATReturnServiceInterface {
 				'vatAmount' => $this->fromCents(cents: $vatCt),
 				'description' => (string)($line['description'] ?? ($transactions[$transactionId]['description'] ?? '')),
 				'reverseChargeApplicable' => $tariffs->isReverseCharge(code: $code),
+				'sourceAdministrationId' => $source,
 			];
 		}//end foreach
 
@@ -465,9 +501,50 @@ class VATReturnService implements VATReturnServiceInterface {
 			'totalVATPaidCt' => $totals['paid'],
 			'totalTaxableCt' => $totals['taxable'],
 			'lineNumber' => $lineNumber,
+			'memberSubtotals' => $this->memberSubtotals(unity: $unity, byAdministration: $byAdministration),
 		];
 
 	}//end scanRubrieken()
+
+	/**
+	 * The subtotal per administration of a fiscal unity's return, the
+	 * representative first (REQ-TVRB-003); empty for a return of one
+	 * administration.
+	 *
+	 * @param array<string,mixed>|null                             $unity            The covering unity, if any.
+	 * @param array<string,array{collected:int,paid:int,taxable:int}> $byAdministration Cents per administration.
+	 *
+	 * @return list<array{administrationId:string,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
+	 */
+	private function memberSubtotals(?array $unity, array $byAdministration): array {
+		if ($unity === null || $unity['role'] !== VatFiscalUnityResolver::ROLE_REPRESENTATIVE) {
+			return [];
+		}
+
+		$subtotals = [];
+		foreach ($byAdministration as $administrationId => $cents) {
+			$subtotals[] = [
+				'administrationId' => (string)$administrationId,
+				'totalVATCollected' => $this->fromCents(cents: $cents['collected']),
+				'totalVATPaid' => $this->fromCents(cents: $cents['paid']),
+				'vatBalance' => $this->fromCents(cents: ($cents['paid'] - $cents['collected'])),
+				'totalTaxableAmount' => $this->fromCents(cents: $cents['taxable']),
+			];
+		}
+
+		return $subtotals;
+	}//end memberSubtotals()
+
+	/**
+	 * The resolver of VAT fiscal unities over this register.
+	 *
+	 * @return VatFiscalUnityResolver
+	 */
+	private function unityResolver(): VatFiscalUnityResolver {
+		return new VatFiscalUnityResolver(objectService: $this->objectService, register: $this->register());
+	}//end unityResolver()
 
 	/**
 	 * Split a line's booked cents into its VAT part and its base part by the line's amount kind.
@@ -790,18 +867,25 @@ class VATReturnService implements VATReturnServiceInterface {
 	 * VAT, the balance (totalVATPaid - totalVATCollected) and the sum of
 	 * taxable amounts.
 	 *
+	 * A fiscal unity's return also carries the subtotal per administration;
+	 * any other return carries none.
+	 *
 	 * @param string $returnId VATReturn id.
 	 * @param array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float} $totals The totals.
+	 * @param list<array<string,mixed>> $memberSubtotals The subtotals per administration of a fiscal unity.
 	 *
 	 * @return void
 	 */
-	private function updateReturnTotals(string $returnId, array $totals): void {
+	private function updateReturnTotals(string $returnId, array $totals, array $memberSubtotals = []): void {
 		$vatReturn = $this->fetchReturn(returnId: $returnId);
 
 		$vatReturn['totalVATCollected'] = $totals['totalVATCollected'];
 		$vatReturn['totalVATPaid'] = $totals['totalVATPaid'];
 		$vatReturn['vatBalance'] = $totals['vatBalance'];
 		$vatReturn['totalTaxableAmount'] = $totals['totalTaxableAmount'];
+		if ($memberSubtotals !== [] || isset($vatReturn['memberSubtotals']) === true) {
+			$vatReturn['memberSubtotals'] = $memberSubtotals;
+		}
 
 		$this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
 

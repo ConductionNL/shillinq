@@ -454,9 +454,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines  = [];
-		$vat    = $this->vatStamper();
-		$groups = [];
+		$lines    = [];
+		$vat      = $this->vatStamper();
+		$groups   = [];
+		$assessed = [];
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
@@ -471,7 +472,15 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				'description' => (string)($line['description'] ?? $label),
 			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
-			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
+			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it:
+			// the buyer self-assesses it at the line's rate instead (design D1).
+			if ($vat->isReverseCharge(code: $code) === true) {
+				$rate = $vat->selfAssessedRate(line: $line);
+				if ($rate !== null) {
+					$assessed[$code] = (($assessed[$code] ?? 0.0) + (float)$vat->vatCents(baseCents: $cents, rate: $rate));
+				}
+			}
+
 			if ($vat->isReverseCharge(code: $code) === false) {
 				$groups = $this->addToVatGroup(
 					groups: $groups,
@@ -491,6 +500,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 				'description' => $label . ' VAT',
 			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
 		}
+		$lines = array_merge($lines, $this->selfAssessedVatLines(assessed: $assessed, label: $label));
 		$lines[] = [
 			'accountNumber' => $this->account(key: self::CFG_AP_CONTROL_ACCOUNT),
 			'side' => 'credit',
@@ -510,6 +520,46 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * The self-assessed VAT of reverse-charged purchase lines: per tariff, the
+	 * VAT owed in the tariff's box (2a, 4a or 4b) on the output VAT account and
+	 * the same amount deducted in box 5b on the input VAT account, so the
+	 * posting stays balanced (REQ-VBTW-004, design D1).
+	 *
+	 * @param array<string, float> $assessed Unrounded VAT cents per reverse-charge tariff code.
+	 * @param string               $label    The posting label.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	private function selfAssessedVatLines(array $assessed, string $label): array {
+		$vat   = $this->vatStamper();
+		$lines = [];
+		foreach ($assessed as $code => $unrounded) {
+			$cents = (int)round($unrounded);
+			if ($cents === 0) {
+				continue;
+			}
+
+			$code    = (string)$code;
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' VAT reverse-charged',
+			] + $vat->stamp(code: $code, kind: 'vat', purchase: false);
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => $label . ' VAT reverse-charged',
+			] + $vat->stamp(code: $code, kind: 'vat', purchase: true);
+		}
+
+		return $lines;
+	}//end selfAssessedVatLines()
 
 	/**
 	 * Book a foreign-currency posting at its rate: each line's amount becomes

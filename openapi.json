@@ -460,6 +460,10 @@
             "description": "Check a filed VAT return for corrections and prepare its supplementary return (REQ-VPS-002)."
         },
         {
+            "name": "vat-return-checks",
+            "description": "The checks of a VAT return before it is filed (REQ-TVRB-001)."
+        },
+        {
             "name": "wbso-account-api",
             "description": "Account REST API (REQ-WBSO-001 / REQ-WBSO-005 / REQ-WBSO-006)."
         },
@@ -11476,6 +11480,9 @@
                     "401": {
                         "$ref": "#/components/responses/Problem401"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
                     }
@@ -12305,6 +12312,105 @@
                     },
                     "201": {
                         "description": "A correction was written.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-returns/{returnId}/checks": {
+            "get": {
+                "operationId": "vat-return-checks-index",
+                "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
+                "description": "Runs the checks on a VAT return's period and answers per check its name, whether it blocks filing, passed or failed and the message naming what failed, and whether a blocking check fails. Needs a signed-in Nextcloud user who is a member of the return's administration.",
+                "tags": [
+                    "vat-return-checks"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The VATReturn id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/fiscal-years/{fiscalYearId}/vat-corrections/check": {
+            "post": {
+                "operationId": "vat-fiscal-year-correction-check",
+                "summary": "Check a broken fiscal year's VAT returns for corrections (REQ-TVRB-002)",
+                "description": "For an administration whose fiscal year is not the calendar year, compares every accepted VAT return of the fiscal year with the books, writes a draft correction for each one that drifted, and answers the corrections, their total and whether the total exceeds the EUR 1,000 threshold. Needs a signed-in Nextcloud user who is a member of the fiscal year's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "fiscalYearId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The FiscalYear id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
                         "headers": {
                             "API-Version": {
                                 "$ref": "#/components/headers/API-Version"

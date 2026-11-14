@@ -63,6 +63,7 @@ export function buildPrepareRequest(form) {
  * @param {object} error The axios error.
  * @return {string} The sentence.
  * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.3
+ * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-5.1
  */
 export function prepareErrorText(error) {
 	const status = error?.response?.status
@@ -71,6 +72,11 @@ export function prepareErrorText(error) {
 	}
 	if (status === 403 || status === 404) {
 		return t('shillinq', 'You cannot prepare a return for this administration.')
+	}
+	// REQ-TVRB-003: a member of a VAT fiscal unity is refused with a sentence naming the unity.
+	const data = error?.response?.data
+	if (status === 409 && data?.error === 'vat-fiscal-unity-member' && typeof data.message === 'string' && data.message !== '') {
+		return data.message
 	}
 	return t(
 		'shillinq',
