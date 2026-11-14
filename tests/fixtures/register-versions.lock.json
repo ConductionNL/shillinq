@@ -84,6 +84,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114160000",
             "versionsSha256": "702bd20e6e189638eedc27a8f5e6e809306f661cc7da1431bb4df3865a47261c"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114170000",
+            "versionsSha256": "ba672604c71422dd256a9108d9fed4e4562517379f442e77842f3e6f779904e1"
         }
     ],
     "versions": {
@@ -110,7 +114,7 @@
         "schema:AnalyticalDimension": "0.2.0",
         "schema:AnnualBudget": "0.1.0",
         "schema:AnnualReport": "0.1.0",
-        "schema:Appointment": "0.1.0",
+        "schema:Appointment": "0.2.0",
         "schema:AppointmentSeries": "1.0.0",
         "schema:ApprovalStep": "0.1.0",
         "schema:AssuranceEngagement": "0.1.0",
@@ -609,6 +613,7 @@
         "schema:WidgetAccessKeyAuditEntry": "0.1.0",
         "schema:WinstToerekening": "0.1.0",
         "schema:WipBalance": "0.1.0",
+        "schema:Withdrawal": "0.1.0",
         "schema:XBRLMapping": "0.1.0",
         "schema:XBRLTaxonomy": "0.1.0",
         "schema:XbrlInstance": "0.1.0",

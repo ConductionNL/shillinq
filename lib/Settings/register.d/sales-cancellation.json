@@ -188,6 +188,146 @@
       "description": "Why this service is exempt from the right of withdrawal, shown to the consumer, for example: leisure service on a specific date."
      }
     }
+   },
+   "Appointment": {
+    "slug": "Appointment",
+    "version": "0.2.0",
+    "properties": {
+     "depositPaymentId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Deposit payment",
+      "description": "The DepositPayment taken for this booking, refunded in full on a withdrawal."
+     },
+     "withdrawal": {
+      "type": "object",
+      "nullable": true,
+      "title": "Withdrawal",
+      "description": "Set when the consumer withdrew from the booking.",
+      "properties": {
+       "withdrawalId": {
+        "type": "string",
+        "title": "Withdrawal record"
+       },
+       "withdrawnAt": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Withdrawn at"
+       }
+      }
+     }
+    }
+   },
+   "Withdrawal": {
+    "slug": "Withdrawal",
+    "version": "0.1.0",
+    "title": "Withdrawal",
+    "description": "A consumer's withdrawal from a booking made online (Directive 2011/83/EU article 11a): cancelled without a fee, every payment refunded, acknowledged by e-mail.",
+    "type": "object",
+    "required": [
+     "appointmentId",
+     "requestedAt",
+     "channel",
+     "refundStatus"
+    ],
+    "properties": {
+     "appointmentId": {
+      "type": "string",
+      "title": "Appointment",
+      "description": "The appointment withdrawn from."
+     },
+     "administrationId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Administration",
+      "description": "Tenant administration scope (ADR-005)."
+     },
+     "requestedAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Withdrawn at",
+      "description": "The moment the consumer confirmed the withdrawal."
+     },
+     "channel": {
+      "type": "string",
+      "enum": [
+       "portal",
+       "guest-link"
+      ],
+      "title": "Channel",
+      "description": "Where the consumer withdrew: the portal, or the signed link from the confirmation."
+     },
+     "acknowledgedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true,
+      "title": "Acknowledged at",
+      "description": "When the acknowledgement e-mail was sent."
+     },
+     "refundAmount": {
+      "type": "integer",
+      "minimum": 0,
+      "title": "Refund (cents)",
+      "description": "Everything paid for the booking, refunded in full, in cents."
+     },
+     "refundStatus": {
+      "type": "string",
+      "enum": [
+       "none",
+       "initiated",
+       "due",
+       "failed"
+      ],
+      "title": "Refund status",
+      "description": "none: nothing was paid; initiated: the payment adapter started the refund; due: staff must pay it by refundDueBy; failed: the adapter refused, staff must pay it."
+     },
+     "refundDueBy": {
+      "type": "string",
+      "format": "date",
+      "nullable": true,
+      "title": "Refund due by",
+      "description": "The latest day the refund must be paid: 14 days after the withdrawal (article 13)."
+     },
+     "depositPaymentId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Deposit payment",
+      "description": "The deposit refunded."
+     },
+     "invoiceId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Invoice to credit",
+      "description": "The deposit's invoice, credited in full for the withdrawal."
+     }
+    },
+    "x-openregister-audit-trail": {
+     "enabled": true
+    },
+    "x-openregister-notifications": {
+     "onWithdrawal": {
+      "trigger": {
+       "type": "created"
+      },
+      "description": "Tell the booking operators a consumer withdrew, and whether a refund is due by hand.",
+      "enabled": true,
+      "channels": [
+       "nc-notification"
+      ],
+      "recipients": [
+       {
+        "kind": "groups",
+        "groups": [
+         "booking-operator"
+        ]
+       }
+      ],
+      "subject": {
+       "nl": "Herroeping van afspraak {{appointmentId}}: terugbetaling {{refundAmount}} cent, status {{refundStatus}}, uiterlijk {{refundDueBy}}",
+       "en": "Withdrawal from appointment {{appointmentId}}: refund {{refundAmount}} cents, status {{refundStatus}}, by {{refundDueBy}}"
+      }
+     }
+    }
    }
   },
   "objects": [

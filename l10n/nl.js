@@ -6930,7 +6930,25 @@ OC.L10N.register(
         "This booking is no longer open, so it cannot be withdrawn.": "Deze boeking staat niet meer open en kan dus niet worden herroepen.",
         "This booking cannot be withdrawn: %s. You can still cancel it under the cancellation policy.": "Deze boeking kan niet worden herroepen: %s. U kunt haar nog annuleren volgens de annuleringsvoorwaarden.",
         "The withdrawal period ended on %s. You can still cancel under the cancellation policy.": "De herroepingstermijn is op %s verlopen. U kunt nog annuleren volgens de annuleringsvoorwaarden.",
-        "This appointment has started, so it can no longer be withdrawn.": "Deze afspraak is begonnen en kan dus niet meer worden herroepen."
+        "This appointment has started, so it can no longer be withdrawn.": "Deze afspraak is begonnen en kan dus niet meer worden herroepen.",
+        "Acknowledged at": "Bevestigd op",
+        "Deposit payment": "Aanbetaling",
+        "Everything paid for the booking, refunded in full, in cents.": "Alles wat voor de boeking is betaald, volledig terugbetaald, in centen.",
+        "Invoice to credit": "Te crediteren factuur",
+        "Refund (cents)": "Terugbetaling (centen)",
+        "Refund due by": "Terugbetalen uiterlijk",
+        "Refund status": "Status terugbetaling",
+        "Set when the consumer withdrew from the booking.": "Ingevuld wanneer de consument de boeking heeft herroepen.",
+        "The DepositPayment taken for this booking, refunded in full on a withdrawal.": "De aanbetaling voor deze boeking, volledig terugbetaald bij herroeping.",
+        "The appointment withdrawn from.": "De herroepen afspraak.",
+        "The deposit refunded.": "De terugbetaalde aanbetaling.",
+        "The deposit's invoice, credited in full for the withdrawal.": "De factuur van de aanbetaling, volledig gecrediteerd voor de herroeping.",
+        "The latest day the refund must be paid: 14 days after the withdrawal (article 13).": "De laatste dag waarop de terugbetaling moet zijn gedaan: 14 dagen na de herroeping (artikel 13).",
+        "The moment the consumer confirmed the withdrawal.": "Het moment waarop de consument de herroeping bevestigde.",
+        "When the acknowledgement e-mail was sent.": "Wanneer de bevestigingsmail is verstuurd.",
+        "Where the consumer withdrew: the portal, or the signed link from the confirmation.": "Waar de consument herriep: in het portaal, of via de ondertekende link uit de bevestiging.",
+        "Withdrawal record": "Herroepingsrecord",
+        "none: nothing was paid; initiated: the payment adapter started the refund; due: staff must pay it by refundDueBy; failed: the adapter refused, staff must pay it.": "none: er is niets betaald; initiated: de betaalkoppeling is de terugbetaling gestart; due: medewerkers moeten haar uiterlijk op refundDueBy betalen; failed: de betaalkoppeling weigerde, medewerkers moeten haar betalen."
     },
     "nplurals=2; plural=(n != 1);"
 )
