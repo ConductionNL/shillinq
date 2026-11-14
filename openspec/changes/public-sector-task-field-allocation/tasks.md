@@ -20,7 +20,7 @@
 
 ## 4. Strings and live check
 
-- [ ] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`.
+- [x] 4.1 English and Dutch strings. Verify: `npm run test:l10n`, `check:schema-l10n`. — every new UI and schema string in `l10n/en.json` and `l10n/nl.json`, catalogues rebuilt; `test:l10n` and `test:l10n-parity` pass, `check:schema-l10n` adds no uncovered string (it stands above its baseline on development already).
 - [ ] 4.2 Live: post a line on an unmapped account in a municipal administration, see it listed; run an allocation over three participants; calculate a cost price.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.
