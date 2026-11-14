@@ -42,6 +42,7 @@ use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -361,6 +362,8 @@ final class ListenerRegistrarTest extends TestCase {
 				[ObjectCreatedEvent::class, ReconciliationMatchToReportListener::class],
 				[ObjectCreatedEvent::class, TenderNedAwardDetectedListener::class],
 				[ObjectCreatedEvent::class, CommitmentTransitionListener::class],
+				[ObjectCreatedEvent::class, WebshopOrderListener::class],
+				[ObjectUpdatedEvent::class, WebshopOrderListener::class],
 			],
 			$this->dispatched
 		);
@@ -375,7 +378,7 @@ final class ListenerRegistrarTest extends TestCase {
 	public function testEachFallbackLogsAWarningNamingListenerAndEvent(): void {
 		$logger = $this->createMock(LoggerInterface::class);
 		$messages = [];
-		$logger->expects(self::exactly(16))->method('warning')->willReturnCallback(
+		$logger->expects(self::exactly(18))->method('warning')->willReturnCallback(
 			function (string $message, array $context) use (&$messages): void {
 				self::assertSame(['app' => 'shillinq'], $context);
 				$messages[] = $message;
