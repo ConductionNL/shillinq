@@ -13,7 +13,7 @@
 - [x] 2.2 Add `PayoutMatchingService` for requests, deposits and web shop invoices, including refunds and chargebacks (REQ-RPPO-002). Verify: PHPUnit per source kind and for an unmatched line.
 - [x] 2.3 Book the capture of an invoice-backed request in `settleLinkedInvoice()`, and add `occ shillinq:payments:book-captures` for invoices paid before this change (REQ-RPPO-003). Verify: PHPUnit asserting a balanced clearing-to-debtors transaction, and the command's listing.
 - [x] 2.4 Add `PayoutPostingRule` booking net, fees and refunds against clearing (REQ-RPPO-003). Verify: PHPUnit for the st_example0001 seed, balanced to the cent.
-- [ ] 2.5 Add the payout candidate to bank matching and the reconciled display (REQ-RPPO-004). Verify: PHPUnit that the matching bank line gets one `provider-payout` match and no posting; Playwright on `BankReconciliationDetail`.
+- [x] 2.5 Add the payout candidate to bank matching and the reconciled display (REQ-RPPO-004). Verify: PHPUnit that the matching bank line gets one `provider-payout` match and no posting; Playwright on `BankReconciliationDetail`.
 - [ ] 2.6 Add `ProviderPayouts` index and detail under Banking (REQ-RPPO-001, REQ-RPPO-002). Verify: `npm run check:manifest` and `npm run check:nav-reachability`.
 
 ## 3. On the spot
