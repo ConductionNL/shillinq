@@ -37,10 +37,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Portal\PortalAssertionVerifier;
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
-use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PortalAssertionVerifierInterface;
+use OCA\Shillinq\Kernel\Contracts\PortalPaymentSessionServiceInterface;
+use OCA\Shillinq\Kernel\Model\PortalPaymentSessionResult;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -56,6 +56,7 @@ use Throwable;
  * session for the asserted subject's own invoice.
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class PortalPaymentInitiationController extends Controller {
 	/**
@@ -71,14 +72,14 @@ class PortalPaymentInitiationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param PortalAssertionVerifier $verifier Verifies the X-Portal-Subject assertion.
-	 * @param PortalPaymentSessionService $sessionService Resolves ownership + mints the payment session.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies the X-Portal-Subject assertion.
+	 * @param PortalPaymentSessionServiceInterface $sessionService Resolves ownership + mints the payment session.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
-		private readonly PortalPaymentSessionService $sessionService,
+		private readonly PortalAssertionVerifierInterface $verifier,
+		private readonly PortalPaymentSessionServiceInterface $sessionService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -115,7 +116,7 @@ class PortalPaymentInitiationController extends Controller {
 	#[AnonRateLimit(limit: 20, period: 60)]
 	public function initiate(): JSONResponse {
 		// 1. Verify — the assertion is the ONLY credential (fail-closed 401).
-		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifier::HEADER));
+		$claims = $this->verifier->verify((string)$this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($claims === null) {
 			return new JSONResponse(['error' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
 		}

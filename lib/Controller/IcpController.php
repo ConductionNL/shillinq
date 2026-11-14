@@ -32,12 +32,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
-use OCA\Shillinq\Service\IcpFilingService;
-use OCA\Shillinq\Service\IcpService;
-use OCA\Shillinq\Service\ViesService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ArInvoiceIcpPdfRendererInterface;
+use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -46,7 +47,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
 /**
@@ -66,27 +66,27 @@ class IcpController extends Controller {
 	 * Constructor for the IcpController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param IcpService $icpService The ICP read-side computation service.
-	 * @param IcpFilingService $filingService The ICP filing write service (correction + export).
-	 * @param ViesService $viesService The VIES validation service.
-	 * @param ArInvoiceIcpPdfRenderer $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
+	 * @param IcpServiceInterface $icpService The ICP read-side computation service.
+	 * @param IcpFilingServiceInterface $filingService The ICP filing write service (correction + export).
+	 * @param ViesServiceInterface $viesService The VIES validation service.
+	 * @param ArInvoiceIcpPdfRendererInterface $pdfRenderer The ICP overlay PDF renderer (REQ-ICP-007).
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param AdministrationContextService $administrations The caller's administration memberships (REQ-ICP-001).
+	 * @param AdministrationContextServiceInterface $administrations The caller's administration memberships (REQ-ICP-001).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly IcpService $icpService,
-		private readonly IcpFilingService $filingService,
-		private readonly ViesService $viesService,
-		private readonly ArInvoiceIcpPdfRenderer $pdfRenderer,
+		private readonly IcpServiceInterface $icpService,
+		private readonly IcpFilingServiceInterface $filingService,
+		private readonly ViesServiceInterface $viesService,
+		private readonly ArInvoiceIcpPdfRendererInterface $pdfRenderer,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly AdministrationContextService $administrations,
+		private readonly AdministrationContextServiceInterface $administrations,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -583,7 +583,7 @@ class IcpController extends Controller {
 	 */
 	private static function renderRefusal(\InvalidArgumentException $failure): JSONResponse {
 		$message = $failure->getMessage();
-		$code = ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING;
+		$code = ArInvoiceIcpPdfRendererInterface::ERROR_VATID_MISSING;
 		if (str_starts_with($message, $code) === true) {
 			return new JSONResponse(
 				['error' => $code, 'message' => $message],

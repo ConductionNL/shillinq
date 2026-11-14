@@ -40,10 +40,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BankRulePreviewService;
-use OCA\Shillinq\Service\BankRuleSuggestionService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BankRulePreviewServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BankRuleSuggestionServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,8 +54,6 @@ use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST surface for bank matching-rule preview + suggestion (REQ-BR-011/012).
@@ -79,9 +79,9 @@ class BankRuleController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Inbound request.
-	 * @param BankRulePreviewService $previewService Read-only predicate evaluator.
-	 * @param BankRuleSuggestionService $suggestionService History-based learning path.
-	 * @param AdministrationContextService $administration Server-resolved tenant scope.
+	 * @param BankRulePreviewServiceInterface $previewService Read-only predicate evaluator.
+	 * @param BankRuleSuggestionServiceInterface $suggestionService History-based learning path.
+	 * @param AdministrationContextServiceInterface $administration Server-resolved tenant scope.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IUserSession $userSession Current NC user.
 	 * @param LoggerInterface $logger Logger.
@@ -90,9 +90,9 @@ class BankRuleController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BankRulePreviewService $previewService,
-		private readonly BankRuleSuggestionService $suggestionService,
-		private readonly AdministrationContextService $administration,
+		private readonly BankRulePreviewServiceInterface $previewService,
+		private readonly BankRuleSuggestionServiceInterface $suggestionService,
+		private readonly AdministrationContextServiceInterface $administration,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
@@ -275,9 +275,9 @@ class BankRuleController extends Controller {
 	 * @return int
 	 */
 	private function threshold(): int {
-		$k = (int)$this->request->getParam('k', (string)BankRuleSuggestionService::DEFAULT_THRESHOLD);
+		$k = (int)$this->request->getParam('k', (string)BankRuleSuggestionServiceInterface::DEFAULT_THRESHOLD);
 		if ($k < 1) {
-			return BankRuleSuggestionService::DEFAULT_THRESHOLD;
+			return BankRuleSuggestionServiceInterface::DEFAULT_THRESHOLD;
 		}
 
 		return $k;

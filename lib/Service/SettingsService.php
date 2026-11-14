@@ -25,7 +25,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SettingsServiceInterface;
 use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\Jurisdiction\LegislationPackSeeder;
 use OCA\Shillinq\Service\Seed\SeedImport;
@@ -55,7 +56,7 @@ use Psr\Log\LoggerInterface;
  * the app's configuration surface; splitting is out of scope for a
  * mechanical phpcs/phpmd cleanup. Deferred to a follow-up.
  */
-class SettingsService {
+class SettingsService implements SettingsServiceInterface {
 
 	/**
 	 * Configuration keys managed by this service.

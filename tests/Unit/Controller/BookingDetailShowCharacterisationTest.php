@@ -25,10 +25,10 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\BookingDetailController;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;

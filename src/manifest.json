@@ -3233,6 +3233,62 @@
 			"title": "Bank Connection",
 			"config": {
 				"register": "shillinq",
+				"widgets": [
+					{
+						"id": "data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"register": "shillinq",
+							"schema": "BankConnection",
+							"columns": 3
+						}
+					},
+					{
+						"id": "related",
+						"type": "related",
+						"title": "Related",
+						"content": {
+							"title": "",
+							"groups": []
+						}
+					},
+					{
+						"id": "connection-statement-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Imported statements",
+						"icon": "FileDocumentMultipleOutline"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "related",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "connection-statement-files",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
 				"_note": "Bank Connection detail — a linked bank account feed (PSD2/statement import). Imported bank statements from this connection are listed; audit trail evidences connection and mandate changes.",
 				"relatedLists": [
 					{
@@ -10944,6 +11000,62 @@
 			"title": "Expense Claim",
 			"config": {
 				"register": "shillinq",
+				"widgets": [
+					{
+						"id": "data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"register": "shillinq",
+							"schema": "ExpenseClaimEntry",
+							"columns": 3
+						}
+					},
+					{
+						"id": "related",
+						"type": "related",
+						"title": "Related",
+						"content": {
+							"title": "",
+							"groups": []
+						}
+					},
+					{
+						"id": "claim-receipt-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Receipt evidence",
+						"icon": "Receipt"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "related",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "claim-receipt-files",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
 				"_note": "Expense Claim detail — an employee reimbursement claim aggregating receipts, per-diems and mileage into one approvable total. Related receipts and mileage entries list the underlying evidence; source receipt images live under Files. Audit trail evidences the approval workflow.",
 				"relatedLists": [
 					{
@@ -11116,6 +11228,18 @@
 										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
 										"collapsed": true
 									}
+								}
+							]
+						},
+						{
+							"id": "talk",
+							"label": "Chat",
+							"icon": "ChatOutline",
+							"order": 85,
+							"widgets": [
+								{
+									"type": "integration",
+									"integrationId": "talk"
 								}
 							]
 						},
@@ -11370,6 +11494,62 @@
 			"title": "BTW return",
 			"config": {
 				"register": "shillinq",
+				"widgets": [
+					{
+						"id": "data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"register": "shillinq",
+							"schema": "VatReturn",
+							"columns": 3
+						}
+					},
+					{
+						"id": "related",
+						"type": "related",
+						"title": "Related",
+						"content": {
+							"title": "",
+							"groups": []
+						}
+					},
+					{
+						"id": "vat-return-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Filed return attachment",
+						"icon": "FileDocument"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "related",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "vat-return-files",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
 				"_note": "BTW return detail — a periodic VAT return (rubrieken, verschuldigde omzetbelasting, voorbelasting, te betalen/teruggave) filed via Digipoort. The filed attachment lives under Files; audit trail evidences submission and acceptance.",
 				"auditTrail": true,
 				"schema": "VatReturn",

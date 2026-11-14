@@ -45,10 +45,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\StockLedgerServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REQ-SM-005 + REQ-SM-009 read-side aggregation for the Stock Ledger
@@ -58,7 +59,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
  */
-class StockLedgerService {
+class StockLedgerService implements StockLedgerServiceInterface {
 	/**
 	 * Construct the service.
 	 *

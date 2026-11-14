@@ -29,9 +29,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoAccountServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Account-register helper service (REQ-WBSO-001 / REQ-WBSO-006).
@@ -43,7 +44,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-23
  */
-class WbsoAccountService {
+class WbsoAccountService implements WbsoAccountServiceInterface {
 
 	/**
 	 * Maximum chart-of-accounts depth (REQ-WBSO-001).
@@ -181,7 +182,6 @@ class WbsoAccountService {
 			parent: (string)($payload['parentAccountNumber'] ?? ''),
 		);
 
-
 		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
 		// this method declares — returning it raised a TypeError on every call.
 		return (array)$this->objectService
@@ -227,7 +227,6 @@ class WbsoAccountService {
 			accountNumber: $accountNumber,
 			parent: (string)($merged['parentAccountNumber'] ?? ''),
 		);
-
 
 		// ADR-084: see createAccount() — the contract returns an entity.
 		return (array)$this->objectService
