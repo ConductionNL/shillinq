@@ -5563,6 +5563,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "sales-cancellation",
+					"id": "CancellationReasons",
+					"route": "/reports/cancellation-reasons",
+					"type": "dashboard",
+					"title": "Cancellation reasons"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "MeterReadings",
