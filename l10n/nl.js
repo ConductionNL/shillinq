@@ -6893,7 +6893,18 @@ OC.L10N.register(
         "Peppol": "Peppol",
         "PDF and email": "PDF en e-mail",
         "Waiting for delivery": "Wacht op aflevering",
-        "Not delivered": "Niet afgeleverd"
+        "Not delivered": "Niet afgeleverd",
+        "Service receipts": "Prestatieverklaringen",
+        "Service receipt": "Prestatieverklaring",
+        "Reason for rejection": "Reden van afkeuring",
+        "Service receipt confirmed.": "Prestatieverklaring bevestigd.",
+        "Could not confirm the service receipt.": "De prestatieverklaring kon niet worden bevestigd.",
+        "Service receipt accepted; the order is updated.": "Prestatieverklaring geaccepteerd; de bestelling is bijgewerkt.",
+        "Could not accept the service receipt.": "De prestatieverklaring kon niet worden geaccepteerd.",
+        "Order line": "Bestelregel",
+        "Quantity confirmed": "Bevestigde hoeveelheid",
+        "Amount confirmed (cents)": "Bevestigd bedrag (centen)",
+        "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).": "Waarom de controller de verklaring heeft afgekeurd, gevraagd bij het afkeuren (REQ-PODR-004)."
     },
     "nplurals=2; plural=(n != 1);"
 )

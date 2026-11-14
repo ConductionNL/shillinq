@@ -4705,7 +4705,23 @@ OC.L10N.register(
         "Peppol": "Peppol",
         "PDF and email": "PDF and email",
         "Waiting for delivery": "Waiting for delivery",
-        "Not delivered": "Not delivered"
+        "Not delivered": "Not delivered",
+        "Service receipts": "Service receipts",
+        "Service receipt": "Service receipt",
+        "Period start": "Period start",
+        "Period end": "Period end",
+        "Approver": "Approver",
+        "Reason for rejection": "Reason for rejection",
+        "Accept": "Accept",
+        "Service receipt confirmed.": "Service receipt confirmed.",
+        "Could not confirm the service receipt.": "Could not confirm the service receipt.",
+        "Service receipt accepted; the order is updated.": "Service receipt accepted; the order is updated.",
+        "Could not accept the service receipt.": "Could not accept the service receipt.",
+        "Order line": "Order line",
+        "% complete": "% complete",
+        "Quantity confirmed": "Quantity confirmed",
+        "Amount confirmed (cents)": "Amount confirmed (cents)",
+        "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004).": "Why the controller rejected the receipt, asked for by the reject transition (REQ-PODR-004)."
     },
     "nplurals=2; plural=(n != 1);"
 )

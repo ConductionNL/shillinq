@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -5187,6 +5201,38 @@
 					"route": "/overheid/interest-allocation/:id",
 					"type": "detail",
 					"title": "Interest allocation run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"children": [
+						{
+							"id": "ServiceReceipts",
+							"label": "Service receipts",
+							"icon": "ClipboardCheckOutline",
+							"route": "ServiceReceipts",
+							"order": 6.5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceipts",
+					"route": "/inkoop/service-receipts",
+					"type": "index",
+					"title": "Service receipts"
+				},
+				{
+					"_fragment": "purchasing-order-dispatch-and-receipt",
+					"id": "ServiceReceiptDetail",
+					"route": "/inkoop/service-receipts/:id",
+					"type": "detail",
+					"title": "Service receipt"
 				}
 			]
 		},

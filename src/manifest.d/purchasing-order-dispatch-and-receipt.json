@@ -1,0 +1,126 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "purchasing-order-dispatch-and-receipt",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Task 4.1 (REQ-PODR-004): the service receipts a budget holder confirms get a list and a detail page, reachable from the purchasing menu right after Goods Receipts. Confirm and Accept call the existing service-receipt endpoints, so accepting still advances the order; Reject runs the declared `reject` transition and asks for the reason. ServiceReceiptDetail is not a menu leaf: the index rowRoute opens it."
+	},
+	"menu": [
+		{
+			"id": "Purchasing",
+			"children": [
+				{
+					"id": "ServiceReceipts",
+					"label": "Service receipts",
+					"icon": "ClipboardCheckOutline",
+					"route": "ServiceReceipts",
+					"order": 6.5
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ServiceReceipts",
+			"route": "/inkoop/service-receipts",
+			"type": "index",
+			"title": "Service receipts",
+			"config": {
+				"register": "shillinq",
+				"schema": "SvcReceipt",
+				"columns": [
+					{ "key": "receiptNumber", "label": "Receipt", "sortable": true },
+					{ "key": "periodStart", "label": "Period start", "sortable": true },
+					{ "key": "periodEnd", "label": "Period end", "sortable": true },
+					{ "key": "approver", "label": "Approver", "sortable": true },
+					{ "key": "statusCode", "label": "Status", "sortable": true },
+					{ "key": "confirmedAt", "label": "Confirmed", "sortable": true }
+				],
+				"defaultSort": "periodStart",
+				"rowRoute": "ServiceReceiptDetail"
+			}
+		},
+		{
+			"id": "ServiceReceiptDetail",
+			"route": "/inkoop/service-receipts/:id",
+			"type": "detail",
+			"title": "Service receipt",
+			"config": {
+				"register": "shillinq",
+				"schema": "SvcReceipt",
+				"_note": "A receipt is read through its lines: each says how much of an order line was delivered, by percentage, quantity or amount. Confirm and Accept go through /api/service-receipts/{id}/confirm and /accept, because accepting is what derives the received quantity and moves the order to partially or fully received; a generic transition would skip that. Reject has no endpoint of its own and is the declared `reject` transition with its reason.",
+				"fields": [
+					{ "key": "receiptNumber", "label": "Receipt", "type": "string" },
+					{ "key": "statusCode", "label": "Status", "type": "string" },
+					{ "key": "periodStart", "label": "Period start", "type": "date" },
+					{ "key": "periodEnd", "label": "Period end", "type": "date" },
+					{ "key": "approver", "label": "Approver", "type": "string" },
+					{ "key": "confirmedAt", "label": "Confirmed", "type": "datetime" },
+					{ "key": "costCenter", "label": "Cost centre", "type": "string" },
+					{ "key": "projectCode", "label": "Project", "type": "string" },
+					{ "key": "notes", "label": "Notes", "type": "string" },
+					{ "key": "rejectionReason", "label": "Reason for rejection", "type": "string" }
+				],
+				"headerActions": [
+					{
+						"id": "confirm-service-receipt",
+						"label": "Confirm",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/service-receipts/@objectId/confirm",
+						"method": "POST",
+						"params": { "administrationId": "@object.administrationId" },
+						"icon": "CheckCircleOutline",
+						"variant": "primary",
+						"successMessage": "Service receipt confirmed.",
+						"errorMessage": "Could not confirm the service receipt.",
+						"visibleWhen": { "field": "statusCode", "op": "eq", "value": "draft" }
+					},
+					{
+						"id": "accept-service-receipt",
+						"label": "Accept",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/service-receipts/@objectId/accept",
+						"method": "POST",
+						"params": { "administrationId": "@object.administrationId" },
+						"icon": "CheckAll",
+						"variant": "primary",
+						"successMessage": "Service receipt accepted; the order is updated.",
+						"errorMessage": "Could not accept the service receipt.",
+						"visibleWhen": { "field": "statusCode", "op": "eq", "value": "confirmed" }
+					}
+				],
+				"lifecycleActions": {
+					"field": "statusCode",
+					"transitions": [
+						{
+							"from": "confirmed",
+							"to": "rejected",
+							"action": "reject",
+							"label": "Reject",
+							"variant": "error",
+							"inputs": [ { "field": "rejectionReason", "required": true } ]
+						}
+					]
+				},
+				"relatedCollections": [
+					{
+						"title": "Lines",
+						"register": "shillinq",
+						"schema": "SvcReceiptLine",
+						"filter": { "serviceReceiptId": "@objectId" },
+						"columns": [
+							{ "key": "poLineId", "label": "Order line" },
+							{ "key": "percentageComplete", "label": "% complete" },
+							{ "key": "quantityConfirmed", "label": "Quantity confirmed" },
+							{ "key": "amountConfirmedCents", "label": "Amount confirmed (cents)" },
+							{ "key": "quantityReceived", "label": "Quantity received" },
+							{ "key": "notes", "label": "Notes" }
+						]
+					}
+				],
+				"auditTrail": true
+			}
+		}
+	]
+}

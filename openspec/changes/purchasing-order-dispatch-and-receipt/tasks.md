@@ -21,7 +21,8 @@
 
 ## 4. Service receipts
 
-- [ ] 4.1 Add manifest pages `ServiceReceipts` and `ServiceReceiptDetail` with Confirm, Accept and Reject actions on the existing endpoints, and the "Service receipts" menu entry (REQ-PODR-004). Verify: nav reachability gate passes; Playwright opens the seed receipt.
+- [x] 4.1 Add manifest pages `ServiceReceipts` and `ServiceReceiptDetail` with Confirm, Accept and Reject actions on the existing endpoints, and the "Service receipts" menu entry (REQ-PODR-004). Verify: nav reachability gate passes; Playwright opens the seed receipt.
+  - Done: `src/manifest.d/purchasing-order-dispatch-and-receipt.json`: "Service receipts" after Goods Receipts in the purchasing menu, index `ServiceReceipts` on `SvcReceipt` opening detail `ServiceReceiptDetail` (fields, lines as a related collection, audit trail). Confirm and Accept are `api-call` header actions on `/api/service-receipts/{id}/confirm` and `/accept`; Reject is the declared `reject` transition, which now asks for a required `rejectionReason` (new `SvcReceipt` property). en/nl strings. `check:manifest`, `check:manifest-shell`, `check:registers` pass. Not done here: the nav reachability gate and Playwright on the seed receipt.
 - [ ] 4.2 Add the custom page `ServiceReceiptForm` with the three confirmation modes and the "Confirm service" action on `PurchaseOrderDetail` for orders with service lines (REQ-PODR-004). Verify: Playwright confirms 25 of 40 hours, accepts the receipt and sees the order partially received.
 
 ## 5. End to end
