@@ -470,6 +470,10 @@
         {
             "name": "widget-settings",
             "description": "Admin endpoints to generate, rotate, and revoke widget API keys."
+        },
+        {
+            "name": "portal-subscription-cancel",
+            "description": "A customer ends their own subscription from the portal."
         }
     ],
     "paths": {
@@ -8324,6 +8328,38 @@
                 "description": "Decline the guardian's own open voluntary contribution. Portaliq forwards `POST /apps/shillinq/api/portal/contributions/decline` with `{\"invoiceId\": \"<uuid>\"}` and the signed assertion header. Response contract: 200 `{status: declined}` (also for a repeat); 401 missing or invalid assertion; 403 wrong audience, or the invoice is not an open voluntary contribution the guardian owns (one body for every reason, no existence oracle); 502 on an OpenRegister failure, never with internals. Rate limit: a human clicks this, and each call can write. Public: it needs no login.",
                 "tags": [
                     "portal-contribution-decline"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/portal/subscriptions/cancel": {
+            "post": {
+                "operationId": "portal-subscription-cancel-cancel",
+                "summary": "End the customer's own running subscription",
+                "description": "End the customer's own running subscription. Portaliq forwards `POST /apps/shillinq/api/portal/subscriptions/cancel` with `{\"profileId\": \"<uuid>\", \"reasonCode\": \"<code>\", \"reasonText\": \"<note>\"}` (reason optional) and the signed assertion header. Response contract: 200 `{status: cancelled}` (also for a repeat); 401 missing or invalid assertion; 403 wrong audience, or the profile is not a running subscription the customer owns (one body for every reason, no existence oracle); 502 on an OpenRegister failure, never with internals. Rate limit: a human clicks this, and each call can write. Public: it needs no login.",
+                "tags": [
+                    "portal-subscription-cancel"
                 ],
                 "security": [],
                 "responses": {

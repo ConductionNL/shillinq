@@ -137,6 +137,20 @@ class PortalContributionProvider {
 	];
 
 	/**
+	 * The RecurringInvoiceProfile fields a customer reads (sales-cancellation REQ-SCX-003).
+	 *
+	 * @var array<int, string>
+	 */
+	private const SUBSCRIPTION_FIELDS = [
+		'name',
+		'status',
+		'frequency',
+		'startDate',
+		'nextRunDate',
+		'currency',
+	];
+
+	/**
 	 * The ARInvoice fields a customer reads, in the list and on the detail card.
 	 *
 	 * @var array<int, string>
@@ -397,6 +411,41 @@ class PortalContributionProvider {
 					'direction' => 'desc',
 				],
 			],
+			// The customer's own subscriptions (sales-cancellation REQ-SCX-003),
+			// scoped on the CustomerMaster the profile bills. An active or
+			// paused one can be ended from its row with cancel-subscription.
+			[
+				'id' => 'subscriptions',
+				'register' => 'shillinq',
+				'schema' => 'RecurringInvoiceProfile',
+				'scopeField' => 'customerMasterId',
+				'scopeClaim' => 'customerMasterId',
+				'label' => 'Mijn abonnementen',
+				'listable' => true,
+				'rowAction' => 'cancel-subscription',
+				'fields' => self::SUBSCRIPTION_FIELDS,
+				'columns' => [
+					[
+						'field' => 'name',
+						'label' => 'Abonnement',
+						'render' => 'text',
+					],
+					[
+						'field' => 'nextRunDate',
+						'label' => 'Volgende factuur',
+						'render' => 'date',
+					],
+					[
+						'field' => 'status',
+						'label' => 'Status',
+						'render' => 'badge',
+					],
+				],
+				'detail' => [
+					'layout' => 'card',
+					'fields' => self::SUBSCRIPTION_FIELDS,
+				],
+			],
 		],
 		// Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
 		// action, forwarded server-to-server by portaliq to
@@ -440,6 +489,23 @@ class PortalContributionProvider {
 					'field' => 'state',
 					'in' => ['pending'],
 				],
+			],
+			// The row action of subscriptions (sales-cancellation REQ-SCX-003):
+			// portaliq forwards the proven row id as profileId, only while the
+			// profile runs, with the reason the customer may give.
+			[
+				'id' => 'cancel-subscription',
+				'label' => 'Abonnement opzeggen',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/subscriptions/cancel',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'profileId',
+				'rowWhen' => [
+					'field' => 'status',
+					'in' => ['active', 'paused'],
+				],
+				'fields' => ['reasonCode', 'reasonText'],
 			],
 		],
 		'notifications' => [],

@@ -15,7 +15,9 @@
       "type": "string",
       "nullable": true,
       "title": "Customer record",
-      "description": "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice."
+      "description": "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice.",
+      "format": "uuid",
+      "$ref": "CustomerMaster"
      },
      "cancellationReasonCode": {
       "type": "string",
