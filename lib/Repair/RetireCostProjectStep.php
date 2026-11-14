@@ -212,9 +212,7 @@ class RetireCostProjectStep implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function migrateCostProjects(object $objectService, string $registerSlug, IOutput $output): array {
-		$migrated = 0;
-		$skipped = 0;
-		$failed = 0;
+		$counts = ['migrated' => 0, 'skipped' => 0, 'failed' => 0];
 
 		try {
 			$costProjects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'CostProject');
@@ -230,82 +228,109 @@ class RetireCostProjectStep implements IRepairStep {
 
 		foreach ($costProjects as $costProject) {
 			$arr = $this->rowPayload(row: $costProject);
-			$id = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
+			$outcome = $this->migrateCostProjectRow(objectService: $objectService, registerSlug: $registerSlug, arr: $arr, output: $output);
+			$counts[$outcome]++;
+		}
 
-			if ($id === '') {
-				$output->warning('Shillinq: RetireCostProjectStep — CostProject record has no id; skipping.');
-				$failed++;
-				continue;
-			}
-
-			try {
-				// Idempotency check: skip if already migrated.
-				if ($this->isAlreadyMigrated(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					costProjectId: $id
-				) === true
-				) {
-					$skipped++;
-					continue;
-				}
-
-				$projectNumber = (string)($arr['projectNumber'] ?? '');
-				if ($projectNumber === '') {
-					$output->warning(
-						'Shillinq: RetireCostProjectStep — CostProject id=' . $id . ' has no projectNumber; cannot mint code; skipping (left in place).'
-					);
-					$failed++;
-					continue;
-				}
-
-				// Mint a namespaced code; disambiguate on collision.
-				$code = $this->mintCode(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					projectNumber: $projectNumber,
-					output: $output
-				);
-
-				if ($code === null) {
-					$output->warning(
-						'Shillinq: RetireCostProjectStep — CostProject id=' . $id . ' projectNumber=' . $projectNumber
-						. ': irrecoverable code collision after ' . self::MAX_COLLISION_ATTEMPTS . ' attempts; skipping (left in place).'
-					);
-					$failed++;
-					continue;
-				}
-
-				$dimension = $this->buildDimensionRecord(
-					source: $arr,
-					code: $code,
-					costProjectId: $id
-				);
-
-				$objectService->saveObject(
-					object: $dimension,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
-					_rbac: false,
-					_multitenancy: false,
-				);
-
-				$migrated++;
-			} catch (\Throwable $e) {
-				// Per-record failure is soft — log and continue.
-				$output->warning(
-					'Shillinq: RetireCostProjectStep — failed to migrate CostProject id=' . $id . ': ' . $e->getMessage()
-				);
-				$this->logger->warning(
-					'Shillinq: RetireCostProjectStep — migration failed for CostProject id=' . $id,
-					['exception' => $e->getMessage()]
-				);
-				$failed++;
-			}//end try
-		}//end foreach
-
-		return ['migrated' => $migrated, 'skipped' => $skipped, 'failed' => $failed];
+		return $counts;
 	}//end migrateCostProjects()
+
+	/**
+	 * Migrate one CostProject row, failing soft on any per-record error.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param array<string,mixed> $arr The CostProject row.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return string One of 'migrated', 'skipped', 'failed'.
+	 */
+	private function migrateCostProjectRow(object $objectService, string $registerSlug, array $arr, IOutput $output): string {
+		$id = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
+
+		if ($id === '') {
+			$output->warning('Shillinq: RetireCostProjectStep — CostProject record has no id; skipping.');
+			return 'failed';
+		}
+
+		try {
+			return $this->migrateCostProjectRecord(objectService: $objectService, registerSlug: $registerSlug, arr: $arr, output: $output);
+		} catch (\Throwable $e) {
+			// Per-record failure is soft — log and continue.
+			$output->warning(
+				'Shillinq: RetireCostProjectStep — failed to migrate CostProject id=' . $id . ': ' . $e->getMessage()
+			);
+			$this->logger->warning(
+				'Shillinq: RetireCostProjectStep — migration failed for CostProject id=' . $id,
+				['exception' => $e->getMessage()]
+			);
+			return 'failed';
+		}//end try
+	}//end migrateCostProjectRow()
+
+	/**
+	 * Convert one CostProject row (with an id) into an AnalyticalDimension.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param array<string,mixed> $arr The CostProject row.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return string One of 'migrated', 'skipped', 'failed'.
+	 */
+	private function migrateCostProjectRecord(object $objectService, string $registerSlug, array $arr, IOutput $output): string {
+		$id = (string)($arr['id'] ?? ($arr['uuid'] ?? ''));
+
+		// Idempotency check: skip if already migrated.
+		if ($this->isAlreadyMigrated(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			costProjectId: $id
+		) === true
+		) {
+			return 'skipped';
+		}
+
+		$projectNumber = (string)($arr['projectNumber'] ?? '');
+		if ($projectNumber === '') {
+			$output->warning(
+				'Shillinq: RetireCostProjectStep — CostProject id=' . $id . ' has no projectNumber; cannot mint code; skipping (left in place).'
+			);
+			return 'failed';
+		}
+
+		// Mint a namespaced code; disambiguate on collision.
+		$code = $this->mintCode(
+			objectService: $objectService,
+			registerSlug: $registerSlug,
+			projectNumber: $projectNumber,
+			output: $output
+		);
+
+		if ($code === null) {
+			$output->warning(
+				'Shillinq: RetireCostProjectStep — CostProject id=' . $id . ' projectNumber=' . $projectNumber
+				. ': irrecoverable code collision after ' . self::MAX_COLLISION_ATTEMPTS . ' attempts; skipping (left in place).'
+			);
+			return 'failed';
+		}
+
+		$dimension = $this->buildDimensionRecord(
+			source: $arr,
+			code: $code,
+			costProjectId: $id
+		);
+
+		$objectService->saveObject(
+			object: $dimension,
+			register: $registerSlug,
+			schema: 'AnalyticalDimension',
+			_rbac: false,
+			_multitenancy: false,
+		);
+
+		return 'migrated';
+	}//end migrateCostProjectRecord()
 
 	/**
 	 * Check whether a CostProject has already been migrated by looking for
@@ -439,31 +464,9 @@ class RetireCostProjectStep implements IRepairStep {
 			'externalProjectRef' => null,
 		];
 
-		// Copy scalar optional fields when present.
-		$optionalFields = [
-			'description',
-			'projectNumber',
-			'organizationId',
-		];
-		foreach ($optionalFields as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== '') {
-				$record[$field] = $source[$field];
-			}
-		}
-
-		// Copy integer budget fields when positive.
-		foreach (['totalBudget', 'totalEstimatedCosts'] as $field) {
-			if (isset($source[$field]) === true) {
-				$record[$field] = (int)$source[$field];
-			}
-		}
-
-		// Copy date fields when non-empty.
-		foreach (['startDate', 'endDate'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== '') {
-				$record[$field] = (string)$source[$field];
-			}
-		}
+		$record = $this->copyOptionalScalarFields(record: $record, source: $source);
+		$record = $this->copyBudgetFields(record: $record, source: $source);
+		$record = $this->copyDateFields(record: $record, source: $source);
 
 		// CostCenterCode → parentCode (migrated project nests under its department).
 		$costCenterCode = ($source['costCenterCode'] ?? null);
@@ -476,6 +479,65 @@ class RetireCostProjectStep implements IRepairStep {
 		// not be stored as a stale integer.
 		return $record;
 	}//end buildDimensionRecord()
+
+	/**
+	 * Copy scalar optional fields when present.
+	 *
+	 * @param array<string,mixed> $record The AnalyticalDimension record.
+	 * @param array<string,mixed> $source The CostProject object as an array.
+	 *
+	 * @return array<string,mixed> The record with the fields copied.
+	 */
+	private function copyOptionalScalarFields(array $record, array $source): array {
+		$optionalFields = [
+			'description',
+			'projectNumber',
+			'organizationId',
+		];
+		foreach ($optionalFields as $field) {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
+				$record[$field] = $source[$field];
+			}
+		}
+
+		return $record;
+	}//end copyOptionalScalarFields()
+
+	/**
+	 * Copy integer budget fields when positive.
+	 *
+	 * @param array<string,mixed> $record The AnalyticalDimension record.
+	 * @param array<string,mixed> $source The CostProject object as an array.
+	 *
+	 * @return array<string,mixed> The record with the fields copied.
+	 */
+	private function copyBudgetFields(array $record, array $source): array {
+		foreach (['totalBudget', 'totalEstimatedCosts'] as $field) {
+			if (isset($source[$field]) === true) {
+				$record[$field] = (int)$source[$field];
+			}
+		}
+
+		return $record;
+	}//end copyBudgetFields()
+
+	/**
+	 * Copy date fields when non-empty.
+	 *
+	 * @param array<string,mixed> $record The AnalyticalDimension record.
+	 * @param array<string,mixed> $source The CostProject object as an array.
+	 *
+	 * @return array<string,mixed> The record with the fields copied.
+	 */
+	private function copyDateFields(array $record, array $source): array {
+		foreach (['startDate', 'endDate'] as $field) {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
+				$record[$field] = (string)$source[$field];
+			}
+		}
+
+		return $record;
+	}//end copyDateFields()
 
 	/**
 	 * Map a CostProject lifecycleState to the AnalyticalDimension lifecycle.

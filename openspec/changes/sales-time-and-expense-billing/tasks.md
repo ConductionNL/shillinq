@@ -5,7 +5,7 @@
 ## 1. Markup
 
 - [x] 1.1 Add `lib/Service/PassThroughMarkupResolver.php` with the priority rule taken from `SettlementGuard::matchMarkupRule()`, and make `SettlementGuard::computeMarkupAmount()` delegate to it (REQ-STEB-004, REQ-STEB-005). Verify: PHPUnit for each priority tier, percentage, fixed and no rule. (`lib/Service/PassThroughMarkupResolver.php`: `select`, `markup`, `resolve`, `filters`; `SettlementGuard::matchMarkupRule()` and `computeMarkupAmount()` delegate to it, the existing Settlement tests and golden unchanged; `PassThroughMarkupResolverTest`.)
-- [ ] 1.2 Add the lifecycle action `lock-passthrough-markup` on `ExpenseClaimEntry.submit`, register it under that name, and remove the three `markupLookup` declarations from `expense-reimbursement-or-passthrough.json` (REQ-STEB-004). Verify: `npm run check:registers`; PHPUnit that a submitted claim's items carry the rule, rate and amount and that a later rule change leaves them.
+- [x] 1.2 Add the lifecycle action `lock-passthrough-markup` on `ExpenseClaimEntry.submit`, register it under that name, and remove the three `markupLookup` declarations from `expense-reimbursement-or-passthrough.json` (REQ-STEB-004). Verify: `npm run check:registers`; PHPUnit that a submitted claim's items carry the rule, rate and amount and that a later rule change leaves them. (`lib/Lifecycle/Action/LockPassThroughMarkupAction.php`, declared with `name: lock-passthrough-markup` on the claim's `submit` transition; the three `markupLookup` calculations are gone and `ExpenseReimbursementOrPassthroughFragmentTest` asserts the new contract; `LockPassThroughMarkupActionTest`.)
 
 ## 2. Billable work
 

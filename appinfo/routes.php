@@ -70,6 +70,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
+        // banking-fx-at-booking task 3.1: the FX rates page's status line —
+        // feed or typed, and the newest rate date per pair. Any signed-in
+        // user; the rates are read with the caller's own register access.
+            ['name' => 'fxRateFeedStatus#status', 'url' => '/api/fx-rates/feed-status', 'verb' => 'GET'],
+
         // No external-adapters roster route: adopt-connection-registry moved
         // the External Connections page onto integriq's app_connection rows,
         // declared in lib/Settings/connections.json.
@@ -148,6 +153,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // Automatic dunning (task 4.1): the Next run preview and a ladder's stage texts.
             ['name' => 'dunningPreview#nextRun', 'url' => '/api/dunning/next-run', 'verb' => 'GET'],
             ['name' => 'dunningPreview#ladderStages', 'url' => '/api/dunning/ladders/{id}/stages', 'verb' => 'GET'],
+            // Records whose retention period has ended (ledger-retention-due-records, REQ-RET-015).
+            // #[NoAdminRequired] with a per-administration canAccess() guard in the controller (ADR-005).
+            ['name' => 'retentionDue#index', 'url' => '/api/retention/due', 'verb' => 'GET'],
 
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
             ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
@@ -200,6 +208,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // position, the drift check on a filed return, and preparing its suppletie.
             ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
             ['name' => 'vatSuppletie#prepare', 'url' => '/api/vat-corrections/{correctionId}/prepare', 'verb' => 'POST'],
+            ['name' => 'vatSuppletieFiling#download', 'url' => '/api/vat-corrections/{correctionId}/supplementary-return', 'verb' => 'GET'],
+            ['name' => 'vatSuppletieFiling#file', 'url' => '/api/vat-corrections/{correctionId}/file', 'verb' => 'POST'],
             ['name' => 'vatPosition#show', 'url' => '/api/vat-position', 'verb' => 'GET'],
             ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
             ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
@@ -903,6 +913,13 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // receivables-sepa-direct-debit (REQ-SDD-011, REQ-SDD-012): propose the
+            // draft batches for a collection date, and download a generated batch's
+            // pain.008 file. Both #[NoAdminRequired], administration checked in the
+            // controller (another administration's batch is masked as 404). The
+            // static /propose URL precedes the {id} route.
+            ['name' => 'directDebitBatch#propose', 'url' => '/api/v1/direct-debit-batches/propose', 'verb' => 'POST'],
+            ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
 

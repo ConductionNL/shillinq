@@ -177,12 +177,9 @@ class DirectDebitBatchService {
 		$number = (string)($invoice['invoiceNumber'] ?? $invoiceId);
 		$skip = ['invoiceId' => $invoiceId, 'invoiceNumber' => $number, 'detail' => ''];
 
-		if (isset($occupied[$invoiceId]) === true) {
-			return ['reason' => self::REASON_ALREADY_COLLECTED] + $skip;
-		}
-
-		if (strtoupper((string)($invoice['currency'] ?? 'EUR')) !== 'EUR') {
-			return ['reason' => self::REASON_CURRENCY] + $skip;
+		$invoiceSkip = self::invoiceSkipReason(invoice: $invoice, occupied: $occupied, invoiceId: $invoiceId);
+		if ($invoiceSkip !== null) {
+			return ['reason' => $invoiceSkip] + $skip;
 		}
 
 		$amount = $this->amountDue(invoice: $invoice);
@@ -190,18 +187,9 @@ class DirectDebitBatchService {
 			return ['reason' => self::REASON_NOTHING_DUE] + $skip;
 		}
 
-		if ($mandate === null) {
-			return ['reason' => self::REASON_NO_MANDATE] + $skip;
-		}
-
-		$status = (string)($mandate['status'] ?? '');
-		if ($status !== 'active') {
-			return ['reason' => self::REASON_MANDATE_INACTIVE, 'detail' => $status] + $skip;
-		}
-
-		$last = (string)($mandate['lastCollectionDate'] ?? '');
-		if ($last !== '' && $last < $collectionDate) {
-			return ['reason' => self::REASON_MANDATE_ENDED, 'detail' => $last] + $skip;
+		$mandateSkip = self::mandateSkip(mandate: $mandate, collectionDate: $collectionDate);
+		if ($mandateSkip !== null) {
+			return $mandateSkip + $skip;
 		}
 
 		$mandateId = (string)$mandate['id'];
@@ -219,6 +207,53 @@ class DirectDebitBatchService {
 		];
 
 	}//end collectionFor()
+
+	/**
+	 * Why the invoice itself cannot be collected: already on a live collection, or not in euro.
+	 *
+	 * @param array<string, mixed> $invoice   The ARInvoice.
+	 * @param array<string, true>  $occupied  Invoice ids already on a live collection.
+	 * @param string               $invoiceId The invoice id.
+	 *
+	 * @return string|null The skip reason, or null when the invoice may be collected.
+	 */
+	private static function invoiceSkipReason(array $invoice, array $occupied, string $invoiceId): string|null {
+		if (isset($occupied[$invoiceId]) === true) {
+			return self::REASON_ALREADY_COLLECTED;
+		}
+
+		if (strtoupper((string)($invoice['currency'] ?? 'EUR')) !== 'EUR') {
+			return self::REASON_CURRENCY;
+		}
+
+		return null;
+	}//end invoiceSkipReason()
+
+	/**
+	 * Why the mandate cannot carry the collection: absent, not active, or ended before the collection date.
+	 *
+	 * @param array<string, mixed>|null $mandate        The invoice's mandate, if one is named.
+	 * @param string                    $collectionDate The requested collection date.
+	 *
+	 * @return array<string, string>|null The skip reason (and detail), or null when the mandate may be used.
+	 */
+	private static function mandateSkip(array|null $mandate, string $collectionDate): array|null {
+		if ($mandate === null) {
+			return ['reason' => self::REASON_NO_MANDATE];
+		}
+
+		$status = (string)($mandate['status'] ?? '');
+		if ($status !== 'active') {
+			return ['reason' => self::REASON_MANDATE_INACTIVE, 'detail' => $status];
+		}
+
+		$last = (string)($mandate['lastCollectionDate'] ?? '');
+		if ($last !== '' && $last < $collectionDate) {
+			return ['reason' => self::REASON_MANDATE_ENDED, 'detail' => $last];
+		}
+
+		return null;
+	}//end mandateSkip()
 
 	/**
 	 * The sequence type of the next collection on a mandate.

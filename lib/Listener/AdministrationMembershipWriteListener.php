@@ -87,6 +87,37 @@ class AdministrationMembershipWriteListener implements IEventListener {
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
 	 */
 	public function handle(Event $event): void {
+		$entity = $this->writtenEntity(event: $event);
+
+		if ($entity === null || $this->isChecked(entity: $entity) === false) {
+			return;
+		}
+
+		$target = $this->foreignTarget(entity: $entity);
+		if ($target === null) {
+			return;
+		}
+
+		[$userId, $administrationId] = $target;
+		$this->logger->warning(
+			'Shillinq: refused a write into an administration the user is no member of',
+			['userId' => $userId, 'administrationId' => $administrationId]
+		);
+
+		$event->setErrors(['message' => self::DENY_MESSAGE, 'field' => 'administrationId']);
+		$event->stopPropagation();
+	}//end handle()
+
+	/**
+	 * The object being created or updated, or null for another event.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
+	 */
+	private function writtenEntity(Event $event): mixed {
 		$entity = null;
 		if ($event instanceof ObjectCreatingEvent === true) {
 			$entity = $event->getObject();
@@ -96,33 +127,36 @@ class AdministrationMembershipWriteListener implements IEventListener {
 			$entity = $event->getNewObject();
 		}
 
-		if ($entity === null || $this->isChecked(entity: $entity) === false) {
-			return;
-		}
+		return $entity;
+	}//end writtenEntity()
 
+	/**
+	 * The user and the administration of a write the user is no member of, or null when it may proceed.
+	 *
+	 * @param mixed $entity The object being written.
+	 *
+	 * @return array{0:string,1:string}|null
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
+	 */
+	private function foreignTarget(mixed $entity): array|null {
 		$userId = $this->administrationContext->currentUserId();
 		if ($userId === null) {
-			return;
+			return null;
 		}
 
 		$data = ($entity->getObject() ?? []);
 		$administrationId = trim((string)($data['administrationId'] ?? ''));
 		if ($administrationId === '') {
-			return;
+			return null;
 		}
 
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === true) {
-			return;
+			return null;
 		}
 
-		$this->logger->warning(
-			'Shillinq: refused a write into an administration the user is no member of',
-			['userId' => $userId, 'administrationId' => $administrationId]
-		);
-
-		$event->setErrors(['message' => self::DENY_MESSAGE, 'field' => 'administrationId']);
-		$event->stopPropagation();
-	}//end handle()
+		return [$userId, $administrationId];
+	}//end foreignTarget()
 
 	/**
 	 * Whether the entity belongs to one of the checked schemas.
