@@ -342,6 +342,7 @@ final class ConnectionsDeclarationTest extends TestCase {
 			if (str_ends_with($path, '.php') === false
 				|| str_starts_with($path, 'Service/External/') === true
 				|| $path === 'AppInfo/Application.php'
+				|| $path === 'Service/ServiceRegistrar.php'
 				|| $path === 'Service/ConnectionReportService.php'
 			) {
 				continue;
