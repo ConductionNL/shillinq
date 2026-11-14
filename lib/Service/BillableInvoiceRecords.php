@@ -96,13 +96,8 @@ final class BillableInvoiceRecords {
 			'netAmount' => $amounts['netAmount'],
 			'vatAmount' => $amounts['vatAmount'],
 			'grossAmount' => $amounts['grossAmount'],
-<<<<<<< HEAD
-			'currency' => 'EUR',
-			'paymentTerms' => 'net ' . $draft->paymentTermDays,
-=======
 			'currency' => $draft->currency,
-			'paymentTerms' => 'net 30',
->>>>>>> origin/development
+			'paymentTerms' => 'net ' . $draft->paymentTermDays,
 			'status' => 'draft',
 			'posted' => false,
 			'obligationId' => null,
