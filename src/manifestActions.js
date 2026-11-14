@@ -26,6 +26,7 @@ import {
 } from './utils/inboundPayableActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
+import { openLedgerSealCheck } from './utils/ledgerSealApi.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -67,6 +68,8 @@ export const manifestActions = Object.freeze({
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,
+	// ledger-sealed-entries: Check ledger seal on the general ledger page.
+	openLedgerSealCheck,
 	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
 	openMissedDepreciation,
 	// tax-vat-number-check: Check VAT number on the customer and supplier pages.

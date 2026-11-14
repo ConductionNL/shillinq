@@ -899,6 +899,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'],
             ['name' => 'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'],
             // planning-commitment-year-end: carry open commitments to next year, mark the last invoice of an order.
+            // Check ledger seal on the general ledger page (ledger-sealed-entries REQ-LSE-002). Admin or controller only.
+            ['name' => 'ledgerSeal#verify', 'url' => '/api/v1/ledger/seal-check', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#previewCarryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],

@@ -4357,6 +4357,9 @@
 				],
 				"defaultSort": "-postingDate",
 				"detailRoute": "GeneralLedgerDetail",
+				"headerActions": [
+					{"id": "check-ledger-seal", "label": "Check ledger seal", "type": "handler", "handler": "openLedgerSealCheck", "icon": "ShieldCheckOutline", "description": "Prove that no posted transaction changed since posting, or see the first one that did."}
+				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/general-ledger"
 			}
 		},

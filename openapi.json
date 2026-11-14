@@ -248,6 +248,10 @@
             "description": "Serves the financial pivot."
         },
         {
+            "name": "ledger-seal",
+            "description": "The seal chain of the general ledger: check that no posted transaction changed since posting."
+        },
+        {
             "name": "manual-match",
             "description": "Manual bank line matching endpoint."
         },
@@ -12249,6 +12253,45 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/ledger/seal-check": {
+            "get": {
+                "operationId": "ledger-seal-verify",
+                "summary": "Check the seal chain of an administration's general ledger",
+                "description": "Recompute every seal of the posted transactions of one administration and report the chain intact, or the first transaction whose content or link no longer matches. Needs a signed-in Nextcloud admin or a controller of that administration.",
+                "tags": [
+                    "ledger-seal"
+                ],
+                "parameters": [
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": true,
+                        "description": "The administration whose ledger is checked.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }
