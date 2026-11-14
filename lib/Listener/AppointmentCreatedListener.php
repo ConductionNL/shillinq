@@ -112,6 +112,11 @@ class AppointmentCreatedListener implements IEventListener {
 			return null;
 		}
 
+		// The stored id, so the send can be recorded on this appointment (REQ-BCF-013).
+		if (isset($appointment['id']) === false && is_string($entity->getUuid()) === true && $entity->getUuid() !== '') {
+			$appointment['id'] = $entity->getUuid();
+		}
+
 		return $appointment;
 
 	}//end pendingAppointment()
