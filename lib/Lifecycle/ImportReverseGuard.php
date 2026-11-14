@@ -26,7 +26,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\Import\ImportPeriod;
+use OCA\Shillinq\Kernel\Contracts\ImportPeriodInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -45,12 +45,12 @@ final class ImportReverseGuard implements LifecycleGuardInterface {
 	 * Constructor.
 	 *
 	 * @param ImportBatchGuard $guard  The posted-and-open rule.
-	 * @param ImportPeriod     $period Whether the migration date's year is open.
+	 * @param ImportPeriodInterface     $period Whether the migration date's year is open.
 	 * @param LoggerInterface  $logger Fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly ImportBatchGuard $guard,
-		private readonly ImportPeriod $period,
+		private readonly ImportPeriodInterface $period,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

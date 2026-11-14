@@ -46,10 +46,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Reporting\ReportGenerationService;
-use OCA\Shillinq\Service\AccountantDashboardService;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AccountantDashboardServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -86,18 +86,18 @@ class AccountantPortalController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param AdministrationContextService $context Administratie-aware RBAC context (IDOR guard).
-	 * @param AccountantDashboardService $dashboard Per-client status aggregation.
-	 * @param ReportGenerationService $reports The existing report-generation orchestration (reused, not re-implemented).
+	 * @param AdministrationContextServiceInterface $context Administratie-aware RBAC context (IDOR guard).
+	 * @param AccountantDashboardServiceInterface $dashboard Per-client status aggregation.
+	 * @param ReportGenerationServiceInterface $reports The existing report-generation orchestration (reused, not re-implemented).
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly AccountantDashboardService $dashboard,
-		private readonly ReportGenerationService $reports,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly AccountantDashboardServiceInterface $dashboard,
+		private readonly ReportGenerationServiceInterface $reports,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

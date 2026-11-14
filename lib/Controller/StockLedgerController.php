@@ -32,9 +32,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\StockLedgerService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\StockLedgerServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,14 +53,14 @@ class StockLedgerController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param StockLedgerService $ledger The ledger aggregation service.
-	 * @param AdministrationContextService $context Admin-membership / IDOR context.
+	 * @param StockLedgerServiceInterface $ledger The ledger aggregation service.
+	 * @param AdministrationContextServiceInterface $context Admin-membership / IDOR context.
 	 * @param LoggerInterface $logger Logger; never leaks stack traces.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly StockLedgerService $ledger,
-		private readonly AdministrationContextService $context,
+		private readonly StockLedgerServiceInterface $ledger,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

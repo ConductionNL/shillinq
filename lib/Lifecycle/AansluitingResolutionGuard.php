@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\AansluitingResolutionGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,7 +53,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  */
-class AansluitingResolutionGuard {
+class AansluitingResolutionGuard implements AansluitingResolutionGuardInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *

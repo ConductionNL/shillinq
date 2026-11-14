@@ -63,7 +63,7 @@ namespace OCA\Shillinq\Service;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;

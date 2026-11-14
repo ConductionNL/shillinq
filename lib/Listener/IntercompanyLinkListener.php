@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\IntercompanyLinkService;
+use OCA\Shillinq\Kernel\Contracts\IntercompanyLinkServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -61,11 +61,11 @@ class IntercompanyLinkListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param IntercompanyLinkService $linkService The mirror + reconciliation orchestrator.
+	 * @param IntercompanyLinkServiceInterface $linkService The mirror + reconciliation orchestrator.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly IntercompanyLinkService $linkService,
+		private readonly IntercompanyLinkServiceInterface $linkService,
 		private readonly LoggerInterface $logger,
 	) {
 
