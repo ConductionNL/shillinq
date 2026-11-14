@@ -450,7 +450,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		self::assertSame(-210.0, $prepared['correctionAmount']);
 		self::assertSame('5b', $prepared['categoryDeltas'][0]['returnBox']);
 		// The filed return had no 5b line, so the posting falls back to the clearing account, as before boxes.
-		self::assertNull($prepared['categoryDeltas'][0]['glAccountNumber']);
+		self::assertSame('', $prepared['categoryDeltas'][0]['glAccountNumber']);
 
 	}//end testLateInputVatLowersTheCorrection()
 
@@ -710,7 +710,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		$prepared = $detectionService->prepare(vatCorrectionId: 'corr-golden-0001');
 
 		self::assertSame(3.0, $prepared['correctionAmount']);
-		self::assertSame(['1500', null, null], array_column($prepared['categoryDeltas'], 'glAccountNumber'));
+		self::assertSame(['1500', '', ''], array_column($prepared['categoryDeltas'], 'glAccountNumber'));
 		$transactions = $stub->dump('GLTransaction');
 		self::assertCount(1, $transactions);
 		self::assertSame('GLCORR-corr-golden-', $transactions[0]['transactionNumber']);

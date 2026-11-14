@@ -10,7 +10,7 @@
 
 ## 2. Supplementary return
 
-- [ ] 2.1 Detect and prepare endpoints and their page actions (REQ-VPS-002). Endpoints built: `POST /api/vat-returns/{returnId}/detect-drift` and `POST /api/vat-corrections/{correctionId}/prepare` in `VatSuppletieController`, each checking the object's administration first (`tests/Unit/Controller/VatSuppletieControllerTest.php`, services doubled). Left: the page actions on the return and correction pages, and the controller test over the real detection service. Verify: PHPUnit on the controller with the real `VatSuppletieDetectionService`; the `VatCorrection` written validated against the real fragment.
+- [ ] 2.1 Detect and prepare endpoints and their page actions (REQ-VPS-002). Endpoints built: `POST /api/vat-returns/{returnId}/detect-drift` and `POST /api/vat-corrections/{correctionId}/prepare` in `VatSuppletieController`, each checking the object's administration first (`tests/Unit/Controller/VatSuppletieControllerTest.php`, services doubled). Controller test over the real `VatSuppletieDetectionService` and `VATReturnService` built (`tests/Unit/Controller/VatSuppletieControllerRealServiceTest.php`): the written `VatCorrection` validates against the merged register, which needed `glAccountNumber` stored as '' instead of null for a delta with no filed line. Left: the page actions on the return and correction pages. Verify: PHPUnit on the controller with the real `VatSuppletieDetectionService`; the `VatCorrection` written validated against the real fragment.
 - [ ] 2.2 Filing through the Digipoort hand-off, download before (REQ-VPS-002). Verify: PHPUnit.
 - [ ] 2.3 Detection after a period close (REQ-VPS-003). Verify: listener test with the real event class, asserting `detect` runs for each filed return.
 
