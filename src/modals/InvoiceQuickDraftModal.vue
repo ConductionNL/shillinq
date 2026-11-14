@@ -200,6 +200,7 @@ import {
 	applyQuickDraftPrefs,
 	buildQuickDraftRequest,
 	computeTotals,
+	customerTerms,
 	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
@@ -387,8 +388,8 @@ export default {
 				customerOrEvent && customerOrEvent.customerId
 					? customerOrEvent
 					: this.selectedCustomer?.customer
-			const terms = customer?.paymentTerms || 'net30'
-			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, terms)
+			// The customer's own payment term (sales-invoice-sending REQ-SIS-005).
+			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, customerTerms(customer))
 		},
 
 		/**
