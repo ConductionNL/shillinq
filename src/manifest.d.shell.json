@@ -4372,6 +4372,33 @@
 		{
 			"menu": [
 				{
+					"id": "ExpenseCategories",
+					"label": "Expense categories",
+					"icon": "TagMultipleOutline",
+					"route": "ExpenseCategories",
+					"order": 85
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "expenses-category-mapping",
+					"id": "ExpenseCategories",
+					"route": "/expense-categories",
+					"type": "index",
+					"title": "Expense categories"
+				},
+				{
+					"_fragment": "expenses-category-mapping",
+					"id": "ExpenseCategoryDetail",
+					"route": "/expense-categories/:id",
+					"type": "detail",
+					"title": "Expense category"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "ExternalConnections",
 					"label": "External Connections",
 					"icon": "TransitConnectionVariant",

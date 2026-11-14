@@ -155,15 +155,12 @@
 				</div>
 			</div>
 
+			<!-- expenses-category-mapping REQ-ECM-002: the category is picked
+			     from the administration's active expense categories, never typed. -->
 			<div class="receipt-capture__field">
-				<label class="receipt-capture__label" for="rc-category">{{
-					t('shillinq', 'Category')
-				}}</label>
-				<input
-					id="rc-category"
+				<ExpenseCategoryPicker
 					v-model="form.category"
-					type="text"
-					class="receipt-capture__input"
+					:administrationId="record?.administrationId || ''"
 					data-testid="rc-category" />
 			</div>
 
@@ -179,6 +176,12 @@
 						:corrected="isCorrected('glAccount')" />
 				</div>
 			</div>
+
+			<!-- expenses-category-mapping REQ-ECM-003: the account this receipt
+			     posts to, next to any docudesk suggestion, which never replaces it. -->
+			<p class="receipt-capture__resolved" data-testid="rc-resolved-account">
+				{{ resolvedAccountText }}
+			</p>
 
 			<!-- gl-account-suggestion-consume (REQ-GAC-003/004) — same pattern as
 			     BillImportModal: the operator must click "Use suggestion" AND
@@ -212,6 +215,17 @@
 					class="receipt-capture__suggestion-rationale"
 					data-testid="rc-gl-suggestion-rationale">
 					{{ glSuggestion.rationale }}
+				</p>
+				<p
+					v-if="suggestionDiffers"
+					class="receipt-capture__suggestion-rationale"
+					data-testid="rc-gl-suggestion-differs">
+					{{
+						t(
+							'shillinq',
+							'The suggestion is not the account this receipt posts to. It counts only after you use it and save.',
+						)
+					}}
 				</p>
 			</div>
 
@@ -346,7 +360,12 @@ import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
+import ExpenseCategoryPicker from '../components/expenses/ExpenseCategoryPicker.vue'
 import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
+import {
+	resolvedReceiptAccount,
+	suggestionRelation,
+} from '../utils/expenseCategories.js'
 import {
 	confidenceForField,
 	hasKnownExtractionId,
@@ -371,7 +390,7 @@ const RECEIPT_SCHEMA = 'Receipt'
 
 export default {
 	name: 'ReceiptCapture',
-	components: { FieldConfidenceBadge, GlAccountPicker },
+	components: { ExpenseCategoryPicker, FieldConfidenceBadge, GlAccountPicker },
 	props: {
 		/** Receipt OR object id, supplied by the manifest router (props: true on `/receipts/:id`). */
 		id: {
@@ -389,6 +408,9 @@ export default {
 			busy: false,
 			saveError: '',
 			glSuggestion: null,
+			// The administration's expense categories, for the account a
+			// category posts to (expenses-category-mapping REQ-ECM-003).
+			categories: [],
 		}
 	},
 
@@ -425,6 +447,58 @@ export default {
 
 		canSave() {
 			return canSaveReceipt(this.form)
+		},
+
+		/**
+		 * The account this receipt posts to as the form stands now.
+		 *
+		 * @return {{code: string|null, source: string|null, category: string}} The account.
+		 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.3
+		 */
+		resolvedAccount() {
+			return resolvedReceiptAccount(
+				{
+					glAccount: this.form.glAccount,
+					category: this.form.category,
+					administrationId: this.record?.administrationId,
+				},
+				this.categories,
+			)
+		},
+
+		/**
+		 * @return {string} The line naming the account and where it comes from.
+		 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.3
+		 */
+		resolvedAccountText() {
+			const account = this.resolvedAccount
+			if (account.source === 'confirmed') {
+				return t('shillinq', 'Posts to {code}, the confirmed account.', {
+					code: account.code,
+				})
+			}
+			if (account.source === 'category') {
+				return t(
+					'shillinq',
+					'Posts to {code}, the account of category {category}.',
+					{ code: account.code, category: account.category },
+				)
+			}
+			return t(
+				'shillinq',
+				'No account yet: posting the claim will stop at this receipt.',
+			)
+		},
+
+		/**
+		 * @return {boolean} Whether the suggestion names another account.
+		 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.3
+		 */
+		suggestionDiffers() {
+			return (
+				suggestionRelation(this.resolvedAccount, this.glSuggestion)
+				=== 'differs'
+			)
 		},
 	},
 
@@ -472,10 +546,38 @@ export default {
 				this.record = body
 				this.form = reviewFormFromReceipt(body)
 				this.fetchGlSuggestion()
+				this.fetchCategories(body.administrationId)
 			} catch (e) {
 				this.loadError = receiptErrorMessage(e)
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Load the administration's expense categories; a failure leaves the
+		 * list empty and the page says no account is known yet.
+		 *
+		 * @param {string|undefined} administrationId The receipt's administration.
+		 * @return {Promise<void>} Resolves when loaded.
+		 * @spec openspec/changes/expenses-category-mapping/tasks.md#task-3.3
+		 */
+		async fetchCategories(administrationId) {
+			const params = { _limit: 500 }
+			if (administrationId) {
+				params.administrationId = administrationId
+			}
+			try {
+				const response = await axios.get(
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/ExpenseCategory`,
+					),
+					{ params },
+				)
+				const rows = response.data?.results ?? response.data ?? []
+				this.categories = Array.isArray(rows) ? rows : []
+			} catch {
+				this.categories = []
 			}
 		},
 

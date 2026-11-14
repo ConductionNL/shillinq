@@ -111,6 +111,7 @@
 		"AvailabilityRules",
 		"Annuleringsbeleid",
 		"ReimbursementPolicies",
+		"ExpenseCategories",
 		"PassThroughMarkupRules",
 		"BankingRules",
 		"AuditProtocols",

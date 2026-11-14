@@ -51,6 +51,18 @@ vi.mock('../../src/components/FieldConfidenceBadge.vue', () => ({
 		},
 	},
 }))
+vi.mock('../../src/components/expenses/ExpenseCategoryPicker.vue', () => ({
+	default: {
+		name: 'ExpenseCategoryPicker',
+		props: ['modelValue', 'administrationId'],
+		render() {
+			return h('input', {
+				'data-testid': 'expense-category-picker',
+				value: this.modelValue,
+			})
+		},
+	},
+}))
 vi.mock('../../src/components/BudgetBBVMapping/GlAccountPicker.vue', () => ({
 	default: {
 		name: 'GlAccountPicker',

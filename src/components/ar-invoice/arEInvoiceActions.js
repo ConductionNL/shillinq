@@ -61,7 +61,7 @@ export function mapSendResult(result, t) {
 		result?.fallback === true
 			? t(
 					'shillinq',
-					'No Peppol participant found for this debtor — use PDF + email instead.',
+					'No Peppol participant was found for this customer. Send the invoice by email instead.',
 				)
 			: ''
 	return { deliveryStatus, fallbackNotice }
@@ -77,4 +77,91 @@ export function mapSendResult(result, t) {
  */
 export function extractSendErrorMessage(error, t) {
 	return error?.response?.data?.error || t('shillinq', 'Failed to send e-invoice')
+}
+
+/**
+ * Whether the Send by email action is enabled: only an issued or overdue
+ * invoice can be sent (sales-invoice-sending REQ-SIS-001). The server checks
+ * again on every call.
+ *
+ * @param {object|null|undefined} object The resolved ARInvoice record.
+ * @return {boolean}
+ *
+ * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3
+ */
+export function canSendInvoice(object) {
+	return ['issued', 'overdue'].includes(object?.lifecycleState)
+}
+
+/**
+ * The id the send endpoint takes: the object's id, else its uuid.
+ *
+ * @param {object|null|undefined} object The resolved ARInvoice record.
+ * @return {string}
+ *
+ * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3
+ */
+export function invoiceIdOf(object) {
+	return String(object?.id || object?.uuid || object?.['@self']?.id || '')
+}
+
+/**
+ * The send endpoint of one invoice.
+ *
+ * @param {string} id The ARInvoice id.
+ * @return {string}
+ *
+ * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3
+ */
+export function sendInvoiceEndpoint(id) {
+	return `/apps/shillinq/api/ar-invoices/${encodeURIComponent(id)}/send`
+}
+
+/**
+ * The line under the actions that says how the invoice went out, or why it did not.
+ *
+ * @param {object|null|undefined} sending The invoice's `sending` group.
+ * @param {(app: string, text: string, vars?: object) => string} t The translate function.
+ * @return {string} The line, or '' when the invoice was never sent.
+ *
+ * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3
+ */
+export function sendingLine(sending, t) {
+	if (!sending || typeof sending !== 'object') {
+		return ''
+	}
+	if (sending.lastError) {
+		return t('shillinq', 'The invoice could not be sent: {error}', { error: sending.lastError })
+	}
+	const at = sending.sentAt ? new Date(sending.sentAt).toLocaleString() : ''
+	switch (sending.sentVia) {
+	case 'email':
+		return t('shillinq', 'Sent by email to {address} on {at}.', { address: sending.sentTo || '', at })
+	case 'peppol':
+		return t('shillinq', 'Sent through Peppol on {at}.', { at })
+	case 'post':
+		return t('shillinq', 'Delivery method post: the letter is printed and posted by hand.')
+	case 'none':
+		return t('shillinq', 'Delivery method none: the invoice is not sent from here.')
+	default:
+		return ''
+	}
+}
+
+/**
+ * What a send answered, for the page: the stored `sending` group, whether to
+ * offer the mail instead of Peppol, and the error.
+ *
+ * @param {object} result The response body `{status, sending, error}`.
+ * @return {{sending: object|null, offerEmail: boolean, error: string}}
+ *
+ * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.3
+ */
+export function mapInvoiceSendResult(result) {
+	const status = result?.status || ''
+	return {
+		sending: status === 'fallback' ? null : result?.sending || null,
+		offerEmail: status === 'fallback',
+		error: status === 'failed' || status === 'fallback' ? String(result?.error || '') : '',
+	}
 }

@@ -1,0 +1,291 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "expenses-category-mapping",
+    "adr": "ADR-037 modular register fragment. ADR-031: categories, their accounts and the per-category limits are data; refusing a non-expense account is a pre-save rule (ExpenseCategoryAccountListener over ExpenseCategoryAccountCheck); resolving a line's account is imperative (ExpenseAccountResolver) because the evaluator has no cross-object lookup.",
+    "description": "Expense categories per administration, each naming its expense account (REQ-ECM-001); Receipt.category picks a category code from the administration's active categories (REQ-ECM-002); the administration's mileage, per diem and expense payable accounts (REQ-ECM-003); a VAT amount on the receipt so a deductible category books its VAT apart; a per-category limit on ReimbursementPolicy and a check on submit that holds a claim over a limit for approval (REQ-ECM-004). The categories and the three settings are seeded for administrations on the RGS template by the MapExpenseCategories repair step from lib/Settings/seeds/expense-categories-rgs.json."
+  },
+  "info": {
+    "version": "0.1.0-expenses-category-mapping"
+  },
+  "components": {
+    "schemas": {
+      "ExpenseCategory": {
+        "slug": "ExpenseCategory",
+        "icon": "TagOutline",
+        "version": "0.1.0",
+        "title": "Expense Category",
+        "description": "An expense category of one administration and the expense account its receipts post to. One account may serve several categories. Saving is refused when the account is not an expense account of the administration's chart.",
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "expenseAccount",
+          "vatDeductionRule",
+          "active",
+          "administrationId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Short code, unique per administration. Receipt.category holds this code.",
+            "example": "travel-public",
+            "title": "Code"
+          },
+          "name": {
+            "type": "object",
+            "description": "The category's name in Dutch and English.",
+            "required": [
+              "nl",
+              "en"
+            ],
+            "properties": {
+              "nl": {
+                "type": "string",
+                "title": "Name (Dutch)",
+                "example": "Openbaar vervoer"
+              },
+              "en": {
+                "type": "string",
+                "title": "Name (English)",
+                "example": "Public transport"
+              }
+            },
+            "example": {
+              "nl": "Openbaar vervoer",
+              "en": "Public transport"
+            },
+            "title": "Name"
+          },
+          "expenseAccount": {
+            "type": "string",
+            "description": "Account number of an expense account (Account.accountType expenses) in the administration's chart.",
+            "example": "4510",
+            "title": "Expense Account"
+          },
+          "vatDeductionRule": {
+            "type": "string",
+            "description": "Whether the VAT on a receipt of this category is deducted: full, none, or the id of a partial deduction rule.",
+            "default": "full",
+            "example": "full",
+            "title": "VAT Deduction"
+          },
+          "defaultCostCentre": {
+            "type": "string",
+            "description": "Cost centre a receipt of this category takes when it names none.",
+            "nullable": true,
+            "example": "CC100",
+            "title": "Default Cost Centre"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true,
+            "description": "Only active categories are offered on a receipt.",
+            "example": true,
+            "title": "Active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this category.",
+            "example": "ADM-001",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-unique": [
+          [
+            "administrationId",
+            "code"
+          ]
+        ],
+        "x-openregister-audit-trail": {
+          "enabled": true
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_employee",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
+        }
+      },
+      "Administration": {
+        "properties": {
+          "mileageAccount": {
+            "type": "string",
+            "description": "Expense account a mileage line of an expense claim posts to.",
+            "nullable": true,
+            "example": "4530",
+            "title": "Mileage Account"
+          },
+          "perDiemAccount": {
+            "type": "string",
+            "description": "Expense account a per diem line of an expense claim posts to.",
+            "nullable": true,
+            "example": "4060",
+            "title": "Per Diem Account"
+          },
+          "expensePayableAccount": {
+            "type": "string",
+            "description": "Account the total of a posted expense claim is owed from to the employee.",
+            "nullable": true,
+            "example": "2200",
+            "title": "Expense Payable Account"
+          }
+        }
+      },
+      "Receipt": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Code of one of the administration's active expense categories; uncategorised until someone picks one.",
+            "example": "travel-public",
+            "title": "Category",
+            "x-openregister-relation": {
+              "schema": "ExpenseCategory",
+              "matchField": "code",
+              "labelField": "name",
+              "filter": {
+                "administrationId": "@self.administrationId",
+                "active": true
+              }
+            }
+          },
+          "nights": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Nights a lodging receipt covers; a per-night category limit divides the amount by it.",
+            "nullable": true,
+            "example": 1,
+            "title": "Nights"
+          },
+          "vatAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "VAT included in the receipt amount, in EUR. Deducted when the category's VAT deduction rule is full.",
+            "nullable": true,
+            "example": 3.53,
+            "title": "VAT Amount"
+          }
+        }
+      },
+      "GLTransaction": {
+        "properties": {
+          "journalType": {
+            "enum": [
+              "expense-claim"
+            ]
+          }
+        }
+      },
+      "ReimbursementPolicy": {
+        "properties": {
+          "categoryLimits": {
+            "type": "array",
+            "description": "Spending limits per expense category. A claim with a line over its category's limit waits for approval on submit.",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "required": [
+                "category",
+                "limit"
+              ],
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "description": "Expense category code.",
+                  "example": "hotel"
+                },
+                "limit": {
+                  "type": "number",
+                  "multipleOf": 0.01,
+                  "minimum": 0,
+                  "description": "Highest amount in EUR per unit.",
+                  "example": 150
+                },
+                "per": {
+                  "type": "string",
+                  "enum": [
+                    "line",
+                    "night"
+                  ],
+                  "default": "line",
+                  "description": "What the limit counts: one receipt line, or one night (the receipt amount divided by its nights).",
+                  "example": "night"
+                }
+              }
+            },
+            "example": [
+              {
+                "category": "hotel",
+                "limit": 150,
+                "per": "night"
+              }
+            ],
+            "title": "Category Limits"
+          }
+        }
+      },
+      "ExpenseClaimEntry": {
+        "properties": {
+          "categoryLimitExceedances": {
+            "type": "array",
+            "description": "Lines over their category's limit, written on submit. A claim with any waits for approval.",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "receiptId": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "limit": {
+                  "type": "number"
+                },
+                "per": {
+                  "type": "string"
+                }
+              }
+            },
+            "title": "Category Limit Exceedances"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "submit": {
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\HoldClaimOverCategoryLimitAction",
+                  "description": "Checks each receipt line against its category's limit in the reimbursement policy; a line over its limit sets approvalState pending and lists the limit it passed (REQ-ECM-004).",
+                  "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

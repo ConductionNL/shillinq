@@ -7894,30 +7894,30 @@
 				"schema": "CustomerMaster",
 				"columns": [
 					{
+						"key": "customerId",
+						"label": "Code",
+						"sortable": true
+					},
+					{
 						"key": "legalName",
 						"label": "Name",
 						"sortable": true,
 						"secondary": "{tradeName}"
 					},
 					{
-						"key": "kvkNumber",
-						"label": "KvK Number",
+						"key": "paymentTermDays",
+						"label": "Payment term (days)",
 						"sortable": true
 					},
 					{
-						"key": "legalForm",
-						"label": "Legal form",
+						"key": "deliveryMethod",
+						"label": "Delivery method",
 						"sortable": true
 					},
 					{
-						"key": "address.city",
-						"label": "City",
-						"sortable": false
-					},
-					{
-						"key": "email",
-						"label": "Email",
-						"sortable": false
+						"key": "creditLimit",
+						"label": "Credit limit",
+						"sortable": true
 					},
 					{
 						"key": "lifecycleState",
@@ -7972,7 +7972,7 @@
 						"id": "customer-identity",
 						"type": "data",
 						"title": "Customer details",
-						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
+						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId", "paymentTermDays", "deliveryMethod", "invoiceEmail"]}
 					},
 					{
 						"id": "customer-stats-open-invoices",
@@ -11120,6 +11120,9 @@
 			"id": "ExpenseClaimDetail",
 			"route": "/inkoop/expense-claims/:id",
 			"type": "detail",
+			"slots": {
+				"widget-claim-receipt-accounts": "ClaimReceiptAccounts"
+			},
 			"title": "Expense Claim",
 			"config": {
 				"register": "shillinq",
@@ -11149,6 +11152,13 @@
 						"integrationId": "files",
 						"title": "Receipt evidence",
 						"icon": "Receipt"
+					},
+					{
+						"id": "claim-receipt-accounts",
+						"type": "custom",
+						"title": "Accounts per receipt",
+						"icon": "Receipt",
+						"_note": "expenses-category-mapping REQ-ECM-003: the account each receipt posts to (the confirmed account, else its category's account) next to the docudesk suggestion, which never replaces it. Rendered through the page slot widget-claim-receipt-accounts -> ClaimReceiptAccounts."
 					}
 				],
 				"layout": [
@@ -11177,6 +11187,14 @@
 						"gridY": 11,
 						"gridWidth": 12,
 						"gridHeight": 3
+					},
+					{
+						"id": "4",
+						"widgetId": "claim-receipt-accounts",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"_note": "Expense Claim detail — an employee reimbursement claim aggregating receipts, per-diems and mileage into one approvable total. Related receipts and mileage entries list the underlying evidence; source receipt images live under Files. Audit trail evidences the approval workflow.",

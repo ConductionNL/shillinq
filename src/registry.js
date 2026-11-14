@@ -111,6 +111,7 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
+import ClaimReceiptAccounts from './components/expenses/ClaimReceiptAccounts.vue'
 import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
@@ -528,6 +529,16 @@ export default {
 		kind: 'widget',
 		component: SpendAnalyticsPanel,
 		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
+	},
+
+	// expenses-category-mapping (REQ-ECM-003): the account each receipt of
+	// a claim posts to, beside its docudesk suggestion, through the slot
+	// widget-claim-receipt-accounts on ExpenseClaimDetail.
+	ClaimReceiptAccounts: {
+		// @custom-widget-ratchet exclude each row joins a receipt to its administration's expense category to show the account it posts to (confirmed account, else the category's account) beside the docudesk suggestion; no declarative widget resolves a value through a second schema by code.
+		kind: 'widget',
+		component: ClaimReceiptAccounts,
+		_note: 'Shows the account each receipt of the claim posts to, in ExpenseAccountResolver order, next to the docudesk suggestion, which never replaces it.',
 	},
 
 	// sales-down-payments (REQ-SDP-003, REQ-SDP-005): the order's down
