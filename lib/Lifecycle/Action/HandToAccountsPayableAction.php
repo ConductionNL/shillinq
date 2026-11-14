@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
@@ -73,18 +74,16 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	/**
 	 * Hand the invoice to accounts payable, once.
 	 *
-	 * @param array<string, mixed> $objectData   The SupplierInvoice as the transition leaves it.
-	 * @param array<string, mixed> $previousData The SupplierInvoice before.
-	 * @param array<string, mixed> $parameters   Declared parameters (none).
-	 * @param string               $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the SupplierInvoice as the transition
+	 *                                        leaves it.
 	 *
 	 * @return array<string, mixed> The invoice with apTransactionId set.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		if ((string)($objectData['apTransactionId'] ?? '') !== '') {
 			return $objectData;
 		}

@@ -71,6 +71,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
@@ -178,20 +179,20 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 	/**
 	 * Book the transitioning source into the ledger.
 	 *
-	 * @param array<string,mixed> $objectData The source after its state moved.
-	 * @param array<string,mixed> $previousData The source before the transition.
-	 * @param array<string,mixed> $parameters The declared actionParameters (`sourceSchema`, `keepBalanced`).
-	 * @param string $actionName The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the source after its state moved. Its
+	 *                                        parameters are the declared actionParameters (`sourceSchema`,
+	 *                                        `keepBalanced`).
 	 *
 	 * @return array<string,mixed> The source with `glTransactionId` set.
 	 *
 	 * @throws RuntimeException When the source schema has no mapper, the posting does not balance, or a write fails.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$sourceSchema = (string)($parameters['sourceSchema'] ?? '');
 		if (in_array($sourceSchema, self::SUPPORTED_SOURCES, true) === false) {
 			throw new RuntimeException(

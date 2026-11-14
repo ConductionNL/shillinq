@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 
 use DOMDocument;
 use DOMXPath;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator;
 use OCA\Shillinq\Service\VATReturnService;
@@ -89,8 +90,22 @@ final class VatReturnReportGeneratorTest extends TestCase {
 		$posting->rows['VatTariff'] = $tariffs;
 
 		$action = new MaterialiseGlTransactionAction($posting->mock($this), $this->defaultsConfig(), $this->createMock(LoggerInterface::class));
-		$action->execute($sale, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
-		$action->execute($purchase, [], ['sourceSchema' => 'APInvoice'], MaterialiseGlTransactionAction::class);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: $sale,
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
+		$action->execute(
+			new LifecycleActionContext(
+				objectData: $purchase,
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		return [
 			'GLTransaction' => $posting->savedOf('GLTransaction'),

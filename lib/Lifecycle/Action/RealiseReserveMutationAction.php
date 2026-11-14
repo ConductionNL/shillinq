@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Kernel\Contracts\ReserveBalancesInterface;
 
@@ -52,18 +53,16 @@ class RealiseReserveMutationAction implements LifecycleActionInterface {
 	/**
 	 * Book the mutation and answer it with its journal entry.
 	 *
-	 * @param array<string,mixed> $objectData   The mutation after the transition.
-	 * @param array<string,mixed> $previousData The mutation before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the mutation after the transition. Its
+	 *                                        parameters are the declared actionParameters.
 	 *
 	 * @return array<string,mixed> The mutation with journalEntryId.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		return $this->balances->realise(mutation: $objectData);
 
 	}//end execute()

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -92,7 +93,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 */
 	public function testABalancedJournalEntryPostsOneTransaction(): void {
 		$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
-		$result = $this->action()->execute($this->journalEntry(), [], $parameters, MaterialiseGlTransactionAction::class);
+		$result = $this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->journalEntry(),
+				previousData: [],
+				parameters: $parameters,
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		$transactions = $this->store->savedOf('GLTransaction');
 		self::assertCount(1, $transactions);
@@ -120,7 +128,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 */
 	public function testAMaterialisedTransactionMeetsTheMandatoryLedgerRules(): void {
 		$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
-		$this->action()->execute($this->journalEntry(), [], $parameters, MaterialiseGlTransactionAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $this->journalEntry(),
+				previousData: [],
+				parameters: $parameters,
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		$transaction = $this->store->savedOf('GLTransaction')[0];
 		self::assertTrue($transaction['postingLocked']);
@@ -151,7 +166,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$entry = $this->journalEntry();
 		$entry['lines'][0]['costCenterCode'] = 'KP-300';
 		$entry['lines'][0]['projectCode'] = 'P-2026-014';
-		$this->action()->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $entry,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		$lines = $this->store->savedOf('GLLine');
 		self::assertSame(['KP-300', 'P-2026-014'], [$lines[0]['costCenterCode'] ?? null, $lines[0]['projectCode'] ?? null]);
@@ -173,7 +195,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 
 		try {
 			$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
-			$action->execute($this->journalEntry(1000.0), [], $parameters, MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $this->journalEntry(1000.0),
+					previousData: [],
+					parameters: $parameters,
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 			self::fail('An unbalanced entry must not post.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('not balanced', $e->getMessage());
@@ -193,11 +222,32 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$action = $this->action();
 		$entry = $this->journalEntry();
 
-		$first = $action->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		$first = $action->execute(
+			new LifecycleActionContext(
+				objectData: $entry,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 		// Same source, back reference not yet saved: found by sourceReference.
-		$second = $action->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		$second = $action->execute(
+			new LifecycleActionContext(
+				objectData: $entry,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 		// Back reference saved: returned untouched.
-		$third = $action->execute($first, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		$third = $action->execute(
+			new LifecycleActionContext(
+				objectData: $first,
+				previousData: [],
+				parameters: ['sourceSchema' => 'JournalEntry'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		self::assertCount(1, $this->store->savedOf('GLTransaction'));
 		self::assertSame($first['glTransactionId'], $second['glTransactionId']);
@@ -228,7 +278,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			'lifecycleState' => 'issued',
 		];
 
-		$result = $this->action()->execute($invoice, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
+		$result = $this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		$byAccount = [];
 		foreach ($this->store->savedOf('GLLine') as $line) {
@@ -253,7 +310,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 * @return array<string,list<array{0: string, 1: float}>>
 	 */
 	private function postedByAccount(array $invoice): array {
-		$this->action()->execute($invoice, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $invoice,
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 
 		$byAccount = [];
 		foreach ($this->store->savedOf('GLLine') as $line) {
@@ -324,13 +388,15 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$this->expectExceptionMessage('not balanced');
 
 		$this->action()->execute(
-			[
-				'id' => 'ar-2', 'invoiceNumber' => '2026-0043', 'invoiceDate' => '2026-06-30', 'administrationId' => 'adm-1',
-				'grossAmount' => 1250.0, 'netAmount' => 1000.0, 'vatAmount' => 210.0,
-			],
-			[],
-			['sourceSchema' => 'ARInvoice'],
-			MaterialiseGlTransactionAction::class
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ar-2', 'invoiceNumber' => '2026-0043', 'invoiceDate' => '2026-06-30', 'administrationId' => 'adm-1',
+					'grossAmount' => 1250.0, 'netAmount' => 1000.0, 'vatAmount' => 210.0,
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 	}//end testASalesInvoiceThatDoesNotAddUpIsRefused()
 
@@ -341,18 +407,20 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 */
 	public function testAPurchaseInvoiceBooksExpenseVatAndPayables(): void {
 		$this->action()->execute(
-			[
-				'id' => 'ap-1', 'invoiceNumber' => 'INK-7', 'invoiceDate' => '2026-05-02', 'administrationId' => 'adm-1',
-				'totalAmount' => 1815.0, 'taxAmount' => 315.0,
-				'lines' => [
-					['accountNumber' => '4500', 'amount' => 1000.0, 'description' => 'Laptops'],
-					['accountNumber' => '4510', 'amount' => 500.0, 'description' => 'Software'],
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-1', 'invoiceNumber' => 'INK-7', 'invoiceDate' => '2026-05-02', 'administrationId' => 'adm-1',
+					'totalAmount' => 1815.0, 'taxAmount' => 315.0,
+					'lines' => [
+						['accountNumber' => '4500', 'amount' => 1000.0, 'description' => 'Laptops'],
+						['accountNumber' => '4510', 'amount' => 500.0, 'description' => 'Software'],
+					],
+					'state' => 'posted',
 				],
-				'state' => 'posted',
-			],
-			[],
-			['sourceSchema' => 'APInvoice'],
-			MaterialiseGlTransactionAction::class
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		$lines = array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $this->store->savedOf('GLLine'));
@@ -371,15 +439,17 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 */
 	public function testAnIssuedApTransactionBooksExpenseVatAndCreditor(): void {
 		$this->action()->execute(
-			[
-				'id' => 'ap-0455', 'invoiceNumber' => '2026-0455', 'invoiceDate' => '2026-09-01', 'administrationId' => 'adm-1',
-				'vendorId' => 'payee-1', 'totalAmount' => 1210.0, 'taxAmount' => 210.0,
-				'lines' => [['accountNumber' => '4300', 'amount' => 1000.0, 'description' => 'Folders']],
-				'state' => 'issued',
-			],
-			[],
-			['sourceSchema' => 'APTransaction'],
-			MaterialiseGlTransactionAction::class
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-0455', 'invoiceNumber' => '2026-0455', 'invoiceDate' => '2026-09-01', 'administrationId' => 'adm-1',
+					'vendorId' => 'payee-1', 'totalAmount' => 1210.0, 'taxAmount' => 210.0,
+					'lines' => [['accountNumber' => '4300', 'amount' => 1000.0, 'description' => 'Folders']],
+					'state' => 'issued',
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'APTransaction'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		$lines = array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $this->store->savedOf('GLLine'));
@@ -400,7 +470,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$this->expectExceptionMessage('"InventoryValuation"');
 
 		$source = ['id' => 'iv-1', 'administrationId' => 'adm-1'];
-		$this->action()->execute($source, [], ['sourceSchema' => 'InventoryValuation'], MaterialiseGlTransactionAction::class);
+		$this->action()->execute(
+			new LifecycleActionContext(
+				objectData: $source,
+				previousData: [],
+				parameters: ['sourceSchema' => 'InventoryValuation'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
+		);
 	}//end testASchemaWithoutAMapperIsRefusedByName()
 
 	/**
@@ -413,7 +490,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$action = $this->action();
 		$source = ['id' => 'ece-1', 'administrationId' => 'adm-1', 'lines' => [['amount' => 100.08]]];
 		try {
-			$action->execute($source, [], ['sourceSchema' => 'ExpenseClaimEntry'], MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $source,
+					previousData: [],
+					parameters: ['sourceSchema' => 'ExpenseClaimEntry'],
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 			self::fail('An expense claim must not post without its account mapping.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('"ExpenseClaimEntry"', $e->getMessage());
@@ -432,7 +516,14 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$this->store->failOnSchema = 'GLLine';
 
 		try {
-			$action->execute($this->journalEntry(), [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+			$action->execute(
+				new LifecycleActionContext(
+					objectData: $this->journalEntry(),
+					previousData: [],
+					parameters: ['sourceSchema' => 'JournalEntry'],
+					actionName: MaterialiseGlTransactionAction::class
+				)
+			);
 			self::fail('A failed line must abort the post.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('could not be written', $e->getMessage());
@@ -485,18 +576,20 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$action = $this->action();
 		$this->seedTariffs();
 		$action->execute(
-			[
-				'id' => 'ar-9', 'invoiceNumber' => '2026-0090', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
-				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 1755.0, 'netAmount' => 1500.0, 'vatAmount' => 255.0,
-				'invoiceLines' => [
-					['itemName' => 'Taarten', 'netAmount' => 500.0, 'vatCategory' => 'S', 'vatRate' => 9],
-					['itemName' => 'Cursus', 'netAmount' => 1000.0, 'vatCategory' => 'S', 'vatRate' => 21],
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ar-9', 'invoiceNumber' => '2026-0090', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+					'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 1755.0, 'netAmount' => 1500.0, 'vatAmount' => 255.0,
+					'invoiceLines' => [
+						['itemName' => 'Taarten', 'netAmount' => 500.0, 'vatCategory' => 'S', 'vatRate' => 9],
+						['itemName' => 'Cursus', 'netAmount' => 1000.0, 'vatCategory' => 'S', 'vatRate' => 21],
+					],
+					'lifecycleState' => 'issued',
 				],
-				'lifecycleState' => 'issued',
-			],
-			[],
-			['sourceSchema' => 'ARInvoice'],
-			MaterialiseGlTransactionAction::class
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		self::assertSame(
@@ -530,19 +623,21 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$action = $this->action();
 		$this->seedTariffs();
 		$action->execute(
-			[
-				'id' => 'ar-10', 'invoiceNumber' => '2026-0091', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
-				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 76.67, 'netAmount' => 66.66, 'vatAmount' => 10.01,
-				'invoiceLines' => [
-					['itemName' => 'A', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 21],
-					['itemName' => 'B', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 9],
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ar-10', 'invoiceNumber' => '2026-0091', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+					'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 76.67, 'netAmount' => 66.66, 'vatAmount' => 10.01,
+					'invoiceLines' => [
+						['itemName' => 'A', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 21],
+						['itemName' => 'B', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 9],
+					],
+					'vatBreakdown' => [['category' => 'S', 'rate' => 21, 'taxableAmount' => 33.33, 'taxAmount' => 7.0]],
+					'lifecycleState' => 'issued',
 				],
-				'vatBreakdown' => [['category' => 'S', 'rate' => 21, 'taxableAmount' => 33.33, 'taxAmount' => 7.0]],
-				'lifecycleState' => 'issued',
-			],
-			[],
-			['sourceSchema' => 'ARInvoice'],
-			MaterialiseGlTransactionAction::class
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		$vat = array_values(array_filter($this->stampedLines(), static fn (array $l): bool => $l[5] === 'vat'));
@@ -562,18 +657,20 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$action = $this->action();
 		$this->seedTariffs();
 		$action->execute(
-			[
-				'id' => 'ap-9', 'invoiceNumber' => 'INK-90', 'invoiceDate' => '2026-08-02', 'administrationId' => 'adm-1',
-				'totalAmount' => 7020.0, 'taxAmount' => 1020.0,
-				'lines' => [
-					['accountNumber' => '7000', 'amount' => 4000.0, 'description' => 'Oven', 'taxCode' => 'BTW21'],
-					['accountNumber' => '7010', 'amount' => 2000.0, 'description' => 'Meel', 'taxCode' => 'low'],
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-9', 'invoiceNumber' => 'INK-90', 'invoiceDate' => '2026-08-02', 'administrationId' => 'adm-1',
+					'totalAmount' => 7020.0, 'taxAmount' => 1020.0,
+					'lines' => [
+						['accountNumber' => '7000', 'amount' => 4000.0, 'description' => 'Oven', 'taxCode' => 'BTW21'],
+						['accountNumber' => '7010', 'amount' => 2000.0, 'description' => 'Meel', 'taxCode' => 'low'],
+					],
+					'state' => 'posted',
 				],
-				'state' => 'posted',
-			],
-			[],
-			['sourceSchema' => 'APInvoice'],
-			MaterialiseGlTransactionAction::class
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		self::assertSame(
@@ -600,18 +697,20 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$action = $this->action();
 		$this->seedTariffs();
 		$action->execute(
-			[
-				'id' => 'ap-10', 'invoiceNumber' => 'INK-91', 'invoiceDate' => '2026-08-03', 'administrationId' => 'adm-1',
-				'totalAmount' => 3000.0, 'taxAmount' => 0,
-				'lines' => [
-					['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge'],
-					['accountNumber' => '7110', 'amount' => 1000.0, 'description' => 'Machine uit Duitsland', 'taxCode' => 'intra-eu-acquisition'],
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ap-10', 'invoiceNumber' => 'INK-91', 'invoiceDate' => '2026-08-03', 'administrationId' => 'adm-1',
+					'totalAmount' => 3000.0, 'taxAmount' => 0,
+					'lines' => [
+						['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge'],
+						['accountNumber' => '7110', 'amount' => 1000.0, 'description' => 'Machine uit Duitsland', 'taxCode' => 'intra-eu-acquisition'],
+					],
+					'state' => 'posted',
 				],
-				'state' => 'posted',
-			],
-			[],
-			['sourceSchema' => 'APInvoice'],
-			MaterialiseGlTransactionAction::class
+				previousData: [],
+				parameters: ['sourceSchema' => 'APInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		self::assertSame(
@@ -634,15 +733,17 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 */
 	public function testWithoutTariffRecordsNoBoxIsGuessed(): void {
 		$this->action()->execute(
-			[
-				'id' => 'ar-11', 'invoiceNumber' => '2026-0092', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
-				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 121.0, 'netAmount' => 100.0, 'vatAmount' => 21.0,
-				'invoiceLines' => [['itemName' => 'A', 'netAmount' => 100.0, 'vatCategory' => 'S', 'vatRate' => 21]],
-				'lifecycleState' => 'issued',
-			],
-			[],
-			['sourceSchema' => 'ARInvoice'],
-			MaterialiseGlTransactionAction::class
+			new LifecycleActionContext(
+				objectData: [
+					'id' => 'ar-11', 'invoiceNumber' => '2026-0092', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+					'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 121.0, 'netAmount' => 100.0, 'vatAmount' => 21.0,
+					'invoiceLines' => [['itemName' => 'A', 'netAmount' => 100.0, 'vatCategory' => 'S', 'vatRate' => 21]],
+					'lifecycleState' => 'issued',
+				],
+				previousData: [],
+				parameters: ['sourceSchema' => 'ARInvoice'],
+				actionName: MaterialiseGlTransactionAction::class
+			)
 		);
 
 		self::assertSame(

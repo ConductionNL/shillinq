@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCP\IUserSession;
@@ -53,18 +54,16 @@ class StampPostingAction implements LifecycleActionInterface {
 	/**
 	 * Stamp the transitioning transaction.
 	 *
-	 * @param array<string,mixed> $objectData The transaction after its state moved to posted.
-	 * @param array<string,mixed> $previousData The transaction before the transition.
-	 * @param array<string,mixed> $parameters The declared actionParameters (none).
-	 * @param string $actionName The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the transaction after its state moved to
+	 *                                        posted.
 	 *
 	 * @return array<string,mixed> The stamped transaction.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$user = $this->userSession->getUser();
 		$uid = 'system';
 		if ($user !== null) {
