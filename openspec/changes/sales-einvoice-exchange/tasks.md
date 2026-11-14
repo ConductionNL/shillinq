@@ -31,6 +31,7 @@
 
 ## 4. Docs
 
-- [ ] 4.1 User guide section on Peppol status, rejections and self-billing, and a release note that lists the `occ shillinq:einvoice:requeue` step for invoices stuck at queued. Verify: the page is in `docs/` and the note in the PR body.
+- [x] 4.1 User guide section on Peppol status, rejections and self-billing, and a release note that lists the `occ shillinq:einvoice:requeue` step for invoices stuck at queued. Verify: the page is in `docs/` and the note in the PR body.
+  - Built: `docs/user-guide/bookkeeping/peppol-einvoicing.md` (sending, delivery status, rejections, self-billing agreements, the review, and the requeue step for administrators), and the release note with the `occ shillinq:einvoice:requeue` step under Unreleased in `CHANGELOG.md`, quoted in the PR.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/sales-einvoice-exchange/tasks.md#task-N` on every new method, English source strings with Dutch translations, and coordinate the own-sequence exclusion with `sales-invoice-issue-controls`.

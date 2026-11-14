@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- E-invoices over Peppol through Integriq (`sales-einvoice-exchange`). Send
+  e-invoice hands the invoice to Integriq's Peppol connection, with the UBL file
+  and the hybrid PDF stored in the administration's Files folder; delivery
+  status and rejections come back to the invoice. A self-billed invoice a
+  customer sends over Peppol becomes a draft sales invoice when the customer has
+  a self-billing agreement, and is refused with a reason otherwise. See
+  `docs/user-guide/bookkeeping/peppol-einvoicing.md`.
+  **Upgrade step**: invoices the old send path left at queued were never sent.
+  Run `occ shillinq:einvoice:requeue` to list them and, once you confirm, send
+  them again.
 - Automatic payment reminders (`receivables-automatic-dunning`). A daily job
   marks issued invoices past their due date as overdue and sends each overdue
   invoice the stage that is due on its customer's ladder, by email with the
