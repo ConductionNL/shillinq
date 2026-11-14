@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookings-messages-and-embedding",
 		"adr": "ADR-037 modular register fragment, never edit shillinq_register.json",
-		"description": "kind: feature. REQ-BCF-013: the appointment records whether the confirmation request reached the mail server, so a failed send can be shown and resent. Written by ConfirmationTokenService after each send or resend, never by a user."
+		"description": "kind: feature. REQ-BCF-013: the appointment records whether the confirmation request reached the mail server, so a failed send can be shown and resent. Written by ConfirmationTokenService after each send or resend, never by a user. REQ-BET-011: a booking records when its last reminder was sent and on which channel, written by BookingNotificationService after the reminder left."
 	},
 	"components": {
 		"schemas": {
@@ -23,6 +23,23 @@
 						"nullable": true,
 						"title": "Confirmation request tried at",
 						"description": "When the last confirmation request was tried, ISO 8601."
+					}
+				}
+			},
+			"Booking": {
+				"properties": {
+					"lastReminderSentAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"title": "Last reminder sent at",
+						"description": "When the last reminder for this booking was accepted by its channel, ISO 8601. Empty until a reminder was sent."
+					},
+					"lastReminderChannel": {
+						"type": "string",
+						"nullable": true,
+						"title": "Last reminder channel",
+						"description": "The channel that accepted the last reminder, for example email or sms."
 					}
 				}
 			}

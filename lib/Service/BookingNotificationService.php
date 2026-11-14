@@ -73,6 +73,7 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 	 * @param IAppConfig $appConfig The Nextcloud app config.
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param NotificationMailer|null $mailer Sends the email channel through Nextcloud's mailer (REQ-BET-011); without it email goes to openconnector.
 	 *
 	 * @return void
 	 */
@@ -81,6 +82,7 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?NotificationMailer $mailer = null,
 	) {
 	}//end __construct()
 
@@ -247,8 +249,9 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 
 		$retryCount = 0;
 		foreach ($dispatch->channels() as $channel) {
-			if ($this->postToOpenconnector(notification: $dispatch->via(channel: $channel, rendered: $rendered)) === true) {
+			if ($this->deliver(channel: (string)$channel, dispatch: $dispatch, rendered: $rendered) === true) {
 				$this->recordAuditTrail(notification: $dispatch->auditRecord(channel: $channel, retryCount: $retryCount), status: 'sent', reason: '');
+				$this->recordReminderSent(dispatch: $dispatch, channel: (string)$channel);
 				return;
 			}
 
@@ -258,6 +261,69 @@ class BookingNotificationService implements BookingNotificationServiceInterface 
 		$this->recordAllChannelsFailed(dispatch: $dispatch, retryCount: $retryCount);
 
 	}//end dispatch()
+
+	/**
+	 * Hand the rendered notification to one channel: email through Nextcloud's
+	 * mailer when it is wired, every other channel to openconnector.
+	 *
+	 * @param string               $channel  The channel.
+	 * @param NotificationDispatch $dispatch The notification to one recipient.
+	 * @param array<string,string> $rendered The rendered subject and body.
+	 *
+	 * @return bool True when the channel accepted the notification.
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.2
+	 */
+	private function deliver(string $channel, NotificationDispatch $dispatch, array $rendered): bool {
+		if ($channel === 'email' && $this->mailer !== null) {
+			return $this->mailer->send(
+				address: $dispatch->address(),
+				subject: (string)($rendered['subject'] ?? ''),
+				body: (string)($rendered['body'] ?? '')
+			);
+		}
+
+		return $this->postToOpenconnector(notification: $dispatch->via(channel: $channel, rendered: $rendered));
+	}//end deliver()
+
+	/**
+	 * Record a sent reminder on the booking it was for (REQ-BET-011): when and on which channel.
+	 *
+	 * A failed write is logged; the delivery itself is already in the audit trail.
+	 *
+	 * @param NotificationDispatch $dispatch The notification that was sent.
+	 * @param string               $channel  The channel that accepted it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/notification-booking-email-templates/spec.md#requirement-a-booking-reminder-mail-leaves-at-its-configured-time-req-bet-011
+	 */
+	private function recordReminderSent(NotificationDispatch $dispatch, string $channel): void {
+		$booking = $dispatch->booking;
+		$id = (string)($booking['id'] ?? '');
+		if (($dispatch->trigger['eventType'] ?? '') !== 'reminder' || $id === '') {
+			return;
+		}
+
+		unset($booking['hoursUntilEvent']);
+		$booking['lastReminderSentAt'] = (new DateTimeImmutable())->format('c');
+		$booking['lastReminderChannel'] = $channel;
+
+		try {
+			$this->objectService->saveObject(
+				object: $booking,
+				register: $this->notificationRegister(),
+				schema: 'Booking',
+				uuid: $id,
+				_rbac: false,
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq: the sent reminder could not be recorded on the booking',
+				['bookingId' => $id, 'exception' => $e->getMessage()]
+			);
+		}
+	}//end recordReminderSent()
 
 	/**
 	 * All channels failed — record final failure.
