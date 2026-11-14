@@ -5632,6 +5632,185 @@
                 }
             }
         },
+        "/icp/statements/prepare": {
+            "post": {
+                "operationId": "icp-statement-prepare",
+                "summary": "Prepare the period's ICP statement from the books (REQ-ICR-002)",
+                "description": "Prepare the period's ICP statement from the books and write its draft: one line per buyer VAT number and supply type, with its reconciliation against box 3b of the VAT return. A statement past draft is never replaced (409). Body parameters: - period (required) YYYY-Qn or YYYY-MM. - administration_id (required) administration scope (REQ-ICP-001). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "description": "The period."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration id."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/xml": {
+            "get": {
+                "operationId": "icp-statement-xml",
+                "summary": "Download the XBRL instance of the period's ICP statement (REQ-ICR-002)",
+                "description": "Download the XBRL instance of the period's prepared ICP statement. Query parameters: - period (required). - administration_id (required). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "description": "The period (YYYY-Qn or YYYY-MM).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administration_id",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/filing": {
+            "get": {
+                "operationId": "icp-statement-filing",
+                "summary": "Whether the ICP statement can be filed through Digipoort (REQ-ICR-003)",
+                "description": "Answers { available }: false while no Digipoort connection is bound, and the page then hides File. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
+        "/icp/statements/file": {
+            "post": {
+                "operationId": "icp-statement-file",
+                "summary": "File the period's finalised ICP statement through Digipoort (REQ-ICR-003)",
+                "description": "File the period's finalised ICP statement as its XBRL instance through the Digipoort hand-off. The status follows only Digipoort's answer: submitted, rejected, or unchanged when deferred. Refused (409) when filing is unavailable or the statement is not finalised or does not reconcile. Body parameters: - period (required). - administration_id (required). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "icp"
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "description": "The period."
+                                    },
+                                    "administration_id": {
+                                        "description": "The administration id."
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    }
+                }
+            }
+        },
         "/icp/ledger": {
             "get": {
                 "operationId": "icp-ledger",

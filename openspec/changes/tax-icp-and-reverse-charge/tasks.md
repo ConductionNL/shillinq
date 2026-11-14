@@ -9,10 +9,10 @@
 
 ## 2. ICP statement
 
-- [ ] 2.1 Prepare endpoint writing the draft statement, validated against the real fragment (REQ-ICR-002). Verify: PHPUnit red first; a filed statement is not replaced.
-- [ ] 2.2 `IcpReportGenerator` for `icp-opgaaf` (REQ-ICR-002). Verify: PHPUnit; `ReportGenerationService` no longer answers "no generator".
+- [x] 2.1 Prepare endpoint writing the draft statement, validated against the real fragment (REQ-ICR-002). Verify: PHPUnit red first; a filed statement is not replaced.
+- [x] 2.2 `IcpReportGenerator` for `icp-opgaaf` (REQ-ICR-002). Verify: PHPUnit; `ReportGenerationService` no longer answers "no generator".
 - [ ] 2.3 ICP page: prepare, reconciliation panel, download, file when available (REQ-ICR-002, 003). Verify: `npm run check:manifest`; vitest on the actions.
-- [ ] 2.4 Filing through the Digipoort path on the ICP entry point (REQ-ICR-003). Verify: PHPUnit with the `tax-digipoort-filing` hand-off stub named after the real class.
+- [x] 2.4 Filing through the Digipoort path on the ICP entry point (REQ-ICR-003). Verify: PHPUnit with the `tax-digipoort-filing` hand-off stub named after the real class.
 
 ## 3. Strings and end to end
 

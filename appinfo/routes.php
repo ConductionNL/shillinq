@@ -527,6 +527,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
             ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
             ['name' => 'icp#renderInvoicePdf', 'url' => '/api/icp/invoice-pdf', 'verb' => 'GET'],
+            // The tax-icp-and-reverse-charge statement: prepare, download and file the statement (REQ-ICR-002, REQ-ICR-003).
+            ['name' => 'icpStatement#prepare', 'url' => '/api/icp/statements/prepare', 'verb' => 'POST'],
+            ['name' => 'icpStatement#xml', 'url' => '/api/icp/statements/xml', 'verb' => 'GET'],
+            ['name' => 'icpStatement#filing', 'url' => '/api/icp/statements/filing', 'verb' => 'GET'],
+            ['name' => 'icpStatement#file', 'url' => '/api/icp/statements/file', 'verb' => 'POST'],
 
             // Aansluiting (tie-out) framework (bookkeeping-aansluitingen,
             // REQ-AANS-004, REQ-AANS-006). compute() resolves source A / source B
