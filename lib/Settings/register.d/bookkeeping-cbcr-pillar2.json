@@ -1130,7 +1130,8 @@
               "from": "draft",
               "to": "approved",
               "label": "Approve GIR",
-              "description": "Approve for filing."
+              "description": "Approve for filing. Needs a valid file made from the current safe harbour records and computations, and no failing mandatory check.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CbcrPillar2Guard::canApproveGir"
             },
             "submit": {
               "from": "approved",
@@ -1331,7 +1332,8 @@
               "from": "reconciled",
               "to": "submitted",
               "label": "Mark submitted",
-              "description": "Record submission."
+              "description": "Record submission. Needs a valid file made from the current figures and no failing mandatory check.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CbcrPillar2Guard::canSubmitCbcrReturn"
             },
             "lock": {
               "from": "submitted",
