@@ -142,31 +142,17 @@ class DepositReconciliationService implements DepositReconciliationServiceInterf
 		?string $errorCode = null,
 		?string $errorMessage = null,
 	): string {
-		if (isset(self::TARGET_STATE[$outcome]) === false) {
-			return self::RESULT_NOOP;
-		}
-
-		if ($paymentIntentId === '') {
-			return self::RESULT_NOT_FOUND;
+		$early = $this->earlyResult(paymentIntentId: $paymentIntentId, outcome: $outcome);
+		if ($early !== null) {
+			return $early;
 		}
 
 		$registerSlug = $this->getRegisterSlug();
 
 		$deposit = $this->findDepositByIntent(registerSlug: $registerSlug, paymentIntentId: $paymentIntentId);
-		if ($deposit === null) {
-			return self::RESULT_NOT_FOUND;
-		}
-
-		$currentState = (string)($deposit['state'] ?? 'draft');
-
-		// Idempotency / no-downgrade guard: if the deposit is already settled in a
-		// way that supersedes this outcome, do nothing (REQ-DP-006).
-		if (in_array($currentState, self::ALREADY_SETTLED[$outcome], true) === true) {
-			$this->logger->debug(
-				'Shillinq: deposit webhook is an idempotent no-op',
-				['gateway' => $gateway, 'currentState' => $currentState, 'outcome' => $outcome]
-			);
-			return self::RESULT_NOOP;
+		$skip = $this->skipResult(deposit: $deposit, outcome: $outcome, gateway: $gateway);
+		if ($skip !== null) {
+			return $skip;
 		}
 
 		$deposit = $this->applyOutcome(
@@ -177,15 +163,93 @@ class DepositReconciliationService implements DepositReconciliationServiceInterf
 			errorMessage: $errorMessage
 		);
 
+		$this->saveDeposit(registerSlug: $registerSlug, deposit: $deposit);
+
+		return self::RESULT_APPLIED;
+	}//end reconcile()
+
+	/**
+	 * The result for an unknown outcome or an empty intent id, or null to go on.
+	 *
+	 * @param string $paymentIntentId The opaque gateway payment intent reference.
+	 * @param string $outcome         The reported outcome.
+	 *
+	 * @return string|null
+	 */
+	private function earlyResult(string $paymentIntentId, string $outcome): string|null {
+		if (isset(self::TARGET_STATE[$outcome]) === false) {
+			return self::RESULT_NOOP;
+		}
+
+		if ($paymentIntentId === '') {
+			return self::RESULT_NOT_FOUND;
+		}
+
+		return null;
+	}//end earlyResult()
+
+	/**
+	 * The result for a missing or already-settled deposit, or null to apply the outcome.
+	 *
+	 * @param array<string, mixed>|null $deposit The deposit, or null when none matched.
+	 * @param string                    $outcome The reported outcome.
+	 * @param string                    $gateway The gateway slug.
+	 *
+	 * @return string|null
+	 */
+	private function skipResult(array|null $deposit, string $outcome, string $gateway): string|null {
+		if ($deposit === null) {
+			return self::RESULT_NOT_FOUND;
+		}
+
+		$currentState = (string)($deposit['state'] ?? 'draft');
+
+		// Idempotency / no-downgrade guard: if the deposit is already settled in a
+		// way that supersedes this outcome, do nothing (REQ-DP-006).
+		if ($this->isAlreadySettled(currentState: $currentState, outcome: $outcome, gateway: $gateway) === true) {
+			return self::RESULT_NOOP;
+		}
+
+		return null;
+	}//end skipResult()
+
+	/**
+	 * Whether the deposit is already settled in a way that supersedes the outcome (logged).
+	 *
+	 * @param string $currentState The deposit's state.
+	 * @param string $outcome      The reported outcome.
+	 * @param string $gateway      The gateway slug.
+	 *
+	 * @return bool
+	 */
+	private function isAlreadySettled(string $currentState, string $outcome, string $gateway): bool {
+		if (in_array($currentState, self::ALREADY_SETTLED[$outcome], true) === true) {
+			$this->logger->debug(
+				'Shillinq: deposit webhook is an idempotent no-op',
+				['gateway' => $gateway, 'currentState' => $currentState, 'outcome' => $outcome]
+			);
+			return true;
+		}
+
+		return false;
+	}//end isAlreadySettled()
+
+	/**
+	 * Save a deposit without RBAC.
+	 *
+	 * @param string               $registerSlug The register slug.
+	 * @param array<string, mixed> $deposit      The deposit.
+	 *
+	 * @return void
+	 */
+	private function saveDeposit(string $registerSlug, array $deposit): void {
 		$this->objectService->saveObject(
 			object: $deposit,
 			register: $registerSlug,
 			schema: 'DepositPayment',
 			_rbac: false,
 		);
-
-		return self::RESULT_APPLIED;
-	}//end reconcile()
+	}//end saveDeposit()
 
 	/**
 	 * The DepositPayment carrying this paymentIntentId, looked up without RBAC:
@@ -273,49 +337,15 @@ class DepositReconciliationService implements DepositReconciliationServiceInterf
 		$batchSize = 0;
 
 		do {
-			$batch = $this->objectService
-				->setRegister($registerSlug)
-				->setSchema('DepositPayment')
-				->findAll(
-					config: [
-						'filters' => ['state' => 'pending'],
-						'limit' => $pageSize,
-						'offset' => (($page - 1) * $pageSize),
-					],
-					_rbac: false,
-				);
+			$batch = $this->pendingPage(registerSlug: $registerSlug, page: $page, pageSize: $pageSize);
 			$batchSize = count($batch);
 
 			foreach ($batch as $deposit) {
 				$scanned++;
-				$intentId = (string)($deposit['paymentIntentId'] ?? '');
-				if ($intentId === '') {
-					continue;
-				}
-
-				try {
-					$outcome = $statusProvider($intentId);
-				} catch (\Throwable $e) {
-					$this->logger->warning(
-						'Shillinq: deposit polling status lookup failed',
-						['exception' => $e->getMessage()]
-					);
-					continue;
-				}
-
-				if ($outcome === null || $outcome === '') {
-					continue;
-				}
-
-				$result = $this->reconcile(
-					paymentIntentId: $intentId,
-					outcome: $outcome,
-					gateway: (string)($deposit['paymentGateway'] ?? 'mollie'),
-				);
-				if ($result === self::RESULT_APPLIED) {
+				if ($this->pollDeposit(deposit: $deposit, statusProvider: $statusProvider) === true) {
 					$reconciled++;
 				}
-			}//end foreach
+			}
 
 			$page++;
 		} while ($batchSize === $pageSize);
@@ -325,6 +355,76 @@ class DepositReconciliationService implements DepositReconciliationServiceInterf
 			'reconciled' => $reconciled,
 		];
 	}//end pollPending()
+
+	/**
+	 * One page of pending DepositPayment records, read without RBAC.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param int    $page         The 1-based page.
+	 * @param int    $pageSize     The page size.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function pendingPage(string $registerSlug, int $page, int $pageSize): array {
+		return $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('DepositPayment')
+			->findAll(
+				config: [
+					'filters' => ['state' => 'pending'],
+					'limit' => $pageSize,
+					'offset' => (($page - 1) * $pageSize),
+				],
+				_rbac: false,
+			);
+	}//end pendingPage()
+
+	/**
+	 * Reconcile one pending deposit against the status its gateway reports.
+	 *
+	 * @param mixed    $deposit        The pending deposit.
+	 * @param callable $statusProvider Maps a paymentIntentId to an OUTCOME_* or null.
+	 *
+	 * @return bool True when the outcome was applied.
+	 */
+	private function pollDeposit(mixed $deposit, callable $statusProvider): bool {
+		$intentId = (string)($deposit['paymentIntentId'] ?? '');
+		if ($intentId === '') {
+			return false;
+		}
+
+		$outcome = $this->statusOf(intentId: $intentId, statusProvider: $statusProvider);
+		if ($outcome === null || $outcome === '') {
+			return false;
+		}
+
+		$result = $this->reconcile(
+			paymentIntentId: $intentId,
+			outcome: $outcome,
+			gateway: (string)($deposit['paymentGateway'] ?? 'mollie'),
+		);
+		return $result === self::RESULT_APPLIED;
+	}//end pollDeposit()
+
+	/**
+	 * The status the provider reports, or null (logged) when the lookup throws.
+	 *
+	 * @param string   $intentId       The paymentIntentId.
+	 * @param callable $statusProvider Maps a paymentIntentId to an OUTCOME_* or null.
+	 *
+	 * @return mixed
+	 */
+	private function statusOf(string $intentId, callable $statusProvider): mixed {
+		try {
+			return $statusProvider($intentId);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: deposit polling status lookup failed',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end statusOf()
 
 	/**
 	 * Adapter-backed polling fallback (REQ-DP-007).

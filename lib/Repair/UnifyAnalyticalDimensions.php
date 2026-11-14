@@ -212,8 +212,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function migrateCostCenters(object $objectService, string $registerSlug, IOutput $output): array {
-		$created = 0;
-		$skipped = 0;
+		$counts = ['created' => 0, 'skipped' => 0, 'none' => 0];
 
 		$costCenters = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'CostCenter');
 
@@ -224,49 +223,65 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 		foreach ($costCenters as $costCenter) {
 			$arr = $this->rowPayload(row: $costCenter);
-			$code = (string)($arr['code'] ?? '');
-			$administrationId = (string)($arr['administrationId'] ?? '');
+			$outcome = $this->migrateCostCenterRow(objectService: $objectService, registerSlug: $registerSlug, arr: $arr, output: $output);
+			$counts[$outcome]++;
+		}
 
-			if ($code === '') {
-				$this->logger->warning('Shillinq: UnifyAnalyticalDimensions — CostCenter record missing code; skipped.', ['record' => $arr]);
-				continue;
+		return ['created' => $counts['created'], 'skipped' => $counts['skipped']];
+	}//end migrateCostCenters()
+
+	/**
+	 * Migrate one CostCenter row unless it lacks a code or is already migrated;
+	 * a per-record failure is soft.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param array<string,mixed> $arr The CostCenter row.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return string One of 'created', 'skipped', 'none'.
+	 */
+	private function migrateCostCenterRow(object $objectService, string $registerSlug, array $arr, IOutput $output): string {
+		$code = (string)($arr['code'] ?? '');
+		$administrationId = (string)($arr['administrationId'] ?? '');
+
+		if ($code === '') {
+			$this->logger->warning('Shillinq: UnifyAnalyticalDimensions — CostCenter record missing code; skipped.', ['record' => $arr]);
+			return 'none';
+		}
+
+		try {
+			if ($this->analyticalDimensionExists(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				code: $code,
+				administrationId: $administrationId,
+				dimensionType: 'cost-center'
+			) === true
+			) {
+				return 'skipped';
 			}
 
-			try {
-				if ($this->analyticalDimensionExists(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					code: $code,
-					administrationId: $administrationId,
-					dimensionType: 'cost-center'
-				) === true
-				) {
-					$skipped++;
-					continue;
-				}
+			$record = $this->buildCostCenterRecord(source: $arr);
 
-				$record = $this->buildCostCenterRecord(source: $arr);
-
-				$objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
-					_rbac: false,
-					_multitenancy: false,
-				);
-				$created++;
-			} catch (\Throwable $e) {
-				// Per-record failure is soft — log and continue.
-				$output->warning('Shillinq: failed to migrate CostCenter code=' . $code . ': ' . $e->getMessage());
-				$this->logger->warning(
-					'Shillinq: UnifyAnalyticalDimensions — CostCenter migration failed for code=' . $code,
-					['exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
-
-		return ['created' => $created, 'skipped' => $skipped];
-	}//end migrateCostCenters()
+			$objectService->saveObject(
+				object: $record,
+				register: $registerSlug,
+				schema: 'AnalyticalDimension',
+				_rbac: false,
+				_multitenancy: false,
+			);
+			return 'created';
+		} catch (\Throwable $e) {
+			// Per-record failure is soft — log and continue.
+			$output->warning('Shillinq: failed to migrate CostCenter code=' . $code . ': ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: UnifyAnalyticalDimensions — CostCenter migration failed for code=' . $code,
+				['exception' => $e->getMessage()]
+			);
+			return 'none';
+		}//end try
+	}//end migrateCostCenterRow()
 
 	/**
 	 * Migrate all KostenDrager objects into AnalyticalDimension with
@@ -281,8 +296,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function migrateCostDragers(object $objectService, string $registerSlug, IOutput $output): array {
-		$created = 0;
-		$skipped = 0;
+		$counts = ['created' => 0, 'skipped' => 0, 'none' => 0];
 
 		$costDragers = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'KostenDrager');
 
@@ -293,48 +307,64 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 		foreach ($costDragers as $costDrager) {
 			$arr = $this->rowPayload(row: $costDrager);
-			$code = (string)($arr['code'] ?? '');
-			$administrationId = (string)($arr['administrationId'] ?? '');
+			$outcome = $this->migrateCostDragerRow(objectService: $objectService, registerSlug: $registerSlug, arr: $arr, output: $output);
+			$counts[$outcome]++;
+		}
 
-			if ($code === '') {
-				$this->logger->warning('Shillinq: UnifyAnalyticalDimensions — KostenDrager record missing code; skipped.', ['record' => $arr]);
-				continue;
+		return ['created' => $counts['created'], 'skipped' => $counts['skipped']];
+	}//end migrateKostenDragers()
+
+	/**
+	 * Migrate one KostenDrager row unless it lacks a code or is already migrated;
+	 * a per-record failure is soft.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param array<string,mixed> $arr The KostenDrager row.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return string One of 'created', 'skipped', 'none'.
+	 */
+	private function migrateCostDragerRow(object $objectService, string $registerSlug, array $arr, IOutput $output): string {
+		$code = (string)($arr['code'] ?? '');
+		$administrationId = (string)($arr['administrationId'] ?? '');
+
+		if ($code === '') {
+			$this->logger->warning('Shillinq: UnifyAnalyticalDimensions — KostenDrager record missing code; skipped.', ['record' => $arr]);
+			return 'none';
+		}
+
+		try {
+			if ($this->analyticalDimensionExists(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				code: $code,
+				administrationId: $administrationId,
+				dimensionType: 'cost-object'
+			) === true
+			) {
+				return 'skipped';
 			}
 
-			try {
-				if ($this->analyticalDimensionExists(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					code: $code,
-					administrationId: $administrationId,
-					dimensionType: 'cost-object'
-				) === true
-				) {
-					$skipped++;
-					continue;
-				}
+			$record = $this->buildCostDragerRecord(source: $arr);
 
-				$record = $this->buildCostDragerRecord(source: $arr);
-
-				$objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
-					_rbac: false,
-					_multitenancy: false,
-				);
-				$created++;
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: failed to migrate KostenDrager code=' . $code . ': ' . $e->getMessage());
-				$this->logger->warning(
-					'Shillinq: UnifyAnalyticalDimensions — KostenDrager migration failed for code=' . $code,
-					['exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
-
-		return ['created' => $created, 'skipped' => $skipped];
-	}//end migrateKostenDragers()
+			$objectService->saveObject(
+				object: $record,
+				register: $registerSlug,
+				schema: 'AnalyticalDimension',
+				_rbac: false,
+				_multitenancy: false,
+			);
+			return 'created';
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: failed to migrate KostenDrager code=' . $code . ': ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: UnifyAnalyticalDimensions — KostenDrager migration failed for code=' . $code,
+				['exception' => $e->getMessage()]
+			);
+			return 'none';
+		}//end try
+	}//end migrateCostDragerRow()
 
 	/**
 	 * Check whether an AnalyticalDimension record already exists for the

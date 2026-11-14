@@ -50,6 +50,33 @@ final class GuardRegistrar {
 	 * @spec exclude Structural composition root, no functional requirement.
 	 */
 	public function register(IRegistrationContext $context): void {
+		$this->bindIv3XmlValidationGuard(context: $context);
+		$this->bindIv3SubmissionGuard(context: $context);
+		$this->bindKorLockoutGuard(context: $context);
+		$this->bindProjectActivationGuard(context: $context);
+		$this->bindProjectTransitionGuard(context: $context);
+		$this->bindProjectCloseGuard(context: $context);
+		$this->bindVatSubmissionGuard(context: $context);
+		$this->bindBcfSubmissionGuard(context: $context);
+		$this->bindSubsidieRepaymentGuard(context: $context);
+		$this->bindRateScheduleOverlapGuard(context: $context);
+		$this->bindOssPaymentReconciliation(context: $context);
+		$this->bindIntercompanyEliminationGuard(context: $context);
+		$this->bindBudgetScenarioModifierGuard(context: $context);
+		$this->bindXbrlInstanceValidationGuard(context: $context);
+		$this->bindXbrlDeliveryGuard(context: $context);
+	}//end register()
+
+	/**
+	 * Bind the `OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindIv3XmlValidationGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -61,7 +88,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindIv3XmlValidationGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\Iv3SubmissionGuard::requireApproval` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindIv3SubmissionGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3SubmissionGuard::requireApproval',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -73,7 +111,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindIv3SubmissionGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\KorLockoutGuard::requireLockoutExpired` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindKorLockoutGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\KorLockoutGuard::requireLockoutExpired',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -85,7 +134,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindKorLockoutGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\ProjectActivationGuard::requireStartDate` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindProjectActivationGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\ProjectActivationGuard::requireStartDate',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -97,7 +157,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindProjectActivationGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\ProjectTransitionGuard::requireReason` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindProjectTransitionGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\ProjectTransitionGuard::requireReason',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -109,7 +180,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindProjectTransitionGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\ProjectCloseGuard::requireWipJustificationOrZero` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindProjectCloseGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\ProjectCloseGuard::requireWipJustificationOrZero',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -121,7 +203,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindProjectCloseGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\VatSubmissionGuard::requireApproval` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindVatSubmissionGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\VatSubmissionGuard::requireApproval',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -133,7 +226,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindVatSubmissionGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\BcfSubmissionGuard::requireApproval` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindBcfSubmissionGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\BcfSubmissionGuard::requireApproval',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -145,7 +249,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindBcfSubmissionGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\SubsidieRepaymentGuard::requireZeroRepaymentBalance` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindSubsidieRepaymentGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\SubsidieRepaymentGuard::requireZeroRepaymentBalance',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -157,7 +272,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindSubsidieRepaymentGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\RateScheduleOverlapGuard::requireNonOverlappingWindow` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindRateScheduleOverlapGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\RateScheduleOverlapGuard::requireNonOverlappingWindow',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -169,7 +295,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindRateScheduleOverlapGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Service\OssPaymentReconciliation::canMarkPaid` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindOssPaymentReconciliation(IRegistrationContext $context): void {
 		// Revive-gl-tax-capabilities design D2 — the OSS money transitions
 		// (`OssReturn.pay`, `OssPayment.reconcile`) have named
 		// `OCA\Shillinq\Service\OssPaymentReconciliation::canMarkPaid` as
@@ -194,7 +331,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindOssPaymentReconciliation()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\IntercompanyEliminationGuard::requireReconciledPair` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindIntercompanyEliminationGuard(IRegistrationContext $context): void {
 		// Revive-gl-tax-capabilities REQ-GLTAX-002 — the `eliminate`
 		// transition on IntercompanyJournalEntry may only fire once the pair
 		// reconciles (zero variance between the two booked sides). Fail-closed
@@ -210,7 +358,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindIntercompanyEliminationGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindBudgetScenarioModifierGuard(IRegistrationContext $context): void {
 		// REQ-BSC-004 — registered (unlike the still-unregistered, pre-existing
 		// CashflowRecurringGuard/ProgrammaLinkGuard `preconditions.save` tags,
 		// shillinq#433's own fleet-wide gap, out of this change's scope) so
@@ -227,7 +386,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindBudgetScenarioModifierGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\XbrlInstanceValidationGuard::requireValidInstance` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindXbrlInstanceValidationGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\XbrlInstanceValidationGuard::requireValidInstance',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -239,7 +409,18 @@ final class GuardRegistrar {
 				);
 			}
 		);
+	}//end bindXbrlInstanceValidationGuard()
 
+	/**
+	 * Bind the `OCA\Shillinq\Guard\XbrlDeliveryGuard::requireDeliveryReference` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindXbrlDeliveryGuard(IRegistrationContext $context): void {
 		$context->registerService(
 			'OCA\Shillinq\Guard\XbrlDeliveryGuard::requireDeliveryReference',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -251,5 +432,5 @@ final class GuardRegistrar {
 				);
 			}
 		);
-	}//end register()
+	}//end bindXbrlDeliveryGuard()
 }//end class

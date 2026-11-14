@@ -31,6 +31,7 @@ use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
+use OCA\Shillinq\Listener\ActuarialValuationApprovedListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
@@ -301,6 +302,13 @@ final class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: CommitmentTransitionListener::class
+		);
+
+		// Reporting-ifrs-calculations REQ-PEN-011: approving an
+		// ActuarialValuation posts its IAS 19 journal entry.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: ActuarialValuationApprovedListener::class
 		);
 
 		// Task 5.3 — OrderFulfilmentTransitionListener emits

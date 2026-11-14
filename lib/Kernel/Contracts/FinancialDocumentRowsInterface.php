@@ -59,4 +59,15 @@ interface FinancialDocumentRowsInterface {
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
 	 */
 	public function row(string $schema, array $document): array;
+	/**
+	 * The kind of a document read from a schema.
+	 *
+	 * @param string $schema The schema it was read from.
+	 * @param array<string, mixed> $document The document.
+	 *
+	 * @return string One of quote, invoice, credit-note, payment-request, payout.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 */
+	public function kindOf(string $schema, array $document): string;
 }//end interface

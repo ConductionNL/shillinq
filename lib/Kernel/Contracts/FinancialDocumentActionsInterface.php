@@ -56,6 +56,7 @@ interface FinancialDocumentActionsInterface {
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $payload The invoice.
+	 * @param string $appId The calling app when acting for another app, or empty for the signed-in user.
 	 *
 	 * @return array{id: string} The issued invoice.
 	 *
@@ -63,7 +64,7 @@ interface FinancialDocumentActionsInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
-	public function issueInvoice(string $register, string $schema, string $objectId, array $payload): array;
+	public function issueInvoice(string $register, string $schema, string $objectId, array $payload, string $appId=''): array;
 
 	/**
 	 * Ask for payment of an outstanding invoice through shillinq.
@@ -72,6 +73,7 @@ interface FinancialDocumentActionsInterface {
 	 * it appears on the same objects as the invoice and settles it on capture.
 	 *
 	 * @param string $invoiceId The invoice.
+	 * @param string $appId The calling app when acting for another app, or empty for the signed-in user.
 	 *
 	 * @return array<string, mixed> The payment request.
 	 *
@@ -79,5 +81,5 @@ interface FinancialDocumentActionsInterface {
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
 	 */
-	public function requestPayment(string $invoiceId): array;
+	public function requestPayment(string $invoiceId, string $appId=''): array;
 }//end interface
