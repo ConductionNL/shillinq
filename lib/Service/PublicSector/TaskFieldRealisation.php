@@ -78,6 +78,25 @@ class TaskFieldRealisation {
 		$byAccount = $this->centsByAccount(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
 		$taskFieldOf = $this->taskFieldByAccount(administrationId: $administrationId);
 
+		[$fields, $unmapped] = $this->splitByTaskField(byAccount: $byAccount, taskFieldOf: $taskFieldOf);
+
+		$result['taskFields'] = $this->taskFieldRows(fields: $fields);
+		$result['unmapped'] = $this->unmappedRows(unmapped: $unmapped);
+
+		return $result;
+	}//end forYear()
+
+	/**
+	 * Sum the cents per task field into expenses and income, and keep the unmapped accounts apart.
+	 *
+	 * @param array<int|string,int> $byAccount The signed cents per account.
+	 * @param array<string,string> $taskFieldOf The task field per account number.
+	 *
+	 * @return array{0: array<string,array{expenses:int,income:int}>, 1: array<string,int>} The sums per task field and the unmapped cents.
+	 *
+	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 */
+	private function splitByTaskField(array $byAccount, array $taskFieldOf): array {
 		$fields = [];
 		$unmapped = [];
 		foreach ($byAccount as $accountNumber => $cents) {
@@ -96,26 +115,54 @@ class TaskFieldRealisation {
 			}
 		}
 
+		return [$fields, $unmapped];
+	}//end splitByTaskField()
+
+	/**
+	 * The task-field rows in natural order, in euros.
+	 *
+	 * @param array<string,array{expenses:int,income:int}> $fields The sums per task field.
+	 *
+	 * @return list<array{taskField: string, expenses: float, income: float}>
+	 *
+	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 */
+	private function taskFieldRows(array $fields): array {
+		$rows = [];
 		uksort($fields, 'strnatcmp');
 		foreach ($fields as $taskField => $sums) {
-			$result['taskFields'][] = [
+			$rows[] = [
 				'taskField' => (string)$taskField,
 				'expenses' => round($sums['expenses'] / 100, 2),
 				'income' => round($sums['income'] / 100, 2),
 			];
 		}
 
+		return $rows;
+	}//end taskFieldRows()
+
+	/**
+	 * The unmapped-account rows in natural order, in euros.
+	 *
+	 * @param array<string,int> $unmapped The unmapped cents per account.
+	 *
+	 * @return list<array{accountNumber: string, amount: float, mappingPage: string}>
+	 *
+	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 */
+	private function unmappedRows(array $unmapped): array {
+		$rows = [];
 		uksort($unmapped, 'strnatcmp');
 		foreach ($unmapped as $accountNumber => $cents) {
-			$result['unmapped'][] = [
+			$rows[] = [
 				'accountNumber' => (string)$accountNumber,
 				'amount' => round($cents / 100, 2),
 				'mappingPage' => self::MAPPING_PAGE,
 			];
 		}
 
-		return $result;
-	}//end forYear()
+		return $rows;
+	}//end unmappedRows()
 
 	/**
 	 * The signed cents per account of the posted lines in the window; an
@@ -131,12 +178,7 @@ class TaskFieldRealisation {
 		$posted = [];
 		$transactions = $this->records->records(schema: 'GLTransaction', filters: ['administrationId' => $administrationId, 'state' => 'posted']);
 		foreach ($transactions as $transaction) {
-			$day = substr((string)($transaction['postingDate'] ?? ''), 0, 10);
-			if ((string)($transaction['administrationId'] ?? '') !== $administrationId || ($transaction['state'] ?? '') !== 'posted') {
-				continue;
-			}
-
-			if ($day !== '' && $day >= $startDate && $day < $endDate) {
+			if ($this->isPostedInWindow(transaction: $transaction, administrationId: $administrationId, startDate: $startDate, endDate: $endDate) === true) {
 				$posted[] = $transaction;
 			}
 		}
@@ -155,6 +197,27 @@ class TaskFieldRealisation {
 
 		return $byAccount;
 	}//end centsByAccount()
+
+	/**
+	 * Whether a transaction is a posted one of the administration, dated within the window.
+	 *
+	 * @param array<string,mixed> $transaction The GLTransaction.
+	 * @param string $administrationId The administration.
+	 * @param string $startDate The window's first day, inclusive.
+	 * @param string $endDate The window's end, exclusive.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-bbv-compliance/spec.md
+	 */
+	private function isPostedInWindow(array $transaction, string $administrationId, string $startDate, string $endDate): bool {
+		$day = substr((string)($transaction['postingDate'] ?? ''), 0, 10);
+		if ((string)($transaction['administrationId'] ?? '') !== $administrationId || ($transaction['state'] ?? '') !== 'posted') {
+			return false;
+		}
+
+		return $day !== '' && $day >= $startDate && $day < $endDate;
+	}//end isPostedInWindow()
 
 	/**
 	 * The task field each account of the administration is mapped to.
