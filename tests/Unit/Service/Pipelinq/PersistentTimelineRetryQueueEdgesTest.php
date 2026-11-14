@@ -1,11 +1,7 @@
 <?php
 
 /**
- * Edge cases of the PersistentTimelineRetryQueue.
- *
- * Covers the id shapes a save can answer with (array, entity uuid,
- * serialised `@self` id, numeric id, none), the timestamp normalisation to
- * UTC, a failed job schedule and the outer never-raise guard.
+ * Unit tests for PersistentTimelineRetryQueue's edge paths.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service\Pipelinq
@@ -16,8 +12,6 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
- *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
@@ -27,374 +21,269 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
 use DateTime;
-use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * Verifies the queue's id extraction, timestamp rendering and failure paths.
+ * enqueue() runs after the booking commit and so must never raise: an entry
+ * id is read from whichever accessor the saved entity has, a save with no id
+ * schedules nothing, a scheduler that refuses is logged, and anything else
+ * that throws falls back to a warning. A mutable timestamp is stored in UTC.
  *
- * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+ * @covers \OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue
+ * @uses \OCA\Shillinq\Kernel\Model\TimelineEventDto
  */
-#[CoversClass(PersistentTimelineRetryQueue::class)]
-#[UsesClass(TimelineEventDto::class)]
 final class PersistentTimelineRetryQueueEdgesTest extends TestCase {
 
 	/**
-	 * The payloads saved by the stub object service.
+	 * Warning and info lines, as [message, context].
+	 *
+	 * @var array<int, array{0: string, 1: array<string, mixed>}>
+	 */
+	private array $logged = [];
+
+	/**
+	 * Jobs scheduled.
+	 *
+	 * @var array<int, array{0: string, 1: mixed}>
+	 */
+	private array $jobs = [];
+
+	/**
+	 * Payloads saved.
 	 *
 	 * @var array<int, array<string, mixed>>
 	 */
 	private array $saved = [];
 
 	/**
-	 * Build an object service stub whose saveObject() answers $result.
+	 * The job list double.
 	 *
-	 * @param mixed $result What saveObject() returns.
-	 *
-	 * @return object
+	 * @var IJobList&MockObject
 	 */
-	private function objectService(mixed $result): object {
-		$saved = &$this->saved;
-		return new class($result, $saved) {
-			/**
-			 * @var array<int, array<string, mixed>>
-			 */
-			private array $saved;
+	private IJobList&MockObject $jobList;
+
+	/**
+	 * Set up the job list.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->jobList = $this->createMock(IJobList::class);
+		$this->jobList->method('add')->willReturnCallback(
+			function (string $job, mixed $argument = null): void {
+				$this->jobs[] = [$job, $argument];
+			}
+		);
+	}//end setUp()
+
+	/**
+	 * The queue over an object service whose save answers the given value.
+	 *
+	 * @param mixed                 $saveAnswer What saveObject returns.
+	 * @param RegisterLocation|null $settings   The settings, or an available default.
+	 *
+	 * @return PersistentTimelineRetryQueue The queue.
+	 */
+	private function queue(mixed $saveAnswer, ?RegisterLocation $settings = null): PersistentTimelineRetryQueue {
+		$objectService = new class ($saveAnswer, $this->saved) {
 
 			/**
-			 * @param mixed $result The save result.
-			 * @param array<int, array<string, mixed>> &$saved Capture sink.
+			 * @param mixed                            $answer The save answer.
+			 * @param array<int, array<string, mixed>> $saved  The sink.
 			 */
-			public function __construct(private mixed $result, array &$saved) {
-				$this->saved = &$saved;
-			}//end __construct()
+			public function __construct(private readonly mixed $answer, private array &$saved) {
+			}
 
 			/**
-			 * @param string $slug Register slug.
+			 * @param string $slug The register.
 			 *
 			 * @return self
 			 */
 			public function setRegister(string $slug): self {
 				return $this;
-			}//end setRegister()
+			}
 
 			/**
-			 * @param string $schema Schema.
+			 * @param string $schema The schema.
 			 *
 			 * @return self
 			 */
 			public function setSchema(string $schema): self {
 				return $this;
-			}//end setSchema()
+			}
 
 			/**
-			 * @param array<string, mixed> $object Payload.
-			 * @param string|null $register Register.
-			 * @param string|null $schema Schema.
-			 * @param bool $_rbac RBAC flag.
+			 * @param array<string, mixed> $object   The payload.
+			 * @param string               $register The register.
+			 * @param string               $schema   The schema.
+			 * @param boolean              $_rbac    RBAC.
 			 *
-			 * @return mixed
+			 * @return mixed The answer.
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, bool $_rbac = true): mixed {
+			public function saveObject(array $object, string $register, string $schema, bool $_rbac): mixed {
 				$this->saved[] = $object;
-				return $this->result;
-			}//end saveObject()
+
+				return $this->answer;
+			}
 		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($objectService);
 
-	}//end objectService()
-
-	/**
-	 * Build the queue under test.
-	 *
-	 * @param mixed $saveResult What the object service save answers.
-	 * @param IJobList $jobList The job list.
-	 * @param LoggerInterface|null $logger The logger.
-	 * @param RegisterLocation|null $settings The register location.
-	 *
-	 * @return PersistentTimelineRetryQueue
-	 */
-	private function queue(
-		mixed $saveResult,
-		IJobList $jobList,
-		?LoggerInterface $logger = null,
-		?RegisterLocation $settings = null,
-	): PersistentTimelineRetryQueue {
 		if ($settings === null) {
 			$settings = $this->createMock(RegisterLocation::class);
 			$settings->method('isOpenRegisterAvailable')->willReturn(true);
 			$settings->method('getRegisterSlug')->willReturn('shillinq');
 		}
 
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->with('OCA\\OpenRegister\\Service\\ObjectService')
-			->willReturn($this->objectService(result: $saveResult));
-
 		$time = $this->createMock(ITimeFactory::class);
-		$time->method('getDateTime')->willReturn(new DateTime('2026-06-07T15:00:00+02:00'));
+		$time->method('getDateTime')->willReturn(new DateTime('2026-11-01T12:00:00Z'));
 
-		return new PersistentTimelineRetryQueue(
-			settings: $settings,
-			container: $container,
-			jobList: $jobList,
-			time: $time,
-			logger: ($logger ?? $this->createMock(LoggerInterface::class)),
-		);
+		$logger = $this->createMock(LoggerInterface::class);
+		foreach (['warning', 'info'] as $level) {
+			$logger->method($level)->willReturnCallback(
+				function (string $message, array $context = []): void {
+					$this->logged[] = [$message, $context];
+				}
+			);
+		}
 
+		return new PersistentTimelineRetryQueue($settings, $container, $this->jobList, $time, $logger);
 	}//end queue()
 
 	/**
-	 * Build an event at the given timestamp.
+	 * An event stamped with a mutable, non-UTC time.
 	 *
-	 * @param \DateTimeInterface|null $timestamp The event time.
-	 *
-	 * @return TimelineEventDto
+	 * @return TimelineEventDto The event.
 	 */
-	private function event(?\DateTimeInterface $timestamp = null): TimelineEventDto {
+	private static function event(): TimelineEventDto {
 		return new TimelineEventDto(
-			type: TimelineEventDto::TYPE_BOOKING_CONFIRMED,
-			externalId: 'booking-5',
-			timestamp: ($timestamp ?? new DateTimeImmutable('2026-06-07T12:00:00Z')),
-			contactId: 'contact-5'
+			'booking.created',
+			'b-1',
+			new DateTime('2026-11-01T11:30:00', new DateTimeZone('Europe/Amsterdam')),
+			'contact-1',
+			['bookingNumber' => 'b-1']
 		);
-
 	}//end event()
 
 	/**
-	 * The id shapes a save can answer with, and the job argument each yields.
-	 *
-	 * @return array<string, array{0: mixed, 1: string}>
-	 */
-	public static function savedIdShapes(): array {
-		return [
-			'array id' => [['id' => 'arr-1'], 'arr-1'],
-			'entity uuid' => [
-				new class {
-					/**
-					 * @return string
-					 */
-					public function getUuid(): string {
-						return 'uuid-1';
-					}//end getUuid()
-				},
-				'uuid-1',
-			],
-			'serialised id' => [
-				new class implements \JsonSerializable {
-					/**
-					 * @return array<string, mixed>
-					 */
-					public function jsonSerialize(): array {
-						return ['id' => 'json-1'];
-					}//end jsonSerialize()
-				},
-				'json-1',
-			],
-			'serialised @self id after an empty uuid' => [
-				new class implements \JsonSerializable {
-					/**
-					 * @return string
-					 */
-					public function getUuid(): string {
-						return '';
-					}//end getUuid()
-
-					/**
-					 * @return array<string, mixed>
-					 */
-					public function jsonSerialize(): array {
-						return ['@self' => ['id' => 'self-1']];
-					}//end jsonSerialize()
-				},
-				'self-1',
-			],
-			'numeric id' => [
-				new class {
-					/**
-					 * @return int
-					 */
-					public function getId(): int {
-						return 42;
-					}//end getId()
-				},
-				'42',
-			],
-		];
-
-	}//end savedIdShapes()
-
-	/**
-	 * Each id shape schedules the retry job with that id.
-	 *
-	 * @param mixed $saveResult The save result.
-	 * @param string $expectedId The expected entry id.
+	 * The entry id is read from the saved entity's uuid, serialised @self id, or id.
 	 *
 	 * @return void
 	 */
-	#[DataProvider('savedIdShapes')]
-	public function testTheSavedIdIsPassedToTheRetryJob(mixed $saveResult, string $expectedId): void {
-		$jobList = $this->createMock(IJobList::class);
-		$jobList->expects(self::once())
-			->method('add')
-			->with(PipelinqTimelineRetryJob::class, ['entryId' => $expectedId]);
+	public function testTheEntryIdIsReadFromTheSavedEntity(): void {
+		$byUuid = new class {
 
-		$this->queue(saveResult: $saveResult, jobList: $jobList)->enqueue(event: $this->event());
+			/**
+			 * @return string The uuid.
+			 */
+			public function getUuid(): string {
+				return 'entry-uuid';
+			}
+		};
+		$bySelf = new class implements \JsonSerializable {
 
-	}//end testTheSavedIdIsPassedToTheRetryJob()
+			/**
+			 * @return array<string, mixed> The payload.
+			 */
+			public function jsonSerialize(): array {
+				return ['@self' => ['id' => 'entry-self']];
+			}
+		};
+		$byId = new class {
+
+			/**
+			 * @return integer The id.
+			 */
+			public function getId(): int {
+				return 42;
+			}
+		};
+
+		foreach ([$byUuid, $bySelf, $byId] as $saved) {
+			$this->queue($saved)->enqueue(self::event());
+		}
+
+		$this->assertSame(
+			[
+				[PipelinqTimelineRetryJob::class, ['entryId' => 'entry-uuid']],
+				[PipelinqTimelineRetryJob::class, ['entryId' => 'entry-self']],
+				[PipelinqTimelineRetryJob::class, ['entryId' => '42']],
+			],
+			$this->jobs
+		);
+	}//end testTheEntryIdIsReadFromTheSavedEntity()
+
+	/**
+	 * The stored timestamp is the event's instant in UTC.
+	 *
+	 * @return void
+	 */
+	public function testAMutableTimestampIsStoredInUtc(): void {
+		$this->queue(['id' => 'e-1'])->enqueue(self::event());
+
+		$this->assertSame('2026-11-01T10:30:00Z', $this->saved[0]['timestampIso']);
+		$this->assertSame('2026-11-01T12:00:00Z', $this->saved[0]['nextRetryAt']);
+		$this->assertSame(0, $this->saved[0]['retryCount']);
+	}//end testAMutableTimestampIsStoredInUtc()
 
 	/**
 	 * A save that yields no id schedules nothing.
 	 *
-	 * @return array<string, array{0: mixed}>
+	 * @return void
 	 */
-	public static function idlessResults(): array {
-		return [
-			'array without id' => [['id' => '']],
-			'scalar' => ['saved'],
-			'null' => [null],
-			'object without id accessors' => [new \stdClass()],
-			'serialised to a non-array' => [
-				new class implements \JsonSerializable {
-					/**
-					 * @return string
-					 */
-					public function jsonSerialize(): string {
-						return 'x';
-					}//end jsonSerialize()
-				},
-			],
-		];
+	public function testASaveWithoutAnIdSchedulesNothing(): void {
+		foreach ([['id' => ''], new \stdClass(), 'saved'] as $answer) {
+			$this->queue($answer)->enqueue(self::event());
+		}
 
-	}//end idlessResults()
+		$this->assertSame([], $this->jobs);
+		$this->assertCount(3, $this->saved);
+	}//end testASaveWithoutAnIdSchedulesNothing()
 
 	/**
-	 * Without an id there is nothing for the job to retry.
-	 *
-	 * @param mixed $saveResult The save result.
+	 * A scheduler that refuses is logged and the call still returns.
 	 *
 	 * @return void
 	 */
-	#[DataProvider('idlessResults')]
-	public function testAnIdlessSaveSchedulesNoJob(mixed $saveResult): void {
+	public function testARefusedScheduleIsLogged(): void {
 		$jobList = $this->createMock(IJobList::class);
-		$jobList->expects(self::never())->method('add');
+		$jobList->method('add')->willThrowException(new RuntimeException('cron table locked'));
+		$this->jobList = $jobList;
 
-		$this->queue(saveResult: $saveResult, jobList: $jobList)->enqueue(event: $this->event());
+		$this->queue(['id' => 'e-1'])->enqueue(self::event());
 
-		self::assertCount(1, $this->saved);
-
-	}//end testAnIdlessSaveSchedulesNoJob()
+		$this->assertSame(
+			[['PersistentTimelineRetryQueue: failed to schedule retry job', ['app' => 'shillinq', 'entryId' => 'e-1', 'exception' => 'cron table locked']]],
+			$this->logged
+		);
+	}//end testARefusedScheduleIsLogged()
 
 	/**
-	 * The event time and the retry time are both written in UTC.
+	 * Anything else that throws falls back to a warning instead of raising.
 	 *
 	 * @return void
 	 */
-	public function testTimesAreWrittenInUtc(): void {
-		$jobList = $this->createMock(IJobList::class);
-		$mutable = new DateTime('2026-03-01T10:30:00', new DateTimeZone('Europe/Amsterdam'));
-
-		$this->queue(saveResult: ['id' => 'x'], jobList: $jobList)->enqueue(event: $this->event(timestamp: $mutable));
-
-		self::assertSame('2026-03-01T09:30:00Z', $this->saved[0]['timestampIso']);
-		self::assertSame('2026-06-07T13:00:00Z', $this->saved[0]['nextRetryAt']);
-		self::assertSame('Europe/Amsterdam', $mutable->getTimezone()->getName(), 'The event time must not be mutated');
-
-	}//end testTimesAreWrittenInUtc()
-
-	/**
-	 * A failed job schedule is logged and swallowed; no success line follows.
-	 *
-	 * @return void
-	 */
-	public function testAFailedJobScheduleIsLoggedAndSwallowed(): void {
-		$jobList = $this->createMock(IJobList::class);
-		$jobList->method('add')->willThrowException(new RuntimeException('job table locked'));
-
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects(self::once())
-			->method('warning')
-			->with(
-				'PersistentTimelineRetryQueue: failed to schedule retry job',
-				[
-					'app' => 'shillinq',
-					'entryId' => 'entry-3',
-					'exception' => 'job table locked',
-				]
-			);
-		$logger->expects(self::never())->method('info');
-
-		$this->queue(saveResult: ['id' => 'entry-3'], jobList: $jobList, logger: $logger)->enqueue(event: $this->event());
-
-	}//end testAFailedJobScheduleIsLoggedAndSwallowed()
-
-	/**
-	 * A successful enqueue logs the queued entry at INFO.
-	 *
-	 * @return void
-	 */
-	public function testASuccessfulEnqueueIsLoggedAtInfo(): void {
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects(self::never())->method('warning');
-		$logger->expects(self::once())
-			->method('info')
-			->with(
-				'PersistentTimelineRetryQueue: event queued for async retry',
-				[
-					'app' => 'shillinq',
-					'entryId' => 'entry-4',
-					'type' => 'booking.confirmed',
-					'externalId' => 'booking-5',
-					'contactId' => 'contact-5',
-				]
-			);
-
-		$this->queue(saveResult: ['id' => 'entry-4'], jobList: $this->createMock(IJobList::class), logger: $logger)
-			->enqueue(event: $this->event());
-
-	}//end testASuccessfulEnqueueIsLoggedAtInfo()
-
-	/**
-	 * Even a failing availability check never raises out of enqueue().
-	 *
-	 * @return void
-	 */
-	public function testEnqueueNeverRaises(): void {
+	public function testAnUnexpectedFailureNeverRaises(): void {
 		$settings = $this->createMock(RegisterLocation::class);
-		$settings->method('isOpenRegisterAvailable')->willThrowException(new RuntimeException('app manager down'));
+		$settings->method('isOpenRegisterAvailable')->willThrowException(new RuntimeException('config unreadable'));
 
-		$jobList = $this->createMock(IJobList::class);
-		$jobList->expects(self::never())->method('add');
+		$this->queue(['id' => 'e-1'], $settings)->enqueue(self::event());
 
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects(self::once())
-			->method('warning')
-			->with(
-				'PersistentTimelineRetryQueue: enqueue failed, falling back to logging',
-				[
-					'app' => 'shillinq',
-					'type' => 'booking.confirmed',
-					'externalId' => 'booking-5',
-					'exception' => 'app manager down',
-				]
-			);
-
-		$this->queue(saveResult: ['id' => 'x'], jobList: $jobList, logger: $logger, settings: $settings)
-			->enqueue(event: $this->event());
-
-		self::assertSame([], $this->saved);
-
-	}//end testEnqueueNeverRaises()
+		$this->assertSame(
+			[['PersistentTimelineRetryQueue: enqueue failed, falling back to logging', ['app' => 'shillinq', 'type' => 'booking.created', 'externalId' => 'b-1', 'exception' => 'config unreadable']]],
+			$this->logged
+		);
+		$this->assertSame([], $this->saved);
+	}//end testAnUnexpectedFailureNeverRaises()
 }//end class

@@ -18,6 +18,8 @@ use PHPUnit\Framework\TestCase;
  * E threw), and the seed data itself.
  *
  * @covers \OCA\Shillinq\Standards\Checks\LedgerIntegrityChecks
+ * @uses \OCA\Shillinq\Standards\Checks\CheckFields
+ * @uses \OCA\Shillinq\Standards\Checks\GlTransactionLines
  *
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */

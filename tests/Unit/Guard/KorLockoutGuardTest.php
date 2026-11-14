@@ -72,4 +72,13 @@ final class KorLockoutGuardTest extends TestCase {
 		self::assertFalse($allowed);
 
 	}//end testReturnDeniedWithoutOptOutTimestamp()
+	/**
+	 * Bad path: an optedOutAt that is not a date fails closed.
+	 *
+	 * @return void
+	 */
+	public function testReturnDeniedForAnUnparseableOptOutTimestamp(): void {
+		self::assertFalse($this->guard->requireLockoutExpired(regime: ['optedOutAt' => 'not-a-date']));
+
+	}//end testReturnDeniedForAnUnparseableOptOutTimestamp()
 }//end class

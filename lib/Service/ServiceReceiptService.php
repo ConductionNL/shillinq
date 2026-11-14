@@ -50,10 +50,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ServiceReceiptServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 12 of bookkeeping-purchase-order-3way: SvcReceipt (prestatieverklaring)
@@ -83,7 +84,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; deferred pending a dedicated refactor.
  */
-class ServiceReceiptService {
+class ServiceReceiptService implements ServiceReceiptServiceInterface {
 	/**
 	 * Schema slug for the SvcReceipt register (declared in member 12).
 	 *

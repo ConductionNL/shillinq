@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\PublicSector;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\InterestAllocationServiceInterface;
 use OCA\Shillinq\Service\KapitaallastenCalculator;
 
 /**
@@ -40,7 +41,7 @@ use OCA\Shillinq\Service\KapitaallastenCalculator;
  *
  * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
-class InterestAllocationService {
+class InterestAllocationService implements InterestAllocationServiceInterface {
 
 	/**
 	 * Constructor.

@@ -78,4 +78,30 @@ class ReportScheduleCalendarTest extends TestCase {
 		self::assertSame('2026-09', $calendar->periodFor('weekly', 'previous-period', new DateTimeImmutable('2026-10-01T00:00:00Z')));
 
 	}//end testAWeeklyScheduleRunsOnItsWeekday()
+	/**
+	 * An unknown frequency is refused rather than guessed.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownFrequencyIsRefused(): void {
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('Unknown report schedule frequency: daily');
+
+		(new ReportScheduleCalendar())->nextRunAfter('daily', 1, new DateTimeImmutable('2026-09-29T09:00:00Z'));
+
+	}//end testAnUnknownFrequencyIsRefused()
+
+	/**
+	 * A run day past 28 is clamped to 28, and a weekday past 7 to Sunday.
+	 *
+	 * @return void
+	 */
+	public function testRunDaysAreClamped(): void {
+		$calendar = new ReportScheduleCalendar();
+
+		self::assertSame('2026-10-28', $calendar->nextRunAfter('monthly', 31, new DateTimeImmutable('2026-09-29T09:00:00Z'))->format('Y-m-d'));
+		// 2026-09-29 is a Tuesday; the Sunday after is 4 October.
+		self::assertSame('2026-10-04', $calendar->nextRunAfter('weekly', 9, new DateTimeImmutable('2026-09-29T09:00:00Z'))->format('Y-m-d'));
+
+	}//end testRunDaysAreClamped()
 }//end class

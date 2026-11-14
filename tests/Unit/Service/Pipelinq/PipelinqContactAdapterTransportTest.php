@@ -1,11 +1,7 @@
 <?php
 
 /**
- * Unit tests for the PipelinqContactAdapter's real HTTP transport.
- *
- * Drives getContact() through the un-overridden dispatch path with only the
- * Nextcloud HTTP client mocked: endpoint and token resolution, request
- * options, the verb dispatch, body decoding, and the contact cache.
+ * Unit tests for PipelinqContactAdapter's HTTP transport.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service\Pipelinq
@@ -16,8 +12,6 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
- *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
@@ -26,316 +20,284 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
-use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
+use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\PipelinqRequestRun;
-use OCA\Shillinq\Service\Pipelinq\PipelinqTransportException;
-use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\ICache;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
+use OCP\ICacheFactory;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
- * Verifies the adapter's transport against a mocked HTTP client.
+ * The other adapter tests replace dispatch(); these drive the real one
+ * through Nextcloud's HTTP client double. They pin the request built from
+ * config (endpoint joined to the path, bearer token, JSON body), the verb
+ * routing, the response decoding, the retry schedule handed to the sleeper,
+ * the refusals when config is missing, and the default circuit breaker
+ * reporting its transition.
  *
- * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+ * @covers \OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter
+ * @uses \OCA\Shillinq\Service\Pipelinq\CircuitBreaker
+ * @uses \OCA\Shillinq\Service\Pipelinq\RetryPolicy
+ * @uses \OCA\Shillinq\Service\Pipelinq\PipelinqRequestRun
+ * @uses \OCA\Shillinq\Kernel\Exception\PipelinqTransportException
+ * @uses \OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService
  */
-#[CoversClass(PipelinqContactAdapter::class)]
-#[UsesClass(CircuitBreaker::class)]
-#[UsesClass(PipelinqContact::class)]
-#[UsesClass(PipelinqRequestRun::class)]
-#[UsesClass(PipelinqTransportException::class)]
-#[UsesClass(RetryPolicy::class)]
 final class PipelinqContactAdapterTransportTest extends TestCase {
 
 	/**
-	 * The in-memory cache contents.
+	 * Requests made, as [verb, url, options].
 	 *
-	 * @var array<string, mixed>
+	 * @var array<int, array{0: string, 1: string, 2: array<string, mixed>}>
 	 */
-	private array $cacheStore = [];
+	private array $requests = [];
 
 	/**
-	 * Build an in-memory cache.
+	 * Seconds the sleeper was asked to wait.
 	 *
-	 * @return ICache
+	 * @var array<int, integer>
 	 */
-	private function cache(): ICache {
-		$cache = $this->createMock(ICache::class);
-		$cache->method('get')->willReturnCallback(fn (string $key): mixed => ($this->cacheStore[$key] ?? null));
-		$cache->method('set')->willReturnCallback(
-			function (string $key, mixed $value): bool {
-				$this->cacheStore[$key] = $value;
-				return true;
-			}
-		);
-		return $cache;
-
-	}//end cache()
+	private array $slept = [];
 
 	/**
-	 * Build an app config answering the endpoint and token.
+	 * The logger double.
 	 *
-	 * @param string $endpoint The configured endpoint.
-	 * @param string $token The configured token.
-	 *
-	 * @return IAppConfig
+	 * @var LoggerInterface&MockObject
 	 */
-	private function appConfig(string $endpoint, string $token): IAppConfig {
-		$config = $this->createMock(IAppConfig::class);
-		$config->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use ($endpoint, $token): string {
-				return match ($key) {
-					PipelinqContactAdapter::CONFIG_KEY_ENDPOINT => $endpoint,
-					PipelinqContactAdapter::CONFIG_KEY_TOKEN => $token,
-					default => $default,
-				};
-			}
-		);
-		return $config;
-
-	}//end appConfig()
+	private LoggerInterface&MockObject $logger;
 
 	/**
-	 * Build a response.
+	 * Set up the logger.
 	 *
-	 * @param int $status The status code.
-	 * @param string $body The raw body.
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->logger = $this->createMock(LoggerInterface::class);
+	}//end setUp()
+
+	/**
+	 * A response with this status and body.
 	 *
-	 * @return IResponse
+	 * @param integer $status The status.
+	 * @param string  $body   The body.
+	 *
+	 * @return IResponse The response.
 	 */
 	private function response(int $status, string $body): IResponse {
 		$response = $this->createMock(IResponse::class);
 		$response->method('getStatusCode')->willReturn($status);
 		$response->method('getBody')->willReturn($body);
-		return $response;
 
+		return $response;
 	}//end response()
 
 	/**
-	 * Build the adapter over a client service that hands out $client.
+	 * The adapter, with request() exposed, over a client answering these responses in turn.
 	 *
-	 * @param IClient $client The HTTP client.
-	 * @param string $endpoint The configured endpoint.
-	 * @param string $token The configured token.
-	 * @param LoggerInterface|null $logger The logger.
+	 * @param array<int, IResponse|\Throwable>       $responses The responses.
+	 * @param string                                 $endpoint  The configured endpoint.
+	 * @param string                                 $token     The configured token.
+	 * @param CustomerBridgeMetricsService|null      $metrics   The metrics.
 	 *
-	 * @return PipelinqContactAdapter
+	 * @return PipelinqContactAdapter The adapter.
 	 */
-	private function adapter(
-		IClient $client,
-		string $endpoint = 'https://crm.example/',
-		string $token = ' secret-token ',
-		?LoggerInterface $logger = null,
-	): PipelinqContactAdapter {
-		$clientService = $this->createMock(IClientService::class);
-		$clientService->expects(self::atMost(1))->method('newClient')->willReturn($client);
+	private function adapter(array $responses, string $endpoint = 'https://crm.example.test/api/', string $token = 'tok-1', ?CustomerBridgeMetricsService $metrics = null): PipelinqContactAdapter {
+		$client = $this->createMock(IClient::class);
+		foreach (['get', 'post', 'put', 'delete'] as $verb) {
+			$client->method($verb)->willReturnCallback(
+				function (string $url, array $options) use ($verb, &$responses): IResponse {
+					$this->requests[] = [$verb, $url, $options];
+					$next = array_shift($responses);
+					if ($next instanceof \Throwable) {
+						throw $next;
+					}
 
-		return new PipelinqContactAdapter(
-			clientService: $clientService,
-			appConfig: $this->appConfig(endpoint: $endpoint, token: $token),
-			logger: ($logger ?? $this->createMock(LoggerInterface::class)),
-			cache: $this->cache(),
-			retryPolicy: new RetryPolicy(),
-			breaker: new CircuitBreaker(failureThreshold: 5, cooldownSeconds: 300),
-			sleeper: static function (int $seconds): void {
-			},
+					return $next;
+				}
+			);
+		}
+
+		$clients = $this->createMock(IClientService::class);
+		$clients->expects($this->atMost(1))->method('newClient')->willReturn($client);
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key): string => match ($key) {
+				PipelinqContactAdapter::CONFIG_KEY_ENDPOINT => $endpoint,
+				PipelinqContactAdapter::CONFIG_KEY_TOKEN => $token,
+				default => '',
+			}
 		);
 
+		return new class (
+			$clients,
+			$config,
+			$this->logger,
+			$this->createMock(ICache::class),
+			sleeper: function (int $seconds): void {
+				$this->slept[] = $seconds;
+			},
+			metrics: $metrics
+		) extends PipelinqContactAdapter {
+
+			/**
+			 * @param string                    $method  The verb.
+			 * @param string                    $path    The path.
+			 * @param array<string, mixed>|null $payload The body.
+			 *
+			 * @return array<string, mixed> The decoded body.
+			 */
+			public function call(string $method, string $path, ?array $payload = null): array {
+				return $this->request($method, $path, $payload);
+			}
+		};
 	}//end adapter()
 
 	/**
-	 * A fetched contact is read with a GET to the trimmed endpoint, the bearer
-	 * token and JSON headers, then cached.
+	 * A GET joins the path to the endpoint and carries the bearer token.
 	 *
 	 * @return void
 	 */
-	public function testGetContactSendsAnAuthenticatedGetAndCachesTheContact(): void {
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::once())
-			->method('get')
-			->with(
-				'https://crm.example/api/v1/contacts/c%2F1',
-				[
-					'timeout' => PipelinqContactAdapter::REQUEST_TIMEOUT_SECONDS,
-					'connect_timeout' => PipelinqContactAdapter::REQUEST_TIMEOUT_SECONDS,
-					'headers' => [
-						'Authorization' => 'Bearer secret-token',
-						'Accept' => 'application/json',
-						'User-Agent' => 'shillinq/pipelinq-adapter',
-					],
-				]
-			)
-			->willReturn($this->response(status: 200, body: '{"legalName":" Acme BV ","email":"a@acme.example"}'));
+	public function testAGetCarriesTheTokenAndDecodesTheBody(): void {
+		$body = $this->adapter([$this->response(200, '{"id":"c-1"}')])->call('get', 'contacts/c-1');
 
-		$adapter = $this->adapter(client: $client);
-		$contact = $adapter->getContact(externalId: ' c/1 ');
-
-		self::assertTrue($contact->isFound());
-		self::assertSame('c/1', $contact->externalId);
-		self::assertSame('Acme BV', $contact->legalName);
-		self::assertSame('a@acme.example', $contact->email);
-
-		// The second read is served from the cache: the client is asked once.
-		$again = $adapter->getContact(externalId: 'c/1');
-		self::assertSame('Acme BV', $again->legalName);
-		self::assertArrayHasKey(PipelinqContactAdapter::CONTACT_CACHE_KEY_PREFIX . 'c/1', $this->cacheStore);
-
-	}//end testGetContactSendsAnAuthenticatedGetAndCachesTheContact()
+		$this->assertSame(['id' => 'c-1'], $body);
+		$this->assertSame('get', $this->requests[0][0]);
+		$this->assertSame('https://crm.example.test/api/contacts/c-1', $this->requests[0][1]);
+		$this->assertSame(
+			[
+				'timeout' => 3,
+				'connect_timeout' => 3,
+				'headers' => ['Authorization' => 'Bearer tok-1', 'Accept' => 'application/json', 'User-Agent' => 'shillinq/pipelinq-adapter'],
+			],
+			$this->requests[0][2]
+		);
+	}//end testAGetCarriesTheTokenAndDecodesTheBody()
 
 	/**
-	 * An empty body is an empty, found contact.
+	 * A payload is sent as a JSON body, on the verb asked for, and an empty body decodes to nothing.
 	 *
 	 * @return void
 	 */
-	public function testAnEmptyBodyIsAFoundContactWithNoFields(): void {
-		$client = $this->createMock(IClient::class);
-		$client->method('get')->willReturn($this->response(status: 204, body: ''));
+	public function testAPayloadIsSentAsJsonOnEachVerb(): void {
+		$adapter = $this->adapter([$this->response(201, ''), $this->response(200, '{}'), $this->response(204, '')]);
 
-		$contact = $this->adapter(client: $client)->getContact(externalId: 'c2');
+		$this->assertSame([], $adapter->call('POST', '/timeline', ['url' => 'https://a/b']));
+		$adapter->call('PUT', '/timeline/1', ['n' => 1]);
+		$adapter->call('DELETE', '');
 
-		self::assertTrue($contact->isFound());
-		self::assertSame('', $contact->legalName);
-
-	}//end testAnEmptyBodyIsAFoundContactWithNoFields()
+		$this->assertSame(['post', 'put', 'delete'], array_column($this->requests, 0));
+		$this->assertSame('https://crm.example.test/api/timeline', $this->requests[0][1]);
+		$this->assertSame('https://crm.example.test/api', $this->requests[2][1]);
+		$this->assertSame('{"url":"https://a/b"}', $this->requests[0][2]['body']);
+		$this->assertSame('application/json', $this->requests[0][2]['headers']['Content-Type']);
+		$this->assertArrayNotHasKey('body', $this->requests[2][2]);
+	}//end testAPayloadIsSentAsJsonOnEachVerb()
 
 	/**
-	 * Invalid JSON falls back to a not-found contact and is not retried.
+	 * An unsupported verb is refused without a call.
 	 *
 	 * @return void
 	 */
-	public function testInvalidJsonFallsBackToNotFoundWithoutRetry(): void {
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::once())->method('get')->willReturn($this->response(status: 200, body: '{not json'));
-
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects(self::once())
-			->method('warning')
-			->with('pipelinq contact response malformed', self::callback(
-				static fn (array $context): bool => $context['status'] === 200 && $context['externalId'] === 'c3'
-			));
-
-		$contact = $this->adapter(client: $client, logger: $logger)->getContact(externalId: 'c3');
-
-		self::assertFalse($contact->isFound());
-		self::assertSame('c3', $contact->externalId);
-
-	}//end testInvalidJsonFallsBackToNotFoundWithoutRetry()
-
-	/**
-	 * A JSON scalar root is refused as a transport error.
-	 *
-	 * @return void
-	 */
-	public function testAScalarJsonRootIsRefused(): void {
-		$client = $this->createMock(IClient::class);
-		$client->method('get')->willReturn($this->response(status: 200, body: '"just a string"'));
-
+	public function testAnUnsupportedVerbIsRefused(): void {
 		$this->expectException(PipelinqTransportException::class);
-		$this->expectExceptionMessage('pipelinq response root must be a JSON object');
+		$this->expectExceptionMessage('unsupported HTTP method PATCH');
 
-		$this->adapter(client: $client)->getContact(externalId: 'c4');
-
-	}//end testAScalarJsonRootIsRefused()
+		$this->adapter([])->call('patch', '/x');
+	}//end testAnUnsupportedVerbIsRefused()
 
 	/**
-	 * A missing endpoint fails before any request is made.
+	 * A body that is not JSON, or not an object, is refused.
 	 *
 	 * @return void
 	 */
-	public function testAMissingEndpointFailsWithoutARequest(): void {
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::never())->method('get');
-
-		$this->expectException(PipelinqTransportException::class);
-		$this->expectExceptionMessage('pipelinq endpoint is not configured');
-
-		$this->adapter(client: $client, endpoint: '   ')->getContact(externalId: 'c5');
-
-	}//end testAMissingEndpointFailsWithoutARequest()
+	public function testABodyThatIsNotAJsonObjectIsRefused(): void {
+		foreach (['<html>' => 'pipelinq response is not valid JSON', '"text"' => 'pipelinq response root must be a JSON object'] as $body => $message) {
+			try {
+				$this->adapter([$this->response(200, $body)])->call('GET', '/x');
+				$this->fail('expected a refusal for ' . $body);
+			} catch (PipelinqTransportException $e) {
+				$this->assertSame($message, $e->getMessage());
+				$this->assertSame(200, $e->statusCode());
+			}
+		}
+	}//end testABodyThatIsNotAJsonObjectIsRefused()
 
 	/**
-	 * A missing token fails before any request is made.
+	 * Without an endpoint or a token nothing is sent.
 	 *
 	 * @return void
 	 */
-	public function testAMissingTokenFailsWithoutARequest(): void {
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::never())->method('get');
+	public function testMissingConfigurationIsRefused(): void {
+		foreach ([['', 'tok', 'pipelinq endpoint is not configured'], ['https://crm.example.test', ' ', 'pipelinq token is not configured']] as [$endpoint, $token, $message]) {
+			try {
+				$this->adapter([], $endpoint, $token)->call('GET', '/x');
+				$this->fail('expected: ' . $message);
+			} catch (PipelinqTransportException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
 
-		$this->expectException(PipelinqTransportException::class);
-		$this->expectExceptionMessage('pipelinq token is not configured');
-
-		$this->adapter(client: $client, token: '')->getContact(externalId: 'c6');
-
-	}//end testAMissingTokenFailsWithoutARequest()
+		$this->assertSame([], $this->requests);
+	}//end testMissingConfigurationIsRefused()
 
 	/**
-	 * An empty external id is refused before the cache or the network.
+	 * Transient failures are retried on the backoff schedule until one succeeds.
 	 *
 	 * @return void
 	 */
-	public function testAnEmptyExternalIdIsRefused(): void {
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::never())->method('get');
+	public function testTransientFailuresAreRetriedOnTheSchedule(): void {
+		$body = $this->adapter(
+			[new RuntimeException('connection reset'), $this->response(503, ''), $this->response(200, '{"ok":true}')]
+		)->call('GET', '/x');
 
-		$this->expectException(PipelinqTransportException::class);
-		$this->expectExceptionMessage('pipelinq Contact lookup requires a non-empty externalId');
-
-		$this->adapter(client: $client)->getContact(externalId: '  ');
-
-	}//end testAnEmptyExternalIdIsRefused()
+		$this->assertSame(['ok' => true], $body);
+		$this->assertCount(3, $this->requests);
+		$this->assertSame([1, 2], $this->slept);
+	}//end testTransientFailuresAreRetriedOnTheSchedule()
 
 	/**
-	 * A corrupt cache entry is ignored and the contact is fetched.
+	 * The default breaker opens after five failures and says so.
 	 *
 	 * @return void
 	 */
-	public function testACorruptCacheEntryIsIgnored(): void {
-		$this->cacheStore[PipelinqContactAdapter::CONTACT_CACHE_KEY_PREFIX . 'c7'] = '{broken';
+	public function testTheDefaultBreakerReportsItsTransition(): void {
+		$states = [];
+		$cache  = $this->createMock(ICache::class);
+		$cache->method('set')->willReturnCallback(
+			static function (string $key, mixed $value) use (&$states): bool {
+				$states[] = [$key, $value];
 
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::once())->method('get')->willReturn($this->response(status: 200, body: '{"legalName":"Fresh"}'));
+				return true;
+			}
+		);
+		$factory = $this->createMock(ICacheFactory::class);
+		$factory->method('createLocal')->willReturn($cache);
+		$transitions = [];
+		$this->logger->method('warning')->willReturnCallback(
+			static function (string $message, array $context) use (&$transitions): void {
+				if ($message === 'pipelinq circuit breaker transitioned') {
+					$transitions[] = $context;
+				}
+			}
+		);
+		$adapter = $this->adapter(array_fill(0, 5, $this->response(400, '')), metrics: new CustomerBridgeMetricsService($factory));
 
-		$contact = $this->adapter(client: $client)->getContact(externalId: 'c7');
+		for ($i = 0; $i < 5; $i++) {
+			try {
+				$adapter->call('GET', '/x');
+			} catch (PipelinqTransportException $e) {
+				$this->assertSame(400, $e->statusCode());
+			}
+		}
 
-		self::assertSame('Fresh', $contact->legalName);
-
-	}//end testACorruptCacheEntryIsIgnored()
-
-	/**
-	 * A cache entry whose JSON is not an object is ignored too.
-	 *
-	 * @return void
-	 */
-	public function testANonObjectCacheEntryIsIgnored(): void {
-		$this->cacheStore[PipelinqContactAdapter::CONTACT_CACHE_KEY_PREFIX . 'c8'] = '42';
-
-		$client = $this->createMock(IClient::class);
-		$client->expects(self::once())->method('get')->willReturn($this->response(status: 200, body: '{"legalName":"Fresh"}'));
-
-		self::assertSame('Fresh', $this->adapter(client: $client)->getContact(externalId: 'c8')->legalName);
-
-	}//end testANonObjectCacheEntryIsIgnored()
-
-	/**
-	 * The adapter exposes its cache and starts with a closed breaker.
-	 *
-	 * @return void
-	 */
-	public function testExposesItsCacheAndBreakerState(): void {
-		$adapter = $this->adapter(client: $this->createMock(IClient::class));
-
-		self::assertSame(CircuitBreaker::STATE_CLOSED, $adapter->circuitState());
-		$adapter->cache()->set('k', 'v');
-		self::assertSame('v', $this->cacheStore['k']);
-
-	}//end testExposesItsCacheAndBreakerState()
+		$this->assertSame([['app' => 'shillinq', 'from' => 'closed', 'to' => 'open', 'reason' => '5 consecutive failures']], $transitions);
+		$this->assertSame('open', $adapter->circuitState());
+		$this->assertContains('open', array_column($states, 1));
+	}//end testTheDefaultBreakerReportsItsTransition()
 }//end class

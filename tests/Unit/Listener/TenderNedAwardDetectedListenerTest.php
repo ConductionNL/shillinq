@@ -182,6 +182,13 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			public ?array $dossierDeleted = null;
 
 			/**
+			 * Schemas whose saves throw, plus 'find' to make the re-read throw.
+			 *
+			 * @var array<int, string>
+			 */
+			public array $failOn = [];
+
+			/**
 			 * Records what the deferred re-read asked for.
 			 *
 			 * @var array<int, array<string, mixed>>
@@ -208,6 +215,10 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 				string | null $schema = null,
 			): ?object {
 				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => ($schema ?? $this->currentSchema)];
+				if (in_array('find', $this->failOn, true) === true) {
+					throw new \RuntimeException('database gone');
+				}
+
 				if ($this->dossier === null) {
 					return null;
 				}
@@ -241,6 +252,10 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			}
 
 			public function saveObject(array $object): array {
+				if (in_array($this->currentSchema, $this->failOn, true) === true) {
+					throw new \RuntimeException('disk full');
+				}
+
 				$this->saves[] = ['schema' => $this->currentSchema, 'object' => $object];
 				return $object;
 			}
@@ -291,6 +306,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 * @param ContainerInterface $container Container.
 	 * @param string $tenantKvk Tenant KvK (default empty).
 	 * @param string $schemaSlug Slug the schema resolver reports for the event entity.
+	 * @param \Psr\Log\LoggerInterface|null $logger Logger, a NullLogger when null.
 	 *
 	 * @return array{0: TenderNedAwardDetectedListener, 1: IEventDispatcher} Listener + dispatcher to inspect.
 	 */
@@ -298,6 +314,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		ContainerInterface $container,
 		string $tenantKvk = '',
 		string $schemaSlug = 'TenderNedProcurement',
+		?\Psr\Log\LoggerInterface $logger = null,
 	): array {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
@@ -308,7 +325,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			$container,
 			$this->appConfigWithTenantKvk($tenantKvk),
 			$this->resolver($schemaSlug),
-			new NullLogger()
+			($logger ?? new NullLogger())
 		);
 		return [$listener, $dispatcher];
 	}//end listener()
@@ -911,4 +928,134 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		$this->assertSame(file_get_contents($golden), $actual);
 
 	}//end testThePromotionWritesMatchTheGolden()
+	/**
+	 * A logger that keeps [level, message] of every record.
+	 *
+	 * @return \Psr\Log\LoggerInterface
+	 */
+	private function recordingLogger(): \Psr\Log\LoggerInterface {
+		return new class extends \Psr\Log\AbstractLogger {
+			/**
+			 * The records.
+			 *
+			 * @var array<int,array{0:string,1:string}>
+			 */
+			public array $records = [];
+
+			/**
+			 * Record a log call.
+			 *
+			 * @param mixed $level Level.
+			 * @param \Stringable|string $message Message.
+			 * @param array<string,mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, \Stringable|string $message, array $context = []): void {
+				$this->records[] = [(string)$level, (string)$message];
+			}
+		};
+	}//end recordingLogger()
+
+	/**
+	 * A failed Commitment save emits nothing; a failed bump of the dossier
+	 * still keeps the Commitment and its budget event. Both are logged.
+	 *
+	 * @return void
+	 */
+	public function testFailedWritesAreLogged(): void {
+		$logger = $this->recordingLogger();
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353', logger: $logger);
+
+		$recorder->failOn = ['Commitment'];
+		$listener->handle(new ObjectCreatedEvent($this->entity('1090', $this->awardBody('TN-2026-0100'))));
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertSame([], $dispatcher->events);
+		$this->assertContains(['warning', 'TenderNedAwardDetectedListener: saveObject failed — fail-soft'], $logger->records);
+
+		$recorder->failOn = ['TenderNedProcurement'];
+		$listener->handle(new ObjectCreatedEvent($this->entity('1090', $this->awardBody('TN-2026-0101'))));
+
+		$this->assertSame(['Commitment'], array_column($recorder->saves, 'schema'));
+		$this->assertCount(1, $dispatcher->events);
+		$this->assertContains(['info', 'TenderNedAwardDetectedListener: failed to bump aanbesteding to in-uitvoering'], $logger->records);
+
+	}//end testFailedWritesAreLogged()
+
+	/**
+	 * Without OpenRegister's ObjectService the award is not promoted, and that is logged.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAnObjectServiceNothingIsPromoted(): void {
+		$logger = $this->recordingLogger();
+		$container = $this->createStub(ContainerInterface::class);
+		$container->method('has')->willReturn(false);
+		$container->method('get')->willThrowException(new \RuntimeException('openregister is disabled'));
+		[$listener, $dispatcher] = $this->listener($container, '30280353', logger: $logger);
+
+		$listener->handle(new ObjectCreatedEvent($this->entity('1090', $this->awardBody('TN-2026-0102'))));
+
+		$this->assertSame([], $dispatcher->events);
+		$this->assertContains(['info', 'TenderNedAwardDetectedListener: OR ObjectService unavailable — skipping promotion'], $logger->records);
+
+		$listener->runDeferredPromotion(['uuid' => 'dossier-uuid-1', 'schema' => 'TenderNedProcurement', 'payload' => []]);
+		$this->assertSame([], $dispatcher->events, 'the deferred run cannot re-read the dossier either');
+
+	}//end testWithoutAnObjectServiceNothingIsPromoted()
+
+	/**
+	 * A deferred run that cannot re-read the dossier, or has no identity, promotes nothing.
+	 *
+	 * @return void
+	 */
+	public function testADeferredRunWithoutADossierPromotesNothing(): void {
+		$logger = $this->recordingLogger();
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353', logger: $logger);
+		$recorder->dossier = $this->awardBody('TN-2026-0103');
+
+		$listener->runDeferredPromotion(['uuid' => '', 'schema' => 'TenderNedProcurement', 'payload' => []]);
+		$this->assertSame([], $recorder->finds, 'no identity, no re-read');
+
+		$recorder->failOn = ['find'];
+		$listener->runDeferredPromotion(['uuid' => 'dossier-uuid-1', 'schema' => 'TenderNedProcurement', 'payload' => []]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertSame([], $dispatcher->events);
+		$this->assertContains(['warning', 'TenderNedAwardDetectedListener: could not re-read the dossier — promotion skipped'], $logger->records);
+
+	}//end testADeferredRunWithoutADossierPromotesNothing()
+
+	/**
+	 * Events that carry no award are ignored, and a failure while reading one is swallowed.
+	 *
+	 * @return void
+	 */
+	public function testNonAwardEventsAndReadFailures(): void {
+		$logger = $this->recordingLogger();
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353', logger: $logger);
+
+		$listener->handle(new Event());
+		$transitioned = $this->createStub(\OCA\OpenRegister\Event\ObjectTransitionedEvent::class);
+		$transitioned->method('getTo')->willReturn('ingetrokken');
+		$listener->handle($transitioned);
+		$noObject = $this->createStub(ObjectCreatedEvent::class);
+		$noObject->method('getObject')->willReturn(null);
+		$listener->handle($noObject);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertSame([], $logger->records);
+
+		$broken = $this->createStub(ObjectCreatedEvent::class);
+		$broken->method('getObject')->willThrowException(new \RuntimeException('entity gone'));
+		$listener->handle($broken);
+
+		$this->assertSame([['warning', 'TenderNedAwardDetectedListener: promotion failed — fail-soft']], $logger->records);
+		$this->assertSame([], $dispatcher->events);
+
+	}//end testNonAwardEventsAndReadFailures()
 }//end class

@@ -36,8 +36,11 @@
 
 declare(strict_types=1);
 
-return \OCA\OpenRegister\AppHost\Routes::standard(
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OCA\OpenRegister\AppHost\Routes::standard(
         [
+        // The OpenAPI document of shillinq's own API, public, served under /api/v1/ too.
+            ['name' => 'openApi#show', 'url' => '/api/openapi.json', 'verb' => 'GET'],
         // Pipelinq integration connection settings — bookings-pipelinq-customer-bridge
         // member 01. GET returns endpoint + hasToken flag (never the token itself);
         // POST persists endpoint + optional token (absent token preserves current
@@ -944,4 +947,4 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // entry makes that class of mistake fail visibly.
             ['name' => 'apiFallback#notFound', 'url' => '/api/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ]
-        );
+        ));

@@ -41,15 +41,17 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Budget;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\BudgetEditingServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
 
 /**
  * Budget entry over AnnualBudget, BudgetLine and LedgerGroup.
  *
  * @spec openspec/specs/budget-grid-view/spec.md
  */
-class BudgetEditingService {
+class BudgetEditingService implements BudgetEditingServiceInterface {
 	/**
 	 * The only source a person types.
 	 *
@@ -68,11 +70,11 @@ class BudgetEditingService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 	) {
 
 	}//end __construct()
