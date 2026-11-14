@@ -52,6 +52,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
+
 /**
  * Pure begroting-grid arithmetic: per-column deviation with the
  * accountType-driven sign convention, the TOTAAL cumulative pair, and the
@@ -59,7 +61,7 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
  */
-class BudgetGridCalculator {
+class BudgetGridCalculator implements BudgetGridCalculatorInterface {
 
 	/**
 	 * Construct the calculator.

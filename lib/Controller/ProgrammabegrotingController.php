@@ -31,8 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ProgrammabegrotingService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ProgrammabegrotingServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,7 +51,7 @@ class ProgrammabegrotingController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param ProgrammabegrotingService $service The read/compute service.
+	 * @param ProgrammabegrotingServiceInterface $service The read/compute service.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 *
@@ -59,7 +59,7 @@ class ProgrammabegrotingController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ProgrammabegrotingService $service,
+		private readonly ProgrammabegrotingServiceInterface $service,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

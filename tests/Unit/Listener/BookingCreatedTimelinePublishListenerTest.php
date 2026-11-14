@@ -40,7 +40,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
@@ -378,4 +378,35 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase {
 		);
 
 	}//end testTheLogLinesAndSkippedEntities()
+	/**
+	 * Only a created object is published; an error while building the event
+	 * is logged and never reaches the booking commit.
+	 *
+	 * @return void
+	 */
+	public function testOtherEventsAreIgnoredAndErrorsAreLogged(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+		$logger = $this->recordingLogger();
+		$resolver = $this->createStub(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willThrowException(new \RuntimeException('schema table gone'));
+
+		$listener = new BookingCreatedTimelinePublishListener(
+			pipelinq: $adapter,
+			retryQueue: $queue,
+			schemaResolver: $resolver,
+			logger: $logger
+		);
+
+		$listener->handle(new \OCP\EventDispatcher\Event());
+		self::assertSame([], $logger->records);
+
+		$listener->handle(new ObjectCreatedEvent($this->appointmentEntity(['appointmentId' => 'booking-1'])));
+
+		self::assertSame([], $publishCalls);
+		self::assertSame([], $enqueueCalls);
+		self::assertCount(1, $logger->records);
+		self::assertSame('BookingCreatedTimelinePublishListener: publish errored', $logger->records[0]['message']);
+	}//end testOtherEventsAreIgnoredAndErrorsAreLogged()
 }//end class

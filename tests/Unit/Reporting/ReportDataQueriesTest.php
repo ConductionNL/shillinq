@@ -35,7 +35,7 @@ use RuntimeException;
  *
  * @covers \OCA\Shillinq\Reporting\Generator\TrialBalanceReportGenerator
  * @uses   \OCA\Shillinq\Reporting\Generator\ReportDataTrait
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

@@ -335,9 +335,10 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 	private function registeredServices(): array {
 		$bound = [];
 
-		foreach (glob($this->root . '/lib/AppInfo/*.php') as $file) {
+		foreach (array_merge(glob($this->root . '/lib/AppInfo/*.php'), glob($this->root . '/lib/*/*Registrar.php')) as $file) {
 			$source = (string)file_get_contents($file);
 			$aliases = $this->useAliases($source);
+			$namespace = preg_match('/^namespace\s+([^;]+);/m', $source, $nsMatch) === 1 ? $nsMatch[1] . '\\' : 'OCA\\Shillinq\\AppInfo\\';
 
 			preg_match_all(
 				'/registerService\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
@@ -346,7 +347,7 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 			);
 
 			foreach ($matches[1] as $short) {
-				$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+				$bound[$aliases[$short] ?? ($namespace . $short)] = true;
 			}
 
 			// registerServiceAlias() is the other binding form the framework offers.
@@ -357,7 +358,7 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 			);
 
 			foreach ($aliasMatches[1] as $short) {
-				$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+				$bound[$aliases[$short] ?? ($namespace . $short)] = true;
 			}
 		}
 

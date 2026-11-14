@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Service\Project\AssignmentHours;
+use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -41,11 +41,11 @@ class BackfillAssignmentHours implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param AssignmentHours $hours  Sums and writes the hours budget.
+	 * @param AssignmentHoursInterface $hours  Sums and writes the hours budget.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly AssignmentHours $hours,
+		private readonly AssignmentHoursInterface $hours,
 		private readonly LoggerInterface $logger,
 	) {
 

@@ -93,7 +93,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BudgetChartSeriesServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -106,7 +107,7 @@ use Throwable;
  *
  * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
  */
-class BudgetChartSeriesService {
+class BudgetChartSeriesService implements BudgetChartSeriesServiceInterface {
 	/**
 	 * AnnualBudget schema slug.
 	 *
