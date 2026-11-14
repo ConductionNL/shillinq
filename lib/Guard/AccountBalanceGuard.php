@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -42,6 +42,13 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 class AccountBalanceGuard {
+	/**
+	 * Page size for the GLLine lookup (stays under findAll()'s default limit, L1).
+	 *
+	 * @var int
+	 */
+	private const LINE_PAGE_SIZE = 500;
+
 	/**
 	 * Construct the guard with lazy DI of OR's ObjectService.
 	 *
@@ -66,7 +73,7 @@ class AccountBalanceGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -108,52 +115,77 @@ class AccountBalanceGuard {
 		//
 		// T2+ check: compute balance via GLLine records. Fail-closed on any error
 		// so a transient DB failure denies archive rather than silently permitting it.
-		// The ObjectService is resolved again inside this guarded block so a failure
-		// to resolve it for the computation path also denies (rather than permits).
 		try {
-			// Page through all GLLine records in batches to avoid hitting the
-			// default findAll() limit when an account has many postings (L1).
-			$pageSize = 500;
-			$page = 1;
-			$lines = [];
-			$batchSize = 0;
-			do {
-				$batch = $this->objectService
-					->setRegister($this->getRegisterSlug())
-					->setSchema('GLLine')
-					->findAll(
-						[
-							'filters' => [
-								'accountNumber' => ($account['accountNumber'] ?? ''),
-								'administrationId' => ($account['administrationId'] ?? ''),
-							],
-							'limit' => $pageSize,
-							'offset' => ($page - 1) * $pageSize,
-						]
-					);
-				$lines = array_merge($lines, $batch);
-				$batchSize = count($batch);
-				$page++;
-			} while ($batchSize === $pageSize);
-
-			// Use integer cents to avoid IEEE-754 float equality issues (C1).
-			// 0.1 + 0.2 - 0.3 in floats ≠ 0.0, but (10 + 20 - 30) === 0.
-			$balanceCents = array_sum(
-				array_map(
-					static fn ($line) => (int)round(((float)($line['debit'] ?? 0) - (float)($line['credit'] ?? 0)) * 100),
-					$lines
-				)
-			);
-
-			return $balanceCents === 0;
+			return $this->balanceCents(lines: $this->accountLines(account: $account)) === 0;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AccountBalanceGuard: balance computation failed — denying archive (fail-closed)',
 				['exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
+		}
 	}//end requireZeroBalance()
+
+	/**
+	 * Every GLLine of the account, paged so an account with many postings is read in full.
+	 *
+	 * @param array<string, mixed> $account Account object array.
+	 *
+	 * @return array<int, mixed> The GLLine rows.
+	 */
+	private function accountLines(array $account): array {
+		$page = 1;
+		$lines = [];
+		do {
+			$batch = $this->linePage(account: $account, page: $page);
+			$lines = array_merge($lines, $batch);
+			$page++;
+		} while (count($batch) === self::LINE_PAGE_SIZE);
+
+		return $lines;
+	}//end accountLines()
+
+	/**
+	 * One page of the account's GLLine rows.
+	 *
+	 * @param array<string, mixed> $account Account object array.
+	 * @param int                  $page    The 1-based page.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function linePage(array $account, int $page): array {
+		return $this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('GLLine')
+			->findAll(
+				[
+					'filters' => [
+						'accountNumber' => ($account['accountNumber'] ?? ''),
+						'administrationId' => ($account['administrationId'] ?? ''),
+					],
+					'limit' => self::LINE_PAGE_SIZE,
+					'offset' => ($page - 1) * self::LINE_PAGE_SIZE,
+				]
+			);
+	}//end linePage()
+
+	/**
+	 * The summed debit-minus-credit of the lines in integer cents (C1: no
+	 * IEEE-754 float equality issues). findAll() yields ObjectEntity rows, which
+	 * cannot be subscripted, so each row is normalised first.
+	 *
+	 * @param array<int, mixed> $lines The GLLine rows.
+	 *
+	 * @return int
+	 */
+	private function balanceCents(array $lines): int {
+		return array_sum(
+			array_map(
+				fn (mixed $row): int => $this->lineBalanceCents(row: $row),
+				$lines
+			)
+		);
+	}//end balanceCents()
 
 	/**
 	 * Precondition for save: at most one Account per administration may have
@@ -171,58 +203,128 @@ class AccountBalanceGuard {
 	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-009)
 	 */
 	public function requireSingleClosingAccount(array $account): bool {
+		// Account isn't being marked as closing — invariant trivially holds.
 		if (($account['isClosingAccount'] ?? false) !== true) {
-			// Account isn't being marked as closing — invariant trivially holds.
 			return true;
 		}
 
 		try {
-			// No LIMIT: we need ALL closing accounts in the administration so we
-			// can correctly exclude the current record and count the remainder (L2).
-			$existing = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('Account')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => ($account['administrationId'] ?? ''),
-							'isClosingAccount' => true,
-						],
-					]
-				);
-
-			// Filter out the current account (by id, if persisted; by accountNumber otherwise).
-			// Defence-in-depth: also verify administrationId matches to prevent cross-tenant leakage.
-			$currentId = ($account['id'] ?? null);
-			$currentAccountNumber = ($account['accountNumber'] ?? null);
-			$currentAdminId = ($account['administrationId'] ?? null);
-			$otherClosing = array_filter(
-				$existing,
-				static function ($candidate) use ($currentId, $currentAccountNumber, $currentAdminId) {
-					// Cross-tenant defence: only consider candidates in the same administration.
-					if ($currentAdminId !== null && ($candidate['administrationId'] ?? null) !== $currentAdminId) {
-						return false;
-					}
-
-					if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
-						return false;
-					}
-
-					if ($currentId === null && ($candidate['accountNumber'] ?? null) === $currentAccountNumber) {
-						return false;
-					}
-
-					return true;
-				}
-			);
-
-			return count($otherClosing) === 0;
+			return count($this->otherClosingAccounts(account: $account)) === 0;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AccountBalanceGuard: closing-account uniqueness check failed — denying save (fail-closed)',
 				['exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
+		}
 	}//end requireSingleClosingAccount()
+
+	/**
+	 * The administration's closing accounts other than this one. No LIMIT: all of
+	 * them are needed to exclude the current record correctly (L2). Rows are
+	 * normalised first, as in requireZeroBalance().
+	 *
+	 * @param array<string, mixed> $account Account object array.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function otherClosingAccounts(array $account): array {
+		return array_filter(
+			array_map(fn (mixed $row): array => $this->asArray(row: $row), $this->closingAccounts(account: $account)),
+			static fn (array $candidate): bool => self::isOtherClosing(candidate: $candidate, account: $account)
+		);
+	}//end otherClosingAccounts()
+
+	/**
+	 * Every account in the administration marked as closing.
+	 *
+	 * @param array<string, mixed> $account Account object array.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function closingAccounts(array $account): array {
+		return $this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('Account')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => ($account['administrationId'] ?? ''),
+						'isClosingAccount' => true,
+					],
+				]
+			);
+	}//end closingAccounts()
+
+	/**
+	 * Whether a candidate counts against the account: in the same administration
+	 * (cross-tenant defence) and not the account itself.
+	 *
+	 * @param array<string, mixed> $candidate A closing account.
+	 * @param array<string, mixed> $account   The account being saved.
+	 *
+	 * @return bool
+	 */
+	private static function isOtherClosing(array $candidate, array $account): bool {
+		$currentAdminId = ($account['administrationId'] ?? null);
+		if ($currentAdminId !== null && ($candidate['administrationId'] ?? null) !== $currentAdminId) {
+			return false;
+		}
+
+		return self::isSameAccount(candidate: $candidate, account: $account) === false;
+	}//end isOtherClosing()
+
+	/**
+	 * Whether a candidate is the account being saved: by id when persisted, by accountNumber otherwise.
+	 *
+	 * @param array<string, mixed> $candidate A closing account.
+	 * @param array<string, mixed> $account   The account being saved.
+	 *
+	 * @return bool
+	 */
+	private static function isSameAccount(array $candidate, array $account): bool {
+		$currentId = ($account['id'] ?? null);
+		if ($currentId !== null) {
+			return ($candidate['id'] ?? null) === $currentId;
+		}
+
+		return ($candidate['accountNumber'] ?? null) === ($account['accountNumber'] ?? null);
+	}//end isSameAccount()
+
+	/**
+	 * Signed debit-minus-credit of one GLLine row, in integer cents.
+	 *
+	 * @param mixed $row A GLLine row from ObjectService: an ObjectEntity in
+	 *                   production, a plain array in some unit fixtures.
+	 *
+	 * @return int Debit minus credit, in cents.
+	 */
+	private function lineBalanceCents(mixed $row): int {
+		$line = $this->asArray(row: $row);
+
+		return (int)round((((float)($line['debit'] ?? 0)) - ((float)($line['credit'] ?? 0))) * 100);
+	}//end lineBalanceCents()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * @param mixed $row A row from ObjectService::findAll().
+	 *
+	 * @return array<string, mixed> The stored object, or an empty array when the
+	 *                              row carries no serialisable payload.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$serialized = $row->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
+		}
+
+		return [];
+	}//end asArray()
 }//end class

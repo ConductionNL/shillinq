@@ -138,35 +138,75 @@ class TrialBalanceCalculator {
 	 * name; the archived REQ-TB-008 that mandates it was never canonical.
 	 */
 	public function rollUpParents(array $rows): array {
-		$ownCents = [];
-		$parentOf = [];
-		foreach ($rows as $row) {
-			$account = (string)($row['accountNumber'] ?? '');
-			if ($account === '') {
-				continue;
-			}
-
-			$ownCents[$account] = $this->toCents(amount: ($row['closingBalance'] ?? 0));
-			$parent = ($row['parentAccountNumber'] ?? null);
-			$parentOf[$account] = null;
-			if ($parent !== null) {
-				$parentOf[$account] = (string)$parent;
-			}
-		}
+		$byAccount = $this->rowsByAccount(rows: $rows);
+		$ownCents  = array_map(fn (array $row): int => $this->toCents(amount: ($row['closingBalance'] ?? 0)), $byAccount);
+		$parentOf  = array_map(fn (array $row): ?string => $this->parentOf(row: $row), $byAccount);
 
 		$rolled = $ownCents;
 		foreach ($ownCents as $account => $cents) {
-			$parent = $parentOf[$account];
-			$guard = 0;
-			while ($parent !== null && isset($rolled[$parent]) === true && $guard < 64) {
+			foreach ($this->ancestors(account: (string)$account, parentOf: $parentOf) as $parent) {
 				$rolled[$parent] += $cents;
-				$parent = ($parentOf[$parent] ?? null);
-				$guard++;
 			}
 		}
 
 		return $rolled;
 	}//end rollUpParents()
+
+	/**
+	 * The rows keyed by account number, the last row of an account winning; rows without one left out.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Per-account rows.
+	 *
+	 * @return array<string,array<string,mixed>> accountNumber => row.
+	 */
+	private function rowsByAccount(array $rows): array {
+		$byAccount = [];
+		foreach ($rows as $row) {
+			$account = (string)($row['accountNumber'] ?? '');
+			if ($account !== '') {
+				$byAccount[$account] = $row;
+			}
+		}
+
+		return $byAccount;
+	}//end rowsByAccount()
+
+	/**
+	 * A row's parent account number, or null when it has none.
+	 *
+	 * @param array<string,mixed> $row One account row.
+	 *
+	 * @return string|null The parent account number.
+	 */
+	private function parentOf(array $row): ?string {
+		$parent = ($row['parentAccountNumber'] ?? null);
+		if ($parent === null) {
+			return null;
+		}
+
+		return (string)$parent;
+	}//end parentOf()
+
+	/**
+	 * The known ancestors of an account, nearest first, at most 64.
+	 *
+	 * @param string                    $account  The account number.
+	 * @param array<string,string|null> $parentOf accountNumber => parent account number.
+	 *
+	 * @return list<string> The ancestor account numbers.
+	 */
+	private function ancestors(string $account, array $parentOf): array {
+		$ancestors = [];
+		$parent    = $parentOf[$account];
+		$steps     = 0;
+		while ($parent !== null && array_key_exists($parent, $parentOf) === true && $steps < 64) {
+			$ancestors[] = $parent;
+			$parent      = $parentOf[$parent];
+			$steps++;
+		}
+
+		return $ancestors;
+	}//end ancestors()
 
 	/**
 	 * Determine whether a set of trial-balance rows is balanced (REQ-TB-003 proof).
@@ -183,12 +223,7 @@ class TrialBalanceCalculator {
 	 * name; the archived REQ-TB-008 that mandates it was never canonical.
 	 */
 	public function isBalanced(array $rows): bool {
-		$debit = 0;
-		$credit = 0;
-		foreach ($rows as $row) {
-			$debit += $this->toCents(amount: ($row['debitMovement'] ?? 0));
-			$credit += $this->toCents(amount: ($row['creditMovement'] ?? 0));
-		}
+		[$debit, $credit] = $this->movementCents(rows: $rows);
 
 		return $debit === $credit;
 	}//end isBalanced()
@@ -209,24 +244,8 @@ class TrialBalanceCalculator {
 	 * name; the archived REQ-TB-008 that mandates it was never canonical.
 	 */
 	public function totals(array $rows): array {
-		$byType = [
-			'assets' => 0,
-			'liabilities' => 0,
-			'equity' => 0,
-			'revenue' => 0,
-			'expenses' => 0,
-		];
-		$debit = 0;
-		$credit = 0;
-		foreach ($rows as $row) {
-			$type = (string)($row['accountType'] ?? '');
-			if (isset($byType[$type]) === true) {
-				$byType[$type] += $this->toCents(amount: ($row['closingBalance'] ?? 0));
-			}
-
-			$debit += $this->toCents(amount: ($row['debitMovement'] ?? 0));
-			$credit += $this->toCents(amount: ($row['creditMovement'] ?? 0));
-		}
+		$byType = $this->closingCentsByType(rows: $rows);
+		[$debit, $credit] = $this->movementCents(rows: $rows);
 
 		return [
 			'totalAssets' => $this->fromCents(cents: $byType['assets']),
@@ -239,4 +258,49 @@ class TrialBalanceCalculator {
 		];
 
 	}//end totals()
+
+	/**
+	 * The summed debit and credit movements in cents.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Per-account rows with debitMovement + creditMovement.
+	 *
+	 * @return array{0: int, 1: int} The debit and the credit cents.
+	 */
+	private function movementCents(array $rows): array {
+		$debit = 0;
+		$credit = 0;
+		foreach ($rows as $row) {
+			$debit += $this->toCents(amount: ($row['debitMovement'] ?? 0));
+			$credit += $this->toCents(amount: ($row['creditMovement'] ?? 0));
+		}
+
+		return [$debit, $credit];
+
+	}//end movementCents()
+
+	/**
+	 * The summed closing balances in cents of the five account types.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Per-account rows with accountType + closingBalance.
+	 *
+	 * @return array<string,int> accountType => closing cents.
+	 */
+	private function closingCentsByType(array $rows): array {
+		$byType = [
+			'assets' => 0,
+			'liabilities' => 0,
+			'equity' => 0,
+			'revenue' => 0,
+			'expenses' => 0,
+		];
+		foreach ($rows as $row) {
+			$type = (string)($row['accountType'] ?? '');
+			if (isset($byType[$type]) === true) {
+				$byType[$type] += $this->toCents(amount: ($row['closingBalance'] ?? 0));
+			}
+		}
+
+		return $byType;
+
+	}//end closingCentsByType()
 }//end class

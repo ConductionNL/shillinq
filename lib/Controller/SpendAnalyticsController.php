@@ -3,6 +3,9 @@
 /**
  * Spend Analytics Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Read-only API for single-dimension spend analysis over the Accounts-Payable
  * sub-ledger. `GET /api/analytics/spend?administration_id=<id>&dimension=
  * <supplier|category|costCentre|period>` returns `{ dimension, label,
@@ -66,18 +69,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/spend-analytics/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SpendAnalyticsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SpendAnalyticsServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -108,8 +108,8 @@ class SpendAnalyticsController extends Controller {
 	 * Constructor for the SpendAnalyticsController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param SpendAnalyticsService $service The spend-aggregation service (consumes OR aggregation-api).
-	 * @param AdministrationContextService $context Authenticated-user context (ADR-005).
+	 * @param SpendAnalyticsServiceInterface $service The spend-aggregation service (consumes OR aggregation-api).
+	 * @param AdministrationContextServiceInterface $context Authenticated-user context (ADR-005).
 	 * @param IL10N $l10n Translation of the human-readable dimension label.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -117,12 +117,12 @@ class SpendAnalyticsController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SpendAnalyticsService $service,
-		private readonly AdministrationContextService $context,
+		private readonly SpendAnalyticsServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -150,29 +150,54 @@ class SpendAnalyticsController extends Controller {
 		// whether anyone is logged in; this only turns a null uid into a clean
 		// 401 instead of letting canAccess() answer "no memberships" as a 404.
 		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(
-				['error' => 'Not authenticated'],
-				Http::STATUS_UNAUTHORIZED
-			);
+			return $this->errorResponse(error: 'Not authenticated', status: Http::STATUS_UNAUTHORIZED);
 		}
 
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		$refusal = $this->administrationRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$dimension = trim((string)$this->request->getParam('dimension', ''));
+		if (in_array($dimension, self::DIMENSIONS, true) === false) {
+			return $this->errorResponse(error: 'dimension must be one of: ' . implode(', ', self::DIMENSIONS), status: Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->analysed(dimension: $dimension, administrationId: $administrationId);
+	}//end spend()
+
+	/**
+	 * The 400 for a missing or malformed administration, or the access refusal.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may proceed.
+	 */
+	private function administrationRefusal(string $administrationId): ?JSONResponse {
 		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administration_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->errorResponse(error: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
 		}
 
 		if (preg_match('/^[A-Za-z0-9_.\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administration_id must be a valid identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->errorResponse(error: 'administration_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		// IDOR guard (ADR-005 / REQ-MA-001): the caller must hold a valid
-		// membership for the administration they named. 404, never 403.
+		return $this->accessRefusal(administrationId: $administrationId);
+	}//end administrationRefusal()
+
+	/**
+	 * IDOR guard (ADR-005 / REQ-MA-001): the caller must hold a valid
+	 * membership for the administration they named. 404, never 403; a
+	 * failing check is a logged 500.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller is a member.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
 		try {
 			$allowed = $this->context->canAccess(administrationId: $administrationId);
 		} catch (\Throwable $e) {
@@ -181,27 +206,25 @@ class SpendAnalyticsController extends Controller {
 				['exception' => $e->getMessage()]
 			);
 
-			return new JSONResponse(
-				['error' => 'Authorization failure'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->errorResponse(error: 'Authorization failure', status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		if ($allowed === false) {
-			return new JSONResponse(
-				['error' => 'Administration not found'],
-				Http::STATUS_NOT_FOUND
-			);
+			return $this->errorResponse(error: 'Administration not found', status: Http::STATUS_NOT_FOUND);
 		}
 
-		$dimension = trim((string)$this->request->getParam('dimension', ''));
-		if (in_array($dimension, self::DIMENSIONS, true) === false) {
-			return new JSONResponse(
-				['error' => 'dimension must be one of: ' . implode(', ', self::DIMENSIONS)],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
+		return null;
+	}//end accessRefusal()
 
+	/**
+	 * Aggregate the spend by the dimension and label it; a failure is a logged 500.
+	 *
+	 * @param string $dimension        The validated dimension.
+	 * @param string $administrationId The authorised administration.
+	 *
+	 * @return JSONResponse
+	 */
+	private function analysed(string $dimension, string $administrationId): JSONResponse {
 		try {
 			$result = $this->dispatch(dimension: $dimension, administrationId: $administrationId);
 			$result['label'] = $this->label(dimension: $dimension);
@@ -211,14 +234,23 @@ class SpendAnalyticsController extends Controller {
 				['exception' => $e->getMessage()]
 			);
 
-			return new JSONResponse(
-				['error' => 'Failed to compute spend analysis'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->errorResponse(error: 'Failed to compute spend analysis', status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end spend()
+	}//end analysed()
+
+	/**
+	 * An `{error}` answer.
+	 *
+	 * @param string $error  The error.
+	 * @param int    $status The HTTP status.
+	 *
+	 * @return JSONResponse
+	 */
+	private function errorResponse(string $error, int $status): JSONResponse {
+		return new JSONResponse(['error' => $error], $status);
+	}//end errorResponse()
 
 	/**
 	 * Dispatch to the matching service method for the validated dimension.

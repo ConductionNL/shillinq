@@ -302,4 +302,53 @@ final class RecognitionControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
 	}//end testForeignAdministrationReturns404AndNeverReachesTheService()
+	/**
+	 * Every refusal body in check order, the trimmed window passed on, the
+	 * projected body and the failure log context.
+	 *
+	 * @return void
+	 */
+	public function testBodiesOrderAndLogContext(): void {
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$cases = [
+			[['from' => 'x'], 'administrationId is required'],
+			[['administrationId' => 'a b'], 'administrationId must be a valid administration identifier'],
+			[['administrationId' => 'adm-1', 'to' => '2026-01-01'], 'from must be an ISO date (YYYY-MM-DD)'],
+			[['administrationId' => 'adm-1', 'from' => '2026-01-01', 'to' => '2026-1-1'], 'to must be an ISO date (YYYY-MM-DD)'],
+			[['administrationId' => 'adm-1', 'from' => '2026-02-01', 'to' => '2026-01-31'], 'from must be on or before to'],
+		];
+		foreach ($cases as [$given, $error]) {
+			$params = $given;
+			$response = $this->controller->recurringRevenue();
+			self::assertSame([Http::STATUS_BAD_REQUEST, ['error' => $error]], [$response->getStatus(), $response->getData()]);
+		}
+
+		$this->canAccess = false;
+		$params = ['administrationId' => 'adm-1', 'from' => 'bad'];
+		$response = $this->controller->recurringRevenue();
+		self::assertSame([Http::STATUS_NOT_FOUND, ['error' => 'Administration not found']], [$response->getStatus(), $response->getData()]);
+
+		$this->canAccess = true;
+		$params = ['administrationId' => ' adm-1 ', 'from' => ' 2026-01-01 ', 'to' => ' 2026-01-01 '];
+		$this->service->method('computeRecurring')->with('adm-1', '2026-01-01', '2026-01-01')->willReturnOnConsecutiveCalls(
+			['recognized' => 1.5, 'arr' => 18.0, 'currency' => 'EUR', 'lineCount' => 2, 'extra' => true],
+			self::throwException(new \RuntimeException('boom'))
+		);
+		$this->logger->expects($this->once())->method('error')->with(
+			'RecognitionController: failed to compute recurring revenue',
+			['administrationId' => 'adm-1', 'from' => '2026-01-01', 'to' => '2026-01-01', 'exception' => 'boom']
+		);
+
+		self::assertSame(
+			['recognized' => 1.5, 'arr' => 18.0, 'currency' => 'EUR', 'lineCount' => 2],
+			$this->controller->recurringRevenue()->getData()
+		);
+		self::assertSame(['error' => 'Failed to compute recurring revenue'], $this->controller->recurringRevenue()->getData());
+
+	}//end testBodiesOrderAndLogContext()
 }//end class

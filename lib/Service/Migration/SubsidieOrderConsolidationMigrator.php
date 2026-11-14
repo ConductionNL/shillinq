@@ -3,6 +3,9 @@
 /**
  * Subsidie + Order consolidation migrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The unit-tested migration core for consolidate-order-subsidie-collisions. The
  * schema-level consolidation (one canonical `Subsidie` = the field union; the
  * booking-context `Order` renamed to `BookingOrder` so the generic `Order` slug
@@ -58,9 +61,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/schema-consolidation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -18,7 +18,7 @@ This specification defines the requirements for inventory lot batch expiry in th
 @e2e exclude unbuilt UI: lot/batch expiry pages not yet implemented
 
 
-### REQ-LOT-001: The system SHALL store inventory lots as an OpenRegister-managed `InventoryLot` register
+### Requirement: REQ-LOT-001: The system SHALL store inventory lots as an OpenRegister-managed `InventoryLot` register
 
 The lot/batch tracking surface MUST be declared as a register in
 `lib/Settings/shillinq_register.json` per ADR-024, with the `InventoryLot`
@@ -44,7 +44,7 @@ shillinq adds no per-app lot-CRUD endpoint.
   table declarations naming `inventory_lots` or `lots`
 - **THEN** no such classes or declarations SHALL exist.
 
-### REQ-LOT-002: The `InventoryLot` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-LOT-002: The `InventoryLot` schema SHALL declare a fixed minimum field set
 
 The `InventoryLot` schema MUST declare the following fields:
 
@@ -87,7 +87,7 @@ per `adr-000-data-model.md`'s top-of-file note.
 - **WHEN** an object with `quantity: -5` is validated
 - **THEN** validation MUST fail with a minimum-value error.
 
-### REQ-LOT-003: The `InventoryLot` schema SHALL declare cross-schema relations via `x-openregister-relations`
+### Requirement: REQ-LOT-003: The `InventoryLot` schema SHALL declare cross-schema relations via `x-openregister-relations`
 
 `InventoryLot` MUST declare the following FK relations using OR's
 `x-openregister-relations` extension:
@@ -112,7 +112,7 @@ per `adr-000-data-model.md`'s top-of-file note.
 - **THEN** OR's relation validator SHOULD reject the save with a
   resolvable error message naming the missing `InventoryItem`.
 
-### REQ-LOT-004: The `InventoryLot` schema SHALL carry a Schema.org type annotation
+### Requirement: REQ-LOT-004: The `InventoryLot` schema SHALL carry a Schema.org type annotation
 
 The system SHALL satisfy this requirement: The `InventoryLot` schema SHALL carry a Schema.org type annotation.
 
@@ -134,7 +134,7 @@ entry.
 - **WHEN** OR's MCP discovery endpoint is queried
 - **THEN** the schema's Schema.org type MUST be exposed as `schema:Product`.
 
-### REQ-LOT-005: Lots SHALL be returned in FEFO order (First-Expiry-First-Out) by default
+### Requirement: REQ-LOT-005: Lots SHALL be returned in FEFO order (First-Expiry-First-Out) by default
 
 The `InventoryLot` schema MUST declare:
 
@@ -169,7 +169,7 @@ legitimate seam" and documented in `design.md` under
 - **THEN** the null-expiry lot MUST appear after the dated lot in the
   response.
 
-### REQ-LOT-006: `InventoryLot` SHALL have a declarative four-state lifecycle
+### Requirement: REQ-LOT-006: `InventoryLot` SHALL have a declarative four-state lifecycle
 
 The `InventoryLot` schema MUST declare an `x-openregister-lifecycle` block
 with the following states and transitions (per ADR-031):
@@ -221,7 +221,7 @@ Transitions:
 - **THEN** the lot's `lotStatus` MUST automatically transition to
   `exhausted` and no further picks against this lot MUST be allowed.
 
-### REQ-LOT-007: The `ExpiryAlert` register SHALL track approaching-expiry and missing-expiry notifications
+### Requirement: REQ-LOT-007: The `ExpiryAlert` register SHALL track approaching-expiry and missing-expiry notifications
 
 The `ExpiryAlert` schema MUST declare the following fields:
 
@@ -255,7 +255,7 @@ The `ExpiryAlert` schema MUST declare the following fields:
 - **THEN** an `ExpiryAlert` of type `missing_expiry_date` MUST be
   created with `status: pending` linked to that lot.
 
-### REQ-LOT-008: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field
+### Requirement: REQ-LOT-008: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field
 
 The system SHALL satisfy this requirement: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field.
 
@@ -284,7 +284,7 @@ without this field (treated as `false`).
 - **WHEN** a `GoodsReceipt` is created for that SKU without an `InventoryLot`
 - **THEN** the save MUST succeed normally.
 
-### REQ-LOT-009: Lot/batch tracking SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-LOT-009: Lot/batch tracking SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Inventory >
 Lots & Batches`) with a `type: index` page binding to the `InventoryLot`

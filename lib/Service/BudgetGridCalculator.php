@@ -3,6 +3,9 @@
 /**
  * Budget Grid Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The arithmetic half of the begroting grid (`budget-grid-view`,
  * REQ-BGV-003/004/005/008). No OpenRegister calls — every input is a
  * {@see BudgetGridReader::loadGrid()} bundle plus
@@ -43,14 +46,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Kernel\Contracts\BudgetGridCalculatorInterface;
 
 /**
  * Pure begroting-grid arithmetic: per-column deviation with the
@@ -59,7 +61,7 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
  */
-class BudgetGridCalculator {
+class BudgetGridCalculator implements BudgetGridCalculatorInterface {
 
 	/**
 	 * Construct the calculator.
@@ -95,59 +97,27 @@ class BudgetGridCalculator {
 		array $budgetLinesByFiscalYear,
 		array $accountTypeByNumber
 	): array {
-		$budgetTotal = 0;
-		$hasAnyBudgetMonth = false;
-		foreach ($column['monthKeys'] as $monthKey) {
-			[$year, $monthNumber] = $this->splitMonthKey(monthKey: $monthKey);
-			$lines = ($budgetLinesByFiscalYear[$year] ?? null);
-			if ($lines === null) {
-				// No default AnnualBudget exists for this fiscal year — this
-				// month contributes nothing, and (§2b) the column must render
-				// an explicit empty state when NO month in it has a budget.
-				continue;
-			}
-
-			$hasAnyBudgetMonth = true;
-			$budgetTotal += $this->budgetedAmountForYear(
-				ledgerGroupKey: $ledgerGroupKey,
-				monthNumber: $monthNumber,
-				budgetLines: $lines,
-				bvaContext: $bvaContext
-			);
-		}
+		$run = new BudgetGridCellRun(
+			ledgerGroupKey: $ledgerGroupKey,
+			bvaContext: $bvaContext,
+			budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
+			accountTypeByNumber: $accountTypeByNumber
+		);
+		$budget = $this->budgetTotal(monthKeys: $column['monthKeys'], run: $run);
 
 		$actualTotal = null;
+		$sign = ['deviation' => null, 'favorable' => null];
 		if ($isPast === true) {
-			$actualTotal = 0;
-			foreach ($column['monthKeys'] as $monthKey) {
-				$actualTotal += $this->inner->actualAmount(ledgerGroupKey: $ledgerGroupKey, monthKey: $monthKey, context: $bvaContext);
-			}
-		}
-
-		$budget = null;
-		if ($hasAnyBudgetMonth === true) {
-			$budget = $budgetTotal;
-		}
-		$deviation = null;
-		$favorable = null;
-		if ($isPast === true && $budget !== null) {
-			$sign = $this->deviationFor(
-				ledgerGroupKey: $ledgerGroupKey,
-				bvaContext: $bvaContext,
-				accountTypeByNumber: $accountTypeByNumber,
-				budget: $budget,
-				actual: (int)$actualTotal
-			);
-			$deviation = $sign['deviation'];
-			$favorable = $sign['favorable'];
+			$actualTotal = $this->actualTotal(monthKeys: $column['monthKeys'], run: $run);
+			$sign = $this->signFor(totals: ['budget' => $budget, 'actual' => $actualTotal], run: $run);
 		}
 
 		return [
 			'budget' => $budget,
 			'actual' => $actualTotal,
-			'deviation' => $deviation,
-			'favorable' => $favorable,
-			'hasBudget' => $hasAnyBudgetMonth,
+			'deviation' => $sign['deviation'],
+			'favorable' => $sign['favorable'],
+			'hasBudget' => ($budget !== null),
 		];
 
 	}//end evaluateColumn()
@@ -175,51 +145,112 @@ class BudgetGridCalculator {
 		array $budgetLinesByFiscalYear,
 		array $accountTypeByNumber
 	): array {
-		$budgetTotal = 0;
-		$hasAnyBudgetMonth = false;
-		$actualTotal = 0;
+		$run = new BudgetGridCellRun(
+			ledgerGroupKey: $ledgerGroupKey,
+			bvaContext: $bvaContext,
+			budgetLinesByFiscalYear: $budgetLinesByFiscalYear,
+			accountTypeByNumber: $accountTypeByNumber
+		);
+		$monthKeys = self::columnMonthKeys(columns: $columns);
+		$budget = $this->budgetTotal(monthKeys: $monthKeys['all'], run: $run);
+		$actualTotal = $this->actualTotal(monthKeys: $monthKeys['past'], run: $run);
+		$sign = $this->signFor(totals: ['budget' => $budget, 'actual' => $actualTotal], run: $run);
 
+		return ['budget' => $budget, 'actual' => $actualTotal, 'deviation' => $sign['deviation'], 'favorable' => $sign['favorable']];
+
+	}//end cumulative()
+
+	/**
+	 * Every month key of the columns, and those of the past columns, in order.
+	 *
+	 * @param array<int,array<string,mixed>> $columns The columns.
+	 *
+	 * @return array{all: list<string>, past: list<string>}
+	 */
+	private static function columnMonthKeys(array $columns): array {
+		$keys = ['all' => [], 'past' => []];
 		foreach ($columns as $column) {
 			foreach ($column['monthKeys'] as $monthKey) {
-				[$year, $monthNumber] = $this->splitMonthKey(monthKey: $monthKey);
-				$lines = ($budgetLinesByFiscalYear[$year] ?? null);
-				if ($lines !== null) {
-					$hasAnyBudgetMonth = true;
-					$budgetTotal += $this->budgetedAmountForYear(
-						ledgerGroupKey: $ledgerGroupKey,
-						monthNumber: $monthNumber,
-						budgetLines: $lines,
-						bvaContext: $bvaContext
-					);
-				}
-
+				$keys['all'][] = $monthKey;
 				if ($column['isPast'] === true) {
-					$actualTotal += $this->inner->actualAmount(ledgerGroupKey: $ledgerGroupKey, monthKey: $monthKey, context: $bvaContext);
+					$keys['past'][] = $monthKey;
 				}
 			}
 		}
 
-		$budget = null;
-		if ($hasAnyBudgetMonth === true) {
-			$budget = $budgetTotal;
-		}
-		$deviation = null;
-		$favorable = null;
-		if ($budget !== null) {
-			$sign = $this->deviationFor(
-				ledgerGroupKey: $ledgerGroupKey,
-				bvaContext: $bvaContext,
-				accountTypeByNumber: $accountTypeByNumber,
-				budget: $budget,
-				actual: $actualTotal
-			);
-			$deviation = $sign['deviation'];
-			$favorable = $sign['favorable'];
+		return $keys;
+
+	}//end columnMonthKeys()
+
+	/**
+	 * The budgeted total over the months, or null when no month's fiscal year
+	 * has a default AnnualBudget (§2b: an explicit empty state, not zero).
+	 *
+	 * @param list<string>      $monthKeys The months (`yyyy-mm`).
+	 * @param BudgetGridCellRun $run       The row's inputs.
+	 *
+	 * @return int|null
+	 */
+	private function budgetTotal(array $monthKeys, BudgetGridCellRun $run): ?int {
+		$total = null;
+		foreach ($monthKeys as $monthKey) {
+			[$year, $monthNumber] = $this->splitMonthKey(monthKey: $monthKey);
+			$lines = ($run->budgetLinesByFiscalYear[$year] ?? null);
+			if ($lines !== null) {
+				$total = (($total ?? 0) + $this->budgetedAmountForYear(
+					ledgerGroupKey: $run->ledgerGroupKey,
+					monthNumber: $monthNumber,
+					budgetLines: $lines,
+					bvaContext: $run->bvaContext
+				));
+			}
 		}
 
-		return ['budget' => $budget, 'actual' => $actualTotal, 'deviation' => $deviation, 'favorable' => $favorable];
+		return $total;
 
-	}//end cumulative()
+	}//end budgetTotal()
+
+	/**
+	 * The actual total over the months.
+	 *
+	 * @param list<string>      $monthKeys The months (`yyyy-mm`).
+	 * @param BudgetGridCellRun $run       The row's inputs.
+	 *
+	 * @return int
+	 */
+	private function actualTotal(array $monthKeys, BudgetGridCellRun $run): int {
+		$total = 0;
+		foreach ($monthKeys as $monthKey) {
+			$total += $this->inner->actualAmount(ledgerGroupKey: $run->ledgerGroupKey, monthKey: $monthKey, context: $run->bvaContext);
+		}
+
+		return $total;
+
+	}//end actualTotal()
+
+	/**
+	 * The deviation and its favourability, or both null without a budget.
+	 *
+	 * @param array{budget: int|null, actual: int} $totals The budget and actual totals.
+	 * @param BudgetGridCellRun                    $run    The row's inputs.
+	 *
+	 * @return array{deviation: mixed, favorable: mixed}
+	 */
+	private function signFor(array $totals, BudgetGridCellRun $run): array {
+		if ($totals['budget'] === null) {
+			return ['deviation' => null, 'favorable' => null];
+		}
+
+		$sign = $this->deviationFor(
+			ledgerGroupKey: $run->ledgerGroupKey,
+			bvaContext: $run->bvaContext,
+			accountTypeByNumber: $run->accountTypeByNumber,
+			budget: $totals['budget'],
+			actual: $totals['actual']
+		);
+		return ['deviation' => $sign['deviation'], 'favorable' => $sign['favorable']];
+
+	}//end signFor()
 
 	/**
 	 * Evaluate a page-config `computedRows` waterfall (design.md §4 /
@@ -246,8 +277,7 @@ class BudgetGridCalculator {
 				continue;
 			}
 
-			$asPercent = (bool)($row['asPercent'] ?? false);
-			$value = $this->evaluateFormula(formula: (string)($row['formula'] ?? ''), values: $values, asPercent: $asPercent);
+			$value = $this->evaluateFormula(row: $row, values: $values);
 			$values[$code] = $value;
 			$results[$code] = $value;
 		}
@@ -257,44 +287,65 @@ class BudgetGridCalculator {
 	}//end evaluateComputedRows()
 
 	/**
-	 * Evaluate one `<code> [+|-] <code> …` (or, for a percent row,
-	 * `<code> / <code>`) formula against the already-resolved value map.
+	 * Evaluate one computed row's `<code> [+|-] <code> …` (or, for a percent
+	 * row, `<code> / <code>`) formula against the already-resolved value map.
 	 *
-	 * @param string $formula The formula string.
-	 * @param array<string,int|float|null> $values code => value (root LedgerGroup codes + earlier computedRows).
-	 * @param boolean $asPercent Whether this is a single `a / b` percent row rather than a `+`/`-` chain.
+	 * @param array{formula?:string,asPercent?:bool} $row    The computed-row definition.
+	 * @param array<string,int|float|null>           $values code => value (root LedgerGroup codes + earlier computedRows).
 	 *
 	 * @return int|float|null Null when any operand is unresolved (missing code, or a null budget-year gap).
 	 */
-	private function evaluateFormula(string $formula, array $values, bool $asPercent): int|float|null {
-		$formula = trim($formula);
+	private function evaluateFormula(array $row, array $values): int|float|null {
+		$formula = trim((string)($row['formula'] ?? ''));
 		if ($formula === '') {
 			return null;
 		}
 
-		if ($asPercent === true) {
-			$parts = array_map('trim', explode('/', $formula, 2));
-			if (count($parts) !== 2) {
-				return null;
-			}
-
-			$numerator = ($values[$parts[0]] ?? null);
-			$denominator = ($values[$parts[1]] ?? null);
-			if ($numerator === null || $denominator === null || $denominator === 0) {
-				return null;
-			}
-
-			return ($numerator / $denominator);
+		if ((bool)($row['asPercent'] ?? false) === true) {
+			return $this->ratio(formula: $formula, values: $values);
 		}
 
-		// Split on a `+`/`-` operator that is surrounded by whitespace,
-		// keeping the operator itself as a delimiter capture — NOT a
-		// character-class token scan, because a `code` itself is a slug that
-		// may contain internal hyphens (e.g. `kostprijs-van-de-omzet`); only
-		// an operator with space on both sides is unambiguously the `+`/`-`
-		// of the grammar, never part of a code.
-		$parts = preg_split('/\s+([+-])\s+/', $formula, -1, PREG_SPLIT_DELIM_CAPTURE);
-		if ($parts === false || $parts === []) {
+		return $this->signedSum(formula: $formula, values: $values);
+
+	}//end evaluateFormula()
+
+	/**
+	 * A single `a / b` percent formula; null when it is not two operands, an
+	 * operand is unresolved, or the divisor is the integer 0.
+	 *
+	 * @param string                       $formula The trimmed formula.
+	 * @param array<string,int|float|null> $values  code => value.
+	 *
+	 * @return int|float|null The ratio, or null.
+	 */
+	private function ratio(string $formula, array $values): int|float|null {
+		$parts = array_map('trim', explode('/', $formula, 2));
+		if (count($parts) !== 2) {
+			return null;
+		}
+
+		$numerator = ($values[$parts[0]] ?? null);
+		$denominator = ($values[$parts[1]] ?? null);
+		if ($numerator === null || $denominator === null || $denominator === 0) {
+			return null;
+		}
+
+		return ($numerator / $denominator);
+
+	}//end ratio()
+
+	/**
+	 * A `<code> [+|-] <code> …` chain; null when any term is empty or
+	 * unresolved.
+	 *
+	 * @param string                       $formula The trimmed formula.
+	 * @param array<string,int|float|null> $values  code => value.
+	 *
+	 * @return int|float|null The sum, or null.
+	 */
+	private function signedSum(string $formula, array $values): int|float|null {
+		$parts = $this->formulaTerms(formula: $formula);
+		if ($parts === null) {
 			return null;
 		}
 
@@ -303,20 +354,11 @@ class BudgetGridCalculator {
 		foreach ($parts as $index => $part) {
 			// Odd indices are the captured operator delimiters.
 			if ($index % 2 === 1) {
-				$termSign = 1;
-				if ($part === '-') {
-					$termSign = -1;
-				}
-
+				$termSign = $this->operatorSign(operator: $part);
 				continue;
 			}
 
-			$code = trim($part);
-			if ($code === '') {
-				return null;
-			}
-
-			$operand = ($values[$code] ?? null);
+			$operand = $this->operandValue(term: $part, values: $values);
 			if ($operand === null) {
 				return null;
 			}
@@ -326,7 +368,65 @@ class BudgetGridCalculator {
 
 		return $sum;
 
-	}//end evaluateFormula()
+	}//end signedSum()
+
+	/**
+	 * Split a chain into terms and the operators between them.
+	 *
+	 * Split on a `+`/`-` operator that is surrounded by whitespace, keeping
+	 * the operator itself as a delimiter capture — NOT a character-class
+	 * token scan, because a `code` itself is a slug that may contain internal
+	 * hyphens (e.g. `kostprijs-van-de-omzet`); only an operator with space on
+	 * both sides is unambiguously the `+`/`-` of the grammar, never part of a
+	 * code.
+	 *
+	 * @param string $formula The trimmed formula.
+	 *
+	 * @return list<string>|null Terms at even indices, operators at odd ones; null when unsplittable.
+	 */
+	private function formulaTerms(string $formula): array|null {
+		$parts = preg_split('/\s+([+-])\s+/', $formula, -1, PREG_SPLIT_DELIM_CAPTURE);
+		if ($parts === false || $parts === []) {
+			return null;
+		}
+
+		return $parts;
+
+	}//end formulaTerms()
+
+	/**
+	 * The sign an operator applies to the next term.
+	 *
+	 * @param string $operator `+` or `-`.
+	 *
+	 * @return int 1 or -1.
+	 */
+	private function operatorSign(string $operator): int {
+		if ($operator === '-') {
+			return -1;
+		}
+
+		return 1;
+
+	}//end operatorSign()
+
+	/**
+	 * The value of one term, or null when the term is empty or unresolved.
+	 *
+	 * @param string                       $term   One term of the chain.
+	 * @param array<string,int|float|null> $values code => value.
+	 *
+	 * @return int|float|null The value, or null.
+	 */
+	private function operandValue(string $term, array $values): int|float|null {
+		$code = trim($term);
+		if ($code === '') {
+			return null;
+		}
+
+		return ($values[$code] ?? null);
+
+	}//end operandValue()
 
 	/**
 	 * Resolve one `LedgerGroup`'s deviation from a raw (already summed)
@@ -414,12 +514,7 @@ class BudgetGridCalculator {
 		}
 
 		$entry = ($bvaContext['ledgerGroupEntries'][$index] ?? null);
-		foreach (($entry['memberAccountNumbers'] ?? []) as $accountNumber) {
-			$type = ($accountTypeByNumber[$accountNumber] ?? null);
-			if ($type !== null) {
-				$types[$type] = true;
-			}
-		}
+		$types += self::memberAccountTypes(entry: $entry, accountTypeByNumber: $accountTypeByNumber);
 
 		foreach (($bvaContext['ledgerGroupChildrenByIndex'][$index] ?? []) as $childIndex) {
 			$childEntry = ($bvaContext['ledgerGroupEntries'][$childIndex] ?? null);
@@ -427,12 +522,8 @@ class BudgetGridCalculator {
 				continue;
 			}
 
-			$childKey = $childEntry['slug'];
-			if ($childEntry['id'] !== '') {
-				$childKey = $childEntry['id'];
-			}
 			$this->collectSubtreeAccountTypes(
-				ledgerGroupKey: $childKey,
+				ledgerGroupKey: self::ledgerGroupKeyOf(entry: $childEntry),
 				bvaContext: $bvaContext,
 				accountTypeByNumber: $accountTypeByNumber,
 				types: $types
@@ -440,6 +531,42 @@ class BudgetGridCalculator {
 		}
 
 	}//end collectSubtreeAccountTypes()
+
+	/**
+	 * The distinct accountTypes of a LedgerGroup entry's own member accounts.
+	 *
+	 * @param array<string,mixed>|null $entry               The LedgerGroup entry.
+	 * @param array<string,string>     $accountTypeByNumber Account number => accountType.
+	 *
+	 * @return array<string,bool> accountType => true.
+	 */
+	private static function memberAccountTypes(array|null $entry, array $accountTypeByNumber): array {
+		$types = [];
+		foreach (($entry['memberAccountNumbers'] ?? []) as $accountNumber) {
+			$type = ($accountTypeByNumber[$accountNumber] ?? null);
+			if ($type !== null) {
+				$types[$type] = true;
+			}
+		}
+
+		return $types;
+	}//end memberAccountTypes()
+
+	/**
+	 * A LedgerGroup entry's key: its id, or its slug when it has no id.
+	 *
+	 * @param array<string,mixed> $entry The LedgerGroup entry.
+	 *
+	 * @return string The key.
+	 */
+	private static function ledgerGroupKeyOf(array $entry): string {
+		$childKey = $entry['slug'];
+		if ($entry['id'] !== '') {
+			$childKey = $entry['id'];
+		}
+
+		return $childKey;
+	}//end ledgerGroupKeyOf()
 
 	/**
 	 * Resolve a `LedgerGroup`'s budgeted amount for one calendar month

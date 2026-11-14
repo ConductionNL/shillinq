@@ -1,0 +1,233 @@
+{
+    "bothOpen": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-a",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-b",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "fromClosed": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-a",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "toClosed": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-a",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-b",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "noYears": {
+        "result": true,
+        "logs": [
+            [
+                "warning",
+                "IntercompanyTransactionGuard: no FiscalYear covers posting date — permitting post without period check",
+                {
+                    "administrationId": "adm-a",
+                    "postingDate": "2026-03-01"
+                }
+            ],
+            [
+                "warning",
+                "IntercompanyTransactionGuard: no FiscalYear covers posting date — permitting post without period check",
+                {
+                    "administrationId": "adm-b",
+                    "postingDate": "2026-03-01"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-a",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-b",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "nonArrayYear": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-a",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "missingDate": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "IntercompanyTransactionGuard: missing posting date or administration — denying post (fail-closed)",
+                {
+                    "transactionId": "ict-1"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "yearsDown": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "IntercompanyTransactionGuard: FiscalYear register not present (T1 state) — posting permitted",
+                {
+                    "administrationId": "adm-a"
+                }
+            ],
+            [
+                "debug",
+                "IntercompanyTransactionGuard: FiscalYear register not present (T1 state) — posting permitted",
+                {
+                    "administrationId": "adm-b"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-a",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-b",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

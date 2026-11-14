@@ -3,6 +3,9 @@
 /**
  * OSS Destination-Country VAT Rate Resolver
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service for the Union One-Stop-Shop scheme (REQ-OSS-001,
  * REQ-OSS-011). Resolves the destination-country VAT rate that applies to a B2C
  * cross-border EU invoice from the EuVatRate table (the seeded mirror of the EU
@@ -27,18 +30,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\OssRateResolverInterface;
+use OCP\IAppConfig;
 
 /**
  * Resolves destination-country VAT rates from the seeded EuVatRate (TEDB) table.
@@ -50,7 +51,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-class OssRateResolver {
+class OssRateResolver implements OssRateResolverInterface {
 	/**
 	 * The set of NL-neighbouring EU member-state ISO codes the OSS scheme covers.
 	 *
@@ -136,24 +137,51 @@ class OssRateResolver {
 		$best = null;
 		$bestFrom = '';
 		foreach ($rates as $rate) {
-			$validFrom = (string)($rate['validFrom'] ?? '');
-			if ($validFrom === '' || $validFrom > $invoiceDate) {
-				continue;
-			}
-
-			$validUntil = ($rate['validUntil'] ?? null);
-			if ($validUntil !== null && (string)$validUntil !== '' && (string)$validUntil < $invoiceDate) {
-				continue;
-			}
-
-			if ($validFrom >= $bestFrom) {
+			$validFrom = $this->inForceFrom(rate: $rate, invoiceDate: $invoiceDate);
+			if ($validFrom !== '' && $validFrom >= $bestFrom) {
 				$best = $rate;
 				$bestFrom = $validFrom;
 			}
-		}//end foreach
+		}
 
 		return $best;
 	}//end selectRateInForce()
+
+	/**
+	 * A rate row's validFrom when the row is in force on the invoice date, or
+	 * '' when it is not (undated, not yet valid, or already ended).
+	 *
+	 * @param array<string,mixed> $rate        One EuVatRate row.
+	 * @param string              $invoiceDate Invoice date in YYYY-MM-DD.
+	 *
+	 * @return string
+	 */
+	private function inForceFrom(array $rate, string $invoiceDate): string {
+		$validFrom = (string)($rate['validFrom'] ?? '');
+		if ($validFrom === '' || $validFrom > $invoiceDate) {
+			return '';
+		}
+
+		if ($this->endedBefore(rate: $rate, invoiceDate: $invoiceDate) === true) {
+			return '';
+		}
+
+		return $validFrom;
+	}//end inForceFrom()
+
+	/**
+	 * Whether a rate row's validUntil lies before the invoice date.
+	 *
+	 * @param array<string,mixed> $rate        One EuVatRate row.
+	 * @param string              $invoiceDate Invoice date in YYYY-MM-DD.
+	 *
+	 * @return boolean
+	 */
+	private function endedBefore(array $rate, string $invoiceDate): bool {
+		$validUntil = (string)($rate['validUntil'] ?? '');
+
+		return $validUntil !== '' && $validUntil < $invoiceDate;
+	}//end endedBefore()
 
 	/**
 	 * Resolve the applicable destination-country VAT rate at invoice time (REQ-OSS-001).
@@ -171,34 +199,40 @@ class OssRateResolver {
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
 	 */
 	public function resolve(string $countryCode, string $rateCategory, string $invoiceDate): ?array {
-		$rates = $this->objectService
-			->setRegister($this->register())
-			->setSchema('EuVatRate')
-			->findAll(
-				['filters' => ['countryCode' => strtoupper(trim($countryCode)), 'rateCategory' => $rateCategory]]
-			);
+		$row = $this->selectRateInForce(rates: $this->ratesFor(countryCode: $countryCode, rateCategory: $rateCategory), invoiceDate: $invoiceDate);
+		if ($row === null) {
+			return null;
+		}
 
-		// OpenRegister's findAll() returns ObjectEntity instances, not plain
-		// arrays; normalise to the array shape selectRateInForce() reads.
+		return [
+			'appliedVatRate' => (float)($row['ratePercentage'] ?? 0),
+			'appliedRateCategory' => $rateCategory,
+			'tedbRateVersion' => (string)($row['id'] ?? ($row['@self']['id'] ?? ($row['@self']['slug'] ?? ''))),
+		];
+
+	}//end resolve()
+
+	/**
+	 * The EuVatRate rows of one (country, category), as plain arrays.
+	 *
+	 * OpenRegister's findAll() returns ObjectEntity instances, not plain
+	 * arrays; they are normalised to the array shape selectRateInForce() reads.
+	 *
+	 * @param string $countryCode  ISO 3166-1 alpha-2 destination member state.
+	 * @param string $rateCategory Rate category.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function ratesFor(string $countryCode, string $rateCategory): array {
+		$filters = ['countryCode' => strtoupper(trim($countryCode)), 'rateCategory' => $rateCategory];
+		$rates = $this->objectService->setRegister($this->register())->setSchema('EuVatRate')->findAll(['filters' => $filters]);
 		$normalised = [];
 		foreach ($rates as $rate) {
 			$normalised[] = $this->asArray(row: $rate);
 		}
 
-		$row = $this->selectRateInForce(rates: $normalised, invoiceDate: $invoiceDate);
-		if ($row === null) {
-			return null;
-		}
-
-		$rowId = (string)($row['id'] ?? ($row['@self']['id'] ?? ($row['@self']['slug'] ?? '')));
-
-		return [
-			'appliedVatRate' => (float)($row['ratePercentage'] ?? 0),
-			'appliedRateCategory' => $rateCategory,
-			'tedbRateVersion' => $rowId,
-		];
-
-	}//end resolve()
+		return $normalised;
+	}//end ratesFor()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
@@ -206,7 +240,7 @@ class OssRateResolver {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
@@ -227,24 +261,31 @@ class OssRateResolver {
 			return $row;
 		}
 
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$out = $row->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
-		}
-
-		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-			$out = $row->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
+		$out = $this->exported(row: $row);
+		if (is_array($out) === true) {
+			return $out;
 		}
 
 		return [];
 	}//end asArray()
+
+	/**
+	 * An object row's own export: jsonSerialize() when it has one, otherwise
+	 * getObject(); null for anything else.
+	 *
+	 * @param mixed $row Raw row from ObjectService::findAll()/find().
+	 *
+	 * @return mixed
+	 */
+	private function exported(mixed $row): mixed {
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			return $row->jsonSerialize();
+		}
+
+		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+			return $row->getObject();
+		}
+
+		return null;
+	}//end exported()
 }//end class

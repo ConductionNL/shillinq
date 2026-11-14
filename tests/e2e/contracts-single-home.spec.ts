@@ -99,7 +99,7 @@ test.describe('shillinq — contracts-single-home register un-merge SPA smoke', 
 		const indexMain = page.locator('#content-vue, .app-content, main').first()
 		await expect(indexMain).toBeVisible({ timeout: 10_000 })
 
-		// Detail — /ifrs-15/contracts/:id (ContractDetail page, now sourced
+		// Detail — /ifrs-15/contracts/:id (RevenueContractDetail page, now sourced
 		// from the RevenueContract schema). A demo revenue-contract seed slug
 		// is used when present; the route itself mounts regardless.
 		await page.goto(APP + '/ifrs-15/contracts/ifrs15-contract-c2026-001')

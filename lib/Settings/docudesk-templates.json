@@ -667,6 +667,38 @@
       "body": "Geachte {{klantNaam}},\n\nDe vordering met betrekking tot factuur {{factuurNummer}} ter waarde van €{{totaalVerschuldigd}} is per heden overgedragen aan {{incassobureauNaam}}. Alle verdere correspondentie en betaling dient via genoemd bureau te worden afgehandeld.\n\nHoogachtend,\nDe ondernemer"
     },
     {
+      "templateId": "tpl-dunning-voluntary-contribution-nl",
+      "title": "Herinnering vrijwillige bijdrage",
+      "description": "De enige herinnering voor een vrijwillige schoolbijdrage (Wet vrijwillige ouderbijdrage). Toon: vriendelijk. Herhaalt dat de bijdrage vrijwillig is en dat het kind hoe dan ook meedoet. Geen betaaltermijn, geen kosten, geen rente, geen rekeningnummer. Gekozen in plaats van de sjabloon van stap 1 zodra de factuur een vrijwillige bijdrage is.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "language": "nl",
+      "mergeFields": [
+        "description",
+        "amount",
+        "invoiceNumber"
+      ],
+      "tone": "vriendelijk",
+      "subject": "Een herinnering aan de vrijwillige bijdrage",
+      "body": "Beste ouder of verzorger,\n\nDit is een herinnering aan {{description}}: {{amount}}, factuur {{invoiceNumber}}. We sturen deze herinnering één keer.\n\nDeze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.\n\nWilt u betalen? Dat kan in het ouderportaal. Wilt u niet betalen? Kies dan in het ouderportaal 'Ik betaal niet'. Dan vragen we er niet meer om.\n\nMet vriendelijke groet,\nDe school"
+    },
+    {
+      "templateId": "tpl-dunning-voluntary-contribution-en",
+      "title": "Voluntary contribution reminder",
+      "description": "The only reminder for a voluntary school contribution (Wet vrijwillige ouderbijdrage). Tone: friendly. Repeats that the contribution is voluntary and that the child takes part either way. No payment term, no costs, no interest, no bank account. Chosen instead of the stage 1 template whenever the invoice is a voluntary contribution.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "language": "en",
+      "mergeFields": [
+        "description",
+        "amount",
+        "invoiceNumber"
+      ],
+      "tone": "friendly",
+      "subject": "A reminder about the voluntary contribution",
+      "body": "Dear parent or guardian,\n\nThis is a reminder about {{description}}: {{amount}}, invoice {{invoiceNumber}}. We send this reminder once.\n\nThis contribution is voluntary. Your child takes part whether you pay or not.\n\nWould you like to pay? You can do so in the parent portal. Would you rather not pay? Choose 'I will not pay' in the parent portal. We will then not ask again.\n\nKind regards,\nThe school"
+    },
+    {
       "templateId": "vpb-aangifte-voorbereiding",
       "title": "Vpb-aangifte voorbereiding",
       "description": "Vpb-aangifte voorbereidingsdocument per ondernemingsactiviteit (add-shillinq-vpb-corporate-tax). Rendert de Vpb-balans (Activa / Passiva / Resultaat) van de vpbBalansFiltered aggregatie en de bijbehorende SBR-payload binding tegen de Belastingdienst Vpb XSD voor het geselecteerde boekjaar. De daadwerkelijke aangifte-transmissie verloopt via het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (Digipoort/SBR) per ADR-019; deze template publiceert uitsluitend het voorbereidingsdocument + payload-binding. Per ADR-031 is er geen PHP Vpb-aangifte service. De template-versie volgt de Vpb XSD-versie per boekjaar; meerdere versies kunnen naast elkaar bestaan.",

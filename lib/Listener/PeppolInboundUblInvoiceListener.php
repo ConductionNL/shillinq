@@ -3,6 +3,9 @@
 /**
  * Peppol Inbound UBL Invoice Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reacts to OpenRegister's ObjectCreatedEvent on the `PeppolInboundMessage`
  * schema published by openconnector's Peppol Access Point. When the
  * inbound message carries a UBL Invoice document, dispatches it into
@@ -39,10 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
 
 declare(strict_types=1);
@@ -50,8 +50,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -62,7 +62,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
 class PeppolInboundUblInvoiceListener implements IEventListener {
 	/**
@@ -85,13 +85,13 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 	/**
 	 * Construct the listener with the ingestion service + a logger.
 	 *
-	 * @param SupplierInvoiceService $supplierInvoices Slice-05 ingestion service.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param SupplierInvoiceServiceInterface $supplierInvoices Slice-05 ingestion service.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly SupplierInvoiceService $supplierInvoices,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly SupplierInvoiceServiceInterface $supplierInvoices,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -104,7 +104,7 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
@@ -112,47 +112,10 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			if ($this->schemaResolver->schemaSlug(entity: $entity) !== self::PEPPOL_INBOUND_SCHEMA) {
-				return;
+			$message = $this->inboundInvoice(event: $event);
+			if ($message !== null) {
+				$this->ingest(message: $message);
 			}
-
-			$message = $entity->getObject();
-			if (is_array($message) === false) {
-				return;
-			}
-
-			if ((string)($message['documentType'] ?? '') !== self::DOCUMENT_TYPE_INVOICE) {
-				return;
-			}
-
-			$administrationId = trim((string)($message['administrationId'] ?? ''));
-			if ($administrationId === '') {
-				$this->logger->warning(
-					'PeppolInboundUblInvoiceListener: inbound Peppol Invoice without administrationId — skipping',
-					['peppolMessageId' => ($message['peppolMessageId'] ?? null)]
-				);
-				return;
-			}
-
-			$payload = (string)($message['payload'] ?? '');
-			if (trim($payload) === '') {
-				$this->logger->warning(
-					'PeppolInboundUblInvoiceListener: inbound Peppol Invoice without payload — skipping',
-					['peppolMessageId' => ($message['peppolMessageId'] ?? null)]
-				);
-				return;
-			}
-
-			$this->supplierInvoices->ingestUBLInvoice(
-				administrationId: $administrationId,
-				ublXml: $payload,
-				context: [
-					'peppolMessageId' => (string)($message['peppolMessageId'] ?? ''),
-					'ublSourceUri' => (string)($message['ublSourceUri'] ?? ''),
-					'peppolReceivedAt' => (string)($message['receivedAt'] ?? ''),
-				]
-			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'PeppolInboundUblInvoiceListener: failed to ingest Peppol UBL Invoice',
@@ -161,4 +124,78 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The created object's payload when it is an inbound Peppol Invoice.
+	 *
+	 * @param ObjectCreatedEvent $event The created-object event.
+	 *
+	 * @return array<string,mixed>|null The message, or null for anything else.
+	 */
+	private function inboundInvoice(ObjectCreatedEvent $event): array|null {
+		$entity = $event->getObject();
+		if ($this->schemaResolver->schemaSlug(entity: $entity) !== self::PEPPOL_INBOUND_SCHEMA) {
+			return null;
+		}
+
+		$message = $entity->getObject();
+		if (is_array($message) === false) {
+			return null;
+		}
+
+		if ((string)($message['documentType'] ?? '') !== self::DOCUMENT_TYPE_INVOICE) {
+			return null;
+		}
+
+		return $message;
+
+	}//end inboundInvoice()
+
+	/**
+	 * Ingest an inbound Invoice, skipping one without administration or payload.
+	 *
+	 * @param array<string,mixed> $message The inbound Peppol message.
+	 *
+	 * @return void
+	 */
+	private function ingest(array $message): void {
+		$administrationId = trim((string)($message['administrationId'] ?? ''));
+		if ($administrationId === '') {
+			$this->skip(message: $message, missing: 'administrationId');
+			return;
+		}
+
+		$payload = (string)($message['payload'] ?? '');
+		if (trim($payload) === '') {
+			$this->skip(message: $message, missing: 'payload');
+			return;
+		}
+
+		$this->supplierInvoices->ingestUBLInvoice(
+			administrationId: $administrationId,
+			ublXml: $payload,
+			context: [
+				'peppolMessageId' => (string)($message['peppolMessageId'] ?? ''),
+				'ublSourceUri' => (string)($message['ublSourceUri'] ?? ''),
+				'peppolReceivedAt' => (string)($message['receivedAt'] ?? ''),
+			]
+		);
+
+	}//end ingest()
+
+	/**
+	 * Log an inbound Invoice skipped for a missing field.
+	 *
+	 * @param array<string,mixed> $message The inbound Peppol message.
+	 * @param string $missing The missing field.
+	 *
+	 * @return void
+	 */
+	private function skip(array $message, string $missing): void {
+		$this->logger->warning(
+			'PeppolInboundUblInvoiceListener: inbound Peppol Invoice without ' . $missing . ' — skipping',
+			['peppolMessageId' => ($message['peppolMessageId'] ?? null)]
+		);
+
+	}//end skip()
 }//end class

@@ -113,6 +113,30 @@ const FACET_SOURCE = {
  */
 const OWNED_QUERY_KEYS = ['accountNumber', 'programmeStructure']
 
+/**
+ * The facet a non-empty selection clears: Programme and Assignment status
+ * address the same property.
+ *
+ * @type {Map<string, string>}
+ */
+const EXCLUSIVE_FACET = new Map([
+	['programmeStructure', 'assignmentStatus'],
+	['assignmentStatus', 'programmeStructure'],
+])
+
+/**
+ * The value of a chosen option: its `value` when it is an object, else the
+ * option itself, as text ('' for none).
+ *
+ * @param {object|string|null} option The chosen option.
+ * @return {string}
+ */
+function optionValue(option) {
+	return option && typeof option === 'object'
+		? String(option.value ?? '')
+		: String(option ?? '')
+}
+
 export default {
 	name: 'BbvLinkerFilterBar',
 
@@ -343,52 +367,61 @@ export default {
 		 * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
 		 */
 		onSelect(facet, option) {
-			const value =
-				option && typeof option === 'object'
-					? String(option.value ?? '')
-					: String(option ?? '')
 			const query = { ...(this.$route?.query || {}) }
 
 			// Read the OTHER facets' current values before clearing, so a
 			// change to one facet preserves the rest.
-			const keep = {
-				accountType:
-					facet.key === 'accountType'
-						? value
-						: this.accountTypeFromQuery(query),
-
-				programmeStructure:
-					facet.key === 'programmeStructure'
-						? value
-						: this.programmeFromQuery(query),
-
-				assignmentStatus:
-					facet.key === 'assignmentStatus'
-						? value
-						: this.assignmentStatusFromQuery(query),
-			}
-
-			// Programme and Assignment status address the same property; the
-			// one just changed wins and the other is dropped.
-			if (facet.key === 'programmeStructure' && value !== '') {
-				keep.assignmentStatus = ''
-			}
-
-			if (facet.key === 'assignmentStatus' && value !== '') {
-				keep.programmeStructure = ''
-			}
+			const keep = this.facetValuesAfter({ key: facet.key, value: optionValue(option) }, query)
 
 			for (const key of OWNED_QUERY_KEYS) {
 				delete query[key]
 			}
 
-			const numbers = this.accountNumbersByType[keep.accountType] || []
-			if (keep.accountType !== '' && numbers.length > 0) {
-				query.accountNumber = numbers.map(String)
+			this.$router.replace({ query: { ...query, ...this.facetQuery(keep) } }).catch(() => {})
+		},
+
+		/**
+		 * The three facets' values once one of them changes: the changed one
+		 * takes its new value, the others keep what the query holds.
+		 * Programme and Assignment status address the same property; the one
+		 * just set wins and the other is dropped.
+		 *
+		 * @param {{key: string, value: string}} change The changed facet and its value.
+		 * @param {object} query The current route query.
+		 * @return {{accountType: string, programmeStructure: string, assignmentStatus: string}}
+		 */
+		facetValuesAfter(change, query) {
+			const keep = {
+				accountType: this.accountTypeFromQuery(query),
+				programmeStructure: this.programmeFromQuery(query),
+				assignmentStatus: this.assignmentStatusFromQuery(query),
+			}
+			if (Object.hasOwn(keep, change.key)) {
+				keep[change.key] = change.value
+			}
+
+			const other = EXCLUSIVE_FACET.get(change.key)
+			if (other && change.value !== '') {
+				keep[other] = ''
+			}
+			return keep
+		},
+
+		/**
+		 * The owned query keys the facet values write.
+		 *
+		 * @param {{accountType: string, programmeStructure: string, assignmentStatus: string}} keep The facet values.
+		 * @return {object} accountNumber and / or programmeStructure.
+		 */
+		facetQuery(keep) {
+			const written = {}
+			const numbers = this.accountNumbersFor(keep.accountType)
+			if (numbers.length > 0) {
+				written.accountNumber = numbers.map(String)
 			}
 
 			if (keep.programmeStructure !== '') {
-				query.programmeStructure = keep.programmeStructure
+				written.programmeStructure = keep.programmeStructure
 			}
 
 			// "Mapped" is an IN over every declared programme code — the one
@@ -396,10 +429,22 @@ export default {
 			// express (see the block comment at the top of this file for the
 			// measurement that rules the other half out).
 			if (keep.assignmentStatus === 'mapped') {
-				query.programmeStructure = this.allProgrammeCodes()
+				written.programmeStructure = this.allProgrammeCodes()
 			}
+			return written
+		},
 
-			this.$router.replace({ query }).catch(() => {})
+		/**
+		 * The account numbers of an account type, none for no type.
+		 *
+		 * @param {string} accountType The account type, '' for none.
+		 * @return {Array<string|number>}
+		 */
+		accountNumbersFor(accountType) {
+			if (accountType === '') {
+				return []
+			}
+			return this.accountNumbersByType[accountType] || []
 		},
 
 		/**

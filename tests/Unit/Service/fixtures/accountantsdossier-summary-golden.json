@@ -1,0 +1,138 @@
+{
+    "{\"auditProtocol\":{\"auditYear\":\"2026\",\"organisationId\":\"gem-<0363>\",\"organisationType\":\"gemeente\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":\"2026-12-31\",\"version\":\"v2 \\\"final\\\"\",\"adoptionDecision\":{\"decisionType\":\"raadsbesluit\",\"decisionNumber\":\"RB-7\",\"date\":\"2026-02-01\"}},\"verklaringDraft\":{\"proposedOpinion\":\"goedkeurend & schoon\",\"opinionRationale\":\"Geen bevindingen >1%\",\"signOff\":{\"auditor\":\"O'Brien\",\"afmPermitNumber\":\"AFM-1\",\"date\":\"2026-03-01\",\"place\":\"Utrecht\"}},\"auditFindings\":[{\"transaction\":\"T-1\",\"findingType\":\"fout\",\"topic\":\"rechtm.\",\"amount\":1234.5,\"severity\":\"hoog\",\"status\":\"open\",\"controllerResponse\":\"<b>ok<\\/b>\",\"auditorConclusion\":\"akkoord\"},[]],\"toleranceMatrix\":[{\"topic\":\"lasten\",\"lawfulnessApprovalCeiling\":1,\"lawfulnessQualificationCeiling\":\"3\",\"faithfulnessApprovalCeiling\":1.5,\"faithfulnessQualificationCeiling\":null,\"uncertaintyCeiling\":\"x\"}],\"sisaAssurance\":[{\"schemeCode\":\"A1\",\"accountableParty\":\"gem\",\"specificBenefit\":\"SPUK\",\"assuranceLevel\":\"redelijk\",\"findings\":[1,2]},{\"schemeCode\":\"B2\"}],\"auditSamples\":[{\"population\":\"crediteuren\",\"selectionMethod\":\"MUS\",\"sampleSize\":\"25\",\"reproducibleSeed\":\"s-1\",\"extractedAt\":\"2026-02-02\"}],\"materialiteit\":[{\"scope\":\"jaarrekening\",\"base\":1000000,\"percentage\":1,\"calculatedAmount\":10000,\"status\":\"vastgesteld\"},{\"scope\":\"sisa\",\"baseLabel\":\"lasten\",\"base\":\"5\",\"status\":\"concept\"}]}": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>Accountantsdossier BADO-2026-&lt;x&gt;</title><meta name=\"pdfaid:part\" content=\"1\"><meta name=\"pdfaid:conformance\" content=\"B\"><meta name=\"xmp:CreatorTool\" content=\"Shillinq BADO Dossier Exporter\"><meta name=\"xmpMM:DocumentID\" content=\"urn:uuid:79df66f8-5dfb-8367-bd0b-5444df7eed93\"><meta name=\"dc:title\" content=\"Accountantsdossier BADO-2026-&lt;x&gt;\"><meta name=\"generated-at\" content=\"2026-04-01T10:00:00Z\"><meta name=\"sha256-anchor\" content=\"abc&lt;&gt;123\"><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:24px 0 8px;}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:10pt;}th,td{padding:6px 8px;border:1px solid #ccc;text-align:left;vertical-align:top;}th{background:#eee;}.num{text-align:right;}.muted{color:#666;font-size:9pt;}.opinion{padding:8px;border:2px solid #333;background:#f8f8f8;font-size:13pt;font-weight:bold;}</style></head><body><h1>Accountantsdossier BADO — gemeente gem-&lt;0363&gt;</h1><p class=\"muted\">Bundle: BADO-2026-&lt;x&gt; &middot; Gegenereerd: 2026-04-01T10:00:00Z (ISO 8601 UTC) &middot; SHA-256: <code>abc&lt;&gt;123</code> &middot; PDF/A-1B / ISO 19005-1:2005</p><h2>1. Controleprotocol</h2><table><tr><th>Versie</th><td>v2 &quot;final&quot;</td><th>Auditjaar</th><td>2026</td></tr><tr><th>Organisatie</th><td>gemeente gem-&lt;0363&gt;</td><th>Effectief</th><td>2026-01-01 &mdash; 2026-12-31</td></tr><tr><th>Adoptiebesluit</th><td colspan=\"3\">raadsbesluit (RB-7) op 2026-02-01</td></tr></table><h2>2. ToleranceMatrix</h2><table><thead><tr><th>Topic</th><th class=\"num\">Goedkeurend % (rechtm.)</th><th class=\"num\">Beperking % (rechtm.)</th><th class=\"num\">Goedkeurend % (getr.)</th><th class=\"num\">Beperking % (getr.)</th><th class=\"num\">Onzekerheid %</th></tr></thead><tbody><tr><td>lasten</td><td class=\"num\">1,00</td><td class=\"num\">3,00</td><td class=\"num\">1,50</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td></tr></tbody></table><h2>3. Materialiteit</h2><table><thead><tr><th>Scope</th><th>Basis</th><th class=\"num\">Basisbedrag (€)</th><th class=\"num\">Percentage %</th><th class=\"num\">Materialiteit (€)</th><th>Status</th></tr></thead><tbody><tr><td>jaarrekening</td><td>1000000</td><td class=\"num\">1.000.000,00</td><td class=\"num\">1,00</td><td class=\"num\">10.000,00</td><td>vastgesteld</td></tr><tr><td>sisa</td><td>lasten</td><td class=\"num\">5,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td>concept</td></tr></tbody></table><h2>4. AuditSamples</h2><table><thead><tr><th>Populatie</th><th>Methode</th><th class=\"num\">Steekproefgrootte</th><th>Seed</th><th>Geëxtraheerd op</th></tr></thead><tbody><tr><td>crediteuren</td><td>MUS</td><td class=\"num\">25</td><td><code>s-1</code></td><td>2026-02-02</td></tr></tbody></table><h2>5. AuditFindings</h2><table><thead><tr><th>Transactie</th><th>Type</th><th>Topic</th><th class=\"num\">Bedrag (€)</th><th>Severity</th><th>Status</th><th>Controller</th><th>Auditor</th></tr></thead><tbody><tr><td>T-1</td><td>fout</td><td>rechtm.</td><td class=\"num\">1.234,50</td><td>hoog</td><td>open</td><td>&lt;b&gt;ok&lt;/b&gt;</td><td>akkoord</td></tr><tr><td></td><td></td><td></td><td class=\"num\">0,00</td><td></td><td></td><td></td><td></td></tr></tbody></table><h2>6. VerklaringDraft</h2><div class=\"opinion\">Oordeel: goedkeurend &amp; schoon</div><p>Geen bevindingen &gt;1%</p><p class=\"muted\">Sign-off: O&#039;Brien &middot; AFM-vergunning AFM-1 &middot; 2026-03-01 te Utrecht</p><h2>7. SiSaAssurance</h2><table><thead><tr><th>Regeling</th><th>Verantwoordingsplichtige</th><th>Specifieke uitkering</th><th>Niveau</th><th class=\"num\">Findings</th></tr></thead><tbody><tr><td>A1</td><td>gem</td><td>SPUK</td><td>redelijk</td><td class=\"num\">2</td></tr><tr><td>B2</td><td></td><td></td><td></td><td class=\"num\">0</td></tr></tbody></table><p class=\"muted\">Retentie: 7 jaar (Archiefwet / Selectielijst Gemeenten 2020 21.1). Handtekening: PKIO RSA-SHA256 / PAdES B-LT (gedelegeerd aan externe signer).</p></body></html>",
+    "{\"auditProtocol\":[],\"verklaringDraft\":null,\"auditFindings\":[{\"transaction\":\"T-1\",\"findingType\":\"fout\",\"topic\":\"rechtm.\",\"amount\":1234.5,\"severity\":\"hoog\",\"status\":\"open\",\"controllerResponse\":\"<b>ok<\\/b>\",\"auditorConclusion\":\"akkoord\"},[]],\"toleranceMatrix\":[{\"topic\":\"lasten\",\"lawfulnessApprovalCeiling\":1,\"lawfulnessQualificationCeiling\":\"3\",\"faithfulnessApprovalCeiling\":1.5,\"faithfulnessQualificationCeiling\":null,\"uncertaintyCeiling\":\"x\"}],\"sisaAssurance\":[{\"schemeCode\":\"A1\",\"accountableParty\":\"gem\",\"specificBenefit\":\"SPUK\",\"assuranceLevel\":\"redelijk\",\"findings\":[1,2]},{\"schemeCode\":\"B2\"}],\"auditSamples\":[{\"population\":\"crediteuren\",\"selectionMethod\":\"MUS\",\"sampleSize\":\"25\",\"reproducibleSeed\":\"s-1\",\"extractedAt\":\"2026-02-02\"}],\"materialiteit\":[{\"scope\":\"jaarrekening\",\"base\":1000000,\"percentage\":1,\"calculatedAmount\":10000,\"status\":\"vastgesteld\"},{\"scope\":\"sisa\",\"baseLabel\":\"lasten\",\"base\":\"5\",\"status\":\"concept\"}]}": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>Accountantsdossier BADO-2026-&lt;x&gt;</title><meta name=\"pdfaid:part\" content=\"1\"><meta name=\"pdfaid:conformance\" content=\"B\"><meta name=\"xmp:CreatorTool\" content=\"Shillinq BADO Dossier Exporter\"><meta name=\"xmpMM:DocumentID\" content=\"urn:uuid:79df66f8-5dfb-8367-bd0b-5444df7eed93\"><meta name=\"dc:title\" content=\"Accountantsdossier BADO-2026-&lt;x&gt;\"><meta name=\"generated-at\" content=\"2026-04-01T10:00:00Z\"><meta name=\"sha256-anchor\" content=\"abc&lt;&gt;123\"><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:24px 0 8px;}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:10pt;}th,td{padding:6px 8px;border:1px solid #ccc;text-align:left;vertical-align:top;}th{background:#eee;}.num{text-align:right;}.muted{color:#666;font-size:9pt;}.opinion{padding:8px;border:2px solid #333;background:#f8f8f8;font-size:13pt;font-weight:bold;}</style></head><body><h1>Accountantsdossier BADO —  </h1><p class=\"muted\">Bundle: BADO-2026-&lt;x&gt; &middot; Gegenereerd: 2026-04-01T10:00:00Z (ISO 8601 UTC) &middot; SHA-256: <code>abc&lt;&gt;123</code> &middot; PDF/A-1B / ISO 19005-1:2005</p><h2>1. Controleprotocol</h2><table><tr><th>Versie</th><td></td><th>Auditjaar</th><td>0</td></tr><tr><th>Organisatie</th><td> </td><th>Effectief</th><td> &mdash; </td></tr><tr><th>Adoptiebesluit</th><td colspan=\"3\">— (—) op —</td></tr></table><h2>2. ToleranceMatrix</h2><table><thead><tr><th>Topic</th><th class=\"num\">Goedkeurend % (rechtm.)</th><th class=\"num\">Beperking % (rechtm.)</th><th class=\"num\">Goedkeurend % (getr.)</th><th class=\"num\">Beperking % (getr.)</th><th class=\"num\">Onzekerheid %</th></tr></thead><tbody><tr><td>lasten</td><td class=\"num\">1,00</td><td class=\"num\">3,00</td><td class=\"num\">1,50</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td></tr></tbody></table><h2>3. Materialiteit</h2><table><thead><tr><th>Scope</th><th>Basis</th><th class=\"num\">Basisbedrag (€)</th><th class=\"num\">Percentage %</th><th class=\"num\">Materialiteit (€)</th><th>Status</th></tr></thead><tbody><tr><td>jaarrekening</td><td>1000000</td><td class=\"num\">1.000.000,00</td><td class=\"num\">1,00</td><td class=\"num\">10.000,00</td><td>vastgesteld</td></tr><tr><td>sisa</td><td>lasten</td><td class=\"num\">5,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td>concept</td></tr></tbody></table><h2>4. AuditSamples</h2><table><thead><tr><th>Populatie</th><th>Methode</th><th class=\"num\">Steekproefgrootte</th><th>Seed</th><th>Geëxtraheerd op</th></tr></thead><tbody><tr><td>crediteuren</td><td>MUS</td><td class=\"num\">25</td><td><code>s-1</code></td><td>2026-02-02</td></tr></tbody></table><h2>5. AuditFindings</h2><table><thead><tr><th>Transactie</th><th>Type</th><th>Topic</th><th class=\"num\">Bedrag (€)</th><th>Severity</th><th>Status</th><th>Controller</th><th>Auditor</th></tr></thead><tbody><tr><td>T-1</td><td>fout</td><td>rechtm.</td><td class=\"num\">1.234,50</td><td>hoog</td><td>open</td><td>&lt;b&gt;ok&lt;/b&gt;</td><td>akkoord</td></tr><tr><td></td><td></td><td></td><td class=\"num\">0,00</td><td></td><td></td><td></td><td></td></tr></tbody></table><h2>6. VerklaringDraft</h2><div class=\"opinion\">Oordeel: —</div><p></p><p class=\"muted\">Sign-off:  &middot; AFM-vergunning  &middot;  te </p><h2>7. SiSaAssurance</h2><table><thead><tr><th>Regeling</th><th>Verantwoordingsplichtige</th><th>Specifieke uitkering</th><th>Niveau</th><th class=\"num\">Findings</th></tr></thead><tbody><tr><td>A1</td><td>gem</td><td>SPUK</td><td>redelijk</td><td class=\"num\">2</td></tr><tr><td>B2</td><td></td><td></td><td></td><td class=\"num\">0</td></tr></tbody></table><p class=\"muted\">Retentie: 7 jaar (Archiefwet / Selectielijst Gemeenten 2020 21.1). Handtekening: PKIO RSA-SHA256 / PAdES B-LT (gedelegeerd aan externe signer).</p></body></html>",
+    "{\"auditProtocol\":null,\"verklaringDraft\":null,\"auditFindings\":[],\"toleranceMatrix\":[],\"sisaAssurance\":[],\"auditSamples\":[],\"materialiteit\":[]}": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>Accountantsdossier BADO-2026-&lt;x&gt;</title><meta name=\"pdfaid:part\" content=\"1\"><meta name=\"pdfaid:conformance\" content=\"B\"><meta name=\"xmp:CreatorTool\" content=\"Shillinq BADO Dossier Exporter\"><meta name=\"xmpMM:DocumentID\" content=\"urn:uuid:79df66f8-5dfb-8367-bd0b-5444df7eed93\"><meta name=\"dc:title\" content=\"Accountantsdossier BADO-2026-&lt;x&gt;\"><meta name=\"generated-at\" content=\"2026-04-01T10:00:00Z\"><meta name=\"sha256-anchor\" content=\"abc&lt;&gt;123\"><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:24px 0 8px;}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:10pt;}th,td{padding:6px 8px;border:1px solid #ccc;text-align:left;vertical-align:top;}th{background:#eee;}.num{text-align:right;}.muted{color:#666;font-size:9pt;}.opinion{padding:8px;border:2px solid #333;background:#f8f8f8;font-size:13pt;font-weight:bold;}</style></head><body><h1>Accountantsdossier BADO —  </h1><p class=\"muted\">Bundle: BADO-2026-&lt;x&gt; &middot; Gegenereerd: 2026-04-01T10:00:00Z (ISO 8601 UTC) &middot; SHA-256: <code>abc&lt;&gt;123</code> &middot; PDF/A-1B / ISO 19005-1:2005</p><h2>1. Controleprotocol</h2><table><tr><th>Versie</th><td></td><th>Auditjaar</th><td>0</td></tr><tr><th>Organisatie</th><td> </td><th>Effectief</th><td> &mdash; </td></tr><tr><th>Adoptiebesluit</th><td colspan=\"3\">— (—) op —</td></tr></table><h2>2. ToleranceMatrix</h2><table><thead><tr><th>Topic</th><th class=\"num\">Goedkeurend % (rechtm.)</th><th class=\"num\">Beperking % (rechtm.)</th><th class=\"num\">Goedkeurend % (getr.)</th><th class=\"num\">Beperking % (getr.)</th><th class=\"num\">Onzekerheid %</th></tr></thead><tbody></tbody></table><h2>3. Materialiteit</h2><table><thead><tr><th>Scope</th><th>Basis</th><th class=\"num\">Basisbedrag (€)</th><th class=\"num\">Percentage %</th><th class=\"num\">Materialiteit (€)</th><th>Status</th></tr></thead><tbody></tbody></table><h2>4. AuditSamples</h2><table><thead><tr><th>Populatie</th><th>Methode</th><th class=\"num\">Steekproefgrootte</th><th>Seed</th><th>Geëxtraheerd op</th></tr></thead><tbody></tbody></table><h2>5. AuditFindings</h2><table><thead><tr><th>Transactie</th><th>Type</th><th>Topic</th><th class=\"num\">Bedrag (€)</th><th>Severity</th><th>Status</th><th>Controller</th><th>Auditor</th></tr></thead><tbody></tbody></table><h2>6. VerklaringDraft</h2><div class=\"opinion\">Oordeel: —</div><p></p><p class=\"muted\">Sign-off:  &middot; AFM-vergunning  &middot;  te </p><h2>7. SiSaAssurance</h2><table><thead><tr><th>Regeling</th><th>Verantwoordingsplichtige</th><th>Specifieke uitkering</th><th>Niveau</th><th class=\"num\">Findings</th></tr></thead><tbody></tbody></table><p class=\"muted\">Retentie: 7 jaar (Archiefwet / Selectielijst Gemeenten 2020 21.1). Handtekening: PKIO RSA-SHA256 / PAdES B-LT (gedelegeerd aan externe signer).</p></body></html>",
+    "dossier envelope": {
+        "packageId": "<packageId>",
+        "protocolId": "cp-1",
+        "generatedAt": "<generatedAt>",
+        "generatedBy": "system",
+        "manifest": {
+            "packageId": "<packageId>",
+            "protocolId": "cp-1",
+            "auditYear": 2026,
+            "organisationId": "gem-1",
+            "organisationType": "gemeente",
+            "generatedAt": "<generatedAt>",
+            "generatedBy": "system",
+            "sha256": "0367aea804198ccea335e03401e1118049cb94520f8c0e63a94caecd429c3ca3",
+            "retentionYears": 7,
+            "retentionPolicy": "Archiefwet + Selectielijst Gemeenten 2020 (21.1)",
+            "bundleSchemaVersion": "1.0.0",
+            "pdfaPart": "1",
+            "pdfaConformance": "ISO 19005-1:2005",
+            "iso8601Timestamp": "<generatedAt>",
+            "attachments": [
+                "attachments/controleprotocol/controleprotocol.json",
+                "attachments/tolerance-matrix/row-0001.json",
+                "attachments/tolerance-matrix/row-0002.json",
+                "attachments/materialiteit/row-0001.json",
+                "attachments/materialiteit/row-0002.json",
+                "attachments/audit-samples/sample-0001.json",
+                "attachments/audit-samples/sample-0002.json",
+                "attachments/audit-findings/finding-0001.json",
+                "attachments/audit-findings/finding-0002.json",
+                "attachments/verklaring-draft/verklaring-draft.json",
+                "attachments/sisa-assurance/row-0001.json",
+                "attachments/sisa-assurance/row-0002.json"
+            ],
+            "objectCounts": {
+                "auditProtocol": 1,
+                "toleranceMatrix": 2,
+                "materialiteit": 2,
+                "auditSamples": 2,
+                "auditFindings": 2,
+                "verklaringDraft": 1,
+                "sisaAssurance": 2
+            },
+            "signature": {
+                "algorithm": "PKIO-RSA-SHA256",
+                "standard": "ETSI EN 319 142-1 PAdES B-LT",
+                "status": "pending",
+                "signedAt": null,
+                "signerUri": null,
+                "thumbprint": null
+            }
+        },
+        "ledger": {
+            "auditProtocol": {
+                "id": "cp-1",
+                "auditYear": 2026,
+                "organisationId": "gem-1",
+                "organisationType": "gemeente",
+                "version": "v1"
+            },
+            "toleranceMatrix": [
+                {
+                    "id": "t1",
+                    "protocol": "cp-1",
+                    "topic": "a"
+                },
+                {
+                    "id": "t2",
+                    "protocol": "cp-1",
+                    "topic": "z"
+                }
+            ],
+            "materialiteit": [
+                {
+                    "id": "m1",
+                    "protocol": "cp-1",
+                    "scope": "jaarrekening",
+                    "base": 100
+                },
+                {
+                    "id": "m2",
+                    "protocol": "cp-1",
+                    "scope": "sisa"
+                }
+            ],
+            "auditSamples": [
+                {
+                    "id": "s1",
+                    "protocol": "cp-1",
+                    "extractedAt": "2026-01-01"
+                },
+                {
+                    "id": "s2",
+                    "protocol": "cp-1",
+                    "extractedAt": "2026-02-02"
+                }
+            ],
+            "auditFindings": [
+                {
+                    "id": "f1",
+                    "sample": "s1",
+                    "amount": 1
+                },
+                {
+                    "id": "f3",
+                    "sample": "s2",
+                    "amount": 3
+                }
+            ],
+            "verklaringDraft": {
+                "id": "v1",
+                "protocol": "cp-1",
+                "proposedOpinion": "goedkeurend"
+            },
+            "sisaAssurance": [
+                {
+                    "id": "q1",
+                    "protocol": "cp-1",
+                    "schemeCode": "A"
+                },
+                {
+                    "id": "q2",
+                    "protocol": "cp-1",
+                    "schemeCode": "B"
+                }
+            ]
+        },
+        "summaryHtml": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>Accountantsdossier <packageId></title><meta name=\"pdfaid:part\" content=\"1\"><meta name=\"pdfaid:conformance\" content=\"B\"><meta name=\"xmp:CreatorTool\" content=\"Shillinq BADO Dossier Exporter\"><meta name=\"xmpMM:DocumentID\" content=\"urn:uuid:<uuid>\"><meta name=\"dc:title\" content=\"Accountantsdossier <packageId>\"><meta name=\"generated-at\" content=\"<generatedAt>\"><meta name=\"sha256-anchor\" content=\"0367aea804198ccea335e03401e1118049cb94520f8c0e63a94caecd429c3ca3\"><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:24px 0 8px;}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:10pt;}th,td{padding:6px 8px;border:1px solid #ccc;text-align:left;vertical-align:top;}th{background:#eee;}.num{text-align:right;}.muted{color:#666;font-size:9pt;}.opinion{padding:8px;border:2px solid #333;background:#f8f8f8;font-size:13pt;font-weight:bold;}</style></head><body><h1>Accountantsdossier BADO — gemeente gem-1</h1><p class=\"muted\">Bundle: <packageId> &middot; Gegenereerd: <generatedAt> (ISO 8601 UTC) &middot; SHA-256: <code>0367aea804198ccea335e03401e1118049cb94520f8c0e63a94caecd429c3ca3</code> &middot; PDF/A-1B / ISO 19005-1:2005</p><h2>1. Controleprotocol</h2><table><tr><th>Versie</th><td>v1</td><th>Auditjaar</th><td>2026</td></tr><tr><th>Organisatie</th><td>gemeente gem-1</td><th>Effectief</th><td> &mdash; </td></tr><tr><th>Adoptiebesluit</th><td colspan=\"3\">— (—) op —</td></tr></table><h2>2. ToleranceMatrix</h2><table><thead><tr><th>Topic</th><th class=\"num\">Goedkeurend % (rechtm.)</th><th class=\"num\">Beperking % (rechtm.)</th><th class=\"num\">Goedkeurend % (getr.)</th><th class=\"num\">Beperking % (getr.)</th><th class=\"num\">Onzekerheid %</th></tr></thead><tbody><tr><td>a</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td></tr><tr><td>z</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td></tr></tbody></table><h2>3. Materialiteit</h2><table><thead><tr><th>Scope</th><th>Basis</th><th class=\"num\">Basisbedrag (€)</th><th class=\"num\">Percentage %</th><th class=\"num\">Materialiteit (€)</th><th>Status</th></tr></thead><tbody><tr><td>jaarrekening</td><td>100</td><td class=\"num\">100,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td></td></tr><tr><td>sisa</td><td></td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td class=\"num\">0,00</td><td></td></tr></tbody></table><h2>4. AuditSamples</h2><table><thead><tr><th>Populatie</th><th>Methode</th><th class=\"num\">Steekproefgrootte</th><th>Seed</th><th>Geëxtraheerd op</th></tr></thead><tbody><tr><td></td><td></td><td class=\"num\">0</td><td><code></code></td><td>2026-01-01</td></tr><tr><td></td><td></td><td class=\"num\">0</td><td><code></code></td><td>2026-02-02</td></tr></tbody></table><h2>5. AuditFindings</h2><table><thead><tr><th>Transactie</th><th>Type</th><th>Topic</th><th class=\"num\">Bedrag (€)</th><th>Severity</th><th>Status</th><th>Controller</th><th>Auditor</th></tr></thead><tbody><tr><td></td><td></td><td></td><td class=\"num\">1,00</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td class=\"num\">3,00</td><td></td><td></td><td></td><td></td></tr></tbody></table><h2>6. VerklaringDraft</h2><div class=\"opinion\">Oordeel: goedkeurend</div><p></p><p class=\"muted\">Sign-off:  &middot; AFM-vergunning  &middot;  te </p><h2>7. SiSaAssurance</h2><table><thead><tr><th>Regeling</th><th>Verantwoordingsplichtige</th><th>Specifieke uitkering</th><th>Niveau</th><th class=\"num\">Findings</th></tr></thead><tbody><tr><td>A</td><td></td><td></td><td></td><td class=\"num\">0</td></tr><tr><td>B</td><td></td><td></td><td></td><td class=\"num\">0</td></tr></tbody></table><p class=\"muted\">Retentie: 7 jaar (Archiefwet / Selectielijst Gemeenten 2020 21.1). Handtekening: PKIO RSA-SHA256 / PAdES B-LT (gedelegeerd aan externe signer).</p></body></html>",
+        "sha256": "0367aea804198ccea335e03401e1118049cb94520f8c0e63a94caecd429c3ca3",
+        "attachmentCount": 12,
+        "retentionYears": 7,
+        "signaturePending": true
+    }
+}

@@ -1103,4 +1103,26 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase {
 		self::assertSame([], $this->notified);
 
 	}//end testReminderRespectsLeadTimeWindow()
+	/**
+	 * A moved due date re-arms the reminder and entries that left the open
+	 * set are pruned; an unchanged map is not rewritten, and a past or
+	 * unreadable due date raises nothing.
+	 *
+	 * @return void
+	 */
+	public function testSentMapReArmsPrunesAndStaysUntouched(): void {
+		$key = 'deadline_reminders_sent';
+		$this->userPrefs['alice'][$key] = json_encode(['btw-filing:vatreturn-2026-Q1' => '2026-04-29', 'gone:uid' => '2026-01-01', 7 => 'x']);
+		$service = $this->buildService(recordsBySchema: ['BtwAangifte' => [$this->vatReturn()]]);
+
+		self::assertSame(1, $service->dispatchDueReminders(now: new DateTimeImmutable('2026-04-23')));
+		self::assertSame(['btw-filing:vatreturn-2026-Q1' => '2026-04-30'], json_decode($this->userPrefs['alice'][$key], true));
+
+		$this->userPrefs['alice'][$key] = '{"btw-filing:vatreturn-2026-Q1":  "2026-04-30"}';
+		self::assertSame(0, $service->dispatchDueReminders(now: new DateTimeImmutable('2026-04-24')));
+		self::assertSame(0, $service->dispatchDueReminders(now: new DateTimeImmutable('2026-05-01')));
+		self::assertSame('{"btw-filing:vatreturn-2026-Q1":  "2026-04-30"}', $this->userPrefs['alice'][$key]);
+		self::assertCount(1, $this->notified);
+
+	}//end testSentMapReArmsPrunesAndStaysUntouched()
 }//end class

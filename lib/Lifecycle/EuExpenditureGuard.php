@@ -3,6 +3,9 @@
 /**
  * EU Expenditure Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the EuExpenditure register
  * (bookkeeping-single-audit-eu-fondsen, T3 regulatory + compliance). Two
  * preconditions are referenced from the EuExpenditure schema's
@@ -35,9 +38,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
 
@@ -45,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -115,24 +115,7 @@ class EuExpenditureGuard {
 				return false;
 			}
 
-			$costCategory = (string)($expenditure['costCategory'] ?? '');
-			$euProjectId = (string)($expenditure['euProjectId'] ?? '');
-			if ($costCategory === '' || $euProjectId === '') {
-				return false;
-			}
-
-			// The eligibilityConfirmed flag is set when the cost-category passed
-			// the booking-time validation against the fund's eligibility-rules.
-			if (($expenditure['eligibilityConfirmed'] ?? false) !== true) {
-				return false;
-			}
-
-			$fonds = $this->resolveProjectFonds(euProjectId: $euProjectId);
-			if ($fonds === null) {
-				return false;
-			}
-
-			return $this->isCostCategoryEligible(fonds: $fonds, costCategory: $costCategory);
+			return $this->isDeclarable(expenditure: $expenditure);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'EuExpenditureGuard: declare eligibility check failed — denying declare transition (fail-closed)',
@@ -141,6 +124,38 @@ class EuExpenditureGuard {
 			return false;
 		}//end try
 	}//end canDeclare()
+
+	/**
+	 * Whether the expenditure names a cost category and project, passed eligibility, and its fund allows the category.
+	 *
+	 * @param array<string,mixed> $expenditure The EuExpenditure.
+	 *
+	 * @return bool True when the expenditure may be declared.
+	 *
+	 * @throws \Throwable When the project's fund cannot be read.
+	 *
+	 * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+	 */
+	private function isDeclarable(array $expenditure): bool {
+		$costCategory = (string)($expenditure['costCategory'] ?? '');
+		$euProjectId = (string)($expenditure['euProjectId'] ?? '');
+		if ($costCategory === '' || $euProjectId === '') {
+			return false;
+		}
+
+		// The eligibilityConfirmed flag is set when the cost-category passed
+		// the booking-time validation against the fund's eligibility-rules.
+		if (($expenditure['eligibilityConfirmed'] ?? false) !== true) {
+			return false;
+		}
+
+		$fonds = $this->resolveProjectFonds(euProjectId: $euProjectId);
+		if ($fonds === null) {
+			return false;
+		}
+
+		return $this->isCostCategoryEligible(fonds: $fonds, costCategory: $costCategory);
+	}//end isDeclarable()
 
 	/**
 	 * Returns true iff the declaration may be submitted to the MA.
@@ -172,26 +187,7 @@ class EuExpenditureGuard {
 				return false;
 			}
 
-			$presentTypes = $this->resolvePresentDocumentTypes(euExpenditureId: $expenditureId);
-
-			$required = $this->resolveRequiredEvidence(
-				fonds: $this->resolveProjectFonds(euProjectId: (string)($expenditure['euProjectId'] ?? '')),
-				costCategory: $costCategory
-			);
-			foreach ($required as $type) {
-				if (in_array($type, $presentTypes, true) === false) {
-					return false;
-				}
-			}
-
-			// REQ-EUF-005: aanbestedingsplichtige uitgave vereist een aanbestedingsdossier.
-			if (($expenditure['procurementRequired'] ?? false) === true
-				&& in_array('aanbestedingsdossier', $presentTypes, true) === false
-			) {
-				return false;
-			}
-
-			return true;
+			return $this->evidenceComplete(expenditure: $expenditure, expenditureId: $expenditureId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'EuExpenditureGuard: submit completeness check failed — denying submit transition (fail-closed)',
@@ -200,6 +196,50 @@ class EuExpenditureGuard {
 			return false;
 		}//end try
 	}//end canSubmit()
+
+	/**
+	 * Whether every required bewijsstuk, and any required aanbestedingsdossier, is linked.
+	 *
+	 * @param array<string,mixed> $expenditure The EuExpenditure.
+	 * @param string $expenditureId The expenditure id the documents link to.
+	 *
+	 * @return bool True when the evidence is complete.
+	 */
+	private function evidenceComplete(array $expenditure, string $expenditureId): bool {
+		$presentTypes = $this->resolvePresentDocumentTypes(euExpenditureId: $expenditureId);
+
+		$required = $this->resolveRequiredEvidence(
+			fonds: $this->resolveProjectFonds(euProjectId: (string)($expenditure['euProjectId'] ?? '')),
+			costCategory: (string)($expenditure['costCategory'] ?? '')
+		);
+		if ($this->allPresent(required: $required, presentTypes: $presentTypes) === false) {
+			return false;
+		}
+
+		// REQ-EUF-005: aanbestedingsplichtige uitgave vereist een aanbestedingsdossier.
+		return ($expenditure['procurementRequired'] ?? false) !== true
+			|| in_array('aanbestedingsdossier', $presentTypes, true) === true;
+
+	}//end evidenceComplete()
+
+	/**
+	 * Whether every required document type is among the present ones.
+	 *
+	 * @param array<string> $required The required document-type enums.
+	 * @param array<string> $presentTypes The linked document-type enums.
+	 *
+	 * @return bool True when none is missing.
+	 */
+	private function allPresent(array $required, array $presentTypes): bool {
+		foreach ($required as $type) {
+			if (in_array($type, $presentTypes, true) === false) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end allPresent()
 
 	/**
 	 * Resolve the EuExpenditure object, preferring the supplied object and
@@ -351,7 +391,7 @@ class EuExpenditureGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

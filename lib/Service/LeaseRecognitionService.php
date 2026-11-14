@@ -86,47 +86,124 @@ class LeaseRecognitionService {
 	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
 	 */
 	public function recognise(array $lease): array {
-		$opening = $this->calculator->openingBalances(lease: $lease);
+		$opening    = $this->calculator->openingBalances(lease: $lease);
 		$assetClass = (string)($lease['assetClass'] ?? 'other');
 		$rouSubtype = (self::ROU_SUBTYPE[$assetClass] ?? 'rou-other');
 
-		// RoU asset attributable to the discounted payment stream (and adjustments)
-		// versus the restoration obligation, which credits a separate liability.
-		$restorationPv = $opening['restorationPv'];
+		$journalLines = $this->recognitionLines(opening: $opening, rouSubtype: $rouSubtype);
+		$fixedAsset   = $this->rouFixedAsset(lease: $lease, opening: $opening, assetClass: $assetClass);
+
+		return [
+			'liability' => $opening['liability'],
+			'rouAsset' => $opening['rouAsset'],
+			'restorationPv' => $opening['restorationPv'],
+			'journalLines' => $journalLines,
+			'fixedAsset' => $fixedAsset,
+		];
+
+	}//end recognise()
+
+	/**
+	 * The commencement journal lines; a restoration obligation credits a separate liability when it has a value.
+	 *
+	 * RoU asset attributable to the discounted payment stream (and adjustments)
+	 * versus the restoration obligation, which credits a separate liability.
+	 *
+	 * @param array<string, mixed> $opening    The opening balances.
+	 * @param string               $rouSubtype The RoU asset's lease account subtype.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function recognitionLines(array $opening, string $rouSubtype): array {
+		$restorationPv    = $opening['restorationPv'];
 		$rouFromLiability = $this->calculator->fromCents(
 			cents: ($this->calculator->toCents(amount: $opening['rouAsset']) - $this->calculator->toCents(amount: $restorationPv))
 		);
 
-		$journalLines = [
-			[
-				'side' => 'debit',
-				'amount' => $opening['rouAsset'],
-				'leaseAccountSubtype' => $rouSubtype,
-				'narrative' => 'IFRS 16 RoU asset recognition at commencement',
-			],
-			[
-				'side' => 'credit',
-				'amount' => $rouFromLiability,
-				'leaseAccountSubtype' => 'lease-liability-noncurrent',
-				'narrative' => 'IFRS 16 lease liability recognition at commencement',
-			],
+		$journalLines = self::commencementLines(rouAsset: $opening['rouAsset'], rouFromLiability: $rouFromLiability, rouSubtype: $rouSubtype);
+
+		return $this->withRestorationLine(journalLines: $journalLines, restorationPv: $restorationPv);
+
+	}//end recognitionLines()
+
+	/**
+	 * The RoU asset debit and lease liability credit at commencement.
+	 *
+	 * @param mixed  $rouAsset         The RoU asset amount.
+	 * @param float  $rouFromLiability The part of the RoU asset the lease liability carries.
+	 * @param string $rouSubtype       The RoU asset's lease account subtype.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private static function commencementLines(mixed $rouAsset, float $rouFromLiability, string $rouSubtype): array {
+		return [
+			self::journalLine(side: 'debit', amount: $rouAsset, subtype: $rouSubtype, narrative: 'IFRS 16 RoU asset recognition at commencement'),
+			self::journalLine(
+				side: 'credit',
+				amount: $rouFromLiability,
+				subtype: 'lease-liability-noncurrent',
+				narrative: 'IFRS 16 lease liability recognition at commencement'
+			),
 		];
 
+	}//end commencementLines()
+
+	/**
+	 * Add the restoration obligation credit when it has a value.
+	 *
+	 * @param list<array<string, mixed>> $journalLines  The commencement lines.
+	 * @param mixed                      $restorationPv The restoration obligation's present value.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function withRestorationLine(array $journalLines, mixed $restorationPv): array {
 		if ($this->calculator->toCents(amount: $restorationPv) > 0) {
-			$journalLines[] = [
-				'side' => 'credit',
-				'amount' => $restorationPv,
-				'leaseAccountSubtype' => 'lease-restoration-obligation',
-				'narrative' => 'IFRS 16 restoration obligation recognition',
-			];
+			$journalLines[] = self::journalLine(
+				side: 'credit',
+				amount: $restorationPv,
+				subtype: 'lease-restoration-obligation',
+				narrative: 'IFRS 16 restoration obligation recognition'
+			);
 		}
 
-		$periodsPerYear = $this->calculator->periodsPerYear(
-			paymentFrequency: (string)($lease['paymentFrequency'] ?? 'monthly')
-		);
+		return $journalLines;
+
+	}//end withRestorationLine()
+
+	/**
+	 * One recognition journal line.
+	 *
+	 * @param string $side      debit or credit.
+	 * @param mixed  $amount    The amount.
+	 * @param string $subtype   The lease account subtype.
+	 * @param string $narrative The line narrative.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function journalLine(string $side, mixed $amount, string $subtype, string $narrative): array {
+		return [
+			'side' => $side,
+			'amount' => $amount,
+			'leaseAccountSubtype' => $subtype,
+			'narrative' => $narrative,
+		];
+
+	}//end journalLine()
+
+	/**
+	 * The RoU fixed asset, depreciated straight-line over the lease's schedule.
+	 *
+	 * @param array<string, mixed> $lease      The lease contract.
+	 * @param array<string, mixed> $opening    The opening balances.
+	 * @param string               $assetClass The lease's asset class.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function rouFixedAsset(array $lease, array $opening, string $assetClass): array {
+		$periodsPerYear   = $this->calculator->periodsPerYear(paymentFrequency: (string)($lease['paymentFrequency'] ?? 'monthly'));
 		$usefulLifeMonths = $this->calculator->scheduleLength(lease: $lease) * (12 / $periodsPerYear);
 
-		$fixedAsset = [
+		return [
 			'isRouAsset' => true,
 			'sourceLease' => (string)($lease['@self']['slug'] ?? ($lease['leaseNumber'] ?? '')),
 			'assetType' => 'RoU-' . $assetClass,
@@ -136,15 +213,7 @@ class LeaseRecognitionService {
 			'administrationId' => (string)($lease['administrationId'] ?? ''),
 		];
 
-		return [
-			'liability' => $opening['liability'],
-			'rouAsset' => $opening['rouAsset'],
-			'restorationPv' => $restorationPv,
-			'journalLines' => $journalLines,
-			'fixedAsset' => $fixedAsset,
-		];
-
-	}//end recognise()
+	}//end rouFixedAsset()
 
 	/**
 	 * Returns true iff the recognition journal lines balance (debit = credit).

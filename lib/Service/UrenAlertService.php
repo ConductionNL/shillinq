@@ -125,13 +125,7 @@ final class UrenAlertService {
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
 	 */
 	public function bouwKwartaalAlert(array $year, string $date): array {
-		if ($this->isKwartaalEinde(date: $date) === false) {
-			$this->logger->debug(
-				'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
-				['date' => $date]
-			);
-		}
-
+		$this->meldGeenKwartaalEinde(date: $date);
 		$alert = $this->seedAlert(
 			year: $year,
 			type: 'QUARTER_END',
@@ -140,17 +134,65 @@ final class UrenAlertService {
 		);
 
 		$alert['actionPerspective'] = $this->handelingsperspectief(year: $year);
+		$this->logKwartaalAlert(alert: $alert, year: $year);
+
+		return $alert;
+	}//end bouwKwartaalAlert()
+
+	/**
+	 * Log a quarter-end alert call on a date that is not a quarter end.
+	 *
+	 * @param string $date The trigger date.
+	 *
+	 * @return void
+	 */
+	private function meldGeenKwartaalEinde(string $date): void {
+		if ($this->isKwartaalEinde(date: $date) === false) {
+			$this->logger->debug(
+				'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
+				['date' => $date]
+			);
+		}
+
+	}//end meldGeenKwartaalEinde()
+
+	/**
+	 * Log a built quarter-end alert.
+	 *
+	 * @param array<string, mixed> $alert The alert.
+	 * @param array<string, mixed> $year  UrencriteriumYear record.
+	 *
+	 * @return void
+	 */
+	private function logKwartaalAlert(array $alert, array $year): void {
 		$this->logger->info(
 			'UrenAlertService: quarter-end alert built',
 			[
 				'enterpriseId' => $alert['enterpriseId'],
-				'date' => $date,
+				'date' => $alert['triggerDate'],
 				'thresholdStatus' => ($year['thresholdStatus'] ?? null),
 			]
 		);
 
-		return $alert;
-	}//end bouwKwartaalAlert()
+	}//end logKwartaalAlert()
+
+	/**
+	 * Log an omslag alert call for a transition that does not escalate.
+	 *
+	 * @param string $oldStatus Previous status.
+	 * @param string $newStatus New status.
+	 *
+	 * @return void
+	 */
+	private function meldNietEscalerend(string $oldStatus, string $newStatus): void {
+		if ($this->isOmslag(oldStatus: $oldStatus, newStatus: $newStatus) === false) {
+			$this->logger->debug(
+				'UrenAlertService: bouwOmslagAlert called for non-escalating transition',
+				['oldStatus' => $oldStatus, 'newStatus' => $newStatus]
+			);
+		}
+
+	}//end meldNietEscalerend()
 
 	/**
 	 * Build an omslag alert (status drop).
@@ -164,27 +206,8 @@ final class UrenAlertService {
 	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
 	 */
 	public function bouwOmslagAlert(array $year, string $oldStatus, string $newStatus): array {
-		if ($this->isOmslag(oldStatus: $oldStatus, newStatus: $newStatus) === false) {
-			$this->logger->debug(
-				'UrenAlertService: bouwOmslagAlert called for non-escalating transition',
-				['oldStatus' => $oldStatus, 'newStatus' => $newStatus]
-			);
-		}
-
-		if ($newStatus === 'CRITICAL') {
-			$type = 'APPORTIONMENT_CRITICAL';
-			$urgency = 'CRITICAL';
-		} else {
-			$type = 'APPORTIONMENT_RISK';
-			$urgency = 'WARNING';
-		}
-
-		$alert = $this->seedAlert(
-			year: $year,
-			type: $type,
-			urgency: $urgency,
-			triggerDate: gmdate('Y-m-d')
-		);
+		$this->meldNietEscalerend(oldStatus: $oldStatus, newStatus: $newStatus);
+		$alert = $this->omslagSeed(year: $year, newStatus: $newStatus);
 
 		$alert['cause'] = sprintf(
 			'Prognose-omslag van %s naar %s',
@@ -209,14 +232,8 @@ final class UrenAlertService {
 		$deficit = max(0.0, ($norm - $prognose));
 
 		$acties = [];
-
 		if ($deficit > 0.0) {
-			$acties[] = sprintf(
-				'Plan %s extra uur in de resterende maanden om de norm te halen',
-				rtrim(rtrim(number_format($deficit, 1, '.', ''), '0'), '.')
-			);
-			$acties[] = 'Heroverweeg geplande vakantie of niet-essentiële vrije dagen in Q4';
-			$acties[] = 'Registreer vergeten administratie- of scholing-uren uit Q1-Q3';
+			$acties = $this->inhaalActies(deficit: $deficit);
 		}
 
 		// Acquisitie-suggestie based on prognose distance.
@@ -226,13 +243,55 @@ final class UrenAlertService {
 
 		// Fiscaal verlies context (informational).
 		if ($deficit > 0.0) {
-			$acties[] = sprintf(
-				'Bij niet behalen norm: zelfstandigenaftrek + startersaftrek vervalt — '
-				. 'gederfd fiscaal voordeel circa %.0f EUR (indicatief, art. 3.76 Wet IB 2001)',
-				($deficit * 5.0)
-			);
+			$acties[] = $this->fiscaalVerliesActie(deficit: $deficit);
 		}
 
+		return array_slice($this->aangevuld(acties: $acties), 0, 5);
+	}//end handelingsperspectief()
+
+	/**
+	 * The acties that close a deficit.
+	 *
+	 * @param float $deficit The hours short of the norm.
+	 *
+	 * @return list<string> The three inhaal-acties.
+	 */
+	private function inhaalActies(float $deficit): array {
+		return [
+			sprintf(
+				'Plan %s extra uur in de resterende maanden om de norm te halen',
+				rtrim(rtrim(number_format($deficit, 1, '.', ''), '0'), '.')
+			),
+			'Heroverweeg geplande vakantie of niet-essentiële vrije dagen in Q4',
+			'Registreer vergeten administratie- of scholing-uren uit Q1-Q3',
+		];
+
+	}//end inhaalActies()
+
+	/**
+	 * The fiscal loss a deficit puts at risk.
+	 *
+	 * @param float $deficit The hours short of the norm.
+	 *
+	 * @return string The actie.
+	 */
+	private function fiscaalVerliesActie(float $deficit): string {
+		return sprintf(
+			'Bij niet behalen norm: zelfstandigenaftrek + startersaftrek vervalt — '
+			. 'gederfd fiscaal voordeel circa %.0f EUR (indicatief, art. 3.76 Wet IB 2001)',
+			($deficit * 5.0)
+		);
+
+	}//end fiscaalVerliesActie()
+
+	/**
+	 * The acties topped up with the informational ones when fewer than three.
+	 *
+	 * @param list<string> $acties The acties so far.
+	 *
+	 * @return list<string> The acties.
+	 */
+	private function aangevuld(array $acties): array {
 		if (count($acties) < 3) {
 			// BEHAALD or OP_KOERS still gets informational acties.
 			$acties[] = 'Houd urenregistratie sluitend tot 31 december (zorgvuldigheidsbewijs)';
@@ -240,8 +299,29 @@ final class UrenAlertService {
 			$acties[] = 'Plan tijdig de IB-aangifte-integratie voor jaareinde';
 		}
 
-		return array_slice($acties, 0, 5);
-	}//end handelingsperspectief()
+		return $acties;
+
+	}//end aangevuld()
+
+	/**
+	 * The seeded omslag alert: critical for a drop to CRITICAL, a warning otherwise.
+	 *
+	 * @param array<string, mixed> $year      UrencriteriumYear record.
+	 * @param string               $newStatus New status.
+	 *
+	 * @return array<string, mixed> The seeded alert.
+	 */
+	private function omslagSeed(array $year, string $newStatus): array {
+		$type    = 'APPORTIONMENT_RISK';
+		$urgency = 'WARNING';
+		if ($newStatus === 'CRITICAL') {
+			$type    = 'APPORTIONMENT_CRITICAL';
+			$urgency = 'CRITICAL';
+		}
+
+		return $this->seedAlert(year: $year, type: $type, urgency: $urgency, triggerDate: gmdate('Y-m-d'));
+
+	}//end omslagSeed()
 
 	/**
 	 * Build the canonical alert seed (type, urgentie, etc) shared across alert kinds.

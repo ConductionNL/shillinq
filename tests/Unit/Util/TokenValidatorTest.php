@@ -31,6 +31,15 @@ use PHPUnit\Framework\TestCase;
 final class TokenValidatorTest extends TestCase {
 
 	/**
+	 * A zero or negative length falls back to the default 32 characters.
+	 */
+	public function testGenerateFallsBackToDefaultForNonPositiveLength(): void {
+		self::assertSame(TokenValidator::TOKEN_LENGTH, strlen(TokenValidator::generate(0)));
+		self::assertMatchesRegularExpression('/^[0-9a-zA-Z]{32}$/', TokenValidator::generate(-3));
+
+	}//end testGenerateFallsBackToDefaultForNonPositiveLength()
+
+	/**
 	 * Generated tokens are 32 URL-safe base62 characters by default.
 	 */
 	public function testGenerateDefaultLengthIs32(): void {

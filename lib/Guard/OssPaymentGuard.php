@@ -3,6 +3,9 @@
 /**
  * OSS Payment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-gl-tax-capabilities, design D2. The `OssReturn.pay` and
  * `OssPayment.reconcile` transitions both declare
  * `"requires": "OCA\\Shillinq\\Service\\OssPaymentReconciliation::canMarkPaid"`
@@ -36,17 +39,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\Service\OssPaymentReconciliation;
-use OCA\Shillinq\Service\OssRecordResolver;
+use OCA\Shillinq\Kernel\Contracts\OssPaymentReconciliationInterface;
+use OCA\Shillinq\Kernel\Contracts\OssRecordResolverInterface;
 
 /**
  * Precondition for `OssReturn.pay` / `OssPayment.reconcile`.
@@ -62,12 +62,12 @@ class OssPaymentGuard {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param OssRecordResolver $resolver Reads the counterpart OssReturn / OssPayment.
-	 * @param OssPaymentReconciliation $reconciliation The pure-logic REQ-OSS-008 kernel.
+	 * @param OssRecordResolverInterface $resolver Reads the counterpart OssReturn / OssPayment.
+	 * @param OssPaymentReconciliationInterface $reconciliation The pure-logic REQ-OSS-008 kernel.
 	 */
 	public function __construct(
-		private readonly OssRecordResolver $resolver,
-		private readonly OssPaymentReconciliation $reconciliation,
+		private readonly OssRecordResolverInterface $resolver,
+		private readonly OssPaymentReconciliationInterface $reconciliation,
 	) {
 
 	}//end __construct()

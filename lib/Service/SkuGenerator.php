@@ -3,6 +3,9 @@
 /**
  * Shillinq SKU Generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path service for declarative SKU generation. Reads SKU
  * templates from lib/Settings/sku-templates.json and interpolates product
  * attributes into the template pattern, applying per-field transformation
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-11
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

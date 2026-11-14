@@ -3,6 +3,9 @@
 /**
  * Digipoort / SBR submission port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Digipoort is the Dutch government's secure-delivery gateway for
  * Standard Business Reporting (SBR) traffic. Shillinq materialises a
  * single SBR XBRL filing (BTW aangifte, jaarrekening deponering bij
@@ -35,9 +38,6 @@
  * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  * @spec openspec/changes/bookkeeping-csrd-esrs/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

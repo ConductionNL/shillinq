@@ -31,9 +31,10 @@
  *
  * @param {object|null} contact Slice-05 contact payload (or null).
  * @return {'organization'|'individual'|null}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function classifyContact(contact) {
-	if (!contact || contact.found === false) {
+	if (!isTrustedContact(contact)) {
 		return null
 	}
 	const kvk = String(contact.kvkNumber || '').trim()
@@ -44,6 +45,25 @@ export function classifyContact(contact) {
 }
 
 /**
+ * The profile fields in display order, with what each adds beyond its value.
+ */
+const PROFILE_FIELDS = [
+	{ key: 'legalName', label: 'Name', extra: () => ({ emphasis: true }) },
+	{ key: 'kvkNumber', label: 'KvK', extra: () => ({}) },
+	{
+		key: 'email',
+		label: 'Email',
+		extra: (value) => ({ href: `mailto:${value}` }),
+	},
+	{
+		key: 'phone',
+		label: 'Phone',
+		extra: (value) => ({ href: `tel:${value.replace(/\s+/g, '')}` }),
+	},
+	{ key: 'address', label: 'Address', extra: () => ({}) },
+]
+
+/**
  * Compute the read-only profile fields, omitting any whose value is empty
  * after trimming. The output preserves declared order so the UI renders
  * deterministically. `mailto`/`tel` href values are prefixed here so the
@@ -51,48 +71,35 @@ export function classifyContact(contact) {
  *
  * @param {object|null} contact Slice-05 contact payload.
  * @return {Array<{ key: string, label: string, value: string, href?: string }>}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function buildProfileFields(contact) {
-	if (!contact || contact.found === false) {
+	if (!isTrustedContact(contact)) {
 		return []
 	}
 	const fields = []
-	const legalName = trimmed(contact.legalName)
-	if (legalName) {
-		fields.push({
-			key: 'legalName',
-			label: 'Name',
-			value: legalName,
-			emphasis: true,
-		})
-	}
-	const kvk = trimmed(contact.kvkNumber)
-	if (kvk) {
-		fields.push({ key: 'kvkNumber', label: 'KvK', value: kvk })
-	}
-	const email = trimmed(contact.email)
-	if (email) {
-		fields.push({
-			key: 'email',
-			label: 'Email',
-			value: email,
-			href: `mailto:${email}`,
-		})
-	}
-	const phone = trimmed(contact.phone)
-	if (phone) {
-		fields.push({
-			key: 'phone',
-			label: 'Phone',
-			value: phone,
-			href: `tel:${phone.replace(/\s+/g, '')}`,
-		})
-	}
-	const address = trimmed(contact.address)
-	if (address) {
-		fields.push({ key: 'address', label: 'Address', value: address })
+	for (const field of PROFILE_FIELDS) {
+		const value = trimmed(contact[field.key])
+		if (value) {
+			fields.push({
+				key: field.key,
+				label: field.label,
+				value,
+				...field.extra(value),
+			})
+		}
 	}
 	return fields
+}
+
+/**
+ * Whether a contact is present and was found.
+ *
+ * @param {object|null} contact Slice-05 contact payload.
+ * @return {boolean}
+ */
+function isTrustedContact(contact) {
+	return Boolean(contact) && contact.found !== false
 }
 
 /**
@@ -106,6 +113,7 @@ export function buildProfileFields(contact) {
  *
  * @param {object} payload Slice-05 response.
  * @return {'unlinked'|'error'|'notfound'|'ok'}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function selectProfileState(payload) {
 	if (!payload) {
@@ -114,16 +122,22 @@ export function selectProfileState(payload) {
 	if (payload.notLinkedToPipelinq === true) {
 		return 'unlinked'
 	}
-	if (
-		typeof payload.contactError === 'string'
-		&& payload.contactError.length > 0
-	) {
+	if (hasContactError(payload)) {
 		return 'error'
 	}
-	if (!payload.contact || payload.contact.found === false) {
-		return 'notfound'
-	}
-	return 'ok'
+	return isTrustedContact(payload.contact) ? 'ok' : 'notfound'
+}
+
+/**
+ * Whether the controller reported a contact error.
+ *
+ * @param {object} payload Slice-05 response.
+ * @return {boolean}
+ */
+function hasContactError(payload) {
+	return (
+		typeof payload.contactError === 'string' && payload.contactError.length > 0
+	)
 }
 
 /**
@@ -138,26 +152,30 @@ export function selectProfileState(payload) {
  *
  * @param {object} payload Slice-05 response.
  * @return {'hidden'|'unavailable'|'empty'|'ok'}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function selectHistoryState(payload) {
-	const profileState = selectProfileState(payload)
-	if (profileState !== 'ok') {
-		return 'hidden'
-	}
 	const k = payload?.klantbeeld
-	if (!k) {
+	if (selectProfileState(payload) !== 'ok' || !k) {
 		return 'hidden'
 	}
 	if (k.unavailable === true) {
 		return 'unavailable'
 	}
-	const empty =
+	return isEmptyHistory(k) ? 'empty' : 'ok'
+}
+
+/**
+ * Whether a klantbeeld envelope holds no transactions.
+ *
+ * @param {object} k Klantbeeld envelope.
+ * @return {boolean}
+ */
+function isEmptyHistory(k) {
+	return (
 		k.empty === true
 		|| (Array.isArray(k.transactions) && k.transactions.length === 0)
-	if (empty) {
-		return 'empty'
-	}
-	return 'ok'
+	)
 }
 
 /**

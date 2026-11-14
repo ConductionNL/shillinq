@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\NotificationController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -182,11 +183,11 @@ final class NotificationControllerTest extends TestCase {
 	private IRequest&MockObject $request;
 
 	/**
-	 * Mock SettingsService.
+	 * Mock RegisterLocation.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mock IUserSession.
@@ -232,7 +233,7 @@ final class NotificationControllerTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->request = $this->createMock(IRequest::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->logger = $this->createMock(LoggerInterface::class);

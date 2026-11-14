@@ -228,27 +228,6 @@
               "en": "VAT return for {{periodYear}} was submitted through Digipoort"
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "IcpStatement": {
@@ -379,27 +358,6 @@
             "sum": [
               "credit"
             ]
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -540,33 +498,12 @@
               "description": "Acknowledgement received."
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "VatTariff": {
         "slug": "VatTariff",
         "icon": "PercentOutline",
-        "version": "0.1.0",
+        "version": "0.3.0",
         "title": "BTW-tarief",
         "description": "VAT rate definition. Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
         "x-schema-org": "schema:DefinedTerm",
@@ -626,27 +563,6 @@
             "nullable": true,
             "description": "Citation, e.g. Wet OB 1968 art. 9.",
             "title": "Legal Basis"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -750,27 +666,6 @@
               "credit"
             ]
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bbv-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "BbvTaakveld": {
@@ -810,25 +705,6 @@
             "description": "BBV catalogue version this entry belongs to.",
             "example": "2024",
             "title": "BBV Version"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bbv-controller": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -1031,26 +907,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
+        "authorization": {
           "roles": {
-            "bcf-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+            "bcf-administrator": [
+              "shillinq_bcf_administrator"
+            ]
+          },
+          "create": [
+            "shillinq_bcf_administrator"
+          ],
+          "read": [
+            "shillinq_bcf_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bcf_administrator"
+          ]
         }
       },
       "ZzpDeduction": {
@@ -1144,27 +1017,6 @@
             "description": "zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling.",
             "expr": "@self.zelfstandigenaftrek + (@self.qualifiesStarters ? @self.startersaftrek : 0) + @self.mkbWinstvrijstelling"
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "zzp-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "IbAangifteExport": {
@@ -1234,27 +1086,6 @@
           "taxableIncome": {
             "description": "totalIncome minus allowableDeductions.",
             "expr": "@self.totalIncome - @self.allowableDeductions"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "zzp-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -1396,24 +1227,12 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "treasury-officer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_treasury_officer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ]
         }
       },
       "RepaymentInstallment": {
@@ -1481,27 +1300,6 @@
             "default": "pending",
             "description": "Instalment status.",
             "title": "Status"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "subsidie-coordinator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       }

@@ -18,7 +18,7 @@ This specification defines the requirements for bookkeeping document attachment 
 @e2e exclude unbuilt UI: attachment detail page not yet implemented
 
 
-### REQ-DA-001: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq
+### Requirement: REQ-DA-001: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq
 
 The system SHALL satisfy this requirement: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq.
 
@@ -62,7 +62,7 @@ registers above.
   T1's `JournalEntry` MUST also carry `sourceDocumentApp` (enum);
   T2 registers MUST also accept `sourceDocumentApp` per REQ-DA-003.
 
-### REQ-DA-002: The FK URI SHALL conform to the `docudesk://attachments/<uuid>/<filename>` scheme; external sources use a stable URI
+### Requirement: REQ-DA-002: The FK URI SHALL conform to the `docudesk://attachments/<uuid>/<filename>` scheme; external sources use a stable URI
 
 The `sourceDocumentUri` field MUST hold either:
 
@@ -95,7 +95,7 @@ validated by a pattern matcher (e.g.
 - **THEN** validation MUST fail with a "malformed docudesk URI"
   error per the pattern matcher.
 
-### REQ-DA-003: Expected mime-types SHALL be declared per attachment role; non-conforming uploads are flagged but not blocked
+### Requirement: REQ-DA-003: Expected mime-types SHALL be declared per attachment role; non-conforming uploads are flagged but not blocked
 
 Each register's `sourceDocumentUri` field declaration MUST carry
 metadata (in an `x-shillinq-attachment-role` or similar
@@ -135,7 +135,7 @@ docudesk's responsibility. The declaration is metadata so:
   ("attached file mime-type application/vnd.openxmlformats-officedocument…
   does not match expected role 'invoice'").
 
-### REQ-DA-004: Bookkeeping flow SHALL NOT block on docudesk transient unavailability; the URI persists, audit records the gap
+### Requirement: REQ-DA-004: Bookkeeping flow SHALL NOT block on docudesk transient unavailability; the URI persists, audit records the gap
 
 The system SHALL satisfy this requirement: Bookkeeping flow SHALL NOT block on docudesk transient unavailability; the URI persists, audit records the gap.
 
@@ -184,7 +184,7 @@ hard error.
   warning banner MUST clear; **AND** an OR audit event MUST
   record the successful retrieval.
 
-### REQ-DA-005: Reviewer + auditor roles SHALL see source-document attachments without elevated permissions on docudesk
+### Requirement: REQ-DA-005: Reviewer + auditor roles SHALL see source-document attachments without elevated permissions on docudesk
 
 The docudesk integration MUST honour the bookkeeping `auditor`
 role (per T2 audit-trail capability) — an actor with the

@@ -211,9 +211,10 @@ _Monthly supplier scorecard tracking on-time delivery, quantity accuracy, price 
 - → Supplier (many-to-one)
 
 ---
+
 ## Requirements
 
-### REQ-PO3W-001: Create purchase order with approval chain
+### Requirement: REQ-PO3W-001: Create purchase order with approval chain
 
 The system SHALL satisfy this requirement: Create purchase order with approval chain.
 
@@ -230,7 +231,7 @@ An **Inkoper** (purchasing agent) creates a purchase order for 200 office chairs
 
 ---
 
-### REQ-PO3W-002: Peppol transmission of approved PO to supplier
+### Requirement: REQ-PO3W-002: Peppol transmission of approved PO to supplier
 
 The system SHALL satisfy this requirement: Peppol transmission of approved PO to supplier.
 
@@ -247,7 +248,7 @@ An **Inkoper** sends an approved PO to a Peppol-registered supplier (ErenteSchre
 
 ---
 
-### REQ-PO3W-003: Goods receipt note entry with line-level quantities
+### Requirement: REQ-PO3W-003: Goods receipt note entry with line-level quantities
 
 The system SHALL satisfy this requirement: Goods receipt note entry with line-level quantities.
 
@@ -264,7 +265,7 @@ A **magazijn-medewerker** receives a pallet of 180 chairs (out of 200 ordered pe
 
 ---
 
-### REQ-PO3W-004: Automated 3-way matching within tolerance
+### Requirement: REQ-PO3W-004: Automated 3-way matching within tolerance
 
 The system SHALL satisfy this requirement: Automated 3-way matching within tolerance.
 
@@ -281,7 +282,7 @@ A **Peppol invoice** arrives from ErenteSchreuders for €18,547 (PO: €18,500,
 
 ---
 
-### REQ-PO3W-005: Exception workflow for price deviation
+### Requirement: REQ-PO3W-005: Exception workflow for price deviation
 
 The system SHALL satisfy this requirement: Exception workflow for price deviation.
 
@@ -301,7 +302,7 @@ An invoice arrives for €19,250 (PO: €18,500, delta +€750 = 4.1% deviation)
 
 ---
 
-### REQ-PO3W-006: Configurable tolerance profiles per supplier/category
+### Requirement: REQ-PO3W-006: Configurable tolerance profiles per supplier/category
 
 The system SHALL satisfy this requirement: Configurable tolerance profiles per supplier/category.
 
@@ -318,7 +319,7 @@ A **controller** onboards a new supplier (NieuweLeverancierBV) with a vendor_sco
 
 ---
 
-### REQ-PO3W-007: Multi-PO consolidated invoice matching
+### Requirement: REQ-PO3W-007: Multi-PO consolidated invoice matching
 
 The system SHALL satisfy this requirement: Multi-PO consolidated invoice matching.
 
@@ -335,7 +336,7 @@ A supplier sends one **maand-factuur** (monthly invoice) covering 12 different P
 
 ---
 
-### REQ-PO3W-008: Vendor performance scoring with auto-review eligibility
+### Requirement: REQ-PO3W-008: Vendor performance scoring with auto-review eligibility
 
 The system SHALL satisfy this requirement: Vendor performance scoring with auto-review eligibility.
 
@@ -352,7 +353,7 @@ ErenteSchreuders has achieved 12 months of 96%+ on-time delivery, 99% quantity a
 
 ---
 
-### REQ-PO3W-009: GR/IR clearing and GL posting on match
+### Requirement: REQ-PO3W-009: GR/IR clearing and GL posting on match
 
 The system SHALL satisfy this requirement: GR/IR clearing and GL posting on match.
 
@@ -378,7 +379,7 @@ The GL posting preserves cost_center and gl_account from the PO line. The GR/IR 
 
 ---
 
-### REQ-PO3W-010: Audit trail and compliance export for external auditors
+### Requirement: REQ-PO3W-010: Audit trail and compliance export for external auditors
 
 The system SHALL satisfy this requirement: Audit trail and compliance export for external auditors.
 
@@ -459,6 +460,59 @@ stuck in `exception_missing_grn`.
   `fully_received` once month 3 is also accepted
 
 ---
+
+### Requirement: An imported invoice finds its supplier (REQ-PSII-001)
+
+On intake, shillinq SHALL resolve a UBL invoice's supplier to a `Payee` of
+the administration by KvK number, then by VAT number, and SHALL store the
+payee and the IBAN the invoice names. When no payee is found, the invoice
+page SHALL say the supplier is not recognised and offer to choose or create
+one.
+
+#### Scenario: A UBL invoice is linked to its supplier
+
+- GIVEN payee Drukkerij Van der Meer B.V. with KvK 12345678
+- WHEN a bookkeeper imports UBL invoice 2026-0455 whose supplier party carries KvK 12345678
+- THEN the supplier invoice page shows Drukkerij Van der Meer B.V. as supplier and IBAN NL20INGB0001234567 from the invoice
+
+### Requirement: An invoice without an order is booked through accounts payable (REQ-PSII-002)
+
+A received `SupplierInvoice` SHALL offer "Book without order". The transition SHALL require a resolved payee,
+an expense account on every line (defaulting to the payee's default expense
+account), and a reason for any open duplicate or IBAN warning. It SHALL
+write one `APTransaction` for the invoice, issue it so that the ledger shows
+the expense, the input VAT and the creditor, and link the two records. It
+MUST be refused for an invoice with a line linked to a purchase order.
+
+#### Scenario: A bookkeeper books a printing invoice without an order
+
+- GIVEN received invoice 2026-0455 from Drukkerij Van der Meer B.V. for EUR 1,000.00 plus EUR 210.00 VAT, its line coded to 4300 Drukwerk
+- WHEN the bookkeeper presses Book without order
+- THEN the invoice shows state approved and links to an AP transaction in state issued
+- AND the general ledger shows 4300 debit EUR 1,000.00, input VAT debit EUR 210.00 and the creditor credit EUR 1,210.00
+
+#### Scenario: An order-backed invoice keeps the three-way match
+
+- GIVEN a received invoice whose line links to purchase order PO-2026-031
+- WHEN the bookkeeper presses Book without order
+- THEN the transition is refused with a message naming PO-2026-031 and the three-way match
+
+### Requirement: A duplicate invoice number is flagged however the invoice arrived (REQ-PSII-003)
+
+Shillinq SHALL apply one duplicate rule to every supplier invoice: another
+supplier invoice or AP transaction with the same number for the same payee
+in the administration. A UBL import SHALL still be refused with 409; a CSV
+import SHALL report every skipped row by invoice number; a typed invoice
+SHALL be saved with a visible warning linking to the earlier one, and it
+MUST NOT be booked until a reason is recorded. A failed lookup MUST be
+treated as a possible duplicate.
+
+#### Scenario: A typed invoice repeats an imported number
+
+- GIVEN imported invoice 2026-0455 from Drukkerij Van der Meer B.V.
+- WHEN a bookkeeper types a new supplier invoice 2026-0455 for the same supplier and saves
+- THEN the invoice page shows a warning that 2026-0455 already exists, with a link to it
+- AND Book without order asks for a reason before it proceeds
 
 ## Acceptance Criteria (cross-requirement)
 

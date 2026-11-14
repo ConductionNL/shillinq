@@ -255,4 +255,33 @@ final class RevenueRecognitionCalculatorTest extends TestCase {
 		self::assertSame(0.3, $this->calc->fromCents(30));
 
 	}//end testCentArithmeticAvoidsFloatDrift()
+
+	/**
+	 * Pin relative-SSP allocation over rounding, ties, zero SSPs, duplicate
+	 * and numeric PO ids.
+	 *
+	 * @return void
+	 */
+	public function testAllocateRelativeSspOverEveryShape(): void {
+		$cases = [
+			[[['poId' => 'a', 'ssp' => 1], ['poId' => 'b', 'ssp' => 1], ['poId' => 'c', 'ssp' => 1]], 100.0],
+			[[['poId' => 'a', 'ssp' => 10], ['poId' => 'b', 'ssp' => 30], ['poId' => 'c', 'ssp' => 30]], 99.99],
+			[[['poId' => 'a', 'ssp' => 0], ['poId' => 'b', 'ssp' => 0]], 50.0],
+			[[], 50.0],
+			[[['poId' => 'a', 'ssp' => 5], ['poId' => 'a', 'ssp' => 15], ['poId' => 'b', 'ssp' => 20]], 10.0],
+			[[['poId' => '7', 'ssp' => 2.005], ['poId' => '3', 'ssp' => 1]], 0.01],
+			[[['poId' => 'x', 'ssp' => 100]], 33.333],
+			[[['poId' => 'a', 'ssp' => 1], ['poId' => 'b', 'ssp' => -1], ['poId' => 'c', 'ssp' => 2]], 10.0],
+		];
+		$actual = [];
+		foreach ($cases as [$pos, $total]) {
+			$actual[] = $this->calc->allocateRelativeSsp($pos, $total);
+		}
+
+		self::assertSame(
+			'[{"a":33.34,"b":33.33,"c":33.33},{"a":14.28,"b":42.86,"c":42.85},{"a":0.0,"b":0.0},[],{"a":3.75,"b":6.25},{"7":0.01,"3":0.0},{"x":33.33},{"a":5.0,"b":-5.0,"c":10.0}]',
+			json_encode($actual, JSON_PRESERVE_ZERO_FRACTION)
+		);
+
+	}//end testAllocateRelativeSspOverEveryShape()
 }//end class

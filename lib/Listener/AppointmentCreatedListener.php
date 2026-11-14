@@ -34,8 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ConfirmationTokenServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -53,13 +53,13 @@ class AppointmentCreatedListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param ConfirmationTokenService $tokens Token + email dispatcher.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param ConfirmationTokenServiceInterface $tokens Token + email dispatcher.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft.
 	 */
 	public function __construct(
-		private readonly ConfirmationTokenService $tokens,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly ConfirmationTokenServiceInterface $tokens,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -77,40 +77,10 @@ class AppointmentCreatedListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			if ($entity === null || $entity->getSchema() === null) {
-				return;
+			$appointment = $this->pendingAppointment(event: $event);
+			if ($appointment !== null) {
+				$this->tokens->issueAndSend($appointment, $this->customerOf(appointment: $appointment));
 			}
-
-			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isAppointmentSchema(schema: $schema) === false) {
-				return;
-			}
-
-			$appointment = $entity->getObject();
-			if (is_array($appointment) === false) {
-				return;
-			}
-
-			if ((string)($appointment['status'] ?? '') !== 'pending_confirmation') {
-				// Admin-created bookings start as `confirmed` and skip the
-				// confirmation flow per REQ-BCF-010.
-				return;
-			}
-
-			$appointmentId = (string)($appointment['appointmentId'] ?? '');
-			if ($appointmentId === '') {
-				return;
-			}
-
-			$customer = [
-				'id' => (string)($appointment['customerId'] ?? ''),
-				'userId' => (string)($appointment['customerUserId'] ?? ''),
-				'name' => (string)($appointment['customerName'] ?? ''),
-				'email' => (string)($appointment['customerEmail'] ?? ''),
-			];
-
-			$this->tokens->issueAndSend($appointment, $customer);
 		} catch (Throwable $e) {
 			// Never fail an appointment create because of a downstream
 			// email/token failure — log + continue. Operators can resend.
@@ -121,6 +91,82 @@ class AppointmentCreatedListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The created Appointment when it awaits customer confirmation.
+	 *
+	 * @param ObjectCreatedEvent $event The created-object event.
+	 *
+	 * @return array<string,mixed>|null The appointment, or null for anything else.
+	 */
+	private function pendingAppointment(ObjectCreatedEvent $event): array|null {
+		$entity = $event->getObject();
+		if ($entity === null || $entity->getSchema() === null
+			|| $this->isAppointmentSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false
+		) {
+			return null;
+		}
+
+		$appointment = $entity->getObject();
+		if (is_array($appointment) === false || $this->awaitsConfirmation(appointment: $appointment) === false) {
+			return null;
+		}
+
+		return self::withStoredId(appointment: $appointment, uuid: $entity->getUuid());
+
+	}//end pendingAppointment()
+
+	/**
+	 * The appointment with its stored id, so the send can be recorded on it (REQ-BCF-013).
+	 *
+	 * @param array<string,mixed> $appointment The appointment.
+	 * @param mixed               $uuid        The stored object's uuid.
+	 *
+	 * @return array<string,mixed> The appointment, with `id` set when it had none.
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 */
+	private static function withStoredId(array $appointment, mixed $uuid): array {
+		if (isset($appointment['id']) === false && is_string($uuid) === true && $uuid !== '') {
+			$appointment['id'] = $uuid;
+		}
+
+		return $appointment;
+
+	}//end withStoredId()
+
+	/**
+	 * Whether the appointment has an id and is pending customer confirmation.
+	 *
+	 * Admin-created bookings start as `confirmed` and skip the confirmation
+	 * flow per REQ-BCF-010.
+	 *
+	 * @param array<string,mixed> $appointment The appointment.
+	 *
+	 * @return bool True when a confirmation token must be sent.
+	 */
+	private function awaitsConfirmation(array $appointment): bool {
+		return (string)($appointment['status'] ?? '') === 'pending_confirmation'
+			&& (string)($appointment['appointmentId'] ?? '') !== '';
+
+	}//end awaitsConfirmation()
+
+	/**
+	 * The customer the confirmation goes to, as the token service expects it.
+	 *
+	 * @param array<string,mixed> $appointment The appointment.
+	 *
+	 * @return array<string,string> The customer id, user id, name and email.
+	 */
+	private function customerOf(array $appointment): array {
+		return [
+			'id' => (string)($appointment['customerId'] ?? ''),
+			'userId' => (string)($appointment['customerUserId'] ?? ''),
+			'name' => (string)($appointment['customerName'] ?? ''),
+			'email' => (string)($appointment['customerEmail'] ?? ''),
+		];
+
+	}//end customerOf()
 
 	/**
 	 * Whether the supplied schema string identifies the Appointment schema

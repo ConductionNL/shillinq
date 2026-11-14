@@ -138,4 +138,56 @@ final class InvoicePdfGeneratorTest extends TestCase {
 		}
 
 	}//end testXrefOffsetsPointAtRealObjects()
+
+	/**
+	 * The hybrid e-invoice PDF prints the ARInvoice's own lines on its page.
+	 * EInvoiceService hands the generator `invoiceLines`; until now the page
+	 * carried one summary line and the lines were never printed (REQ-EINV-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
+	 */
+	public function testTheHybridPdfPrintsTheArInvoiceLines(): void {
+		$result = (new InvoicePdfGenerator())->generateHybridPdf(
+			invoice: ['invoiceNumber' => '2026-0042', 'grossAmount' => 242.0, 'currency' => 'EUR'],
+			lines: [
+				['lineId' => '1', 'itemName' => 'Consulting (senior)', 'quantity' => 2, 'netPrice' => 100.0, 'netAmount' => 200.0, 'vatRate' => 21],
+				['lineId' => '2', 'itemName' => 'Travel', 'quantity' => 1, 'netPrice' => 42.5, 'netAmount' => 42.5, 'vatRate' => 0],
+			],
+			ublXml: '<Invoice/>'
+		);
+
+		self::assertStringContainsString('(1  Consulting \\(senior\\)  2 x 100,00 = 200,00 EUR  btw 21%)', $result['pdf']);
+		self::assertStringContainsString('(2  Travel  1 x 42,50 = 42,50 EUR  btw 0%)', $result['pdf']);
+		self::assertStringContainsString('Factuur 2026-0042 - EUR 242,00', $result['pdf']);
+	}//end testTheHybridPdfPrintsTheArInvoiceLines()
+
+	/**
+	 * The HTML row reads an `invoiceLines` entry as well as a
+	 * BillableInvoiceLine, and the BillableInvoiceLine row is unchanged
+	 * (REQ-EINV-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
+	 */
+	public function testTheHtmlRowReadsEitherLineShape(): void {
+		$html = (new InvoicePdfGenerator())->generatePdf(
+			invoice: ['invoiceNumber' => '2026-0042'],
+			lines: [
+				['lineId' => '1', 'itemName' => 'Consulting', 'quantity' => 2, 'netPrice' => 100.0, 'netAmount' => 200.0, 'vatRate' => 21],
+				['lineNumber' => 3, 'description' => 'Advies', 'billableUnits' => 1.5, 'rateApplied' => ['rateCents' => 12000], 'costAmount' => 180.0, 'vatRate' => 9],
+			]
+		)['html'];
+
+		self::assertStringContainsString(
+			'<tr><td>1</td><td>Consulting</td><td class="num">2</td><td class="num">€ 100,00</td><td class="num">€ 200,00</td><td class="num">21%</td></tr>',
+			$html
+		);
+		self::assertStringContainsString(
+			'<tr><td>3</td><td>Advies</td><td class="num">1,5</td><td class="num">€ 120,00</td><td class="num">€ 180,00</td><td class="num">9%</td></tr>',
+			$html
+		);
+	}//end testTheHtmlRowReadsEitherLineShape()
 }//end class

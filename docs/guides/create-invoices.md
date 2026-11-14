@@ -113,6 +113,10 @@ configure Peppol in **Settings → E-invoicing**:
 3. When sending an invoice to a government customer, select the
    **Peppol** delivery method and enter the customer's **OIN** (Organisatie
    Identificatie Nummer) as the Peppol receiver ID.
+4. Put the order number or reference the government customer gave you in the
+   invoice's **reference**. Shillinq sends it as the buyer reference (BT-10),
+   which most government buyers need to route the invoice. An empty reference
+   is left out of the e-invoice.
 
 ### Send e-invoice and delivery status
 

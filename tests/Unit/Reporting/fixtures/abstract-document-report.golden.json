@@ -1,0 +1,332 @@
+{
+    "pdfSystemUser": {
+        "outcome": {
+            "fileName": "balance-sheet-2026-Q1-adm-1.pdf",
+            "mimeType": "application\/pdf",
+            "format": "pdf",
+            "content": "BYTES"
+        },
+        "call": {
+            "templateId": "tpl-1",
+            "dataRefs": [],
+            "options": {
+                "format": "pdf",
+                "userId": "system",
+                "adHocData": {
+                    "report": {
+                        "title": "Balans",
+                        "subtitle": "Balans",
+                        "blocks": [
+                            {
+                                "type": "cover",
+                                "title": "Balans",
+                                "subtitle": "Balans per peildatum",
+                                "meta": [
+                                    "Periode: 2026-Q1",
+                                    "Administratie: adm-1",
+                                    "Gegenereerd: <masked>"
+                                ]
+                            },
+                            {
+                                "type": "heading",
+                                "text": "Activa",
+                                "depth": 2
+                            },
+                            {
+                                "type": "amountTable",
+                                "labelHead": "Rekening",
+                                "amountHead": "Saldo",
+                                "lines": [
+                                    {
+                                        "label": "1300 Debiteuren",
+                                        "amount": 1000.0
+                                    }
+                                ],
+                                "total": {
+                                    "label": "Totaal activa",
+                                    "amount": 1000.0
+                                },
+                                "currency": "EUR"
+                            }
+                        ]
+                    },
+                    "meta": {
+                        "reportType": "balance-sheet",
+                        "period": "2026-Q1",
+                        "administrationId": "adm-1",
+                        "generatedAt": "<masked>"
+                    }
+                }
+            }
+        },
+        "loads": 0
+    },
+    "odtNamedUser": {
+        "outcome": {
+            "fileName": "balance-sheet-2026-Q1-adm-1.odt",
+            "mimeType": "application\/vnd.oasis.opendocument.text",
+            "format": "odt",
+            "content": "ODT"
+        },
+        "call": {
+            "templateId": "tpl-1",
+            "dataRefs": [],
+            "options": {
+                "format": "odf",
+                "userId": "alice",
+                "adHocData": {
+                    "report": {
+                        "title": "Balans",
+                        "subtitle": "Balans",
+                        "blocks": [
+                            {
+                                "type": "cover",
+                                "title": "Balans",
+                                "subtitle": "Balans per peildatum",
+                                "meta": [
+                                    "Periode: 2026-Q1",
+                                    "Administratie: adm-1",
+                                    "Gegenereerd: <masked>"
+                                ]
+                            },
+                            {
+                                "type": "heading",
+                                "text": "Activa",
+                                "depth": 2
+                            },
+                            {
+                                "type": "amountTable",
+                                "labelHead": "Rekening",
+                                "amountHead": "Saldo",
+                                "lines": [
+                                    {
+                                        "label": "1300 Debiteuren",
+                                        "amount": 1000.0
+                                    }
+                                ],
+                                "total": {
+                                    "label": "Totaal activa",
+                                    "amount": 1000.0
+                                },
+                                "currency": "EUR"
+                            }
+                        ]
+                    },
+                    "meta": {
+                        "reportType": "balance-sheet",
+                        "period": "2026-Q1",
+                        "administrationId": "adm-1",
+                        "generatedAt": "<masked>"
+                    }
+                }
+            }
+        },
+        "loads": 0
+    },
+    "unknownFormat": {
+        "outcome": {
+            "fileName": "balance-sheet.odt",
+            "mimeType": "application\/vnd.oasis.opendocument.text",
+            "format": "odt",
+            "content": "X"
+        },
+        "call": {
+            "templateId": "tpl-1",
+            "dataRefs": [],
+            "options": {
+                "format": "odf",
+                "userId": "system",
+                "adHocData": {
+                    "report": {
+                        "title": "Balans",
+                        "subtitle": "Balans",
+                        "blocks": [
+                            {
+                                "type": "cover",
+                                "title": "Balans",
+                                "subtitle": "Balans per peildatum",
+                                "meta": [
+                                    "Gegenereerd: <masked>"
+                                ]
+                            },
+                            {
+                                "type": "heading",
+                                "text": "Activa",
+                                "depth": 2
+                            },
+                            {
+                                "type": "amountTable",
+                                "labelHead": "Rekening",
+                                "amountHead": "Saldo",
+                                "lines": [
+                                    {
+                                        "label": "1300 Debiteuren",
+                                        "amount": 1000.0
+                                    }
+                                ],
+                                "total": {
+                                    "label": "Totaal activa",
+                                    "amount": 1000.0
+                                },
+                                "currency": "EUR"
+                            }
+                        ]
+                    },
+                    "meta": {
+                        "reportType": "balance-sheet",
+                        "period": "",
+                        "administrationId": "",
+                        "generatedAt": "<masked>"
+                    }
+                }
+            }
+        },
+        "loads": 0
+    },
+    "noTemplates": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "No docudesk template found for \"balance-sheet\" in namespace \"shillinq\" (category \"shillinq-balans\"); generation is refused."
+        },
+        "call": null,
+        "loads": 0
+    },
+    "twoTemplates": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "Multiple docudesk templates (tpl-1, tpl-2, ?) for \"balance-sheet\" in namespace \"shillinq\"; generation is refused (never guess between templates that produce official documents)."
+        },
+        "call": null,
+        "loads": 0
+    },
+    "selfIdTemplate": {
+        "outcome": {
+            "fileName": "balance-sheet-2026-Q1-adm-1.pdf",
+            "mimeType": "application\/pdf",
+            "format": "pdf",
+            "content": "X"
+        },
+        "call": {
+            "templateId": "tpl-s",
+            "dataRefs": [],
+            "options": {
+                "format": "pdf",
+                "userId": "system",
+                "adHocData": {
+                    "report": {
+                        "title": "Balans",
+                        "subtitle": "Balans",
+                        "blocks": [
+                            {
+                                "type": "cover",
+                                "title": "Balans",
+                                "subtitle": "Balans per peildatum",
+                                "meta": [
+                                    "Periode: 2026-Q1",
+                                    "Administratie: adm-1",
+                                    "Gegenereerd: <masked>"
+                                ]
+                            },
+                            {
+                                "type": "heading",
+                                "text": "Activa",
+                                "depth": 2
+                            },
+                            {
+                                "type": "amountTable",
+                                "labelHead": "Rekening",
+                                "amountHead": "Saldo",
+                                "lines": [
+                                    {
+                                        "label": "1300 Debiteuren",
+                                        "amount": 1000.0
+                                    }
+                                ],
+                                "total": {
+                                    "label": "Totaal activa",
+                                    "amount": 1000.0
+                                },
+                                "currency": "EUR"
+                            }
+                        ]
+                    },
+                    "meta": {
+                        "reportType": "balance-sheet",
+                        "period": "2026-Q1",
+                        "administrationId": "adm-1",
+                        "generatedAt": "<masked>"
+                    }
+                }
+            }
+        },
+        "loads": 0
+    },
+    "idlessTemplate": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "The matched docudesk template has no id."
+        },
+        "call": null,
+        "loads": 0
+    },
+    "emptyContent": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "Docudesk returned no document content for \"balance-sheet\"."
+        },
+        "call": {
+            "templateId": "tpl-1",
+            "dataRefs": [],
+            "options": {
+                "format": "pdf",
+                "userId": "system",
+                "adHocData": {
+                    "report": {
+                        "title": "Balans",
+                        "subtitle": "Balans",
+                        "blocks": [
+                            {
+                                "type": "cover",
+                                "title": "Balans",
+                                "subtitle": "Balans per peildatum",
+                                "meta": [
+                                    "Periode: 2026-Q1",
+                                    "Administratie: adm-1",
+                                    "Gegenereerd: <masked>"
+                                ]
+                            },
+                            {
+                                "type": "heading",
+                                "text": "Activa",
+                                "depth": 2
+                            },
+                            {
+                                "type": "amountTable",
+                                "labelHead": "Rekening",
+                                "amountHead": "Saldo",
+                                "lines": [
+                                    {
+                                        "label": "1300 Debiteuren",
+                                        "amount": 1000.0
+                                    }
+                                ],
+                                "total": {
+                                    "label": "Totaal activa",
+                                    "amount": 1000.0
+                                },
+                                "currency": "EUR"
+                            }
+                        ]
+                    },
+                    "meta": {
+                        "reportType": "balance-sheet",
+                        "period": "2026-Q1",
+                        "administrationId": "adm-1",
+                        "generatedAt": "<masked>"
+                    }
+                }
+            }
+        },
+        "loads": 0
+    }
+}

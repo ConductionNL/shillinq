@@ -41,34 +41,56 @@
  * @param {object}        fullFragment     The dynamically-imported fragment JSON (`{pages, menu, ...}`).
  * @param {Array<object>} fullFragment.pages Full page objects (with `config` etc.) from the fragment.
  * @return {{updated: number, appended: number}} How many pages were updated in place vs. newly appended.
+ * @spec openspec/specs/manifest-boot-performance/spec.md
  */
 export function mergeFullFragmentIntoManifest(manifest, fullFragment) {
-	const pages = Array.isArray(manifest && manifest.pages) ? manifest.pages : []
-	const fullPages = Array.isArray(fullFragment && fullFragment.pages)
-		? fullFragment.pages
-		: []
-
-	let updated = 0
-	let appended = 0
-
-	for (const fullPage of fullPages) {
-		if (!fullPage || typeof fullPage.id !== 'string') {
-			continue
-		}
-
-		const existing = pages.find((p) => p && p.id === fullPage.id)
-		if (existing) {
-			for (const key of Object.keys(fullPage)) {
-				existing[key] = fullPage[key]
-			}
-			updated++
-		} else {
-			pages.push({ ...fullPage })
-			appended++
+	const pages = arrayOrEmpty(manifest && manifest.pages)
+	const counts = { updated: 0, appended: 0 }
+	for (const fullPage of arrayOrEmpty(fullFragment && fullFragment.pages)) {
+		if (isPage(fullPage)) {
+			counts[mergePage(pages, fullPage)]++
 		}
 	}
+	return counts
+}
 
-	return { updated, appended }
+/**
+ * Update the shell page with the full page's id in place, or append a copy.
+ *
+ * @param {Array<object>} pages The manifest's pages.
+ * @param {object} fullPage The full page.
+ * @return {string} `updated` or `appended`.
+ */
+function mergePage(pages, fullPage) {
+	const existing = pages.find((p) => p && p.id === fullPage.id)
+	if (!existing) {
+		pages.push({ ...fullPage })
+		return 'appended'
+	}
+	for (const key of Object.keys(fullPage)) {
+		existing[key] = fullPage[key]
+	}
+	return 'updated'
+}
+
+/**
+ * The value when it is an array, else an empty array.
+ *
+ * @param {unknown} value The value.
+ * @return {Array}
+ */
+function arrayOrEmpty(value) {
+	return Array.isArray(value) ? value : []
+}
+
+/**
+ * Whether a value is a page with a string id.
+ *
+ * @param {unknown} page The value.
+ * @return {boolean}
+ */
+function isPage(page) {
+	return Boolean(page) && typeof page.id === 'string'
 }
 
 /**
@@ -81,22 +103,14 @@ export function mergeFullFragmentIntoManifest(manifest, fullFragment) {
  *
  * @param {Array<object>} pages The merged manifest's `pages[]` (post-boot-merge, still carrying `_fragment` on slim entries).
  * @return {Map<string, string>} pageId → fragment filename stem.
+ * @spec openspec/specs/manifest-boot-performance/spec.md
  */
 export function buildPageFragmentIndex(pages) {
 	const index = new Map()
-	if (!Array.isArray(pages)) {
-		return index
-	}
-
-	for (const page of pages) {
-		if (
-			page
-			&& typeof page.id === 'string'
-			&& typeof page._fragment === 'string'
-		) {
+	for (const page of arrayOrEmpty(pages)) {
+		if (isPage(page) && typeof page._fragment === 'string') {
 			index.set(page.id, page._fragment)
 		}
 	}
-
 	return index
 }

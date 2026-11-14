@@ -1,3 +1,5 @@
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!--
   Sync Status Badge
 
@@ -54,6 +56,8 @@ import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMob
 
 const STALE_THRESHOLD_MS = 2 * 60 * 1000
 
+const BUSY_STATES = ['syncing', 'pending', 'failed']
+
 export default {
 	name: 'SyncStatusBadge',
 	data() {
@@ -69,12 +73,7 @@ export default {
 		},
 
 		badgeClass() {
-			if (
-				this.store.syncState === 'syncing'
-				|| this.store.syncState === 'pending'
-				|| this.store.syncState === 'failed'
-				|| this.isStale
-			) {
+			if (BUSY_STATES.includes(this.store.syncState) || this.isStale) {
 				return 'sync-status-badge__button--yellow'
 			}
 			if (this.store.syncState === 'offline') {
@@ -95,28 +94,7 @@ export default {
 		},
 
 		humanLabel() {
-			if (this.store.syncState === 'failed') {
-				return this.t('shillinq', 'Sync failed; retry {sec}s', {
-					sec: Math.ceil((this.store.retryInMs || 0) / 1000),
-				})
-			}
-			if (this.store.syncState === 'syncing') {
-				return this.t('shillinq', 'Syncing…')
-			}
-			if (this.store.syncState === 'offline') {
-				return this.t('shillinq', 'Offline')
-			}
-			if (this.store.pendingCount > 0) {
-				return this.t('shillinq', 'Pending ({n})', {
-					n: this.store.pendingCount,
-				})
-			}
-			if (this.store.lastSyncedAt) {
-				return this.t('shillinq', 'Last synced {at}', {
-					at: this.formatTime(this.store.lastSyncedAt),
-				})
-			}
-			return this.t('shillinq', 'Sync now')
+			return this.syncStateLabel() ?? this.queueLabel()
 		},
 	},
 
@@ -134,6 +112,46 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * The label of a failed, running or offline sync.
+		 *
+		 * @return {string|null} The label, null in any other sync state.
+		 */
+		syncStateLabel() {
+			if (this.store.syncState === 'failed') {
+				return this.t('shillinq', 'Sync failed; retry {sec}s', {
+					sec: Math.ceil((this.store.retryInMs || 0) / 1000),
+				})
+			}
+			if (this.store.syncState === 'syncing') {
+				return this.t('shillinq', 'Syncing…')
+			}
+			if (this.store.syncState === 'offline') {
+				return this.t('shillinq', 'Offline')
+			}
+			return null
+		},
+
+		/**
+		 * The label of an idle sync: what is pending, when it last synced, or
+		 * an invitation to sync.
+		 *
+		 * @return {string} The label.
+		 */
+		queueLabel() {
+			if (this.store.pendingCount > 0) {
+				return this.t('shillinq', 'Pending ({n})', {
+					n: this.store.pendingCount,
+				})
+			}
+			if (this.store.lastSyncedAt) {
+				return this.t('shillinq', 'Last synced {at}', {
+					at: this.formatTime(this.store.lastSyncedAt),
+				})
+			}
+			return this.t('shillinq', 'Sync now')
+		},
+
 		async handleClick() {
 			if (!this.store.isOnline) {
 				return

@@ -15,7 +15,7 @@ This specification defines the requirements for bookkeeping chart of accounts in
 
 ## Requirements
 
-### REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
+### Requirement: REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
 
 The chart of accounts MUST be declared as a register in
 `lib/Settings/shillinq_register.json` per ADR-024, with the `Account`
@@ -45,7 +45,7 @@ shillinq adds no per-app endpoint.
   table declarations naming `accounts` / `chart_of_accounts`
 - **THEN** no such classes or declarations SHALL exist.
 
-### REQ-CoA-002: The `Account` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-CoA-002: The `Account` schema SHALL declare a fixed minimum field set
 
 The `Account` schema MUST declare the following fields with the typing
 below. Additional fields MAY be added later (additive only).
@@ -82,7 +82,7 @@ per `adr-000-data-model.md`'s top-of-file note.
 - **WHEN** an object with `accountType: "magic"` is validated
 - **THEN** validation MUST fail with an enum-violation error.
 
-### REQ-CoA-003: The `Account` schema SHALL declare a self-relation for hierarchy via `x-openregister-relations`
+### Requirement: REQ-CoA-003: The `Account` schema SHALL declare a self-relation for hierarchy via `x-openregister-relations`
 
 Account hierarchy MUST be declared as an `x-openregister-relations`
 self-relation: `parentAccountNumber` points at another
@@ -109,7 +109,7 @@ OpenRegister's relation engine; no app-local join code.
 - **THEN** OR's relation validator SHOULD reject the save with a
   resolvable error message naming the missing parent.
 
-### REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
+### Requirement: REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
 
 The system SHALL ensure the `Account` schema declares a canonical Schema.org annotation.
 
@@ -131,7 +131,7 @@ reconciled to `schema:DefinedTerm` in the data-model ADR update task.
   `schema:DefinedTerm` (or, if the reconciliation lands later, the
   ADR-000-aligned value once agreed).
 
-### REQ-CoA-005: Accounts SHALL have a declarative active/blocked/archived lifecycle
+### Requirement: REQ-CoA-005: Accounts SHALL have a declarative active/blocked/archived lifecycle
 
 The `Account` schema MUST declare an `x-openregister-lifecycle` block
 with the following states and transitions (per ADR-031):
@@ -178,7 +178,7 @@ legitimate seam".
 - **THEN** the transition MUST be rejected with a "non-zero balance"
   error and the account state MUST remain `active`/`blocked`.
 
-### REQ-CoA-006: The system SHALL ship RGS template seed data for SMB, ZZP, and government variants
+### Requirement: REQ-CoA-006: The system SHALL ship RGS template seed data for SMB, ZZP, and government variants
 
 Three seed files under `lib/Settings/seeds/` MUST be shipped:
 `rgs-3.5-mkb.json`, `rgs-3.5-zzp.json`, `rgs-bbv.json`. Each is a
@@ -209,7 +209,7 @@ Templates MAY evolve over time; filename version pinning
   expense top-level groupings) SHALL match the RGS 3.5 SMB reference
   chart documented at `https://www.referentiegrootboekschema.nl`.
 
-### REQ-CoA-007: The repair step SHALL seed the selected RGS template on first install, idempotently
+### Requirement: REQ-CoA-007: The repair step SHALL seed the selected RGS template on first install, idempotently
 
 The shillinq repair step (or migration class) MUST extend
 `ConfigurationService::importFromApp()` to load the selected RGS
@@ -237,7 +237,7 @@ seeded records (per the per-administration override allowance).
 - **THEN** account `4100`'s name MUST remain `Omzet binnenland`;
   the seed step MUST NOT revert operator edits.
 
-### REQ-CoA-008: Chart of accounts SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-CoA-008: Chart of accounts SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Chart of Accounts` or top-level — exact placement settled in the
@@ -269,7 +269,7 @@ purpose" convention).
   fields from REQ-CoA-002 and the lifecycle-state actions allowed
   by REQ-CoA-005.
 
-### REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
+### Requirement: REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
 
 The system SHALL ensure each administration designates exactly one account as the closing account.
 
@@ -300,3 +300,60 @@ lifecycle precondition on `Account.save`.
 - **WHEN** the operator first clears `isClosingAccount` on `8990`,
   then sets it on a different account
 - **THEN** the second save MUST succeed.
+
+### Requirement: An account declares the sub-ledger that owns it (REQ-LBR-001)
+
+`Account` SHALL carry a nullable `controlAccountFor` (`receivables`,
+`payables`, `vat`, `expense-claims`, `payroll`). The posting mappings that
+select a control account SHALL select it by this field.
+
+@e2e exclude the role is register data set on the generic account form, asserted by BackfillControlAccountRolesTest (validated against the merged register) and PostingRestrictionGuardTest
+
+#### Scenario: An administrator marks the VAT account as a control account
+
+- GIVEN an administrator on the chart of accounts detail page of account 2110 BTW-schuld
+- WHEN they set control account for to vat and save
+- THEN the account shows control account for vat
+
+### Requirement: A person cannot post by hand on a control account (REQ-LBR-002)
+
+When a journal entry or a general ledger transaction made by a person is
+posted, the post guard MUST refuse it if any line is on an account with
+`controlAccountFor` set, unless the posting comes from that sub-ledger. The
+refusal SHALL name the account and its control role. Postings materialised
+by a sub-ledger SHALL NOT be refused by this check.
+
+@e2e exclude the refusal runs in the post guards, asserted through the real adapter by PostingGuardsThroughAdapterTest::testAManualJournalEntryOnAControlAccountIsRefusedNamingIt and ::testASubLedgerDraftOnAControlAccountPostsAndAManualOneDoesNot, and by PostingRestrictionGuardTest
+
+#### Scenario: A bookkeeper tries a memorial entry on receivables
+
+- GIVEN a draft journal entry on the journal detail page with a debit line on 1100 Debiteuren and a credit line on 8000 Netto-omzet
+- WHEN the bookkeeper presses Post without approval
+- THEN the post is refused with a message naming 1100 Debiteuren as the receivables control account
+- AND the entry stays in draft
+
+#### Scenario: A posted sales invoice still books receivables
+
+- GIVEN an issued sales invoice whose posting materialises a debit on 1100 Debiteuren
+- WHEN the invoice is posted
+- THEN the ledger transaction is written with the line on 1100
+
+#### Scenario: A bank booking posts its VAT line
+
+- GIVEN a bank line booked by hand to 4910 with 21 percent VAT
+- WHEN the booking is confirmed
+- THEN the journal entry posts with its VAT line on 1230 BTW-vordering
+
+### Requirement: The booking line shows the account's guidance (REQ-LBR-003)
+
+The lines on the journal detail page and the general ledger detail page
+SHALL show each line's account with its `description` under it, and SHALL
+mark a control account.
+
+@e2e exclude the panel is held to the manifest, the registry and the account lookup by tests/vitest/ledgerBookingRules.spec.js
+
+#### Scenario: A bookkeeper sees when to use the housing account
+
+- GIVEN account 4000 Huisvesting with the description "Huur, energie en schoonmaak van het kantoor. Niet voor thuiswerkvergoedingen."
+- WHEN a bookkeeper opens a journal entry with a line on 4000
+- THEN that description is shown under the account on the line

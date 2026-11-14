@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Invoice Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the Invoice register
@@ -45,7 +50,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -96,23 +101,7 @@ class InvoiceGuard {
 				return false;
 			}
 
-			$lines = $this->resolveLines(invoiceId: $invoiceId, invoice: $invoice);
-			if (count($lines) < 1) {
-				return false;
-			}
-
-			$billingModel = (string)($invoice['billingModel'] ?? '');
-			if ($billingModel === '') {
-				return false;
-			}
-
-			if ($this->modelLinesAreConsistent(billingModel: $billingModel, lines: $lines) === false) {
-				return false;
-			}
-
-			// Double-invoicing guard: no time/expense source id may already be
-			// referenced by another non-cancelled invoice (REQ-ITE-007).
-			return $this->sourceIdsAreUnique(invoice: $invoice);
+			return $this->invoiceIsPostable(invoiceId: $invoiceId, invoice: $invoice);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InvoiceGuard: post check failed — denying post transition (fail-closed)',
@@ -121,6 +110,34 @@ class InvoiceGuard {
 			return false;
 		}//end try
 	}//end canPost()
+
+	/**
+	 * Whether a resolved invoice has lines, a billing model its lines are consistent with, and only unique sources.
+	 *
+	 * @param string               $invoiceId The Invoice id.
+	 * @param array<string, mixed> $invoice   The resolved Invoice.
+	 *
+	 * @return bool
+	 */
+	private function invoiceIsPostable(string $invoiceId, array $invoice): bool {
+		$lines = $this->resolveLines(invoiceId: $invoiceId, invoice: $invoice);
+		if (count($lines) < 1) {
+			return false;
+		}
+
+		$billingModel = (string)($invoice['billingModel'] ?? '');
+		if ($billingModel === '') {
+			return false;
+		}
+
+		if ($this->modelLinesAreConsistent(billingModel: $billingModel, lines: $lines) === false) {
+			return false;
+		}
+
+		// Double-invoicing guard: no time/expense source id may already be
+		// referenced by another non-cancelled invoice (REQ-ITE-007).
+		return $this->sourceIdsAreUnique(invoice: $invoice);
+	}//end invoiceIsPostable()
 
 	/**
 	 * Returns true iff the line set satisfies the model-specific mandatory-line
@@ -197,34 +214,58 @@ class InvoiceGuard {
 		$ownId = (string)($invoice['id'] ?? '');
 
 		$register = $this->resolveRegister();
-
-		$others = $this->objectService
-			->setRegister($register)
-			->setSchema('Invoice')
-			->findAll([]);
+		$others   = $this->objectService->setRegister($register)->setSchema('Invoice')->findAll([]);
 
 		foreach ($others as $other) {
-			if (is_array($other) === false || ($other['state'] ?? '') === 'cancelled') {
-				continue;
-			}
-
-			$otherId = (string)($other['id'] ?? '');
-			if ($otherId !== '' && $otherId === $ownId) {
-				continue;
-			}
-
-			$otherSources = $this->collectSourceIds(invoice: $other);
-			if (array_intersect($ownSources, $otherSources) !== []) {
-				$this->logger->warning(
-					'InvoiceGuard: double-invoicing denied — overlapping source ids',
-					['invoiceId' => $ownId, 'conflictingInvoiceId' => $otherId]
-				);
+			if (self::isOtherLiveInvoice(other: $other, ownId: $ownId) === true
+				&& $this->sharesSourceWith(other: $other, ownSources: $ownSources, ownId: $ownId) === true
+			) {
 				return false;
 			}
-		}//end foreach
+		}
 
 		return true;
 	}//end sourceIdsAreUnique()
+
+	/**
+	 * Whether another invoice references one of the invoice's sources; logged as a denied double-invoicing.
+	 *
+	 * @param array<string, mixed> $other      The other, live invoice.
+	 * @param array<int, string>   $ownSources The invoice's own source ids.
+	 * @param string               $ownId      The invoice's id.
+	 *
+	 * @return bool
+	 */
+	private function sharesSourceWith(array $other, array $ownSources, string $ownId): bool {
+		$otherId      = (string)($other['id'] ?? '');
+		$otherSources = $this->collectSourceIds(invoice: $other);
+		if (array_intersect($ownSources, $otherSources) !== []) {
+			$this->logger->warning(
+				'InvoiceGuard: double-invoicing denied — overlapping source ids',
+				['invoiceId' => $ownId, 'conflictingInvoiceId' => $otherId]
+			);
+			return true;
+		}
+
+		return false;
+	}//end sharesSourceWith()
+
+	/**
+	 * Whether a row is another invoice that is not cancelled.
+	 *
+	 * @param mixed  $other The Invoice row.
+	 * @param string $ownId The id of the invoice being posted.
+	 *
+	 * @return bool
+	 */
+	private static function isOtherLiveInvoice(mixed $other, string $ownId): bool {
+		if (is_array($other) === false || ($other['state'] ?? '') === 'cancelled') {
+			return false;
+		}
+
+		$otherId = (string)($other['id'] ?? '');
+		return ($otherId !== '' && $otherId === $ownId) === false;
+	}//end isOtherLiveInvoice()
 
 	/**
 	 * Collect the deduplicated set of time + expense source ids on an invoice.
@@ -368,7 +409,7 @@ class InvoiceGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

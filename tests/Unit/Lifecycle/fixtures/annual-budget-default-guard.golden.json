@@ -1,0 +1,137 @@
+{
+    "notDefault": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "noSiblings": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:AnnualBudget",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "fiscalYear": 2026,
+                        "isDefault": true
+                    }
+                }
+            }
+        ]
+    },
+    "onlySelf": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:AnnualBudget",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "fiscalYear": 2026,
+                        "isDefault": true
+                    }
+                }
+            }
+        ]
+    },
+    "selfViaAtSelf": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:AnnualBudget",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "fiscalYear": 2026,
+                        "isDefault": true
+                    }
+                }
+            }
+        ]
+    },
+    "otherDefault": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "AnnualBudgetDefaultGuard: another default AnnualBudget already exists — denying activate",
+                {
+                    "administrationId": "adm-1",
+                    "fiscalYear": 2026,
+                    "conflictingId": "b2"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:AnnualBudget",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "fiscalYear": 2026,
+                        "isDefault": true
+                    }
+                }
+            }
+        ]
+    },
+    "newBudgetVsIdless": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "AnnualBudgetDefaultGuard: another default AnnualBudget already exists — denying activate",
+                {
+                    "administrationId": "",
+                    "fiscalYear": 0,
+                    "conflictingId": null
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:AnnualBudget",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "",
+                        "fiscalYear": 0,
+                        "isDefault": true
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "AnnualBudgetDefaultGuard: isUniqueDefault check failed — denying (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:AnnualBudget",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "fiscalYear": 2026,
+                        "isDefault": true
+                    }
+                }
+            }
+        ]
+    }
+}

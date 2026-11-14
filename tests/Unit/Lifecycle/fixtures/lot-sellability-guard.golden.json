@@ -1,0 +1,174 @@
+{
+    "enough": {
+        "sellable": true,
+        "availableSellable": 6.5,
+        "shortfall": 0.0,
+        "sellableLotIds": [
+            "l-2",
+            "l-1",
+            "l-8"
+        ],
+        "offendingLots": [
+            {
+                "lotId": "l-3",
+                "lotNumber": "C",
+                "lotStatus": "quarantined",
+                "expiryDate": null,
+                "reason": "quarantined (held for quality inspection)",
+                "reasonNl": "in quarantaine (vastgehouden voor kwaliteitsinspectie)"
+            },
+            {
+                "lotId": "l-4",
+                "lotNumber": "",
+                "lotStatus": "expired",
+                "expiryDate": null,
+                "reason": "expired (lot marked expired)",
+                "reasonNl": "verlopen (lot gemarkeerd als verlopen)"
+            },
+            {
+                "lotId": "l-5",
+                "lotNumber": "",
+                "lotStatus": "exhausted",
+                "expiryDate": null,
+                "reason": "exhausted (lot depleted)",
+                "reasonNl": "uitgeput (lot leeg)"
+            },
+            {
+                "lotId": "l-6",
+                "lotNumber": "",
+                "lotStatus": "active",
+                "expiryDate": "2026-02-28",
+                "reason": "expired (past expiry date 2026-02-28)",
+                "reasonNl": "verlopen (vervaldatum 2026-02-28 verstreken)"
+            },
+            {
+                "lotId": "l-7",
+                "lotNumber": "",
+                "lotStatus": "recalled",
+                "expiryDate": null,
+                "reason": "not sellable (lotStatus recalled)",
+                "reasonNl": "niet verkoopbaar (lotstatus recalled)"
+            }
+        ]
+    },
+    "epsilon": {
+        "sellable": true,
+        "availableSellable": 6.5,
+        "shortfall": 0.0,
+        "sellableLotIds": [
+            "l-2",
+            "l-1",
+            "l-8"
+        ],
+        "offendingLots": [
+            {
+                "lotId": "l-3",
+                "lotNumber": "C",
+                "lotStatus": "quarantined",
+                "expiryDate": null,
+                "reason": "quarantined (held for quality inspection)",
+                "reasonNl": "in quarantaine (vastgehouden voor kwaliteitsinspectie)"
+            },
+            {
+                "lotId": "l-4",
+                "lotNumber": "",
+                "lotStatus": "expired",
+                "expiryDate": null,
+                "reason": "expired (lot marked expired)",
+                "reasonNl": "verlopen (lot gemarkeerd als verlopen)"
+            },
+            {
+                "lotId": "l-5",
+                "lotNumber": "",
+                "lotStatus": "exhausted",
+                "expiryDate": null,
+                "reason": "exhausted (lot depleted)",
+                "reasonNl": "uitgeput (lot leeg)"
+            },
+            {
+                "lotId": "l-6",
+                "lotNumber": "",
+                "lotStatus": "active",
+                "expiryDate": "2026-02-28",
+                "reason": "expired (past expiry date 2026-02-28)",
+                "reasonNl": "verlopen (vervaldatum 2026-02-28 verstreken)"
+            },
+            {
+                "lotId": "l-7",
+                "lotNumber": "",
+                "lotStatus": "recalled",
+                "expiryDate": null,
+                "reason": "not sellable (lotStatus recalled)",
+                "reasonNl": "niet verkoopbaar (lotstatus recalled)"
+            }
+        ]
+    },
+    "short": {
+        "sellable": false,
+        "availableSellable": 6.5,
+        "shortfall": 3.5,
+        "sellableLotIds": [
+            "l-2",
+            "l-1",
+            "l-8"
+        ],
+        "offendingLots": [
+            {
+                "lotId": "l-3",
+                "lotNumber": "C",
+                "lotStatus": "quarantined",
+                "expiryDate": null,
+                "reason": "quarantined (held for quality inspection)",
+                "reasonNl": "in quarantaine (vastgehouden voor kwaliteitsinspectie)"
+            },
+            {
+                "lotId": "l-4",
+                "lotNumber": "",
+                "lotStatus": "expired",
+                "expiryDate": null,
+                "reason": "expired (lot marked expired)",
+                "reasonNl": "verlopen (lot gemarkeerd als verlopen)"
+            },
+            {
+                "lotId": "l-5",
+                "lotNumber": "",
+                "lotStatus": "exhausted",
+                "expiryDate": null,
+                "reason": "exhausted (lot depleted)",
+                "reasonNl": "uitgeput (lot leeg)"
+            },
+            {
+                "lotId": "l-6",
+                "lotNumber": "",
+                "lotStatus": "active",
+                "expiryDate": "2026-02-28",
+                "reason": "expired (past expiry date 2026-02-28)",
+                "reasonNl": "verlopen (vervaldatum 2026-02-28 verstreken)"
+            },
+            {
+                "lotId": "l-7",
+                "lotNumber": "",
+                "lotStatus": "recalled",
+                "expiryDate": null,
+                "reason": "not sellable (lotStatus recalled)",
+                "reasonNl": "niet verkoopbaar (lotstatus recalled)"
+            }
+        ]
+    },
+    "expiresToday": {
+        "sellable": true,
+        "availableSellable": 1.0,
+        "shortfall": 0.0,
+        "sellableLotIds": [
+            "x"
+        ],
+        "offendingLots": []
+    },
+    "none": {
+        "sellable": true,
+        "availableSellable": 0.0,
+        "shortfall": 0.0,
+        "sellableLotIds": [],
+        "offendingLots": []
+    }
+}

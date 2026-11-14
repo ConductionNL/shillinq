@@ -3,6 +3,9 @@
 /**
  * Compliance + dashboard aggregation integration test.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 (testing) of the bookkeeping-waterschappen-bbv-variant chain
  * (ADR-032). Asserts that the dashboard data shaped by
  * {@see \OCA\Shillinq\Dashboard\BBVComplianceWidget} matches the
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-11-testing/tasks.md#integration-tests
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

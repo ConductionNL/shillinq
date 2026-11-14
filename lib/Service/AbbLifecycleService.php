@@ -37,12 +37,6 @@ use InvalidArgumentException;
  * Side-effect-free ABB lifecycle state-machine (REQ-WMO-005).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-2
- *
- * @SuppressWarnings(PHPMD.CyclomaticComplexity)
- * @SuppressWarnings(PHPMD.ElseExpression)
- * Pre-existing debt (issue #506): inherent branch complexity in this
- * domain logic; early-return refactor deferred pending full behavioral
- * verification of each branch.
  */
 class AbbLifecycleService {
 	/**
@@ -64,6 +58,39 @@ class AbbLifecycleService {
 	];
 
 	/**
+	 * Automatic task generated on entering a status (REQ-WMO-005 §c). A null
+	 * offset means the task is due on the ABB's nextEvaluation.
+	 *
+	 * @var array<string,array{type:string,subject:string,offset:string|null,assignedTo:string}>
+	 */
+	private const STATUS_TASKS = [
+		'councilResolution' => [
+			'type' => 'publish-gemeenteblad',
+			'subject' => 'Publish in gemeenteblad: %s',
+			'offset' => 'P14D',
+			'assignedTo' => 'griffier',
+		],
+		'publicatie' => [
+			'type' => 'notify-acm',
+			'subject' => 'Notify ACM: %s',
+			'offset' => 'P7D',
+			'assignedTo' => 'juridisch-beleidsadviseur',
+		],
+		'acm-notified' => [
+			'type' => 'review-bezwaarschriften',
+			'subject' => 'Review bezwaarschriften (6 weeks): %s',
+			'offset' => 'P42D',
+			'assignedTo' => 'juridisch-beleidsadviseur',
+		],
+		'evaluatie-due' => [
+			'type' => 'evaluate-abb',
+			'subject' => 'Evaluate ABB: %s',
+			'offset' => null,
+			'assignedTo' => 'juridisch-beleidsadviseur',
+		],
+	];
+
+	/**
 	 * Validate a desired status transition (REQ-WMO-005).
 	 *
 	 * @param string $fromStatus Current status.
@@ -78,58 +105,125 @@ class AbbLifecycleService {
 			return ['ok' => false, 'error' => sprintf('Transition %s -> %s is not allowed', $fromStatus, $toStatus)];
 		}
 
-		// Per-target precondition checks.
-		switch ($toStatus) {
-			case 'councilResolution':
-				$reference = trim((string)($abb['reference'] ?? ''));
-				if ($reference === '') {
-					return ['ok' => false, 'error' => 'Transition to council resolution requires a reference'];
-				}
-				break;
-
-			case 'publicatie':
-				if (trim((string)($abb['publicationMunicipalGazette'] ?? '')) === '') {
-					return ['ok' => false, 'error' => 'Transition to publicatie requires publicatieGemeenteblad'];
-				}
-
-				if (trim((string)($abb['publicationDate'] ?? '')) === '') {
-					return ['ok' => false, 'error' => 'Transition to publicatie requires publicatieDatum'];
-				}
-				break;
-
-			case 'acm-notified':
-				$acm = (array)($abb['notificationAcm'] ?? []);
-				if (((bool)($acm['submitted'] ?? false)) === false) {
-					return ['ok' => false, 'error' => 'Transition to acm-notified requires kennisgevingAcm.ingediend=true'];
-				}
-
-				if (trim((string)($acm['reference'] ?? '')) === '') {
-					return ['ok' => false, 'error' => 'Transition to acm-notified requires kennisgevingAcm.kenmerk'];
-				}
-				break;
-
-			case 'geldig':
-				if (trim((string)($abb['publicationDate'] ?? '')) === '') {
-					return ['ok' => false, 'error' => 'Geldig requires publicatieDatum'];
-				}
-
-				$acm = (array)($abb['notificationAcm'] ?? []);
-				if (((bool)($acm['submitted'] ?? false)) === false || trim((string)($acm['reference'] ?? '')) === '') {
-					return ['ok' => false, 'error' => 'Geldig requires ACM kenmerk'];
-				}
-				break;
-
-			case 'intrekking':
-			case 'herziening':
-				// Both terminal-ish states; allowed from geldig or evaluatie-due.
-				break;
-
-			default:
-				break;
-		}//end switch
+		$error = $this->preconditionError(toStatus: $toStatus, abb: $abb);
+		if ($error !== null) {
+			return ['ok' => false, 'error' => $error];
+		}
 
 		return ['ok' => true];
 	}//end canTransition()
+
+	/**
+	 * The refusal for the per-target precondition, or null when it holds.
+	 * Targets without a precondition (intrekking, herziening, ...) pass.
+	 *
+	 * @param string              $toStatus Desired status.
+	 * @param array<string,mixed> $abb      Full ABB record.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private function preconditionError(string $toStatus, array $abb): string|null {
+		return match ($toStatus) {
+			'councilResolution' => $this->councilResolutionError(abb: $abb),
+			'publicatie' => $this->publicationError(abb: $abb),
+			'acm-notified' => $this->acmNotificationError(abb: $abb),
+			'geldig' => $this->validityError(abb: $abb),
+			default => null,
+		};
+
+	}//end preconditionError()
+
+	/**
+	 * A council resolution requires a reference.
+	 *
+	 * @param array<string,mixed> $abb Full ABB record.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private function councilResolutionError(array $abb): string|null {
+		if ($this->isBlank(value: $abb['reference'] ?? '') === true) {
+			return 'Transition to council resolution requires a reference';
+		}
+
+		return null;
+
+	}//end councilResolutionError()
+
+	/**
+	 * Publication requires the municipal gazette and the publication date.
+	 *
+	 * @param array<string,mixed> $abb Full ABB record.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private function publicationError(array $abb): string|null {
+		if ($this->isBlank(value: $abb['publicationMunicipalGazette'] ?? '') === true) {
+			return 'Transition to publicatie requires publicatieGemeenteblad';
+		}
+
+		if ($this->isBlank(value: $abb['publicationDate'] ?? '') === true) {
+			return 'Transition to publicatie requires publicatieDatum';
+		}
+
+		return null;
+
+	}//end publicationError()
+
+	/**
+	 * The ACM notification must be submitted and carry its reference.
+	 *
+	 * @param array<string,mixed> $abb Full ABB record.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private function acmNotificationError(array $abb): string|null {
+		$acm = (array)($abb['notificationAcm'] ?? []);
+		if (((bool)($acm['submitted'] ?? false)) === false) {
+			return 'Transition to acm-notified requires kennisgevingAcm.ingediend=true';
+		}
+
+		if ($this->isBlank(value: $acm['reference'] ?? '') === true) {
+			return 'Transition to acm-notified requires kennisgevingAcm.kenmerk';
+		}
+
+		return null;
+
+	}//end acmNotificationError()
+
+	/**
+	 * Geldig requires the publication date and a submitted ACM notification
+	 * with its reference.
+	 *
+	 * @param array<string,mixed> $abb Full ABB record.
+	 *
+	 * @return string|null The refusal message, or null.
+	 */
+	private function validityError(array $abb): string|null {
+		if ($this->isBlank(value: $abb['publicationDate'] ?? '') === true) {
+			return 'Geldig requires publicatieDatum';
+		}
+
+		$acm = (array)($abb['notificationAcm'] ?? []);
+		if (((bool)($acm['submitted'] ?? false)) === false || $this->isBlank(value: $acm['reference'] ?? '') === true) {
+			return 'Geldig requires ACM kenmerk';
+		}
+
+		return null;
+
+	}//end validityError()
+
+	/**
+	 * True when the value is empty once cast to a string and trimmed.
+	 *
+	 * @param mixed $value The value to test.
+	 *
+	 * @return bool True when blank.
+	 */
+	private function isBlank(mixed $value): bool {
+		return trim((string)$value) === '';
+
+	}//end isBlank()
+
 
 	/**
 	 * Apply a transition, producing the post-transition ABB plus the task envelope (REQ-WMO-005).
@@ -151,14 +245,7 @@ class AbbLifecycleService {
 		}
 
 		$abb['status'] = $toStatus;
-
-		// Auto-calculate volgendeEvaluatie when entering geldig.
-		if ($toStatus === 'geldig' && trim((string)($abb['determinationDate'] ?? '')) !== '') {
-			$abb['nextEvaluation'] = $this->calculateNextEvaluation(
-				determinationDate: (string)$abb['determinationDate'],
-				ritme: (string)($abb['evaluationCadence'] ?? 'tweejaarlijks')
-			);
-		}
+		$abb = $this->withNextEvaluation(abb: $abb);
 
 		return [
 			'abb' => $abb,
@@ -166,6 +253,25 @@ class AbbLifecycleService {
 		];
 
 	}//end transition()
+
+	/**
+	 * Auto-calculate volgendeEvaluatie when the ABB enters geldig with a
+	 * determination date.
+	 *
+	 * @param array<string,mixed> $abb The ABB record, status already set.
+	 *
+	 * @return array<string,mixed> The ABB, with nextEvaluation when it applies.
+	 */
+	private function withNextEvaluation(array $abb): array {
+		if ($abb['status'] === 'geldig' && trim((string)($abb['determinationDate'] ?? '')) !== '') {
+			$abb['nextEvaluation'] = $this->calculateNextEvaluation(
+				determinationDate: (string)$abb['determinationDate'],
+				ritme: (string)($abb['evaluationCadence'] ?? 'tweejaarlijks')
+			);
+		}
+
+		return $abb;
+	}//end withNextEvaluation()
 
 	/**
 	 * Generate the automatic tasks for a given status (REQ-WMO-005 §c).
@@ -176,60 +282,39 @@ class AbbLifecycleService {
 	 * @return array<int,array<string,mixed>> Task envelopes.
 	 */
 	public function generateTasks(array $abb, string $toStatus): array {
-		$tasks = [];
-		$now = new DateTimeImmutable('now');
-		$reference = (string)($abb['reference'] ?? 'ABB');
+		$template = self::STATUS_TASKS[$toStatus] ?? null;
+		if ($template === null) {
+			return [];
+		}
 
-		switch ($toStatus) {
-			case 'councilResolution':
-				$due = $now->add(new DateInterval('P14D'))->format('Y-m-d');
-				$tasks[] = [
-					'type' => 'publish-gemeenteblad',
-					'subject' => sprintf('Publish in gemeenteblad: %s', $reference),
-					'dueDate' => $due,
-					'assignedTo' => 'griffier',
-					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
-				];
-				break;
-
-			case 'publicatie':
-				$due = $now->add(new DateInterval('P7D'))->format('Y-m-d');
-				$tasks[] = [
-					'type' => 'notify-acm',
-					'subject' => sprintf('Notify ACM: %s', $reference),
-					'dueDate' => $due,
-					'assignedTo' => 'juridisch-beleidsadviseur',
-					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
-				];
-				break;
-
-			case 'acm-notified':
-				$due = $now->add(new DateInterval('P42D'))->format('Y-m-d');
-				$tasks[] = [
-					'type' => 'review-bezwaarschriften',
-					'subject' => sprintf('Review bezwaarschriften (6 weeks): %s', $reference),
-					'dueDate' => $due,
-					'assignedTo' => 'juridisch-beleidsadviseur',
-					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
-				];
-				break;
-
-			case 'evaluatie-due':
-				$tasks[] = [
-					'type' => 'evaluate-abb',
-					'subject' => sprintf('Evaluate ABB: %s', $reference),
-					'dueDate' => (string)($abb['nextEvaluation'] ?? $now->format('Y-m-d')),
-					'assignedTo' => 'juridisch-beleidsadviseur',
-					'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
-				];
-				break;
-
-			default:
-				break;
-		}//end switch
-
-		return $tasks;
+		return [
+			[
+				'type' => $template['type'],
+				'subject' => sprintf($template['subject'], (string)($abb['reference'] ?? 'ABB')),
+				'dueDate' => $this->taskDueDate(offset: $template['offset'], abb: $abb),
+				'assignedTo' => $template['assignedTo'],
+				'abbId' => (string)($abb['id'] ?? $abb['_id'] ?? ''),
+			],
+		];
 	}//end generateTasks()
+
+	/**
+	 * Due date of an automatic task: the offset from today, or — for a task
+	 * without an offset — the ABB's nextEvaluation, defaulting to today.
+	 *
+	 * @param string|null         $offset ISO-8601 interval from today, or null.
+	 * @param array<string,mixed> $abb    The ABB record.
+	 *
+	 * @return string The due date (Y-m-d).
+	 */
+	private function taskDueDate(string|null $offset, array $abb): string {
+		$now = new DateTimeImmutable('now');
+		if ($offset === null) {
+			return (string)($abb['nextEvaluation'] ?? $now->format('Y-m-d'));
+		}
+
+		return $now->add(new DateInterval($offset))->format('Y-m-d');
+	}//end taskDueDate()
 
 	/**
 	 * Calculate volgendeEvaluatie based on vaststellingsdatum + ritme.
@@ -270,14 +355,21 @@ class AbbLifecycleService {
 			return [];
 		}
 
-		$flags = [];
-		$reference = (string)($abb['reference'] ?? 'ABB');
-		if ($status === 'intrekking') {
-			$reason = sprintf('Exemption ABB %s ingetrokken; review activity', $reference);
-		} else {
-			$reason = sprintf('Exemption ABB %s in herziening; review activity', $reference);
-		}
+		$reason = $this->dependentReviewReason(status: $status, reference: (string)($abb['reference'] ?? 'ABB'));
 
+		return $this->activityFlags(activities: $activities, reason: $reason);
+	}//end flagDependentActivities()
+
+	/**
+	 * One flag per linked activity record, all with the same reason.
+	 *
+	 * @param array<int,mixed> $activities Linked CommercialActivity records.
+	 * @param string           $reason     The review reason.
+	 *
+	 * @return array<int,array{commercialActivityId:string,reason:string}> Flag envelopes.
+	 */
+	private function activityFlags(array $activities, string $reason): array {
+		$flags = [];
 		foreach ($activities as $activity) {
 			if (is_array($activity) === false) {
 				continue;
@@ -290,5 +382,21 @@ class AbbLifecycleService {
 		}
 
 		return $flags;
-	}//end flagDependentActivities()
+	}//end activityFlags()
+
+	/**
+	 * Reason text for flagging a dependent activity of a withdrawn or revised ABB.
+	 *
+	 * @param string $status    herziening or intrekking.
+	 * @param string $reference The ABB reference.
+	 *
+	 * @return string The reason.
+	 */
+	private function dependentReviewReason(string $status, string $reference): string {
+		if ($status === 'intrekking') {
+			return sprintf('Exemption ABB %s ingetrokken; review activity', $reference);
+		}
+
+		return sprintf('Exemption ABB %s in herziening; review activity', $reference);
+	}//end dependentReviewReason()
 }//end class

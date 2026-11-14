@@ -317,4 +317,40 @@ final class InnovatieboxAuditEventLoggerTest extends TestCase {
 
 	}//end testNullOptionalFieldsAreNotForwarded()
 
+	/**
+	 * Pin the exact event: key order, casting, null and unknown options, and
+	 * the warnings of both refusal paths.
+	 *
+	 * @return void
+	 */
+	public function testEventShapeAndWarningsAreExact(): void {
+		$this->arrangeUser('bob');
+		$warnings = [];
+		$this->logger->method('warning')->willReturnCallback(
+			function (string $message, array $context) use (&$warnings): void {
+				$warnings[] = [$message, $context];
+			}
+		);
+		$fake = new FakeAuditObjectService();
+		$svc = $this->svc($fake);
+
+		self::assertTrue($svc->record(['details' => [], 'reason' => null, 'administrationId' => 42, 'event_type' => 'X.y', 'extra' => 'dropped', 'subject_id' => 0]));
+		$payload = $fake->saves[0]['payload'];
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/', $payload['event_timestamp']);
+		unset($payload['event_timestamp']);
+		self::assertSame(['event_type' => 'X.y', 'administrationId' => '42', 'actor_uid' => 'bob', 'subject_id' => 0, 'details' => []], $payload);
+		self::assertSame(['event_type', 'event_timestamp', 'administrationId', 'actor_uid', 'subject_id', 'details'], array_keys($fake->saves[0]['payload']));
+
+		self::assertFalse($svc->record(['event_type' => 'X.y', 'administrationId' => '']));
+		$fake->setError(new \RuntimeException('disk full'));
+		self::assertFalse($svc->record(['event_type' => 'X.z', 'administrationId' => 'a']));
+		self::assertSame(
+			[
+				['InnovatieboxAuditEventLogger: missing required event_type or administrationId', ['options' => ['event_type' => 'X.y', 'administrationId' => '']]],
+				['InnovatieboxAuditEventLogger: failed to persist audit event', ['event_type' => 'X.z', 'exception' => 'disk full']],
+			],
+			$warnings
+		);
+
+	}//end testEventShapeAndWarningsAreExact()
 }//end class

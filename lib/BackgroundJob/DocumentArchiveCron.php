@@ -3,6 +3,9 @@
 /**
  * WBSO Document Archive Cron.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Nightly background job that scans `Document` records in `filed` whose
  * `documentDate` (or `filedAt`, whichever is later) has crossed the seven-
  * year Archiefwet 1995 retention boundary, and routes each match through
@@ -29,17 +32,15 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\WbsoDocumentService;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -55,6 +56,7 @@ use Throwable;
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
  */
 class DocumentArchiveCron extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Daily interval in seconds (24h).
@@ -74,15 +76,15 @@ class DocumentArchiveCron extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param SettingsService $settings Settings (register slug + OR availability).
-	 * @param WbsoDocumentService $documents Document archival service.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param WbsoDocumentServiceInterface $documents Document archival service.
 	 * @param ContainerInterface $container DI container (OR ObjectService).
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
-		private readonly WbsoDocumentService $documents,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly WbsoDocumentServiceInterface $documents,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -92,6 +94,21 @@ class DocumentArchiveCron extends TimedJob {
 		$this->setAllowParallelRuns(allow: false);
 
 	}//end __construct()
+
+	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
 
 	/**
 	 * Sweep filed documents and archive ones past the retention boundary.
@@ -105,68 +122,15 @@ class DocumentArchiveCron extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+	private function runAsJob($argument): void {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('DocumentArchiveCron: OpenRegister not available, skipping.');
 			return;
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-
-			$filed = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Document')
-				->findAll(
-					[
-						'filters' => ['status' => 'filed'],
-						'limit' => 5000,
-					]
-				);
-
-			$archived = 0;
-			$skipped = 0;
-			$failed = 0;
-			foreach ($filed as $row) {
-				$documentId = (string)($row['id'] ?? ($row['documentNumber'] ?? ''));
-				$administrationId = (string)($row['administrationId'] ?? '');
-				$filedAt = (string)($row['filedAt'] ?? ($row['documentDate'] ?? ''));
-
-				if ($documentId === '' || $administrationId === '') {
-					$skipped++;
-					continue;
-				}
-
-				if ($this->documents->isRetentionElapsed(filedAt: $filedAt) === false) {
-					$skipped++;
-					continue;
-				}
-
-				try {
-					$this->documents->archiveDocument(
-						administrationId: $administrationId,
-						documentId: $documentId,
-						reason: self::SYSTEM_REASON,
-						allowEarly: false,
-					);
-					$archived++;
-				} catch (Throwable $e) {
-					$failed++;
-					$this->logger->warning(
-						'DocumentArchiveCron: failed to archive document ' . $documentId,
-						[
-							'administrationId' => $administrationId,
-							'exception' => $e->getMessage(),
-						]
-					);
-				}
-			}//end foreach
-
-			$this->logger->info(
-				'DocumentArchiveCron: archived=' . $archived . ' skipped=' . $skipped . ' failed=' . $failed
-				. ' (sampled ' . count($filed) . ' filed documents).'
-			);
+			$filed = $this->filedDocuments();
+			$this->logTally(tally: $this->archiveAll(filed: $filed), sampled: count($filed));
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'DocumentArchiveCron failed: ' . $e->getMessage(),
@@ -174,5 +138,119 @@ class DocumentArchiveCron extends TimedJob {
 			);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
+
+	/**
+	 * Log the run's counts.
+	 *
+	 * @param ArchiveTally $tally   The run's counts.
+	 * @param int          $sampled How many filed documents were read.
+	 *
+	 * @return void
+	 */
+	private function logTally(ArchiveTally $tally, int $sampled): void {
+		$this->logger->info(
+			'DocumentArchiveCron: archived=' . $tally->archived . ' skipped=' . $tally->skipped . ' failed=' . $tally->failed
+			. ' (sampled ' . $sampled . ' filed documents).'
+		);
+	}//end logTally()
+
+	/**
+	 * The filed Documents (up to 5000).
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function filedDocuments(): array {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$registerSlug = $this->registerLocation->getRegisterSlug();
+
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema('Document')
+			->findAll(
+				[
+					'filters' => ['status' => 'filed'],
+					'limit' => 5000,
+				]
+			);
+	}//end filedDocuments()
+
+	/**
+	 * Archive every filed document whose retention has elapsed, counting the outcomes.
+	 *
+	 * @param array<int, mixed> $filed The filed Document rows.
+	 *
+	 * @return ArchiveTally
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+	 */
+	private function archiveAll(array $filed): ArchiveTally {
+		$tally = new ArchiveTally();
+		foreach ($filed as $row) {
+			$this->archiveOne(tally: $tally, document: new ArchivableDocument(row: $row));
+		}
+
+		return $tally;
+	}//end archiveAll()
+
+	/**
+	 * Skip an unidentified document or one still within the retention
+	 * boundary; archive any other.
+	 *
+	 * @param ArchiveTally       $tally    The run's counts.
+	 * @param ArchivableDocument $document The filed document.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+	 */
+	private function archiveOne(ArchiveTally $tally, ArchivableDocument $document): void {
+		if ($document->isIdentified() === false || $this->documents->isRetentionElapsed(filedAt: $document->filedAt) === false) {
+			$tally->skipped++;
+			return;
+		}
+
+		$this->tryArchive(tally: $tally, document: $document);
+	}//end archiveOne()
+
+	/**
+	 * Archive one document; a failure is counted and logged, never fatal.
+	 *
+	 * @param ArchiveTally       $tally    The run's counts.
+	 * @param ArchivableDocument $document The document past its retention boundary.
+	 *
+	 * @return void
+	 */
+	private function tryArchive(ArchiveTally $tally, ArchivableDocument $document): void {
+		try {
+			$this->documents->archiveDocument(
+				administrationId: $document->administrationId,
+				documentId: $document->documentId,
+				reason: self::SYSTEM_REASON,
+				allowEarly: false,
+			);
+			$tally->archived++;
+		} catch (Throwable $e) {
+			$tally->failed++;
+			$this->logArchiveFailure(document: $document, e: $e);
+		}
+	}//end tryArchive()
+
+	/**
+	 * Log a document that could not be archived.
+	 *
+	 * @param ArchivableDocument $document The document.
+	 * @param Throwable          $e        The failure.
+	 *
+	 * @return void
+	 */
+	private function logArchiveFailure(ArchivableDocument $document, Throwable $e): void {
+		$this->logger->warning(
+			'DocumentArchiveCron: failed to archive document ' . $document->documentId,
+			[
+				'administrationId' => $document->administrationId,
+				'exception' => $e->getMessage(),
+			]
+		);
+	}//end logArchiveFailure()
 }//end class

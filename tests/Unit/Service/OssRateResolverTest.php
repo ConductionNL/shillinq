@@ -104,4 +104,90 @@ class OssRateResolverTest extends TestCase {
 	}//end testSelectRateInForceReturnsNullWhenMissing()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+
+	/**
+	 * Pin the rate choice over every bound and tie case.
+	 *
+	 * @return void
+	 */
+	public function testSelectRateInForceOverEveryBound(): void {
+		$rows = [
+			'a' => ['id' => 'a', 'validFrom' => '2025-01-01'],
+			'b' => ['id' => 'b', 'validFrom' => '2025-06-01', 'validUntil' => '2025-12-31'],
+			'c' => ['id' => 'c', 'validFrom' => '2025-06-01', 'validUntil' => ''],
+			'd' => ['id' => 'd', 'validFrom' => '2026-02-01'],
+			'e' => ['id' => 'e', 'validUntil' => '2030-01-01'],
+			'f' => ['id' => 'f', 'validFrom' => '2025-03-01', 'validUntil' => null],
+		];
+		$pick = fn (array $keys, string $date): ?string => ($this->resolver->selectRateInForce(array_values(array_intersect_key($rows, array_flip($keys))), $date)['id'] ?? null);
+
+		self::assertSame('c', $pick(['a', 'b', 'c', 'd'], '2025-07-01'));
+		self::assertSame('c', $pick(['a', 'c', 'b'], '2025-07-01'));
+		self::assertSame('b', $pick(['a', 'b'], '2025-12-31'));
+		self::assertSame('a', $pick(['a', 'b'], '2026-01-01'));
+		self::assertSame('d', $pick(['a', 'd'], '2026-02-01'));
+		self::assertSame('f', $pick(['a', 'f', 'e'], '2025-04-01'));
+		self::assertNull($pick(['d', 'e'], '2025-04-01'));
+		self::assertNull($pick([], '2025-04-01'));
+
+	}//end testSelectRateInForceOverEveryBound()
+
+	/**
+	 * Pin resolve over array, serialisable, wrapped and unusable rows.
+	 *
+	 * @return void
+	 */
+	public function testResolveNormalisesRowsAndQueriesExactly(): void {
+		$queries = [];
+		$serialisable = new class {
+			public function jsonSerialize(): array {
+				return ['@self' => ['slug' => 'nl-std-2026'], 'validFrom' => '2026-01-01', 'ratePercentage' => '21'];
+			}
+		};
+		$wrapped = new class {
+			public function getObject(): array {
+				return ['@self' => ['id' => 'w'], 'validFrom' => '2025-01-01', 'ratePercentage' => 19];
+			}
+		};
+		$badJson = new class {
+			public function jsonSerialize(): string {
+				return 'x';
+			}
+
+			public function getObject(): array {
+				return ['validFrom' => '2027-01-01', 'ratePercentage' => 1];
+			}
+		};
+		$store = $this->createMock(ObjectServiceInterface::class);
+		$store->method('setRegister')->willReturnSelf();
+		$store->method('setSchema')->willReturnSelf();
+		$store->method('findAll')->willReturnCallback(
+			function (array $config) use (&$queries, $serialisable, $wrapped, $badJson): array {
+				$queries[] = $config;
+				return [$wrapped, $badJson, 'scalar', $serialisable];
+			}
+		);
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('');
+		$resolver = new OssRateResolver($config, objectService: $store);
+
+		self::assertSame(
+			['appliedVatRate' => 21.0, 'appliedRateCategory' => 'standard', 'tedbRateVersion' => 'nl-std-2026'],
+			$resolver->resolve(' nl ', 'standard', '2026-06-01')
+		);
+		self::assertSame(
+			['appliedVatRate' => 19.0, 'appliedRateCategory' => 'reduced', 'tedbRateVersion' => 'w'],
+			$resolver->resolve('de', 'reduced', '2025-06-01')
+		);
+		self::assertNull($resolver->resolve('fr', 'standard', '2024-01-01'));
+		self::assertSame(
+			[
+				['filters' => ['countryCode' => 'NL', 'rateCategory' => 'standard']],
+				['filters' => ['countryCode' => 'DE', 'rateCategory' => 'reduced']],
+				['filters' => ['countryCode' => 'FR', 'rateCategory' => 'standard']],
+			],
+			$queries
+		);
+
+	}//end testResolveNormalisesRowsAndQueriesExactly()
 }//end class

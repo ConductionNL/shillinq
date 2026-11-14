@@ -1,0 +1,95 @@
+{
+    "entity-string-schema-ar": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "exact",
+                "manualOverride": false,
+                "confidenceScoreT4": 0.75,
+                "reconId": "rec-1",
+                "arInvoiceId": "obj-9",
+                "bankLineId": "bsl-1",
+                "id": "m1"
+            }
+        }
+    ],
+    "slug-object-journal-manual": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "manual",
+                "manualOverride": true,
+                "confidenceScoreT4": 1.0,
+                "glTransactionId": "obj-9",
+                "id": "m2"
+            }
+        }
+    ],
+    "self-schema-suspense": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "exact",
+                "manualOverride": false,
+                "confidenceScoreT4": 1.0,
+                "id": "m3"
+            }
+        }
+    ],
+    "int-schema-falls-back-ap": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "exact",
+                "manualOverride": false,
+                "confidenceScoreT4": 1.0,
+                "apTransactionId": "obj-9",
+                "id": "m4"
+            }
+        }
+    ],
+    "gl-unresolved-line": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "exact",
+                "manualOverride": false,
+                "confidenceScoreT4": 1.0,
+                "glTransactionId": "obj-9",
+                "bankLineId": "bsl-x",
+                "id": "m5"
+            }
+        }
+    ],
+    "empty-matched-object": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "exact",
+                "manualOverride": false,
+                "confidenceScoreT4": 1.0,
+                "id": "m6"
+            }
+        }
+    ],
+    "statement-without-session": [
+        {
+            "schema": "ReconciliationMatch",
+            "object": {
+                "matchAlgorithm": "exact",
+                "manualOverride": false,
+                "confidenceScoreT4": 1.0,
+                "arInvoiceId": "obj-9",
+                "bankLineId": "bsl-2",
+                "id": "m7"
+            }
+        }
+    ],
+    "other-schema": [],
+    "not-confirmed": [],
+    "already-stamped": [],
+    "no-id": [],
+    "scalar-snapshot": [],
+    "entity-scalar-snapshot": [],
+    "no-schema-anywhere": []
+}

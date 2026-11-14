@@ -266,29 +266,23 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_vat_administrator"
+          ]
         }
       },
       "VATDeclaration": {
@@ -404,29 +398,23 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_vat_administrator"
+          ]
         }
       },
       "VATLine": {
@@ -543,29 +531,23 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_vat_administrator"
+          ]
         }
       }
     },

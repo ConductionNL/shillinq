@@ -3,6 +3,9 @@
 /**
  * Budget Overrun Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the budget-overrun precondition on
  * GL posting (REQ-010). When a JournalEntry is materialised (boekstuk posted),
  * the system validates that the cumulative lasten posted to a programma /
@@ -27,20 +30,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-27
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\BegrotingswijzigingStacker;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BegrotingswijzigingStackerInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Precondition guard preventing GL lasten postings beyond the authorized budget.
@@ -52,13 +52,13 @@ class BudgetOverrunGuard {
 	 * Construct the guard with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param BegrotingswijzigingStacker $stacker Computes the stacked authorized lasten.
+	 * @param BegrotingswijzigingStackerInterface $stacker Computes the stacked authorized lasten.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly BegrotingswijzigingStacker $stacker,
+		private readonly BegrotingswijzigingStackerInterface $stacker,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -109,35 +109,15 @@ class BudgetOverrunGuard {
 				return false;
 			}
 
-			$register = $this->resolveRegister();
-
-			$basis = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('Taakveld')
-					->findAll(['filters' => ['budgetId' => $budgetId]])
+			$check = new BudgetPostCheck(
+				register: $this->resolveRegister(),
+				budgetId: $budgetId,
+				taskFieldCode: $taskFieldCode
 			);
-			$wijzigingen = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('Begrotingswijziging')
-					->findAll(['filters' => ['budgetId' => $budgetId]])
-			);
-
-			$authorized = $this->stacker->authorizedLasten(
-				taskFieldCode: $taskFieldCode,
-				basisTaskFields: $basis,
-				wijzigingen: $wijzigingen
-			);
-
-			$glLines = $this->toRows(
-				rows: $this->objectService->setRegister($register)->setSchema('GLLine')
-					->findAll(['filters' => ['taskFieldCode' => $taskFieldCode, 'side' => 'debit']])
-			);
-			$alreadyPostedCents = 0;
-			foreach ($glLines as $line) {
-				$alreadyPostedCents += (int)round(((float)($line['amount'] ?? 0)) * 100);
-			}
 
 			return $this->isWithinBudget(
-				authorizedExpenses: $authorized,
-				alreadyPosted: ($alreadyPostedCents / 100),
+				authorizedExpenses: $this->authorizedExpenses(check: $check),
+				alreadyPosted: $this->postedDebits(check: $check),
 				attempted: $attempted
 			);
 		} catch (\Throwable $e) {
@@ -148,6 +128,52 @@ class BudgetOverrunGuard {
 			return false;
 		}//end try
 	}//end canPost()
+
+	/**
+	 * The taakveld's authorized lasten: the basis budget stacked with its wijzigingen.
+	 *
+	 * @param BudgetPostCheck $check The budget and taakveld.
+	 *
+	 * @return float The authorized expenses.
+	 */
+	private function authorizedExpenses(BudgetPostCheck $check): float {
+		$basis = $this->toRows(
+			rows: $this->objectService->setRegister($check->register)->setSchema('Taakveld')
+				->findAll(['filters' => ['budgetId' => $check->budgetId]])
+		);
+		$wijzigingen = $this->toRows(
+			rows: $this->objectService->setRegister($check->register)->setSchema('Begrotingswijziging')
+				->findAll(['filters' => ['budgetId' => $check->budgetId]])
+		);
+
+		return $this->stacker->authorizedLasten(
+			taskFieldCode: $check->taskFieldCode,
+			basisTaskFields: $basis,
+			wijzigingen: $wijzigingen
+		);
+
+	}//end authorizedExpenses()
+
+	/**
+	 * The debit GL lines already posted to the taakveld, summed in cents.
+	 *
+	 * @param BudgetPostCheck $check The budget and taakveld.
+	 *
+	 * @return float The amount already posted.
+	 */
+	private function postedDebits(BudgetPostCheck $check): float {
+		$glLines = $this->toRows(
+			rows: $this->objectService->setRegister($check->register)->setSchema('GLLine')
+				->findAll(['filters' => ['taskFieldCode' => $check->taskFieldCode, 'side' => 'debit']])
+		);
+		$alreadyPostedCents = 0;
+		foreach ($glLines as $line) {
+			$alreadyPostedCents += (int)round(((float)($line['amount'] ?? 0)) * 100);
+		}
+
+		return ($alreadyPostedCents / 100);
+
+	}//end postedDebits()
 
 	/**
 	 * Normalise an ObjectService result into an array of array rows.
@@ -173,7 +199,7 @@ class BudgetOverrunGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

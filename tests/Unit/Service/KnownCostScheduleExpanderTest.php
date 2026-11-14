@@ -302,4 +302,65 @@ final class KnownCostScheduleExpanderTest extends TestCase {
 		}
 
 	}//end testExpiredRecurringContributesNothing()
+
+	/**
+	 * Every recurring case of the characterisation grid, keyed by a readable
+	 * label.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private static function goldenGrid(): array {
+		$frequencies = [
+			'M' => ['frequency' => 'MONTHLY'],
+			'Q' => ['frequency' => 'QUARTERLY'],
+			'A0' => ['frequency' => 'ANNUALLY'],
+			'A3' => ['frequency' => 'ANNUALLY', 'monthOfYear' => 3],
+			'A13' => ['frequency' => 'ANNUALLY', 'monthOfYear' => 13],
+			'W' => ['frequency' => 'WEEKLY'],
+			'F' => ['frequency' => 'FORTNIGHTLY'],
+			'X' => ['frequency' => 'DAILY'],
+			'-' => [],
+		];
+		$froms = ['2024-06-03', '2025-12-30', '2026-02-10', '', 'garbage'];
+		$tos = ['n' => null, 'e' => '', 'aug' => '2026-08-03', 'past' => '2025-01-01'];
+		$rules = [
+			'fixed' => [],
+			'cpi' => ['indexationRule' => 'CPI_PAST_YEAR', 'cpiRatePercent' => 2.5],
+			'cpiInt' => ['indexationRule' => 'CPI_PAST_YEAR', 'cpiRatePercent' => 3],
+			'cpiNull' => ['indexationRule' => 'CPI_PAST_YEAR'],
+		];
+		$grid = [];
+		foreach ($frequencies as $fk => $frequency) {
+			foreach ($froms as $from) {
+				foreach ($tos as $tk => $to) {
+					foreach ($rules as $rk => $rule) {
+						$row = $frequency + $rule + ['standardAmount' => 123.45, 'validFrom' => $from, 'validTo' => $to];
+						$grid[$fk . '|' . $from . '|' . $tk . '|' . $rk] = $row;
+					}
+				}
+			}
+		}
+
+		return $grid;
+
+	}//end goldenGrid()
+
+	/**
+	 * Pin the expansion of every case in the grid against a golden fixture
+	 * written from the pre-refactor code.
+	 *
+	 * @return void
+	 */
+	public function testExpansionMatchesTheGoldenGrid(): void {
+		$actual = [];
+		foreach (self::goldenGrid() as $label => $row) {
+			$actual[$label] = $this->expander->expand($row, 2026);
+		}
+		$actual['noAmount'] = $this->expander->expand(['frequency' => 'MONTHLY', 'validFrom' => '2026-01-01'], 2026);
+		$actual['fy2025'] = $this->expander->expand(['frequency' => 'WEEKLY', 'validFrom' => '2024-12-30', 'standardAmount' => 10], 2025);
+
+		$golden = (string)file_get_contents(__DIR__ . '/fixtures/known-cost-schedule-golden.json');
+		self::assertSame($golden, json_encode($actual, JSON_PRESERVE_ZERO_FRACTION) . "\n");
+
+	}//end testExpansionMatchesTheGoldenGrid()
 }//end class

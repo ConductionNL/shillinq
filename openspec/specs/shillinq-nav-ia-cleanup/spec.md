@@ -6,7 +6,9 @@ status: done
 
 ## Purpose
 Corrects shillinq's navigation information architecture by disambiguating the manual-journal entry as "Manual Journals" distinct from the General Ledger, giving the Project schema exactly one navigation home while keeping its page deep-linkable, and ensuring each route marks exactly one active nav leaf with no duplicate detail-route registrations. The capability also fixes dashboard KPI rendering so stats-block tiles render with single card chrome instead of nested cards, and adds e2e coverage for these corrections.
+
 ## Requirements
+
 ### Requirement: REQ-NAVIA-001 — The system SHALL label the manual-journal menu entry "Manual Journals" (nl "Memoriaalboekingen") so it does not read as a duplicate of the General Ledger
 
 The Bookkeeping menu entry `id: "Journals"` and the page `id: "Journals"` title MUST read **"Manual Journals"** in English and **"Memoriaalboekingen"** in Dutch. The change is label-only: the menu id `Journals`, the route
@@ -31,39 +33,49 @@ NOT merged.
   the page still binds schema `JournalEntry` — only the human-readable label
   and page title changed
 
-### Requirement: REQ-NAVIA-002 — The system SHALL expose `Project` under exactly one navigation home — the "People & Projects" group
+### Requirement: REQ-NAVIA-002 — The system SHALL expose `Project` under exactly one navigation home — a `Projects` page inside the Bookkeeping cluster
 
 The `Project` schema (RJ270/IFRS15 revenue-recognition register) MUST be
-reachable from a single navigation home: the root group `Projecten`
-("People & Projects") via page `ProjectenOverzicht`, which already groups the
-project's rate-card (`Tarieven`) and utilisation (`Utilisatie`) context. The
-duplicate Bookkeeping menu leaf `Projects` MUST be removed from the navigation
-by adding `"Projects"` to the `removals` array in `src/menu-layout.json`. The
-`CostProjects` leaf (schema `CostProject`, the distinct analytical
-management-accounting register) MUST NOT be affected.
-
-**IMPLEMENTATION NOTE (2026-06-15):** The retire-cost-project change (merged
-before this change) added `"ProjectenOverzicht"` and `"CostProjects"` to
-`menu-layout.json` removals, which changes the disposition. The `ProjectenOverzicht`
-leaf (People & Projects → Overview) was the intended canonical home per the original
-spec, but it is now removed by retire-cost-project. The `Bookkeeping > Projects`
-leaf is therefore the ONLY remaining nav home for the `Project` schema —
-REQ-NAVIA-002 is satisfied (exactly one home) but the canonical home is
-`Bookkeeping > Projects`, not `Projecten > ProjectenOverzicht` as originally
-specified. Adding `"Projects"` to removals would orphan `Project` entirely
-(zero nav homes). Do NOT add `"Projects"` to removals.
+reachable from a single navigation home: the page id `Projects`, relocated
+into the Bookkeeping cluster (`nav-six-clusters`). The former `Projecten`
+top-level group and its `ProjectenOverzicht` page MUST NOT survive as a
+second navigation home for the `Project` schema — `ProjectenOverzicht` MUST
+be deleted, not merely unlinked from the menu, so a future manifest edit
+cannot silently resurrect the duplicate the way the withdrawn `removals`
+entry did. `Utilisatie` (the `Projecten` group's other child, a distinct
+schema) relocates alongside `Projects` into the Bookkeeping cluster as a
+companion card; it is not merged with `Projects` and is unaffected by this
+requirement. The `CostProjects` leaf (schema `CostProject`, the distinct
+analytical management-accounting register, already removed by
+`retire-cost-project`) remains unaffected.
 
 #### Scenario: Only one Project nav entry remains
-- **Given** the `menu-layout.json` `removals` array contains `"ProjectenOverzicht"` and `"CostProjects"` (added by retire-cost-project)
-- **When** `applyMenuRemovals` runs after all manifest.d fragments merge
-- **Then** the `ProjectenOverzicht` leaf and `CostProjects` leaf are absent and
-  the only navigation home for the `Project` schema is `Bookkeeping > Projects`
+- **GIVEN** the restructured `src/manifest.json` + `src/manifest.d/*.json` +
+  `src/menu-layout.json` (no `ProjectenOverzicht` page definition anywhere
+  in any fragment)
+- **WHEN** `buildManifest()` runs
+- **THEN** the only navigation home for the `Project` schema is the
+  `Projects` page inside the Bookkeeping cluster, and this holds regardless
+  of `menu-layout.json#removals`'s contents (there is no page left for a
+  withdrawn or re-added removals entry to accidentally resurrect)
+
+@e2e nav-six-clusters::preset-deep-links-resolve
+
+#### Scenario: Utilisatie is relocated, not merged
+- **GIVEN** the restructured manifest
+- **WHEN** the `Utilisatie` page is inspected
+- **THEN** it still exists as its own page, now reachable as a companion
+  card inside the Bookkeeping cluster landing page, and its schema/route are
+  unchanged from before this change
+
+@e2e nav-six-clusters::preset-deep-links-resolve
 
 #### Scenario: CostProjects is untouched
-- **Given** the `Projects` removal is NOT applied (ProjectenOverzicht is removed instead)
-- **When** the Bookkeeping menu renders
-- **Then** the `CostProjects` leaf (schema `CostProject`) is absent (removed via
-  retire-cost-project) and `Bookkeeping > Projects` (schema `Project`) remains
+- **GIVEN** the restructured manifest
+- **WHEN** the Bookkeeping cluster renders
+- **THEN** the `CostProjects` leaf (schema `CostProject`) is still absent
+  (per `retire-cost-project`, unaffected by this change) and `Projects`
+  (schema `Project`) is present exactly once
 
 ### Requirement: REQ-NAVIA-003 — The system SHALL keep the `Projects` page routable for deep links after its menu entry is removed
 
@@ -161,4 +173,3 @@ hydra-gate-dashboard-antipattern family (hydra#316) applied to KPI tiles.
 - **When** every `type: dashboard` page with a stats-block widget is opened
 - **Then** each stats-block tile renders with single card chrome and
   hydra-gate-dashboard-antipattern reports no cards-in-cards finding
-

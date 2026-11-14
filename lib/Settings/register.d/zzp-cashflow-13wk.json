@@ -179,27 +179,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByLifecycleState": {
             "field": "lifecycleState",
@@ -431,27 +410,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "inflowsArByWeek": {
             "field": "inflows_ar_geprognosticeerd",
@@ -586,27 +544,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "projectedReceiptsByWeek": {
             "field": "outstandingAmount",
@@ -709,27 +646,6 @@
             "description": "FK to the administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         },
         "x-openregister-aggregations": {
@@ -908,27 +824,6 @@
             "save": "OCA\\Shillinq\\Guard\\CashflowRecurringGuard::validateOnSave"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByCategorie": {
             "field": "category",
@@ -1003,27 +898,6 @@
             "description": "FK to the administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         },
         "x-openregister-aggregations": {
@@ -1220,27 +1094,6 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByHorizon": {
             "field": "horizonId",
@@ -1376,25 +1229,6 @@
             "description": "FK to the administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "cashflow-manager": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         },
         "x-openregister-aggregations": {

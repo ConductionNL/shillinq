@@ -4,6 +4,9 @@
  * The in-memory ObjectService double with real OpenRegister's identifier
  * semantics restored.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## Why a second double exists
  *
  * {@see \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService} matches every
@@ -46,9 +49,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

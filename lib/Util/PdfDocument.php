@@ -3,6 +3,9 @@
 /**
  * PDF Document Assembler
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Serialises a set of numbered PDF objects into a complete, structurally valid
  * PDF document with a correct cross-reference table and trailer, plus the
  * escaping rule for a PDF literal string token.
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

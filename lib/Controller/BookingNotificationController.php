@@ -16,6 +16,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -24,9 +27,11 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -37,7 +42,6 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST endpoints for notification trigger configuration and admin monitoring.
@@ -53,25 +57,25 @@ class BookingNotificationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param SettingsService $settingsService The settings service.
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param IGroupManager $groupManager The group manager.
 	 * @param IUserSession $userSession The user session.
 	 * @param LoggerInterface $logger The logger.
-	 * @param AdministrationContextService $administrationContext The administration membership seam.
+	 * @param AdministrationContextServiceInterface $administrationContext The administration membership seam.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SettingsService $settingsService,
+		private RegisterLocationInterface $settingsService,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
-		private AdministrationContextService $administrationContext,
+		private AdministrationContextServiceInterface $administrationContext,
 		private readonly ObjectServiceInterface $objectService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -111,11 +115,13 @@ class BookingNotificationController extends Controller {
 	 * Update notification trigger configuration for a specific booking.
 	 *
 	 * Accepts a JSON body with trigger overrides (active, recipients, templateId).
-	 * Organizers may update their own bookings' triggers.
+	 * Organizers may update their own bookings' triggers. A trigger that names
+	 * an id must already belong to this booking; otherwise nothing is saved.
 	 *
 	 * @param string $id Booking UUID.
 	 *
-	 * @return JSONResponse
+	 * @return JSONResponse 200 with the saved triggers; 400 without a triggers
+	 *                      array; 403 when a trigger belongs to another booking.
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
 	 */
@@ -133,23 +139,105 @@ class BookingNotificationController extends Controller {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
-			$saved = [];
-			foreach ($data['triggers'] as $triggerData) {
-				$triggerData['bookingId'] = $id;
-				$saved[] = $this->objectService->saveObject(
-					object: $triggerData,
-					register: $registerSlug,
-					schema: 'BookingNotificationTrigger',
-				);
+			$owned   = $this->triggerIdsOf(registerSlug: $registerSlug, bookingId: $id);
+			$refusal = self::refuseForeignTriggers(triggers: $data['triggers'], owned: $owned);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
-			return new JSONResponse(['triggers' => $saved]);
+			return new JSONResponse(['triggers' => $this->saveTriggers(triggers: $data['triggers'], registerSlug: $registerSlug, bookingId: $id)]);
 		} catch (\Throwable $e) {
 			$this->logger->error('Shillinq: updateBookingTriggers failed', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['message' => 'Failed to update triggers.'], 500);
 		}//end try
 
 	}//end updateBookingTriggers()
+
+	/**
+	 * Refuse a trigger that is not an object (400) or that claims the id of another booking's trigger (403).
+	 *
+	 * @param array<mixed>  $triggers The submitted triggers.
+	 * @param array<string> $owned    The ids of this booking's triggers.
+	 *
+	 * @return JSONResponse|null The refusal, or null when every trigger may be saved.
+	 */
+	private static function refuseForeignTriggers(array $triggers, array $owned): JSONResponse|null {
+		foreach ($triggers as $triggerData) {
+			if (is_array($triggerData) === false) {
+				return new JSONResponse(['message' => 'Each trigger must be an object.'], 400);
+			}
+
+			if (array_diff(self::claimedTriggerIds(triggerData: $triggerData), $owned) !== []) {
+				return new JSONResponse(['message' => 'A trigger of another booking cannot be changed here.'], 403);
+			}
+		}
+
+		return null;
+	}//end refuseForeignTriggers()
+
+	/**
+	 * The ids a submitted trigger claims, as strings.
+	 *
+	 * @param array<string, mixed> $triggerData The submitted trigger.
+	 *
+	 * @return array<string>
+	 */
+	private static function claimedTriggerIds(array $triggerData): array {
+		$claimed = array_filter(
+			[$triggerData['id'] ?? '', $triggerData['uuid'] ?? '', $triggerData['@self']['id'] ?? ''],
+			static fn (mixed $value): bool => is_scalar($value) === true && (string)$value !== ''
+		);
+
+		return array_map('strval', $claimed);
+	}//end claimedTriggerIds()
+
+	/**
+	 * Save each trigger onto the booking.
+	 *
+	 * @param array<int, array<string, mixed>> $triggers     The validated triggers.
+	 * @param string                           $registerSlug The register slug.
+	 * @param string                           $bookingId    The booking id.
+	 *
+	 * @return array<int, mixed> The saved triggers.
+	 */
+	private function saveTriggers(array $triggers, string $registerSlug, string $bookingId): array {
+		$saved = [];
+		foreach ($triggers as $triggerData) {
+			$triggerData['bookingId'] = $bookingId;
+			$saved[] = $this->objectService->saveObject(
+				object: $triggerData,
+				register: $registerSlug,
+				schema: 'BookingNotificationTrigger',
+			);
+		}
+
+		return $saved;
+	}//end saveTriggers()
+
+	/**
+	 * The ids of the triggers that belong to one booking.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param string $bookingId    The booking id.
+	 *
+	 * @return list<string>
+	 */
+	private function triggerIdsOf(string $registerSlug, string $bookingId): array {
+		$triggers = $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('BookingNotificationTrigger')
+			->findAll(['filters' => ['bookingId' => $bookingId], 'limit' => 1000]);
+
+		$ids = [];
+		foreach ($triggers as $trigger) {
+			$triggerId = ObjectIdentifier::resolve(saved: $trigger);
+			if ($triggerId !== '') {
+				$ids[] = $triggerId;
+			}
+		}
+
+		return $ids;
+	}//end triggerIdsOf()
 
 	/**
 	 * Get notification monitor data for the admin dashboard.
@@ -161,7 +249,7 @@ class BookingNotificationController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	#[NoCSRFRequired]
 	public function getNotificationMonitor(): JSONResponse {
 		try {
@@ -217,7 +305,7 @@ class BookingNotificationController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function disableAllTriggers(): JSONResponse {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
@@ -304,31 +392,7 @@ class BookingNotificationController extends Controller {
 		}
 
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
-
-			// ADR-022: the real ObjectService API is find()/findAll().
-			// findObject() does not exist — calling it raised an Error that the
-			// \Throwable arm below turned into a blanket 403, so this guard
-			// denied EVERY non-admin instead of checking anything.
-			$booking = $this->objectService->find(
-				id: $bookingId,
-				register: $registerSlug,
-				schema: 'Booking'
-			);
-
-			if ($booking === null) {
-				throw new OCSForbiddenException('Booking not found.');
-			}
-
-			$row = $booking->jsonSerialize();
-
-			// An absent or empty administrationId must DENY, never skip the
-			// check — that is the defect fixed in #474, where `?? ''` plus a
-			// `!== ''` guard meant canAccess() was never reached.
-			$administrationId = (string)($row['administrationId'] ?? '');
-			if ($this->administrationContext->canAccess($administrationId) === false) {
-				throw new OCSForbiddenException('Not authorized to access this booking.');
-			}
+			$this->assertBookingInAccessibleAdministration(bookingId: $bookingId);
 		} catch (OCSForbiddenException $e) {
 			throw $e;
 		} catch (\Throwable $e) {
@@ -340,4 +404,41 @@ class BookingNotificationController extends Controller {
 		}//end try
 
 	}//end authorizeBookingAccess()
+
+	/**
+	 * Refuse a booking that is not found or that is outside the caller's administrations.
+	 *
+	 * @param string $bookingId The booking id.
+	 *
+	 * @return void
+	 *
+	 * @throws OCSForbiddenException When the booking is not found or not accessible.
+	 */
+	private function assertBookingInAccessibleAdministration(string $bookingId): void {
+		$registerSlug = $this->settingsService->getRegisterSlug();
+
+		// ADR-022: the real ObjectService API is find()/findAll().
+		// findObject() does not exist — calling it raised an Error that the
+		// \Throwable arm of authorizeBookingAccess() turned into a blanket 403, so this guard
+		// denied EVERY non-admin instead of checking anything.
+		$booking = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($registerSlug)->setSchema('Booking'),
+			id: $bookingId
+		);
+
+		if ($booking === null) {
+			throw new OCSForbiddenException('Booking not found.');
+		}
+
+		$row = $booking->jsonSerialize();
+
+		// An absent or empty administrationId must DENY, never skip the
+		// check — that is the defect fixed in #474, where `?? ''` plus a
+		// `!== ''` guard meant canAccess() was never reached.
+		$administrationId = (string)($row['administrationId'] ?? '');
+		if ($this->administrationContext->canAccess($administrationId) === false) {
+			throw new OCSForbiddenException('Not authorized to access this booking.');
+		}
+
+	}//end assertBookingInAccessibleAdministration()
 }//end class

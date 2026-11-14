@@ -1,0 +1,135 @@
+{
+    "adm-1": {
+        "items": [
+            {
+                "lineId": "l-1",
+                "statementId": "st-1",
+                "status": "unmatched",
+                "amount": -12.345,
+                "valueDate": "2026-01-01",
+                "daysOutstanding": 31
+            },
+            {
+                "lineId": "l-2",
+                "statementId": "st-2",
+                "status": "routed-to-suspense",
+                "amount": 5.0,
+                "valueDate": "2026-01-10",
+                "daysOutstanding": 22
+            },
+            {
+                "lineId": "l-3",
+                "statementId": "st-2-uuid",
+                "status": "unmatched",
+                "amount": 7.5,
+                "valueDate": "2026-03-01",
+                "daysOutstanding": 0
+            },
+            {
+                "lineId": "l-4",
+                "statementId": "st-1",
+                "status": "unmatched",
+                "amount": 1.0,
+                "valueDate": "not a date",
+                "daysOutstanding": 0
+            },
+            {
+                "lineId": "l-8",
+                "statementId": "st-1",
+                "status": "unmatched",
+                "amount": 2.0,
+                "valueDate": "",
+                "daysOutstanding": 0
+            }
+        ],
+        "count": 5,
+        "oldestDaysOutstanding": 31,
+        "totalAmountCents": 2785
+    },
+    "adm-2": {
+        "items": [
+            {
+                "lineId": "l-5",
+                "statementId": "st-9",
+                "status": "unmatched",
+                "amount": 100.0,
+                "valueDate": "2025-01-01",
+                "daysOutstanding": 396
+            }
+        ],
+        "count": 1,
+        "oldestDaysOutstanding": 396,
+        "totalAmountCents": 10000
+    },
+    "unscoped": {
+        "items": [
+            {
+                "lineId": "l-5",
+                "statementId": "st-9",
+                "status": "unmatched",
+                "amount": 100.0,
+                "valueDate": "2025-01-01",
+                "daysOutstanding": 396
+            },
+            {
+                "lineId": "l-7",
+                "statementId": "",
+                "status": "unmatched",
+                "amount": 3.0,
+                "valueDate": "2025-12-01",
+                "daysOutstanding": 62
+            },
+            {
+                "lineId": "l-1",
+                "statementId": "st-1",
+                "status": "unmatched",
+                "amount": -12.345,
+                "valueDate": "2026-01-01",
+                "daysOutstanding": 31
+            },
+            {
+                "lineId": "l-2",
+                "statementId": "st-2",
+                "status": "routed-to-suspense",
+                "amount": 5.0,
+                "valueDate": "2026-01-10",
+                "daysOutstanding": 22
+            },
+            {
+                "lineId": "l-3",
+                "statementId": "st-2-uuid",
+                "status": "unmatched",
+                "amount": 7.5,
+                "valueDate": "2026-03-01",
+                "daysOutstanding": 0
+            },
+            {
+                "lineId": "l-4",
+                "statementId": "st-1",
+                "status": "unmatched",
+                "amount": 1.0,
+                "valueDate": "not a date",
+                "daysOutstanding": 0
+            },
+            {
+                "lineId": "l-8",
+                "statementId": "st-1",
+                "status": "unmatched",
+                "amount": 2.0,
+                "valueDate": "",
+                "daysOutstanding": 0
+            }
+        ],
+        "count": 7,
+        "oldestDaysOutstanding": 396,
+        "totalAmountCents": 13085
+    },
+    "unknown administration": {
+        "items": [],
+        "count": 0,
+        "oldestDaysOutstanding": 0,
+        "totalAmountCents": 0
+    },
+    "control adm-1": true,
+    "control unknown": false
+}

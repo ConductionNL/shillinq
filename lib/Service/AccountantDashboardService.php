@@ -3,6 +3,9 @@
 /**
  * Accountant Dashboard Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Aggregates a per-client status overview for the accountant-portal in-app
  * surface (REQ-ACP-002): for every administration the authenticated user has
  * a valid {@see AdministrationContextService} membership for, it composes a
@@ -44,9 +47,6 @@
  *
  * @spec openspec/specs/accountant-portal/spec.md
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 
@@ -55,7 +55,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AccountantDashboardServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -65,7 +66,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/accountant-portal/spec.md
  */
-class AccountantDashboardService {
+class AccountantDashboardService implements AccountantDashboardServiceInterface {
 
 	/**
 	 * Statutory BTW filing term: aangifte + betaling due one month after the
@@ -228,6 +229,26 @@ class AccountantDashboardService {
 		$statusCode = (string)($latest['statusCode'] ?? 'draft');
 		$endDate = (string)($latest['endDate'] ?? '');
 
+		[$dueDate, $overdue] = $this->filingDeadline(statusCode: $statusCode, endDate: $endDate);
+
+		return [
+			'statusCode' => $statusCode,
+			'periodEndDate' => $endDate,
+			'dueDate' => $dueDate,
+			'overdue' => $overdue,
+		];
+
+	}//end latestVatFilingStatus()
+
+	/**
+	 * The statutory filing deadline of an unfiled return, and whether it has passed.
+	 *
+	 * @param string $statusCode The return's status code.
+	 * @param string $endDate    The return's period end date.
+	 *
+	 * @return array{0: string|null, 1: bool} [dueDate, overdue]; no deadline for a filed return or one without an end date.
+	 */
+	private function filingDeadline(string $statusCode, string $endDate): array {
 		$dueDate = null;
 		$overdue = false;
 		if ($statusCode !== 'filed' && $endDate !== '') {
@@ -240,14 +261,8 @@ class AccountantDashboardService {
 			}
 		}
 
-		return [
-			'statusCode' => $statusCode,
-			'periodEndDate' => $endDate,
-			'dueDate' => $dueDate,
-			'overdue' => $overdue,
-		];
-
-	}//end latestVatFilingStatus()
+		return [$dueDate, $overdue];
+	}//end filingDeadline()
 
 	/**
 	 * Best-effort count of SupplierInvoice rows with no recorded source document
@@ -341,7 +356,7 @@ class AccountantDashboardService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -3,6 +3,9 @@
 /**
  * UWV Loonaangifte / Werkhervattingskas adapter port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * UWV (Uitvoeringsinstituut Werknemersverzekeringen) is the Dutch
  * agency that operates the werkloosheids- and arbeidsongeschiktheids-
  * regimes (WW, WIA, ZW). Shillinq materialises two UWV interactions
@@ -47,9 +50,6 @@
  * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

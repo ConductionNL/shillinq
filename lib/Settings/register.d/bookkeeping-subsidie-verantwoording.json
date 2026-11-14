@@ -63,19 +63,11 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "subsidie-coordinator": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_auditor",
+            "shillinq_subsidie_coordinator"
+          ]
         }
       },
       "SubsidieVerantwoording": {
@@ -353,27 +345,19 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "subsidie-coordinator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "finance-officer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_subsidie_coordinator"
+          ],
+          "read": [
+            "shillinq_subsidie_coordinator",
+            "shillinq_finance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_subsidie_coordinator",
+            "shillinq_finance_officer"
+          ]
         }
       },
       "AuditorStatement": {
@@ -660,26 +644,18 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "auditor": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "finance-officer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "subsidie-coordinator": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_auditor"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_finance_officer",
+            "shillinq_subsidie_coordinator"
+          ],
+          "update": [
+            "shillinq_auditor"
+          ]
         }
       }
     }

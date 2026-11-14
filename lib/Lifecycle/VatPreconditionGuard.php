@@ -23,13 +23,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-nl-btw-invoice/tasks.md#task-8
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -93,55 +96,18 @@ class VatPreconditionGuard {
 	 */
 	public function validate(string $invoiceId, string $administrationId): bool {
 		try {
-			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
 			}
 
-			if ($this->vatGlAccountsMissing(
-				objectService: $this->objectService,
-				register: $register,
-				administrationId: $administrationId
-			) === true
-			) {
-				$this->logger->warning(
-					'VatPreconditionGuard: VAT GL accounts not configured — blocking issuance',
-					['administrationId' => $administrationId, 'invoiceId' => $invoiceId]
-				);
-				return false;
-			}
-
-			$lines = $this->objectService
-				->setRegister($register)
-				->setSchema('InvoiceLine')
-				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
-
-			$overrides = $this->loadOverrides(
-				objectService: $this->objectService,
-				register: $register,
-				administrationId: $administrationId
+			return $this->preconditionsMet(
+				run: new VatPreconditionRun(
+					invoiceId: $invoiceId,
+					administrationId: $administrationId,
+					register: $register
+				)
 			);
-
-			foreach ($lines as $line) {
-				$category = (string)($line['serviceCategory'] ?? 'product');
-				$rate = (int)($line['vatRate'] ?? 21);
-				$seq = (int)($line['lineSequence'] ?? 0);
-
-				if ($this->ratePermitted(category: $category, rate: $rate, overrides: $overrides) === false) {
-					$this->logger->warning(
-						'VatPreconditionGuard: line rejected — serviceCategory does not permit vatRate',
-						[
-							'invoiceId' => $invoiceId,
-							'lineSequence' => $seq,
-							'serviceCategory' => $category,
-							'vatRate' => $rate,
-						]
-					);
-					return false;
-				}
-			}//end foreach
-
-			return true;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VatPreconditionGuard: precondition check failed — denying issue transition (fail-closed)',
@@ -150,6 +116,85 @@ class VatPreconditionGuard {
 			return false;
 		}//end try
 	}//end validate()
+
+	/**
+	 * GL accounts configured, then every invoice line at a permitted rate.
+	 *
+	 * @param VatPreconditionRun $run The validate request.
+	 *
+	 * @return bool True when issuance may proceed.
+	 */
+	private function preconditionsMet(VatPreconditionRun $run): bool {
+		if ($this->vatGlAccountsMissing(
+			objectService: $this->objectService,
+			register: $run->register,
+			administrationId: $run->administrationId
+		) === true
+		) {
+			$this->logger->warning(
+				'VatPreconditionGuard: VAT GL accounts not configured — blocking issuance',
+				['administrationId' => $run->administrationId, 'invoiceId' => $run->invoiceId]
+			);
+			return false;
+		}
+
+		$lines = $this->objectService
+			->setRegister($run->register)
+			->setSchema('InvoiceLine')
+			->findAll(['filters' => ['invoiceId' => $run->invoiceId]]);
+
+		return $this->linesPermitted(run: $run, lines: $lines);
+
+	}//end preconditionsMet()
+
+	/**
+	 * Load the administration's overrides and check each line in order.
+	 *
+	 * @param VatPreconditionRun $run The validate request.
+	 * @param array<int,array<string,mixed>> $lines The invoice lines.
+	 *
+	 * @return bool False at the first line whose rate its category forbids.
+	 */
+	private function linesPermitted(VatPreconditionRun $run, array $lines): bool {
+		$overrides = $this->loadOverrides(
+			objectService: $this->objectService,
+			register: $run->register,
+			administrationId: $run->administrationId
+		);
+
+		foreach ($lines as $line) {
+			$category = (string)($line['serviceCategory'] ?? 'product');
+			$rate = (int)($line['vatRate'] ?? 21);
+			if ($this->ratePermitted(category: $category, rate: $rate, overrides: $overrides) === false) {
+				$this->logRejectedLine(invoiceId: $run->invoiceId, line: $line);
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end linesPermitted()
+
+	/**
+	 * Log a line whose vatRate its serviceCategory does not permit.
+	 *
+	 * @param string $invoiceId The ARInvoice id.
+	 * @param array<string,mixed> $line The rejected line.
+	 *
+	 * @return void
+	 */
+	private function logRejectedLine(string $invoiceId, array $line): void {
+		$this->logger->warning(
+			'VatPreconditionGuard: line rejected — serviceCategory does not permit vatRate',
+			[
+				'invoiceId' => $invoiceId,
+				'lineSequence' => (int)($line['lineSequence'] ?? 0),
+				'serviceCategory' => (string)($line['serviceCategory'] ?? 'product'),
+				'vatRate' => (int)($line['vatRate'] ?? 21),
+			]
+		);
+
+	}//end logRejectedLine()
 
 	/**
 	 * Check whether VAT GL accounts are missing for the given administration.

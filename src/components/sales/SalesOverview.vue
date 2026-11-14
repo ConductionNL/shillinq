@@ -27,6 +27,100 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import ClusterOverview from '../cluster-overview/ClusterOverview.vue'
+import { translateSections } from '../cluster-overview/clusterSections.js'
+
+// Each label is a function, so its literal t() call runs when the page renders.
+const SECTIONS = [
+	{
+		id: 'customers',
+		label: () => t('shillinq', 'Customers & Bookings'),
+		cards: [
+			{
+				id: 'Customers',
+				label: () => t('shillinq', 'Customers'),
+				route: 'Customers',
+			},
+			{
+				id: 'Bookings',
+				label: () => t('shillinq', 'Bookings'),
+				route: 'BookingList',
+			},
+			{
+				id: 'Deposits',
+				label: () => t('shillinq', 'Deposits'),
+				route: 'Deposits',
+			},
+		],
+	},
+	{
+		id: 'invoicing',
+		label: () => t('shillinq', 'Invoicing'),
+		cards: [
+			{
+				id: 'BillableInvoices',
+				label: () => t('shillinq', 'Billable Invoices'),
+				route: 'BillableInvoiceList',
+			},
+			{
+				id: 'RecurringInvoicing',
+				label: () => t('shillinq', 'Recurring Invoices'),
+				route: 'RecurringInvoiceProfiles',
+			},
+			{
+				id: 'PaymentRequests',
+				label: () => t('shillinq', 'Payment requests'),
+				route: 'PaymentRequests',
+			},
+			{
+				id: 'Orders',
+				label: () => t('shillinq', 'Orders'),
+				route: 'Orders',
+			},
+		],
+	},
+	{
+		id: 'retainers',
+		label: () => t('shillinq', 'Retainers'),
+		cards: [
+			{
+				id: 'RetainerPools',
+				label: () => t('shillinq', 'Retainer Pools'),
+				route: 'RetainerPools',
+			},
+			{
+				id: 'RetainerDrawdowns',
+				label: () => t('shillinq', 'Retainer Drawdowns'),
+				route: 'RetainerDrawdowns',
+			},
+			{
+				id: 'RateCards',
+				label: () => t('shillinq', 'Rate Cards'),
+				route: 'RateCards',
+			},
+			{
+				id: 'RateSchedules',
+				label: () => t('shillinq', 'Rate Schedules'),
+				route: 'RateSchedules',
+			},
+		],
+	},
+	{
+		id: 'receivable',
+		label: () => t('shillinq', 'Accounts Receivable'),
+		cards: [
+			{
+				id: 'AccountsReceivable',
+				label: () => t('shillinq', 'Accounts Receivable'),
+				route: 'AccountsReceivable',
+			},
+			{
+				id: 'ARAging',
+				label: () => t('shillinq', 'AR Aging'),
+				route: 'ARAging',
+			},
+		],
+	},
+]
 
 export default {
 	name: 'SalesOverview',
@@ -40,97 +134,7 @@ export default {
 		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
 		 */
 		sections() {
-			return [
-				{
-					id: 'customers',
-					label: this.t('shillinq', 'Customers & Bookings'),
-					cards: [
-						{
-							id: 'Customers',
-							label: this.t('shillinq', 'Customers'),
-							route: 'Customers',
-						},
-						{
-							id: 'Bookings',
-							label: this.t('shillinq', 'Bookings'),
-							route: 'Bookings',
-						},
-						{
-							id: 'Deposits',
-							label: this.t('shillinq', 'Deposits'),
-							route: 'Deposits',
-						},
-					],
-				},
-				{
-					id: 'invoicing',
-					label: this.t('shillinq', 'Invoicing'),
-					cards: [
-						{
-							id: 'BillableInvoices',
-							label: this.t('shillinq', 'Billable Invoices'),
-							route: 'BillableInvoices',
-						},
-						{
-							id: 'RecurringInvoicing',
-							label: this.t('shillinq', 'Recurring Invoices'),
-							route: 'RecurringInvoiceProfiles',
-						},
-						{
-							id: 'PaymentRequests',
-							label: this.t('shillinq', 'Payment requests'),
-							route: 'PaymentRequests',
-						},
-						{
-							id: 'Orders',
-							label: this.t('shillinq', 'Orders'),
-							route: 'Orders',
-						},
-					],
-				},
-				{
-					id: 'retainers',
-					label: this.t('shillinq', 'Retainers'),
-					cards: [
-						{
-							id: 'RetainerPools',
-							label: this.t('shillinq', 'Retainer Pools'),
-							route: 'RetainerPools',
-						},
-						{
-							id: 'RetainerDrawdowns',
-							label: this.t('shillinq', 'Retainer Drawdowns'),
-							route: 'RetainerDrawdowns',
-						},
-						{
-							id: 'RateCards',
-							label: this.t('shillinq', 'Rate Cards'),
-							route: 'RateCards',
-						},
-						{
-							id: 'RateSchedules',
-							label: this.t('shillinq', 'Rate Schedules'),
-							route: 'RateSchedules',
-						},
-					],
-				},
-				{
-					id: 'receivable',
-					label: this.t('shillinq', 'Accounts Receivable'),
-					cards: [
-						{
-							id: 'AccountsReceivable',
-							label: this.t('shillinq', 'Accounts Receivable'),
-							route: 'AccountsReceivable',
-						},
-						{
-							id: 'ARAging',
-							label: this.t('shillinq', 'AR Aging'),
-							route: 'ARAging',
-						},
-					],
-				},
-			]
+			return translateSections(SECTIONS)
 		},
 	},
 

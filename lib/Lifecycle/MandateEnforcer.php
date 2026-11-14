@@ -3,6 +3,9 @@
 /**
  * Mandate Enforcer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Commitment commitment
  * transitions. Mandate-checking is context-specific (amount + soort + effective
  * date + second-signature threshold), which the declarative lifecycle DSL cannot
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\Contracts\MandateEnforcerInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
  */
-class MandateEnforcer {
+class MandateEnforcer implements MandateEnforcerInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
@@ -138,41 +138,44 @@ class MandateEnforcer {
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
 	 */
 	public function resolveApplicableMandate(array $commitment): ?array {
-		$kind = (string)($commitment['kind'] ?? '');
+		$kind   = (string)($commitment['kind'] ?? '');
 		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
-		$admin = (string)($commitment['administrationId'] ?? '');
+		$admin  = (string)($commitment['administrationId'] ?? '');
 
 		$mandaten = $this->findMany(schema: 'SpendingMandate', filters: ['administrationId' => $admin]);
 
 		$best = null;
 		foreach ($mandaten as $mandate) {
-			if ($this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount) === false) {
-				continue;
-			}
-
-			if ($best === null) {
-				$best = $mandate;
-				continue;
-			}
-
-			// Prefer non-override, then the lowest sufficient ceiling (least-privilege).
-			$bestOverride = (bool)($best['is_override'] ?? false);
-			$candOverride = (bool)($mandate['is_override'] ?? false);
-			if ($bestOverride !== $candOverride) {
-				if ($candOverride === false) {
-					$best = $mandate;
-				}
-
-				continue;
-			}
-
-			if ((int)($mandate['maximumAmount'] ?? 0) < (int)($best['maximumAmount'] ?? 0)) {
+			$applies = $this->mandateApplies(mandate: $mandate, kind: $kind, amount: $amount);
+			if ($applies === true && self::isPreferredMandate(candidate: $mandate, best: $best) === true) {
 				$best = $mandate;
 			}
 		}//end foreach
 
 		return $best;
 	}//end resolveApplicableMandate()
+
+	/**
+	 * Prefer non-override, then the lowest sufficient ceiling (least-privilege).
+	 *
+	 * @param array<string,mixed>      $candidate An applicable mandate.
+	 * @param array<string,mixed>|null $best      The best applicable mandate so far, or null.
+	 *
+	 * @return bool Whether the candidate replaces the best so far.
+	 */
+	private static function isPreferredMandate(array $candidate, array|null $best): bool {
+		if ($best === null) {
+			return true;
+		}
+
+		$bestOverride = (bool)($best['is_override'] ?? false);
+		$candOverride = (bool)($candidate['is_override'] ?? false);
+		if ($bestOverride !== $candOverride) {
+			return ($candOverride === false);
+		}
+
+		return ((int)($candidate['maximumAmount'] ?? 0) < (int)($best['maximumAmount'] ?? 0));
+	}//end isPreferredMandate()
 
 	/**
 	 * Whether a commitment requires a second signature under the applicable mandaat
@@ -248,20 +251,6 @@ class MandateEnforcer {
 	}//end isCurrentlyValid()
 
 	/**
-	 * Return the configured register slug, falling back to 'shillinq'.
-	 *
-	 * @return string
-	 */
-	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
-	}//end getRegisterSlug()
-
-	/**
 	 * Find a single record by exact-match filters in the configured register.
 	 *
 	 * @param string $schema Schema name.
@@ -270,12 +259,7 @@ class MandateEnforcer {
 	 * @return array<string, mixed>|null First matching record, or null.
 	 */
 	private function findOne(string $schema, array $filters): ?array {
-		$result = $this->findMany(schema: $schema, filters: $filters, limit: 1);
-		if (count($result) === 0) {
-			return null;
-		}
-
-		return reset($result);
+		return $this->records()->first(records: $this->findMany(schema: $schema, filters: $filters, limit: 1));
 	}//end findOne()
 
 	/**
@@ -294,22 +278,7 @@ class MandateEnforcer {
 	 */
 	private function findMany(string $schema, array $filters, int $limit = 0): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$query = ['filters' => $filters];
-			if ($limit > 0) {
-				$query['limit'] = $limit;
-			}
-
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: $schema)
-				->findAll($query);
-
-			if (is_array($result) === false) {
-				return [];
-			}
-
-			return array_values($result);
+			return $this->records()->records(schema: $schema, query: new RecordQuery(filters: $filters, limit: $limit));
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'MandateEnforcer: schema lookup unavailable — treating as absent',
@@ -319,4 +288,13 @@ class MandateEnforcer {
 		}//end try
 
 	}//end findMany()
+
+	/**
+	 * The register lookups of this guard.
+	 *
+	 * @return RegisterRecordFinder The finder.
+	 */
+	private function records(): RegisterRecordFinder {
+		return new RegisterRecordFinder(container: $this->container, appConfig: $this->appConfig);
+	}//end records()
 }//end class

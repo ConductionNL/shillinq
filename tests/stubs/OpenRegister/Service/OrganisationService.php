@@ -25,23 +25,26 @@ namespace OCA\OpenRegister\Service;
 class OrganisationService {
 
 	/**
-	 * Return the active organisation uuid.
+	 * The active organisation (real signature; the stub has none).
 	 *
-	 * @return string|null
+	 * @param array|null $preloadedOrgs Organisations already loaded.
+	 *
+	 * @return object|null The organisation entity in OpenRegister.
 	 */
-	public function getActiveOrganisationUuid(): ?string {
+	public function getActiveOrganisation(?array $preloadedOrgs = null): ?object {
 		return null;
 
-	}//end getActiveOrganisationUuid()
+	}//end getActiveOrganisation()
 
 	/**
-	 * Set the active organisation.
+	 * Set the active organisation (real signature).
 	 *
-	 * @param string|null $uuid Organisation uuid.
+	 * @param string $organisationUuid Organisation uuid.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function setActiveOrganisation(?string $uuid): void {
+	public function setActiveOrganisation(string $organisationUuid): bool {
+		return true;
 
 	}//end setActiveOrganisation()
 }//end class

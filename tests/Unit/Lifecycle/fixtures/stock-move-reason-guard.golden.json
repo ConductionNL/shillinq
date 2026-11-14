@@ -1,0 +1,88 @@
+{
+    "missing": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "StockMoveReasonGuard: post denied — movementReason missing",
+                {
+                    "movementNumber": "SM-1"
+                }
+            ]
+        ],
+        "configReads": []
+    },
+    "nullReason": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "StockMoveReasonGuard: post denied — movementReason missing",
+                {
+                    "movementNumber": null
+                }
+            ]
+        ],
+        "configReads": []
+    },
+    "blank": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "StockMoveReasonGuard: post denied — movementReason missing",
+                {
+                    "movementNumber": "SM-2"
+                }
+            ]
+        ],
+        "configReads": []
+    },
+    "standard": {
+        "result": true,
+        "logs": [],
+        "configReads": []
+    },
+    "unknownNoAdministration": {
+        "result": false,
+        "logs": [],
+        "configReads": []
+    },
+    "customAllowed": {
+        "result": true,
+        "logs": [],
+        "configReads": [
+            "stockmove_reason_codes_adm-1"
+        ]
+    },
+    "customAbsent": {
+        "result": false,
+        "logs": [],
+        "configReads": [
+            "stockmove_reason_codes_adm-1"
+        ]
+    },
+    "numericAdministration": {
+        "result": true,
+        "logs": [],
+        "configReads": [
+            "stockmove_reason_codes_7"
+        ]
+    },
+    "configDown": {
+        "result": false,
+        "logs": [
+            [
+                "debug",
+                "StockMoveReasonGuard: failed to read per-administration reason codes; using defaults",
+                {
+                    "administrationId": "adm-1",
+                    "exception": "config down"
+                }
+            ]
+        ],
+        "configReads": [
+            "stockmove_reason_codes_adm-1"
+        ]
+    }
+}

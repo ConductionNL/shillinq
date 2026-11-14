@@ -3,6 +3,9 @@
 /**
  * Programmabegroting Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Programmabegroting register
  * (bookkeeping-programmabegroting, T2). Two preconditions are referenced from
  * the Programmabegroting schema's x-openregister-lifecycle transitions because
@@ -33,16 +36,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-18
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -117,18 +117,7 @@ final class ProgrammabegrotingGuard {
 			$id = $this->resolveId(budgetId: $budgetId, object: $object);
 			$paragrafen = $this->fetchParagrafen(budgetId: $id);
 
-			$types = [];
-			foreach ($paragrafen as $paragraph) {
-				$types[(string)($paragraph['type'] ?? '')] = true;
-			}
-
-			foreach (self::VERPLICHTE_PARAGRAFEN as $type) {
-				if (isset($types[$type]) === false) {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->coversVerplichteParagrafen(paragrafen: $paragrafen);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProgrammabegrotingGuard: behandelen check failed — denying transition (fail-closed)',
@@ -168,24 +157,8 @@ final class ProgrammabegrotingGuard {
 			$id = $this->resolveId(budgetId: $budgetId, object: $object);
 			$paragrafen = $this->fetchParagrafen(budgetId: $id);
 
-			$types = [];
-			foreach ($paragrafen as $paragraph) {
-				$type = (string)($paragraph['type'] ?? '');
-				$narrative = trim((string)($paragraph['narrative'] ?? ''));
-				if ($narrative === '') {
-					return false;
-				}
-
-				$types[$type] = true;
-			}
-
-			foreach (self::VERPLICHTE_PARAGRAFEN as $type) {
-				if (isset($types[$type]) === false) {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->allNarrated(paragrafen: $paragrafen)
+				&& $this->coversVerplichteParagrafen(paragrafen: $paragrafen);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProgrammabegrotingGuard: vaststellen check failed — denying transition (fail-closed)',
@@ -194,6 +167,47 @@ final class ProgrammabegrotingGuard {
 			return false;
 		}//end try
 	}//end canVaststellen()
+
+	/**
+	 * Whether every paragraph carries a non-blank narrative.
+	 *
+	 * @param array<int,array<string,mixed>> $paragrafen The begroting's paragrafen.
+	 *
+	 * @return bool True when none is left without toelichting.
+	 */
+	private function allNarrated(array $paragrafen): bool {
+		foreach ($paragrafen as $paragraph) {
+			if (trim((string)($paragraph['narrative'] ?? '')) === '') {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end allNarrated()
+
+	/**
+	 * Whether the paragrafen include every verplichte paragraaf type (BBV).
+	 *
+	 * @param array<int,array<string,mixed>> $paragrafen The begroting's paragrafen.
+	 *
+	 * @return bool True when no verplichte paragraaf is missing.
+	 */
+	private function coversVerplichteParagrafen(array $paragrafen): bool {
+		$types = [];
+		foreach ($paragrafen as $paragraph) {
+			$types[(string)($paragraph['type'] ?? '')] = true;
+		}
+
+		foreach (self::VERPLICHTE_PARAGRAFEN as $type) {
+			if (isset($types[$type]) === false) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end coversVerplichteParagrafen()
 
 	/**
 	 * Resolve the begroting id from the in-flight object or the passed id.
@@ -273,7 +287,7 @@ final class ProgrammabegrotingGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

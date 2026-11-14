@@ -3,6 +3,9 @@
 /**
  * Unit tests for the `/api/{path}` fallback route's POSITION.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The fallback only works because of where it sits: after every genuine API
  * route this app declares, and before the SPA catch-all. That ordering is the
  * entire mechanism, and nothing about it is visible in a diff that merely
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

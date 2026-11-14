@@ -3,11 +3,17 @@
 /**
  * Innovatiebox Audit Trail Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Listens to OpenRegister `ObjectCreatedEvent` + `ObjectUpdatedEvent` on the
  * three immutable / sensitive innovatiebox schemas — `NexusCalculation`,
- * `IBProfitAttribution`, and `CarryForwardLoss` — and appends one immutable
- * `InnovatieboxAuditEvent` per business-relevant lifecycle transition
- * (REQ-IBA-008 + REQ-IBA-009).
+ * `IBProfitAttribution`, and `CarryForwardLoss` — and records one row per
+ * business-relevant lifecycle transition on the subject object's own
+ * OpenRegister audit trail, through `AuditTrailMapper::recordObjectEvent()`
+ * (hash-chained and immutable; REQ-IBA-008 asks for exactly that, ADR-022).
+ * The action is the event type below; the context carries the fields an
+ * app-local `InnovatieboxAuditEvent` row carried until gate 23 moved it.
  *
  * Mapping (subject schema -> audit event):
  *
@@ -39,28 +45,28 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Db\AuditTrail\ObjectAuditEvent;
+use OCA\OpenRegister\Db\AuditTrailMapper;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\VsoLockingValidator;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxAuditEventLoggerInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\VsoLockingValidatorInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Append an InnovatieboxAuditEvent for every relevant innovatiebox lifecycle
- * transition (REQ-IBA-008 + REQ-IBA-009).
+ * Record every relevant innovatiebox lifecycle transition on the subject
+ * object's OpenRegister audit trail (REQ-IBA-008 + REQ-IBA-009).
  *
  * @implements IEventListener<Event>
  *
@@ -89,17 +95,49 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	private const SCHEMA_LOSS = 'carryforwardloss';
 
 	/**
+	 * The NexusCalculation fields an audit row carries.
+	 *
+	 * @var list<string>
+	 */
+	private const NEXUS_DETAIL_KEYS = [
+		'own_rd_cost',
+		'rd_cost_outsourced_third_parties',
+		'rd_cost_outsourced_affiliated',
+		'uplift_factor',
+		'nexusbreuk_ongecapt',
+		'nexus_fraction_applied',
+	];
+
+	/**
+	 * The IBProfitAttribution fields an audit row carries.
+	 *
+	 * @var list<string>
+	 */
+	private const PROFIT_DETAIL_KEYS = [
+		'method',
+		'gross_revenue_asset',
+		'qualifying_profit_for_nexus',
+		'qualifying_profit_after_nexus',
+		'effective_rate',
+		'vpb_on_innovation_share',
+		'benefit_innovation_box',
+		'flat_rate_cap_applied',
+	];
+
+	/**
 	 * Construct the listener.
 	 *
-	 * @param InnovatieboxAuditEventLogger $logger Append-only audit event writer.
-	 * @param VsoLockingValidator $vsoValidator VSO year-lock checker (task 4.3).
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param AuditTrailMapper $auditTrail OpenRegister's hash-chained audit trail: every
+	 *                                     innovatiebox transition is recorded on the subject
+	 *                                     object's own trail (REQ-IBA-008, ADR-022).
+	 * @param VsoLockingValidatorInterface $vsoValidator VSO year-lock checker (task 4.3).
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $psrLogger Psr logger for fail-soft.
 	 */
 	public function __construct(
-		private readonly InnovatieboxAuditEventLogger $logger,
-		private readonly VsoLockingValidator $vsoValidator,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly AuditTrailMapper $auditTrail,
+		private readonly VsoLockingValidatorInterface $vsoValidator,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $psrLogger,
 	) {
 	}//end __construct()
@@ -150,104 +188,142 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$schema = $this->normaliseSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity));
 		$data = $this->extractObjectArray(entity: $entity);
 
-		if ($schema === self::SCHEMA_NEXUS) {
-			$this->logger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
-					'administrationId' => (string)($data['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'NexusCalculation',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'details' => $this->slice(
-						data: $data,
-						keys: [
-							'own_rd_cost',
-							'rd_cost_outsourced_third_parties',
-							'rd_cost_outsourced_affiliated',
-							'uplift_factor',
-							'nexusbreuk_ongecapt',
-							'nexus_fraction_applied',
-						]
-					),
-				]
-			);
-			return;
-		}//end if
-
-		if ($schema === self::SCHEMA_PROFIT) {
-			$this->logger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
-					'administrationId' => (string)($data['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'IBProfitAttribution',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'details' => $this->slice(
-						data: $data,
-						keys: [
-							'method',
-							'gross_revenue_asset',
-							'qualifying_profit_for_nexus',
-							'qualifying_profit_after_nexus',
-							'effective_rate',
-							'vpb_on_innovation_share',
-							'benefit_innovation_box',
-							'flat_rate_cap_applied',
-						]
-					),
-				]
-			);
-
-			// Twin event: a forfaitair election that hit the EUR 25k cap
-			// emits ForfaitairCap.applied so the Belastingdienst defence can
-			// see the binding cap and the resulting benefit reduction (task
-			// 5.4 + REQ-IBA-003).
-			if ($this->isForfaitairCapHit(data: $data) === true) {
-				$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
-				$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
-				$this->logger->record(
-					options: [
-						'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
-						'administrationId' => (string)($data['administrationId'] ?? ''),
-						'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-						'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-						'subject_schema' => 'IBProfitAttribution',
-						'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-						'reason' => 'cap_hit',
-						'details' => [
-							'voor_cap' => $kwalifFor,
-							'na_cap' => $kwalifAfter,
-							'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
-							'forfaitair_cap_eur' => 25000,
-						],
-					]
-				);
-			}//end if
-
-			return;
-		}//end if
-
-		if ($schema === self::SCHEMA_LOSS) {
-			$this->logger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
-					'administrationId' => (string)($data['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
-					'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'CarryForwardLoss',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'details' => $this->slice(
-						data: $data,
-						keys: ['origin_boekjaar', 'oorspronkelijk_bedrag', 'balance_after', 'status']
-					),
-				]
-			);
-			return;
-		}
+		match ($schema) {
+			self::SCHEMA_NEXUS => $this->recordNexusCalculated(entity: $entity, data: $data),
+			self::SCHEMA_PROFIT => $this->recordProfitCreated(entity: $entity, data: $data),
+			self::SCHEMA_LOSS => $this->recordLossCreated(entity: $entity, data: $data),
+			default => null,
+		};
 
 	}//end handleCreated()
+
+	/**
+	 * NexusCalculation.calculated, with the R&D breakdown sliced into the details.
+	 *
+	 * @param ObjectEntity        $entity The created NexusCalculation.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordNexusCalculated(ObjectEntity $entity, array $data): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_NEXUS_CALCULATED,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'NexusCalculation',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'details' => $this->slice(data: $data, keys: self::NEXUS_DETAIL_KEYS),
+			]
+		);
+	}//end recordNexusCalculated()
+
+	/**
+	 * IBProfitAttribution.created, plus — when a forfaitair election hit the
+	 * EUR 25k cap — the ForfaitairCap.applied twin.
+	 *
+	 * @param ObjectEntity        $entity The created IBProfitAttribution.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordProfitCreated(ObjectEntity $entity, array $data): void {
+		$row = $this->profitRow(entity: $entity, data: $data);
+		$this->append(
+			entity: $entity,
+			options: $row + [
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_PROFIT_CREATED,
+				'details' => $this->slice(data: $data, keys: self::PROFIT_DETAIL_KEYS),
+			]
+		);
+
+		if ($this->isForfaitairCapHit(data: $data) === true) {
+			$this->recordForfaitairCap(entity: $entity, data: $data);
+		}
+	}//end recordProfitCreated()
+
+	/**
+	 * Twin event: a forfaitair election that hit the EUR 25k cap emits
+	 * ForfaitairCap.applied so the Belastingdienst defence can see the binding
+	 * cap and the resulting benefit reduction (task 5.4 + REQ-IBA-003).
+	 *
+	 * @param ObjectEntity        $entity The created IBProfitAttribution.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordForfaitairCap(ObjectEntity $entity, array $data): void {
+		$row = $this->profitRow(entity: $entity, data: $data);
+		$this->append(
+			entity: $entity,
+			options: $row + [
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_FORFAITAIR_CAP_APPLIED,
+				'reason' => 'cap_hit',
+				'details' => $this->forfaitairCapDetails(data: $data),
+			]
+		);
+	}//end recordForfaitairCap()
+
+	/**
+	 * The subject fields shared by both IBProfitAttribution create rows.
+	 *
+	 * @param ObjectEntity        $entity The created IBProfitAttribution.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function profitRow(ObjectEntity $entity, array $data): array {
+		return [
+			'administrationId' => (string)($data['administrationId'] ?? ''),
+			'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
+			'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+			'subject_schema' => 'IBProfitAttribution',
+			'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+		];
+	}//end profitRow()
+
+	/**
+	 * Before/after cap figures for the ForfaitairCap.applied twin.
+	 *
+	 * @param array<string,mixed> $data The IBProfitAttribution payload.
+	 *
+	 * @return array<string,float|int>
+	 */
+	private function forfaitairCapDetails(array $data): array {
+		$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
+		$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
+		return [
+			'voor_cap' => $kwalifFor,
+			'na_cap' => $kwalifAfter,
+			'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
+			'forfaitair_cap_eur' => 25000,
+		];
+	}//end forfaitairCapDetails()
+
+	/**
+	 * CarryForwardLoss.created, dated by its origin year (else its financial year).
+	 *
+	 * @param ObjectEntity        $entity The created CarryForwardLoss.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordLossCreated(ObjectEntity $entity, array $data): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_LOSS_CREATED,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
+				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'CarryForwardLoss',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'details' => $this->slice(data: $data, keys: ['origin_boekjaar', 'oorspronkelijk_bedrag', 'balance_after', 'status']),
+			]
+		);
+	}//end recordLossCreated()
 
 	/**
 	 * Handle an update event — finalisation, blocked amendment, or loss offset.
@@ -277,20 +353,11 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}
 
 		// NexusCalculation is x-openregister.immutable, so an update event
-		// here means OR allowed an amendment that should not have happened —
-		// record it as a blocked-attempt-style audit event for the defence.
+		// here means OR allowed an amendment that should not have happened.
 		if ($schema === self::SCHEMA_NEXUS) {
-			$this->logger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
-					'administrationId' => (string)($next['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'NexusCalculation',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'reason' => 'immutable_schema_violation',
-					'details' => ['changed_keys' => $this->changedKeys(prior: $prior, next: $next)],
-				]
+			$this->recordAmendmentBlocked(
+				entity: $entity,
+				states: ['next' => $next, 'prior' => $prior, 'schema' => 'NexusCalculation', 'reason' => 'immutable_schema_violation']
 			);
 		}
 
@@ -299,71 +366,118 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	/**
 	 * Branch profit-attribution update events into finalised / blocked.
 	 *
-	 * @param object $entity Entity wrapper (for uuid).
+	 * @param ObjectEntity $entity The subject object (its own audit trail gets the row).
 	 * @param array<string,mixed> $next Next-state payload.
 	 * @param array<string,mixed> $prior Prior-state payload (best-effort).
 	 *
 	 * @return void
 	 */
-	private function handleProfitUpdated(object $entity, array $next, array $prior): void {
+	private function handleProfitUpdated(ObjectEntity $entity, array $next, array $prior): void {
 		$priorLocked = (bool)($prior['vso_locked'] ?? false);
 		$nextLocked = (bool)($next['vso_locked'] ?? false);
 
 		if ($priorLocked === false && $nextLocked === true) {
-			$this->logger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
-					'administrationId' => (string)($next['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'IBProfitAttribution',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'reason' => 'vso_signed',
-				]
-			);
+			$this->recordProfitFinalized(entity: $entity, next: $next);
 			return;
 		}
 
-		$administrationId = (string)($next['administrationId'] ?? '');
-		$financialYear = $this->intOrNull(value: $next['financialYear'] ?? null);
-		$alreadyLocked = ($priorLocked === true);
-		if ($alreadyLocked === false && $financialYear !== null && $administrationId !== '') {
-			// Cross-check: even if THIS record is not locked, the year may be
-			// locked by another row in the same administration + boekjaar.
-			$alreadyLocked = $this->vsoValidator->isYearLocked(
-				administrationId: $administrationId,
-				financialYear: $financialYear
-			);
-		}
-
-		if ($alreadyLocked === true) {
-			$this->logger->record(
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
-					'administrationId' => $administrationId,
-					'financialYear' => $financialYear,
-					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'IBProfitAttribution',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'reason' => 'vso_locked',
-					'details' => ['changed_keys' => $this->changedKeys(prior: $prior, next: $next)],
-				]
+		if ($this->profitYearLocked(next: $next, priorLocked: $priorLocked) === true) {
+			$this->recordAmendmentBlocked(
+				entity: $entity,
+				states: ['next' => $next, 'prior' => $prior, 'schema' => 'IBProfitAttribution', 'reason' => 'vso_locked']
 			);
 		}
 
 	}//end handleProfitUpdated()
 
 	/**
+	 * Whether a profit attribution's year is locked: the prior state was
+	 * VSO-locked, or — even if THIS record is not locked — the year is locked
+	 * by another row in the same administration + boekjaar.
+	 *
+	 * @param array<string,mixed> $next        Next-state payload.
+	 * @param bool                $priorLocked Whether the prior state was VSO-locked.
+	 *
+	 * @return bool
+	 */
+	private function profitYearLocked(array $next, bool $priorLocked): bool {
+		if ($priorLocked === true) {
+			return true;
+		}
+
+		$administrationId = (string)($next['administrationId'] ?? '');
+		$financialYear = $this->intOrNull(value: $next['financialYear'] ?? null);
+		if ($financialYear === null || $administrationId === '') {
+			return false;
+		}
+
+		return $this->vsoValidator->isYearLocked(administrationId: $administrationId, financialYear: $financialYear);
+
+	}//end profitYearLocked()
+
+	/**
+	 * Record the finalisation (VSO signed) of a profit attribution.
+	 *
+	 * @param ObjectEntity        $entity The subject object (its own audit trail gets the row).
+	 * @param array<string,mixed> $next   Next-state payload.
+	 *
+	 * @return void
+	 */
+	private function recordProfitFinalized(ObjectEntity $entity, array $next): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_PROFIT_FINALIZED,
+				'administrationId' => (string)($next['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'IBProfitAttribution',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'reason' => 'vso_signed',
+			]
+		);
+
+	}//end recordProfitFinalized()
+
+	/**
+	 * Record a blocked amendment: a profit attribution in a locked year
+	 * (`vso_locked`), or an immutable NexusCalculation that OR let through
+	 * (`immutable_schema_violation`).
+	 *
+	 * @param ObjectEntity        $entity The subject object (its own audit trail gets the row).
+	 * @param array<string,mixed> $states Next- and prior-state payloads, the subject schema and the reason.
+	 *
+	 * @return void
+	 */
+	private function recordAmendmentBlocked(ObjectEntity $entity, array $states): void {
+		$next = $states['next'];
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_PROFIT_AMENDMENT_BLOCKED,
+				'administrationId' => (string)($next['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
+				'subject_schema' => $states['schema'],
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'reason' => $states['reason'],
+				'details' => ['changed_keys' => $this->changedKeys(prior: $states['prior'], next: $next)],
+			]
+		);
+
+	}//end recordAmendmentBlocked()
+
+	/**
 	 * Handle a CarryForwardLoss update — emit an offset-applied event when
 	 * the `verrekend_boekjaar` array grew.
 	 *
-	 * @param object $entity Entity wrapper (for uuid).
+	 * @param ObjectEntity $entity The subject object (its own audit trail gets the row).
 	 * @param array<string,mixed> $next Next-state payload.
 	 * @param array<string,mixed> $prior Prior-state payload (best-effort).
 	 *
 	 * @return void
 	 */
-	private function handleLossUpdated(object $entity, array $next, array $prior): void {
+	private function handleLossUpdated(ObjectEntity $entity, array $next, array $prior): void {
 		$priorEntries = (array)($prior['settled_financial_year'] ?? []);
 		$nextEntries = (array)($next['settled_financial_year'] ?? []);
 		if (count($nextEntries) <= count($priorEntries)) {
@@ -372,9 +486,10 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 
 		$newEntries = array_slice($nextEntries, count($priorEntries));
 
-		$this->logger->record(
+		$this->append(
+			entity: $entity,
 			options: [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_LOSS_OFFSET_APPLIED,
 				'administrationId' => (string)($next['administrationId'] ?? ''),
 				'financialYear' => $this->intOrNull(value: $next['origin_boekjaar'] ?? ($next['financialYear'] ?? null)),
 				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
@@ -389,6 +504,48 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		);
 
 	}//end handleLossUpdated()
+
+	/**
+	 * Record one innovatiebox transition on the subject object's own
+	 * OpenRegister audit trail. The action is the event type (for example
+	 * `IBProfitAttribution.finalized`), the context carries the same fields an
+	 * InnovatieboxAuditEvent row carried; OpenRegister stamps the actor, the
+	 * time and the hash chain. A row without an event type or administration
+	 * is refused, and a failed write is logged, never thrown: the subject
+	 * record is the legal truth and OpenRegister's write path must not break.
+	 *
+	 * @param ObjectEntity $entity The subject object.
+	 * @param array<string,mixed> $options The event fields (event_type, administrationId, ...).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
+	 */
+	private function append(ObjectEntity $entity, array $options): void {
+		$eventType = (string)($options['event_type'] ?? '');
+		if ($eventType === '' || (string)($options['administrationId'] ?? '') === '') {
+			$this->psrLogger->warning(
+				'InnovatieboxAuditTrailListener: missing event_type or administrationId, no audit row written',
+				['options' => $options]
+			);
+			return;
+		}
+
+		$context = array_filter(
+			array_diff_key($options, ['event_type' => true]),
+			static fn (mixed $value): bool => $value !== null
+		);
+		try {
+			$this->auditTrail->recordObjectEvent(
+				event: new ObjectAuditEvent(object: $entity, action: $eventType, context: $context)
+			);
+		} catch (Throwable $e) {
+			$this->psrLogger->warning(
+				'InnovatieboxAuditTrailListener: failed to write the audit row',
+				['event_type' => $eventType, 'exception' => $e->getMessage()]
+			);
+		}
+	}//end append()
 
 	/**
 	 * Normalise an OR schema identifier to a lowercase slug (also strips a

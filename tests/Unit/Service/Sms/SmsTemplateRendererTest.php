@@ -145,4 +145,17 @@ final class SmsTemplateRendererTest extends TestCase {
 
 	}//end testUnknownVariables()
 
+	/**
+	 * A limit of one character or less leaves no room for the ellipsis: the
+	 * value is cut hard, counting multibyte characters as one.
+	 *
+	 * @return void
+	 */
+	public function testTruncateWithoutRoomForTheEllipsis(): void {
+		self::assertSame('Ö', $this->renderer->truncate('Örebro', 1));
+		self::assertSame('', $this->renderer->truncate('Örebro', 0));
+		self::assertSame('Öre…', $this->renderer->truncate('Örebro', 4));
+		self::assertSame('Ö', $this->renderer->truncate('Ö', 1));
+
+	}//end testTruncateWithoutRoomForTheEllipsis()
 }//end class

@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 // Define that we're running PHPUnit.
@@ -29,6 +34,10 @@ foreach (spl_autoload_functions() as $loader) {
 		// When run inside a deployed NC tree with OpenRegister installed,
 		// base.php below provides the real classes and this entry is shadowed.
 		$loader[0]->addPsr4('OCA\\OpenRegister\\', __DIR__ . '/stubs/OpenRegister/');
+		// Integriq's connection-registry event (adopt-connection-registry).
+		// ConnectionReportService names it by string and sends it only when
+		// the class exists; the stub mirrors integriq's real constructor.
+		$loader[0]->addPsr4('OCA\\Integriq\\', __DIR__ . '/stubs/Integriq/');
 		break;
 	}
 }
@@ -95,6 +104,21 @@ if (class_exists('Doctrine\\DBAL\\ArrayParameterType', false) === false) {
 		. 'class ArrayParameterType { '
 		. 'const INTEGER = 101; const STRING = 102; '
 		. 'const ASCII = 103; const BINARY = 104; }'
+	);
+}
+
+// IQueryBuilder's PARAM_DATE / PARAM_BOOL constants reference
+// Doctrine\DBAL\Types\Types, and PHP resolves every constant of the interface
+// the first time any one of them (e.g. PARAM_STR_ARRAY) is read. Same
+// constant-only stub pattern; values mirror doctrine/dbal.
+if (class_exists('Doctrine\\DBAL\\Types\\Types', false) === false) {
+	eval(
+		'namespace Doctrine\\DBAL\\Types; '
+		. 'class Types { '
+		. "const BOOLEAN = 'boolean'; const DATE_MUTABLE = 'date'; "
+		. "const DATE_IMMUTABLE = 'date_immutable'; const DATETIME_MUTABLE = 'datetime'; "
+		. "const DATETIME_IMMUTABLE = 'datetime_immutable'; const DATETIMETZ_MUTABLE = 'datetimetz'; "
+		. "const DATETIMETZ_IMMUTABLE = 'datetimetz_immutable'; const TIME_MUTABLE = 'time'; }"
 	);
 }
 

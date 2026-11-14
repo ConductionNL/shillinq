@@ -3,6 +3,9 @@
 /**
  * Integration test for the slice 10 monthly vendor scoring sweep.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Threads the whole aggregation pipeline against the in-memory
  * ObjectService stub: seeds two suppliers' worth of GoodsReceiptNote +
  * ThreeWayMatch + SupplierInvoice + PurchaseOrder history for a
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

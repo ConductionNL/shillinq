@@ -104,34 +104,24 @@
             "title": "Notes"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "pos_terminal": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_pos_terminal",
+            "shillinq_inventory",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       }
     }

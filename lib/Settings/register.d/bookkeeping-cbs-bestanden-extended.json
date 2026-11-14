@@ -62,7 +62,7 @@
           },
           "taxIdentificationNumber": {
             "type": "string",
-            "pattern": "^NL[0-9]{10}B[0-9]{2}$",
+            "pattern": "^NL[0-9]{9}B[0-9]{2}$",
             "description": "Dutch VAT/BTW identification number.",
             "example": "NL814022818B01",
             "title": "Tax Identification Number"
@@ -162,7 +162,12 @@
               "from": "draft",
               "to": "validated",
               "label": "Valideren",
-              "description": "Run structural + balancing validation, attach IV3 file."
+              "description": "Run structural + balancing validation, attach IV3 file.",
+              "authorization": [
+                {
+                  "role": "auditor"
+                }
+              ]
             },
             "submit": {
               "from": "validated",
@@ -252,30 +257,26 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read",
-                "validate"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
+        },
+        "authorization": {
+          "roles": {
+            "auditor": [
+              "shillinq_auditor"
+            ]
+          },
+          "create": [
+            "shillinq_finance_manager"
+          ],
+          "read": [
+            "shillinq_finance_manager",
+            "shillinq_accountant",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_finance_manager"
+          ]
         }
       },
       "CBSLine": {
@@ -363,29 +364,21 @@
             "title": "Description"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
+        },
+        "authorization": {
+          "create": [
+            "shillinq_finance_manager"
+          ],
+          "read": [
+            "shillinq_finance_manager",
+            "shillinq_accountant",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_finance_manager"
+          ]
         }
       }
     }
@@ -395,7 +388,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "CBSSubmission",
-        "slug": "cbs-sub-2025-org-001"
+        "slug": "cbs-sub-2025-org-001",
+        "id": "57aa5284-f2e0-5cf6-952b-01602a235fdc"
       },
       "submissionNumber": "CBS-2025-001",
       "reportingPeriodStartDate": "2025-01-01",
@@ -451,7 +445,7 @@
         "schema": "CBSLine",
         "slug": "cbs-line-2025-001-revenue"
       },
-      "cbsSubmissionId": "cbs-sub-2025-org-001",
+      "cbsSubmissionId": "57aa5284-f2e0-5cf6-952b-01602a235fdc",
       "cbsLineClassification": "Revenue",
       "cbsLineNumber": "1000",
       "accountRangeStart": "8000",
@@ -467,7 +461,7 @@
         "schema": "CBSLine",
         "slug": "cbs-line-2025-001-costs"
       },
-      "cbsSubmissionId": "cbs-sub-2025-org-001",
+      "cbsSubmissionId": "57aa5284-f2e0-5cf6-952b-01602a235fdc",
       "cbsLineClassification": "OperatingCosts",
       "cbsLineNumber": "2000",
       "accountRangeStart": "5000",
@@ -483,7 +477,7 @@
         "schema": "CBSLine",
         "slug": "cbs-line-2025-001-depreciation"
       },
-      "cbsSubmissionId": "cbs-sub-2025-org-001",
+      "cbsSubmissionId": "57aa5284-f2e0-5cf6-952b-01602a235fdc",
       "cbsLineClassification": "Depreciation",
       "cbsLineNumber": "3000",
       "accountRangeStart": "6000",

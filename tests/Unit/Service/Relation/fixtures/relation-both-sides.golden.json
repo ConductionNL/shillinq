@@ -1,0 +1,483 @@
+{
+    "customer.both": {
+        "customer": {
+            "id": "c-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "payee": {
+            "id": "p-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "link": {
+            "matchedOn": "kvk",
+            "confirmedBy": "petra",
+            "confirmedAt": "2026-03-01T10:00:00+00:00"
+        },
+        "sent": {
+            "restricted": false,
+            "rows": [
+                {
+                    "id": "ar-cn",
+                    "schema": "ARInvoice",
+                    "number": "2026-0400",
+                    "date": "2026-05-01",
+                    "state": "issued",
+                    "amount": -242.0,
+                    "open": -242.0
+                },
+                {
+                    "id": "ar-0355",
+                    "schema": "ARInvoice",
+                    "number": "2026-0355",
+                    "date": "2026-04-02",
+                    "state": "issued",
+                    "amount": 1210.0,
+                    "open": 1210.0
+                },
+                {
+                    "id": "ar-0310",
+                    "schema": "ARInvoice",
+                    "number": "2026-0310",
+                    "date": "2026-03-10",
+                    "state": "paid",
+                    "amount": 4235.0,
+                    "open": 0.0
+                }
+            ],
+            "more": false,
+            "invoiced": 5203.0,
+            "open": 968.0
+        },
+        "received": {
+            "restricted": false,
+            "rows": [
+                {
+                    "id": "si-new",
+                    "schema": "SupplierInvoice",
+                    "number": "INK-2026-130",
+                    "date": "2026-06-01",
+                    "state": "received",
+                    "amount": 100.0,
+                    "open": 100.0
+                },
+                {
+                    "id": "ap-118",
+                    "schema": "APTransaction",
+                    "number": "INK-2026-118",
+                    "date": "2026-04-15",
+                    "state": "issued",
+                    "amount": 2662.0,
+                    "open": 2662.0
+                }
+            ],
+            "more": false,
+            "invoiced": 2762.0,
+            "open": 2762.0
+        },
+        "totals": {
+            "sales": 5203.0,
+            "purchases": 2762.0,
+            "openReceivable": 968.0,
+            "openPayable": 2762.0,
+            "net": -1794.0
+        }
+    },
+    "administration.both": {
+        "relations": [
+            {
+                "id": "c-oost",
+                "customerId": "c-oost",
+                "name": "Drukwerk Oost B.V.",
+                "payeeId": "p-west",
+                "sales": 0.0,
+                "purchases": 0.0,
+                "openReceivable": 0.0,
+                "openPayable": 0.0,
+                "net": 0.0
+            },
+            {
+                "id": "c-zuid",
+                "customerId": "c-zuid",
+                "name": "Reclamebureau Zuid B.V.",
+                "payeeId": "p-zuid",
+                "sales": 5203.0,
+                "purchases": 2762.0,
+                "openReceivable": 968.0,
+                "openPayable": 2762.0,
+                "net": -1794.0
+            },
+            {
+                "id": "c-noord",
+                "customerId": "c-noord",
+                "name": "Transport Noord B.V.",
+                "payeeId": "p-noord",
+                "sales": 0.0,
+                "purchases": 0.0,
+                "openReceivable": 0.0,
+                "openPayable": 0.0,
+                "net": 0.0
+            }
+        ],
+        "restricted": {
+            "sent": false,
+            "received": false
+        }
+    },
+    "customer.sentOnly": {
+        "customer": {
+            "id": "c-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "payee": {
+            "id": "p-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "link": {
+            "matchedOn": "kvk",
+            "confirmedBy": "petra",
+            "confirmedAt": "2026-03-01T10:00:00+00:00"
+        },
+        "sent": {
+            "restricted": false,
+            "rows": [
+                {
+                    "id": "ar-cn",
+                    "schema": "ARInvoice",
+                    "number": "2026-0400",
+                    "date": "2026-05-01",
+                    "state": "issued",
+                    "amount": -242.0,
+                    "open": -242.0
+                },
+                {
+                    "id": "ar-0355",
+                    "schema": "ARInvoice",
+                    "number": "2026-0355",
+                    "date": "2026-04-02",
+                    "state": "issued",
+                    "amount": 1210.0,
+                    "open": 1210.0
+                },
+                {
+                    "id": "ar-0310",
+                    "schema": "ARInvoice",
+                    "number": "2026-0310",
+                    "date": "2026-03-10",
+                    "state": "paid",
+                    "amount": 4235.0,
+                    "open": 0.0
+                }
+            ],
+            "more": false,
+            "invoiced": 5203.0,
+            "open": 968.0
+        },
+        "received": {
+            "restricted": true,
+            "rows": [],
+            "invoiced": null,
+            "open": null
+        },
+        "totals": {
+            "sales": 5203.0,
+            "purchases": null,
+            "openReceivable": 968.0,
+            "openPayable": null,
+            "net": null
+        }
+    },
+    "administration.sentOnly": {
+        "relations": [
+            {
+                "id": "c-oost",
+                "customerId": "c-oost",
+                "name": "Drukwerk Oost B.V.",
+                "payeeId": "p-west",
+                "sales": 0.0,
+                "purchases": null,
+                "openReceivable": 0.0,
+                "openPayable": null,
+                "net": null
+            },
+            {
+                "id": "c-zuid",
+                "customerId": "c-zuid",
+                "name": "Reclamebureau Zuid B.V.",
+                "payeeId": "p-zuid",
+                "sales": 5203.0,
+                "purchases": null,
+                "openReceivable": 968.0,
+                "openPayable": null,
+                "net": null
+            },
+            {
+                "id": "c-noord",
+                "customerId": "c-noord",
+                "name": "Transport Noord B.V.",
+                "payeeId": "p-noord",
+                "sales": 0.0,
+                "purchases": null,
+                "openReceivable": 0.0,
+                "openPayable": null,
+                "net": null
+            }
+        ],
+        "restricted": {
+            "sent": false,
+            "received": true
+        }
+    },
+    "customer.receivedOnly": {
+        "customer": {
+            "id": "c-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "payee": {
+            "id": "p-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "link": {
+            "matchedOn": "kvk",
+            "confirmedBy": "petra",
+            "confirmedAt": "2026-03-01T10:00:00+00:00"
+        },
+        "sent": {
+            "restricted": true,
+            "rows": [],
+            "invoiced": null,
+            "open": null
+        },
+        "received": {
+            "restricted": false,
+            "rows": [
+                {
+                    "id": "si-new",
+                    "schema": "SupplierInvoice",
+                    "number": "INK-2026-130",
+                    "date": "2026-06-01",
+                    "state": "received",
+                    "amount": 100.0,
+                    "open": 100.0
+                },
+                {
+                    "id": "ap-118",
+                    "schema": "APTransaction",
+                    "number": "INK-2026-118",
+                    "date": "2026-04-15",
+                    "state": "issued",
+                    "amount": 2662.0,
+                    "open": 2662.0
+                }
+            ],
+            "more": false,
+            "invoiced": 2762.0,
+            "open": 2762.0
+        },
+        "totals": {
+            "sales": null,
+            "purchases": 2762.0,
+            "openReceivable": null,
+            "openPayable": 2762.0,
+            "net": null
+        }
+    },
+    "administration.receivedOnly": {
+        "relations": [
+            {
+                "id": "c-oost",
+                "customerId": "c-oost",
+                "name": "Drukwerk Oost B.V.",
+                "payeeId": "p-west",
+                "sales": null,
+                "purchases": 0.0,
+                "openReceivable": null,
+                "openPayable": 0.0,
+                "net": null
+            },
+            {
+                "id": "c-zuid",
+                "customerId": "c-zuid",
+                "name": "Reclamebureau Zuid B.V.",
+                "payeeId": "p-zuid",
+                "sales": null,
+                "purchases": 2762.0,
+                "openReceivable": null,
+                "openPayable": 2762.0,
+                "net": null
+            },
+            {
+                "id": "c-noord",
+                "customerId": "c-noord",
+                "name": "Transport Noord B.V.",
+                "payeeId": "p-noord",
+                "sales": null,
+                "purchases": 0.0,
+                "openReceivable": null,
+                "openPayable": 0.0,
+                "net": null
+            }
+        ],
+        "restricted": {
+            "sent": true,
+            "received": false
+        }
+    },
+    "customer.neither": {
+        "customer": {
+            "id": "c-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "payee": {
+            "id": "p-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "link": {
+            "matchedOn": "kvk",
+            "confirmedBy": "petra",
+            "confirmedAt": "2026-03-01T10:00:00+00:00"
+        },
+        "sent": {
+            "restricted": true,
+            "rows": [],
+            "invoiced": null,
+            "open": null
+        },
+        "received": {
+            "restricted": true,
+            "rows": [],
+            "invoiced": null,
+            "open": null
+        },
+        "totals": {
+            "sales": null,
+            "purchases": null,
+            "openReceivable": null,
+            "openPayable": null,
+            "net": null
+        }
+    },
+    "administration.neither": {
+        "relations": [
+            {
+                "id": "c-oost",
+                "customerId": "c-oost",
+                "name": "Drukwerk Oost B.V.",
+                "payeeId": "p-west",
+                "sales": null,
+                "purchases": null,
+                "openReceivable": null,
+                "openPayable": null,
+                "net": null
+            },
+            {
+                "id": "c-zuid",
+                "customerId": "c-zuid",
+                "name": "Reclamebureau Zuid B.V.",
+                "payeeId": "p-zuid",
+                "sales": null,
+                "purchases": null,
+                "openReceivable": null,
+                "openPayable": null,
+                "net": null
+            },
+            {
+                "id": "c-noord",
+                "customerId": "c-noord",
+                "name": "Transport Noord B.V.",
+                "payeeId": "p-noord",
+                "sales": null,
+                "purchases": null,
+                "openReceivable": null,
+                "openPayable": null,
+                "net": null
+            }
+        ],
+        "restricted": {
+            "sent": true,
+            "received": true
+        }
+    },
+    "customer.firstHalf": {
+        "customer": {
+            "id": "c-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "payee": {
+            "id": "p-zuid",
+            "name": "Reclamebureau Zuid B.V."
+        },
+        "link": {
+            "matchedOn": "kvk",
+            "confirmedBy": "petra",
+            "confirmedAt": "2026-03-01T10:00:00+00:00"
+        },
+        "sent": {
+            "restricted": false,
+            "rows": [
+                {
+                    "id": "ar-cn",
+                    "schema": "ARInvoice",
+                    "number": "2026-0400",
+                    "date": "2026-05-01",
+                    "state": "issued",
+                    "amount": -242.0,
+                    "open": -242.0
+                },
+                {
+                    "id": "ar-0355",
+                    "schema": "ARInvoice",
+                    "number": "2026-0355",
+                    "date": "2026-04-02",
+                    "state": "issued",
+                    "amount": 1210.0,
+                    "open": 1210.0
+                },
+                {
+                    "id": "ar-0310",
+                    "schema": "ARInvoice",
+                    "number": "2026-0310",
+                    "date": "2026-03-10",
+                    "state": "paid",
+                    "amount": 4235.0,
+                    "open": 0.0
+                }
+            ],
+            "more": false,
+            "invoiced": 5203.0,
+            "open": 968.0
+        },
+        "received": {
+            "restricted": false,
+            "rows": [
+                {
+                    "id": "si-new",
+                    "schema": "SupplierInvoice",
+                    "number": "INK-2026-130",
+                    "date": "2026-06-01",
+                    "state": "received",
+                    "amount": 100.0,
+                    "open": 100.0
+                },
+                {
+                    "id": "ap-118",
+                    "schema": "APTransaction",
+                    "number": "INK-2026-118",
+                    "date": "2026-04-15",
+                    "state": "issued",
+                    "amount": 2662.0,
+                    "open": 2662.0
+                }
+            ],
+            "more": false,
+            "invoiced": 2762.0,
+            "open": 2762.0
+        },
+        "totals": {
+            "sales": 5203.0,
+            "purchases": 2762.0,
+            "openReceivable": 968.0,
+            "openPayable": 2762.0,
+            "net": -1794.0
+        }
+    }
+}

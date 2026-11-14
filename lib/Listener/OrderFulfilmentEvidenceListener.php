@@ -3,6 +3,9 @@
 /**
  * OrderFulfilment bewijsstuk write-path guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Enforces REQ-004 — an OrderFulfilment may only carry `status: completed`
  * when at least one bewijsstuk (proof of delivery) is attached — on the PLAIN
  * WRITE path, i.e. `POST`/`PUT` against
@@ -53,19 +56,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
-use OCA\OpenRegister\Event\ObjectCreatingEvent;
-use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\OrderFulfilmentGuardInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -115,13 +113,13 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param OrderFulfilmentGuard $guard The REQ-004 precondition guard (single source of truth).
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema to its slug.
+	 * @param OrderFulfilmentGuardInterface $guard The REQ-004 precondition guard (single source of truth).
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema to its slug.
 	 * @param LoggerInterface $logger Logger for guard diagnostics.
 	 */
 	public function __construct(
-		private readonly OrderFulfilmentGuard $guard,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly OrderFulfilmentGuardInterface $guard,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -136,43 +134,30 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
 	 */
 	public function handle(Event $event): void {
-		$entity = null;
-		if ($event instanceof ObjectCreatingEvent === true) {
-			$entity = $event->getObject();
-		}
-
-		if ($event instanceof ObjectUpdatingEvent === true) {
-			$entity = $event->getNewObject();
-		}
-
-		if ($entity === null) {
+		$write = new PreSaveWrite();
+		$entity = $write->incomingEntity(event: $event);
+		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
 			return;
 		}
 
-		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
+		$data = $write->payload(entity: $entity);
+		if ($this->completionAllowed(data: $data) === true) {
 			return;
 		}
 
-		$data = [];
-		if (method_exists($entity, 'getObject') === true) {
-			$data = ($entity->getObject() ?? []);
-		}
+		$this->refuse(event: $event, data: $data);
 
-		if (is_array($data) === false) {
-			$data = [];
-		}
+		}//end handle()
 
-		// Only the completed state is gated — an in-progress or cancelled
-		// delivery may be written freely, with or without bewijsstukken.
-		$status = strtolower(trim((string)($data[self::STATUS_FIELD] ?? '')));
-		if ($status !== self::COMPLETED_STATE) {
-			return;
-		}
-
-		if ($this->guard->canVoltooien(assignment: $data) === true) {
-			return;
-		}
-
+	/**
+	 * Log the refusal and veto the write into `completed` (REQ-004).
+	 *
+	 * @param Event                $event The OpenRegister pre-save event.
+	 * @param array<string, mixed> $data  The fulfilment being written.
+	 *
+	 * @return void
+	 */
+	private function refuse(Event $event, array $data): void {
 		$this->logger->warning(
 			'Shillinq: refused an OrderFulfilment write into `completed` without a bewijsstuk (REQ-004)',
 			[
@@ -191,5 +176,24 @@ class OrderFulfilmentEvidenceListener implements IEventListener {
 		);
 		$event->stopPropagation();
 
-	}//end handle()
+	}//end refuse()
+
+	/**
+	 * Whether the write may proceed: only the completed state is gated — an
+	 * in-progress or cancelled delivery may be written freely, with or
+	 * without bewijsstukken.
+	 *
+	 * @param array<string, mixed> $data The fulfilment being written.
+	 *
+	 * @return bool
+	 */
+	private function completionAllowed(array $data): bool {
+		$status = strtolower(trim((string)($data[self::STATUS_FIELD] ?? '')));
+		if ($status !== self::COMPLETED_STATE) {
+			return true;
+		}
+
+		return $this->guard->canVoltooien(assignment: $data);
+
+	}//end completionAllowed()
 }//end class

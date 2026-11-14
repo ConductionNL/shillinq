@@ -135,11 +135,11 @@ class ConsolidationGuardTest extends TestCase {
 	}//end testRequireFiscalPeriodClosedDeniesMissingFiscalYearId()
 
 	/**
-	 * RequireFiscalPeriodClosed permits transition when FiscalYear schema is absent (T1/T2 deferral).
+	 * RequireFiscalPeriodClosed denies the transition when the FiscalYear is not found.
 	 *
 	 * @return void
 	 */
-	public function testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent(): void {
+	public function testRequireFiscalPeriodClosedDeniesWhenFiscalYearAbsent(): void {
 		$objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
 		$this->guard = $this->buildGuard(store: $objectService);
 
@@ -150,9 +150,9 @@ class ConsolidationGuardTest extends TestCase {
 			]
 		);
 
-		self::assertTrue(condition: $result, message: 'FiscalYear absent (T1/T2): finalise must be permitted by default');
+		self::assertFalse(condition: $result, message: 'An unknown FiscalYear must deny finalise');
 
-	}//end testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent()
+	}//end testRequireFiscalPeriodClosedDeniesWhenFiscalYearAbsent()
 
 	/**
 	 * RequireFiscalPeriodClosed permits when FiscalYear.isClosed is true.
@@ -228,11 +228,11 @@ class ConsolidationGuardTest extends TestCase {
 	}//end testRequireAllMembersFinalisedDeniesMissingFields()
 
 	/**
-	 * RequireAllMembersFinalised permits when ConsolidationGroup not found (deferral).
+	 * RequireAllMembersFinalised denies when the ConsolidationGroup is not found.
 	 *
 	 * @return void
 	 */
-	public function testRequireAllMembersFinalisedPermitsWhenGroupAbsent(): void {
+	public function testRequireAllMembersFinalisedDeniesWhenGroupAbsent(): void {
 		$objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
 		$this->guard = $this->buildGuard(store: $objectService);
 
@@ -243,9 +243,118 @@ class ConsolidationGuardTest extends TestCase {
 			]
 		);
 
-		self::assertTrue(condition: $result, message: 'Absent ConsolidationGroup must permit by default (T2 deferral)');
+		self::assertFalse(condition: $result, message: 'An unknown ConsolidationGroup must deny finalise');
 
-	}//end testRequireAllMembersFinalisedPermitsWhenGroupAbsent()
+	}//end testRequireAllMembersFinalisedDeniesWhenGroupAbsent()
+
+	/**
+	 * RequireAllMembersFinalised denies when the group has no member administrations.
+	 *
+	 * @return void
+	 */
+	public function testRequireAllMembersFinalisedDeniesWhenGroupHasNoMembers(): void {
+		$group = ['id' => 'cg-001', 'administrationIds' => []];
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(findReturn: $group, findAllReturn: [['id' => 'bs-001']]));
+
+		$result = $this->guard->requireAllMembersFinalised(['consolidationGroupId' => 'cg-001', 'fiscalYearId' => 'fy-2026']);
+
+		self::assertFalse(condition: $result, message: 'A group without members must deny finalise');
+
+	}//end testRequireAllMembersFinalisedDeniesWhenGroupHasNoMembers()
+
+	/**
+	 * The member lookup passes its conditions as filters, so a draft BalanceSheet
+	 * of the member does not count as final.
+	 *
+	 * @return void
+	 */
+	public function testRequireAllMembersFinalisedFiltersOnFinalStatus(): void {
+		$group = ['id' => 'cg-001', 'administrationIds' => ['adm-1']];
+		$sheets = [['id' => 'bs-001', 'administrationId' => 'adm-1', 'fiscalYearId' => 'fy-2026', 'status' => 'draft']];
+		$store = new class($group, $sheets) {
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,mixed>            $group  The group find() answers.
+			 * @param array<int,array<string,mixed>> $sheets The BalanceSheets.
+			 */
+			public function __construct(private array $group, private array $sheets) {
+			}//end __construct()
+
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * The group, as an entity.
+			 *
+			 * @param string $id Object id.
+			 *
+			 * @return object
+			 */
+			public function find(string $id): object {
+				return new class($this->group) {
+					/**
+					 * Constructor.
+					 *
+					 * @param array<string,mixed> $row The row.
+					 */
+					public function __construct(private array $row) {
+					}//end __construct()
+
+					/**
+					 * The row.
+					 *
+					 * @return array<string,mixed>
+					 */
+					public function jsonSerialize(): array {
+						return $this->row;
+					}//end jsonSerialize()
+				};
+			}//end find()
+
+			/**
+			 * Rows matching the `filters` of the query; other top-level keys are ignored, as OpenRegister does.
+			 *
+			 * @param array<string,mixed> $params Query.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$filters = (array)($params['filters'] ?? []);
+				return array_values(
+					array_filter(
+						$this->sheets,
+						static fn (array $row): bool => array_intersect_assoc($filters, $row) === $filters
+					)
+				);
+			}//end findAll()
+		};
+		$this->guard = $this->buildGuard(store: $store);
+
+		$result = $this->guard->requireAllMembersFinalised(['consolidationGroupId' => 'cg-001', 'fiscalYearId' => 'fy-2026']);
+
+		self::assertFalse(condition: $result, message: 'A draft BalanceSheet must not count as final');
+
+	}//end testRequireAllMembersFinalisedFiltersOnFinalStatus()
 
 	/**
 	 * RequireAllMembersFinalised permits when all member administrations have a final BalanceSheet.

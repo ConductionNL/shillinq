@@ -4,6 +4,9 @@
  * Config-schemas-and-seed integration test for member 01 of the
  * bookkeeping-waterschappen-bbv-variant chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Loads the slice-01 register fragment + slice-01 seed fixture and asserts
  * that the BBVProgramme and BudgetBBVMapping registers materialise with the
  * declared properties, that every fixture record satisfies the schema's
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#integration-test-scaffold
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -1,0 +1,292 @@
+{
+    "string full": {
+        "company": {
+            "companyName": "Acme 1",
+            "kvkNumber": "12341",
+            "taxRegIdent": "NL001B01",
+            "currencyCode": "EUR"
+        },
+        "ledgerAccounts": [
+            {
+                "code": "1000",
+                "name": "Kas",
+                "type": "B",
+                "rgsCode": "BLimKas"
+            }
+        ],
+        "relations": [
+            {
+                "code": "C1",
+                "name": "Klant",
+                "kvk": "777",
+                "vat": "NL9B9",
+                "email": "a@b.nl",
+                "phone": "010",
+                "type": "C"
+            }
+        ],
+        "openingBalances": [
+            {
+                "accountCode": "1000",
+                "debit": 100.5,
+                "credit": 0.0
+            },
+            {
+                "accountCode": "0800",
+                "debit": 0.0,
+                "credit": 100.5
+            },
+            {
+                "accountCode": "9",
+                "debit": 0.0,
+                "credit": 0.0
+            }
+        ],
+        "journals": [
+            {
+                "journalId": "MEM1",
+                "transactions": [
+                    {
+                        "transactionId": "1",
+                        "lines": [
+                            {
+                                "accountCode": "1000",
+                                "amount": 10.0,
+                                "amountType": "D"
+                            },
+                            {
+                                "accountCode": "0800",
+                                "amount": null,
+                                "amountType": "C"
+                            }
+                        ]
+                    },
+                    {
+                        "transactionId": "2",
+                        "lines": []
+                    }
+                ]
+            },
+            {
+                "journalId": "EMPTY",
+                "transactions": []
+            }
+        ],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "transaction-line-missing-amount",
+                "message": "A transaction line is missing its <amnt> amount.",
+                "context": {
+                    "journalId": "MEM1",
+                    "accountCode": "0800"
+                }
+            }
+        ]
+    },
+    "string empty": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "empty-input",
+                "message": "Auditfile is empty.",
+                "context": []
+            }
+        ]
+    },
+    "string doctype": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "doctype-rejected",
+                "message": "Auditfile contains a DOCTYPE or ENTITY declaration and was rejected (XXE protection).",
+                "context": []
+            }
+        ]
+    },
+    "string entity": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "doctype-rejected",
+                "message": "Auditfile contains a DOCTYPE or ENTITY declaration and was rejected (XXE protection).",
+                "context": []
+            }
+        ]
+    },
+    "string malformed": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "malformed-xml",
+                "message": "Auditfile is not well-formed XML.",
+                "context": {
+                    "detail": true
+                }
+            }
+        ]
+    },
+    "string bare": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": []
+    },
+    "file two companies": {
+        "company": {
+            "companyName": "Acme 1",
+            "kvkNumber": "12341",
+            "taxRegIdent": "NL001B01",
+            "currencyCode": "EUR"
+        },
+        "ledgerAccounts": [
+            {
+                "code": "1000",
+                "name": "Kas",
+                "type": "B",
+                "rgsCode": "BLimKas"
+            }
+        ],
+        "relations": [
+            {
+                "code": "C1",
+                "name": "Klant",
+                "kvk": "777",
+                "vat": "NL9B9",
+                "email": "a@b.nl",
+                "phone": "010",
+                "type": "C"
+            }
+        ],
+        "openingBalances": [
+            {
+                "accountCode": "1000",
+                "debit": 100.5,
+                "credit": 0.0
+            },
+            {
+                "accountCode": "0800",
+                "debit": 0.0,
+                "credit": 100.5
+            },
+            {
+                "accountCode": "9",
+                "debit": 0.0,
+                "credit": 0.0
+            }
+        ],
+        "journals": [
+            {
+                "journalId": "MEM1",
+                "transactions": [
+                    {
+                        "transactionId": "1",
+                        "lines": [
+                            {
+                                "accountCode": "1000",
+                                "amount": 10.0,
+                                "amountType": "D"
+                            },
+                            {
+                                "accountCode": "0800",
+                                "amount": null,
+                                "amountType": "C"
+                            }
+                        ]
+                    },
+                    {
+                        "transactionId": "2",
+                        "lines": []
+                    }
+                ]
+            },
+            {
+                "journalId": "EMPTY",
+                "transactions": []
+            }
+        ],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "transaction-line-missing-amount",
+                "message": "A transaction line is missing its <amnt> amount.",
+                "context": {
+                    "journalId": "MEM1",
+                    "accountCode": "0800"
+                }
+            }
+        ]
+    },
+    "file no company": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "no-company",
+                "message": "No <company> element found in the auditfile.",
+                "context": {
+                    "path": "PATH"
+                }
+            }
+        ]
+    },
+    "file unreadable": {
+        "company": [],
+        "ledgerAccounts": [],
+        "relations": [],
+        "openingBalances": [],
+        "journals": [],
+        "findings": [
+            {
+                "severity": "error",
+                "code": "unreadable-file",
+                "message": "Auditfile is not readable.",
+                "context": {
+                    "path": "PATH"
+                }
+            }
+        ]
+    },
+    "warnings": [
+        [
+            "AuditfileParser: rejected DOCTYPE/ENTITY (XXE protection)",
+            []
+        ],
+        [
+            "AuditfileParser: rejected DOCTYPE/ENTITY (XXE protection)",
+            []
+        ],
+        [
+            "AuditfileParser: malformed XML",
+            {
+                "detail": true
+            }
+        ]
+    ]
+}

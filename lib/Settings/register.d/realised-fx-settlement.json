@@ -172,6 +172,25 @@
                             "description": "Mark the realised-FX posting as reversed; the original entry is preserved."
                         }
                     }
+                },
+                "authorization": {
+                    "create": [
+                        "shillinq_treasurer",
+                        "shillinq_bookkeeper"
+                    ],
+                    "read": [
+                        "shillinq_treasurer",
+                        "shillinq_bookkeeper",
+                        "shillinq_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_treasurer",
+                        "shillinq_bookkeeper"
+                    ],
+                    "delete": [
+                        "shillinq_controller"
+                    ]
                 }
             }
         }

@@ -72,62 +72,8 @@ class AcmReportGenerator {
 			throw new InvalidArgumentException('Invalid period format: ' . $period);
 		}
 
-		$inputActivities = (array)$input['activities'];
-		$ikpRecords = (array)($input['ikpRecords'] ?? []);
-		$revenueByActivity = (array)($input['omzetByActivity'] ?? []);
-		$abbList = (array)($input['abbList'] ?? []);
-
-		// The source list and the accumulator were `$activiteiten` and
-		// `$activities`; translating the first collapsed them onto one name, and
-		// the accumulator's `= []` then emptied the input before the loop read it.
-		$activities = [];
-		foreach ($inputActivities as $activity) {
-			if (is_array($activity) === false) {
-				continue;
-			}
-
-			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
-			$code = (string)($activity['code'] ?? '');
-			$name = (string)($activity['name'] ?? '');
-			$ikp = (array)($ikpRecords[$activityId] ?? []);
-			$integraleCost = (float)($ikp['totalCost'] ?? 0);
-			$revenue = (float)($revenueByActivity[$activityId] ?? 0);
-			if ($integraleCost > 0.0) {
-				$ratio = round(($revenue / $integraleCost), 4);
-			} else {
-				$ratio = null;
-			}
-
-			$compliant = ($revenue >= $integraleCost);
-			if ((bool)($activity['isExempted'] ?? false) === true) {
-				$abbReference = (string)($activity['exemptionDecisionId'] ?? '');
-			} else {
-				$abbReference = null;
-			}
-
-			$activities[] = [
-				'commercialActivityId' => $activityId,
-				'code' => $code,
-				'name' => $name,
-				'revenue' => $revenue,
-				'integralCostPrice' => $integraleCost,
-				'costRecoveryRatio' => $ratio,
-				'compliant' => $compliant,
-				'abbReference' => $abbReference,
-			];
-		}//end foreach
-
-		$abbSummaries = [];
-		foreach ($abbList as $abb) {
-			if (is_array($abb) === false) {
-				continue;
-			}
-
-			$abbSummaries[] = [
-				'reference' => (string)($abb['reference'] ?? ''),
-				'rationaleExcerpt' => mb_substr(trim((string)($abb['rationale'] ?? '')), 0, 240),
-			];
-		}
+		$activities = $this->activityRows(input: $input);
+		$abbSummaries = $this->abbSummaries(abbList: (array)($input['abbList'] ?? []));
 
 		return [
 			'period' => $period,
@@ -149,6 +95,123 @@ class AcmReportGenerator {
 		];
 
 	}//end compose()
+
+	/**
+	 * Build one report line per array activity in the input, in input order.
+	 *
+	 * @param array<string,mixed> $input The compose input.
+	 *
+	 * @return array<int,array<string,mixed>> Activity lines.
+	 */
+	private function activityRows(array $input): array {
+		$activities = [];
+		foreach ((array)$input['activities'] as $activity) {
+			if (is_array($activity) === false) {
+				continue;
+			}
+
+			$activities[] = $this->activityRow(activity: $activity, input: $input);
+		}
+
+		return $activities;
+
+	}//end activityRows()
+
+	/**
+	 * Build the report line for one activity from its IKP record and revenue.
+	 *
+	 * @param array<string,mixed> $activity The activity.
+	 * @param array<string,mixed> $input    The compose input.
+	 *
+	 * @return array<string,mixed> The activity line.
+	 */
+	private function activityRow(array $activity, array $input): array {
+		$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
+		$integraleCost = (float)($this->ikpRecord(input: $input, activityId: $activityId)['totalCost'] ?? 0);
+		$revenue = (float)(((array)($input['omzetByActivity'] ?? []))[$activityId] ?? 0);
+
+		return [
+			'commercialActivityId' => $activityId,
+			'code' => (string)($activity['code'] ?? ''),
+			'name' => (string)($activity['name'] ?? ''),
+			'revenue' => $revenue,
+			'integralCostPrice' => $integraleCost,
+			'costRecoveryRatio' => $this->costRecoveryRatio(revenue: $revenue, integraleCost: $integraleCost),
+			'compliant' => ($revenue >= $integraleCost),
+			'abbReference' => $this->abbReference(activity: $activity),
+		];
+
+	}//end activityRow()
+
+	/**
+	 * The IKP record of an activity; empty when it has none.
+	 *
+	 * @param array<string,mixed> $input      The compose input.
+	 * @param string              $activityId The activity id.
+	 *
+	 * @return array<string,mixed> The IKP record.
+	 */
+	private function ikpRecord(array $input, string $activityId): array {
+		return (array)(((array)($input['ikpRecords'] ?? []))[$activityId] ?? []);
+
+	}//end ikpRecord()
+
+	/**
+	 * Revenue over integral cost, rounded to 4 decimals; null without cost.
+	 *
+	 * @param float $revenue       The revenue.
+	 * @param float $integraleCost The integral cost price.
+	 *
+	 * @return float|null The ratio.
+	 */
+	private function costRecoveryRatio(float $revenue, float $integraleCost): float|null {
+		if ($integraleCost > 0.0) {
+			return round(($revenue / $integraleCost), 4);
+		}
+
+		return null;
+
+	}//end costRecoveryRatio()
+
+	/**
+	 * The exemption decision of an exempted activity; null otherwise.
+	 *
+	 * @param array<string,mixed> $activity The activity.
+	 *
+	 * @return string|null The ABB reference.
+	 */
+	private function abbReference(array $activity): string|null {
+		if ((bool)($activity['isExempted'] ?? false) === true) {
+			return (string)($activity['exemptionDecisionId'] ?? '');
+		}
+
+		return null;
+
+	}//end abbReference()
+
+	/**
+	 * Summarise each array ABB decision to its reference and a rationale excerpt.
+	 *
+	 * @param array<int|string,mixed> $abbList The ABB decisions.
+	 *
+	 * @return array<int,array<string,string>> Summaries.
+	 */
+	private function abbSummaries(array $abbList): array {
+		$abbSummaries = [];
+		foreach ($abbList as $abb) {
+			if (is_array($abb) === false) {
+				continue;
+			}
+
+			$abbSummaries[] = [
+				'reference' => (string)($abb['reference'] ?? ''),
+				'rationaleExcerpt' => mb_substr(trim((string)($abb['rationale'] ?? '')), 0, 240),
+			];
+		}
+
+		return $abbSummaries;
+
+	}//end abbSummaries()
 
 	/**
 	 * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
@@ -212,27 +275,8 @@ class AcmReportGenerator {
 				continue;
 			}
 
-			if ($a['costRecoveryRatio'] === null) {
-				$ratioAttr = '';
-			} else {
-				$ratioAttr = (string)$a['costRecoveryRatio'];
-			}
-
-			if ((bool)($a['compliant'] ?? false) === true) {
-				$compliantAttr = 'true';
-			} else {
-				$compliantAttr = 'false';
-			}
-
-			$lines[] = sprintf(
-				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
-				htmlspecialchars((string)($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
-				(float)($a['revenue'] ?? 0),
-				(float)($a['integralCostPrice'] ?? 0),
-				$ratioAttr,
-				$compliantAttr
-			);
-		}//end foreach
+			$lines[] = $this->activityXml(line: $a);
+		}
 
 		$body = implode("\n", $lines);
 
@@ -244,4 +288,33 @@ class AcmReportGenerator {
 XML;
 
 	}//end toXml()
+
+	/**
+	 * Render one activity line as an <Activiteit/> element.
+	 *
+	 * @param array<string,mixed> $line The activity line.
+	 *
+	 * @return string The XML element, indented two spaces.
+	 */
+	private function activityXml(array $line): string {
+		$ratioAttr = '';
+		if ($line['costRecoveryRatio'] !== null) {
+			$ratioAttr = (string)$line['costRecoveryRatio'];
+		}
+
+		$compliantAttr = 'false';
+		if ((bool)($line['compliant'] ?? false) === true) {
+			$compliantAttr = 'true';
+		}
+
+		return sprintf(
+			'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
+			htmlspecialchars((string)($line['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
+			(float)($line['revenue'] ?? 0),
+			(float)($line['integralCostPrice'] ?? 0),
+			$ratioAttr,
+			$compliantAttr
+		);
+
+	}//end activityXml()
 }//end class

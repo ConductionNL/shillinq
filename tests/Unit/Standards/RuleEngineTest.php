@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Standards;
@@ -46,6 +51,9 @@ use PHPUnit\Framework\TestCase;
  * @uses \OCA\Shillinq\Standards\Checks\SustainabilityChecks
  * @uses \OCA\Shillinq\Standards\Checks\VatBbvLedgerTailChecks
  * @uses \OCA\Shillinq\Standards\Checks\VatChecks
+ * @uses \OCA\Shillinq\Standards\Checks\CheckFields
+ * @uses \OCA\Shillinq\Standards\Checks\GlTransactionLines
+ * @uses \OCA\Shillinq\Standards\Checks\InvoiceParts
  */
 class RuleEngineTest extends TestCase {
 
@@ -253,6 +261,12 @@ class RuleEngineTest extends TestCase {
 		$goodIds = array_map(static fn (Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $good));
 		$this->assertNotContains('en16931-br-cl-03', $goodIds);
 		$this->assertNotContains('en16931-br-dec-14', $goodIds);
+
+		// The code list is upper case: a lower-case or padded code is not on it.
+		foreach (['eur', ' EUR', 'Eur'] as $currency) {
+			$ids = array_map(static fn (Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', array_merge($base, ['currency' => $currency])));
+			$this->assertContains(needle: 'en16931-br-cl-03', haystack: $ids, message: 'currency "' . $currency . '" flagged');
+		}
 
 	}//end testCurrencyAndDecimalChecks()
 

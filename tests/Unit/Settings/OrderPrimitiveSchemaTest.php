@@ -3,6 +3,9 @@
 /**
  * Register schema tests for abstract-order-primitive.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Asserts the shipped `OrderPrimitive` schema against the register JSON:
  *  - exactly ONE `OrderPrimitive` schema definition exists (no slug collision);
  *  - the bare `Order` slug is NEVER used (issue #503 regression guard — a
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -298,18 +298,19 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	}//end testEveryTransitionIsGatedToItsOwnOrderTypeStates()
 
 	/**
-	 * RBAC roles are declared for every domain the Order primitive folds.
+	 * Every domain the Order primitive folds holds a group in its enforced
+	 * authorization block.
 	 *
 	 * @return void
 	 */
 	public function testOrderSchemaDeclaresRbacRoles(): void {
 		$order = $this->orderSchema();
-		$roles = array_keys($order['x-openregister-rbac']['roles']);
+		$readers = $order['authorization']['read'];
 
-		self::assertContains('subsidie-coordinator', $roles);
-		self::assertContains('bookkeeper', $roles);
-		self::assertContains('ondernemer', $roles);
-		self::assertContains('auditor', $roles);
+		self::assertContains('shillinq_subsidie_coordinator', $readers);
+		self::assertContains('shillinq_bookkeeper', $readers);
+		self::assertContains('shillinq_ondernemer', $readers);
+		self::assertContains('shillinq_auditor', $readers);
 
 	}//end testOrderSchemaDeclaresRbacRoles()
 

@@ -1,0 +1,2156 @@
+[
+    {
+        "case": "hit hit  [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit hit  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit hit  {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit hit  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit hit code [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit hit code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit hit code {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit hit code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit entity  [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit entity  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit entity  {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit entity  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit entity code [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit entity code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit entity code {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit entity code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit empty  [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit empty  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit empty  {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit empty  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit empty code [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit empty code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit empty code {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit empty code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit junk  [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit junk  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit junk  {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit junk  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit junk code [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit junk code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit junk code {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit junk code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit throw  [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit throw  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit throw  {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit throw  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit throw code [] u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "hit throw code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "hit throw code {\"_rbac\":false} u-1",
+        "result": {
+            "id": "u-1",
+            "name": "by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "hit throw code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity hit  [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity hit  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity hit  {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity hit  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity hit code [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity hit code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity hit code {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity hit code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity entity  [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity entity  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity entity  {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity entity  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity entity code [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity entity code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity entity code {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity entity code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity empty  [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity empty  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity empty  {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity empty  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity empty code [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity empty code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity empty code {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity empty code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity junk  [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity junk  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity junk  {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity junk  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity junk code [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity junk code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity junk code {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity junk code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity throw  [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity throw  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity throw  {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity throw  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity throw code [] u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "entity throw code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "entity throw code {\"_rbac\":false} u-1",
+        "result": {
+            "name": "entity by uuid"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "entity throw code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty hit  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty hit  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty hit  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty hit  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty hit code [] u-1",
+        "result": {
+            "code": "by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty hit code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty hit code {\"_rbac\":false} u-1",
+        "result": {
+            "code": "by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty hit code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty entity  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty entity  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty entity  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty entity  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty entity code [] u-1",
+        "result": {
+            "code": "entity by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty entity code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty entity code {\"_rbac\":false} u-1",
+        "result": {
+            "code": "entity by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty entity code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty empty  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty empty  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty empty  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty empty  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty empty code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty empty code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty empty code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty empty code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty junk  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty junk  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty junk  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty junk  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty junk code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty junk code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty junk code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty junk code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty throw  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty throw  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty throw  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty throw  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty throw code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "empty throw code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "empty throw code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "empty throw code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity hit  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity hit  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity hit  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity hit  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity hit code [] u-1",
+        "result": {
+            "code": "by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity hit code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity hit code {\"_rbac\":false} u-1",
+        "result": {
+            "code": "by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity hit code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity entity  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity entity  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity entity  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity entity  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity entity code [] u-1",
+        "result": {
+            "code": "entity by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity entity code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity entity code {\"_rbac\":false} u-1",
+        "result": {
+            "code": "entity by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity entity code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity empty  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity empty  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity empty  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity empty  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity empty code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity empty code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity empty code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity empty code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity junk  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity junk  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity junk  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity junk  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity junk code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity junk code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity junk code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity junk code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity throw  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity throw  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity throw  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity throw  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity throw code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity throw code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "emptyEntity throw code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "emptyEntity throw code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw hit  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw hit  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw hit  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw hit  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw hit code [] u-1",
+        "result": {
+            "code": "by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw hit code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw hit code {\"_rbac\":false} u-1",
+        "result": {
+            "code": "by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw hit code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw entity  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw entity  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw entity  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw entity  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw entity code [] u-1",
+        "result": {
+            "code": "entity by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw entity code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw entity code {\"_rbac\":false} u-1",
+        "result": {
+            "code": "entity by property"
+        },
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw entity code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw empty  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw empty  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw empty  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw empty  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw empty code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw empty code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw empty code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw empty code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw junk  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw junk  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw junk  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw junk  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw junk code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw junk code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw junk code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw junk code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw throw  [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw throw  [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw throw  {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw throw  {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw throw code [] u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                []
+            ]
+        ]
+    },
+    {
+        "case": "throw throw code [] ",
+        "result": null,
+        "calls": []
+    },
+    {
+        "case": "throw throw code {\"_rbac\":false} u-1",
+        "result": null,
+        "calls": [
+            [
+                "find",
+                "u-1",
+                {
+                    "_rbac": false
+                }
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "code": "u-1"
+                    },
+                    "limit": 1
+                },
+                {
+                    "_rbac": false
+                }
+            ]
+        ]
+    },
+    {
+        "case": "throw throw code {\"_rbac\":false} ",
+        "result": null,
+        "calls": []
+    }
+]

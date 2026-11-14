@@ -36,18 +36,19 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Transaction-register helper service (REQ-WBSO-002 / REQ-WBSO-008).
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-24
  */
-class WbsoTransactionService {
+class WbsoTransactionService implements WbsoTransactionServiceInterface {
 
 	/**
 	 * Allowed transactionType values.
@@ -94,34 +95,71 @@ class WbsoTransactionService {
 		return array_values(
 			array_filter(
 				$transactions,
-				static function (array $row) use ($filters): bool {
-					if (isset($filters['status']) === true && $filters['status'] !== ''
-						&& (string)($row['status'] ?? '') !== (string)$filters['status']
-					) {
-						return false;
-					}
-
-					if (isset($filters['type']) === true && $filters['type'] !== ''
-						&& (string)($row['transactionType'] ?? '') !== (string)$filters['type']
-					) {
-						return false;
-					}
-
-					$date = (string)($row['transactionDate'] ?? '');
-					if (isset($filters['dateFrom']) === true && $filters['dateFrom'] !== '' && $date < (string)$filters['dateFrom']) {
-						return false;
-					}
-
-					if (isset($filters['dateTo']) === true && $filters['dateTo'] !== '' && $date > (string)$filters['dateTo']) {
-						return false;
-					}
-
-					return true;
-				}
+				static fn (array $row): bool => self::matchesTransactionFilters(row: $row, filters: $filters)
 			)
 		);
 
 	}//end listTransactions()
+
+	/**
+	 * Whether a transaction passes the status, type and date filters that are
+	 * set.
+	 *
+	 * @param array<string,mixed> $row     The Transaction record.
+	 * @param array<string,mixed> $filters The list filters.
+	 *
+	 * @return bool
+	 */
+	private static function matchesTransactionFilters(array $row, array $filters): bool {
+		$status = self::activeFilter(filters: $filters, key: 'status');
+		if ($status !== null && (string)($row['status'] ?? '') !== $status) {
+			return false;
+		}
+
+		$type = self::activeFilter(filters: $filters, key: 'type');
+		if ($type !== null && (string)($row['transactionType'] ?? '') !== $type) {
+			return false;
+		}
+
+		return self::withinDateFilters(row: $row, filters: $filters);
+	}//end matchesTransactionFilters()
+
+	/**
+	 * Whether the transaction date lies inside the dateFrom / dateTo filters
+	 * that are set.
+	 *
+	 * @param array<string,mixed> $row     The Transaction record.
+	 * @param array<string,mixed> $filters The list filters.
+	 *
+	 * @return bool
+	 */
+	private static function withinDateFilters(array $row, array $filters): bool {
+		$date = (string)($row['transactionDate'] ?? '');
+
+		$from = self::activeFilter(filters: $filters, key: 'dateFrom');
+		if ($from !== null && $date < $from) {
+			return false;
+		}
+
+		$to = self::activeFilter(filters: $filters, key: 'dateTo');
+		return ($to === null || $date <= $to);
+	}//end withinDateFilters()
+
+	/**
+	 * A filter's value as text, or null when it is not set or empty.
+	 *
+	 * @param array<string,mixed> $filters The list filters.
+	 * @param string              $key     The filter name.
+	 *
+	 * @return string|null
+	 */
+	private static function activeFilter(array $filters, string $key): ?string {
+		if (isset($filters[$key]) === false || $filters[$key] === '') {
+			return null;
+		}
+
+		return (string)$filters[$key];
+	}//end activeFilter()
 
 	/**
 	 * Fetch a single transaction by id within an administration scope.
@@ -162,7 +200,6 @@ class WbsoTransactionService {
 
 		$this->validateTransactionPayload(payload: $payload);
 
-
 		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
 		// this method declares — returning it raised a TypeError on every call.
 		return (array)$this->objectService
@@ -198,7 +235,6 @@ class WbsoTransactionService {
 
 		$existing['status'] = 'posted';
 		$existing['postedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
-
 
 		// ADR-084: see createTransaction() — the contract returns an entity.
 		return (array)$this->objectService
@@ -254,7 +290,6 @@ class WbsoTransactionService {
 			'reversalReason' => $reason,
 		];
 
-
 		// ADR-084: see createTransaction() — the contract returns an entity.
 		return (array)$this->objectService
 			->setRegister($this->register())
@@ -307,7 +342,7 @@ class WbsoTransactionService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

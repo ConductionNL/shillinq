@@ -168,6 +168,55 @@ final class LogPeppolTransmissionAdapterTest extends TestCase {
 	}//end testEmptyInputsShortCircuit()
 
 	/**
+	 * A schema that cannot be read is logged and skipped; the next schema is
+	 * still searched with the administration and its own id field, and blank
+	 * or non-array rows are passed over.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableSchemaIsLoggedAndSkipped(): void {
+		$schema = '';
+		$queries = [];
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnCallback(
+			static function (string|int $requested) use (&$schema, $objectService): ObjectServiceInterface {
+				$schema = (string)$requested;
+				return $objectService;
+			}
+		);
+		$objectService->method('findAll')->willReturnCallback(
+			static function (array $config = []) use (&$schema, &$queries): array {
+				$queries[] = [$schema, $config];
+				if ($schema === 'Vendor') {
+					throw new \RuntimeException('no such schema');
+				}
+
+				return ['not-a-row', ['peppolParticipantId' => '  '], ['peppolParticipantId' => ' 0106:42 '], ['peppolParticipantId' => '0106:later']];
+			}
+		);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+		$logger->expects(self::once())->method('info')->with(
+			'shillinq.peppol.lookup.skipped',
+			['schema' => 'Vendor', 'reason' => 'schema_unavailable', 'exception' => 'no such schema']
+		);
+
+		$adapter = new LogPeppolTransmissionAdapter(objectService: $objectService, appConfig: $appConfig, logger: $logger);
+
+		self::assertSame('0106:42', $adapter->lookupParticipant(administrationId: 'adm-1', partyId: 'P-1'));
+		self::assertSame(
+			[
+				['Vendor', ['filters' => ['administrationId' => 'adm-1', 'id' => 'P-1']]],
+				['CustomerMaster', ['filters' => ['administrationId' => 'adm-1', 'customerId' => 'P-1']]],
+			],
+			$queries
+		);
+
+	}//end testAnUnreadableSchemaIsLoggedAndSkipped()
+
+	/**
 	 * Build an adapter over a stub ObjectService that serves the given
 	 * schema => rows map and applies equality filters.
 	 *

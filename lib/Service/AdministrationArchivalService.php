@@ -3,6 +3,9 @@
 /**
  * Administration Archival Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure rule + ObjectService-backed enforcement for the administratie archival
  * write-block (REQ-MA-007 / Task 17). An administratie in a read-only
  * lifecycle state (`gearchiveerd`, `opgeheven`) MUST reject every mutation
@@ -28,16 +31,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationArchivalServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -59,7 +60,7 @@ use Throwable;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class AdministrationArchivalService {
+class AdministrationArchivalService implements AdministrationArchivalServiceInterface {
 	/**
 	 * Administration lifecycle states that reject all mutations (REQ-MA-007).
 	 *
@@ -282,7 +283,7 @@ class AdministrationArchivalService {
 	 * @return string
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

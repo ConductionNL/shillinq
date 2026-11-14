@@ -5,8 +5,8 @@
  *
  * Covers IrregularityReportGuard (REQ-EUF-007 OLAF €10k IMS-meldplicht),
  * SegregatedLedgerGuard (REQ-EUF-002 zero-variance close),
- * SupportingDocumentGuard (REQ-EUF-004 SHA-256 certify), and AuditTrailGuard
- * (REQ-EUF-009 append-only immutability + event builder).
+ * SupportingDocumentGuard (REQ-EUF-004 SHA-256 certify), and the AuditTrail
+ * schema (REQ-EUF-009: append-only in OpenRegister, required fields, closed enum).
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -28,10 +28,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Lifecycle\AuditTrailGuard;
 use OCA\Shillinq\Lifecycle\IrregularityReportGuard;
 use OCA\Shillinq\Lifecycle\SegregatedLedgerGuard;
 use OCA\Shillinq\Lifecycle\SupportingDocumentGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -198,65 +198,66 @@ class EuFondsenGuardsTest extends TestCase {
 	}//end testDocumentWithoutHashCannotCertify()
 
 	/**
-	 * AuditTrail records can never be modified or deleted (REQ-EUF-009).
+	 * AuditTrail records can never be modified or deleted (REQ-EUF-009), and
+	 * OpenRegister is what refuses it: the schema declares `appendOnly`, so
+	 * ObjectService answers an update or a delete with SCHEMA_APPEND_ONLY (405).
+	 * The app-local AuditTrailGuard that said so was never called by anything.
 	 *
 	 * @return void
 	 */
-	public function testAuditTrailIsAppendOnly(): void {
-		$guard = new AuditTrailGuard($this->createMock(LoggerInterface::class));
-
-		// phpcs:disable CustomSniffs.Functions.NamedParameters
-		self::assertFalse($guard->canModify('at-1', ['eventType' => 'booking']));
-		self::assertFalse($guard->canDelete('at-1', ['eventType' => 'booking']));
-		// phpcs:enable CustomSniffs.Functions.NamedParameters
-	}//end testAuditTrailIsAppendOnly()
+	public function testAuditTrailIsAppendOnlyInOpenRegister(): void {
+		self::assertTrue(RegisterSchema::schema(slug: 'AuditTrail')['appendOnly'] ?? false);
+	}//end testAuditTrailIsAppendOnlyInOpenRegister()
 
 	/**
-	 * buildEvent() constructs a well-formed event with before/after snapshots (REQ-EUF-009).
+	 * A well-formed EU-fondsen event is accepted by the register as it stands.
 	 *
 	 * @return void
 	 */
-	public function testBuildEventConstructsWellFormedRecord(): void {
-		$guard = new AuditTrailGuard($this->createMock(LoggerInterface::class));
-
-		$event = $guard->buildEvent(
-			[
-				'administrationId' => 'adm-1',
-				'euProjectId' => 'eu-1',
-				'eventType' => 'correction',
-				'actorRole' => 'certificeringsautoriteit',
-				'beforeState' => ['state' => 'in_audit'],
-				'afterState' => ['state' => 'gecorrigeerd'],
-				'euExpenditureId' => 'exp-1',
-				'justification' => '5% financial correction per DG REGIO finding',
-			]
-		);
-
-		self::assertSame('adm-1', $event['administrationId']);
-		self::assertSame('correction', $event['eventType']);
-		self::assertSame(['state' => 'in_audit'], $event['beforeState']);
-		self::assertSame(['state' => 'gecorrigeerd'], $event['afterState']);
-		self::assertArrayHasKey('timestamp', $event);
-		// No BSN / natural-person leak when not supplied (ADR-005).
-		self::assertArrayNotHasKey('actorNaturalPerson', $event);
-	}//end testBuildEventConstructsWellFormedRecord()
+	public function testAuditTrailAcceptsAWellFormedEvent(): void {
+		self::assertSame([], RegisterSchema::errors(slug: 'AuditTrail', object: $this->auditEvent()));
+	}//end testAuditTrailAcceptsAWellFormedEvent()
 
 	/**
-	 * buildEvent() rejects an unknown event type (REQ-EUF-009 closed enum).
+	 * The register refuses an event without its project, the check the
+	 * guard's builder made in PHP (REQ-EUF-009).
 	 *
 	 * @return void
 	 */
-	public function testBuildEventRejectsUnknownEventType(): void {
-		$guard = new AuditTrailGuard($this->createMock(LoggerInterface::class));
+	public function testAuditTrailRefusesAnEventWithoutItsProject(): void {
+		$event = $this->auditEvent();
+		unset($event['euProjectId']);
 
-		$this->expectException(\InvalidArgumentException::class);
-		$guard->buildEvent(
-			[
-				'administrationId' => 'adm-1',
-				'euProjectId' => 'eu-1',
-				'eventType' => 'tampering',
-				'actorRole' => 'controller',
-			]
-		);
-	}//end testBuildEventRejectsUnknownEventType()
+		self::assertNotSame([], RegisterSchema::errors(slug: 'AuditTrail', object: $event));
+	}//end testAuditTrailRefusesAnEventWithoutItsProject()
+
+	/**
+	 * The register refuses an unknown event type (REQ-EUF-009 closed enum).
+	 *
+	 * @return void
+	 */
+	public function testAuditTrailRefusesAnUnknownEventType(): void {
+		$event = $this->auditEvent();
+		$event['eventType'] = 'tampering';
+
+		self::assertNotSame([], RegisterSchema::errors(slug: 'AuditTrail', object: $event));
+	}//end testAuditTrailRefusesAnUnknownEventType()
+
+	/**
+	 * A correction event as an EU-fondsen transition writes it.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function auditEvent(): array {
+		return [
+			'administrationId' => '7c0e4a3e-2f7b-4c55-9c39-8a1d1b8b6f10',
+			'euProjectId' => '0b6f0a2c-6a8e-4c43-8a7e-3f2b9c1d4e21',
+			'eventType' => 'correction',
+			'actorRole' => 'certificeringsautoriteit',
+			'timestamp' => '2026-10-04T10:00:00+00:00',
+			'beforeState' => ['state' => 'in_audit'],
+			'afterState' => ['state' => 'gecorrigeerd'],
+			'justification' => '5% financial correction per DG REGIO finding',
+		];
+	}//end auditEvent()
 }//end class

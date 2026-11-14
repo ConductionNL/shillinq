@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\Shillinq\Service\BIKStaffelCalculator;
+use OCA\Shillinq\Service\InterestAccrualRequest;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -142,10 +143,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testRenteB2BHandelsrenteOn8400Eur22Days(): void {
 		$r = $this->calc->rente(
-			partyType: 'B2B',
-			principal: 8400.00,
-			effectiveDate: new DateTimeImmutable('2026-05-30'),
-			calculatedOn: new DateTimeImmutable('2026-06-21')
+			new InterestAccrualRequest(
+				partyType: 'B2B',
+				principal: 8400.00,
+				effectiveDate: new DateTimeImmutable('2026-05-30'),
+				calculatedOn: new DateTimeImmutable('2026-06-21')
+			)
 		);
 
 		self::assertSame(0.1015, $r['rate']);
@@ -169,10 +172,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testRenteB2CWettelijkeRenteOn820Eur31Days(): void {
 		$r = $this->calc->rente(
-			partyType: 'B2C',
-			principal: 820.00,
-			effectiveDate: new DateTimeImmutable('2026-05-30'),
-			calculatedOn: new DateTimeImmutable('2026-06-30')
+			new InterestAccrualRequest(
+				partyType: 'B2C',
+				principal: 820.00,
+				effectiveDate: new DateTimeImmutable('2026-05-30'),
+				calculatedOn: new DateTimeImmutable('2026-06-30')
+			)
 		);
 
 		self::assertSame(0.04, $r['rate']);
@@ -191,10 +196,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	public function testRenteRejectsBerekendOpBeforeIngangsdatum(): void {
 		$this->expectException(InvalidArgumentException::class);
 		$this->calc->rente(
-			partyType: 'B2B',
-			principal: 1000,
-			effectiveDate: new DateTimeImmutable('2026-06-01'),
-			calculatedOn: new DateTimeImmutable('2026-05-01')
+			new InterestAccrualRequest(
+				partyType: 'B2B',
+				principal: 1000,
+				effectiveDate: new DateTimeImmutable('2026-06-01'),
+				calculatedOn: new DateTimeImmutable('2026-05-01')
+			)
 		);
 
 	}//end testRenteRejectsBerekendOpBeforeIngangsdatum()
@@ -301,10 +308,12 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testRenteSplitsAcrossRateBoundary(): void {
 		$r = $this->calc->rente(
-			partyType: 'B2C',
-			principal: 10000.00,
-			effectiveDate: new DateTimeImmutable('2025-12-17'),
-			calculatedOn: new DateTimeImmutable('2026-01-16')
+			new InterestAccrualRequest(
+				partyType: 'B2C',
+				principal: 10000.00,
+				effectiveDate: new DateTimeImmutable('2025-12-17'),
+				calculatedOn: new DateTimeImmutable('2026-01-16')
+			)
 		);
 
 		self::assertSame(30, $r['days']);
@@ -326,11 +335,13 @@ final class BIKStaffelCalculatorTest extends TestCase {
 	 */
 	public function testRenteHonoursExplicitOverride(): void {
 		$r = $this->calc->rente(
-			partyType: 'B2B',
-			principal: 8400.00,
-			effectiveDate: new DateTimeImmutable('2026-05-30'),
-			calculatedOn: new DateTimeImmutable('2026-06-21'),
-			rateB2B: 0.12
+			new InterestAccrualRequest(
+				partyType: 'B2B',
+				principal: 8400.00,
+				effectiveDate: new DateTimeImmutable('2026-05-30'),
+				calculatedOn: new DateTimeImmutable('2026-06-21'),
+				rateB2B: 0.12
+			)
 		);
 
 		self::assertSame(0.12, $r['rate']);

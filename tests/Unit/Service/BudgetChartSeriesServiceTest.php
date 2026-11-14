@@ -160,6 +160,39 @@ final class BudgetChartSeriesServiceTest extends TestCase {
 	}//end fixture()
 
 	/**
+	 * The whole response for a revenue account with a LedgerGroup and budget,
+	 * an unbudgeted expense account without history and a stock account,
+	 * over months spanning a year without a budget and past the projection
+	 * horizon, matches the recorded golden byte for byte.
+	 *
+	 * Regenerate (only for an intended change) with
+	 * `BUDGET_CHART_GOLDEN_WRITE=1 vendor/bin/phpunit -c phpunit-unit.xml tests/Unit/Service/BudgetChartSeriesServiceTest.php`.
+	 *
+	 * @return void
+	 */
+	public function testTheFullSeriesMatchesTheGolden(): void {
+		$data = $this->fixture();
+		$data['Account'][] = ['accountNumber' => '4000', 'administrationId' => 'adm-1', 'accountType' => 'expenses'];
+		$data['Account'][] = ['accountNumber' => '1100', 'administrationId' => 'adm-1', 'accountType' => 'assets'];
+		$data['GLTransaction'][] = ['id' => 'tx-b', 'transactionNumber' => 'GL-2027-B', 'administrationId' => 'adm-1', 'state' => 'posted', 'postingDate' => '2027-03-20'];
+		$data['GLLine'][] = ['transactionId' => 'tx-b', 'accountNumber' => '1100', 'side' => 'debit', 'amount' => 250.0];
+		$data['LedgerGroup'][] = [
+			'id' => '', '@self' => ['slug' => 'kosten'], 'name' => 'Kosten', 'administrationId' => 'adm-1', 'parentLedgerGroupId' => null,
+			'accountRanges' => [['from' => '4000', 'to' => '4999']], 'includedAccountNumbers' => ['1100'], 'excludedAccountNumbers' => [],
+		];
+		[$service] = $this->buildService(data: $data);
+
+		$actual = json_encode($service->resolveSeries('adm-1', '2026-12', '2028-08'), JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION) . "\n";
+		$golden = __DIR__ . '/fixtures/budget-chart-series-golden.json';
+		if (getenv('BUDGET_CHART_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, $actual);
+		}
+
+		$this->assertSame(file_get_contents($golden), $actual);
+
+	}//end testTheFullSeriesMatchesTheGolden()
+
+	/**
 	 * `resolveSeries()` calls each reader's `loadContext()` EXACTLY ONCE
 	 * (5 for BudgetVsActualsReader + 4 for BudgetProjectionReader), plus
 	 * exactly 1 more for the single fiscal year's AnnualBudget resolution

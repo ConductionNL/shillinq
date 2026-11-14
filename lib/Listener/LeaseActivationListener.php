@@ -3,6 +3,9 @@
 /**
  * Lease Activation Listener
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change revive-lease-capabilities (shillinq#446): the missing IFRS-16 lease
  * schedule trigger. {@see \OCA\Shillinq\Service\LeasePaymentScheduleService::generateSchedule()}
  * fully materialises the per-period amortization schedule (interest /
@@ -37,9 +40,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -48,8 +48,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\LeasePaymentScheduleService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\LeasePaymentScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -74,13 +74,13 @@ class LeaseActivationListener implements IEventListener {
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param LeasePaymentScheduleService $scheduleService The amortization schedule generator.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LeasePaymentScheduleServiceInterface $scheduleService The amortization schedule generator.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly LeasePaymentScheduleService $scheduleService,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LeasePaymentScheduleServiceInterface $scheduleService,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -103,41 +103,10 @@ class LeaseActivationListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			if ($entity === null) {
-				return;
+			$new = $this->activatedLease(event: $event);
+			if ($new !== null) {
+				$this->generateSchedule(lease: $new);
 			}
-
-			if ($this->isLeaseContractSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
-				return;
-			}
-
-			$new = $entity->getObject();
-			if (is_array($new) === false) {
-				return;
-			}
-
-			if ($this->isActivationEdge(event: $event, new: $new) === false) {
-				return;
-			}
-
-			$leaseContractId = $this->resolveLeaseId(lease: $new);
-			$administrationId = trim((string)($new['administrationId'] ?? ''));
-			if ($leaseContractId === '' || $administrationId === '') {
-				$this->logger->warning(
-					'LeaseActivationListener: activated lease carries no id/administrationId; schedule generation skipped',
-					['leaseNumber' => ($new['leaseNumber'] ?? null)]
-				);
-				return;
-			}
-
-			// The schedule service re-guards classification (IFRS16-capitalised
-			// only) and the administration scope (ADR-005), so the listener
-			// stays thin.
-			$this->scheduleService->generateSchedule(
-				leaseContractId: $leaseContractId,
-				administrationId: $administrationId
-			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'LeaseActivationListener: failed to generate the lease amortization schedule',
@@ -148,6 +117,56 @@ class LeaseActivationListener implements IEventListener {
 	}//end handle()
 
 	/**
+	 * The saved LeaseContract when this save is its activation edge.
+	 *
+	 * @param ObjectCreatedEvent|ObjectUpdatedEvent $event The inbound event.
+	 *
+	 * @return array<string,mixed>|null The lease, or null for any other save.
+	 */
+	private function activatedLease(ObjectCreatedEvent|ObjectUpdatedEvent $event): array|null {
+		$entity = $event->getObject();
+		if ($entity === null || $this->isLeaseContractSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+			return null;
+		}
+
+		$new = $entity->getObject();
+		if (is_array($new) === false || $this->isActivationEdge(event: $event, new: $new) === false) {
+			return null;
+		}
+
+		return $new;
+
+	}//end activatedLease()
+
+	/**
+	 * Generate the activated lease's schedule; a lease without id or administration is skipped.
+	 *
+	 * @param array<string,mixed> $lease The activated LeaseContract.
+	 *
+	 * @return void
+	 */
+	private function generateSchedule(array $lease): void {
+		$leaseContractId = $this->resolveLeaseId(lease: $lease);
+		$administrationId = trim((string)($lease['administrationId'] ?? ''));
+		if ($leaseContractId === '' || $administrationId === '') {
+			$this->logger->warning(
+				'LeaseActivationListener: activated lease carries no id/administrationId; schedule generation skipped',
+				['leaseNumber' => ($lease['leaseNumber'] ?? null)]
+			);
+			return;
+		}
+
+		// The schedule service re-guards classification (IFRS16-capitalised
+		// only) and the administration scope (ADR-005), so the listener
+		// stays thin.
+		$this->scheduleService->generateSchedule(
+			leaseContractId: $leaseContractId,
+			administrationId: $administrationId
+		);
+
+	}//end generateSchedule()
+
+	/**
 	 * Whether this save moved the lease into the `active` state.
 	 *
 	 * For a create, the edge is simply "created active". For an update, the
@@ -155,12 +174,12 @@ class LeaseActivationListener implements IEventListener {
 	 * the new state to be `active` — so a later save of an already-active
 	 * lease (which would otherwise clobber posted schedule rows) is ignored.
 	 *
-	 * @param Event $event The inbound event.
+	 * @param ObjectCreatedEvent|ObjectUpdatedEvent $event The inbound event.
 	 * @param array<string,mixed> $new The new object body.
 	 *
 	 * @return bool True when this save is the activation edge.
 	 */
-	private function isActivationEdge(Event $event, array $new): bool {
+	private function isActivationEdge(ObjectCreatedEvent|ObjectUpdatedEvent $event, array $new): bool {
 		$newStatus = (string)($new['status'] ?? '');
 		if ($newStatus !== self::STATE_ACTIVE) {
 			return false;
@@ -172,19 +191,30 @@ class LeaseActivationListener implements IEventListener {
 
 		// ObjectUpdatedEvent: require a real edge from a non-active prior
 		// state. A missing old object (defensive) is treated as an edge.
-		$old = null;
-		if ($event instanceof ObjectUpdatedEvent) {
-			$oldEntity = $event->getOldObject();
-			if ($oldEntity !== null) {
-				$oldData = $oldEntity->getObject();
-				if (is_array($oldData) === true) {
-					$old = (string)($oldData['status'] ?? '');
-				}
-			}
+		return $this->previousStatus(event: $event) !== self::STATE_ACTIVE;
+	}//end isActivationEdge()
+
+	/**
+	 * The lease's status before this update, or null when the old object is missing.
+	 *
+	 * @param ObjectUpdatedEvent $event The update event.
+	 *
+	 * @return string|null The previous status.
+	 */
+	private function previousStatus(ObjectUpdatedEvent $event): string|null {
+		$oldEntity = $event->getOldObject();
+		if ($oldEntity === null) {
+			return null;
 		}
 
-		return $old !== self::STATE_ACTIVE;
-	}//end isActivationEdge()
+		$oldData = $oldEntity->getObject();
+		if (is_array($oldData) === false) {
+			return null;
+		}
+
+		return (string)($oldData['status'] ?? '');
+
+	}//end previousStatus()
 
 	/**
 	 * Resolve the lease id to hand to the schedule generator.

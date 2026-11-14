@@ -379,4 +379,55 @@ final class BudgetScenarioDefaultPromoterTest extends TestCase {
 		$this->assertSame(1, $outcome['defaultCount']);
 
 	}//end testDemotesAPreviousDefaultWhenFindAllReturnsEntities()
+
+	/**
+	 * Characterisation: the exact verification-mismatch record, and the
+	 * stored rows after a demotion of the previous default and the
+	 * promotion of an archived scenario (its status is kept).
+	 *
+	 * @return void
+	 */
+	public function testMismatchRecordAndStoredRowsArePinned(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$racyStore = new RacingDefaultObjectServiceDecorator(
+			inner: new InMemoryObjectServiceStub(['BudgetScenario' => [['id' => 'scn-a', 'administrationId' => 'adm-1']]]),
+			racerId: 'scn-racer',
+			administrationId: 'adm-1',
+		);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('error')->with(
+			'BudgetScenarioDefaultPromoter: post-promotion verification found 2 default BudgetScenario(s) for administration adm-1'
+			. ' (expected exactly 1) — a concurrent promotion may have raced this one; surfacing the inconsistency rather than silently resolving it',
+			['administrationId' => 'adm-1', 'scenarioId' => 'scn-a', 'defaultCount' => 2]
+		);
+		(new BudgetScenarioDefaultPromoter(appConfig: $appConfig, logger: $logger, objectService: $racyStore))->promote(scenarioId: 'scn-a');
+
+		[$promoter, $store] = $this->buildPromoter(
+			[
+				['id' => 'scn-old', 'administrationId' => 'adm-1', 'isDefault' => true, 'status' => 'active'],
+				['id' => 'scn-arch', 'administrationId' => 'adm-1', 'isDefault' => false, 'status' => 'archived'],
+			]
+		);
+		$outcome = $promoter->promote(scenarioId: 'scn-arch');
+
+		$this->assertSame(
+			[
+				'scenarioId' => 'scn-arch',
+				'administrationId' => 'adm-1',
+				'demotedScenarioId' => 'scn-old',
+				'verified' => true,
+				'defaultCount' => 1,
+			],
+			$outcome
+		);
+		$rows = [];
+		foreach ($store->setRegister('shillinq')->setSchema('BudgetScenario')->findAll() as $row) {
+			$rows[$row['id']] = [$row['isDefault'], $row['status']];
+		}
+
+		ksort($rows);
+		$this->assertSame(['scn-arch' => [true, 'archived'], 'scn-old' => [false, 'active']], $rows);
+
+	}//end testMismatchRecordAndStoredRowsArePinned()
 }//end class

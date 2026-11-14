@@ -1,0 +1,237 @@
+{
+    "readyToGroupAndUser": {
+        "returned": 2,
+        "calls": [
+            [
+                "linkToRouteAbsolute",
+                "files.viewcontroller.showFile",
+                {
+                    "fileid": 77
+                }
+            ],
+            [
+                "createNotification"
+            ],
+            [
+                "setApp",
+                "shillinq"
+            ],
+            [
+                "setUser",
+                "anna"
+            ],
+            [
+                "setDateTime",
+                "DateTime"
+            ],
+            [
+                "setObject",
+                "report_schedule",
+                "sched-1"
+            ],
+            [
+                "setSubject",
+                "scheduled_report_ready",
+                {
+                    "name": "Maandrapportage",
+                    "period": "2026-09"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.example/files.viewcontroller.showFile"
+            ],
+            [
+                "notify"
+            ],
+            [
+                "createNotification"
+            ],
+            [
+                "setApp",
+                "shillinq"
+            ],
+            [
+                "setUser",
+                "bert"
+            ],
+            [
+                "setDateTime",
+                "DateTime"
+            ],
+            [
+                "setObject",
+                "report_schedule",
+                "sched-1"
+            ],
+            [
+                "setSubject",
+                "scheduled_report_ready",
+                {
+                    "name": "Maandrapportage",
+                    "period": "2026-09"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.example/files.viewcontroller.showFile"
+            ],
+            [
+                "notify"
+            ]
+        ]
+    },
+    "readyNoName": {
+        "returned": 1,
+        "calls": [
+            [
+                "linkToRouteAbsolute",
+                "files.viewcontroller.showFile",
+                {
+                    "fileid": 5
+                }
+            ],
+            [
+                "createNotification"
+            ],
+            [
+                "setApp",
+                "shillinq"
+            ],
+            [
+                "setUser",
+                "carl"
+            ],
+            [
+                "setDateTime",
+                "DateTime"
+            ],
+            [
+                "setObject",
+                "report_schedule",
+                ""
+            ],
+            [
+                "setSubject",
+                "scheduled_report_ready",
+                {
+                    "name": "trial-balance",
+                    "period": "2026"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.example/files.viewcontroller.showFile"
+            ],
+            [
+                "notify"
+            ]
+        ]
+    },
+    "readyNobody": {
+        "returned": 0,
+        "calls": [
+            [
+                "linkToRouteAbsolute",
+                "files.viewcontroller.showFile",
+                {
+                    "fileid": 77
+                }
+            ]
+        ]
+    },
+    "failed": {
+        "returned": null,
+        "calls": [
+            [
+                "linkToRouteAbsolute",
+                "shillinq.dashboard.page",
+                []
+            ],
+            [
+                "createNotification"
+            ],
+            [
+                "setApp",
+                "shillinq"
+            ],
+            [
+                "setUser",
+                "anna"
+            ],
+            [
+                "setDateTime",
+                "DateTime"
+            ],
+            [
+                "setObject",
+                "report_schedule",
+                "sched-1"
+            ],
+            [
+                "setSubject",
+                "scheduled_report_failed",
+                {
+                    "name": "Maandrapportage",
+                    "reason": "Docudesk is not installed."
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.example/shillinq.dashboard.page"
+            ],
+            [
+                "notify"
+            ]
+        ]
+    },
+    "failedNoOwner": {
+        "returned": null,
+        "calls": []
+    },
+    "failedNoId": {
+        "returned": null,
+        "calls": [
+            [
+                "linkToRouteAbsolute",
+                "shillinq.dashboard.page",
+                []
+            ],
+            [
+                "createNotification"
+            ],
+            [
+                "setApp",
+                "shillinq"
+            ],
+            [
+                "setUser",
+                "bert"
+            ],
+            [
+                "setDateTime",
+                "DateTime"
+            ],
+            [
+                "setObject",
+                "report_schedule",
+                ""
+            ],
+            [
+                "setSubject",
+                "scheduled_report_failed",
+                {
+                    "name": "R",
+                    "reason": "y"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.example/shillinq.dashboard.page"
+            ],
+            [
+                "notify"
+            ]
+        ]
+    }
+}

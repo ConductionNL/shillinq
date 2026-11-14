@@ -1,0 +1,1181 @@
+{
+    "dedupAndWrite": {
+        "result": {
+            "statementId": "BankStatement-1",
+            "written": [
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r",
+                    "id": "BankStatementLine-2"
+                },
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}",
+                    "id": "BankStatementLine-3"
+                },
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}",
+                    "id": "BankStatementLine-4"
+                }
+            ],
+            "skipped": 2,
+            "duplicateBatch": false
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "bankAccountIban": "NL01"
+                    },
+                    "limit": 500
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "findAll",
+                "BankStatementLine",
+                {
+                    "filters": {
+                        "statementId": "st-old"
+                    },
+                    "limit": 5000
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "saveObject",
+                "BankStatement",
+                {
+                    "bankConnectionId": "00000000-0000-0000-0000-000000000000",
+                    "statementFormat": "camt.053.001.08",
+                    "importFormat": "camt053",
+                    "statementDate": "2026-01-31T00:00:00Z",
+                    "transactionCount": 3,
+                    "administrationId": "adm-1",
+                    "statementSource": "camt053",
+                    "importedAt": "<now>",
+                    "currency": "EUR",
+                    "bankAccountIban": "NL01",
+                    "glAccountId": "gl-1",
+                    "closingBalance": 12.5
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}"
+                }
+            ]
+        ]
+    },
+    "duplicateBatch": {
+        "result": {
+            "statementId": "",
+            "written": [],
+            "skipped": 5,
+            "duplicateBatch": true
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "sourceBatchUri": "batch-old"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "log",
+                "info",
+                "StatementIntakeService: batch already written, nothing to do",
+                {
+                    "batchUri": "batch-old"
+                }
+            ]
+        ]
+    },
+    "newBatchUri": {
+        "result": {
+            "statementId": "BankStatement-1",
+            "written": [
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r",
+                    "id": "BankStatementLine-2"
+                },
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}",
+                    "id": "BankStatementLine-3"
+                },
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}",
+                    "id": "BankStatementLine-4"
+                }
+            ],
+            "skipped": 2,
+            "duplicateBatch": false
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "sourceBatchUri": "batch-new"
+                    },
+                    "limit": 1
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "bankAccountIban": "NL01"
+                    },
+                    "limit": 500
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "findAll",
+                "BankStatementLine",
+                {
+                    "filters": {
+                        "statementId": "st-old"
+                    },
+                    "limit": 5000
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "saveObject",
+                "BankStatement",
+                {
+                    "bankConnectionId": "00000000-0000-0000-0000-000000000000",
+                    "statementFormat": "camt.053.001.08",
+                    "importFormat": "file",
+                    "statementDate": "<now>",
+                    "transactionCount": 3,
+                    "administrationId": "adm-1",
+                    "statementSource": "file",
+                    "importedAt": "<now>",
+                    "currency": "EUR",
+                    "bankAccountIban": "NL01",
+                    "sourceBatchUri": "batch-new"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}"
+                }
+            ]
+        ]
+    },
+    "noIban": {
+        "result": {
+            "statementId": "BankStatement-1",
+            "written": [
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "2026-01-01",
+                    "amount": 1.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"E2E-OLD\",\"amount\":1,\"valueDate\":\"2026-01-01T00:00:00\"}",
+                    "endToEndRef": "E2E-OLD",
+                    "reference": "E2E-OLD",
+                    "id": "BankStatementLine-2"
+                },
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r",
+                    "id": "BankStatementLine-3"
+                },
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}",
+                    "id": "BankStatementLine-4"
+                },
+                {
+                    "lineId": "BankStat-0004",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 4,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}",
+                    "id": "BankStatementLine-5"
+                }
+            ],
+            "skipped": 1,
+            "duplicateBatch": false
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "saveObject",
+                "BankStatement",
+                {
+                    "bankConnectionId": "00000000-0000-0000-0000-000000000000",
+                    "statementFormat": "camt.053.001.08",
+                    "importFormat": "file",
+                    "statementDate": "<now>",
+                    "transactionCount": 4,
+                    "administrationId": "adm-1",
+                    "statementSource": "file",
+                    "importedAt": "<now>",
+                    "currency": "EUR"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "2026-01-01",
+                    "amount": 1.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"E2E-OLD\",\"amount\":1,\"valueDate\":\"2026-01-01T00:00:00\"}",
+                    "endToEndRef": "E2E-OLD",
+                    "reference": "E2E-OLD"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0004",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 4,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}"
+                }
+            ]
+        ]
+    },
+    "otherIban": {
+        "result": {
+            "statementId": "BankStatement-1",
+            "written": [
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "2026-01-01",
+                    "amount": 1.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"E2E-OLD\",\"amount\":1,\"valueDate\":\"2026-01-01T00:00:00\"}",
+                    "endToEndRef": "E2E-OLD",
+                    "reference": "E2E-OLD",
+                    "id": "BankStatementLine-2"
+                },
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r",
+                    "id": "BankStatementLine-3"
+                },
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}",
+                    "id": "BankStatementLine-4"
+                },
+                {
+                    "lineId": "BankStat-0004",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 4,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}",
+                    "id": "BankStatementLine-5"
+                }
+            ],
+            "skipped": 1,
+            "duplicateBatch": false
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "bankAccountIban": "NL99"
+                    },
+                    "limit": 500
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "saveObject",
+                "BankStatement",
+                {
+                    "bankConnectionId": "00000000-0000-0000-0000-000000000000",
+                    "statementFormat": "camt.053.001.08",
+                    "importFormat": "file",
+                    "statementDate": "<now>",
+                    "transactionCount": 4,
+                    "administrationId": "adm-1",
+                    "statementSource": "file",
+                    "importedAt": "<now>",
+                    "currency": "EUR",
+                    "bankAccountIban": "NL99"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0001",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 1,
+                    "valueDate": "2026-01-01",
+                    "amount": 1.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"E2E-OLD\",\"amount\":1,\"valueDate\":\"2026-01-01T00:00:00\"}",
+                    "endToEndRef": "E2E-OLD",
+                    "reference": "E2E-OLD"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0002",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0003",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "BankStat-0004",
+                    "statementId": "BankStatement-1",
+                    "lineNumber": 4,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}"
+                }
+            ]
+        ]
+    },
+    "statementWithoutId": {
+        "result": {
+            "statementId": "",
+            "written": [
+                {
+                    "lineId": "-0001",
+                    "statementId": "",
+                    "lineNumber": 1,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r",
+                    "id": "BankStatementLine-1"
+                },
+                {
+                    "lineId": "-0002",
+                    "statementId": "",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}",
+                    "id": "BankStatementLine-2"
+                },
+                {
+                    "lineId": "-0003",
+                    "statementId": "",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}",
+                    "id": "BankStatementLine-3"
+                }
+            ],
+            "skipped": 2,
+            "duplicateBatch": false
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "bankAccountIban": "NL01"
+                    },
+                    "limit": 500
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "findAll",
+                "BankStatementLine",
+                {
+                    "filters": {
+                        "statementId": "st-old"
+                    },
+                    "limit": 5000
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "saveObject",
+                "BankStatement",
+                {
+                    "bankConnectionId": "00000000-0000-0000-0000-000000000000",
+                    "statementFormat": "camt.053.001.08",
+                    "importFormat": "file",
+                    "statementDate": "<now>",
+                    "transactionCount": 3,
+                    "administrationId": "adm-1",
+                    "statementSource": "file",
+                    "importedAt": "<now>",
+                    "currency": "EUR",
+                    "bankAccountIban": "NL01"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "-0001",
+                    "statementId": "",
+                    "lineNumber": 1,
+                    "valueDate": "",
+                    "amount": 2.35,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\" E2E-NEW \",\"amount\":2.345,\"remittanceInfo\":\" r \"}",
+                    "endToEndRef": "E2E-NEW",
+                    "reference": "E2E-NEW",
+                    "remittanceInfo": "r",
+                    "narrative": "r"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "-0002",
+                    "statementId": "",
+                    "lineNumber": 2,
+                    "valueDate": "",
+                    "amount": -4.5,
+                    "currency": "USD",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"x\":1}"
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "saveObject",
+                "BankStatementLine",
+                {
+                    "lineId": "-0003",
+                    "statementId": "",
+                    "lineNumber": 3,
+                    "valueDate": "",
+                    "amount": 5.0,
+                    "currency": "EUR",
+                    "matchState": "unmatched",
+                    "status": "unmatched",
+                    "administrationId": "adm-1",
+                    "counterpartyName": "",
+                    "counterpartyIban": "",
+                    "rawPayload": "{\"endToEndRef\":\"\",\"amount\":5}"
+                }
+            ]
+        ]
+    },
+    "noLines": {
+        "result": {
+            "statementId": "BankStatement-1",
+            "written": [],
+            "skipped": 0,
+            "duplicateBatch": false
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "findAll",
+                "BankStatement",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "bankAccountIban": "NL01"
+                    },
+                    "limit": 500
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatementLine"
+            ],
+            [
+                "findAll",
+                "BankStatementLine",
+                {
+                    "filters": {
+                        "statementId": "st-old"
+                    },
+                    "limit": 5000
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "setSchema",
+                "BankStatement"
+            ],
+            [
+                "saveObject",
+                "BankStatement",
+                {
+                    "bankConnectionId": "00000000-0000-0000-0000-000000000000",
+                    "statementFormat": "camt.053.001.08",
+                    "importFormat": "file",
+                    "statementDate": "<now>",
+                    "transactionCount": 0,
+                    "administrationId": "adm-1",
+                    "statementSource": "file",
+                    "importedAt": "<now>",
+                    "currency": "EUR",
+                    "bankAccountIban": "NL01"
+                }
+            ]
+        ]
+    }
+}

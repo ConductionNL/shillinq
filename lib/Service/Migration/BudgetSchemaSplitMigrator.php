@@ -3,6 +3,9 @@
 /**
  * Budget schema split migrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The unit-tested migration core for `budget-core-schema`'s resolution of the
  * `Budget` schema collision (`openspec/changes/budget-core-schema/design.md`
  * §1–§2). `lib/Settings/register.d/` used to carry TWO full `Budget` schema
@@ -60,9 +63,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-003
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

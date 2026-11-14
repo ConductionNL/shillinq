@@ -3,6 +3,9 @@
 /**
  * SalesOrder / SalesOrderLine schema + seed-data integration test.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `order-revenue-recognition` is a `kind:config` head — no shillinq PHP ships in
  * this change; recognition arithmetic is deferred to the chained
  * `order-revenue-recognition-engine` service. This test therefore exercises
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/order-revenue-recognition/tasks.md#5-verification
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -159,8 +159,8 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 	}//end overlapMonths()
 
 	/**
-	 * SalesOrder + SalesOrderLine declare the lifecycle, audit-trail and
-	 * administrationId-scoped RBAC the spec requires.
+	 * SalesOrder + SalesOrderLine declare the lifecycle, audit trail and the
+	 * enforced authorization block.
 	 *
 	 * @return void
 	 */
@@ -173,7 +173,7 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 		self::assertSame('active', $order['x-openregister-lifecycle']['initialState']);
 		self::assertArrayHasKey('ended', $order['x-openregister-lifecycle']['states']);
 		self::assertTrue($order['x-openregister-audit-trail']['enabled']);
-		self::assertSame('administrationId', $order['x-openregister-rbac']['adminScope']['field']);
+		self::assertContains('shillinq_bookkeeper', $order['authorization']['create']);
 
 		$line = $schemas['SalesOrderLine'];
 		self::assertTrue($line['x-openregister-audit-trail']['enabled']);

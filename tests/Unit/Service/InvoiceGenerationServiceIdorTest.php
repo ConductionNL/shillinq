@@ -3,6 +3,9 @@
 /**
  * Second-order IDOR guard on InvoiceGenerationService::draftInvoice().
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * REQ-001 (security-endpoint-guards): draftInvoice() resolves every id the
  * client supplies on the request (timeEntryIds/expenseIds/meterReadingIds/
  * milestoneId, and the UsageRatePlan a MeterReading points at) through
@@ -33,9 +36,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -46,6 +46,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
@@ -259,6 +260,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-attacker',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 				[
 					'id' => 'mr-victim-1',
@@ -270,6 +272,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-victim',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 				[
 					// Attacker's OWN reading, but with a ratePlanId that resolves to
@@ -284,6 +287,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-victim',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 			],
 			'UsageRatePlan' => [
@@ -347,6 +351,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
+			billedReadings: $this->createMock(BilledReadings::class),
 		);
 	}//end setUp()
 

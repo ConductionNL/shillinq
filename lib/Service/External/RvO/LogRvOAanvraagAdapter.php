@@ -3,6 +3,9 @@
 /**
  * Dormant default RvO aanvraag adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Records the would-be aanvraag to the structured logger and returns
  * a synthetic DEFERRED result so the surrounding lifecycle stays
  * observable until an openconnector-backed binding to RvO is wired
@@ -26,9 +29,6 @@
  *
  * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

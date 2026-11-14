@@ -144,4 +144,46 @@ class OssReturnGeneratorTest extends TestCase {
 	}//end testBuildCorrection()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+
+	/**
+	 * Pin the full aggregate over eligible, ineligible, credited, rate-derived
+	 * and multi-rate documents.
+	 *
+	 * @return void
+	 */
+	public function testAggregateIsExactOverMixedDocuments(): void {
+		$oss = static fn (string $country, ?string $category, $rate): array => array_filter(
+			['ossEligible' => true, 'destinationCountry' => $country, 'appliedRateCategory' => $category, 'appliedVatRate' => $rate],
+			static fn ($value): bool => $value !== null
+		);
+		$documents = [
+			['ossContext' => $oss('DE', null, 19), 'netAmount' => 100, 'vatAmount' => 19],
+			['ossContext' => $oss('DE', null, 7), 'netAmount' => '10.005'],
+			['ossContext' => $oss('BE', 'reduced', '6'), 'grossAmount' => 50],
+			['ossContext' => $oss('BE', 'reduced', 6), 'documentType' => 'credit-note', 'netAmount' => -20, 'vatAmount' => -1.2],
+			['ossContext' => $oss('BE', 'reduced', 6), 'documentType' => 'credit-note', 'netAmount' => 5],
+			['ossContext' => $oss('FR', null, 20), 'netAmount' => -30, 'vatAmount' => 0],
+			['ossContext' => $oss('', null, 20), 'netAmount' => 999],
+			['ossContext' => ['ossEligible' => 'yes', 'destinationCountry' => 'NL'], 'netAmount' => 999],
+			['ossContext' => 'none', 'netAmount' => 999],
+			['netAmount' => 999],
+			['ossContext' => $oss('AT', 'super-reduced', null)],
+		];
+
+		self::assertSame(
+			[
+				'lineItems' => [
+					['countryCode' => 'AT', 'rateCategory' => 'super-reduced', 'taxableBase' => 0.0, 'vatRate' => 0.0, 'vatAmount' => 0.0],
+					['countryCode' => 'BE', 'rateCategory' => 'reduced', 'taxableBase' => 25.0, 'vatRate' => 6.0, 'vatAmount' => 1.5],
+					['countryCode' => 'DE', 'rateCategory' => 'standard', 'taxableBase' => 110.01, 'vatRate' => 19.0, 'vatAmount' => 19.7],
+					['countryCode' => 'FR', 'rateCategory' => 'standard', 'taxableBase' => -30.0, 'vatRate' => 20.0, 'vatAmount' => -6.0],
+				],
+				'totalTaxableBase' => 105.01,
+				'totalVatAmount' => 15.2,
+			],
+			$this->generator->aggregate($documents)
+		);
+		self::assertSame(['lineItems' => [], 'totalTaxableBase' => 0.0, 'totalVatAmount' => 0.0], $this->generator->aggregate([]));
+
+	}//end testAggregateIsExactOverMixedDocuments()
 }//end class

@@ -3,6 +3,9 @@
 /**
  * OrderFulfilment Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the OrderFulfilment completion
  * transition (in-progress → completed). Enforces the bewijsstuk gate of REQ-004:
  * a delivery milestone may only be marked completed when at least one proof-of-
@@ -28,15 +31,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\OrderFulfilmentGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -46,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class OrderFulfilmentGuard {
+class OrderFulfilmentGuard implements OrderFulfilmentGuardInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *

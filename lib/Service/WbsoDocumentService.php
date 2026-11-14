@@ -33,11 +33,12 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WbsoDocumentServiceInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Document-register helper service (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009).
@@ -47,7 +48,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
  *     #506): changing this signature would ripple to callers; deferred.
  */
-class WbsoDocumentService {
+class WbsoDocumentService implements WbsoDocumentServiceInterface {
 
 	/**
 	 * Seven calendar years in days (REQ-WBSO-009).
@@ -159,7 +160,6 @@ class WbsoDocumentService {
 
 		$this->validateDocumentPayload(payload: $payload);
 
-
 		// ADR-084: saveObject() returns an ObjectEntityInterface, not the array
 		// this method declares — returning it raised a TypeError on every call.
 		return (array)$this->objectService
@@ -205,7 +205,6 @@ class WbsoDocumentService {
 		$document['filedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$document['filedBy'] = $approver;
 
-
 		// ADR-084: see createDocument() — the contract returns an entity.
 		return (array)$this->objectService
 			->setRegister($this->register())
@@ -234,28 +233,14 @@ class WbsoDocumentService {
 		string $reason,
 		bool $allowEarly = false,
 	): array {
-		$document = $this->getDocument(administrationId: $administrationId, documentId: $documentId);
-		if ($document === null) {
-			throw new InvalidArgumentException('Document not found');
-		}
-
-		if ((string)($document['status'] ?? '') !== 'filed') {
-			throw new RuntimeException('Only filed documents can be archived');
-		}
-
+		$document = $this->filedDocument(administrationId: $administrationId, documentId: $documentId);
 		if ($allowEarly === false) {
-			$filedAt = (string)($document['filedAt'] ?? $document['documentDate'] ?? '');
-			if ($this->isRetentionElapsed(filedAt: $filedAt) === false) {
-				throw new RuntimeException(
-					'Documents must have been filed for at least seven years before archival'
-				);
-			}
+			$this->assertRetentionElapsed(document: $document);
 		}
 
 		$document['status'] = 'archived';
 		$document['archivedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$document['archivalReason'] = $reason;
-
 
 		// ADR-084: see createDocument() — the contract returns an entity.
 		return (array)$this->objectService
@@ -265,6 +250,50 @@ class WbsoDocumentService {
 			->jsonSerialize();
 
 	}//end archiveDocument()
+
+	/**
+	 * The administration's document with this id or number, which must be filed.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $documentId       Document id or documentNumber.
+	 *
+	 * @return array<string,mixed> The document.
+	 *
+	 * @throws InvalidArgumentException When the administration has no such document.
+	 * @throws RuntimeException When the document is not filed.
+	 */
+	private function filedDocument(string $administrationId, string $documentId): array {
+		$document = $this->getDocument(administrationId: $administrationId, documentId: $documentId);
+		if ($document === null) {
+			throw new InvalidArgumentException('Document not found');
+		}
+
+		if ((string)($document['status'] ?? '') !== 'filed') {
+			throw new RuntimeException('Only filed documents can be archived');
+		}
+
+		return $document;
+
+	}//end filedDocument()
+
+	/**
+	 * Refuse a document filed (or, without filedAt, dated) less than seven years ago.
+	 *
+	 * @param array<string,mixed> $document The document.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the retention period has not elapsed.
+	 */
+	private function assertRetentionElapsed(array $document): void {
+		$filedAt = (string)($document['filedAt'] ?? $document['documentDate'] ?? '');
+		if ($this->isRetentionElapsed(filedAt: $filedAt) === false) {
+			throw new RuntimeException(
+				'Documents must have been filed for at least seven years before archival'
+			);
+		}
+
+	}//end assertRetentionElapsed()
 
 	/**
 	 * Pure helper: has the seven-year retention boundary elapsed?
@@ -320,7 +349,7 @@ class WbsoDocumentService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

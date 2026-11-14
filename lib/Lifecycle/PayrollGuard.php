@@ -3,6 +3,9 @@
 /**
  * Payroll Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Payroll register
  * (bookkeeping-detachering-payroll-administratie, T2). Two preconditions are
  * referenced from the Payroll schema's x-openregister-lifecycle transitions
@@ -34,16 +37,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -96,28 +96,7 @@ class PayrollGuard {
 	 */
 	public function canCalculate(string $payrollId, ?array $object = null): bool {
 		try {
-			$payroll = $this->resolvePayroll(payrollId: $payrollId, object: $object);
-			if ($payroll === null) {
-				return false;
-			}
-
-			$employeeId = (string)($payroll['employeeId'] ?? '');
-			if ($employeeId === '') {
-				return false;
-			}
-
-			// The employee must be active and not exited before the period start.
-			$employeeOk = $this->employeeAllowsPayroll(
-				employeeId: $employeeId,
-				periodStartDate: (string)($payroll['periodStartDate'] ?? '')
-			);
-			if ($employeeOk === false) {
-				return false;
-			}
-
-			// At least one deduction line item must be assigned.
-			$deductions = $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId));
-			return count($deductions) > 0;
+			return $this->calculable(payrollId: $payrollId, object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PayrollGuard: calculate check failed — denying transition (fail-closed)',
@@ -126,6 +105,43 @@ class PayrollGuard {
 			return false;
 		}//end try
 	}//end canCalculate()
+
+	/**
+	 * Whether the payroll's employee allows it and at least one deduction is assigned.
+	 *
+	 * @param string                   $payrollId The Payroll.id being transitioned.
+	 * @param array<string,mixed>|null $object    The in-flight Payroll object.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When a lookup fails.
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	private function calculable(string $payrollId, array|null $object): bool {
+		$payroll = $this->resolvePayroll(payrollId: $payrollId, object: $object);
+		if ($payroll === null) {
+			return false;
+		}
+
+		$employeeId = (string)($payroll['employeeId'] ?? '');
+		if ($employeeId === '') {
+			return false;
+		}
+
+		// The employee must be active and not exited before the period start.
+		$employeeOk = $this->employeeAllowsPayroll(
+			employeeId: $employeeId,
+			periodStartDate: (string)($payroll['periodStartDate'] ?? '')
+		);
+		if ($employeeOk === false) {
+			return false;
+		}
+
+		// At least one deduction line item must be assigned.
+		$deductions = $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId));
+		return count($deductions) > 0;
+	}//end calculable()
 
 	/**
 	 * Returns true iff the payroll may transition calculated -> issued.
@@ -153,17 +169,9 @@ class PayrollGuard {
 				return false;
 			}
 
-			$deductions = $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId));
-			$incomeTaxSum = 0.0;
-			foreach ($deductions as $deduction) {
-				if (is_array($deduction) === false) {
-					continue;
-				}
-
-				if (($deduction['deductionType'] ?? '') === 'income-tax') {
-					$incomeTaxSum += (float)($deduction['amount'] ?? 0);
-				}
-			}
+			$incomeTaxSum = $this->incomeTaxWithheld(
+				deductions: $this->findDeductions(payrollId: (string)($payroll['id'] ?? $payrollId))
+			);
 
 			$ceiling = $this->incomeTaxCeiling(
 				period: (string)($payroll['period'] ?? ''),
@@ -178,6 +186,25 @@ class PayrollGuard {
 			return false;
 		}//end try
 	}//end canIssue()
+
+	/**
+	 * The sum of the income-tax deductions.
+	 *
+	 * @param array<int,mixed> $deductions The payroll's Deduction rows.
+	 *
+	 * @return float The income tax withheld.
+	 */
+	private function incomeTaxWithheld(array $deductions): float {
+		$incomeTaxSum = 0.0;
+		foreach ($deductions as $deduction) {
+			if (is_array($deduction) === true && ($deduction['deductionType'] ?? '') === 'income-tax') {
+				$incomeTaxSum += (float)($deduction['amount'] ?? 0);
+			}
+		}
+
+		return $incomeTaxSum;
+
+	}//end incomeTaxWithheld()
 
 	/**
 	 * Compute the statutory income-tax ceiling for the payroll period.
@@ -200,7 +227,7 @@ class PayrollGuard {
 		$fraction = self::DEFAULT_INCOME_TAX_CEILING_FRACTION;
 		if ($year !== '') {
 			$configured = $this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				'payroll_income_tax_ceiling_' . $year,
 				''
 			);
@@ -314,7 +341,7 @@ class PayrollGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

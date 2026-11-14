@@ -1,0 +1,1379 @@
+{
+	"nothing pending": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"every field of an operation": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "transfer",
+							"sku": "A",
+							"location": "L1",
+							"toLocation": "L2",
+							"quantity": 3,
+							"physicalQuantity": 9,
+							"reconcile": true,
+							"orderLineId": "OL-1",
+							"timestamp": "2026-11-01T10:00:00.000Z"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"ack-1"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"accepted with the ack time": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"ack-1"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"accepted with the server time": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"srv"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"accepted with an empty ack time": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"srv"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"accepted with no time at all": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"duplicate with the ack time": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"ack-1"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 1,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"duplicate with the server time": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"srv"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 1,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"duplicate with no time at all": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 1,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"rejected": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": [
+				{
+					"id": 1,
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "S",
+					"quantity": 1,
+					"ack": {
+						"transactionId": "tx-1",
+						"status": "rejected",
+						"reason": "permission"
+					}
+				}
+			]
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"unknown status": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": [
+				{
+					"id": 1,
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "S",
+					"quantity": 1,
+					"ack": {
+						"transactionId": "tx-1",
+						"status": "pending"
+					}
+				}
+			]
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"inherited property name as status": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": [
+				{
+					"id": 1,
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "S",
+					"quantity": 1,
+					"ack": {
+						"transactionId": "tx-1",
+						"status": "constructor"
+					}
+				}
+			]
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"status in another case": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": [
+				{
+					"id": 1,
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "S",
+					"quantity": 1,
+					"ack": {
+						"transactionId": "tx-1",
+						"status": "Accepted"
+					}
+				}
+			]
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"no status": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": [
+				{
+					"id": 1,
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "S",
+					"quantity": 1,
+					"ack": {
+						"transactionId": "tx-1"
+					}
+				}
+			]
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"no ack for the operation": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-2",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 2,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				2,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				2
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"two acks for one transaction": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 1,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"two operations with one transaction id": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 2,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			],
+			[
+				"markOpSynced",
+				"db",
+				2,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				2
+			]
+		],
+		"returned": {
+			"accepted": 2,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"a mixed batch": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-2",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 2,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-3",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 3,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-4",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 4,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-5",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 5,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-6",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 6,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"ack-1"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			],
+			[
+				"markOpSynced",
+				"db",
+				3,
+				"ack-3"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				3
+			],
+			[
+				"markOpSynced",
+				"db",
+				5,
+				"srv"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				5
+			],
+			[
+				"markOpSynced",
+				"db",
+				6,
+				"srv"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				6
+			]
+		],
+		"returned": {
+			"accepted": 2,
+			"duplicates": 2,
+			"rejected": [
+				{
+					"id": 2,
+					"transactionId": "tx-2",
+					"type": "receive",
+					"sku": "S",
+					"quantity": 2,
+					"ack": {
+						"transactionId": "tx-2",
+						"status": "rejected"
+					}
+				}
+			]
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"results not a list": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"no results": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"empty data": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"no response": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": {
+			"accepted": 0,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"an ack without a transaction id": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "(undefined)",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": {
+			"accepted": 1,
+			"duplicates": 0,
+			"rejected": []
+		},
+		"keys": [
+			"accepted",
+			"duplicates",
+			"rejected"
+		],
+		"thrown": null
+	},
+	"the post fails": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			]
+		],
+		"returned": null,
+		"keys": null,
+		"thrown": "network down"
+	},
+	"marking the second operation fails": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-2",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 2,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-3",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 3,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			],
+			[
+				"markOpSynced",
+				"db",
+				2,
+				"2026-11-01T12:00:00.000Z"
+			]
+		],
+		"returned": null,
+		"keys": null,
+		"thrown": "mark failed"
+	},
+	"deleting the first operation fails": {
+		"calls": [
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"post",
+				"/index.php/apps/shillinq/api/v1/inventory/sync",
+				{
+					"operations": [
+						{
+							"transactionId": "tx-1",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 1,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						},
+						{
+							"transactionId": "tx-2",
+							"type": "receive",
+							"sku": "S",
+							"location": "(undefined)",
+							"toLocation": "(undefined)",
+							"quantity": 2,
+							"physicalQuantity": "(undefined)",
+							"reconcile": "(undefined)",
+							"orderLineId": "(undefined)",
+							"timestamp": "(undefined)"
+						}
+					]
+				}
+			],
+			[
+				"markOpSynced",
+				"db",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"deletePendingOp",
+				"db",
+				1
+			]
+		],
+		"returned": null,
+		"keys": null,
+		"thrown": "delete failed"
+	}
+}

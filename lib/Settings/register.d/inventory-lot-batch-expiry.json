@@ -284,40 +284,26 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "warehouse_operator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_inventory"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_inventory",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_inventory"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       },
       "ExpiryAlert": {
@@ -458,38 +444,24 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "warehouse_operator": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_inventory",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_inventory"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       }
     }

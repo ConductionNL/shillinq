@@ -3,6 +3,9 @@
 /**
  * Shillinq RetireSubsidieSchema Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent, fail-soft cleanup that retires the legacy `Subsidie` schema AFTER
  * the FoldIntoOrder repair step (which runs earlier in the same post-migration
  * repair list) has folded every Subsidie row onto an `Order` (orderType=subsidie).
@@ -55,9 +58,6 @@
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.PHP.DisallowInlineIf
  */
 
@@ -65,8 +65,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -114,14 +114,14 @@ class RetireSubsidieSchema implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Provides the shillinq register slug.
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger Logger for per-object failures.
 	 * @param IGroupManager $groupManager Resolves the admin IUser for OR writes.
 	 * @param IDBConnection $db Direct DB access (delete-if-empty schema row).
 	 * @param ContainerInterface $container DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly IGroupManager $groupManager,
 		private readonly IDBConnection $db,
@@ -163,63 +163,125 @@ class RetireSubsidieSchema implements IRepairStep {
 			return;
 		}
 
-		$deleted = 0;
-		$kept = 0;
-		$failed = 0;
+		$counts = $this->retireAll(objectService: $objectService, registerSlug: $registerSlug, output: $output);
+
+		$this->report(counts: $counts, output: $output);
+
+	}//end run()
+
+	/**
+	 * Retire every folded Subsidie object and tally the outcomes.
+	 *
+	 * @param object  $objectService The OR ObjectService.
+	 * @param string  $registerSlug  The register slug.
+	 * @param IOutput $output        The repair-step output.
+	 *
+	 * @return array{deleted:int,kept:int,failed:int}
+	 *
+	 * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+	 */
+	private function retireAll(object $objectService, string $registerSlug, IOutput $output): array {
+		$counts = ['deleted' => 0, 'kept' => 0, 'failed' => 0];
 
 		foreach ($this->readSubsidies($objectService, $registerSlug, $output) as $row) {
-			$src = $this->rowPayload(row: $row);
-			$subsidyId = (string)($src['id'] ?? ($src['uuid'] ?? ''));
-			$migrationKey = $this->migrationKey($src);
+			$counts[$this->retireOne(objectService: $objectService, registerSlug: $registerSlug, output: $output, row: $row)]++;
+		}
 
-			if ($migrationKey === '' || $subsidyId === '') {
-				$output->warning('Shillinq: RetireSubsidieSchema — Subsidie row without subsidieNumber or id; left in place.');
-				$kept++;
-				continue;
+		return $counts;
+	}//end retireAll()
+
+	/**
+	 * Retire one Subsidie row, keeping rows without a key or id.
+	 *
+	 * @param object  $objectService The OR ObjectService.
+	 * @param string  $registerSlug  The register slug.
+	 * @param IOutput $output        The repair-step output.
+	 * @param mixed   $row           The Subsidie row.
+	 *
+	 * @return string The tally it counts under: 'deleted', 'kept' or 'failed'.
+	 *
+	 * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+	 */
+	private function retireOne(object $objectService, string $registerSlug, IOutput $output, mixed $row): string {
+		$src = $this->rowPayload(row: $row);
+		$subsidyId = (string)($src['id'] ?? ($src['uuid'] ?? ''));
+		$migrationKey = $this->migrationKey($src);
+
+		if ($migrationKey === '' || $subsidyId === '') {
+			$output->warning('Shillinq: RetireSubsidieSchema — Subsidie row without subsidieNumber or id; left in place.');
+			return 'kept';
+		}
+
+		return $this->retireFolded(objectService: $objectService, registerSlug: $registerSlug, output: $output, src: $src);
+	}//end retireOne()
+
+	/**
+	 * Delete a Subsidie only when an Order carries its migration marker.
+	 *
+	 * @param object               $objectService The OR ObjectService.
+	 * @param string               $registerSlug  The register slug.
+	 * @param IOutput              $output        The repair-step output.
+	 * @param array<string, mixed> $src           The Subsidie payload (has a key and an id).
+	 *
+	 * @return string The tally it counts under: 'deleted', 'kept' or 'failed'.
+	 *
+	 * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+	 */
+	private function retireFolded(object $objectService, string $registerSlug, IOutput $output, array $src): string {
+		$subsidyId = (string)($src['id'] ?? ($src['uuid'] ?? ''));
+		$migrationKey = $this->migrationKey($src);
+
+		try {
+			// Data-safety: only delete a Subsidie that was actually folded
+			// (an Order carries its migration marker). No Order → keep it.
+			if ($this->orderExists($objectService, $registerSlug, $migrationKey) === false) {
+				$output->warning('Shillinq: RetireSubsidieSchema — Subsidie "' . $migrationKey . '" has no migrated Order; left in place (unmigrated data).');
+				return 'kept';
 			}
 
-			try {
-				// Data-safety: only delete a Subsidie that was actually folded
-				// (an Order carries its migration marker). No Order → keep it.
-				if ($this->orderExists($objectService, $registerSlug, $migrationKey) === false) {
-					$output->warning('Shillinq: RetireSubsidieSchema — Subsidie "' . $migrationKey . '" has no migrated Order; left in place (unmigrated data).');
-					$kept++;
-					continue;
-				}
+			$objectService
+				->setRegister($registerSlug)
+				->setSchema(self::SCHEMA)
+				->deleteObject($subsidyId, _rbac: false, _multitenancy: false);
 
-				$objectService
-					->setRegister($registerSlug)
-					->setSchema(self::SCHEMA)
-					->deleteObject($subsidyId, _rbac: false, _multitenancy: false);
+			return 'deleted';
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: RetireSubsidieSchema — failed to delete Subsidie "' . $migrationKey . '": ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: RetireSubsidieSchema — Subsidie delete failed',
+				['key' => $migrationKey, 'exception' => $e->getMessage()]
+			);
+			return 'failed';
+		}//end try
+	}//end retireFolded()
 
-				$deleted++;
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: RetireSubsidieSchema — failed to delete Subsidie "' . $migrationKey . '": ' . $e->getMessage());
-				$this->logger->warning(
-					'Shillinq: RetireSubsidieSchema — Subsidie delete failed',
-					['key' => $migrationKey, 'exception' => $e->getMessage()]
-				);
-				$failed++;
-			}//end try
-		}//end foreach
-
+	/**
+	 * Report the tallies and drop the schema row when every Subsidie is gone.
+	 *
+	 * @param array{deleted:int,kept:int,failed:int} $counts The tallies.
+	 * @param IOutput                                $output The repair-step output.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+	 */
+	private function report(array $counts, IOutput $output): void {
 		$output->info(
 			sprintf(
 				'Shillinq: RetireSubsidieSchema — %d Subsidie object(s) deleted, %d kept (unmigrated), %d failed.',
-				$deleted,
-				$kept,
-				$failed
+				$counts['deleted'],
+				$counts['kept'],
+				$counts['failed']
 			)
 		);
 
 		// Only drop the schema row when every Subsidie object is gone.
-		if ($kept === 0 && $failed === 0) {
+		if ($counts['kept'] === 0 && $counts['failed'] === 0) {
 			$this->dropSchemaIfEmpty($output);
 		} else {
 			$output->info('Shillinq: RetireSubsidieSchema — Subsidie objects remain; leaving the Subsidie schema row in place.');
 		}
-
-	}//end run()
+	}//end report()
 
 	/**
 	 * Resolve the admin user as an IUser object (NEVER a string) for OR writes.

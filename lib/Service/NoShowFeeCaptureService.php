@@ -3,6 +3,9 @@
 /**
  * No-Show Fee Capture Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Closes the bookings-depth "no-show-fee-capture" gap: the
  * bookings-cancellation-rules change DEFINES `CancellationPolicy.noShowFee`
  * (a 0-100 percentage of the appointment cost, snapshotted onto the
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-cancellation-rules/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,8 +39,9 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,14 +54,7 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class NoShowFeeCaptureService {
-
-	/**
-	 * No fee defined / nothing to capture.
-	 *
-	 * @var string
-	 */
-	public const STATUS_NONE = 'none';
+class NoShowFeeCaptureService implements NoShowFeeCaptureServiceInterface {
 
 	/**
 	 * Fee captured through the provider.
@@ -174,71 +168,113 @@ class NoShowFeeCaptureService {
 	 */
 	public function captureNoShowFee(array $appointment, ?DateTimeImmutable $capturedAt = null): array {
 		$feeCents = $this->computeNoShowFeeCents(appointment: $appointment);
-
 		if ($feeCents <= 0) {
-			$appointment['noShowFeeAmount'] = 0;
-			$appointment['noShowFeeStatus'] = self::STATUS_NONE;
-			$this->logger->info(
-				'Shillinq: no-show recorded but no fee defined — no charge dispatched',
-				['appointmentId' => (string)($appointment['appointmentId'] ?? '')]
-			);
-
-			return [
-				'appointment' => $appointment,
-				'feeCents' => 0,
-				'charged' => false,
-				'result' => null,
-			];
+			return $this->skipWithoutFee(appointment: $appointment);
 		}
 
 		$capturedAt = ($capturedAt ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-		$currency = (string)($appointment['currency'] ?? 'EUR');
+		$appointment['noShowFeeAmount'] = $feeCents;
+		$result = $this->dispatchCharge(appointment: $appointment);
+		$appointment['noShowFeeStatus'] = $this->statusOf(result: $result);
+		$appointment['noShowFeePaymentIntentId'] = $result->paymentIntentId;
+		$appointment['noShowFeeCapturedAt'] = $capturedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
+		$this->logCapture(appointment: $appointment, result: $result);
+
+		return ['appointment' => $appointment, 'feeCents' => $feeCents, 'charged' => true, 'result' => $result];
+
+	}//end captureNoShowFee()
+
+	/**
+	 * Stamp a fee-less no-show and log that no charge was dispatched (design D1).
+	 *
+	 * @param array<string, mixed> $appointment Appointment array.
+	 *
+	 * @return array{appointment: array<string, mixed>, feeCents: int, charged: bool, result: DepositPaymentResult|null}
+	 */
+	private function skipWithoutFee(array $appointment): array {
+		$appointment['noShowFeeAmount'] = 0;
+		$appointment['noShowFeeStatus'] = self::STATUS_NONE;
+		$this->logger->info(
+			'Shillinq: no-show recorded but no fee defined — no charge dispatched',
+			['appointmentId' => (string)($appointment['appointmentId'] ?? '')]
+		);
+
+		return ['appointment' => $appointment, 'feeCents' => 0, 'charged' => false, 'result' => null];
+
+	}//end skipWithoutFee()
+
+	/**
+	 * Charge the stamped `noShowFeeAmount`: capture against an existing
+	 * authorization when the appointment carries one (capture-later rail),
+	 * otherwise open a fresh charge (authorise-now rail).
+	 *
+	 * @param array<string, mixed> $appointment Appointment with `noShowFeeAmount` set.
+	 *
+	 * @return DepositPaymentResult
+	 */
+	private function dispatchCharge(array $appointment): DepositPaymentResult {
+		$amount = ['value' => $appointment['noShowFeeAmount'], 'currency' => (string)($appointment['currency'] ?? 'EUR')];
+		$meta = $this->chargeMetadata(appointment: $appointment);
 		$intentId = (string)($appointment['depositPaymentIntentId'] ?? '');
-		$meta = [
+		if ($intentId !== '') {
+			return $this->adapter->capturePayment(
+				$intentId,
+				['amount' => $amount, 'reason' => 'noShowFee', 'metadata' => $meta]
+			);
+		}
+
+		return $this->adapter->requestPayment(
+			['amount' => $amount, 'description' => 'No-show fee', 'methodHint' => 'creditcard', 'metadata' => $meta]
+		);
+
+	}//end dispatchCharge()
+
+	/**
+	 * Provider metadata tying the charge back to the appointment.
+	 *
+	 * @param array<string, mixed> $appointment Appointment array.
+	 *
+	 * @return array{appointmentId: string, administrationId: string, correlationId: string}
+	 */
+	private function chargeMetadata(array $appointment): array {
+		return [
 			'appointmentId' => (string)($appointment['appointmentId'] ?? ''),
 			'administrationId' => (string)($appointment['administrationId'] ?? ''),
 			'correlationId' => 'noshow-' . ((string)($appointment['appointmentId'] ?? 'unknown')),
 		];
 
-		if ($intentId !== '') {
-			// Capture-later rail: capture the no-show fee against the existing
-			// authorization / card hold.
-			$result = $this->adapter->capturePayment(
-				$intentId,
-				[
-					'amount' => ['value' => $feeCents, 'currency' => $currency],
-					'reason' => 'noShowFee',
-					'metadata' => $meta,
-				]
-			);
-		} else {
-			// Authorise-now rail: open a fresh charge for the fee amount.
-			$result = $this->adapter->requestPayment(
-				[
-					'amount' => ['value' => $feeCents, 'currency' => $currency],
-					'description' => 'No-show fee',
-					'methodHint' => 'creditcard',
-					'metadata' => $meta,
-				]
-			);
-		}//end if
+	}//end chargeMetadata()
 
-		$ok = in_array($result->lifecycleState, ['captured', 'authorized', 'pending'], true);
-		$status = self::STATUS_FAILED;
-		if ($ok === true) {
-			$status = self::STATUS_CAPTURED;
+	/**
+	 * Map a provider lifecycle state onto the no-show fee status.
+	 *
+	 * @param DepositPaymentResult $result Provider result.
+	 *
+	 * @return string STATUS_CAPTURED or STATUS_FAILED.
+	 */
+	private function statusOf(DepositPaymentResult $result): string {
+		if (in_array($result->lifecycleState, ['captured', 'authorized', 'pending'], true) === true) {
+			return self::STATUS_CAPTURED;
 		}
 
-		$appointment['noShowFeeAmount'] = $feeCents;
-		$appointment['noShowFeeStatus'] = $status;
-		$appointment['noShowFeePaymentIntentId'] = $result->paymentIntentId;
-		$appointment['noShowFeeCapturedAt'] = $capturedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
+		return self::STATUS_FAILED;
 
+	}//end statusOf()
+
+	/**
+	 * Write the audit line for a dispatched no-show charge.
+	 *
+	 * @param array<string, mixed> $appointment Stamped appointment.
+	 * @param DepositPaymentResult $result      Provider result.
+	 *
+	 * @return void
+	 */
+	private function logCapture(array $appointment, DepositPaymentResult $result): void {
 		$this->logger->info(
 			'Shillinq: no-show fee captured via payment provider',
 			[
-				'appointmentId' => $meta['appointmentId'],
-				'feeCents' => $feeCents,
+				'appointmentId' => (string)($appointment['appointmentId'] ?? ''),
+				'feeCents' => $appointment['noShowFeeAmount'],
 				'gateway' => $result->gateway,
 				'lifecycleState' => $result->lifecycleState,
 				'dormant' => $result->dormant,
@@ -246,12 +282,5 @@ class NoShowFeeCaptureService {
 			]
 		);
 
-		return [
-			'appointment' => $appointment,
-			'feeCents' => $feeCents,
-			'charged' => true,
-			'result' => $result,
-		];
-
-	}//end captureNoShowFee()
+	}//end logCapture()
 }//end class

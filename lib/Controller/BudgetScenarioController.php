@@ -3,6 +3,9 @@
 /**
  * Budget Scenario Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Two endpoints:
  *   - `promote` (REQ-BSC-002): the REST surface `BudgetScenarioDefaultPromoter`
  *     needs — `isDefault` is set exclusively via this endpoint (a service
@@ -34,20 +37,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BudgetScenarioDefaultPromoter;
-use OCA\Shillinq\Service\BudgetScenarioEvaluator;
-use OCA\Shillinq\Service\BudgetScenarioReader;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioDefaultPromoterInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioEvaluatorInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetScenarioReaderInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -68,23 +68,23 @@ class BudgetScenarioController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param BudgetScenarioDefaultPromoter $promoter The one-default enforcement service.
-	 * @param BudgetScenarioReader $reader Batched store access for evaluate().
-	 * @param BudgetScenarioEvaluator $evaluator Pure base-vs-scenario evaluator.
-	 * @param AdministrationContextService $context Membership guard (ADR-005, REQ-MA-001).
+	 * @param BudgetScenarioDefaultPromoterInterface $promoter The one-default enforcement service.
+	 * @param BudgetScenarioReaderInterface $reader Batched store access for evaluate().
+	 * @param BudgetScenarioEvaluatorInterface $evaluator Pure base-vs-scenario evaluator.
+	 * @param AdministrationContextServiceInterface $context Membership guard (ADR-005, REQ-MA-001).
 	 * @param IUserSession $userSession Session for the acting user id.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BudgetScenarioDefaultPromoter $promoter,
-		private readonly BudgetScenarioReader $reader,
-		private readonly BudgetScenarioEvaluator $evaluator,
-		private readonly AdministrationContextService $context,
+		private readonly BudgetScenarioDefaultPromoterInterface $promoter,
+		private readonly BudgetScenarioReaderInterface $reader,
+		private readonly BudgetScenarioEvaluatorInterface $evaluator,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -101,21 +101,9 @@ class BudgetScenarioController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function promote(string $scenarioId): JSONResponse {
-		if ($this->requireUser() === false) {
-			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
-		}
-
-		$scenarioId = trim($scenarioId);
-		if ($this->validId(value: $scenarioId) === false) {
-			return $this->error(message: 'scenarioId must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$outcome = $this->promoter->promote(scenarioId: $scenarioId);
-		} catch (RuntimeException) {
-			return $this->error(message: 'Scenario not found', status: Http::STATUS_NOT_FOUND);
-		} catch (Throwable $e) {
-			return $this->serverError(action: 'promote', e: $e);
+		$outcome = $this->promoted(scenarioId: trim($scenarioId));
+		if ($outcome instanceof JSONResponse) {
+			return $outcome;
 		}
 
 		// Authorisation happens AFTER resolving the scenario's own
@@ -145,17 +133,89 @@ class BudgetScenarioController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function evaluate(string $scenarioId): JSONResponse {
+		$scope = $this->evaluationScope(scenarioId: trim($scenarioId));
+		if ($scope instanceof JSONResponse) {
+			return $scope;
+		}
+
+		$context = $this->scenarioContext(scope: $scope);
+		if ($context instanceof JSONResponse) {
+			return $context;
+		}
+
+		return $this->evaluated(scope: $scope, context: $context);
+
+	}//end evaluate()
+
+	/**
+	 * Promote the scenario after the user and scenario-id checks; an unknown
+	 * scenario is a 404, any other failure a logged 500.
+	 *
+	 * @param string $scenarioId The trimmed scenario id.
+	 *
+	 * @return array<string, mixed>|JSONResponse The promotion outcome, or the refusal.
+	 */
+	private function promoted(string $scenarioId): array|JSONResponse {
+		$refusal = $this->scenarioIdRefusal(scenarioId: $scenarioId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		try {
+			return $this->promoter->promote(scenarioId: $scenarioId);
+		} catch (RuntimeException) {
+			return $this->error(message: 'Scenario not found', status: Http::STATUS_NOT_FOUND);
+		} catch (Throwable $e) {
+			return $this->serverError(action: 'promote', e: $e);
+		}
+	}//end promoted()
+
+	/**
+	 * The user and scenario-id checks shared by promote() and evaluate().
+	 *
+	 * @param string $scenarioId The trimmed scenario id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may proceed.
+	 */
+	private function scenarioIdRefusal(string $scenarioId): ?JSONResponse {
 		if ($this->requireUser() === false) {
 			return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$scenarioId = trim($scenarioId);
 		if ($this->validId(value: $scenarioId) === false) {
 			return $this->error(message: 'scenarioId must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($this->validId(value: $administrationId) === false) {
+		return null;
+	}//end scenarioIdRefusal()
+
+	/**
+	 * Resolve and check what an evaluation is for: user, scenario id,
+	 * administration, membership, fiscal year — in that order.
+	 *
+	 * @param string $scenarioId The trimmed scenario id.
+	 *
+	 * @return ScenarioEvaluationScope|JSONResponse The scope, or the refusal.
+	 */
+	private function evaluationScope(string $scenarioId): ScenarioEvaluationScope|JSONResponse {
+		$refusal = $this->scenarioIdRefusal(scenarioId: $scenarioId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$scope = new ScenarioEvaluationScope(request: $this->request, scenarioId: $scenarioId);
+		return $this->scopeRefusal(scope: $scope) ?? $scope;
+	}//end evaluationScope()
+
+	/**
+	 * The administration, membership and fiscal-year checks of an evaluation.
+	 *
+	 * @param ScenarioEvaluationScope $scope The evaluation scope.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the scope is valid.
+	 */
+	private function scopeRefusal(ScenarioEvaluationScope $scope): ?JSONResponse {
+		if ($this->validId(value: $scope->administrationId) === false) {
 			return $this->error(message: 'administration_id is required', status: Http::STATUS_BAD_REQUEST);
 		}
 
@@ -163,66 +223,84 @@ class BudgetScenarioController extends Controller {
 		// PeriodCloseController's own ordering — canAccess() fails closed for
 		// an anonymous caller and a refusal reads 404, never 403 (IDOR-safe:
 		// a 403 would confirm the administration exists).
-		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+		if ($this->context->canAccess(administrationId: $scope->administrationId) === false) {
 			return $this->error(message: 'Scenario not found', status: Http::STATUS_NOT_FOUND);
 		}
 
-		$fiscalYear = (int)$this->request->getParam('fiscal_year', (string)((int)date('Y')));
-		if ($fiscalYear < 2000 || $fiscalYear > 2100) {
+		if ($scope->plausibleYear() === false) {
 			return $this->error(message: 'fiscal_year must be a plausible year', status: Http::STATUS_BAD_REQUEST);
 		}
 
+		return null;
+	}//end scopeRefusal()
+
+	/**
+	 * Load the evaluation context and check the scenario is in it.
+	 *
+	 * @param ScenarioEvaluationScope $scope The evaluation scope.
+	 *
+	 * @return array<string, mixed>|JSONResponse The context, or the 404/500.
+	 */
+	private function scenarioContext(ScenarioEvaluationScope $scope): array|JSONResponse {
 		try {
-			$annualBudgetIds = $this->reader->resolveAnnualBudgetIds(
-				administrationId: $administrationId,
-				fiscalYear: $fiscalYear
-			);
-			$context = $this->reader->loadContext(administrationId: $administrationId, annualBudgetIds: $annualBudgetIds);
+			$annualBudgetIds = $this->reader->resolveAnnualBudgetIds(administrationId: $scope->administrationId, fiscalYear: $scope->fiscalYear);
+			$context = $this->reader->loadContext(administrationId: $scope->administrationId, annualBudgetIds: $annualBudgetIds);
 		} catch (Throwable $e) {
 			return $this->serverError(action: 'evaluate', e: $e);
 		}
 
-		$scenarioExists = false;
-		foreach ($context['scenarios'] as $scenario) {
-			$id = (string)($scenario['id'] ?? $scenario['@self']['id'] ?? '');
-			if ($id === $scenarioId) {
-				$scenarioExists = true;
-				break;
-			}
-		}
-
-		if ($scenarioExists === false) {
+		if ($this->hasScenario(scenarios: $context['scenarios'], scenarioId: $scope->scenarioId) === false) {
 			// Either the scenario does not exist, or it belongs to a
 			// different administration than the one already authorised above
 			// — either way, 404, not 403 (IDOR-safe).
 			return $this->error(message: 'Scenario not found', status: Http::STATUS_NOT_FOUND);
 		}
 
+		return $context;
+	}//end scenarioContext()
+
+	/**
+	 * Whether the scenario is among the loaded scenarios.
+	 *
+	 * @param array<int, array<string, mixed>> $scenarios  The loaded scenarios.
+	 * @param string                           $scenarioId The scenario id.
+	 *
+	 * @return bool
+	 */
+	private function hasScenario(array $scenarios, string $scenarioId): bool {
+		foreach ($scenarios as $scenario) {
+			if ((string)($scenario['id'] ?? $scenario['@self']['id'] ?? '') === $scenarioId) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end hasScenario()
+
+	/**
+	 * Evaluate the scenario against its context and answer the envelope.
+	 *
+	 * @param ScenarioEvaluationScope $scope   The evaluation scope.
+	 * @param array<string, mixed>    $context The loaded context.
+	 *
+	 * @return JSONResponse 200 with the cells, or a 500.
+	 */
+	private function evaluated(ScenarioEvaluationScope $scope, array $context): JSONResponse {
 		try {
-			$modifiers = ($context['modifiersByScenarioId'][$scenarioId] ?? []);
 			$cells = $this->evaluator->evaluate(
 				baseBudgetLines: $context['budgetLines'],
 				ledgerGroups: $context['ledgerGroups'],
 				cashflowRecurringRows: $context['cashflowRecurringRows'],
-				modifiers: $modifiers,
-				fiscalYear: $fiscalYear
+				modifiers: ($context['modifiersByScenarioId'][$scope->scenarioId] ?? []),
+				fiscalYear: $scope->fiscalYear
 			);
 		} catch (Throwable $e) {
 			return $this->serverError(action: 'evaluate', e: $e);
 		}
 
-		return new JSONResponse(
-			[
-				'data' => [
-					'scenarioId' => $scenarioId,
-					'fiscalYear' => $fiscalYear,
-					'cells' => array_values($cells),
-				],
-			],
-			Http::STATUS_OK
-		);
-
-	}//end evaluate()
+		$data = ['scenarioId' => $scope->scenarioId, 'fiscalYear' => $scope->fiscalYear, 'cells' => array_values($cells)];
+		return new JSONResponse(['data' => $data], Http::STATUS_OK);
+	}//end evaluated()
 
 	/**
 	 * Authorization body-guard: the in-body counterpart to #[NoAdminRequired].

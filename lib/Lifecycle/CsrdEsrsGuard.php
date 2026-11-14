@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * CSRD / ESRS Lifecycle Guard
  *
  * ADR-031 exception-path lifecycle guards for the CSRD/ESRS sustainability
@@ -46,7 +51,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -96,18 +100,7 @@ class CsrdEsrsGuard {
 				return false;
 			}
 
-			$groups = $assessment['stakeholderGroupsConsulted'] ?? [];
-			if (is_array($groups) === false || count($groups) < 1) {
-				return false;
-			}
-
-			foreach ($groups as $group) {
-				if ($this->isConsultationComplete(group: $group) === false) {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->allConsultationsComplete(groups: ($assessment['stakeholderGroupsConsulted'] ?? []));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CsrdEsrsGuard: materiality submit check failed — denying transition (fail-closed)',
@@ -116,6 +109,29 @@ class CsrdEsrsGuard {
 			return false;
 		}//end try
 	}//end canSubmitMateriality()
+
+	/**
+	 * Whether at least one stakeholder group was consulted and every consultation is complete.
+	 *
+	 * @param mixed $groups The consulted stakeholder groups.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
+	 */
+	private function allConsultationsComplete(mixed $groups): bool {
+		if (is_array($groups) === false || count($groups) < 1) {
+			return false;
+		}
+
+		foreach ($groups as $group) {
+			if ($this->isConsultationComplete(group: $group) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allConsultationsComplete()
 
 	/**
 	 * Returns true iff the MaterialityAssessment may be approved (board sign-off).
@@ -137,22 +153,7 @@ class CsrdEsrsGuard {
 				return false;
 			}
 
-			if ((string)($assessment['approver'] ?? '') === '') {
-				return false;
-			}
-
-			$matrix = $assessment['doubleMaterialityMatrixSnapshot'] ?? [];
-			if (is_array($matrix) === false || $matrix === []) {
-				return false;
-			}
-
-			foreach ($matrix as $entry) {
-				if ($this->isMatrixEntryDisclosable(entry: $entry) === false) {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->isApprovable(assessment: $assessment);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CsrdEsrsGuard: materiality approve check failed — denying transition (fail-closed)',
@@ -161,6 +162,46 @@ class CsrdEsrsGuard {
 			return false;
 		}//end try
 	}//end canApproveMateriality()
+
+	/**
+	 * Whether the assessment has a board-level approver and a fully disclosable matrix.
+	 *
+	 * @param array<string,mixed> $assessment The MaterialityAssessment.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
+	 */
+	private function isApprovable(array $assessment): bool {
+		if ((string)($assessment['approver'] ?? '') === '') {
+			return false;
+		}
+
+		return $this->isMatrixDisclosable(matrix: ($assessment['doubleMaterialityMatrixSnapshot'] ?? []));
+	}//end isApprovable()
+
+	/**
+	 * Whether the double-materiality matrix is non-empty and every entry is disclosable.
+	 *
+	 * @param mixed $matrix The matrix snapshot.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
+	 */
+	private function isMatrixDisclosable(mixed $matrix): bool {
+		if (is_array($matrix) === false || $matrix === []) {
+			return false;
+		}
+
+		foreach ($matrix as $entry) {
+			if ($this->isMatrixEntryDisclosable(entry: $entry) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isMatrixDisclosable()
 
 	/**
 	 * Returns true iff the EsrsDataPoint may transition to approved.
@@ -245,24 +286,7 @@ class CsrdEsrsGuard {
 				return false;
 			}
 
-			$findings = $engagement['findings'] ?? [];
-			if (is_array($findings) === false) {
-				return false;
-			}
-
-			foreach ($findings as $finding) {
-				if (is_array($finding) === false) {
-					return false;
-				}
-
-				$status = (string)($finding['status'] ?? 'open');
-				if ($status !== 'resolved' && $status !== 'accepted-risk') {
-					// An open finding blocks the opinion (REQ-CSR-004).
-					return false;
-				}
-			}
-
-			return true;
+			return $this->allFindingsSettled(findings: ($engagement['findings'] ?? []));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CsrdEsrsGuard: issue-opinion check failed — denying transition (fail-closed)',
@@ -271,6 +295,47 @@ class CsrdEsrsGuard {
 			return false;
 		}//end try
 	}//end canIssueOpinion()
+
+	/**
+	 * Whether every finding is resolved or accepted-risk.
+	 *
+	 * @param mixed $findings The engagement's findings.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
+	 */
+	private function allFindingsSettled(mixed $findings): bool {
+		if (is_array($findings) === false) {
+			return false;
+		}
+
+		foreach ($findings as $finding) {
+			if ($this->isFindingSettled(finding: $finding) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allFindingsSettled()
+
+	/**
+	 * Whether a finding is resolved or accepted-risk; an open finding blocks the opinion (REQ-CSR-004).
+	 *
+	 * @param mixed $finding The finding.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
+	 */
+	private function isFindingSettled(mixed $finding): bool {
+		if (is_array($finding) === false) {
+			return false;
+		}
+
+		$status = (string)($finding['status'] ?? 'open');
+		return $status === 'resolved' || $status === 'accepted-risk';
+	}//end isFindingSettled()
 
 	/**
 	 * Returns true iff a stakeholder-consultation row carries a group, a method,
@@ -322,41 +387,8 @@ class CsrdEsrsGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
-
-	/**
-	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-	 *
-	 * @return string The register slug.
-	 */
-	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end resolveRegister()
 }//end class

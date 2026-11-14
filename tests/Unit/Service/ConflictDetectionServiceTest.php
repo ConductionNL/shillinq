@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -49,9 +50,9 @@ class ConflictDetectionServiceTest extends TestCase {
 	/**
 	 * SettingsService stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Transactional guard stub.
@@ -82,7 +83,7 @@ class ConflictDetectionServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->guard = $this->createMock(TransactionalGuard::class);
 
 		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);

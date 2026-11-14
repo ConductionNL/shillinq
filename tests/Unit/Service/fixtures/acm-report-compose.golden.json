@@ -1,0 +1,87 @@
+{
+    "report": {
+        "period": "2026-YTD",
+        "format": "acm-standard_form-mo-2024",
+        "generatedAt": "<masked>",
+        "activities": [
+            {
+                "commercialActivityId": "a1",
+                "code": "PARK",
+                "name": "Parkeren",
+                "revenue": 1234.5,
+                "integralCostPrice": 1000.0,
+                "costRecoveryRatio": 1.2345,
+                "compliant": true,
+                "abbReference": null
+            },
+            {
+                "commercialActivityId": "a2",
+                "code": "MARKT",
+                "name": "Markt & <kraam>",
+                "revenue": 100.0,
+                "integralCostPrice": 300.0,
+                "costRecoveryRatio": 0.3333,
+                "compliant": false,
+                "abbReference": "ABB-7"
+            },
+            {
+                "commercialActivityId": "ZAAL",
+                "code": "ZAAL",
+                "name": "",
+                "revenue": 50.0,
+                "integralCostPrice": 0.0,
+                "costRecoveryRatio": null,
+                "compliant": true,
+                "abbReference": ""
+            },
+            {
+                "commercialActivityId": "LEEG",
+                "code": "LEEG",
+                "name": "",
+                "revenue": 0.0,
+                "integralCostPrice": 0.0,
+                "costRecoveryRatio": null,
+                "compliant": true,
+                "abbReference": null
+            }
+        ],
+        "summary": "Samenvatting",
+        "manualOverrides": 3,
+        "abbList": [
+            {
+                "reference": "ABB-7",
+                "rationaleExcerpt": "Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Algemeen belang. Al"
+            },
+            {
+                "reference": "",
+                "rationaleExcerpt": "kort"
+            }
+        ],
+        "signatory": null,
+        "signedOn": null,
+        "signatureFingerprint": null,
+        "sentInAcm": false,
+        "sentInAcmOn": null,
+        "publicationMunicipalGazette": null,
+        "administrationId": "adm-gem",
+        "status": "draft"
+    },
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ACMReport format=\"acm-standard_form-mo-2024\" period=\"2026-YTD\" administrationId=\"adm-gem\">\n  <Activiteit code=\"PARK\" omzet=\"1234.50\" integraleKostprijs=\"1000.00\" kostendekkingsratio=\"1.2345\" compliant=\"true\"\/>\n  <Activiteit code=\"MARKT\" omzet=\"100.00\" integraleKostprijs=\"300.00\" kostendekkingsratio=\"0.3333\" compliant=\"false\"\/>\n  <Activiteit code=\"ZAAL\" omzet=\"50.00\" integraleKostprijs=\"0.00\" kostendekkingsratio=\"\" compliant=\"true\"\/>\n  <Activiteit code=\"LEEG\" omzet=\"0.00\" integraleKostprijs=\"0.00\" kostendekkingsratio=\"\" compliant=\"true\"\/>\n<\/ACMReport>",
+    "minimal": {
+        "period": "2025-Q4",
+        "format": "acm-standard_form-mo-2024",
+        "generatedAt": "<masked>",
+        "activities": [],
+        "summary": null,
+        "manualOverrides": 0,
+        "abbList": [],
+        "signatory": null,
+        "signedOn": null,
+        "signatureFingerprint": null,
+        "sentInAcm": false,
+        "sentInAcmOn": null,
+        "publicationMunicipalGazette": null,
+        "administrationId": "7",
+        "status": "draft"
+    }
+}

@@ -1,0 +1,164 @@
+{
+    "2026-01-01..2026-03-31": {
+        "result": {
+            "recognized": 2453.84,
+            "oneOff": 1133.33,
+            "arr": 9914.16,
+            "currency": "USD",
+            "lineCount": 10
+        },
+        "logs": [
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r5",
+                    "frequency": "DAILY"
+                }
+            ],
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r6",
+                    "frequency": ""
+                }
+            ]
+        ]
+    },
+    "2026-03-15..2026-03-15": {
+        "result": {
+            "recognized": 813.83,
+            "oneOff": 211.11,
+            "arr": 9765.96,
+            "currency": "USD",
+            "lineCount": 10
+        },
+        "logs": [
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r5",
+                    "frequency": "DAILY"
+                }
+            ],
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r6",
+                    "frequency": ""
+                }
+            ]
+        ]
+    },
+    "2025-01-01..2027-12-31": {
+        "result": {
+            "recognized": 18430.66,
+            "oneOff": 3199.99,
+            "arr": 5760.0,
+            "currency": "USD",
+            "lineCount": 10
+        },
+        "logs": [
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r5",
+                    "frequency": "DAILY"
+                }
+            ],
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r6",
+                    "frequency": ""
+                }
+            ]
+        ]
+    },
+    "2026-06-01..2026-01-01": {
+        "result": {
+            "recognized": 0.0,
+            "oneOff": 0.0,
+            "arr": 5760.0,
+            "currency": "USD",
+            "lineCount": 10
+        },
+        "logs": [
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r5",
+                    "frequency": "DAILY"
+                }
+            ],
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r6",
+                    "frequency": ""
+                }
+            ]
+        ]
+    },
+    "..2026-12-31": {
+        "result": {
+            "recognized": 0.0,
+            "oneOff": 500.0,
+            "arr": 9765.96,
+            "currency": "USD",
+            "lineCount": 10
+        },
+        "logs": [
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r5",
+                    "frequency": "DAILY"
+                }
+            ],
+            [
+                "RevenueRecognitionService: RECURRING line with null\/unknown frequentie contributes 0",
+                {
+                    "lineId": "r6",
+                    "frequency": ""
+                }
+            ]
+        ]
+    },
+    "empty": {
+        "result": {
+            "recognized": 0.0,
+            "oneOff": 0.0,
+            "arr": 0.0,
+            "currency": "EUR",
+            "lineCount": 0
+        },
+        "logs": []
+    },
+    "failing": {
+        "result": {
+            "recognized": 0.0,
+            "oneOff": 0.0,
+            "arr": 0.0,
+            "currency": "EUR",
+            "lineCount": 0
+        },
+        "logs": [
+            [
+                "RevenueRecognitionService: SalesOrder data unavailable; treating as empty",
+                {
+                    "schema": "SalesOrder",
+                    "administrationId": "adm",
+                    "exception": "down"
+                }
+            ],
+            [
+                "RevenueRecognitionService: SalesOrder data unavailable; treating as empty",
+                {
+                    "schema": "SalesOrderLine",
+                    "administrationId": "adm",
+                    "exception": "down"
+                }
+            ]
+        ]
+    }
+}

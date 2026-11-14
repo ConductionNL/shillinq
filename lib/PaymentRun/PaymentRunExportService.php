@@ -3,6 +3,9 @@
 /**
  * Payment-run SEPA export orchestration service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The orchestration layer behind the "Export to bank" action. It AUTO-DISCOVERS
  * the per-format generators (lib/PaymentRun/Generator/*.php implementing
  * PaymentRunGeneratorInterface, keyed by ::format()) — the same glob-and-filter
@@ -30,9 +33,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/specs/payment-run-sepa-export/spec.md
  */
 
@@ -40,13 +40,16 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRunExportServiceInterface;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
-use OCP\Files\Folder;
+use OCA\Shillinq\Reporting\SystemTagAssigner;
+use OCA\Shillinq\Reporting\TaggedFileStore;
+use OCA\Shillinq\Reporting\TaggedFileStoreLog;
+use OCA\Shillinq\Reporting\TaggedFileStoreMessages;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
-use OCP\SystemTag\TagNotFoundException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -55,7 +58,7 @@ use ReflectionClass;
  * Discovers generators, validates + renders the run, stores + tags the files,
  * writes back the file reference, and drives approved → exported.
  */
-class PaymentRunExportService {
+class PaymentRunExportService implements PaymentRunExportServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.
@@ -70,13 +73,6 @@ class PaymentRunExportService {
 	 * @var string
 	 */
 	private const SCHEMA = 'PaymentRun';
-
-	/**
-	 * The Nextcloud object type the system tags are mapped against.
-	 *
-	 * @var string
-	 */
-	private const TAG_OBJECT_TYPE = 'files';
 
 	/**
 	 * Memoised generator index (format => instance).
@@ -96,6 +92,7 @@ class PaymentRunExportService {
 	 * @param ISystemTagObjectMapper $tagMapper Maps tags onto the stored file id.
 	 * @param IUserSession $userSession Current user (storage home).
 	 * @param LoggerInterface $logger Fail-soft warning logger.
+	 * @param PaymentBlockChecker $blockChecker Names blocked and disputed lines (REQ-BPR-005).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -104,6 +101,7 @@ class PaymentRunExportService {
 		private readonly ISystemTagObjectMapper $tagMapper,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly PaymentBlockChecker $blockChecker,
 	) {
 
 	}//end __construct()
@@ -116,8 +114,45 @@ class PaymentRunExportService {
 	 * @return array<string, mixed> An envelope: on success
 	 *                              `{ exportedFileRef, exportedAt, lifecycleState,
 	 *                              files: [...] }`; on rejection `{ error: ... }`.
+	 *
+	 * @spec openspec/specs/payment-run-sepa-export/spec.md#requirement-req-sepa-005-export-shall-write-back-the-file-reference-and-drive-the-lifecycle
 	 */
 	public function export(array $paymentRun): array {
+		$refusal = $this->refusal(paymentRun: $paymentRun);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$rendered = $this->renderArtefacts(paymentRun: $paymentRun);
+		if ($rendered === []) {
+			return ['error' => 'no-generator'];
+		}
+
+		$run = new PaymentRunExportRun(paymentRun: $paymentRun, userId: ($this->userSession->getUser()?->getUID() ?? ''));
+		foreach ($rendered as $file) {
+			$this->storeOne(run: $run, file: $file);
+		}
+
+		// Storage failed entirely — leave the run approved for an idempotent retry.
+		if ($run->xmlFileRef === null) {
+			$this->logger->warning('PaymentRunExportService: XML file storage failed; run stays approved');
+			return ['error' => 'storage-failed', 'files' => $run->files];
+		}
+
+		return $this->writeBack(paymentRun: $paymentRun, run: $run);
+
+	}//end export()
+
+	/**
+	 * Why the run may not be exported, or null when it may: it must be
+	 * approved, every line needs a creditor IBAN, and (REQ-BPR-005) a block
+	 * set after approval stops the file before it is written.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 *
+	 * @return array<string, mixed>|null The refusal envelope, or null.
+	 */
+	private function refusal(array $paymentRun): array|null {
 		$state = (string)($paymentRun['lifecycleState'] ?? $paymentRun['status'] ?? '');
 		if ($state !== 'approved') {
 			$this->logger->warning('PaymentRunExportService: run not approved', ['state' => $state]);
@@ -130,74 +165,106 @@ class PaymentRunExportService {
 			return ['error' => 'missing-creditor-iban', 'lines' => $missing];
 		}
 
-		$rendered = $this->renderArtefacts(paymentRun: $paymentRun);
-		if ($rendered === []) {
-			return ['error' => 'no-generator'];
+		$blocked = $this->blockChecker->blockedLines(paymentRun: $paymentRun);
+		if ($blocked !== []) {
+			$this->logger->warning('PaymentRunExportService: run pays a blocked invoice', ['invoices' => array_column($blocked, 'invoiceNumber')]);
+			return ['error' => 'payment-blocked', 'blocked' => $blocked];
 		}
 
-		$administrationId = (string)($paymentRun['administrationId'] ?? '');
-		$runNumber = (string)($paymentRun['runNumber'] ?? '');
-		$userId = ($this->userSession->getUser()?->getUID() ?? '');
+		return null;
+	}//end refusal()
 
-		$storedFiles = [];
-		$xmlFileRef = null;
-		foreach ($rendered as $file) {
-			$stored = $this->storeFile(administrationId: $administrationId, rendered: $file, userId: $userId);
+	/**
+	 * Store one rendered file, tag it with the run, administration and file
+	 * type, and record it on the run (the pain.001 path as the file reference).
+	 *
+	 * @param PaymentRunExportRun $run  The export in progress.
+	 * @param RenderedFile        $file The rendered artefact.
+	 *
+	 * @return void
+	 */
+	private function storeOne(PaymentRunExportRun $run, RenderedFile $file): void {
+		$stored = $this->storeFile(administrationId: $run->administrationId, rendered: $file, userId: $run->userId);
 
-			if ($stored['fileId'] !== null) {
-				$this->applyTags(
-					fileId: $stored['fileId'],
-					tags: [
-						'shillinq-payment-run:' . $runNumber,
-						'shillinq-administration:' . $administrationId,
-						'shillinq-file-type:' . $file->format,
-					]
-				);
-			}
-
-			$storedFiles[] = [
-				'format' => $file->format,
-				'fileName' => $file->fileName,
-				'filePath' => $stored['filePath'],
-				'fileId' => $stored['fileId'],
-			];
-
-			if ($file->format === 'sepa-pain001' && $stored['filePath'] !== null) {
-				$xmlFileRef = $stored['filePath'];
-			}
-		}//end foreach
-
-		// Storage failed entirely — leave the run approved for an idempotent retry.
-		if ($xmlFileRef === null) {
-			$this->logger->warning('PaymentRunExportService: XML file storage failed; run stays approved');
-			return ['error' => 'storage-failed', 'files' => $storedFiles];
+		if ($stored['fileId'] !== null) {
+			$this->fileStore()->applyTags(
+				fileId: $stored['fileId'],
+				tags: [
+					'shillinq-payment-run:' . $run->runNumber,
+					'shillinq-administration:' . $run->administrationId,
+					'shillinq-file-type:' . $file->format,
+				]
+			);
 		}
 
-		$exportedAt = gmdate('Y-m-d\TH:i:s\Z');
+		if ($stored['node'] !== null) {
+			$run->nodes[] = $stored['node'];
+		}
 
-		$update = array_merge(
+		$run->files[] = [
+			'format' => $file->format,
+			'fileName' => $file->fileName,
+			'filePath' => $stored['filePath'],
+			'fileId' => $stored['fileId'],
+		];
+
+		if ($file->format === 'sepa-pain001' && $stored['filePath'] !== null) {
+			$run->xmlFileRef = $stored['filePath'];
+		}
+	}//end storeOne()
+
+	/**
+	 * Write the file reference and export time back and request the
+	 * declarative approved → exported transition. When the run does not move
+	 * to exported (a guard refused it, or it could not be saved), its bank
+	 * file must not stay where someone uploads it.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 * @param PaymentRunExportRun  $run        The export with its stored files.
+	 *
+	 * @return array<string, mixed> The success envelope, or the save outcome's error.
+	 */
+	private function writeBack(array $paymentRun, PaymentRunExportRun $run): array {
+		$run->exportedAt = gmdate('Y-m-d\TH:i:s\Z');
+
+		$outcome = $this->saveRun(run: $this->exportedUpdate(paymentRun: $paymentRun, run: $run));
+		if (isset($outcome['error']) === true) {
+			$this->removeFiles(nodes: $run->nodes);
+			return $outcome;
+		}
+
+		$saved = $outcome['run'];
+
+		return [
+			'exportedFileRef' => $run->xmlFileRef,
+			'exportedAt' => $run->exportedAt,
+			'lifecycleState' => (string)($saved['lifecycleState'] ?? 'exported'),
+			'files' => $run->files,
+			'paymentRun' => $saved,
+		];
+	}//end writeBack()
+
+	/**
+	 * The run with its export written back.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 * @param PaymentRunExportRun  $run        The export with its file reference and time.
+	 *
+	 * @return array<string, mixed> The updated run.
+	 */
+	private function exportedUpdate(array $paymentRun, PaymentRunExportRun $run): array {
+		return array_merge(
 			$paymentRun,
 			[
-				'exportedFileRef' => $xmlFileRef,
-				'exportedAt' => $exportedAt,
+				'exportedFileRef' => $run->xmlFileRef,
+				'exportedAt' => $run->exportedAt,
 				// Request the declarative approved → exported transition via the
 				// OR lifecycle engine (it validates the transition on save).
 				'lifecycleState' => 'exported',
 				'status' => 'exported',
 			]
 		);
-
-		$saved = $this->saveRun(run: $update);
-
-		return [
-			'exportedFileRef' => $xmlFileRef,
-			'exportedAt' => $exportedAt,
-			'lifecycleState' => (string)($saved['lifecycleState'] ?? 'exported'),
-			'files' => $storedFiles,
-			'paymentRun' => $saved,
-		];
-
-	}//end export()
+	}//end exportedUpdate()
 
 	/**
 	 * Render every discovered generator's artefact for the run (no storage).
@@ -277,34 +344,67 @@ class PaymentRunExportService {
 		}
 
 		foreach ($files as $file) {
-			$class = '\\OCA\\Shillinq\\PaymentRun\\Generator\\' . basename($file, '.php');
-			if (class_exists($class) === false) {
-				continue;
+			$class = self::generatorClass(file: $file);
+			$instance = null;
+			if ($class !== null) {
+				$instance = $this->instantiateGenerator(class: $class);
 			}
 
-			if (in_array(PaymentRunGeneratorInterface::class, class_implements($class), true) === false) {
-				continue;
-			}
-
-			if ((new ReflectionClass($class))->isInstantiable() === false) {
-				continue;
-			}
-
-			try {
-				// Resolve via the container so generators with constructor DI are autowired.
-				$instance = $this->container->get($class);
+			if ($instance !== null) {
 				$found[$instance::format()] = $instance;
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'PaymentRunExportService: failed to instantiate generator',
-					['class' => $class, 'exception' => $e->getMessage()]
-				);
 			}
-		}//end foreach
+		}
 
 		$this->generators = $found;
 		return $found;
 	}//end generators()
+
+	/**
+	 * The generator class a file in Generator/ declares, or null when it is not
+	 * an existing, instantiable PaymentRunGeneratorInterface implementation.
+	 *
+	 * @param string $file The PHP file.
+	 *
+	 * @return string|null
+	 */
+	private static function generatorClass(string $file): ?string {
+		$class = '\\OCA\\Shillinq\\PaymentRun\\Generator\\' . basename($file, '.php');
+		if (class_exists($class) === false) {
+			return null;
+		}
+
+		if (in_array(PaymentRunGeneratorInterface::class, class_implements($class), true) === false) {
+			return null;
+		}
+
+		if ((new ReflectionClass($class))->isInstantiable() === false) {
+			return null;
+		}
+
+		return $class;
+
+	}//end generatorClass()
+
+	/**
+	 * Resolve a generator via the container, so generators with constructor
+	 * DI are autowired; null (logged) when that fails.
+	 *
+	 * @param string $class The generator class.
+	 *
+	 * @return object|null The generator (container-resolved), or null.
+	 */
+	private function instantiateGenerator(string $class): ?object {
+		try {
+			return $this->container->get($class);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'PaymentRunExportService: failed to instantiate generator',
+				['class' => $class, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end instantiateGenerator()
 
 	/**
 	 * Write the rendered bytes to /Shillinq/PaymentRuns/<administrationId>/.
@@ -313,12 +413,12 @@ class PaymentRunExportService {
 	 * @param RenderedFile $rendered The rendered payload.
 	 * @param string $userId The owning user id (storage home).
 	 *
-	 * @return array{filePath: string|null, fileId: int|null}
+	 * @return array{filePath: string|null, fileId: int|null, node: \OCP\Files\File|null}
 	 */
 	private function storeFile(string $administrationId, RenderedFile $rendered, string $userId): array {
 		if ($userId === '') {
 			$this->logger->warning('PaymentRunExportService: no user session, cannot store export file');
-			return ['filePath' => null, 'fileId' => null];
+			return ['filePath' => null, 'fileId' => null, 'node' => null];
 		}
 
 		try {
@@ -329,161 +429,124 @@ class PaymentRunExportService {
 				$segments[] = $administrationId;
 			}
 
-			$folder = $this->ensureFolder(base: $userFolder, segments: $segments);
+			$folder = $this->fileStore()->ensureFolder(base: $userFolder, segments: $segments);
 			if ($folder === null) {
-				return ['filePath' => null, 'fileId' => null];
+				return ['filePath' => null, 'fileId' => null, 'node' => null];
 			}
 
-			$fileName = $this->uniqueName(folder: $folder, name: $rendered->fileName);
+			$fileName = $this->fileStore()->uniqueName(folder: $folder, name: $rendered->fileName);
 			$file = $folder->newFile($fileName, $rendered->content);
 
-			return ['filePath' => $file->getPath(), 'fileId' => $file->getId()];
+			return ['filePath' => $file->getPath(), 'fileId' => $file->getId(), 'node' => $file];
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'PaymentRunExportService: failed to store export file',
 				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
-			return ['filePath' => null, 'fileId' => null];
+			return ['filePath' => null, 'fileId' => null, 'node' => null];
 		}//end try
 
 	}//end storeFile()
 
 	/**
-	 * Ensure a nested folder path exists under a base folder, returning the leaf.
+	 * The store this service writes its files through, logging in its own words.
 	 *
-	 * @param Folder $base The base folder (the user's Files home).
-	 * @param array<string> $segments Path segments to create/descend.
-	 *
-	 * @return Folder|null
+	 * @return TaggedFileStore
 	 */
-	private function ensureFolder(Folder $base, array $segments): ?Folder {
-		$current = $base;
-		foreach ($segments as $segment) {
-			if ($current->nodeExists($segment) === true) {
-				$node = $current->get($segment);
-				if ($node instanceof Folder) {
-					$current = $node;
-					continue;
-				}
-
-				$this->logger->warning('PaymentRunExportService: path segment is not a folder', ['segment' => $segment]);
-				return null;
-			}
-
-			$current = $current->newFolder($segment);
-		}
-
-		return $current;
-	}//end ensureFolder()
-
-	/**
-	 * Produce a non-colliding file name within a folder (suffixes -1, -2, ...).
-	 *
-	 * @param Folder $folder The target folder.
-	 * @param string $name The desired file name.
-	 *
-	 * @return string
-	 */
-	private function uniqueName(Folder $folder, string $name): string {
-		if ($folder->nodeExists($name) === false) {
-			return $name;
-		}
-
-		$dot = strrpos($name, '.');
-		$stem = $name;
-		$extension = '';
-		if ($dot !== false) {
-			$stem = substr($name, 0, $dot);
-			$extension = substr($name, $dot);
-		}
-
-		$counter = 1;
-		do {
-			$candidate = $stem . '-' . $counter . $extension;
-			$counter++;
-		} while ($folder->nodeExists($candidate) === true && $counter < 1000);
-
-		return $candidate;
-	}//end uniqueName()
-
-	/**
-	 * Apply (creating if needed) the given system tags to a file id.
-	 *
-	 * @param int $fileId The Nextcloud file id.
-	 * @param array<string> $tags The tag names to apply.
-	 *
-	 * @return void
-	 */
-	private function applyTags(int $fileId, array $tags): void {
-		foreach ($tags as $tagName) {
-			$tagName = trim($tagName);
-			if ($tagName === '') {
-				continue;
-			}
-
-			try {
-				$tag = $this->resolveTag(tagName: $tagName);
-				$this->tagMapper->assignTags((string)$fileId, self::TAG_OBJECT_TYPE, [$tag->getId()]);
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'PaymentRunExportService: failed to apply system tag',
-					['tag' => $tagName, 'fileId' => $fileId, 'exception' => $e->getMessage()]
-				);
-			}
-		}
-
-	}//end applyTags()
-
-	/**
-	 * Resolve a user-visible, assignable system tag by name, creating it on miss.
-	 *
-	 * @param string $tagName The tag name.
-	 *
-	 * @return \OCP\SystemTag\ISystemTag
-	 */
-	private function resolveTag(string $tagName): \OCP\SystemTag\ISystemTag {
-		try {
-			return $this->tagManager->getTag($tagName, true, true);
-		} catch (TagNotFoundException $e) {
-			return $this->tagManager->createTag($tagName, true, true);
-		}
-
-	}//end resolveTag()
+	private function fileStore(): TaggedFileStore {
+		$messages = new TaggedFileStoreMessages(
+			notFolder: 'PaymentRunExportService: path segment is not a folder',
+			tagFailed: 'PaymentRunExportService: failed to apply system tag',
+		);
+		$tags = new SystemTagAssigner(tagManager: $this->tagManager, tagMapper: $this->tagMapper);
+		return new TaggedFileStore(tags: $tags, log: new TaggedFileStoreLog(logger: $this->logger, messages: $messages));
+	}//end fileStore()
 
 	/**
 	 * Persist the updated PaymentRun through OpenRegister (drives the transition).
 	 *
+	 * A save that throws is never reported as exported: a guard that stops the
+	 * approved to exported transition (the duplicate guard, four eyes) comes
+	 * back as `export-refused` with its reason, anything else as `save-failed`.
+	 *
 	 * @param array<string, mixed> $run The updated PaymentRun fields.
 	 *
-	 * @return array<string, mixed> The saved run (or the input on failure).
+	 * @return array<string, mixed> `{ run: saved }` or `{ error, reason }`.
 	 */
 	private function saveRun(array $run): array {
-		try {
-			$objectService = $this->objectService();
-			if ($objectService === null) {
-				return $run;
-			}
+		$objectService = $this->objectService();
+		if ($objectService === null) {
+			return ['error' => 'save-failed', 'reason' => 'OpenRegister is not available'];
+		}
 
+		try {
 			$saved = $objectService
 				->setRegister(self::REGISTER)
 				->setSchema(self::SCHEMA)
 				->saveObject($run);
-
-			if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-				return (array)$saved->jsonSerialize();
-			}
-
-			if (is_array($saved) === true) {
-				return $saved;
-			}
-
-			return $run;
 		} catch (\Throwable $e) {
 			$this->logger->warning('PaymentRunExportService: failed to save PaymentRun', ['exception' => $e->getMessage()]);
-			return $run;
-		}//end try
+
+			return ['error' => $this->saveError(exception: $e), 'reason' => $e->getMessage()];
+		}
+
+		return ['run' => $this->savedRun(saved: $saved, run: $run)];
 
 	}//end saveRun()
+
+	/**
+	 * `export-refused` when a guard stopped the transition, else `save-failed`.
+	 *
+	 * @param \Throwable $exception The save failure.
+	 *
+	 * @return string The error code.
+	 */
+	private function saveError(\Throwable $exception): string {
+		$error = 'save-failed';
+		if (method_exists($exception, 'getErrors') === true && $exception->getErrors() !== []) {
+			$error = 'export-refused';
+		}
+
+		return $error;
+	}//end saveError()
+
+	/**
+	 * The saved PaymentRun as an array, falling back to the fields that were saved.
+	 *
+	 * @param mixed $saved The saveObject() result.
+	 * @param array<string, mixed> $run The updated PaymentRun fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function savedRun(mixed $saved, array $run): array {
+		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
+			return (array)$saved->jsonSerialize();
+		}
+
+		if (is_array($saved) === true) {
+			return $saved;
+		}
+
+		return $run;
+	}//end savedRun()
+
+	/**
+	 * Delete the export files of a run that did not move to exported.
+	 *
+	 * @param array<int, \OCP\Files\File> $nodes The stored files.
+	 *
+	 * @return void
+	 */
+	private function removeFiles(array $nodes): void {
+		foreach ($nodes as $node) {
+			try {
+				$node->delete();
+			} catch (\Throwable $e) {
+				$this->logger->warning('PaymentRunExportService: could not remove the file of an unexported run', ['exception' => $e->getMessage()]);
+			}
+		}
+
+	}//end removeFiles()
 
 	/**
 	 * Lazily resolve OpenRegister's ObjectService from the container (null on miss).

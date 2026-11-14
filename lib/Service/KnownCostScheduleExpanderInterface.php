@@ -3,6 +3,9 @@
 /**
  * Known-cost schedule-expander port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `budget-scenarios` (REQ-BSC-006) MUST evaluate a `RECURRING_END`/
  * `RECURRING_AMOUNT_CHANGE` modifier by calling `budget-known-costs`'s own
  * pure `KnownCostScheduleExpander::expand()` — never a second, independent
@@ -67,9 +70,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

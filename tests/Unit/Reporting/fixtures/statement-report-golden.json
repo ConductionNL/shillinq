@@ -1,0 +1,1055 @@
+{
+    "balance-sheet": {
+        "{\"administrationId\":\"adm-1\",\"period\":\"2026\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Balans",
+                    "subtitle": "Balans per peildatum",
+                    "meta": [
+                        "Periode: 2026",
+                        "Administratie: adm-1",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Activa",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "0100 Gebouwen",
+                            "amount": 125000.5
+                        },
+                        {
+                            "label": "1000 Kas",
+                            "amount": 474.75
+                        },
+                        {
+                            "label": "1300 Debiteuren",
+                            "amount": 900
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal activa",
+                        "amount": 126375.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Passiva",
+                    "depth": 2
+                },
+                {
+                    "type": "text",
+                    "text": "Eigen vermogen",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "0500 Kapitaal",
+                            "amount": -50000
+                        },
+                        {
+                            "label": "0600 Reserves",
+                            "amount": -4000
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal eigen vermogen",
+                        "amount": -54000
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "text",
+                    "text": "Schulden",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "1600 Crediteuren",
+                            "amount": -300.25
+                        },
+                        {
+                            "label": "1700",
+                            "amount": -800
+                        },
+                        {
+                            "label": "Rekening acc-x",
+                            "amount": 10
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal schulden",
+                        "amount": -1090.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Recapitulatie passiva",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Eigen vermogen",
+                            "amount": -54000
+                        },
+                        {
+                            "label": "Schulden",
+                            "amount": -1090.25
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal passiva",
+                        "amount": -55090.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Balanscontrole",
+                    "depth": 2
+                },
+                {
+                    "type": "detailsTable",
+                    "rows": {
+                        "Aantal grootboekrekeningen": "15",
+                        "Totaal activa": "USD 126.375,25",
+                        "Totaal passiva": "USD -55.090,25",
+                        "Verschil": "USD 181.465,50",
+                        "Balans sluit aan": "Nee"
+                    }
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}",
+                "GLLine {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}"
+            ]
+        },
+        "{\"administrationId\":\"adm-1\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Balans",
+                    "subtitle": "Balans per peildatum",
+                    "meta": [
+                        "Administratie: adm-1",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Activa",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "0100 Gebouwen",
+                            "amount": 125000.5
+                        },
+                        {
+                            "label": "1000 Kas",
+                            "amount": 474.75
+                        },
+                        {
+                            "label": "1300 Debiteuren",
+                            "amount": 900
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal activa",
+                        "amount": 126375.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Passiva",
+                    "depth": 2
+                },
+                {
+                    "type": "text",
+                    "text": "Eigen vermogen",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "0500 Kapitaal",
+                            "amount": -50000
+                        },
+                        {
+                            "label": "0600 Reserves",
+                            "amount": -4000
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal eigen vermogen",
+                        "amount": -54000
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "text",
+                    "text": "Schulden",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "1600 Crediteuren",
+                            "amount": -300.25
+                        },
+                        {
+                            "label": "1700",
+                            "amount": -800
+                        },
+                        {
+                            "label": "Rekening acc-x",
+                            "amount": 10
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal schulden",
+                        "amount": -1090.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Recapitulatie passiva",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Eigen vermogen",
+                            "amount": -54000
+                        },
+                        {
+                            "label": "Schulden",
+                            "amount": -1090.25
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal passiva",
+                        "amount": -55090.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Balanscontrole",
+                    "depth": 2
+                },
+                {
+                    "type": "detailsTable",
+                    "rows": {
+                        "Aantal grootboekrekeningen": "15",
+                        "Totaal activa": "USD 126.375,25",
+                        "Totaal passiva": "USD -55.090,25",
+                        "Verschil": "USD 181.465,50",
+                        "Balans sluit aan": "Nee"
+                    }
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}",
+                "Account {\"limit\":10000}",
+                "GLLine {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}",
+                "GLLine {\"limit\":10000}"
+            ]
+        },
+        "{\"period\":\"Q1\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Balans",
+                    "subtitle": "Balans per peildatum",
+                    "meta": [
+                        "Periode: Q1",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Activa",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "0100 Gebouwen",
+                            "amount": 125000.5
+                        },
+                        {
+                            "label": "1000 Kas",
+                            "amount": 0
+                        },
+                        {
+                            "label": "1300 Debiteuren",
+                            "amount": 900
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal activa",
+                        "amount": 125900.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Passiva",
+                    "depth": 2
+                },
+                {
+                    "type": "text",
+                    "text": "Eigen vermogen",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "0500 Kapitaal",
+                            "amount": -50000
+                        },
+                        {
+                            "label": "0600 Reserves",
+                            "amount": 0
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal eigen vermogen",
+                        "amount": -50000
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "text",
+                    "text": "Schulden",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [
+                        {
+                            "label": "1600 Crediteuren",
+                            "amount": -300.25
+                        },
+                        {
+                            "label": "1700",
+                            "amount": 0
+                        },
+                        {
+                            "label": "Rekening acc-x",
+                            "amount": 10
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal schulden",
+                        "amount": -290.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Recapitulatie passiva",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Eigen vermogen",
+                            "amount": -50000
+                        },
+                        {
+                            "label": "Schulden",
+                            "amount": -290.25
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal passiva",
+                        "amount": -50290.25
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Balanscontrole",
+                    "depth": 2
+                },
+                {
+                    "type": "detailsTable",
+                    "rows": {
+                        "Aantal grootboekrekeningen": "15",
+                        "Totaal activa": "USD 125.900,50",
+                        "Totaal passiva": "USD -50.290,25",
+                        "Verschil": "USD 176.190,75",
+                        "Balans sluit aan": "Nee"
+                    }
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000}",
+                "GLLine {\"limit\":10000}"
+            ]
+        },
+        "{\"administrationId\":\"adm-9\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Balans",
+                    "subtitle": "Balans per peildatum",
+                    "meta": [
+                        "Administratie: adm-9",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Activa",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [],
+                    "total": {
+                        "label": "Totaal activa",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Passiva",
+                    "depth": 2
+                },
+                {
+                    "type": "text",
+                    "text": "Eigen vermogen",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [],
+                    "total": {
+                        "label": "Totaal eigen vermogen",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "text",
+                    "text": "Schulden",
+                    "style": "amountBold",
+                    "paragraphStyle": "tight"
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Saldo",
+                    "lines": [],
+                    "total": {
+                        "label": "Totaal schulden",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Recapitulatie passiva",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Eigen vermogen",
+                            "amount": 0
+                        },
+                        {
+                            "label": "Schulden",
+                            "amount": 0
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal passiva",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Balanscontrole",
+                    "depth": 2
+                },
+                {
+                    "type": "detailsTable",
+                    "rows": {
+                        "Aantal grootboekrekeningen": "0",
+                        "Totaal activa": "EUR 0,00",
+                        "Totaal passiva": "EUR 0,00",
+                        "Verschil": "EUR 0,00",
+                        "Balans sluit aan": "Ja"
+                    }
+                },
+                {
+                    "type": "note",
+                    "text": "Er zijn geen grootboekrekeningen gevonden voor deze administratie."
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-9\"}}",
+                "Account {\"limit\":10000}"
+            ]
+        }
+    },
+    "profit-loss": {
+        "{\"administrationId\":\"adm-1\",\"period\":\"2026\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Winst- en verliesrekening",
+                    "subtitle": "Resultatenrekening over de periode",
+                    "meta": [
+                        "Periode: 2026",
+                        "Administratie: adm-1",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Opbrengsten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "8000 Omzet",
+                            "amount": 9750
+                        },
+                        {
+                            "label": "8100 Overige baten",
+                            "amount": 1200
+                        },
+                        {
+                            "label": "8200 Rente",
+                            "amount": 75.5
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal opbrengsten",
+                        "amount": 11025.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Kosten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "4000 Lonen",
+                            "amount": 3000
+                        },
+                        {
+                            "label": "4100 Huur",
+                            "amount": 2400
+                        },
+                        {
+                            "label": "4200 Afschrijving",
+                            "amount": 125
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal kosten",
+                        "amount": 5525
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Resultaat",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Resultaatbepaling",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Totaal opbrengsten",
+                            "amount": 11025.5
+                        },
+                        {
+                            "label": "Totaal kosten",
+                            "amount": -5525
+                        }
+                    ],
+                    "total": {
+                        "label": "Resultaat (winst)",
+                        "amount": 5500.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "note",
+                    "text": "Het resultaat is bepaald als het saldo van opbrengsten en kosten over de periode. Bedragen zijn afgeleid uit de grootboekrekeningen van het type opbrengst en kosten, aangevuld met de geboekte grootboekmutaties."
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}",
+                "GLLine {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}"
+            ]
+        },
+        "{\"administrationId\":\"adm-1\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Winst- en verliesrekening",
+                    "subtitle": "Resultatenrekening over de periode",
+                    "meta": [
+                        "Administratie: adm-1",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Opbrengsten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "8000 Omzet",
+                            "amount": 9750
+                        },
+                        {
+                            "label": "8100 Overige baten",
+                            "amount": 1200
+                        },
+                        {
+                            "label": "8200 Rente",
+                            "amount": 75.5
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal opbrengsten",
+                        "amount": 11025.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Kosten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "4000 Lonen",
+                            "amount": 3000
+                        },
+                        {
+                            "label": "4100 Huur",
+                            "amount": 2400
+                        },
+                        {
+                            "label": "4200 Afschrijving",
+                            "amount": 125
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal kosten",
+                        "amount": 5525
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Resultaat",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Resultaatbepaling",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Totaal opbrengsten",
+                            "amount": 11025.5
+                        },
+                        {
+                            "label": "Totaal kosten",
+                            "amount": -5525
+                        }
+                    ],
+                    "total": {
+                        "label": "Resultaat (winst)",
+                        "amount": 5500.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "note",
+                    "text": "Het resultaat is bepaald als het saldo van opbrengsten en kosten over de periode. Bedragen zijn afgeleid uit de grootboekrekeningen van het type opbrengst en kosten, aangevuld met de geboekte grootboekmutaties."
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}",
+                "Account {\"limit\":10000}",
+                "GLLine {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-1\"}}",
+                "GLLine {\"limit\":10000}"
+            ]
+        },
+        "{\"period\":\"Q1\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Winst- en verliesrekening",
+                    "subtitle": "Resultatenrekening over de periode",
+                    "meta": [
+                        "Periode: Q1",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Opbrengsten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "8000 Omzet",
+                            "amount": 0
+                        },
+                        {
+                            "label": "8100 Overige baten",
+                            "amount": 1200
+                        },
+                        {
+                            "label": "8200 Rente",
+                            "amount": 75.5
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal opbrengsten",
+                        "amount": 1275.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Kosten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "4000 Lonen",
+                            "amount": 0
+                        },
+                        {
+                            "label": "4100 Huur",
+                            "amount": 2400
+                        },
+                        {
+                            "label": "4200 Afschrijving",
+                            "amount": 0
+                        }
+                    ],
+                    "total": {
+                        "label": "Totaal kosten",
+                        "amount": 2400
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Resultaat",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Resultaatbepaling",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Totaal opbrengsten",
+                            "amount": 1275.5
+                        },
+                        {
+                            "label": "Totaal kosten",
+                            "amount": -2400
+                        }
+                    ],
+                    "total": {
+                        "label": "Resultaat (verlies)",
+                        "amount": -1124.5
+                    },
+                    "currency": "USD"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "note",
+                    "text": "Het resultaat is bepaald als het saldo van opbrengsten en kosten over de periode. Bedragen zijn afgeleid uit de grootboekrekeningen van het type opbrengst en kosten, aangevuld met de geboekte grootboekmutaties."
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000}",
+                "GLLine {\"limit\":10000}"
+            ]
+        },
+        "{\"administrationId\":\"adm-9\"}": {
+            "blocks": [
+                {
+                    "type": "cover",
+                    "title": "Winst- en verliesrekening",
+                    "subtitle": "Resultatenrekening over de periode",
+                    "meta": [
+                        "Administratie: adm-9",
+                        "Gegenereerd: <now>"
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "text": "Opbrengsten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [],
+                    "total": {
+                        "label": "Totaal opbrengsten",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Kosten",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Rekening",
+                    "amountHead": "Bedrag",
+                    "lines": [],
+                    "total": {
+                        "label": "Totaal kosten",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "heading",
+                    "text": "Resultaat",
+                    "depth": 2
+                },
+                {
+                    "type": "amountTable",
+                    "labelHead": "Resultaatbepaling",
+                    "amountHead": "Bedrag",
+                    "lines": [
+                        {
+                            "label": "Totaal opbrengsten",
+                            "amount": 0
+                        },
+                        {
+                            "label": "Totaal kosten",
+                            "amount": 0
+                        }
+                    ],
+                    "total": {
+                        "label": "Resultaat (winst)",
+                        "amount": 0
+                    },
+                    "currency": "EUR"
+                },
+                {
+                    "type": "textBreak",
+                    "count": 1
+                },
+                {
+                    "type": "note",
+                    "text": "Het resultaat is bepaald als het saldo van opbrengsten en kosten over de periode. Bedragen zijn afgeleid uit de grootboekrekeningen van het type opbrengst en kosten."
+                },
+                {
+                    "type": "note",
+                    "text": "Er zijn geen resultaatrekeningen gevonden voor deze administratie."
+                }
+            ],
+            "reads": [
+                "Account {\"limit\":10000,\"filters\":{\"administrationId\":\"adm-9\"}}",
+                "Account {\"limit\":10000}"
+            ]
+        }
+    }
+}

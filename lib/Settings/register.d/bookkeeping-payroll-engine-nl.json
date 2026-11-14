@@ -119,6 +119,22 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "Werknemer": {
@@ -373,6 +389,22 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "LoonheffingTabel2026": {
@@ -467,6 +499,22 @@
             "example": null,
             "title": "Geldig Tot"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "LoonPeriode": {
@@ -600,6 +648,22 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "LoonStrook": {
@@ -732,6 +796,22 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "LHAfdracht": {
@@ -830,6 +910,22 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       },
       "Loonjournaalpost": {
@@ -881,6 +977,22 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_officer"
+          ],
+          "read": [
+            "shillinq_payroll_officer",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_officer"
+          ],
+          "delete": [
+            "shillinq_payroll_officer"
+          ]
         }
       }
     },

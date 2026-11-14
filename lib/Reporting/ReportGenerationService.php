@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Report generation orchestration service
  *
  * The orchestration layer behind "Reporting & Compliance". It AUTO-DISCOVERS the
@@ -64,21 +69,22 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting;
 
+use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Files\File;
-use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
-use OCP\SystemTag\TagNotFoundException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 
 /**
  * Discovers generators, renders a report, stores + tags the file, records it.
  */
-class ReportGenerationService {
+class ReportGenerationService implements ReportGenerationServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.
@@ -89,11 +95,6 @@ class ReportGenerationService {
 	 * The GeneratedReport schema slug.
 	 */
 	private const SCHEMA = 'GeneratedReport';
-
-	/**
-	 * The Nextcloud object type the system tags are mapped against.
-	 */
-	private const TAG_OBJECT_TYPE = 'files';
 
 	/**
 	 * Memoised generator index (reportType => instance).
@@ -142,13 +143,62 @@ class ReportGenerationService {
 	 * @param string $period Reporting period (e.g. '2026', '2026-Q1', '2026-03').
 	 * @param string $administrationId Administration the report is generated for.
 	 * @param string $format One of the report's catalogue formats.
+	 * @param string|null $asUserId The user the report is produced for when there
+	 *                              is no session (a scheduled run); null = the session user.
 	 *
 	 * @return array<string, mixed> The recorded GeneratedReport (incl. fileId + downloadPath),
 	 *                              or an `{ error: ... }` envelope when generation cannot proceed.
 	 *
 	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
+	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
-	public function generate(string $reportType, string $period, string $administrationId, string $format): array {
+	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array {
+		$userId = ($asUserId ?? ($this->userSession->getUser()?->getUID() ?? ''));
+
+		$prepared = $this->prepareGeneration(reportType: $reportType, administrationId: $administrationId, format: $format);
+		if (isset($prepared['error']) === true) {
+			return $prepared;
+		}
+
+		$generator = $prepared['generator'];
+		$useFormat = $prepared['format'];
+
+		$context = [
+			'reportType' => $reportType,
+			'period' => $period,
+			'administrationId' => $administrationId,
+		];
+
+		try {
+			$rendered = $generator->generate($context, $useFormat);
+		} catch (DocudeskUnavailableException $e) {
+			return $this->recordDocudeskUnavailable(exception: $e, prepared: $prepared, context: $context, userId: $userId);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'ReportGenerationService: generator failed',
+				['reportType' => $reportType, 'exception' => $e->getMessage()]
+			);
+			return ['error' => 'generation-failed', 'reportType' => $reportType, 'message' => $e->getMessage()];
+		}
+
+		return $this->storeAndRecord(rendered: $rendered, catalogue: $prepared['catalogue'], context: $context, userId: $userId);
+	}//end generate()
+
+	/**
+	 * Validate the request and resolve the catalogue entry, generator and format to render with.
+	 *
+	 * @param string $reportType       ReportCatalogue report-type id.
+	 * @param string $administrationId Administration the report is generated for.
+	 * @param string $format           The requested format.
+	 *
+	 * @return array<string, mixed> `{ catalogue, generator, format }`, or an `{ error: ... }` envelope.
+	 */
+	private function prepareGeneration(string $reportType, string $administrationId, string $format): array {
+		// The generators read every administration's ledger when none is named.
+		if (trim($administrationId) === '') {
+			return ['error' => 'missing-administration', 'reportType' => $reportType];
+		}
+
 		$catalogue = ReportCatalogue::byId($reportType);
 		if ($catalogue === null) {
 			$this->logger->warning('ReportGenerationService: unknown report type', ['reportType' => $reportType]);
@@ -161,6 +211,22 @@ class ReportGenerationService {
 			return ['error' => 'no-generator', 'reportType' => $reportType];
 		}
 
+		return [
+			'catalogue' => $catalogue,
+			'generator' => $generator,
+			'format' => $this->resolveFormat(generator: $generator, format: $format),
+		];
+	}//end prepareGeneration()
+
+	/**
+	 * The requested format when the generator supports it, otherwise its preferred (first) supported format.
+	 *
+	 * @param ReportGeneratorInterface $generator The generator to render with.
+	 * @param string                   $format    The requested format.
+	 *
+	 * @return string The format to render in.
+	 */
+	private function resolveFormat(ReportGeneratorInterface $generator, string $format): string {
 		// Honour the requested format only when the generator supports it; otherwise
 		// fall back to its preferred (first) supported format.
 		$supported = $generator::supportedFormats();
@@ -169,54 +235,69 @@ class ReportGenerationService {
 			$useFormat = ($supported[0] ?? $format);
 		}
 
-		$context = [
-			'reportType' => $reportType,
-			'period' => $period,
-			'administrationId' => $administrationId,
-		];
+		return $useFormat;
+	}//end resolveFormat()
 
-		try {
-			$rendered = $generator->generate($context, $useFormat);
-		} catch (DocudeskUnavailableException $e) {
-			// ADR-081 rule 7: a source app MUST degrade gracefully when the
-			// receiver is absent -- an unsent allocation is a visible pending
-			// state, never a silent drop. Record the attempt (status:
-			// 'unavailable') before returning, so it is findable via
-			// listGenerated() rather than disappearing with the HTTP response.
-			$this->logger->warning(
-				'ReportGenerationService: docudesk unavailable, report generation deferred',
-				['reportType' => $reportType, 'exception' => $e->getMessage()]
-			);
+	/**
+	 * Record an 'unavailable' GeneratedReport when docudesk is absent and return the error envelope.
+	 *
+	 * @param DocudeskUnavailableException $exception The generator's unavailability error.
+	 * @param array<string, mixed>         $prepared  The `{ catalogue, generator, format }` of this run.
+	 * @param array<string, string>        $context   The reportType, period and administrationId.
+	 * @param string                       $userId    The user the report is produced for.
+	 *
+	 * @return array<string, mixed> The `docudesk-unavailable` envelope with the recorded attempt.
+	 */
+	private function recordDocudeskUnavailable(DocudeskUnavailableException $exception, array $prepared, array $context, string $userId): array {
+		$catalogue = $prepared['catalogue'];
+		$reportType = $context['reportType'];
 
-			$record = $this->saveRecord(
-				[
-					'reportType' => $reportType,
-					'reportLabel' => (string)($catalogue['label'] ?? $reportType),
-					'category' => (string)($catalogue['category'] ?? ''),
-					'period' => $period,
-					'administrationId' => $administrationId,
-					'format' => $useFormat,
-					'status' => 'unavailable',
-					'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-					'generatedBy' => ($this->userSession->getUser()?->getUID() ?? ''),
-				]
-			);
+		// ADR-081 rule 7: a source app MUST degrade gracefully when the
+		// receiver is absent -- an unsent allocation is a visible pending
+		// state, never a silent drop. Record the attempt (status:
+		// 'unavailable') before returning, so it is findable via
+		// listGenerated() rather than disappearing with the HTTP response.
+		$this->logger->warning(
+			'ReportGenerationService: docudesk unavailable, report generation deferred',
+			['reportType' => $reportType, 'exception' => $exception->getMessage()]
+		);
 
-			return [
-				'error' => 'docudesk-unavailable',
+		$record = $this->saveRecord(
+			[
 				'reportType' => $reportType,
-				'message' => $e->getMessage(),
-				'record' => $record,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'ReportGenerationService: generator failed',
-				['reportType' => $reportType, 'exception' => $e->getMessage()]
-			);
-			return ['error' => 'generation-failed', 'reportType' => $reportType, 'message' => $e->getMessage()];
-		}
+				'reportLabel' => (string)($catalogue['label'] ?? $reportType),
+				'category' => (string)($catalogue['category'] ?? ''),
+				'period' => $context['period'],
+				'administrationId' => $context['administrationId'],
+				'format' => $prepared['format'],
+				'status' => 'unavailable',
+				'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+				'generatedBy' => $userId,
+			]
+		);
 
-		$userId = ($this->userSession->getUser()?->getUID() ?? '');
+		return [
+			'error' => 'docudesk-unavailable',
+			'reportType' => $reportType,
+			'message' => $exception->getMessage(),
+			'record' => $record,
+		];
+	}//end recordDocudeskUnavailable()
+
+	/**
+	 * Store and tag the rendered file, then record the ready GeneratedReport.
+	 *
+	 * @param GeneratedFile         $rendered  The rendered report.
+	 * @param array<string, mixed>  $catalogue The report's catalogue entry.
+	 * @param array<string, string> $context   The reportType, period and administrationId.
+	 * @param string                $userId    The user the report is produced for.
+	 *
+	 * @return array<string, mixed> The recorded GeneratedReport incl. downloadPath.
+	 */
+	private function storeAndRecord(GeneratedFile $rendered, array $catalogue, array $context, string $userId): array {
+		$reportType = $context['reportType'];
+		$period = $context['period'];
+		$administrationId = $context['administrationId'];
 
 		$stored = $this->storeFile($administrationId, $rendered, $userId);
 
@@ -231,7 +312,7 @@ class ReportGenerationService {
 		];
 
 		if ($stored['fileId'] !== null) {
-			$this->applyTags($stored['fileId'], $tags);
+			$this->fileStore()->applyTags(fileId: $stored['fileId'], tags: $tags);
 		}
 
 		$record = [
@@ -257,7 +338,7 @@ class ReportGenerationService {
 		$saved['downloadPath'] = '/index.php/apps/shillinq/api/reporting/download/' . ((string)($saved['id'] ?? ''));
 
 		return $saved;
-	}//end generate()
+	}//end storeAndRecord()
 
 	/**
 	 * List recorded GeneratedReport records, optionally filtered.
@@ -341,13 +422,42 @@ class ReportGenerationService {
 		$path = ($record['filePath'] ?? null);
 		$userId = ($this->userSession->getUser()?->getUID() ?? '');
 
+		$inHome = $this->fileInUserHome(fileId: $fileId, userId: $userId);
+		if ($inHome !== null) {
+			return $inHome;
+		}
+
+		if ($this->hasRecordedPath(fileId: $fileId, path: $path) === true) {
+			return $this->fileAtRecordedPath(fileId: $fileId, path: $path);
+		}
+
+		return null;
+	}//end resolveRecordFile()
+
+	/**
+	 * Whether the record carries a numeric fileId and a non-empty filePath.
+	 *
+	 * @param mixed $fileId The recorded fileId.
+	 * @param mixed $path   The recorded filePath.
+	 *
+	 * @return bool True when both are usable for the instance-wide lookup.
+	 */
+	private function hasRecordedPath(mixed $fileId, mixed $path): bool {
+		return is_numeric($fileId) === true && is_string($path) === true && $path !== '';
+	}//end hasRecordedPath()
+
+	/**
+	 * Resolve a report file by id in the current user's Files home.
+	 *
+	 * @param mixed  $fileId The recorded fileId.
+	 * @param string $userId The current user, or '' without a session.
+	 *
+	 * @return File|null The file, or null when it is not in the user's home.
+	 */
+	private function fileInUserHome(mixed $fileId, string $userId): File|null {
 		if (is_numeric($fileId) === true && $userId !== '') {
 			try {
-				foreach ($this->rootFolder->getUserFolder($userId)->getById((int)$fileId) as $node) {
-					if ($node instanceof File) {
-						return $node;
-					}
-				}
+				return $this->firstFile(nodes: $this->rootFolder->getUserFolder($userId)->getById((int)$fileId));
 			} catch (\Throwable $e) {
 				$this->logger->warning(
 					'ReportGenerationService: report file not resolvable in the user home',
@@ -356,24 +466,51 @@ class ReportGenerationService {
 			}
 		}
 
-		if (is_numeric($fileId) === true && is_string($path) === true && $path !== '') {
-			foreach ($this->rootFolder->getById((int)$fileId) as $node) {
-				// The recorded path is server-written by storeFile(); requiring an
-				// exact match stops a stale or tampered fileId resolving to some
-				// unrelated node elsewhere on the instance.
-				if ($node instanceof File && $node->getPath() === $path) {
-					return $node;
-				}
-			}
+		return null;
+	}//end fileInUserHome()
 
-			$this->logger->warning(
-				'ReportGenerationService: stored report file missing',
-				['fileId' => $fileId, 'path' => $path]
-			);
+	/**
+	 * The first File among the given nodes.
+	 *
+	 * @param iterable<mixed> $nodes The nodes to search.
+	 *
+	 * @return File|null The first File, or null when there is none.
+	 */
+	private function firstFile(iterable $nodes): File|null {
+		foreach ($nodes as $node) {
+			if ($node instanceof File) {
+				return $node;
+			}
 		}
 
 		return null;
-	}//end resolveRecordFile()
+	}//end firstFile()
+
+	/**
+	 * Resolve a report file by id anywhere on the instance, only at exactly its recorded path.
+	 *
+	 * @param mixed  $fileId The recorded fileId (numeric).
+	 * @param string $path   The recorded filePath.
+	 *
+	 * @return File|null The file, or null (logged) when no node with that id sits at that path.
+	 */
+	private function fileAtRecordedPath(mixed $fileId, string $path): File|null {
+		foreach ($this->rootFolder->getById((int)$fileId) as $node) {
+			// The recorded path is server-written by storeFile(); requiring an
+			// exact match stops a stale or tampered fileId resolving to some
+			// unrelated node elsewhere on the instance.
+			if ($node instanceof File && $node->getPath() === $path) {
+				return $node;
+			}
+		}
+
+		$this->logger->warning(
+			'ReportGenerationService: stored report file missing',
+			['fileId' => $fileId, 'path' => $path]
+		);
+
+		return null;
+	}//end fileAtRecordedPath()
 
 	/**
 	 * Look up a single GeneratedReport record by id.
@@ -393,10 +530,10 @@ class ReportGenerationService {
 				return null;
 			}
 
-			$object = $objectService
-				->setRegister(self::REGISTER)
-				->setSchema(self::SCHEMA)
-				->find($id);
+			$object = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA),
+				id: $id
+			);
 
 			if ($object === null) {
 				return null;
@@ -431,16 +568,7 @@ class ReportGenerationService {
 		$found = [];
 		foreach ((glob(__DIR__ . '/Generator/*.php') ?: []) as $file) {
 			$class = '\\OCA\\Shillinq\\Reporting\\Generator\\' . basename($file, '.php');
-			if (class_exists($class) === false) {
-				continue;
-			}
-
-			if (in_array(ReportGeneratorInterface::class, class_implements($class), true) === false) {
-				continue;
-			}
-
-			// Skip the abstract document base (matches the glob + interface but is not instantiable).
-			if ((new ReflectionClass($class))->isInstantiable() === false) {
+			if (self::isGeneratorClass(class: $class) === false) {
 				continue;
 			}
 
@@ -466,6 +594,26 @@ class ReportGenerationService {
 	}//end generators()
 
 	/**
+	 * Whether the class exists, implements ReportGeneratorInterface and can be instantiated.
+	 *
+	 * @param string $class The fully qualified class name.
+	 *
+	 * @return bool True for a concrete generator.
+	 */
+	private static function isGeneratorClass(string $class): bool {
+		if (class_exists($class) === false) {
+			return false;
+		}
+
+		if (in_array(ReportGeneratorInterface::class, class_implements($class), true) === false) {
+			return false;
+		}
+
+		// Skip the abstract document base (matches the glob + interface but is not instantiable).
+		return (new ReflectionClass($class))->isInstantiable();
+	}//end isGeneratorClass()
+
+	/**
 	 * Write the rendered bytes to Nextcloud Files under the user's
 	 * /Shillinq/Reports/<administrationId>/ folder (folders created as needed).
 	 *
@@ -489,12 +637,12 @@ class ReportGenerationService {
 				$segments[] = $administrationId;
 			}
 
-			$folder = $this->ensureFolder($userFolder, $segments);
+			$folder = $this->fileStore()->ensureFolder(base: $userFolder, segments: $segments);
 			if ($folder === null) {
 				return ['filePath' => null, 'fileId' => null];
 			}
 
-			$fileName = $this->uniqueName($folder, $rendered->fileName);
+			$fileName = $this->fileStore()->uniqueName(folder: $folder, name: $rendered->fileName);
 
 			$file = $folder->newFile($fileName, $rendered->content);
 
@@ -510,103 +658,18 @@ class ReportGenerationService {
 	}//end storeFile()
 
 	/**
-	 * Ensure a nested folder path exists under a base folder, returning the leaf.
+	 * The store this service writes its files through, logging in its own words.
 	 *
-	 * @param Folder $base The base folder (the user's Files home).
-	 * @param array<string> $segments Path segments to create/descend.
-	 *
-	 * @return Folder|null The leaf folder, or null on failure.
+	 * @return TaggedFileStore
 	 */
-	private function ensureFolder(Folder $base, array $segments): ?Folder {
-		$current = $base;
-		foreach ($segments as $segment) {
-			if ($current->nodeExists($segment) === true) {
-				$node = $current->get($segment);
-				if ($node instanceof Folder) {
-					$current = $node;
-					continue;
-				}
-
-				$this->logger->warning('ReportGenerationService: report path segment is not a folder', ['segment' => $segment]);
-				return null;
-			}
-
-			$current = $current->newFolder($segment);
-		}
-
-		return $current;
-	}//end ensureFolder()
-
-	/**
-	 * Produce a non-colliding file name within a folder (suffixes -1, -2, ...).
-	 *
-	 * @param Folder $folder The target folder.
-	 * @param string $name The desired file name.
-	 *
-	 * @return string A name that does not yet exist in the folder.
-	 */
-	private function uniqueName(Folder $folder, string $name): string {
-		if ($folder->nodeExists($name) === false) {
-			return $name;
-		}
-
-		$dot = strrpos($name, '.');
-		$stem = $dot === false ? $name : substr($name, 0, $dot);
-		$extension = $dot === false ? '' : substr($name, $dot);
-
-		$counter = 1;
-		do {
-			$candidate = $stem . '-' . $counter . $extension;
-			$counter++;
-		} while ($folder->nodeExists($candidate) === true && $counter < 1000);
-
-		return $candidate;
-	}//end uniqueName()
-
-	/**
-	 * Apply (creating if needed) the given system tags to a file id.
-	 *
-	 * @param int $fileId The Nextcloud file id.
-	 * @param array<string> $tags The tag names to apply.
-	 *
-	 * @return void
-	 */
-	private function applyTags(int $fileId, array $tags): void {
-		foreach ($tags as $tagName) {
-			$tagName = trim($tagName);
-			if ($tagName === '') {
-				continue;
-			}
-
-			try {
-				$tag = $this->resolveTag($tagName);
-				$this->tagMapper->assignTags((string)$fileId, self::TAG_OBJECT_TYPE, [$tag->getId()]);
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'ReportGenerationService: failed to apply system tag',
-					['tag' => $tagName, 'fileId' => $fileId, 'exception' => $e->getMessage()]
-				);
-			}
-		}
-
-	}//end applyTags()
-
-	/**
-	 * Resolve a user-visible, assignable system tag by name, creating it on miss.
-	 *
-	 * @param string $tagName The tag name.
-	 *
-	 * @return \OCP\SystemTag\ISystemTag The resolved (or newly created) tag.
-	 */
-	private function resolveTag(string $tagName): \OCP\SystemTag\ISystemTag {
-		try {
-			$matches = $this->tagManager->getTag($tagName, true, true);
-			return $matches;
-		} catch (TagNotFoundException $e) {
-			return $this->tagManager->createTag($tagName, true, true);
-		}
-
-	}//end resolveTag()
+	private function fileStore(): TaggedFileStore {
+		$messages = new TaggedFileStoreMessages(
+			notFolder: 'ReportGenerationService: report path segment is not a folder',
+			tagFailed: 'ReportGenerationService: failed to apply system tag',
+		);
+		$tags = new SystemTagAssigner(tagManager: $this->tagManager, tagMapper: $this->tagMapper);
+		return new TaggedFileStore(tags: $tags, log: new TaggedFileStoreLog(logger: $this->logger, messages: $messages));
+	}//end fileStore()
 
 	/**
 	 * Persist a GeneratedReport record through OpenRegister, returning it as an

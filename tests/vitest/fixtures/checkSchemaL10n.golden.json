@@ -1,0 +1,307 @@
+{
+	"at the baseline": {
+		"status": 0,
+		"stdout": [
+			"21 schema string(s); 18 uncovered, baseline 18",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"below the baseline": {
+		"status": 0,
+		"stdout": [
+			"21 schema string(s); 18 uncovered, baseline 20",
+			"2 fewer than the baseline — lower it with:",
+			"  npm run check:schema-l10n -- --update",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 20\n}\n"
+	},
+	"above the baseline": {
+		"status": 1,
+		"stdout": [
+			"21 schema string(s); 18 uncovered, baseline 3",
+			""
+		],
+		"stderr": [
+			"",
+			"15 schema string(s) added with no catalogue key — they will render",
+			"in English inside an otherwise translated form.",
+			"",
+			"Add them to l10n/en.json (identity) and l10n/nl.json (translated), then",
+			"run `npm run l10n:build`. See what is uncovered with:",
+			"  node scripts/check-schema-l10n.js --list",
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 3\n}\n"
+	},
+	"one above the baseline": {
+		"status": 1,
+		"stdout": [
+			"21 schema string(s); 18 uncovered, baseline 17",
+			""
+		],
+		"stderr": [
+			"",
+			"1 schema string(s) added with no catalogue key — they will render",
+			"in English inside an otherwise translated form.",
+			"",
+			"Add them to l10n/en.json (identity) and l10n/nl.json (translated), then",
+			"run `npm run l10n:build`. See what is uncovered with:",
+			"  node scripts/check-schema-l10n.js --list",
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 17\n}\n"
+	},
+	"no baseline": {
+		"status": 1,
+		"stdout": [
+			""
+		],
+		"stderr": [
+			"No baseline. Run `npm run check:schema-l10n -- --update` and commit it.",
+			""
+		],
+		"baseline": "(none)"
+	},
+	"update writes the baseline": {
+		"status": 0,
+		"stdout": [
+			"baseline written: 18 uncovered schema string(s)",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"update without a baseline": {
+		"status": 0,
+		"stdout": [
+			"baseline written: 18 uncovered schema string(s)",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"list and check": {
+		"status": 0,
+		"stdout": [
+			"lib/Settings/register.d/payment.json:amount.title",
+			"  Amount",
+			"lib/Settings/register.d/payment.json:amount.description",
+			"  Amount paid",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Ignored",
+			"lib/Settings/shillinq_register.json:x.title",
+			"  In array",
+			"lib/Settings/shillinq_register.json:inner.title",
+			"  Inner title",
+			"lib/Settings/shillinq_register.json:labelsNull.title",
+			"  Labels null",
+			"lib/Settings/shillinq_register.json:nested.title",
+			"  Nested",
+			"lib/Settings/shillinq_register.json:n.title",
+			"  Note",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Note title",
+			"lib/Settings/shillinq_register.json:status.x-enum-labels",
+			"  Open",
+			"lib/Settings/register.d/payment.json:schema title",
+			"  Payment",
+			"lib/Settings/register.d/payment.json:state.x-enum-labels",
+			"  Queued",
+			"lib/Settings/register.d/payment.json:state.x-enum-labels",
+			"  Sent",
+			"lib/Settings/register.d/payment.json:state.title",
+			"  State",
+			"lib/Settings/shillinq_register.json:status.title",
+			"  Status",
+			"lib/Settings/shillinq_register.json:tags.x-enum-labels",
+			"  Tag A",
+			"lib/Settings/shillinq_register.json:tags.title",
+			"  Tags",
+			"lib/Settings/shillinq_register.json:number.description",
+			"  The invoice number",
+			"21 schema string(s); 18 uncovered, baseline 18",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"list and update": {
+		"status": 0,
+		"stdout": [
+			"lib/Settings/register.d/payment.json:amount.title",
+			"  Amount",
+			"lib/Settings/register.d/payment.json:amount.description",
+			"  Amount paid",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Ignored",
+			"lib/Settings/shillinq_register.json:x.title",
+			"  In array",
+			"lib/Settings/shillinq_register.json:inner.title",
+			"  Inner title",
+			"lib/Settings/shillinq_register.json:labelsNull.title",
+			"  Labels null",
+			"lib/Settings/shillinq_register.json:nested.title",
+			"  Nested",
+			"lib/Settings/shillinq_register.json:n.title",
+			"  Note",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Note title",
+			"lib/Settings/shillinq_register.json:status.x-enum-labels",
+			"  Open",
+			"lib/Settings/register.d/payment.json:schema title",
+			"  Payment",
+			"lib/Settings/register.d/payment.json:state.x-enum-labels",
+			"  Queued",
+			"lib/Settings/register.d/payment.json:state.x-enum-labels",
+			"  Sent",
+			"lib/Settings/register.d/payment.json:state.title",
+			"  State",
+			"lib/Settings/shillinq_register.json:status.title",
+			"  Status",
+			"lib/Settings/shillinq_register.json:tags.x-enum-labels",
+			"  Tag A",
+			"lib/Settings/shillinq_register.json:tags.title",
+			"  Tags",
+			"lib/Settings/shillinq_register.json:number.description",
+			"  The invoice number",
+			"baseline written: 18 uncovered schema string(s)",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"no catalogue": {
+		"status": 1,
+		"stdout": [
+			"21 schema string(s); 21 uncovered, baseline 18",
+			""
+		],
+		"stderr": [
+			"",
+			"3 schema string(s) added with no catalogue key — they will render",
+			"in English inside an otherwise translated form.",
+			"",
+			"Add them to l10n/en.json (identity) and l10n/nl.json (translated), then",
+			"run `npm run l10n:build`. See what is uncovered with:",
+			"  node scripts/check-schema-l10n.js --list",
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"catalogue without translations": {
+		"status": 1,
+		"stdout": [
+			"21 schema string(s); 21 uncovered, baseline 18",
+			""
+		],
+		"stderr": [
+			"",
+			"3 schema string(s) added with no catalogue key — they will render",
+			"in English inside an otherwise translated form.",
+			"",
+			"Add them to l10n/en.json (identity) and l10n/nl.json (translated), then",
+			"run `npm run l10n:build`. See what is uncovered with:",
+			"  node scripts/check-schema-l10n.js --list",
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"catalogue that is not JSON": {
+		"status": 1,
+		"stdout": [
+			"lib/Settings/register.d/payment.json:amount.title",
+			"  Amount",
+			"lib/Settings/register.d/payment.json:amount.description",
+			"  Amount paid",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Ignored",
+			"lib/Settings/shillinq_register.json:x.title",
+			"  In array",
+			"lib/Settings/shillinq_register.json:inner.title",
+			"  Inner title",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Invoice",
+			"lib/Settings/shillinq_register.json:labelsNull.title",
+			"  Labels null",
+			"lib/Settings/shillinq_register.json:nested.title",
+			"  Nested",
+			"lib/Settings/shillinq_register.json:n.title",
+			"  Note",
+			"lib/Settings/shillinq_register.json:schema title",
+			"  Note title",
+			"lib/Settings/shillinq_register.json:number.title",
+			"  Number",
+			"lib/Settings/shillinq_register.json:status.x-enum-labels",
+			"  Open",
+			"lib/Settings/shillinq_register.json:status.x-enum-labels",
+			"  Paid",
+			"lib/Settings/register.d/payment.json:schema title",
+			"  Payment",
+			"lib/Settings/register.d/payment.json:state.x-enum-labels",
+			"  Queued",
+			"lib/Settings/register.d/payment.json:state.x-enum-labels",
+			"  Sent",
+			"lib/Settings/register.d/payment.json:state.title",
+			"  State",
+			"lib/Settings/shillinq_register.json:status.title",
+			"  Status",
+			"lib/Settings/shillinq_register.json:tags.x-enum-labels",
+			"  Tag A",
+			"lib/Settings/shillinq_register.json:tags.title",
+			"  Tags",
+			"lib/Settings/shillinq_register.json:number.description",
+			"  The invoice number",
+			"21 schema string(s); 21 uncovered, baseline 18",
+			""
+		],
+		"stderr": [
+			"",
+			"3 schema string(s) added with no catalogue key — they will render",
+			"in English inside an otherwise translated form.",
+			"",
+			"Add them to l10n/en.json (identity) and l10n/nl.json (translated), then",
+			"run `npm run l10n:build`. See what is uncovered with:",
+			"  node scripts/check-schema-l10n.js --list",
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 18\n}\n"
+	},
+	"no lib/Settings": {
+		"status": 0,
+		"stdout": [
+			"baseline written: 0 uncovered schema string(s)",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 0\n}\n"
+	},
+	"everything covered": {
+		"status": 0,
+		"stdout": [
+			"2 schema string(s); 0 uncovered, baseline 0",
+			""
+		],
+		"stderr": [
+			""
+		],
+		"baseline": "{\n  \"uncovered\": 0\n}\n"
+	}
+}

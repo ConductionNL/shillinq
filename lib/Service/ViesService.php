@@ -3,6 +3,9 @@
 /**
  * VIES Validation Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 intra-community supplies (ICP) VAT-ID verification (REQ-ICP-001,
  * REQ-ICP-009). Validates a counterparty VAT-ID against the EU VIES service and
  * persists an immutable `ViesValidation` record carrying the VIES `requestId` as
@@ -31,20 +34,18 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Validates EU VAT-IDs against VIES and persists immutable evidence records.
@@ -56,7 +57,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class ViesService {
+class ViesService implements ViesServiceInterface {
 	/**
 	 * VIES REST proxy endpoint (per-country, per-number).
 	 *
@@ -249,7 +250,10 @@ class ViesService {
 		$best = null;
 		$bestTs = -1;
 		foreach ($records as $record) {
-			if ((bool)($record['valid'] ?? false) !== true) {
+			// A result reused during an outage is not fresh evidence: counting it
+			// would date the last valid check to the outage and renew the reuse
+			// window on every outage (tax-vat-number-check).
+			if ((bool)($record['valid'] ?? false) !== true || (bool)($record['outage'] ?? false) === true) {
 				continue;
 			}
 
@@ -411,7 +415,7 @@ class ViesService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

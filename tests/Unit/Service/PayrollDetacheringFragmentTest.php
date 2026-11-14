@@ -122,9 +122,11 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 			$transitions['issue']['requires']
 		);
 
-		// The issue transition materialises a GLTransaction (REQ-PAY-008).
+		// The issue transition no longer materialises a GLTransaction: payroll
+		// runs in humaniq, whose JournalEntry is posted instead (ledger-posting-path
+		// REQ-LPP-006), so a second posting here would book the payroll twice.
 		$issueActions = array_column($transitions['issue']['actions'], 'action');
-		self::assertContains('materialise-gl-transaction', $issueActions);
+		self::assertNotContains('materialise-gl-transaction', $issueActions);
 		self::assertContains('generate-determination-letter', $issueActions);
 		self::assertContains('publish-cloudevent', $issueActions);
 	}//end testPayrollLifecycleAndGuards()
@@ -167,7 +169,8 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 		$employee = $this->fragment()['components']['schemas']['payrollEmployee'];
 		$bsn = $employee['properties']['bsn'];
 
-		self::assertTrue(($bsn['pii'] ?? false), 'BSN must be flagged pii');
+		self::assertSame('bsn', ($bsn['x-pii'] ?? null), 'BSN must be flagged pii');
+		self::assertSame('bsn', ($bsn['format'] ?? null), 'BSN must pass the 11-proef');
 		self::assertTrue(($bsn['nullable'] ?? false), 'BSN must be nullable (B2B contractors have none)');
 		self::assertSame('active', $employee['x-openregister-lifecycle']['initialState']);
 	}//end testEmployeeBsnIsPiiFlagged()

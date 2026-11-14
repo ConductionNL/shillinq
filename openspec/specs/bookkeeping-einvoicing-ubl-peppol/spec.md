@@ -27,7 +27,9 @@ declare PDF/A-3 conformance (see REQ-EINV-002 / REQ-EINV-008).
 Market driver: NL B2G e-invoicing is already mandatory; a B2B e-invoicing draft
 law is expected Q4 2026 on the EU ViDA trajectory toward a 2030 structured-invoicing
 mandate with Peppol as the preferred network.
+
 ## Requirements
+
 ### Requirement: REQ-EINV-000 — Shillinq SHALL generate and transmit EN 16931 / NLCIUS e-invoices over Peppol from issued AR invoices
 
 The system SHALL be able to turn an issued `ARInvoice` into an EN 16931 / NLCIUS
@@ -280,6 +282,51 @@ rather than being handed a UBL payload under a Factur-X-branded filename.
   hybrid PDF (REQ-EINV-002), and transmitted over Peppol exactly as before
   this change — only the embedded filename and the (now absent) false
   PDF/A-3B XMP claim changed
+
+### Requirement: REQ-EINV-009: The hybrid PDF SHALL print the ARInvoice's own lines
+
+`InvoicePdfGenerator` SHALL read a line in either shape: the BillableInvoiceLine
+keys (`lineNumber`, `description`, `billableUnits`, `rateApplied.rateCents`,
+`costAmount`) first, and the `invoiceLines` keys (`lineId`, `itemName`,
+`quantity`, `netPrice`, `netAmount`) when those are absent. The hybrid PDF page
+SHALL print one text line per invoice line under its summary (number,
+description, quantity x price = amount with the currency code, VAT rate), up to
+45 lines. A BillableInvoice PDF SHALL render exactly as before.
+
+#### Scenario: An e-invoice PDF shows the consultancy line
+
+- GIVEN an ARInvoice line `lineId` "1", `itemName` "Consulting", `quantity` 2, `netPrice` 100, `netAmount` 200, `vatRate` 21
+- WHEN the hybrid PDF is generated
+- THEN its page prints "1  Consulting  2 x 100,00 = 200,00 EUR  btw 21%" under the summary
+- AND the HTML row for the same line shows 1, Consulting, 2, € 100,00, € 200,00 and 21%
+- @e2e exclude document generation; covered by `InvoicePdfGeneratorTest::testTheHybridPdfPrintsTheArInvoiceLines` and `::testTheHtmlRowReadsEitherLineShape`
+
+#### Scenario: A time-and-expense PDF is unchanged
+
+- GIVEN a BillableInvoiceLine with `description`, `billableUnits` and `costAmount`
+- WHEN the PDF is generated
+- THEN the row is the same as before this change
+- @e2e exclude document generation; covered by the existing `InvoicePdfGeneratorTest` cases
+
+### Requirement: REQ-EINV-010: The NLCIUS document SHALL carry the customer's reference as the buyer reference (BT-10)
+
+`ArInvoiceUblMapper::toNlciusXml()` SHALL write the ARInvoice's `customerReference`
+as `cbc:BuyerReference`, escaped, directly after `cbc:DocumentCurrencyCode` (the
+UBL 2.1 element order). A blank reference SHALL write no element.
+
+#### Scenario: The reference is the buyer reference
+
+- GIVEN an issued invoice with customer reference `PO-4711 & co`
+- WHEN it is rendered
+- THEN the document holds `<cbc:BuyerReference>PO-4711 &amp; co</cbc:BuyerReference>` after the document currency
+- @e2e exclude XML mapper; covered by `ArInvoiceUblMapperTest::testCustomerReferenceIsTheBuyerReference`
+
+#### Scenario: No reference, no element
+
+- GIVEN an issued invoice whose customer reference is blank
+- WHEN it is rendered
+- THEN the document holds no `BuyerReference`
+- @e2e exclude XML mapper; covered by `ArInvoiceUblMapperTest::testNoCustomerReferenceWritesNoBuyerReference`
 
 ## Notes
 

@@ -3,6 +3,9 @@
 /**
  * Tolerance Profile Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Server-authoritative tolerance evaluation for the 3-way matching engine
  * (REQ-PO3W-006, REQ-TOL-001). Owns:
  *
@@ -43,17 +46,14 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -62,7 +62,7 @@ use Psr\Log\LoggerInterface;
  * Slice 06 — most-specific ToleranceProfile resolution and per-field
  * tolerance evaluation.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  */
 class ToleranceProfileService {
 
@@ -83,11 +83,13 @@ class ToleranceProfileService {
 
 	/**
 	 * Scope precedence — narrower scopes override broader ones
-	 * (REQ-PO3W-006). Order matters: the first hit wins.
+	 * (REQ-PO3W-006). Order matters: the first hit wins. These scopes match on
+	 * the candidate's reference; an active global profile is the fallback
+	 * after them.
 	 *
 	 * @var array<int,string>
 	 */
-	private const SCOPE_PRIORITY = ['supplier', 'category', 'gl_account', 'global'];
+	private const REFERENCED_SCOPES = ['supplier', 'category', 'gl_account'];
 
 	/**
 	 * Constructor.
@@ -135,60 +137,95 @@ class ToleranceProfileService {
 	 *
 	 * @return array<string,mixed>|null The applicable ToleranceProfile or null.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function getApplicableProfile(string $administrationId, array $candidate): ?array {
-		if ($administrationId === '') {
-			return null;
-		}
-
-		$profiles = $this->findAll(
-			schema: self::SCHEMA_TOLERANCE_PROFILE,
-			filters: ['administrationId' => $administrationId]
-		);
+		$profiles = $this->administrationProfiles(administrationId: $administrationId);
 		if ($profiles === []) {
 			return null;
 		}
 
 		// Group active profiles by scope so the precedence walk can read
 		// the right bucket in O(1).
+		$byScope = self::activeProfilesByScope(profiles: $profiles);
+
+		foreach (self::REFERENCED_SCOPES as $scope) {
+			$match = self::firstWithReference(
+				profiles: $byScope[$scope],
+				needle: $this->scopeReferenceFromCandidate(scope: $scope, candidate: $candidate)
+			);
+			if ($match !== null) {
+				return $match;
+			}
+		}
+
+		// Global profiles ignore scopeReference; the first active one wins.
+		return ($byScope['global'][0] ?? null);
+	}//end getApplicableProfile()
+
+	/**
+	 * The administration's tolerance profiles; none without an administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function administrationProfiles(string $administrationId): array {
+		if ($administrationId === '') {
+			return [];
+		}
+
+		return $this->findAll(
+			schema: self::SCHEMA_TOLERANCE_PROFILE,
+			filters: ['administrationId' => $administrationId]
+		);
+	}//end administrationProfiles()
+
+	/**
+	 * The active profiles grouped by their scope; profiles of an unknown scope
+	 * are left out.
+	 *
+	 * @param array<int,array<string,mixed>> $profiles The administration's profiles.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	private static function activeProfilesByScope(array $profiles): array {
 		$byScope = ['supplier' => [], 'category' => [], 'gl_account' => [], 'global' => []];
 		foreach ($profiles as $profile) {
 			$status = (string)($profile['status'] ?? '');
-			if ($status !== self::STATUS_ACTIVE) {
-				continue;
-			}
-
 			$scope = (string)($profile['scope'] ?? '');
-			if (isset($byScope[$scope]) === false) {
+			if ($status !== self::STATUS_ACTIVE || isset($byScope[$scope]) === false) {
 				continue;
 			}
 
 			$byScope[$scope][] = $profile;
 		}
 
-		foreach (self::SCOPE_PRIORITY as $scope) {
-			$needle = $this->scopeReferenceFromCandidate(scope: $scope, candidate: $candidate);
-			foreach ($byScope[$scope] as $profile) {
-				if ($scope === 'global') {
-					// Global profiles ignore scopeReference; the first
-					// active one wins.
-					return $profile;
-				}
+		return $byScope;
+	}//end activeProfilesByScope()
 
-				if ($needle === '') {
-					continue;
-				}
+	/**
+	 * The first profile whose scopeReference is the candidate's reference;
+	 * none when the candidate has no reference for the scope.
+	 *
+	 * @param array<int,array<string,mixed>> $profiles The scope's active profiles.
+	 * @param string                         $needle   The candidate's reference.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function firstWithReference(array $profiles, string $needle): ?array {
+		if ($needle === '') {
+			return null;
+		}
 
-				$reference = (string)($profile['scopeReference'] ?? '');
-				if ($reference !== '' && $reference === $needle) {
-					return $profile;
-				}
+		foreach ($profiles as $profile) {
+			if ((string)($profile['scopeReference'] ?? '') === $needle) {
+				return $profile;
 			}
 		}
 
 		return null;
-	}//end getApplicableProfile()
+	}//end firstWithReference()
 
 	/**
 	 * Decide whether a signed cents delta is within the profile's price
@@ -211,7 +248,7 @@ class ToleranceProfileService {
 	 *
 	 * @return bool True when within tolerance.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateWithinTolerance(int $expectedCents, int $actualCents, ?array $profile): bool {
 		$deltaAbsCents = abs($actualCents - $expectedCents);
@@ -255,7 +292,7 @@ class ToleranceProfileService {
 	 *
 	 * @return bool True when within tolerance.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateQuantityVariance(int $expectedThousandths, int $actualThousandths, ?array $profile): bool {
 		$deltaAbs = abs($actualThousandths - $expectedThousandths);
@@ -287,7 +324,7 @@ class ToleranceProfileService {
 	 *
 	 * @return bool True when within tolerance.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateDateVariance(int $deltaDays, ?array $profile): bool {
 		$deltaAbs = abs($deltaDays);
@@ -373,7 +410,7 @@ class ToleranceProfileService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

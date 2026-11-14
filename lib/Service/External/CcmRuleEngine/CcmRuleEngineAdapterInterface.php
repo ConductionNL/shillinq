@@ -3,6 +3,9 @@
 /**
  * CCM rule-engine cross-app delegation port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shillinq's `bookkeeping-ccm-rule-engine` capability ships a local
  * deterministic DSL compiler + AST evaluator (`lib/Service/CcmRuleEngine.php`)
  * because the OpenRegister platform does not yet expose a native
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

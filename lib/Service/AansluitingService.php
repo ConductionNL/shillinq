@@ -3,6 +3,9 @@
 /**
  * Aansluiting Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The Aansluiting (tie-out) framework's orchestrator (REQ-AANS-002,
  * REQ-AANS-004, REQ-AANS-006). Resolves an Aansluiting definition's source A
  * / source B totals by dispatching on `aansluitingType` to one of two
@@ -49,9 +52,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -60,12 +60,14 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AansluitingResolutionGuardInterface;
+use OCA\Shillinq\Kernel\Contracts\AansluitingServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes, explains, resolves, and reopens AansluitingResult records.
@@ -76,7 +78,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class AansluitingService {
+class AansluitingService implements AansluitingServiceInterface {
 	/**
 	 * ARInvoice lifecycleState values counted as "open" (not yet settled)
 	 * for the subledger-gl-control AR resolver (REQ-AANS-005).
@@ -111,7 +113,7 @@ class AansluitingService {
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param AansluitingCalculator $calculator Pure-logic tolerance/diff helper.
 	 * @param VATReturnService $vatReturnService The BTW ledger-derivation engine this service diffs against.
-	 * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+	 * @param AansluitingResolutionGuardInterface $resolutionGuard The ADR-031 exception guard for explained -> resolved.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
@@ -119,7 +121,7 @@ class AansluitingService {
 		private readonly LoggerInterface $logger,
 		private readonly AansluitingCalculator $calculator,
 		private readonly VATReturnService $vatReturnService,
-		private readonly AansluitingResolutionGuard $resolutionGuard,
+		private readonly AansluitingResolutionGuardInterface $resolutionGuard,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
@@ -143,69 +145,20 @@ class AansluitingService {
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
 	public function compute(string $reconciliationId, string $periodId): array {
-		$definition = $this->fetchReconciliation(reconciliationId: $reconciliationId);
-		$existing = $this->fetchExistingResult(reconciliationId: $reconciliationId, periodId: $periodId);
-
-		$existingStatus = 'open';
-		if ($existing !== null) {
-			$existingStatus = (string)($existing['status'] ?? 'open');
-		}
-
-		if ($existing !== null && $existingStatus !== 'open') {
-			$this->logger->info(
-				'AansluitingService: skipping recompute of a non-open result; reopen() first',
-				['reconciliationId' => $reconciliationId, 'periodId' => $periodId, 'status' => $existingStatus]
-			);
-
-			return $existing;
-		}
-
-		$administrationId = (string)($definition['administrationId'] ?? '');
-		$relationship = (string)($definition['expectedRelationship'] ?? 'equal');
-		$toleranceCents = (int)($definition['toleranceCents'] ?? 100);
-		$reconciliationType = (string)($definition['reconciliationType'] ?? '');
-
-		$resolved = match ($reconciliationType) {
-			'vat-ledger-return' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $periodId),
-			'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $definition, administrationId: $administrationId),
-			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $reconciliationType)),
-		};
-
-		$differenceCents = $this->calculator->differenceCents(
-			sourceATotal: $resolved['sourceATotal'],
-			sourceBTotal: $resolved['sourceBTotal'],
-			relationship: $relationship
+		$run = new AansluitingComputeRun(
+			reconciliationId: $reconciliationId,
+			periodId: $periodId,
+			definition: $this->fetchReconciliation(reconciliationId: $reconciliationId),
+			existing: $this->fetchExistingResult(reconciliationId: $reconciliationId, periodId: $periodId)
 		);
-		$withinTolerance = $this->calculator->isWithinTolerance(differenceCents: $differenceCents, toleranceCents: $toleranceCents);
 
-		$totalRow = [
-			'bucketKey' => 'TOTAL',
-			'sourceAAmount' => $resolved['sourceATotal'],
-			'sourceBAmount' => $resolved['sourceBTotal'],
-			'deltaAmount' => $this->calculator->fromCents(cents: $differenceCents),
-		];
+		$locked = $this->lockedResult(run: $run);
+		if ($locked !== null) {
+			return $locked;
+		}
 
-		$result = [
-			'reconciliationId' => $reconciliationId,
-			'periodId' => $periodId,
-			'computedAt' => $this->now(),
-			'sourceATotal' => $resolved['sourceATotal'],
-			'sourceBTotal' => $resolved['sourceBTotal'],
-			'differenceCents' => $differenceCents,
-			'withinTolerance' => $withinTolerance,
-			'status' => 'open',
-			'lineDeltas' => array_merge([$totalRow], $resolved['lineDeltas']),
-			'explainedBy' => ($existing['explainedBy'] ?? null),
-			'explainedAt' => ($existing['explainedAt'] ?? null),
-			'explanationReasonCode' => ($existing['explanationReasonCode'] ?? null),
-			'explanationReasonText' => ($existing['explanationReasonText'] ?? null),
-			'resolvedBy' => null,
-			'resolvedAt' => null,
-			'relatedVatCorrectionId' => ($resolved['relatedVatCorrectionId'] ?? null),
-			'administrationId' => $administrationId,
-		];
-
-		if ($withinTolerance === true) {
+		$result = $this->resultRecord(run: $run, resolved: $this->resolveSources(run: $run));
+		if ($result['withinTolerance'] === true) {
 			// REQ-AANS-004: a within-tolerance difference auto-resolves;
 			// nothing for an operator to explain.
 			$result['status'] = 'resolved';
@@ -213,12 +166,133 @@ class AansluitingService {
 			$result['resolvedAt'] = $this->now();
 		}
 
-		if ($existing !== null) {
-			$result['id'] = ($existing['id'] ?? ($existing['@self']['id'] ?? null));
+		if ($run->existing !== null) {
+			$result['id'] = ($run->existing['id'] ?? ($run->existing['@self']['id'] ?? null));
 		}
 
 		return $this->saveObject(schema: 'AansluitingResult', data: $result);
 	}//end compute()
+
+	/**
+	 * The existing result when it is past `open` and so must not be recomputed.
+	 *
+	 * @param AansluitingComputeRun $run The compute request.
+	 *
+	 * @return array<string,mixed>|null The locked result, or null to recompute.
+	 */
+	private function lockedResult(AansluitingComputeRun $run): array|null {
+		if ($run->existing === null) {
+			return null;
+		}
+
+		$existingStatus = (string)($run->existing['status'] ?? 'open');
+		if ($existingStatus === 'open') {
+			return null;
+		}
+
+		$this->logger->info(
+			'AansluitingService: skipping recompute of a non-open result; reopen() first',
+			['reconciliationId' => $run->reconciliationId, 'periodId' => $run->periodId, 'status' => $existingStatus]
+		);
+
+		return $run->existing;
+
+	}//end lockedResult()
+
+	/**
+	 * Resolve both sources for the definition's reconciliation type.
+	 *
+	 * @param AansluitingComputeRun $run The compute request.
+	 *
+	 * @return array<string,mixed> Source totals, line deltas and any VAT correction link.
+	 *
+	 * @throws RuntimeException When the reconciliation type is not supported.
+	 */
+	private function resolveSources(AansluitingComputeRun $run): array {
+		$administrationId = (string)($run->definition['administrationId'] ?? '');
+		$reconciliationType = (string)($run->definition['reconciliationType'] ?? '');
+
+		return match ($reconciliationType) {
+			'vat-ledger-return' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $run->periodId),
+			'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $run->definition, administrationId: $administrationId),
+			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $reconciliationType)),
+		};
+
+	}//end resolveSources()
+
+	/**
+	 * The open AansluitingResult record for the resolved sources.
+	 *
+	 * @param AansluitingComputeRun $run The compute request.
+	 * @param array<string,mixed> $resolved The resolved sources.
+	 *
+	 * @return array<string,mixed> The result record, before auto-resolution.
+	 */
+	private function resultRecord(AansluitingComputeRun $run, array $resolved): array {
+		$differenceCents = $this->calculator->differenceCents(
+			sourceATotal: $resolved['sourceATotal'],
+			sourceBTotal: $resolved['sourceBTotal'],
+			relationship: (string)($run->definition['expectedRelationship'] ?? 'equal')
+		);
+		$withinTolerance = $this->calculator->isWithinTolerance(
+			differenceCents: $differenceCents,
+			toleranceCents: (int)($run->definition['toleranceCents'] ?? 100)
+		);
+		$totalRow = $this->totalRow(resolved: $resolved, differenceCents: $differenceCents);
+
+		return [
+			'reconciliationId' => $run->reconciliationId,
+			'periodId' => $run->periodId,
+			'computedAt' => $this->now(),
+			'sourceATotal' => $resolved['sourceATotal'],
+			'sourceBTotal' => $resolved['sourceBTotal'],
+			'differenceCents' => $differenceCents,
+			'withinTolerance' => $withinTolerance,
+			'status' => 'open',
+			'lineDeltas' => array_merge([$totalRow], $resolved['lineDeltas']),
+			...$this->carriedExplanation(existing: $run->existing),
+			'resolvedBy' => null,
+			'resolvedAt' => null,
+			'relatedVatCorrectionId' => ($resolved['relatedVatCorrectionId'] ?? null),
+			'administrationId' => (string)($run->definition['administrationId'] ?? ''),
+		];
+
+	}//end resultRecord()
+
+	/**
+	 * The TOTAL drill-down row heading the line deltas.
+	 *
+	 * @param array<string,mixed> $resolved The resolved sources.
+	 * @param integer $differenceCents The difference in cents.
+	 *
+	 * @return array<string,mixed> The total row.
+	 */
+	private function totalRow(array $resolved, int $differenceCents): array {
+		return [
+			'bucketKey' => 'TOTAL',
+			'sourceAAmount' => $resolved['sourceATotal'],
+			'sourceBAmount' => $resolved['sourceBTotal'],
+			'deltaAmount' => $this->calculator->fromCents(cents: $differenceCents),
+		];
+
+	}//end totalRow()
+
+	/**
+	 * The explanation fields an existing open result carries into a recompute.
+	 *
+	 * @param array<string,mixed>|null $existing The existing result, or null.
+	 *
+	 * @return array{explainedBy:mixed,explainedAt:mixed,explanationReasonCode:mixed,explanationReasonText:mixed}
+	 */
+	private function carriedExplanation(array|null $existing): array {
+		return [
+			'explainedBy' => ($existing['explainedBy'] ?? null),
+			'explainedAt' => ($existing['explainedAt'] ?? null),
+			'explanationReasonCode' => ($existing['explanationReasonCode'] ?? null),
+			'explanationReasonText' => ($existing['explanationReasonText'] ?? null),
+		];
+
+	}//end carriedExplanation()
 
 	/**
 	 * Record an operator's explanation for an open AansluitingResult and
@@ -344,15 +418,8 @@ class AansluitingService {
 		);
 		$filed = $this->vatReturnService->fetchFiledDeclarations(returnId: $returnId);
 
-		$currentByKey = [];
-		foreach ($current as $bucket) {
-			$currentByKey[$this->rubriekKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
-		}
-
-		$filedByKey = [];
-		foreach ($filed as $bucket) {
-			$filedByKey[$this->rubriekKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
-		}
+		$currentByKey = $this->vatTotalsByKey(buckets: $current);
+		$filedByKey = $this->vatTotalsByKey(buckets: $filed);
 
 		$lineDeltas = $this->calculator->diffBuckets(bucketsA: $currentByKey, bucketsB: $filedByKey, relationship: 'equal');
 
@@ -364,6 +431,24 @@ class AansluitingService {
 		];
 
 	}//end resolveBtwLedgerAangifte()
+
+	/**
+	 * The VAT amount of each declaration bucket, by declaration key (a later
+	 * bucket with the same key wins).
+	 *
+	 * @param array<int,array<string,mixed>> $buckets The declaration buckets.
+	 *
+	 * @return array<string,float>
+	 */
+	private function vatTotalsByKey(array $buckets): array {
+		$byKey = [];
+		foreach ($buckets as $bucket) {
+			$byKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
+		}
+
+		return $byKey;
+
+	}//end vatTotalsByKey()
 
 	/**
 	 * Resolve source A (GL control account cumulative balance) / source B
@@ -385,24 +470,11 @@ class AansluitingService {
 			accountNumber: $controlAccountNumber
 		);
 
-		$openItems = [];
-		if ($subLedgerType === 'ar') {
-			$openItems = $this->openArInvoices(administrationId: $administrationId);
-		} elseif ($subLedgerType === 'ap') {
-			$openItems = $this->openApTransactions(administrationId: $administrationId);
-		}
-
-		$sourceBTotal = 0.0;
-		$itemBuckets = [];
-		foreach ($openItems as $item) {
-			$itemId = (string)($item['itemId'] ?? '');
-			if ($itemId === '') {
-				continue;
-			}
-
-			$sourceBTotal += $item['amount'];
-			$itemBuckets[$itemId] = $item['amount'];
-		}
+		$open = self::openItemTotals(
+			openItems: $this->openSubledgerItems(subLedgerType: $subLedgerType, administrationId: $administrationId)
+		);
+		$sourceBTotal = $open['total'];
+		$itemBuckets = $open['buckets'];
 
 		// Item-level rows only decompose sourceB (the GL control account
 		// does not decompose per open item), so bucketsA is empty here — the
@@ -423,6 +495,50 @@ class AansluitingService {
 	}//end resolveSubledgerGlControl()
 
 	/**
+	 * The open items of the AR or AP subledger; none for any other type.
+	 *
+	 * @param string $subLedgerType    'ar' or 'ap'.
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,array{itemId:string,amount:float}>
+	 */
+	private function openSubledgerItems(string $subLedgerType, string $administrationId): array {
+		if ($subLedgerType === 'ar') {
+			return $this->openArInvoices(administrationId: $administrationId);
+		}
+
+		if ($subLedgerType === 'ap') {
+			return $this->openApTransactions(administrationId: $administrationId);
+		}
+
+		return [];
+
+	}//end openSubledgerItems()
+
+	/**
+	 * The total of the open items with an id, in order, and the amount of each
+	 * by item id (a repeated id adds to the total, its last amount is kept as
+	 * the bucket); items without an id are skipped.
+	 *
+	 * @param array<int,array{itemId:string,amount:float}> $openItems The open items.
+	 *
+	 * @return array{total: float, buckets: array<string,float>}
+	 */
+	private static function openItemTotals(array $openItems): array {
+		$totals = ['total' => 0.0, 'buckets' => []];
+		foreach ($openItems as $item) {
+			$itemId = (string)($item['itemId'] ?? '');
+			if ($itemId !== '') {
+				$totals['total'] += $item['amount'];
+				$totals['buckets'][$itemId] = $item['amount'];
+			}
+		}
+
+		return $totals;
+
+	}//end openItemTotals()
+
+	/**
 	 * Sum a GL account's all-time cumulative balance (debit - credit, whole
 	 * cents) across every non-eliminated GLLine for the administration. A
 	 * balance-sheet control account's tie-out target is its life-to-date
@@ -440,18 +556,7 @@ class AansluitingService {
 		}
 
 		$register = $this->register();
-
-		$transactions = $this->objectService
-			->setRegister($register)
-			->setSchema('GLTransaction')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-		$transactionIds = [];
-		foreach ($transactions as $transaction) {
-			$id = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
-			if ($id !== '') {
-				$transactionIds[$id] = true;
-			}
-		}
+		$transactionIds = $this->transactionIdSet(register: $register, administrationId: $administrationId);
 
 		$lines = $this->objectService
 			->setRegister($register)
@@ -460,25 +565,60 @@ class AansluitingService {
 
 		$balanceCents = 0;
 		foreach ($lines as $line) {
-			if (($line['eliminationFlag'] ?? false) === true) {
-				continue;
+			$counts = (($line['eliminationFlag'] ?? false) !== true);
+			if ($transactionIds !== [] && isset($transactionIds[(string)($line['transactionId'] ?? '')]) === false) {
+				$counts = false;
 			}
 
-			$transactionId = (string)($line['transactionId'] ?? '');
-			if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
-				continue;
-			}
-
-			$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-			if (($line['side'] ?? '') === 'debit') {
-				$balanceCents += $cents;
-			} else {
-				$balanceCents -= $cents;
+			if ($counts === true) {
+				$balanceCents += $this->signedCents(line: $line);
 			}
 		}
 
 		return $this->calculator->fromCents(cents: $balanceCents);
 	}//end controlAccountBalance()
+
+	/**
+	 * The ids of the administration's GL transactions, as a set.
+	 *
+	 * @param string $register         The register.
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,bool>
+	 */
+	private function transactionIdSet(string $register, string $administrationId): array {
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
+		$ids = [];
+		foreach ($transactions as $transaction) {
+			$id = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+			if ($id !== '') {
+				$ids[$id] = true;
+			}
+		}
+
+		return $ids;
+
+	}//end transactionIdSet()
+
+	/**
+	 * A GL line's amount in whole cents, positive for debit, negative otherwise.
+	 *
+	 * @param array<string,mixed> $line The GLLine.
+	 *
+	 * @return int
+	 */
+	private function signedCents(array $line): int {
+		$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
+		if (($line['side'] ?? '') === 'debit') {
+			return $cents;
+		}
+
+		return (-1 * $cents);
+
+	}//end signedCents()
 
 	/**
 	 * Fetch every ARInvoice for the administration in an "open" lifecycle
@@ -618,18 +758,6 @@ class AansluitingService {
 	}//end findRelatedVatCorrection()
 
 	/**
-	 * Build the type:taxRate rubriek bucket key, matching
-	 * VatSuppletieDetectionService's bucketKey() convention.
-	 *
-	 * @param array<string,mixed> $bucket A VATReturnService declaration bucket.
-	 *
-	 * @return string
-	 */
-	private function rubriekKey(array $bucket): string {
-		return ((string)$bucket['type']) . ':' . number_format((float)$bucket['taxRate'], 2, '.', '');
-	}//end rubriekKey()
-
-	/**
 	 * Fetch an Aansluiting definition by id.
 	 *
 	 * @param string $reconciliationId Aansluiting id.
@@ -637,10 +765,10 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchReconciliation(string $reconciliationId): array {
-		$definition = $this->objectService
-			->setRegister($this->register())
-			->setSchema('Aansluiting')
-			->find($reconciliationId);
+		$definition = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('Aansluiting'),
+			id: $reconciliationId
+		);
 
 		if ($definition === null) {
 			throw new RuntimeException(sprintf('Aansluiting %s not found', $reconciliationId));
@@ -657,10 +785,10 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchResult(string $resultId): array {
-		$result = $this->objectService
-			->setRegister($this->register())
-			->setSchema('AansluitingResult')
-			->find($resultId);
+		$result = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('AansluitingResult'),
+			id: $resultId
+		);
 
 		if ($result === null) {
 			throw new RuntimeException(sprintf('AansluitingResult %s not found', $resultId));
@@ -722,7 +850,7 @@ class AansluitingService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

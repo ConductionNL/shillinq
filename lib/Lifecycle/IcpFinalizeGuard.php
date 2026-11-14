@@ -3,6 +3,9 @@
 /**
  * ICP Finalize Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the IcpOpgaaf draft → finalized
  * transition (REQ-ICP-004, REQ-ICP-005). This guard is registered because
  * OpenRegister's x-openregister-lifecycle engine cannot yet express the
@@ -27,16 +30,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Service\IcpService;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,11 +53,11 @@ class IcpFinalizeGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param IcpService $icpService The ICP reconciliation service.
+	 * @param IcpServiceInterface $icpService The ICP reconciliation service.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly IcpService $icpService,
+		private readonly IcpServiceInterface $icpService,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

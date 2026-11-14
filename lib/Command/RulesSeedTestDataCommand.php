@@ -20,13 +20,16 @@
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
-use OCA\Shillinq\Service\RuleTestDataSeeder;
+use OCA\Shillinq\Kernel\Contracts\RuleTestDataSeederInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -38,10 +41,10 @@ class RulesSeedTestDataCommand extends Command {
 	/**
 	 * Construct the seed-testdata command.
 	 *
-	 * @param RuleTestDataSeeder $seeder The test-data seeder.
+	 * @param RuleTestDataSeederInterface $seeder The test-data seeder.
 	 */
 	public function __construct(
-		private readonly RuleTestDataSeeder $seeder,
+		private readonly RuleTestDataSeederInterface $seeder,
 	) {
 		parent::__construct();
 

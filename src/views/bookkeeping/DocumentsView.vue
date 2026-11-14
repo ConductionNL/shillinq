@@ -108,7 +108,7 @@
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
+import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcButton } from '@nextcloud/vue'
 
 export default {
@@ -177,7 +177,7 @@ export default {
 			this.loading = true
 			this.errorMessage = ''
 			try {
-				const url = generateOcsUrl('apps/shillinq/api/v1/documents')
+				const url = generateUrl('/apps/shillinq/api/v1/documents')
 				const params = {}
 				if (this.filters.status) params.status = this.filters.status
 				if (this.filters.type) params.type = this.filters.type

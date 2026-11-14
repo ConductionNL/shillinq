@@ -83,6 +83,30 @@ class SubjectCostAggregator {
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-cost-is-published-only-when-every-hour-in-it-could-be-priced
 	 */
 	public function aggregate(array $hourRows, array $rates): array {
+		$hoursByPerson = $this->hoursByPerson(hourRows: $hourRows);
+		$summary = self::summary(
+			hoursByPerson: $hoursByPerson,
+			perPerson: self::perPersonLines(hoursByPerson: $hoursByPerson, rates: $rates)
+		);
+
+		if ($summary['unpricedPersonIds'] !== []) {
+			$this->logger->info(
+				'SubjectCostAggregator: cost withheld — some hours have no resolvable rate',
+				['unpricedPersonIds' => $summary['unpricedPersonIds']]
+			);
+		}
+
+		return $summary;
+	}//end aggregate()
+
+	/**
+	 * The usable hours of the rows summed per person, in first-seen order.
+	 *
+	 * @param array<int,mixed> $hourRows The hour rows.
+	 *
+	 * @return array<string,float>
+	 */
+	private function hoursByPerson(array $hourRows): array {
 		$hoursByPerson = [];
 		foreach ($hourRows as $row) {
 			if (is_array($row) === false) {
@@ -98,76 +122,171 @@ class SubjectCostAggregator {
 				continue;
 			}
 
-			$personId = trim((string)($row['personId'] ?? ''));
-			if ($personId === '') {
-				// Hours nobody owns cannot be priced. They still count toward
-				// effort, under a reserved key, so the total hours stay honest.
-				$personId = '(unattributed)';
-			}
-
+			$personId = self::personKey(row: $row);
 			$hoursByPerson[$personId] = (($hoursByPerson[$personId] ?? 0.0) + $hours);
 		}//end foreach
 
-		$perPerson = [];
-		$totalHours = 0.0;
-		$totalCents = 0;
-		$unpriced = [];
+		return $hoursByPerson;
+	}//end hoursByPerson()
 
-		foreach ($hoursByPerson as $personId => $hours) {
-			$totalHours += $hours;
-
-			$centsPerHour = ($rates[$personId] ?? null);
-			if (is_int($centsPerHour) === false || $centsPerHour < 0) {
-				$centsPerHour = null;
-			}
-
-			$costCents = null;
-			if ($centsPerHour === null) {
-				$unpriced[] = (string)$personId;
-			}
-
-			if ($centsPerHour !== null) {
-				// Round once, at the person level, rather than accumulating a
-				// float and rounding at the end — the latter lets sub-cent
-				// error from every row survive into the total.
-				$costCents = (int)round($hours * $centsPerHour);
-				$totalCents += $costCents;
-			}
-
-			$perPerson[] = [
-				'personId' => (string)$personId,
-				'hours' => round(num: $hours, precision: 2),
-				'centsPerHour' => $centsPerHour,
-				'costCents' => $costCents,
-			];
-		}//end foreach
-
-		$complete = ($unpriced === [] && $perPerson !== []);
-
-		// A cost is published only when every person with hours could be
-		// priced. See the class docblock: a partial total is plausible, always
-		// too low, and indistinguishable from a correct one.
-		$publishedCost = null;
-		if ($complete === true) {
-			$publishedCost = $totalCents;
+	/**
+	 * The person a row's hours belong to. Hours nobody owns cannot be priced;
+	 * they still count toward effort, under a reserved key, so the total hours
+	 * stay honest.
+	 *
+	 * @param array<string,mixed> $row The hour row.
+	 *
+	 * @return string
+	 */
+	private static function personKey(array $row): string {
+		$personId = trim((string)($row['personId'] ?? ''));
+		if ($personId === '') {
+			return '(unattributed)';
 		}
 
-		if ($unpriced !== []) {
-			$this->logger->info(
-				'SubjectCostAggregator: cost withheld — some hours have no resolvable rate',
-				['unpricedPersonIds' => $unpriced]
-			);
+		return $personId;
+	}//end personKey()
+
+	/**
+	 * One breakdown line per person: hours, rate and cost.
+	 *
+	 * @param array<string,float> $hoursByPerson The hours per person.
+	 * @param array<string,mixed> $rates         Cents per hour per person.
+	 *
+	 * @return array<int,array{personId:string,hours:float,centsPerHour:?int,costCents:?int}>
+	 */
+	private static function perPersonLines(array $hoursByPerson, array $rates): array {
+		$perPerson = [];
+		foreach ($hoursByPerson as $personId => $hours) {
+			$perPerson[] = [
+				'personId' => (string)$personId,
+				...self::pricedHours(hours: $hours, centsPerHour: self::usableRate(rate: ($rates[$personId] ?? null))),
+			];
+		}
+
+		return $perPerson;
+	}//end perPersonLines()
+
+	/**
+	 * A rate that can price hours: a non-negative integer of cents, else null.
+	 *
+	 * @param mixed $rate The configured rate.
+	 *
+	 * @return int|null
+	 */
+	private static function usableRate(mixed $rate): ?int {
+		if (is_int($rate) === false || $rate < 0) {
+			return null;
+		}
+
+		return $rate;
+	}//end usableRate()
+
+	/**
+	 * The hours, the rate and their cost, rounded once at the person level
+	 * rather than accumulating a float and rounding at the end — the latter
+	 * lets sub-cent error from every row survive into the total. No rate, no
+	 * cost.
+	 *
+	 * @param float    $hours        The person's hours.
+	 * @param int|null $centsPerHour The person's rate.
+	 *
+	 * @return array{hours:float,centsPerHour:?int,costCents:?int}
+	 */
+	private static function pricedHours(float $hours, ?int $centsPerHour): array {
+		$costCents = null;
+		if ($centsPerHour !== null) {
+			$costCents = (int)round($hours * $centsPerHour);
 		}
 
 		return [
-			'hours' => round(num: $totalHours, precision: 2),
-			'costCents' => $publishedCost,
+			'hours' => round(num: $hours, precision: 2),
+			'centsPerHour' => $centsPerHour,
+			'costCents' => $costCents,
+		];
+	}//end pricedHours()
+
+	/**
+	 * The aggregate: total hours, the cost when every person could be priced,
+	 * the breakdown and the people without a rate.
+	 *
+	 * A cost is published only when every person with hours could be priced.
+	 * See the class docblock: a partial total is plausible, always too low,
+	 * and indistinguishable from a correct one.
+	 *
+	 * @param array<string,float>             $hoursByPerson The hours per person.
+	 * @param array<int,array<string,mixed>>  $perPerson     The breakdown lines.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function summary(array $hoursByPerson, array $perPerson): array {
+		[$unpriced, $totalCents] = self::unpricedAndPricedTotal(perPerson: $perPerson);
+		$complete = ($unpriced === [] && $perPerson !== []);
+
+		return [
+			'hours' => round(num: self::totalHours(hoursByPerson: $hoursByPerson), precision: 2),
+			'costCents' => self::publishedCost(complete: $complete, totalCents: $totalCents),
 			'complete' => $complete,
 			'currency' => 'EUR',
 			'perPerson' => $perPerson,
 			'unpricedPersonIds' => $unpriced,
 		];
-	}//end aggregate()
+	}//end summary()
+
+	/**
+	 * The people without a rate, in breakdown order, and the summed cost of
+	 * the people with one.
+	 *
+	 * @param array<int,array<string,mixed>> $perPerson The breakdown lines.
+	 *
+	 * @return array{0:array<int,string>,1:int}
+	 */
+	private static function unpricedAndPricedTotal(array $perPerson): array {
+		$unpriced = [];
+		$totalCents = 0;
+		foreach ($perPerson as $line) {
+			if ($line['costCents'] === null) {
+				$unpriced[] = $line['personId'];
+				continue;
+			}
+
+			$totalCents += $line['costCents'];
+		}
+
+		return [$unpriced, $totalCents];
+	}//end unpricedAndPricedTotal()
+
+	/**
+	 * The total hours, summed in person order.
+	 *
+	 * @param array<string,float> $hoursByPerson The hours per person.
+	 *
+	 * @return float
+	 */
+	private static function totalHours(array $hoursByPerson): float {
+		$totalHours = 0.0;
+		foreach ($hoursByPerson as $hours) {
+			$totalHours += $hours;
+		}
+
+		return $totalHours;
+	}//end totalHours()
+
+	/**
+	 * The total cost when complete, else null.
+	 *
+	 * @param bool $complete   Whether every person was priced.
+	 * @param int  $totalCents The summed person costs.
+	 *
+	 * @return int|null
+	 */
+	private static function publishedCost(bool $complete, int $totalCents): ?int {
+		if ($complete === true) {
+			return $totalCents;
+		}
+
+		return null;
+	}//end publishedCost()
 
 	/**
 	 * Coerce an hours value to float, or null when it is not a number.

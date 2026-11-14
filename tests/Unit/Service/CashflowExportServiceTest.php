@@ -4,6 +4,9 @@
  * Unit tests for CashflowExportService — the wiring that makes REQ-CF-016's
  * "Export PDF" affordance produce an actual document (#865).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## What these tests are pointed at
  *
  * `CashflowPdfRenderer` was written and had ZERO callers. The gap this closes
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

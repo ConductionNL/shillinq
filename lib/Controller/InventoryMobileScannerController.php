@@ -3,6 +3,9 @@
 /**
  * Inventory Mobile Scanner Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * HTTP endpoints that back the offline-first warehouse PWA:
  *
  *   GET  /api/v1/inventory/sync — return InventoryStock deltas since the
@@ -39,19 +42,16 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-mobile-scanner/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\InventoryMobileScannerService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -59,6 +59,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUser;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -94,9 +95,9 @@ class InventoryMobileScannerController extends Controller {
 	 * @param IRequest $request The HTTP request.
 	 * @param IUserSession $userSession Authenticated user session.
 	 * @param IGroupManager $groupManager Group membership lookups.
-	 * @param SettingsService $settings Shillinq settings.
-	 * @param AdministrationContextService $admin Per-user administration scope.
-	 * @param InventoryMobileScannerService $scanner Sync core.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param AdministrationContextServiceInterface $admin Per-user administration scope.
+	 * @param InventoryMobileScannerServiceInterface $scanner Sync core.
 	 * @param ContainerInterface $container DI container (locations lookup).
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
@@ -104,13 +105,13 @@ class InventoryMobileScannerController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly SettingsService $settings,
-		private readonly AdministrationContextService $admin,
-		private readonly InventoryMobileScannerService $scanner,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly AdministrationContextServiceInterface $admin,
+		private readonly InventoryMobileScannerServiceInterface $scanner,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -130,36 +131,18 @@ class InventoryMobileScannerController extends Controller {
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
 	public function downloadDeltas(?string $since = null): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+		if ($this->userSession->getUser() === null) {
+			return self::notLoggedIn();
 		}
 
 		$administrationId = $this->resolveAdministrationId();
 		if ($administrationId === null) {
-			return new JSONResponse(
-				data: ['message' => 'No administration in scope for current user'],
-				statusCode: Http::STATUS_FORBIDDEN,
-			);
+			return self::noAdministration();
 		}
 
-		$cleanSince = null;
-		if ($since !== null && trim($since) !== '') {
-			$cleanSince = trim($since);
-		}
+		$result = $this->scanner->downloadDeltas(since: self::cleanSince(since: $since), administrationId: $administrationId);
 
-		$result = $this->scanner->downloadDeltas(
-			since: $cleanSince,
-			administrationId: $administrationId,
-		);
-
-		return new JSONResponse(
-			data: [
-				'deltas' => $result['deltas'],
-				'serverTimestamp' => $result['serverTimestamp'],
-			],
-		);
-
+		return new JSONResponse(data: ['deltas' => $result['deltas'], 'serverTimestamp' => $result['serverTimestamp']]);
 	}//end downloadDeltas()
 
 	/**
@@ -180,48 +163,18 @@ class InventoryMobileScannerController extends Controller {
 	public function uploadOperations(): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+			return self::notLoggedIn();
 		}
 
 		$administrationId = $this->resolveAdministrationId();
 		if ($administrationId === null) {
-			return new JSONResponse(
-				data: ['message' => 'No administration in scope for current user'],
-				statusCode: Http::STATUS_FORBIDDEN,
-			);
+			return self::noAdministration();
 		}
 
 		$raw = $this->request->getParam('operations');
-		if (is_array($raw) === false) {
-			return new JSONResponse(
-				data: ['message' => 'Missing or invalid operations array'],
-				statusCode: Http::STATUS_BAD_REQUEST,
-			);
-		}
 
-		if (count($raw) > self::MAX_BATCH_SIZE) {
-			return new JSONResponse(
-				data: ['message' => 'Batch exceeds maximum size ' . self::MAX_BATCH_SIZE],
-				statusCode: Http::STATUS_BAD_REQUEST,
-			);
-		}
-
-		$roles = $this->resolveRoles(userId: $user->getUID());
-
-		$result = $this->scanner->uploadOperations(
-			operations: $raw,
-			userId: $user->getUID(),
-			roles: $roles,
-			administrationId: $administrationId,
-		);
-
-		return new JSONResponse(
-			data: [
-				'results' => $result['results'],
-				'serverTimestamp' => $result['serverTimestamp'],
-			],
-		);
-
+		return self::batchRefusal(raw: $raw)
+			?? $this->uploaded(user: $user, batch: new ScannerUpload(operations: $raw, administrationId: $administrationId));
 	}//end uploadOperations()
 
 	/**
@@ -238,42 +191,129 @@ class InventoryMobileScannerController extends Controller {
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
 	public function listLocations(): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+		if ($this->userSession->getUser() === null) {
+			return self::notLoggedIn();
 		}
 
 		$administrationId = $this->resolveAdministrationId();
 		if ($administrationId === null) {
+			return self::noAdministration();
+		}
+
+		$records = null;
+		if ($this->registerLocation->isOpenRegisterAvailable() === true) {
+			$records = $this->locationRecords(administrationId: $administrationId);
+		}
+
+		return new JSONResponse(data: ['locations' => $this->locationRows(records: ($records ?? []))]);
+	}//end listLocations()
+
+	/**
+	 * The 401 for a request without a session user.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function notLoggedIn(): JSONResponse {
+		return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+	}//end notLoggedIn()
+
+	/**
+	 * The 403 for a user without an active administration.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function noAdministration(): JSONResponse {
+		return new JSONResponse(
+			data: ['message' => 'No administration in scope for current user'],
+			statusCode: Http::STATUS_FORBIDDEN,
+		);
+	}//end noAdministration()
+
+	/**
+	 * The trimmed `since` value; null (a full initial sync) when absent or blank.
+	 *
+	 * @param string|null $since The query value.
+	 *
+	 * @return string|null
+	 */
+	private static function cleanSince(?string $since): ?string {
+		if ($since !== null && trim($since) !== '') {
+			return trim($since);
+		}
+
+		return null;
+	}//end cleanSince()
+
+	/**
+	 * The 400 for a missing, non-array or oversized operations batch.
+	 *
+	 * @param mixed $raw The operations parameter.
+	 *
+	 * @return JSONResponse|null The refusal, or null for an acceptable batch.
+	 */
+	private static function batchRefusal(mixed $raw): ?JSONResponse {
+		if (is_array($raw) === false) {
+			return new JSONResponse(data: ['message' => 'Missing or invalid operations array'], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		if (count($raw) > self::MAX_BATCH_SIZE) {
 			return new JSONResponse(
-				data: ['message' => 'No administration in scope for current user'],
-				statusCode: Http::STATUS_FORBIDDEN,
+				data: ['message' => 'Batch exceeds maximum size ' . self::MAX_BATCH_SIZE],
+				statusCode: Http::STATUS_BAD_REQUEST,
 			);
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return new JSONResponse(data: ['locations' => []]);
-		}
+		return null;
+	}//end batchRefusal()
 
+	/**
+	 * Hand the batch to the sync core with the user's roles; answer its results.
+	 *
+	 * @param IUser         $user  The session user.
+	 * @param ScannerUpload $batch The operations and their administration.
+	 *
+	 * @return JSONResponse
+	 */
+	private function uploaded(IUser $user, ScannerUpload $batch): JSONResponse {
+		$roles = $this->resolveRoles(userId: $user->getUID());
+		$result = $this->scanner->uploadOperations(
+			operations: $batch->operations,
+			userId: $user->getUID(),
+			roles: $roles,
+			administrationId: $batch->administrationId,
+		);
+
+		return new JSONResponse(data: ['results' => $result['results'], 'serverTimestamp' => $result['serverTimestamp']]);
+	}//end uploaded()
+
+	/**
+	 * The administration's Location records (at most 500); a failed lookup is a warning.
+	 *
+	 * @param string $administrationId The administration in scope.
+	 *
+	 * @return array<int, mixed>|null The records, or null when the lookup failed.
+	 */
+	private function locationRecords(string $administrationId): ?array {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$records = $objectService
-				->setRegister($this->settings->getRegisterSlug())
+			return $objectService
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema('Location')
-				->findAll(
-					[
-						'filters' => ['administrationId' => $administrationId],
-						'limit' => 500,
-					]
-				);
+				->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 500]);
 		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'Shillinq mobile scanner: location list lookup failed',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(data: ['locations' => []]);
+			$this->logger->warning('Shillinq mobile scanner: location list lookup failed', ['exception' => $e->getMessage()]);
+			return null;
 		}
+	}//end locationRecords()
 
+	/**
+	 * Project the records to code / name / warehouse strings.
+	 *
+	 * @param array<int, mixed> $records Location records (entities or arrays).
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	private function locationRows(array $records): array {
 		$locations = [];
 		foreach ($records as $record) {
 			$row = $this->normalise(record: $record);
@@ -284,8 +324,8 @@ class InventoryMobileScannerController extends Controller {
 			];
 		}
 
-		return new JSONResponse(data: ['locations' => $locations]);
-	}//end listLocations()
+		return $locations;
+	}//end locationRows()
 
 	/**
 	 * Resolve the administration id in scope for the authenticated user.
@@ -315,29 +355,37 @@ class InventoryMobileScannerController extends Controller {
 	 * @return list<string>
 	 */
 	private function resolveRoles(string $userId): array {
-		$roles = [];
-
 		$user = $this->userSession->getUser();
 		if ($user === null) {
-			return $roles;
+			return [];
 		}
 
+		$roles = [];
 		if ($this->groupManager->isAdmin(userId: $userId) === true) {
 			$roles[] = 'admin';
 		}
 
-		$groups = $this->groupManager->getUserGroupIds(user: $user);
-		foreach ($groups as $group) {
-			$role = (self::GROUP_ROLE_MAP[$group] ?? null);
-			if ($role === null) {
-				continue;
-			}
+		return array_values(array_unique(array_merge($roles, $this->groupRoles(user: $user))));
+	}//end resolveRoles()
 
-			$roles[] = $role;
+	/**
+	 * The REQ-PERM-001 roles the user's Nextcloud groups map to, in group order.
+	 *
+	 * @param IUser $user The session user.
+	 *
+	 * @return list<string>
+	 */
+	private function groupRoles(IUser $user): array {
+		$roles = [];
+		foreach ($this->groupManager->getUserGroupIds(user: $user) as $group) {
+			$role = (self::GROUP_ROLE_MAP[$group] ?? null);
+			if ($role !== null) {
+				$roles[] = $role;
+			}
 		}
 
-		return array_values(array_unique($roles));
-	}//end resolveRoles()
+		return $roles;
+	}//end groupRoles()
 
 	/**
 	 * Normalise an OR record (entity or array) to a flat array.
@@ -351,17 +399,28 @@ class InventoryMobileScannerController extends Controller {
 			return $record;
 		}
 
-		if (is_object($record) === true && method_exists($record, 'jsonSerialize') === true) {
+		if (is_object($record) === false) {
+			return [];
+		}
+
+		return self::objectRow(record: $record);
+	}//end normalise()
+
+	/**
+	 * An object record as an array: its jsonSerialize() payload when that is an array, else its public fields.
+	 *
+	 * @param object $record The record.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function objectRow(object $record): array {
+		if (method_exists($record, 'jsonSerialize') === true) {
 			$serialised = $record->jsonSerialize();
 			if (is_array($serialised) === true) {
 				return $serialised;
 			}
 		}
 
-		if (is_object($record) === true) {
-			return (array)$record;
-		}
-
-		return [];
-	}//end normalise()
+		return (array)$record;
+	}//end objectRow()
 }//end class

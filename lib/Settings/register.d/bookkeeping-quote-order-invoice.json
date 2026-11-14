@@ -10,6 +10,27 @@
   "components": {
     "schemas": {
       "Quote": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "Quote",
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
@@ -216,6 +237,27 @@
         }
       },
       "QuoteLine": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "QuoteLine",
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
@@ -651,6 +693,27 @@
         }
       },
       "Delivery": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "Delivery",
         "icon": "TruckDeliveryOutline",
         "version": "0.1.0",
@@ -1244,6 +1307,27 @@
         }
       },
       "PricingTier": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "PricingTier",
         "icon": "TagMultipleOutline",
         "version": "0.1.0",
@@ -1319,6 +1403,27 @@
         }
       },
       "VolumeDiscount": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "VolumeDiscount",
         "icon": "SaleOutline",
         "version": "0.1.0",
@@ -1416,6 +1521,27 @@
         }
       },
       "BlanketOrder": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "BlanketOrder",
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
@@ -1514,6 +1640,27 @@
         }
       },
       "CreditHold": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "CreditHold",
         "icon": "AccountCancelOutline",
         "version": "0.1.0",
@@ -1942,7 +2089,12 @@
         "netAmount": 7500,
         "vatAmount": 0,
         "grossAmount": 7500,
-        "status": "draft"
+        "status": "draft",
+        "administrationId": "adm-1",
+        "invoiceId": "inv-2026-0003",
+        "customerId": "qoi-sample-customer-industrial",
+        "sourceDocumentUri": "urn:nextcloud:booking:order:ord-2026-0003",
+        "state": "issued"
       },
       {
         "@self": {
@@ -1988,7 +2140,13 @@
         "totalAmount": 588.06,
         "reason": "return",
         "notes": "Customer returned 6 defective widgets.",
-        "status": "issued"
+        "status": "issued",
+        "administrationId": "adm-1",
+        "creditNoteId": "cn-2026-0001",
+        "linkedInvoiceId": "qoi-sample-invoice-retail-delivery1",
+        "customerId": "qoi-sample-customer-retail",
+        "grossAmount": 58806,
+        "state": "issued"
       }
     ]
   }

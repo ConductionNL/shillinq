@@ -68,7 +68,7 @@ SMS character limits (e.g., location >30 chars) truncated with ellipsis.
 
 ## Requirements
 
-### REQ-SMS-001: Channel CRUD operations
+### Requirement: REQ-SMS-001: Channel CRUD operations
 
 The system SHALL satisfy this requirement: Channel CRUD operations.
 
@@ -85,7 +85,7 @@ The system SHALL satisfy this requirement: Channel CRUD operations.
 **THEN** the channel is saved with status `active` and shows in the
 channel list. Channel is immediately available for booking dispatch.
 
-### REQ-SMS-002: Channel provider selection via openconnector
+### Requirement: REQ-SMS-002: Channel provider selection via openconnector
 
 The system SHALL satisfy this requirement: Channel provider selection via openconnector.
 
@@ -97,7 +97,7 @@ dropdown, and switches to "twilio",
 **THEN** the UI requests new Twilio credentials, old credentials
 discarded, and channel applies new provider on next send.
 
-### REQ-SMS-003: Message template validation and character limit
+### Requirement: REQ-SMS-003: Message template validation and character limit
 
 The system SHALL satisfy this requirement: Message template validation and character limit.
 
@@ -109,7 +109,7 @@ The system SHALL satisfy this requirement: Message template validation and chara
 values substituted) and warns if total exceeds 160 characters. Save is
 rejected if template is too long.
 
-### REQ-SMS-004: Phone number validation per locale
+### Requirement: REQ-SMS-004: Phone number validation per locale
 
 The system SHALL satisfy this requirement: Phone number validation per locale.
 
@@ -121,7 +121,7 @@ The system SHALL satisfy this requirement: Phone number validation per locale.
 (starts with +31 or 06), accepts valid number, and rejects invalid
 format with error message.
 
-### REQ-SMS-005: Delivery scheduling with send time
+### Requirement: REQ-SMS-005: Delivery scheduling with send time
 
 The system SHALL satisfy this requirement: Delivery scheduling with send time.
 
@@ -133,7 +133,7 @@ The system SHALL satisfy this requirement: Delivery scheduling with send time.
 "2026-05-21 14:30" (±15 min tolerance window). SMS is sent at
 scheduled time if channel is active.
 
-### REQ-SMS-006: Channel lifecycle — active to inactive
+### Requirement: REQ-SMS-006: Channel lifecycle — active to inactive
 
 The system SHALL satisfy this requirement: Channel lifecycle — active to inactive.
 
@@ -145,7 +145,7 @@ The system SHALL satisfy this requirement: Channel lifecycle — active to inact
 are dispatched from this channel. Operator can re-enable by clicking
 "Activate Channel" (status back to `active`).
 
-### REQ-SMS-007: Channel lifecycle — to archived
+### Requirement: REQ-SMS-007: Channel lifecycle — to archived
 
 The system SHALL satisfy this requirement: Channel lifecycle — to archived.
 
@@ -158,7 +158,7 @@ from active channel list; previous SMS messages remain in history.
 Archived channels cannot be reactivated; operator must create new
 channel.
 
-### REQ-SMS-008: Retry logic for failed SMS sends
+### Requirement: REQ-SMS-008: Retry logic for failed SMS sends
 
 The system SHALL satisfy this requirement: Retry logic for failed SMS sends.
 
@@ -170,7 +170,7 @@ The system SHALL satisfy this requirement: Retry logic for failed SMS sends.
 (5 minutes). Retry repeats up to 3 times. After 3rd failure, SMS is
 marked failed; error logged for operator review.
 
-### REQ-SMS-009: Message variable substitution
+### Requirement: REQ-SMS-009: Message variable substitution
 
 The system SHALL satisfy this requirement: Message variable substitution.
 
@@ -184,7 +184,7 @@ The system SHALL satisfy this requirement: Message variable substitution.
 "Hallo Jan Jansen, boeking BK001 op 21 mei om 14:30". SMS is sent with
 substituted message.
 
-### REQ-SMS-010: Long variable truncation for SMS character limit
+### Requirement: REQ-SMS-010: Long variable truncation for SMS character limit
 
 The system SHALL satisfy this requirement: Long variable truncation for SMS character limit.
 
@@ -196,7 +196,7 @@ The system SHALL satisfy this requirement: Long variable truncation for SMS char
 **THEN** location is truncated to "Amsterdam Hoofdkantoor, K..." (≤30
 chars). Final SMS is "Hallo Jan Jansen, uw boeking in Amsterdam Hoofdkantoor, K.... Ref: BK001".
 
-### REQ-SMS-011: Sender ID customization per provider
+### Requirement: REQ-SMS-011: Sender ID customization per provider
 
 The system SHALL satisfy this requirement: Sender ID customization per provider.
 
@@ -208,7 +208,7 @@ The system SHALL satisfy this requirement: Sender ID customization per provider.
 sender (or number, provider-dependent). Operator can change sender ID
 without reactivating channel.
 
-### REQ-SMS-012: Fallback phone number for missing contact
+### Requirement: REQ-SMS-012: Fallback phone number for missing contact
 
 The system SHALL satisfy this requirement: Fallback phone number for missing contact.
 
@@ -220,7 +220,7 @@ booking with no customer phone number,
 **THEN** SMS is sent to fallback number. If both booking contact and
 fallback missing, SMS dispatch fails with error logged.
 
-### REQ-SMS-013: Provider credential storage via openconnector
+### Requirement: REQ-SMS-013: Provider credential storage via openconnector
 
 The system SHALL satisfy this requirement: Provider credential storage via openconnector.
 
@@ -232,7 +232,7 @@ The system SHALL satisfy this requirement: Provider credential storage via openc
 encrypted, not in Nextcloud schema). Credentials never exposed in logs
 or admin UI (masked as "●●●●●●").
 
-### REQ-SMS-014: Test send for channel validation
+### Requirement: REQ-SMS-014: Test send for channel validation
 
 The system SHALL satisfy this requirement: Test send for channel validation.
 
@@ -244,7 +244,7 @@ The system SHALL satisfy this requirement: Test send for channel validation.
 (customerName: "Test Customer", bookingRef: "TEST001", etc.) and sends
 test SMS. Operator sees success or failure message.
 
-### REQ-SMS-015: Channel manifest entry and admin navigation
+### Requirement: REQ-SMS-015: Channel manifest entry and admin navigation
 
 The system SHALL satisfy this requirement: Channel manifest entry and admin navigation.
 
@@ -255,7 +255,7 @@ The system SHALL satisfy this requirement: Channel manifest entry and admin navi
 **THEN** a new "SMS Reminder Channels" menu item is visible. Clicking
 opens the channel list and admin interface.
 
-### REQ-SMS-016: Audit trail for channel changes
+### Requirement: REQ-SMS-016: Audit trail for channel changes
 
 The system SHALL satisfy this requirement: Audit trail for channel changes.
 
@@ -267,7 +267,7 @@ The system SHALL satisfy this requirement: Audit trail for channel changes.
 field changed, old value, new value). Audit trail visible in channel
 detail history.
 
-### REQ-SMS-017: Multi-channel support (multiple SMS providers)
+### Requirement: REQ-SMS-017: Multi-channel support (multiple SMS providers)
 
 The system SHALL satisfy this requirement: Multi-channel support (multiple SMS providers).
 
@@ -280,7 +280,7 @@ fallback provider,
 primary channel; if dispatch fails, future booking-lifecycle
 integration can try fallback channel.
 
-### REQ-SMS-018: Provider API error handling
+### Requirement: REQ-SMS-018: Provider API error handling
 
 The system SHALL satisfy this requirement: Provider API error handling.
 
@@ -293,7 +293,7 @@ unreachable,
 `retryCount` setting, and logs failure. Operator sees error status in
 dispatch history; channel remains active for future sends.
 
-### REQ-SMS-019: SMS cost logging for billing integration
+### Requirement: REQ-SMS-019: SMS cost logging for billing integration
 
 The system SHALL satisfy this requirement: SMS cost logging for billing integration.
 
@@ -305,7 +305,7 @@ The system SHALL satisfy this requirement: SMS cost logging for billing integrat
 message length (single SMS or multi-part), cost (if available from
 provider). Log available for future billing integration (T3).
 
-### REQ-SMS-020: Permissions and access control
+### Requirement: REQ-SMS-020: Permissions and access control
 
 The system SHALL satisfy this requirement: Permissions and access control.
 

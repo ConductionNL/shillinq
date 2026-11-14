@@ -145,8 +145,7 @@ final class BookingsCancellationRulesFragmentTest extends TestCase {
 	 */
 	public function testBookingCancellationIsImmutableAndLinked(): void {
 		$schema = $this->load(path: $this->fragmentPath)['components']['schemas']['BookingCancellation'];
-		$operator = $schema['x-openregister-rbac']['roles']['operator']['permissions'];
-		self::assertNotContains(needle: 'delete', haystack: $operator, message: 'BookingCancellation must be immutable (no delete)');
+		self::assertArrayNotHasKey(key: 'delete', array: $schema['authorization'], message: 'BookingCancellation must be immutable (no delete)');
 
 		self::assertArrayHasKey(
 			key: 'appointmentId',

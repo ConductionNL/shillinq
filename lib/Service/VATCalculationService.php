@@ -49,35 +49,13 @@ class VATCalculationService {
 	 * @return array{netCents:int,vatCents:int,grossCents:int,breakdown:array<int,array{rate:float,netCents:int,vatCents:int,grossCents:int}>}
 	 */
 	public function calculateVAT(array $lineItems): array {
-		$byRate = [];
-
-		foreach ($lineItems as $line) {
-			$net = (int)($line['costAmountCents'] ?? 0);
-			$rate = (float)($line['vatRate'] ?? 21.0);
-
-			$rateKey = (string)$rate;
-			if (isset($byRate[$rateKey]) === false) {
-				$byRate[$rateKey] = ['rate' => $rate, 'netCents' => 0];
-			}
-
-			$byRate[$rateKey]['netCents'] += $net;
-		}//end foreach
-
-		$netTotal = 0;
-		$vatTotal = 0;
 		$breakdown = [];
-
-		foreach ($byRate as $group) {
-			$vat = $this->vatOnNet(netCents: $group['netCents'], rate: $group['rate']);
-			$breakdown[] = [
-				'rate' => $group['rate'],
-				'netCents' => $group['netCents'],
-				'vatCents' => $vat,
-				'grossCents' => ($group['netCents'] + $vat),
-			];
-			$netTotal += $group['netCents'];
-			$vatTotal += $vat;
+		foreach ($this->netPerRate(lineItems: $lineItems) as $group) {
+			$breakdown[] = $this->rateLine(group: $group);
 		}
+
+		$netTotal = array_sum(array_column($breakdown, 'netCents'));
+		$vatTotal = array_sum(array_column($breakdown, 'vatCents'));
 
 		return [
 			'netCents' => $netTotal,
@@ -87,6 +65,48 @@ class VATCalculationService {
 		];
 
 	}//end calculateVAT()
+
+	/**
+	 * The net cents per VAT rate, in the order the rates first appear (21 % by default).
+	 *
+	 * @param array<int,array<string,mixed>> $lineItems Line items with costAmountCents and vatRate.
+	 *
+	 * @return array<string,array{rate:float,netCents:int}>
+	 */
+	private function netPerRate(array $lineItems): array {
+		$byRate = [];
+		foreach ($lineItems as $line) {
+			$rate = (float)($line['vatRate'] ?? 21.0);
+			$rateKey = (string)$rate;
+			if (isset($byRate[$rateKey]) === false) {
+				$byRate[$rateKey] = ['rate' => $rate, 'netCents' => 0];
+			}
+
+			$byRate[$rateKey]['netCents'] += (int)($line['costAmountCents'] ?? 0);
+		}
+
+		return $byRate;
+
+	}//end netPerRate()
+
+	/**
+	 * One breakdown line: a rate's net, its VAT and its gross.
+	 *
+	 * @param array{rate:float,netCents:int} $group The net cents of one rate.
+	 *
+	 * @return array{rate:float,netCents:int,vatCents:int,grossCents:int}
+	 */
+	private function rateLine(array $group): array {
+		$vat = $this->vatOnNet(netCents: $group['netCents'], rate: $group['rate']);
+
+		return [
+			'rate' => $group['rate'],
+			'netCents' => $group['netCents'],
+			'vatCents' => $vat,
+			'grossCents' => ($group['netCents'] + $vat),
+		];
+
+	}//end rateLine()
 
 	/**
 	 * Compute VAT on a net cents figure using bankers' rounding (REQ-ITE-009).

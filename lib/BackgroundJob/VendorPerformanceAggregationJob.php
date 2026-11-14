@@ -3,6 +3,9 @@
 /**
  * Vendor Performance Aggregation Job
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 10 of the bookkeeping-purchase-order-3way chain (REQ-PO3W-008 /
  * REQ-VP-001 / REQ-VP-005). Monthly cron that aggregates GoodsReceiptNote
  * + ThreeWayMatch + SupplierInvoice activity per supplier into a
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -41,8 +41,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\VendorPerformanceAggregation;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -61,13 +62,11 @@ use Throwable;
  * the sweep runs for the just-closed month.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
  */
 class VendorPerformanceAggregationJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Monthly interval in seconds (30 days).
@@ -85,6 +84,13 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	private const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
 
 	/**
+	 * The sweep's summary log line: period, scorecards, administrations, failed.
+	 *
+	 * @var string
+	 */
+	private const SUMMARY = 'VendorPerformanceAggregationJob: period=%s scorecards=%d administrations=%d failed=%d';
+
+	/**
 	 * Time factory captured at construction (the parent stores it
 	 * privately so we keep our own reference for run()'s current-time
 	 * computation).
@@ -97,8 +103,8 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling and current-time reads.
-	 * @param SettingsService $settings Resolves the active OR register slug.
-	 * @param VendorPerformanceAggregation $aggregation Aggregation service (server-authoritative scoring).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param VendorPerformanceAggregationInterface $aggregation Aggregation service (server-authoritative scoring).
 	 * @param ContainerInterface $container DI container for OR ObjectService lookup.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 *
@@ -106,8 +112,8 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
-		private readonly VendorPerformanceAggregation $aggregation,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly VendorPerformanceAggregationInterface $aggregation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -118,6 +124,21 @@ class VendorPerformanceAggregationJob extends TimedJob {
 		$this->timeFactory = $time;
 
 	}//end __construct()
+
+	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
 
 	/**
 	 * Sweep every administration with SupplierInvoice activity in the
@@ -132,66 +153,104 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+	private function runAsJob($argument): void {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info('VendorPerformanceAggregationJob: OR unavailable, skipping.');
 			return;
 		}
 
+		$period = $this->currentPeriod();
+		if ($period === null) {
+			return;
+		}
+
+		$administrations = $this->activeAdministrations(period: $period);
+		if ($administrations === null) {
+			return;
+		}
+
+		$this->aggregateAll(period: $period, administrations: $administrations);
+	}//end runAsJob()
+
+	/**
+	 * The period just closed; a failing clock is logged.
+	 *
+	 * @return string|null Period code (YYYY-MM), or null when it cannot be computed.
+	 */
+	private function currentPeriod(): ?string {
 		try {
-			$now = $this->timeFactory->getDateTime();
-			$period = $this->previousMonthPeriod(now: $now);
+			return $this->previousMonthPeriod(now: $this->timeFactory->getDateTime());
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'VendorPerformanceAggregationJob: failed to compute period',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
+	}//end currentPeriod()
 
+	/**
+	 * The administrations active in the period; a failing lookup is logged.
+	 *
+	 * @param string $period Period code (YYYY-MM).
+	 *
+	 * @return array<int,string>|null Administration ids, or null when discovery failed.
+	 */
+	private function activeAdministrations(string $period): ?array {
 		try {
-			$administrations = $this->discoverAdministrationsForPeriod(period: $period);
+			return $this->discoverAdministrationsForPeriod(period: $period);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'VendorPerformanceAggregationJob: failed to discover administrations',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
+	}//end activeAdministrations()
 
+	/**
+	 * Aggregate every administration, continuing past failures, then log the summary.
+	 *
+	 * @param string            $period          Period code (YYYY-MM).
+	 * @param array<int,string> $administrations Administration ids.
+	 *
+	 * @return void
+	 */
+	private function aggregateAll(string $period, array $administrations): void {
 		$totalScorecards = 0;
 		$failedAdmins = 0;
 		foreach ($administrations as $administrationId) {
-			try {
-				$scorecards = $this->aggregation->aggregateAdministrationForPeriod(
-					administrationId: $administrationId,
-					period:           $period
-				);
-				$totalScorecards += count($scorecards);
-			} catch (Throwable $e) {
+			$scorecards = $this->aggregateOne(administrationId: $administrationId, period: $period);
+			if ($scorecards === null) {
 				$failedAdmins++;
-				$this->logger->error(
-					'VendorPerformanceAggregationJob: aggregation failed for administration',
-					[
-						'administrationId' => $administrationId,
-						'period' => $period,
-						'exception' => $e->getMessage(),
-					]
-				);
+				continue;
 			}
+
+			$totalScorecards += $scorecards;
 		}
 
-		$this->logger->info(
-			sprintf(
-				'VendorPerformanceAggregationJob: period=%s scorecards=%d administrations=%d failed=%d',
-				$period,
-				$totalScorecards,
-				count($administrations),
-				$failedAdmins
-			)
-		);
+		$this->logger->info(sprintf(self::SUMMARY, $period, $totalScorecards, count($administrations), $failedAdmins));
+	}//end aggregateAll()
 
-	}//end run()
+	/**
+	 * Aggregate one administration; a failure is logged.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $period           Period code (YYYY-MM).
+	 *
+	 * @return int|null The number of scorecards written, or null when aggregation failed.
+	 */
+	private function aggregateOne(string $administrationId, string $period): ?int {
+		try {
+			return count($this->aggregation->aggregateAdministrationForPeriod(administrationId: $administrationId, period: $period));
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'VendorPerformanceAggregationJob: aggregation failed for administration',
+				['administrationId' => $administrationId, 'period' => $period, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end aggregateOne()
 
 	/**
 	 * Compute the YYYY-MM code of the calendar month before $now.
@@ -222,46 +281,103 @@ class VendorPerformanceAggregationJob extends TimedJob {
 			return [];
 		}
 
-		$from = $period . '-01';
-		$to = (new DateTimeImmutable($from))->modify('last day of this month')->format('Y-m-d');
-
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
-			->setRegister($this->settings->getRegisterSlug())
-			->setSchema(self::SCHEMA_SUPPLIER_INVOICE)
-			->findAll(['filters' => []]);
-
+		$window = self::monthWindow(period: $period);
 		$administrations = [];
-		foreach ($rows as $row) {
-			$data = $row;
-			if (is_array($row) === false) {
-				if (method_exists($row, 'jsonSerialize') === true) {
-					$serialized = $row->jsonSerialize();
-					if (is_array($serialized) === true) {
-						$data = $serialized;
-					} else {
-						continue;
-					}
-				} else {
-					continue;
-				}
+		foreach ($this->supplierInvoiceRows() as $row) {
+			$admin = $this->administrationInWindow(data: self::rowData(row: $row), window: $window);
+			if ($admin !== '') {
+				$administrations[$admin] = true;
 			}
-
-			$admin = trim((string)($data['administrationId'] ?? ''));
-			if ($admin === '') {
-				continue;
-			}
-
-			$invoiceDate = $this->dateOnly(iso: (string)($data['invoiceDate'] ?? ''));
-			if ($invoiceDate === '' || $invoiceDate < $from || $invoiceDate > $to) {
-				continue;
-			}
-
-			$administrations[$admin] = true;
-		}//end foreach
+		}
 
 		return array_keys($administrations);
 	}//end discoverAdministrationsForPeriod()
+
+	/**
+	 * The first and last day (YYYY-MM-DD) of a period.
+	 *
+	 * @param string $period Period code (YYYY-MM).
+	 *
+	 * @return array{from: string, to: string}
+	 */
+	private static function monthWindow(string $period): array {
+		$from = $period . '-01';
+		$to = (new DateTimeImmutable($from))->modify('last day of this month')->format('Y-m-d');
+
+		return ['from' => $from, 'to' => $to];
+	}//end monthWindow()
+
+	/**
+	 * Every SupplierInvoice row on the configured register.
+	 *
+	 * @return mixed What findAll answers.
+	 */
+	private function supplierInvoiceRows(): mixed {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+		return $objectService
+			->setRegister($this->registerLocation->getRegisterSlug())
+			->setSchema(self::SCHEMA_SUPPLIER_INVOICE)
+			->findAll(['filters' => []]);
+	}//end supplierInvoiceRows()
+
+	/**
+	 * A row as an array: an array as is, an object through jsonSerialize(), else null.
+	 *
+	 * @param mixed $row A SupplierInvoice row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function rowData(mixed $row): ?array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (method_exists($row, 'jsonSerialize') === false) {
+			return null;
+		}
+
+		$serialized = $row->jsonSerialize();
+		if (is_array($serialized) === true) {
+			return $serialized;
+		}
+
+		return null;
+	}//end rowData()
+
+	/**
+	 * The row's administration when its invoiceDate falls inside the window, else ''.
+	 *
+	 * @param array<string,mixed>|null       $data   The row data, or null for an unreadable row.
+	 * @param array{from: string, to: string} $window The period's first and last day.
+	 *
+	 * @return string
+	 */
+	private function administrationInWindow(?array $data, array $window): string {
+		if ($data === null) {
+			return '';
+		}
+
+		$admin = trim((string)($data['administrationId'] ?? ''));
+		$invoiceDate = $this->dateOnly(iso: (string)($data['invoiceDate'] ?? ''));
+		if ($admin === '' || self::inWindow(date: $invoiceDate, window: $window) === false) {
+			return '';
+		}
+
+		return $admin;
+	}//end administrationInWindow()
+
+	/**
+	 * Whether a non-empty YYYY-MM-DD date lies within the window (both ends inclusive).
+	 *
+	 * @param string                          $date   The date, or ''.
+	 * @param array{from: string, to: string} $window The period's first and last day.
+	 *
+	 * @return bool
+	 */
+	private static function inWindow(string $date, array $window): bool {
+		return $date !== '' && $date >= $window['from'] && $date <= $window['to'];
+	}//end inWindow()
 
 	/**
 	 * Reduce an ISO timestamp to its date component.

@@ -3,6 +3,9 @@
 /**
  * Budget Grid Reader
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The OpenRegister half of the begroting grid (`budget-grid-view`,
  * REQ-BGV-001/002/003/009) — the year-basis screen rows-from-`LedgerGroup`,
  * columns-from-a-period-range view the user asked for. This class resolves
@@ -61,9 +64,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -71,10 +71,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\Contracts\BudgetGridReaderInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Resolves the begroting grid's row tree, column list, and past/future
@@ -82,7 +81,7 @@ use Throwable;
  *
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-009
  */
-class BudgetGridReader {
+class BudgetGridReader implements BudgetGridReaderInterface {
 	/**
 	 * Ledger group schema slug.
 	 *
@@ -171,13 +170,61 @@ class BudgetGridReader {
 	public function loadGrid(string $administrationId, string $startPeriod, string $endPeriod, string $granularity): array {
 		$rowTree = $this->rowsFor(administrationId: $administrationId);
 		$columns = $this->columnsFor(range: ['start' => $startPeriod, 'end' => $endPeriod], granularity: $granularity);
+		$columns = $this->markPastColumns(columns: $columns, administrationId: $administrationId);
 
+		$annualBudgetIdByYear = $this->defaultBudgetsByYear(columns: $columns, administrationId: $administrationId);
+		$budgetLinesByAnnualId = $this->budgetLinesByAnnualId(annualBudgetIdByYear: $annualBudgetIdByYear);
+
+		$bvaContext = $this->budgetVsActualsReader->loadContext(
+			administrationId: $administrationId,
+			annualBudgetIds: [],
+			includeLedgerGroups: true
+		);
+		$accounts = self::accountIndexes(accounts: ($bvaContext['accounts'] ?? []));
+
+		return [
+			'rowTree' => $rowTree,
+			'columns' => $columns,
+			'bvaContext' => $bvaContext,
+			'accountTypeByNumber' => $accounts['typeByNumber'],
+			'accountByNumber' => $accounts['byNumber'],
+			'annualBudgetIdByYear' => $annualBudgetIdByYear,
+			'budgetLinesByFiscalYear' => self::linesByFiscalYear(
+				annualBudgetIdByYear: $annualBudgetIdByYear,
+				linesByAnnualId: $budgetLinesByAnnualId
+			),
+		];
+
+	}//end loadGrid()
+
+	/**
+	 * Flag each column `isPast` against the administration's closed periods.
+	 *
+	 * @param array<int,array<string,mixed>> $columns          The columns.
+	 * @param string                         $administrationId The administration.
+	 *
+	 * @return array<int,array<string,mixed>> The columns, flagged.
+	 */
+	private function markPastColumns(array $columns, string $administrationId): array {
 		$fiscalPeriods = $this->query(schema: self::SCHEMA_FISCAL_PERIOD, filters: ['administrationId' => $administrationId]);
 		$pastKeys = $this->pastColumnKeys(columns: $columns, fiscalPeriods: $fiscalPeriods);
 		foreach ($columns as $index => $column) {
 			$columns[$index]['isPast'] = (($pastKeys[$column['key']] ?? false) === true);
 		}
 
+		return $columns;
+
+	}//end markPastColumns()
+
+	/**
+	 * The default AnnualBudget id (or null) of every fiscal year the columns touch.
+	 *
+	 * @param array<int,array<string,mixed>> $columns          The columns.
+	 * @param string                         $administrationId The administration.
+	 *
+	 * @return array<int|string,string|null> Fiscal year => AnnualBudget id or null.
+	 */
+	private function defaultBudgetsByYear(array $columns, string $administrationId): array {
 		$fiscalYears = [];
 		foreach ($columns as $column) {
 			foreach ($column['fiscalYears'] as $year) {
@@ -186,73 +233,91 @@ class BudgetGridReader {
 		}
 
 		$annualBudgets = $this->query(schema: self::SCHEMA_ANNUAL_BUDGET, filters: ['administrationId' => $administrationId]);
-		$annualBudgetIdByYear = $this->resolveDefaultAnnualBudgets(annualBudgets: $annualBudgets, fiscalYears: array_keys($fiscalYears));
+		return $this->resolveDefaultAnnualBudgets(annualBudgets: $annualBudgets, fiscalYears: array_keys($fiscalYears));
 
+	}//end defaultBudgetsByYear()
+
+	/**
+	 * The BudgetLines of the resolved AnnualBudgets, grouped by AnnualBudget id;
+	 * no query at all when no year has a default budget.
+	 *
+	 * @param array<int|string,string|null> $annualBudgetIdByYear Fiscal year => AnnualBudget id or null.
+	 *
+	 * @return array<string,list<array<string,mixed>>>
+	 */
+	private function budgetLinesByAnnualId(array $annualBudgetIdByYear): array {
 		$relevantAnnualBudgetIds = array_values(array_filter($annualBudgetIdByYear, static fn ($id) => $id !== null));
+		if ($relevantAnnualBudgetIds === []) {
+			return [];
+		}
 
-		$budgetLinesByAnnualId = [];
-		if ($relevantAnnualBudgetIds !== []) {
-			$budgetLines = $this->query(
-				schema: self::SCHEMA_BUDGET_LINE,
-				filters: ['annualBudgetId' => ['in' => $relevantAnnualBudgetIds]]
-			);
-			foreach ($budgetLines as $line) {
-				$ref = (string)($line['annualBudgetId'] ?? '');
-				if ($ref === '') {
-					continue;
-				}
-
-				$budgetLinesByAnnualId[$ref][] = $line;
+		$grouped = [];
+		$budgetLines = $this->query(
+			schema: self::SCHEMA_BUDGET_LINE,
+			filters: ['annualBudgetId' => ['in' => $relevantAnnualBudgetIds]]
+		);
+		foreach ($budgetLines as $line) {
+			$ref = (string)($line['annualBudgetId'] ?? '');
+			if ($ref !== '') {
+				$grouped[$ref][] = $line;
 			}
 		}
 
-		$bvaContext = $this->budgetVsActualsReader->loadContext(
-			administrationId: $administrationId,
-			annualBudgetIds: [],
-			includeLedgerGroups: true
-		);
+		return $grouped;
 
-		$accountByNumber = [];
-		$accountTypeByNumber = [];
-		foreach (($bvaContext['accounts'] ?? []) as $account) {
+	}//end budgetLinesByAnnualId()
+
+	/**
+	 * Accounts by number, and account types by number (non-empty types only);
+	 * accounts without a number are skipped.
+	 *
+	 * @param array<int,array<string,mixed>> $accounts The accounts.
+	 *
+	 * @return array{byNumber: array<string,array<string,mixed>>, typeByNumber: array<string,string>}
+	 */
+	private static function accountIndexes(array $accounts): array {
+		$indexes = ['byNumber' => [], 'typeByNumber' => []];
+		foreach ($accounts as $account) {
 			$number = (string)($account['accountNumber'] ?? '');
 			if ($number === '') {
 				continue;
 			}
 
-			$accountByNumber[$number] = $account;
+			$indexes['byNumber'][$number] = $account;
 			$type = (string)($account['accountType'] ?? '');
 			if ($type !== '') {
-				$accountTypeByNumber[$number] = $type;
+				$indexes['typeByNumber'][$number] = $type;
 			}
 		}
 
-		// BudgetLinesByFiscalYear: for each fiscal year touched by the range,
-		// the slice of budgetLines belonging to THAT year's default
-		// AnnualBudget only. Kept separate per year so a range crossing a
-		// fiscal-year boundary never lets one year's BudgetLine shadow
-		// another's for the same LedgerGroup (design.md §2b).
-		$budgetLinesByFiscalYear = [];
+		return $indexes;
+
+	}//end accountIndexes()
+
+	/**
+	 * For each fiscal year touched by the range, the slice of budgetLines
+	 * belonging to THAT year's default AnnualBudget only (null when the year
+	 * has none). Kept separate per year so a range crossing a fiscal-year
+	 * boundary never lets one year's BudgetLine shadow another's for the same
+	 * LedgerGroup (design.md §2b).
+	 *
+	 * @param array<int|string,string|null>           $annualBudgetIdByYear Fiscal year => AnnualBudget id or null.
+	 * @param array<string,list<array<string,mixed>>> $linesByAnnualId      Lines by AnnualBudget id.
+	 *
+	 * @return array<int|string,list<array<string,mixed>>|null>
+	 */
+	private static function linesByFiscalYear(array $annualBudgetIdByYear, array $linesByAnnualId): array {
+		$byYear = [];
 		foreach ($annualBudgetIdByYear as $year => $annualBudgetId) {
-			if ($annualBudgetId === null) {
-				$budgetLinesByFiscalYear[$year] = null;
-				continue;
+			$byYear[$year] = null;
+			if ($annualBudgetId !== null) {
+				$byYear[$year] = ($linesByAnnualId[$annualBudgetId] ?? []);
 			}
-
-			$budgetLinesByFiscalYear[$year] = ($budgetLinesByAnnualId[$annualBudgetId] ?? []);
 		}
 
-		return [
-			'rowTree' => $rowTree,
-			'columns' => $columns,
-			'bvaContext' => $bvaContext,
-			'accountTypeByNumber' => $accountTypeByNumber,
-			'accountByNumber' => $accountByNumber,
-			'annualBudgetIdByYear' => $annualBudgetIdByYear,
-			'budgetLinesByFiscalYear' => $budgetLinesByFiscalYear,
-		];
+		return $byYear;
 
-	}//end loadGrid()
+	}//end linesByFiscalYear()
 
 	/**
 	 * The current administration's `LedgerGroup` tree, fetched once
@@ -274,73 +339,118 @@ class BudgetGridReader {
 	 */
 	public function rowsFor(string $administrationId): array {
 		$rows = $this->query(schema: self::SCHEMA_LEDGER_GROUP, filters: ['administrationId' => $administrationId]);
+		$index = self::indexEntries(rows: $rows);
+		$entries = $index['entries'];
+		$tree = self::linkTree(entries: $entries, keyToIndex: $index['keyToIndex']);
 
+		$rootIndexes = self::sortByOrder(indexes: $tree['rootIndexes'], entries: $entries);
+		$childrenByIndex = $tree['childrenByIndex'];
+		foreach ($childrenByIndex as $parentIndex => $children) {
+			$childrenByIndex[$parentIndex] = self::sortByOrder(indexes: $children, entries: $entries);
+		}
+
+		return ['entries' => $entries, 'keyToIndex' => $index['keyToIndex'], 'childrenByIndex' => $childrenByIndex, 'rootIndexes' => $rootIndexes];
+
+	}//end rowsFor()
+
+	/**
+	 * The flat entries of the LedgerGroup rows and the id/slug => index map.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The LedgerGroup rows.
+	 *
+	 * @return array{entries: list<array<string,mixed>>, keyToIndex: array<string,int>}
+	 */
+	private static function indexEntries(array $rows): array {
 		$entries = [];
 		$keyToIndex = [];
 		foreach ($rows as $row) {
-			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
-			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
+			$entry = self::ledgerEntry(row: $row);
 			$index = count($entries);
-
-			$parentRef = null;
-			if (($row['parentLedgerGroupId'] ?? null) !== null) {
-				$parentRef = (string)$row['parentLedgerGroupId'];
+			$entries[] = $entry;
+			if ($entry['id'] !== '') {
+				$keyToIndex[$entry['id']] = $index;
 			}
 
-			$entries[] = [
-				'id' => $id,
-				'slug' => $slug,
-				'code' => (string)($row['code'] ?? ''),
-				'name' => (string)($row['name'] ?? ''),
-				'order' => (int)($row['order'] ?? 0),
-				'parentRef' => $parentRef,
-			];
-
-			if ($id !== '') {
-				$keyToIndex[$id] = $index;
-			}
-
-			if ($slug !== '' && $slug !== $id) {
-				$keyToIndex[$slug] = $index;
+			if ($entry['slug'] !== '' && $entry['slug'] !== $entry['id']) {
+				$keyToIndex[$entry['slug']] = $index;
 			}
 		}
 
-		$childrenByIndex = [];
-		$rootIndexes = [];
+		return ['entries' => $entries, 'keyToIndex' => $keyToIndex];
+
+	}//end indexEntries()
+
+	/**
+	 * The entry of one LedgerGroup row.
+	 *
+	 * @param array<string,mixed> $row The row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function ledgerEntry(array $row): array {
+		$parentRef = null;
+		if (($row['parentLedgerGroupId'] ?? null) !== null) {
+			$parentRef = (string)$row['parentLedgerGroupId'];
+		}
+
+		return [
+			'id' => (string)($row['@self']['id'] ?? $row['id'] ?? ''),
+			'slug' => (string)($row['@self']['slug'] ?? $row['slug'] ?? ''),
+			'code' => (string)($row['code'] ?? ''),
+			'name' => (string)($row['name'] ?? ''),
+			'order' => (int)($row['order'] ?? 0),
+			'parentRef' => $parentRef,
+		];
+
+	}//end ledgerEntry()
+
+	/**
+	 * Link entries to their parents. An entry without a parent reference, or
+	 * whose parent does not resolve, is a root rather than silently dropped
+	 * from the tree (same convention as
+	 * BudgetVsActualsReader::buildLedgerGroupIndex()).
+	 *
+	 * @param list<array<string,mixed>> $entries    The entries.
+	 * @param array<string,int>         $keyToIndex Id/slug => entry index.
+	 *
+	 * @return array{childrenByIndex: array<int,list<int>>, rootIndexes: list<int>} Unsorted.
+	 */
+	private static function linkTree(array $entries, array $keyToIndex): array {
+		$tree = ['childrenByIndex' => [], 'rootIndexes' => []];
 		foreach ($entries as $index => $entry) {
-			$parentRef = $entry['parentRef'];
-			if ($parentRef === null || $parentRef === '') {
-				$rootIndexes[] = $index;
-				continue;
+			$parentIndex = null;
+			if ($entry['parentRef'] !== null && $entry['parentRef'] !== '') {
+				$parentIndex = ($keyToIndex[$entry['parentRef']] ?? null);
 			}
 
-			$parentIndex = ($keyToIndex[$parentRef] ?? null);
 			if ($parentIndex === null) {
-				// Unresolved parent reference — treated as a root rather than
-				// silently dropped from the tree (same convention as
-				// BudgetVsActualsReader::buildLedgerGroupIndex()).
-				$rootIndexes[] = $index;
+				$tree['rootIndexes'][] = $index;
 				continue;
 			}
 
-			$childrenByIndex[$parentIndex][] = $index;
+			$tree['childrenByIndex'][$parentIndex][] = $index;
 		}
 
+		return $tree;
+
+	}//end linkTree()
+
+	/**
+	 * Entry indexes sorted by the entries' `order` (stable).
+	 *
+	 * @param list<int>                 $indexes The indexes.
+	 * @param list<array<string,mixed>> $entries The entries.
+	 *
+	 * @return list<int>
+	 */
+	private static function sortByOrder(array $indexes, array $entries): array {
 		usort(
-			$rootIndexes,
+			$indexes,
 			fn (int $a, int $b): int => ($entries[$a]['order'] <=> $entries[$b]['order'])
 		);
-		foreach ($childrenByIndex as $parentIndex => $children) {
-			usort(
-				$children,
-				fn (int $a, int $b): int => ($entries[$a]['order'] <=> $entries[$b]['order'])
-			);
-			$childrenByIndex[$parentIndex] = $children;
-		}
+		return $indexes;
 
-		return ['entries' => $entries, 'keyToIndex' => $keyToIndex, 'childrenByIndex' => $childrenByIndex, 'rootIndexes' => $rootIndexes];
-
-	}//end rowsFor()
+	}//end sortByOrder()
 
 	/**
 	 * Generate the column list for a period range at a granularity
@@ -354,20 +464,12 @@ class BudgetGridReader {
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 */
 	public function columnsFor(array $range, string $granularity): array {
-		$start = $this->parseYearMonth(value: (string)($range['start'] ?? ''));
-		$end = $this->parseYearMonth(value: (string)($range['end'] ?? ''));
-		if ($start === null || $end === null) {
+		$ordinals = $this->rangeOrdinals(range: $range);
+		if ($ordinals === null) {
 			return [];
 		}
 
-		// 0-based month ordinal (year*12 + (month-1)) — MUST match
-		// buildColumn()'s own decode (`$year = intdiv($ordinal, 12); $month =
-		// ($ordinal % 12) + 1`), which assumes ordinal 0 = January.
-		$startOrdinal = (($start[0] * 12) + ($start[1] - 1));
-		$endOrdinal = (($end[0] * 12) + ($end[1] - 1));
-		if ($startOrdinal > $endOrdinal) {
-			return [];
-		}
+		[$startOrdinal, $endOrdinal] = $ordinals;
 
 		$step = match ($granularity) {
 			'quarter' => 3,
@@ -375,14 +477,7 @@ class BudgetGridReader {
 			default => 1,
 		};
 
-		// Align the first column's start to a period boundary so a
-		// mid-quarter/mid-year start still produces a whole aligned column
-		// (a quarter column is always Q1/Q2/Q3/Q4, never a partial span).
-		$alignedStartOrdinal = $startOrdinal;
-		if ($step > 1) {
-			$offset = ($startOrdinal % $step);
-			$alignedStartOrdinal = ($startOrdinal - $offset);
-		}
+		$alignedStartOrdinal = $this->alignedOrdinal(startOrdinal: $startOrdinal, step: $step);
 
 		$columns = [];
 		for ($ordinal = $alignedStartOrdinal; $ordinal <= $endOrdinal; $ordinal += $step) {
@@ -392,6 +487,57 @@ class BudgetGridReader {
 		return $columns;
 
 	}//end columnsFor()
+
+	/**
+	 * The 0-based month ordinals of a range's start and end, or null when unparseable or reversed.
+	 *
+	 * @param array{start:string,end:string} $range `YYYY-MM` start/end, inclusive.
+	 *
+	 * @return array{0:int,1:int}|null
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function rangeOrdinals(array $range): array|null {
+		$start = $this->parseYearMonth(value: (string)($range['start'] ?? ''));
+		$end = $this->parseYearMonth(value: (string)($range['end'] ?? ''));
+		if ($start === null || $end === null) {
+			return null;
+		}
+
+		// 0-based month ordinal (year*12 + (month-1)) — MUST match
+		// buildColumn()'s own decode (`$year = intdiv($ordinal, 12); $month =
+		// ($ordinal % 12) + 1`), which assumes ordinal 0 = January.
+		$startOrdinal = (($start[0] * 12) + ($start[1] - 1));
+		$endOrdinal = (($end[0] * 12) + ($end[1] - 1));
+		if ($startOrdinal > $endOrdinal) {
+			return null;
+		}
+
+		return [$startOrdinal, $endOrdinal];
+	}//end rangeOrdinals()
+
+	/**
+	 * The first column's start, aligned down to a period boundary.
+	 *
+	 * A mid-quarter/mid-year start still produces a whole aligned column
+	 * (a quarter column is always Q1/Q2/Q3/Q4, never a partial span).
+	 *
+	 * @param int $startOrdinal The range's start ordinal.
+	 * @param int $step         Months per column.
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
+	 */
+	private function alignedOrdinal(int $startOrdinal, int $step): int {
+		$alignedStartOrdinal = $startOrdinal;
+		if ($step > 1) {
+			$offset = ($startOrdinal % $step);
+			$alignedStartOrdinal = ($startOrdinal - $offset);
+		}
+
+		return $alignedStartOrdinal;
+	}//end alignedOrdinal()
 
 	/**
 	 * The set of column keys that are "past" per REQ-BGV-003 / design.md
@@ -407,41 +553,67 @@ class BudgetGridReader {
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
 	 */
 	public function pastColumnKeys(array $columns, array $fiscalPeriods): array {
-		$closedPeriods = [];
-		foreach ($fiscalPeriods as $period) {
-			$state = (string)($period['state'] ?? '');
-			if ((self::PAST_STATES[$state] ?? false) !== true) {
-				continue;
-			}
-
-			$closedPeriods[] = [
-				'startDate' => (string)($period['startDate'] ?? ''),
-				'endDate' => (string)($period['endDate'] ?? ''),
-			];
-		}
+		$closedPeriods = self::closedPeriods(fiscalPeriods: $fiscalPeriods);
 
 		$past = [];
 		foreach ($columns as $column) {
-			$columnStart = (string)$column['startDate'];
-			$columnEnd = (string)$column['endDate'];
-
-			foreach ($closedPeriods as $period) {
-				if ($period['startDate'] === '' || $period['endDate'] === '') {
-					continue;
-				}
-
-				$exactMatch = ($period['startDate'] === $columnStart && $period['endDate'] === $columnEnd);
-				$contained = ($period['startDate'] <= $columnStart && $columnEnd <= $period['endDate']);
-				if ($exactMatch === true || $contained === true) {
-					$past[$column['key']] = true;
-					break;
-				}
+			if (self::coveredByAny(column: $column, periods: $closedPeriods) === true) {
+				$past[$column['key']] = true;
 			}
 		}
 
 		return $past;
 
 	}//end pastColumnKeys()
+
+	/**
+	 * The start/end dates of the periods in a past state; a period with a
+	 * missing start or end date covers nothing and is left out.
+	 *
+	 * @param array<int,array<string,mixed>> $fiscalPeriods The FiscalPeriods.
+	 *
+	 * @return list<array{startDate: string, endDate: string}>
+	 */
+	private static function closedPeriods(array $fiscalPeriods): array {
+		$closed = [];
+		foreach ($fiscalPeriods as $period) {
+			$state = (string)($period['state'] ?? '');
+			$dates = [
+				'startDate' => (string)($period['startDate'] ?? ''),
+				'endDate' => (string)($period['endDate'] ?? ''),
+			];
+			if ((self::PAST_STATES[$state] ?? false) === true && $dates['startDate'] !== '' && $dates['endDate'] !== '') {
+				$closed[] = $dates;
+			}
+		}
+
+		return $closed;
+
+	}//end closedPeriods()
+
+	/**
+	 * Whether a column lies within any of the periods.
+	 *
+	 * An exact-span match is a special case of containment, so containment
+	 * alone decides (a closed period equal to or coarser than the column).
+	 *
+	 * @param array<string,mixed>                             $column  The column.
+	 * @param list<array{startDate: string, endDate: string}> $periods The closed periods.
+	 *
+	 * @return bool
+	 */
+	private static function coveredByAny(array $column, array $periods): bool {
+		$columnStart = (string)$column['startDate'];
+		$columnEnd = (string)$column['endDate'];
+		foreach ($periods as $period) {
+			if ($period['startDate'] <= $columnStart && $columnEnd <= $period['endDate']) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end coveredByAny()
 
 	/**
 	 * Build one column descriptor for a `month`/`quarter`/`year` span
@@ -454,27 +626,79 @@ class BudgetGridReader {
 	 * @return array{key:string,label:string,granularity:string,startDate:string,endDate:string,monthKeys:list<string>,isPast:bool,fiscalYears:list<int>}
 	 */
 	private function buildColumn(int $startOrdinal, int $step, string $granularity): array {
+		$months = self::spanMonths(startOrdinal: $startOrdinal, step: $step);
+		$dates = self::spanDates(startOrdinal: $startOrdinal, step: $step);
+		[$key, $label] = self::columnKeyAndLabel(startOrdinal: $startOrdinal, granularity: $granularity);
+
+		return [
+			'key' => $key,
+			'label' => $label,
+			'granularity' => $granularity,
+			'startDate' => $dates['startDate'],
+			'endDate' => $dates['endDate'],
+			'monthKeys' => $months['monthKeys'],
+			'isPast' => false,
+			'fiscalYears' => $months['fiscalYears'],
+		];
+
+	}//end buildColumn()
+
+	/**
+	 * The `yyyy-mm` keys and the distinct fiscal years of a span.
+	 *
+	 * @param integer $startOrdinal The span's first month, as `year*12 + (month-1)`.
+	 * @param integer $step         Span length in months.
+	 *
+	 * @return array{monthKeys: list<string>, fiscalYears: list<int>}
+	 */
+	private static function spanMonths(int $startOrdinal, int $step): array {
 		$monthKeys = [];
 		$fiscalYears = [];
 		for ($i = 0; $i < $step; $i++) {
 			$ordinal = ($startOrdinal + $i);
 			$year = intdiv($ordinal, 12);
-			$month = (($ordinal % 12) + 1);
-			$monthKeys[] = sprintf('%04d-%02d', $year, $month);
+			$monthKeys[] = sprintf('%04d-%02d', $year, (($ordinal % 12) + 1));
 			$fiscalYears[$year] = true;
 		}
 
-		$firstYear = intdiv($startOrdinal, 12);
-		$firstMonth = (($startOrdinal % 12) + 1);
+		return ['monthKeys' => $monthKeys, 'fiscalYears' => array_keys($fiscalYears)];
+
+	}//end spanMonths()
+
+	/**
+	 * The first and last day of a span.
+	 *
+	 * @param integer $startOrdinal The span's first month, as `year*12 + (month-1)`.
+	 * @param integer $step         Span length in months.
+	 *
+	 * @return array{startDate: string, endDate: string}
+	 */
+	private static function spanDates(int $startOrdinal, int $step): array {
 		$lastOrdinal = ($startOrdinal + $step - 1);
 		$lastYear = intdiv($lastOrdinal, 12);
 		$lastMonth = (($lastOrdinal % 12) + 1);
 		$lastDay = (int)date('t', mktime(0, 0, 0, $lastMonth, 1, $lastYear));
 
-		$startDate = sprintf('%04d-%02d-01', $firstYear, $firstMonth);
-		$endDate = sprintf('%04d-%02d-%02d', $lastYear, $lastMonth, $lastDay);
+		return [
+			'startDate' => sprintf('%04d-%02d-01', intdiv($startOrdinal, 12), (($startOrdinal % 12) + 1)),
+			'endDate' => sprintf('%04d-%02d-%02d', $lastYear, $lastMonth, $lastDay),
+		];
 
-		[$key, $label] = match ($granularity) {
+	}//end spanDates()
+
+	/**
+	 * The column key and label of a span starting at a month.
+	 *
+	 * @param integer $startOrdinal The span's first month, as `year*12 + (month-1)`.
+	 * @param string  $granularity  `month`, `quarter`, or `year`.
+	 *
+	 * @return array{0: string, 1: string}
+	 */
+	private static function columnKeyAndLabel(int $startOrdinal, string $granularity): array {
+		$firstYear = intdiv($startOrdinal, 12);
+		$firstMonth = (($startOrdinal % 12) + 1);
+
+		return match ($granularity) {
 			'quarter' => [
 				sprintf('%04d-Q%d', $firstYear, intdiv($firstMonth - 1, 3) + 1),
 				sprintf('Q%d %04d', intdiv($firstMonth - 1, 3) + 1, $firstYear),
@@ -486,18 +710,7 @@ class BudgetGridReader {
 			],
 		};
 
-		return [
-			'key' => $key,
-			'label' => $label,
-			'granularity' => $granularity,
-			'startDate' => $startDate,
-			'endDate' => $endDate,
-			'monthKeys' => $monthKeys,
-			'isPast' => false,
-			'fiscalYears' => array_keys($fiscalYears),
-		];
-
-	}//end buildColumn()
+	}//end columnKeyAndLabel()
 
 	/**
 	 * Resolve the `isDefault: true` `AnnualBudget` id for every fiscal year
@@ -565,7 +778,7 @@ class BudgetGridReader {
 	 * Run one property-filtered query against the shillinq register.
 	 *
 	 * A failure is logged and answered as an empty result set: a missing
-	 * schema must not stop the grid from rendering whatever it can.
+	 * schema must not stop the reader from computing whatever it can.
 	 *
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters Property filters (never `id`).
@@ -573,50 +786,12 @@ class BudgetGridReader {
 	 * @return list<array<string,mixed>> The matching records as plain arrays.
 	 */
 	private function query(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BudgetGridReader: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$query = new RegisterQuery(
+			register: new ShillinqRegister(appConfig: $this->appConfig, objectService: $this->objectService),
+			failureLog: new QueryFailureLog(logger: $this->logger, component: 'BudgetGridReader'),
+		);
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
-			}
-		}
-
-		return $result;
+		return $query->rows(schema: $schema, filters: $filters);
 
 	}//end query()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config.
-	 *
-	 * @return string The register slug, defaulting to `shillinq`.
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-
-	}//end register()
 }//end class

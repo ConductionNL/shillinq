@@ -1,0 +1,174 @@
+{
+    "linear-rounding": [
+        {
+            "month": "2026-11",
+            "start": "2026-11-01",
+            "end": "2026-11-30",
+            "cents": 14142,
+            "bookCents": 85858
+        },
+        {
+            "month": "2026-12",
+            "start": "2026-12-01",
+            "end": "2026-12-31",
+            "cents": 14142,
+            "bookCents": 71716
+        },
+        {
+            "month": "2027-01",
+            "start": "2027-01-01",
+            "end": "2027-01-31",
+            "cents": 14142,
+            "bookCents": 57574
+        },
+        {
+            "month": "2027-02",
+            "start": "2027-02-01",
+            "end": "2027-02-28",
+            "cents": 14142,
+            "bookCents": 43432
+        },
+        {
+            "month": "2027-03",
+            "start": "2027-03-01",
+            "end": "2027-03-31",
+            "cents": 14142,
+            "bookCents": 29290
+        },
+        {
+            "month": "2027-04",
+            "start": "2027-04-01",
+            "end": "2027-04-30",
+            "cents": 14142,
+            "bookCents": 15148
+        },
+        {
+            "month": "2027-05",
+            "start": "2027-05-01",
+            "end": "2027-05-31",
+            "cents": 14148,
+            "bookCents": 1000
+        }
+    ],
+    "units": [
+        {
+            "month": "2026-01",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "cents": 1666,
+            "bookCents": 3334
+        },
+        {
+            "month": "2026-02",
+            "start": "2026-02-01",
+            "end": "2026-02-28",
+            "cents": 1666,
+            "bookCents": 1668
+        },
+        {
+            "month": "2026-03",
+            "start": "2026-03-01",
+            "end": "2026-03-31",
+            "cents": 1668,
+            "bookCents": 0
+        }
+    ],
+    "degressive": [
+        {
+            "month": "2025-12",
+            "start": "2025-12-01",
+            "end": "2025-12-31",
+            "cents": 3000,
+            "bookCents": 117000
+        },
+        {
+            "month": "2026-01",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "cents": 2925,
+            "bookCents": 114075
+        },
+        {
+            "month": "2026-02",
+            "start": "2026-02-01",
+            "end": "2026-02-28",
+            "cents": 2852,
+            "bookCents": 111223
+        },
+        {
+            "month": "2026-03",
+            "start": "2026-03-01",
+            "end": "2026-03-31",
+            "cents": 2781,
+            "bookCents": 108442
+        },
+        {
+            "month": "2026-04",
+            "start": "2026-04-01",
+            "end": "2026-04-30",
+            "cents": 88442,
+            "bookCents": 20000
+        }
+    ],
+    "degressive-exhausted": [
+        {
+            "month": "2026-02",
+            "start": "2026-02-01",
+            "end": "2026-02-28",
+            "cents": 10,
+            "bookCents": 990
+        },
+        {
+            "month": "2026-03",
+            "start": "2026-03-01",
+            "end": "2026-03-31",
+            "cents": 0,
+            "bookCents": 990
+        },
+        {
+            "month": "2026-04",
+            "start": "2026-04-01",
+            "end": "2026-04-30",
+            "cents": 0,
+            "bookCents": 990
+        },
+        {
+            "month": "2026-05",
+            "start": "2026-05-01",
+            "end": "2026-05-31",
+            "cents": 0,
+            "bookCents": 990
+        }
+    ],
+    "below-residual": [
+        {
+            "month": "2026-02",
+            "start": "2026-02-01",
+            "end": "2026-02-28",
+            "cents": 0,
+            "bookCents": 500
+        },
+        {
+            "month": "2026-03",
+            "start": "2026-03-01",
+            "end": "2026-03-31",
+            "cents": 0,
+            "bookCents": 500
+        }
+    ],
+    "one-month": [
+        {
+            "month": "2026-02",
+            "start": "2026-02-01",
+            "end": "2026-02-28",
+            "cents": 999,
+            "bookCents": 0
+        }
+    ],
+    "refusals": [
+        "Depreciation method sum-of-years cannot be planned.",
+        "An asset needs at least one month of useful life left.",
+        "Degressive depreciation needs a rate above zero.",
+        "none"
+    ]
+}

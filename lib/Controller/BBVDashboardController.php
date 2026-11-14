@@ -3,6 +3,9 @@
 /**
  * Shillinq BBV Dashboard Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Thin page controller for the waterschappen BBV compliance dashboard.
  *
  * Slice 04 of the bookkeeping-waterschappen-bbv-variant chain
@@ -29,19 +32,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Dashboard\BBVComplianceWidget;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
+use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,6 +58,30 @@ use OCP\IUserSession;
  */
 class BBVDashboardController extends Controller {
 	/**
+	 * The data part of an empty envelope (before its scope and timestamp).
+	 *
+	 * @var array<string,mixed>
+	 */
+	private const EMPTY_ENVELOPE = [
+		'widgets' => [],
+		'programmes' => [],
+		'mappings' => [],
+		'counts' => [
+			'unconfigured' => 0,
+			'on-track' => 0,
+			'at-risk' => 0,
+			'non-compliant' => 0,
+		],
+		'summary' => [
+			'programmeCount' => 0,
+			'mappingCount' => 0,
+			'totalBudget' => 0,
+			'totalYtdSpend' => 0,
+			'utilization' => 0.0,
+		],
+	];
+
+	/**
 	 * Constructor for BBVDashboardController.
 	 *
 	 * @param IRequest $request The current request.
@@ -66,23 +91,24 @@ class BBVDashboardController extends Controller {
 	 *                    to localise response
 	 *                    messages (ADR-007 / slice
 	 *                    10 i18n).
-	 * @param BBVComplianceWidget $widget Envelope assembler — reads
+	 * @param BBVComplianceWidgetInterface $widget Envelope assembler — reads
 	 *                                    the slice-02 declarative
 	 *                                    aggregation, cached for 1h
 	 *                                    by ComplianceService.
-	 * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+	 * @param AdministrationContextServiceInterface $administrationContext Admin RBAC + accessibility
 	 *                                                            checks (slice 09, ADR-005)
 	 *                                                            — server-side admin scope
 	 *                                                            so cross-tenant requests
 	 *                                                            cannot read another
 	 *                                                            administration's data.
-	 * @param FiscalYearContextService $fiscalYearContext Active fiscal-year resolver
+	 * @param FiscalYearContextServiceInterface $fiscalYearContext Active fiscal-year resolver
 	 *                                                    (slice 09, REQ-BBVW-006) —
 	 *                                                    collapses the client-
 	 *                                                    supplied fiscal year to
 	 *                                                    the active window
 	 *                                                    inherited from the
 	 *                                                    Administration context.
+	 * @param TaskFieldRealisation|null $realisation The year per task field (public-sector-task-field-allocation REQ-BBV-012).
 	 *
 	 * @return void
 	 */
@@ -90,11 +116,12 @@ class BBVDashboardController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly BBVComplianceWidget $widget,
-		private readonly AdministrationContextService $administrationContext,
-		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly BBVComplianceWidgetInterface $widget,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
+		private readonly ?TaskFieldRealisation $realisation = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -165,28 +192,11 @@ class BBVDashboardController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationIdRaw = $this->request->getParam('administrationId');
-		$administrationId = null;
-		if (is_string($administrationIdRaw) === true && trim($administrationIdRaw) !== '') {
-			$administrationId = trim($administrationIdRaw);
-		}
-
-		// Server-derived default: when the client omits administrationId, fall
-		// back to the active administration from the session (REQ-MA-001).
-		if ($administrationId === null) {
-			$context = $this->administrationContext->buildContext();
-			$sessionDefault = ($context['activeAdministrationId'] ?? null);
-			if (is_string($sessionDefault) === true && $sessionDefault !== '') {
-				$administrationId = $sessionDefault;
-			}
-		}
-
 		// IDOR mask (ADR-005) — when the user lacks a valid membership we
 		// return an empty envelope rather than 403 / 404 so the dashboard
 		// never discloses the existence of other tenants.
-		if ($administrationId === null
-			|| $this->administrationContext->canAccess(administrationId: $administrationId) === false
-		) {
+		$administrationId = $this->requestedAdministration();
+		if ($administrationId === null || $this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse($this->emptyEnvelope());
 		}
 
@@ -195,19 +205,67 @@ class BBVDashboardController extends Controller {
 			return new JSONResponse($this->emptyEnvelope(administrationId: $administrationId));
 		}
 
-		$envelope = $this->widget->buildEnvelope(
-			fiscalYear: $window['fiscalYear'],
-			administrationId: $administrationId,
-		);
+		return new JSONResponse($this->scopedEnvelope(administrationId: $administrationId, window: $window));
+	}//end index()
+
+	/**
+	 * The asked-for administration (trimmed); when the client omits it, the
+	 * server-derived active administration from the session (REQ-MA-001).
+	 *
+	 * @return string|null
+	 */
+	private function requestedAdministration(): ?string {
+		$administrationIdRaw = $this->request->getParam('administrationId');
+		if (is_string($administrationIdRaw) === true && trim($administrationIdRaw) !== '') {
+			return trim($administrationIdRaw);
+		}
+
+		return $this->sessionAdministration();
+	}//end requestedAdministration()
+
+	/**
+	 * The session's active administration, when it is a non-empty string.
+	 *
+	 * @return string|null
+	 */
+	private function sessionAdministration(): ?string {
+		$sessionDefault = ($this->administrationContext->buildContext()['activeAdministrationId'] ?? null);
+		if (is_string($sessionDefault) === true && $sessionDefault !== '') {
+			return $sessionDefault;
+		}
+
+		return null;
+	}//end sessionAdministration()
+
+	/**
+	 * The widget envelope for the administration's active fiscal year, with its scope.
+	 *
+	 * @param string              $administrationId The authorised administration.
+	 * @param array<string,mixed> $window           The active fiscal-year window.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function scopedEnvelope(string $administrationId, array $window): array {
+		$envelope = $this->widget->buildEnvelope(fiscalYear: $window['fiscalYear'], administrationId: $administrationId);
 		$envelope['scope'] = [
 			'administrationId' => $administrationId,
 			'fiscalYear' => $window['fiscalYear'],
 			'startDate' => $window['startDate'],
 			'endDate' => $window['endDate'],
 		];
+		if ($this->realisation !== null) {
+			// The year per task field from posted lines, and the accounts with
+			// postings but no mapping (public-sector-task-field-allocation REQ-BBV-012).
+			$envelope['taskFieldRealisation'] = $this->realisation->forYear(
+				administrationId: $administrationId,
+				fiscalYear: (string)$window['fiscalYear'],
+				startDate: (string)$window['startDate'],
+				endDate: (string)$window['endDate']
+			);
+		}
 
-		return new JSONResponse($envelope);
-	}//end index()
+		return $envelope;
+	}//end scopedEnvelope()
 
 	/**
 	 * Empty envelope for unauthorised / cross-tenant probes.
@@ -222,23 +280,7 @@ class BBVDashboardController extends Controller {
 	 * @return array<string,mixed>
 	 */
 	private function emptyEnvelope(?string $administrationId = null): array {
-		return [
-			'widgets' => [],
-			'programmes' => [],
-			'mappings' => [],
-			'counts' => [
-				'unconfigured' => 0,
-				'on-track' => 0,
-				'at-risk' => 0,
-				'non-compliant' => 0,
-			],
-			'summary' => [
-				'programmeCount' => 0,
-				'mappingCount' => 0,
-				'totalBudget' => 0,
-				'totalYtdSpend' => 0,
-				'utilization' => 0.0,
-			],
+		return self::EMPTY_ENVELOPE + [
 			'scope' => [
 				'administrationId' => $administrationId,
 				'fiscalYear' => null,

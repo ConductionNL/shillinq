@@ -31,11 +31,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\SlotService;
-use OCA\Shillinq\Service\WidgetAuthService;
-use OCA\Shillinq\Service\WidgetService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetAuthServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -61,29 +61,55 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ShortVariable)
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; variable renames deferred pending a dedicated pass.
+ *
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class WidgetApiController extends Controller {
+	/**
+	 * Refusals of the write path that the widget explains to the visitor.
+	 *
+	 * @var array<int,array{error:string,message:string}>
+	 */
+	private const APPOINTMENT_REFUSALS = [
+		Http::STATUS_NOT_FOUND => [
+			'error' => 'service-not-found',
+			'message' => 'This service is not available for online booking.',
+		],
+		Http::STATUS_CONFLICT => [
+			'error' => 'slot-unavailable',
+			'message' => 'This slot was just booked. Please select another time.',
+		],
+	];
+
+	/**
+	 * The administration of the widget key guard() accepted; every read and
+	 * write of the request is scoped to it.
+	 *
+	 * @var string
+	 */
+	private string $keyAdministrationId = '';
+
 	/**
 	 * Construct the controller with DI dependencies.
 	 *
 	 * @param IRequest $request The HTTP request.
-	 * @param WidgetAuthService $auth API key + rate-limit gateway.
-	 * @param WidgetService $widgetService The single widget booking write path.
-	 * @param SlotService $slots Slot availability computation.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
+	 * @param WidgetAuthServiceInterface $auth API key + rate-limit gateway.
+	 * @param WidgetServiceInterface $widgetService The single widget booking write path.
+	 * @param SlotServiceInterface $slots Slot availability computation.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WidgetAuthService $auth,
-		private readonly WidgetService $widgetService,
-		private readonly SlotService $slots,
-		private readonly SettingsService $settings,
+		private readonly WidgetAuthServiceInterface $auth,
+		private readonly WidgetServiceInterface $widgetService,
+		private readonly SlotServiceInterface $slots,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -110,62 +136,99 @@ class WidgetApiController extends Controller {
 			return $authResult;
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			return $this->serverError(message: 'Service catalogue unavailable.');
 		}
 
+		$records = $this->activeServiceRecords();
+		if ($records === null) {
+			return $this->serverError(message: 'Service catalogue unavailable.');
+		}
+
+		return new JSONResponse(data: ['services' => $this->publicServices(records: $records)]);
+	}//end services()
+
+	/**
+	 * The active Service records of the key's administration, or null when the lookup fails.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	private function activeServiceRecords(): array|null {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$records = $objectService
+			$registerSlug  = $this->registerLocation->getRegisterSlug();
+			return $objectService
 				->setRegister($registerSlug)
 				->setSchema('Service')
-				->findAll(
-					[
-						'filters' => ['status' => 'active'],
-						'limit' => 200,
-					]
-				);
+				->findAll(['filters' => ['status' => 'active', 'administrationId' => $this->keyAdministrationId], 'limit' => 200]);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq widget: services lookup failed',
-				['exception' => $e->getMessage()]
-			);
-			return $this->serverError(message: 'Service catalogue unavailable.');
+			$this->logger->error('Shillinq widget: services lookup failed', ['exception' => $e->getMessage()]);
+			return null;
 		}
+	}//end activeServiceRecords()
 
+	/**
+	 * The public projection of the listable services.
+	 *
+	 * @param array<int, mixed> $records The Service records.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function publicServices(array $records): array {
 		$services = [];
 		foreach ($records as $record) {
 			$row = $this->toArray(object: $record);
-
-			// This endpoint is reachable by any visitor loading an embedded
-			// widget, so only services explicitly flagged isPublic may be
-			// listed. Filtered here rather than in the findAll() query so an
-			// absent or non-boolean value DENIES: a query filter that silently
-			// matched nothing would look identical to "no private services".
-			if ((bool)($row['isPublic'] ?? false) !== true) {
-				continue;
+			if ($this->isListable(row: $row) === true) {
+				$services[] = self::publicService(row: $row);
 			}
+		}
 
-			$service = [
-				'serviceId' => (string)($row['serviceId'] ?? ''),
-				'name' => (string)($row['name'] ?? ''),
-				'duration' => (int)($row['duration'] ?? 0),
-				'currency' => (string)($row['currency'] ?? 'EUR'),
-				'description' => (string)($row['description'] ?? ''),
-			];
+		return $services;
+	}//end publicServices()
 
-			// The priceVisible flag is a per-service choice; publishing the
-			// price regardless of it made the setting inert.
-			if ((bool)($row['priceVisible'] ?? false) === true) {
-				$service['price'] = ($row['basePrice'] ?? $row['price'] ?? null);
-			}
+	/**
+	 * This endpoint is reachable by any visitor loading an embedded
+	 * widget, so only services explicitly flagged isPublic may be
+	 * listed. Filtered here rather than in the findAll() query so an
+	 * absent or non-boolean value DENIES: a query filter that silently
+	 * matched nothing would look identical to "no private services".
+	 *
+	 * @param array<string, mixed> $row The Service row.
+	 *
+	 * @return bool
+	 */
+	private function isListable(array $row): bool {
+		if ((bool)($row['isPublic'] ?? false) !== true) {
+			return false;
+		}
 
-			$services[] = $service;
-		}//end foreach
+		return (string)($row['administrationId'] ?? '') === $this->keyAdministrationId;
+	}//end isListable()
 
-		return new JSONResponse(data: ['services' => $services]);
-	}//end services()
+	/**
+	 * A service's public fields; the price only when the service makes it visible.
+	 *
+	 * @param array<string, mixed> $row The Service row.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function publicService(array $row): array {
+		$service = [
+			'serviceId' => (string)($row['serviceId'] ?? ''),
+			'name' => (string)($row['name'] ?? ''),
+			'duration' => (int)($row['duration'] ?? 0),
+			'currency' => (string)($row['currency'] ?? 'EUR'),
+			'description' => (string)($row['description'] ?? ''),
+		];
+
+		// The priceVisible flag is a per-service choice; publishing the
+		// price regardless of it made the setting inert.
+		if ((bool)($row['priceVisible'] ?? false) === true) {
+			$service['price'] = ($row['basePrice'] ?? $row['price'] ?? null);
+		}
+
+		return $service;
+	}//end publicService()
 
 	/**
 	 * GET /api/widget/slots — available slots for a service + resource + date.
@@ -190,10 +253,29 @@ class WidgetApiController extends Controller {
 			return $authResult;
 		}
 
-		$serviceId = trim($serviceId);
+		$serviceId  = trim($serviceId);
 		$resourceId = trim($resourceId);
-		$date = trim($date);
+		$date       = trim($date);
 
+		$refusal = $this->refuseSlotQuery(serviceId: $serviceId, resourceId: $resourceId, date: $date);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$result = $this->slots->getAvailableSlots(serviceId: $serviceId, resourceId: $resourceId, date: $date);
+		return $this->slotsResponse(date: $date, result: $result);
+	}//end slots()
+
+	/**
+	 * Refuse a slot query that is incomplete, malformed, or for a service that is not publicly bookable.
+	 *
+	 * @param string $serviceId  Service identifier.
+	 * @param string $resourceId Resource identifier.
+	 * @param string $date       Calendar date YYYY-MM-DD UTC.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the query may proceed.
+	 */
+	private function refuseSlotQuery(string $serviceId, string $resourceId, string $date): JSONResponse|null {
 		if ($serviceId === '' || $resourceId === '' || $date === '') {
 			return $this->badRequest(message: 'serviceId, resourceId and date are required.');
 		}
@@ -202,27 +284,43 @@ class WidgetApiController extends Controller {
 			return $this->badRequest(message: 'date must be ISO YYYY-MM-DD.');
 		}
 
-		// The #491 gate, third door. services() filters the catalogue to
-		// `isPublic` and appointments() refuses to book a service that is not,
-		// but availability was readable for ANY serviceId of this tenant.
-		// guard() only proves the caller holds the widget API key — which is
-		// shipped in a PUBLIC widget, so everyone who can see the page has it.
-		//
-		// 404 rather than 403, matching WidgetService: a 403 would confirm the
-		// service exists, which is the fact being withheld.
-		if ($this->widgetService->isPubliclyBookable(serviceId: $serviceId) === false) {
+		return $this->refuseUnbookableService(serviceId: $serviceId);
+	}//end refuseSlotQuery()
+
+	/**
+	 * The #491 gate, third door. services() filters the catalogue to
+	 * `isPublic` and appointments() refuses to book a service that is not,
+	 * but availability was readable for ANY serviceId of this tenant.
+	 * guard() only proves the caller holds the widget API key — which is
+	 * shipped in a PUBLIC widget, so everyone who can see the page has it.
+	 *
+	 * 404 rather than 403, matching WidgetService: a 403 would confirm the
+	 * service exists, which is the fact being withheld.
+	 *
+	 * @param string $serviceId Service identifier.
+	 *
+	 * @return JSONResponse|null The 404, or null when the service is publicly bookable.
+	 */
+	private function refuseUnbookableService(string $serviceId): JSONResponse|null {
+		if ($this->widgetService->isPubliclyBookable(serviceId: $serviceId, administrationId: $this->keyAdministrationId) === false) {
 			return new JSONResponse(
 				data: ['error' => 'service_not_found'],
 				statusCode: Http::STATUS_NOT_FOUND
 			);
 		}
 
-		$result = $this->slots->getAvailableSlots(
-			serviceId: $serviceId,
-			resourceId: $resourceId,
-			date: $date,
-		);
+		return null;
+	}//end refuseUnbookableService()
 
+	/**
+	 * The slot list, or 304 Not Modified when the client's ETag is current (REQ-WSW-002).
+	 *
+	 * @param string               $date   Calendar date YYYY-MM-DD UTC.
+	 * @param array<string, mixed> $result The slot service's result.
+	 *
+	 * @return JSONResponse
+	 */
+	private function slotsResponse(string $date, array $result): JSONResponse {
 		$clientEtag = (string)$this->request->getHeader('If-None-Match');
 		if ($clientEtag !== '' && $clientEtag === $result['etag']) {
 			$notModified = new JSONResponse(data: [], statusCode: Http::STATUS_NOT_MODIFIED);
@@ -230,18 +328,12 @@ class WidgetApiController extends Controller {
 			return $notModified;
 		}
 
-		$response = new JSONResponse(
-			data: [
-				'date' => $date,
-				'slots' => $result['slots'],
-				'cached' => (bool)$result['cached'],
-			]
-		);
+		$response = new JSONResponse(data: ['date' => $date, 'slots' => $result['slots'], 'cached' => (bool)$result['cached']]);
 		$response->addHeader('ETag', $result['etag']);
-		$response->addHeader('Cache-Control', 'public, max-age=' . SlotService::SLOT_CACHE_TTL_SECONDS);
+		$response->addHeader('Cache-Control', 'public, max-age=' . SlotServiceInterface::SLOT_CACHE_TTL_SECONDS);
 
 		return $response;
-	}//end slots()
+	}//end slotsResponse()
 
 	/**
 	 * POST /api/widget/appointments — create an appointment from the widget.
@@ -281,27 +373,20 @@ class WidgetApiController extends Controller {
 		?string $phone = null,
 		?string $notes = null,
 	): JSONResponse {
-		$authResult = $this->guard();
-		if ($authResult instanceof JSONResponse) {
-			return $authResult;
-		}
+		$payload = [
+			'serviceId' => $serviceId,
+			'resourceId' => $resourceId,
+			'startTime' => $startTime,
+			'endTime' => $endTime,
+			'customerName' => $customerName,
+			'customerEmail' => $email,
+			'customerPhone' => ($phone ?? ''),
+			'notes' => ($notes ?? ''),
+		];
 
-		$validation = $this->validateAppointmentPayload(
-			serviceId: $serviceId,
-			resourceId: $resourceId,
-			startTime: $startTime,
-			endTime: $endTime,
-			customerName: $customerName,
-			email: $email,
-			phone: $phone,
-			notes: $notes,
-		);
-		if ($validation !== null) {
-			return $validation;
-		}
-
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return $this->serverError(message: 'Booking unavailable.');
+		$refusal = $this->refuseAppointment(payload: $payload);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		// ONE write path. This endpoint used to re-implement the booking inline
@@ -318,39 +403,282 @@ class WidgetApiController extends Controller {
 		// + rate-limit guard, payload validation with its user-facing REQ-WSW-008
 		// messages, and the mapping from the service's result code to HTTP.
 		$result = $this->widgetService->createAppointment(
-			administrationId: (string)($this->settings->getSettings()['administration_id'] ?? 'adm-1'),
-			payload: [
-				'serviceId' => $serviceId,
-				'resourceId' => $resourceId,
-				'startTime' => $startTime,
-				'endTime' => $endTime,
-				'customerName' => $customerName,
-				'customerEmail' => $email,
-				'customerPhone' => ($phone ?? ''),
-				'notes' => ($notes ?? ''),
-			],
+			administrationId: $this->keyAdministrationId,
+			payload: $payload,
 		);
 
-		$code = (int)($result['code'] ?? Http::STATUS_INTERNAL_SERVER_ERROR);
+		return $this->appointmentResponse(result: $result);
 
-		if ($code === Http::STATUS_NOT_FOUND) {
-			return new JSONResponse(
-				data: [
-					'error' => 'service-not-found',
-					'message' => 'This service is not available for online booking.',
-				],
-				statusCode: Http::STATUS_NOT_FOUND,
-			);
+	}//end appointments()
+
+	/**
+	 * Authenticate + rate-limit the current request.
+	 *
+	 * Returns null when the request is allowed; a populated JSONResponse
+	 * (401 / 403 / 429) when it is not. A key that names no administration
+	 * is refused, since nothing it books or reads could be scoped.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function guard(): ?JSONResponse {
+		$businessId = (string)$this->request->getParam('businessId', '');
+		$bearer     = $this->bearerToken();
+
+		if ($businessId === '' || $bearer === '') {
+			return $this->unauthorised();
 		}
 
-		if ($code === Http::STATUS_CONFLICT) {
-			return new JSONResponse(
-				data: [
-					'error' => 'slot-unavailable',
-					'message' => 'This slot was just booked. Please select another time.',
-				],
-				statusCode: Http::STATUS_CONFLICT,
+		return $this->authorise(businessId: $businessId, bearer: $bearer);
+	}//end guard()
+
+	/**
+	 * The bearer token from the Authorization header, or '' when there is none.
+	 *
+	 * @return string
+	 */
+	private function bearerToken(): string {
+		$authHeader = (string)$this->request->getHeader('Authorization');
+		$bearer     = '';
+		if (str_starts_with(strtolower($authHeader), 'bearer ') === true) {
+			$bearer = trim(substr($authHeader, 7));
+		}
+
+		return $bearer;
+	}//end bearerToken()
+
+	/**
+	 * Validate the API key, scope it to its administration and consume its rate limit.
+	 *
+	 * @param string $businessId The widget's business id.
+	 * @param string $bearer     The API key.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the request is allowed.
+	 */
+	private function authorise(string $businessId, string $bearer): JSONResponse|null {
+		$auth = $this->auth->validateApiKey(businessId: $businessId, apiKey: $bearer);
+		if (($auth['valid'] ?? false) !== true) {
+			return $this->unauthorised();
+		}
+
+		$key = ($auth['key'] ?? []);
+		$this->keyAdministrationId = trim((string)($key['administrationId'] ?? ''));
+		if ($this->keyAdministrationId === '') {
+			$this->logger->warning('Shillinq widget auth: key has no administration', ['businessId' => $businessId]);
+			return $this->unauthorised();
+		}
+
+		return $this->consumeRateLimit(businessId: $businessId, key: $key);
+	}//end authorise()
+
+	/**
+	 * Consume one request of the key's rate limit; 429 with Retry-After when it is spent.
+	 *
+	 * @param string $businessId The widget's business id.
+	 * @param mixed  $key        The validated key record.
+	 *
+	 * @return JSONResponse|null The 429, or null when the request is allowed.
+	 */
+	private function consumeRateLimit(string $businessId, mixed $key): JSONResponse|null {
+		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthServiceInterface::DEFAULT_RATE_LIMIT));
+		if ($rateLimit <= 0) {
+			$rateLimit = WidgetAuthServiceInterface::DEFAULT_RATE_LIMIT;
+		}
+
+		$rl = $this->auth->consumeRateLimit(businessId: $businessId, limit: $rateLimit);
+		if (($rl['allowed'] ?? false) !== true) {
+			$response = new JSONResponse(
+				data: ['error' => 'rate-limited', 'message' => 'Too many requests. Please retry shortly.'],
+				statusCode: Http::STATUS_TOO_MANY_REQUESTS,
 			);
+			$response->addHeader('Retry-After', (string)($rl['retryAfter'] ?? WidgetAuthServiceInterface::RATE_LIMIT_WINDOW_SECONDS));
+			return $response;
+		}
+
+		return null;
+	}//end consumeRateLimit()
+
+	/**
+	 * Refuse a booking request before anything is written.
+	 *
+	 * Runs the widget guard, then the payload checks, then the OpenRegister
+	 * availability check, and returns the first refusal; null when the
+	 * booking may go ahead.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function refuseAppointment(array $payload): ?JSONResponse {
+		$authResult = $this->guard();
+		if ($authResult instanceof JSONResponse) {
+			return $authResult;
+		}
+
+		$message = $this->appointmentPayloadError(payload: $payload);
+		if ($message !== null) {
+			return $this->badRequest(message: $message);
+		}
+
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
+			return $this->serverError(message: 'Booking unavailable.');
+		}
+
+		return null;
+
+	}//end refuseAppointment()
+
+	/**
+	 * Validate the POST /appointments payload (REQ-WSW-006).
+	 *
+	 * Returns null when the payload passes; otherwise the message of the
+	 * first check that fails, in the order slot, name, contact, notes.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return string|null
+	 */
+	private function appointmentPayloadError(array $payload): ?string {
+		return $this->slotError(payload: $payload)
+			?? $this->customerNameError(customerName: $payload['customerName'])
+			?? $this->contactError(payload: $payload)
+			?? $this->notesError(notes: $payload['notes']);
+
+	}//end appointmentPayloadError()
+
+	/**
+	 * Check the service, resource and ISO 8601 UTC start and end time.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return string|null
+	 */
+	private function slotError(array $payload): ?string {
+		if ($this->missesSlotField(payload: $payload) === true) {
+			return 'serviceId, resourceId, startTime and endTime are required.';
+		}
+
+		if ($this->isIsoUtc(time: $payload['startTime']) === false
+			|| $this->isIsoUtc(time: $payload['endTime']) === false
+		) {
+			return 'startTime and endTime must be ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ).';
+		}
+
+		return null;
+
+	}//end slotError()
+
+	/**
+	 * Whether the service, resource, start or end time is empty.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return bool
+	 */
+	private function missesSlotField(array $payload): bool {
+		foreach (['serviceId', 'resourceId', 'startTime', 'endTime'] as $field) {
+			if ($payload[$field] === '') {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end missesSlotField()
+
+	/**
+	 * Whether a time is ISO 8601 UTC to the second (YYYY-MM-DDTHH:MM:SSZ).
+	 *
+	 * @param string $time The time to check.
+	 *
+	 * @return bool
+	 */
+	private function isIsoUtc(string $time): bool {
+		return (bool)preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $time);
+
+	}//end isIsoUtc()
+
+	/**
+	 * Check the customer display name (1-255 characters, letters only).
+	 *
+	 * @param string $customerName Display name.
+	 *
+	 * @return string|null
+	 */
+	private function customerNameError(string $customerName): ?string {
+		$nameLength = strlen(trim($customerName));
+		if ($nameLength < 1 || $nameLength > 255) {
+			return 'customerName must be 1-255 characters.';
+		}
+
+		if ((bool)preg_match('/^[\p{L}\p{Mn}\s\'\-\.]+$/u', $customerName) === false) {
+			return 'customerName contains invalid characters.';
+		}
+
+		return null;
+
+	}//end customerNameError()
+
+	/**
+	 * Check the email (RFC 5322) and the optional phone (E.164).
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return string|null
+	 */
+	private function contactError(array $payload): ?string {
+		$email = $payload['customerEmail'];
+		if ($email === '' || (filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+			return 'Please enter a valid email address.';
+		}
+
+		return $this->phoneError(phone: $payload['customerPhone']);
+
+	}//end contactError()
+
+	/**
+	 * Check the optional phone number (E.164).
+	 *
+	 * @param string $phone Customer phone, '' when not given.
+	 *
+	 * @return string|null
+	 */
+	private function phoneError(string $phone): ?string {
+		if ($phone !== '' && (bool)preg_match('/^\+?[1-9]\d{1,14}$/', $phone) === false) {
+			return 'Phone number must be E.164 (e.g. +31612345678).';
+		}
+
+		return null;
+
+	}//end phoneError()
+
+	/**
+	 * Check the optional notes (at most 500 characters).
+	 *
+	 * @param string $notes Customer notes.
+	 *
+	 * @return string|null
+	 */
+	private function notesError(string $notes): ?string {
+		if (strlen($notes) > 500) {
+			return 'notes must be at most 500 characters.';
+		}
+
+		return null;
+
+	}//end notesError()
+
+	/**
+	 * Map the write path's result to the HTTP response.
+	 *
+	 * @param array<string,mixed> $result Result of WidgetService::createAppointment().
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentResponse(array $result): JSONResponse {
+		$code = (int)($result['code'] ?? Http::STATUS_INTERNAL_SERVER_ERROR);
+
+		if (isset(self::APPOINTMENT_REFUSALS[$code]) === true) {
+			return new JSONResponse(data: self::APPOINTMENT_REFUSALS[$code], statusCode: $code);
 		}
 
 		if ($code !== Http::STATUS_CREATED) {
@@ -361,6 +689,18 @@ class WidgetApiController extends Controller {
 			return $this->serverError(message: 'Booking failed. Please try again later.');
 		}
 
+		return $this->appointmentCreated(result: $result);
+
+	}//end appointmentResponse()
+
+	/**
+	 * Build the 201 Created response; never echoes customer PII.
+	 *
+	 * @param array<string,mixed> $result Result of WidgetService::createAppointment().
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentCreated(array $result): JSONResponse {
 		return new JSONResponse(
 			data: [
 				'appointmentId' => (string)($result['appointmentId'] ?? ''),
@@ -370,116 +710,7 @@ class WidgetApiController extends Controller {
 			statusCode: Http::STATUS_CREATED,
 		);
 
-	}//end appointments()
-
-	/**
-	 * Authenticate + rate-limit the current request.
-	 *
-	 * Returns null when the request is allowed; a populated JSONResponse
-	 * (401 / 403 / 429) when it is not.
-	 *
-	 * @return JSONResponse|null
-	 */
-	private function guard(): ?JSONResponse {
-		$businessId = (string)$this->request->getParam('businessId', '');
-		$authHeader = (string)$this->request->getHeader('Authorization');
-		$bearer = '';
-		if (str_starts_with(strtolower($authHeader), 'bearer ') === true) {
-			$bearer = trim(substr($authHeader, 7));
-		}
-
-		if ($businessId === '' || $bearer === '') {
-			return $this->unauthorised();
-		}
-
-		$auth = $this->auth->validateApiKey(businessId: $businessId, apiKey: $bearer);
-		if (($auth['valid'] ?? false) !== true) {
-			return $this->unauthorised();
-		}
-
-		$key = ($auth['key'] ?? []);
-		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthService::DEFAULT_RATE_LIMIT));
-		if ($rateLimit <= 0) {
-			$rateLimit = WidgetAuthService::DEFAULT_RATE_LIMIT;
-		}
-
-		$rl = $this->auth->consumeRateLimit(businessId: $businessId, limit: $rateLimit);
-		if (($rl['allowed'] ?? false) !== true) {
-			$response = new JSONResponse(
-				data: [
-					'error' => 'rate-limited',
-					'message' => 'Too many requests. Please retry shortly.',
-				],
-				statusCode: Http::STATUS_TOO_MANY_REQUESTS,
-			);
-			$response->addHeader('Retry-After', (string)($rl['retryAfter'] ?? WidgetAuthService::RATE_LIMIT_WINDOW_SECONDS));
-			return $response;
-		}
-
-		return null;
-	}//end guard()
-
-	/**
-	 * Validate the POST /appointments payload (REQ-WSW-006).
-	 *
-	 * Returns null when the payload passes; a JSONResponse with a structured
-	 * error otherwise.
-	 *
-	 * @param string $serviceId Service id.
-	 * @param string $resourceId Resource id.
-	 * @param string $startTime Start time ISO UTC.
-	 * @param string $endTime End time ISO UTC.
-	 * @param string $customerName Display name (1-255).
-	 * @param string $email Email (RFC 5322).
-	 * @param string|null $phone Phone (E.164, optional).
-	 * @param string|null $notes Notes (≤500 chars, optional).
-	 *
-	 * @return JSONResponse|null
-	 */
-	private function validateAppointmentPayload(
-		string $serviceId,
-		string $resourceId,
-		string $startTime,
-		string $endTime,
-		string $customerName,
-		string $email,
-		?string $phone,
-		?string $notes,
-	): ?JSONResponse {
-		if ($serviceId === '' || $resourceId === '' || $startTime === '' || $endTime === '') {
-			return $this->badRequest(message: 'serviceId, resourceId, startTime and endTime are required.');
-		}
-
-		$isoPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/';
-		if ((bool)preg_match($isoPattern, $startTime) === false
-			|| (bool)preg_match($isoPattern, $endTime) === false
-		) {
-			return $this->badRequest(message: 'startTime and endTime must be ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ).');
-		}
-
-		$nameLength = strlen(trim($customerName));
-		if ($nameLength < 1 || $nameLength > 255) {
-			return $this->badRequest(message: 'customerName must be 1-255 characters.');
-		}
-
-		if ((bool)preg_match('/^[\p{L}\p{Mn}\s\'\-\.]+$/u', $customerName) === false) {
-			return $this->badRequest(message: 'customerName contains invalid characters.');
-		}
-
-		if ($email === '' || (filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
-			return $this->badRequest(message: 'Please enter a valid email address.');
-		}
-
-		if ($phone !== null && $phone !== '' && (bool)preg_match('/^\+?[1-9]\d{1,14}$/', $phone) === false) {
-			return $this->badRequest(message: 'Phone number must be E.164 (e.g. +31612345678).');
-		}
-
-		if ($notes !== null && strlen($notes) > 500) {
-			return $this->badRequest(message: 'notes must be at most 500 characters.');
-		}
-
-		return null;
-	}//end validateAppointmentPayload()
+	}//end appointmentCreated()
 
 	/**
 	 * Build a 400 Bad Request JSON response.

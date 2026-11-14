@@ -283,7 +283,7 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "record-mutatie",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCommitmentMovementAction",
                   "description": "Record a `committed` CommitmentMovement and increase openstaande_verplichtingen on the matching budgets.",
                   "actionParameters": {
                     "register": "shillinq",
@@ -307,7 +307,10 @@
               "description": "Record (partial) receipt. Informational; budget unchanged."
             },
             "factureren": {
-              "from": "partially_delivered",
+              "from": [
+                "committed",
+                "partially_delivered"
+              ],
               "to": "partially_invoiced",
               "label": "Factureren",
               "description": "Invoice matched against the commitment; remaining_committed reduced."
@@ -319,10 +322,27 @@
               "description": "Payment settled; openstaande_verplichtingen unchanged (already released at gefactureerd)."
             },
             "afsluiten": {
-              "from": "committed",
+              "from": [
+                "committed",
+                "partially_delivered",
+                "partially_invoiced",
+                "partially_paid"
+              ],
               "to": "closed",
               "label": "Afsluiten",
-              "description": "Close the commitment; restant released back to budget."
+              "description": "Close the commitment; restant released back to budget. Allowed from every open state, so a last invoice closes a partly invoiced commitment.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCommitmentMovementAction",
+                  "description": "Release what remains: a closed CommitmentMovement of minus the remainder, every line closed, openstaande_verplichtingen lowered on the matching budgets.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "CommitmentMovement",
+                    "kind": "closed"
+                  }
+                }
+              ]
             },
             "annuleren": {
               "from": "committed",
@@ -351,38 +371,6 @@
               }
             ],
             "onApprove": "advanceTransition"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "commitment-administrator": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "budget-holder": {
-              "scope": "programme",
-              "capabilities": [
-                "read"
-              ]
-            },
-            "finance-director": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -516,6 +504,11 @@
             "default": false,
             "example": false,
             "title": "Afgesloten"
+          },
+          "carriedFromLine": {
+            "type": "string",
+            "title": "Carried from line",
+            "description": "The line of the previous year this line continues, written by the year-end carry-over (planning-commitment-year-end, REQ-PCYE-004)."
           }
         },
         "x-openregister-aggregations": {
@@ -533,12 +526,20 @@
               "afgesloten": false
             },
             "metrics": [
-              { "metric": "sum", "field": "remaining_committed" },
-              { "metric": "sum", "field": "invoiced_amount" }
+              {
+                "metric": "sum",
+                "field": "remaining_committed"
+              },
+              {
+                "metric": "sum",
+                "field": "invoiced_amount"
+              }
             ],
             "join": {
               "through": "CommitmentBudget",
-              "on": { "programme": "programmeCode" },
+              "on": {
+                "programme": "programmeCode"
+              },
               "filter": {},
               "select": [
                 "CommitmentBudget.authorised_amount",
@@ -550,6 +551,29 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a CommitmentLine is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CommitmentMovement": {
@@ -607,7 +631,8 @@
               "paid",
               "closed",
               "cancelled",
-              "reclaimed"
+              "reclaimed",
+              "carried_forward"
             ],
             "example": "committed",
             "title": "Soort"
@@ -664,6 +689,29 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "SpendingMandate": {
@@ -793,28 +841,32 @@
             "title": "Vereist Tweede Handtekening Boven"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-director": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Mandate is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ApprovalStep": {
@@ -872,7 +924,7 @@
           },
           "status": {
             "type": "string",
-            "_note": "DELIBERATELY LEFT DUTCH — do not anglicise these values piecemeal. RenameDutchValueDecisions::VALUE_MAP is keyed by PROPERTY NAME and every entry applies REGISTER-WIDE, so a `status` entry translating `in_behandeling` or `afgewezen` would also rewrite stored rows of Rechtmatigheidstoets.status, Rechtmatigheidsbevinding.status and JournalEntry.lawfulness.status (bookkeeping-rechtmatigheidsverantwoording.json) plus ReviewWorkflow's nested step/comment statuses (bookkeeping-titel-9-jaarrekening.json) — all of which still declare the Dutch enum. Schema and data would silently desync: OpenRegister does not reject an out-of-enum stored value, the filter just returns nothing. A wholly Dutch enum is honest; a half-renamed one is a trap. Anglicise this only together with those fragments, or after the value map grows a schema-scoped key.",
+            "$comment": "DELIBERATELY LEFT DUTCH — do not anglicise these values piecemeal. RenameDutchValueDecisions::VALUE_MAP is keyed by PROPERTY NAME and every entry applies REGISTER-WIDE, so a `status` entry translating `in_behandeling` or `afgewezen` would also rewrite stored rows of Rechtmatigheidstoets.status, Rechtmatigheidsbevinding.status and JournalEntry.lawfulness.status (bookkeeping-rechtmatigheidsverantwoording.json) plus ReviewWorkflow's nested step/comment statuses (bookkeeping-titel-9-jaarrekening.json) — all of which still declare the Dutch enum. Schema and data would silently desync: OpenRegister does not reject an out-of-enum stored value, the filter just returns nothing. A wholly Dutch enum is honest; a half-renamed one is a trap. Anglicise this only together with those fragments, or after the value map grows a schema-scoped key.",
             "description": "Step status.",
             "enum": [
               "wachtend",
@@ -918,6 +970,29 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a ApprovalStep is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CommitmentBudget": {
@@ -1030,33 +1105,32 @@
             "description": "Free budget snapshot (D9)."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "budget-holder": {
-              "scope": "programme",
-              "capabilities": [
-                "read"
-              ]
-            },
-            "finance-director": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema): the flag was missing under the retired 'Budget' slug too."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

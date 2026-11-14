@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -81,7 +84,7 @@ final class EmuReportingFragmentTest extends TestCase {
 
 		foreach (['EMUReport', 'EMUAdjustment', 'CashFlowItem', 'DebtPosition'] as $name) {
 			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-			self::assertArrayHasKey('x-openregister-rbac', $schemas[$name], "$name must declare RBAC");
+			self::assertArrayHasKey('authorization', $schemas[$name], "$name must declare an enforced authorization block");
 			self::assertArrayHasKey('type', $schemas[$name]);
 		}
 	}//end testFragmentDeclaresFourEntities()

@@ -1,0 +1,211 @@
+{
+    "runMissing": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            }
+        ]
+    },
+    "noInvoice": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            }
+        ]
+    },
+    "paused": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "Shillinq: DunningRun run-1 blocked by active pause.",
+                []
+            ]
+        ],
+        "calls": [
+            "register:custom",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            },
+            "register:custom",
+            "schema:DunningPauseDispute",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "lifecycleState": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "stageOne": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:DunningPauseDispute",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "lifecycleState": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "stageThreeWithGrace": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:DunningPauseDispute",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "lifecycleState": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "stageThreeWithoutGrace": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "Shillinq: DunningRun run-1 stage-3 missing 14-day grace fragment; blocked.",
+                []
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:DunningPauseDispute",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "lifecycleState": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "stageThreeNoBody": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "Shillinq: DunningRun run-1 stage-3 missing 14-day grace fragment; blocked.",
+                []
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:DunningPauseDispute",
+            {
+                "findAll": {
+                    "filters": {
+                        "invoiceId": "inv-1",
+                        "lifecycleState": "active"
+                    }
+                }
+            }
+        ]
+    },
+    "stringRun": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "Shillinq: DunningRunExecuteGuard failed: store down",
+                []
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:DunningRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "run-1"
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,4908 @@
+{
+	"rows 0": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 0": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 1": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 1": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&b=a+b%26c&_limit=200"
+	},
+	"rows 2": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 2": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&c=x&_limit=200"
+	},
+	"rows 3": {
+		"value": []
+	},
+	"url 3": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 4": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 4": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=false&_limit=200"
+	},
+	"rows 5": {
+		"value": []
+	},
+	"url 5": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 6": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "Use for rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 6": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 7": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 7": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 8": {
+		"value": []
+	},
+	"url 8": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 9": {
+		"value": []
+	},
+	"url 9": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&b=false&c=false&_limit=200"
+	},
+	"rows 10": {
+		"value": []
+	},
+	"url 10": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 11": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 11": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&b=0&c=x&_limit=200"
+	},
+	"rows 12": {
+		"value": []
+	},
+	"url 12": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 13": {
+		"value": []
+	},
+	"url 13": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&b=a+b%26c&c=x&_limit=200"
+	},
+	"rows 14": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 14": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 15": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 15": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&c=a+b%26c&_limit=200"
+	},
+	"rows 16": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 16": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	},
+	"rows 17": {
+		"value": []
+	},
+	"url 17": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	},
+	"rows 18": {
+		"value": []
+	},
+	"url 18": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 19": {
+		"value": []
+	},
+	"url 19": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	},
+	"rows 20": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 20": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 21": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": "5"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 21": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 22": {
+		"value": []
+	},
+	"url 22": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 23": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 23": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 24": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 24": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=0&_limit=200"
+	},
+	"rows 25": {
+		"value": []
+	},
+	"url 25": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 26": {
+		"value": []
+	},
+	"url 26": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 27": {
+		"value": []
+	},
+	"url 27": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 28": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 28": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&_limit=200"
+	},
+	"rows 29": {
+		"value": []
+	},
+	"url 29": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&_limit=200"
+	},
+	"rows 30": {
+		"value": []
+	},
+	"url 30": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&c=false&_limit=200"
+	},
+	"rows 31": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 31": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&b=a+b%26c&c=a+b%26c&_limit=200"
+	},
+	"rows 32": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 32": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 33": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 33": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 34": {
+		"value": []
+	},
+	"url 34": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 35": {
+		"value": []
+	},
+	"url 35": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&_limit=200"
+	},
+	"rows 36": {
+		"value": []
+	},
+	"url 36": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 37": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 37": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 38": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 38": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 39": {
+		"value": []
+	},
+	"url 39": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 40": {
+		"value": []
+	},
+	"url 40": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 41": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "Rent",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 41": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&c=x&_limit=200"
+	},
+	"rows 42": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 42": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 43": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 43": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 44": {
+		"value": []
+	},
+	"url 44": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 45": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 45": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&_limit=200"
+	},
+	"rows 46": {
+		"value": []
+	},
+	"url 46": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 47": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 47": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 48": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 48": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 49": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 49": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&_limit=200"
+	},
+	"rows 50": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 50": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 51": {
+		"value": []
+	},
+	"url 51": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 52": {
+		"value": []
+	},
+	"url 52": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 53": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 53": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&c=a+b%26c&_limit=200"
+	},
+	"rows 54": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 54": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 55": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 55": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 56": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 56": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 57": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 57": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 58": {
+		"value": []
+	},
+	"url 58": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 59": {
+		"value": []
+	},
+	"url 59": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 60": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Use for rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Use for rent",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 60": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 61": {
+		"value": []
+	},
+	"url 61": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&c=0&_limit=200"
+	},
+	"rows 62": {
+		"value": []
+	},
+	"url 62": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 63": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 63": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=false&_limit=200"
+	},
+	"rows 64": {
+		"value": []
+	},
+	"url 64": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 65": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 65": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=false&_limit=200"
+	},
+	"rows 66": {
+		"value": []
+	},
+	"url 66": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&b=a+b%26c&_limit=200"
+	},
+	"rows 67": {
+		"value": []
+	},
+	"url 67": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 68": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "5"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 68": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 69": {
+		"value": []
+	},
+	"url 69": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 70": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 70": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&b=0&_limit=200"
+	},
+	"rows 71": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 71": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&b=false&_limit=200"
+	},
+	"rows 72": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 72": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	},
+	"rows 73": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 73": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 74": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 74": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 75": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "3",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 75": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&c=0&_limit=200"
+	},
+	"rows 76": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 76": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&_limit=200"
+	},
+	"rows 77": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 77": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 78": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 78": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 79": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 79": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 80": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 80": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 81": {
+		"value": []
+	},
+	"url 81": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&_limit=200"
+	},
+	"rows 82": {
+		"value": []
+	},
+	"url 82": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 83": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 83": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	},
+	"rows 84": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 84": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 85": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 85": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 86": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 86": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&_limit=200"
+	},
+	"rows 87": {
+		"value": []
+	},
+	"url 87": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 88": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 88": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&_limit=200"
+	},
+	"rows 89": {
+		"value": []
+	},
+	"url 89": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 90": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "2",
+				"accountNumber": "4000",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 90": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 91": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 91": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 92": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 92": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 93": {
+		"value": []
+	},
+	"url 93": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&b=a+b%26c&_limit=200"
+	},
+	"rows 94": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 94": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 95": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 95": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 96": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 96": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 97": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 97": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=false&_limit=200"
+	},
+	"rows 98": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 98": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 99": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 99": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 100": {
+		"value": []
+	},
+	"url 100": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=false&_limit=200"
+	},
+	"rows 101": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 101": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 102": {
+		"value": []
+	},
+	"url 102": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=false&_limit=200"
+	},
+	"rows 103": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 103": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&c=a+b%26c&_limit=200"
+	},
+	"rows 104": {
+		"value": []
+	},
+	"url 104": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 105": {
+		"value": []
+	},
+	"url 105": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 106": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 106": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&_limit=200"
+	},
+	"rows 107": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 107": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 108": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 108": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 109": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 109": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=false&c=false&_limit=200"
+	},
+	"rows 110": {
+		"value": []
+	},
+	"url 110": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 111": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 111": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 112": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 112": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 113": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 113": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 114": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 114": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 115": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 115": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=x&_limit=200"
+	},
+	"rows 116": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 116": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&c=x&_limit=200"
+	},
+	"rows 117": {
+		"value": []
+	},
+	"url 117": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 118": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 118": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=false&c=a+b%26c&_limit=200"
+	},
+	"rows 119": {
+		"value": []
+	},
+	"url 119": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&b=a+b%26c&_limit=200"
+	},
+	"rows 120": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "4000",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 120": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&c=false&_limit=200"
+	},
+	"rows 121": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 121": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 122": {
+		"value": []
+	},
+	"url 122": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&_limit=200"
+	},
+	"rows 123": {
+		"value": []
+	},
+	"url 123": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 124": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 124": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=false&_limit=200"
+	},
+	"rows 125": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 125": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 126": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 126": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&b=false&_limit=200"
+	},
+	"rows 127": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 127": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 128": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 128": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	},
+	"rows 129": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 129": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 130": {
+		"value": []
+	},
+	"url 130": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&_limit=200"
+	},
+	"rows 131": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 131": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&_limit=200"
+	},
+	"rows 132": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 132": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&b=x&_limit=200"
+	},
+	"rows 133": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 133": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=0&_limit=200"
+	},
+	"rows 134": {
+		"value": []
+	},
+	"url 134": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 135": {
+		"value": []
+	},
+	"url 135": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&c=a+b%26c&_limit=200"
+	},
+	"rows 136": {
+		"value": []
+	},
+	"url 136": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=0&_limit=200"
+	},
+	"rows 137": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 137": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 138": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 138": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 139": {
+		"value": []
+	},
+	"url 139": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 140": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 140": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 141": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 141": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=0&_limit=200"
+	},
+	"rows 142": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "4000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 142": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 143": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 143": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 144": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 144": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 145": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 145": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 146": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 146": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 147": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 147": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&b=a+b%26c&_limit=200"
+	},
+	"rows 148": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 148": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 149": {
+		"value": []
+	},
+	"url 149": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 150": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 150": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&b=0&c=0&_limit=200"
+	},
+	"rows 151": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "5"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 151": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 152": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 152": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&_limit=200"
+	},
+	"rows 153": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 153": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 154": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 154": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&b=a+b%26c&_limit=200"
+	},
+	"rows 155": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 155": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 156": {
+		"value": []
+	},
+	"url 156": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=0&_limit=200"
+	},
+	"rows 157": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 157": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 158": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 158": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&_limit=200"
+	},
+	"rows 159": {
+		"value": []
+	},
+	"url 159": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&c=0&_limit=200"
+	},
+	"rows 160": {
+		"value": []
+	},
+	"url 160": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 161": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 161": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 162": {
+		"value": []
+	},
+	"url 162": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 163": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 163": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 164": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "5",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "5"
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 164": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 165": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 165": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 166": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 166": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 167": {
+		"value": []
+	},
+	"url 167": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&b=a+b%26c&_limit=200"
+	},
+	"rows 168": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 168": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 169": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 169": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 170": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "Rent",
+				"guidance": "Rent",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": "5"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "5",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 170": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&b=0&_limit=200"
+	},
+	"rows 171": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "5",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 171": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=0&_limit=200"
+	},
+	"rows 172": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 172": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&b=a+b%26c&_limit=200"
+	},
+	"rows 173": {
+		"value": []
+	},
+	"url 173": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 174": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 174": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&_limit=200"
+	},
+	"rows 175": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "Use for rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 175": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 176": {
+		"value": []
+	},
+	"url 176": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&c=0&_limit=200"
+	},
+	"rows 177": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "2",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "3",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 177": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 178": {
+		"value": []
+	},
+	"url 178": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 179": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 179": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=x&_limit=200"
+	},
+	"rows 180": {
+		"value": []
+	},
+	"url 180": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&c=x&_limit=200"
+	},
+	"rows 181": {
+		"value": []
+	},
+	"url 181": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&_limit=200"
+	},
+	"rows 182": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "5",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 182": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 183": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 183": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 184": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "Rent",
+				"guidance": "",
+				"controlAccountFor": "ar",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 184": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 185": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 185": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&_limit=200"
+	},
+	"rows 186": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": "5",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "2",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 186": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 187": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": ""
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": " Use for rent \n",
+				"guidance": "Use for rent",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 2.5,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": " Use for rent \n",
+				"guidance": "5",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 187": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=a+b%26c&_limit=200"
+	},
+	"rows 188": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "Rent",
+				"projectCode": ""
+			},
+			{
+				"key": "1",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": "Rent",
+				"projectCode": "5"
+			}
+		]
+	},
+	"url 188": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&b=x&_limit=200"
+	},
+	"rows 189": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "Rent",
+				"controlAccountFor": "ar",
+				"side": "debit",
+				"amount": 2.5,
+				"costCenterCode": " Use for rent \n",
+				"projectCode": " Use for rent \n"
+			},
+			{
+				"key": "3",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 189": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&c=false&_limit=200"
+	},
+	"rows 190": {
+		"value": []
+	},
+	"url 190": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 191": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": "__NaN",
+				"costCenterCode": " Use for rent \n",
+				"projectCode": "Rent"
+			},
+			{
+				"key": "1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			},
+			{
+				"key": "l1",
+				"accountNumber": "4000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "5",
+				"projectCode": "Rent"
+			}
+		]
+	},
+	"url 191": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 192": {
+		"value": []
+	},
+	"url 192": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 193": {
+		"value": [
+			{
+				"key": "l1",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 10,
+				"costCenterCode": "",
+				"projectCode": " Use for rent \n"
+			}
+		]
+	},
+	"url 193": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=0&b=false&c=x&_limit=200"
+	},
+	"rows 194": {
+		"value": []
+	},
+	"url 194": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=false&c=x&_limit=200"
+	},
+	"rows 195": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "",
+				"amount": 0,
+				"costCenterCode": "",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 195": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?c=a+b%26c&_limit=200"
+	},
+	"rows 196": {
+		"value": []
+	},
+	"url 196": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?b=0&_limit=200"
+	},
+	"rows 197": {
+		"value": [
+			{
+				"key": "0",
+				"accountNumber": "8000",
+				"accountName": "",
+				"guidance": "",
+				"controlAccountFor": "",
+				"side": "debit",
+				"amount": 0,
+				"costCenterCode": "5",
+				"projectCode": ""
+			}
+		]
+	},
+	"url 197": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?_limit=200"
+	},
+	"rows 198": {
+		"value": []
+	},
+	"url 198": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=x&_limit=200"
+	},
+	"rows 199": {
+		"value": []
+	},
+	"url 199": {
+		"value": "/index.php/apps/openregister/api/objects/shillinq/Account?a=a+b%26c&_limit=200"
+	}
+}

@@ -1,0 +1,860 @@
+{
+    "gridMonthCrossYear": {
+        "rowTree": {
+            "entries": [
+                {
+                    "id": "g-root-b",
+                    "slug": "root-b",
+                    "code": "B",
+                    "name": "Root B",
+                    "order": 20,
+                    "parentRef": null
+                },
+                {
+                    "id": "g-root-a",
+                    "slug": "root-a",
+                    "code": "A",
+                    "name": "Root A",
+                    "order": 10,
+                    "parentRef": null
+                },
+                {
+                    "id": "g-child-2",
+                    "slug": "",
+                    "code": "A2",
+                    "name": "Child 2",
+                    "order": 5,
+                    "parentRef": "root-a"
+                },
+                {
+                    "id": "g-child-1",
+                    "slug": "",
+                    "code": "A1",
+                    "name": "Child 1",
+                    "order": 1,
+                    "parentRef": "g-root-a"
+                },
+                {
+                    "id": "g-grand",
+                    "slug": "grand",
+                    "code": "A11",
+                    "name": "Grandchild",
+                    "order": 3,
+                    "parentRef": "g-child-1"
+                },
+                {
+                    "id": "",
+                    "slug": "orphan",
+                    "code": "",
+                    "name": "Orphan",
+                    "order": 0,
+                    "parentRef": "missing"
+                },
+                {
+                    "id": "g-empty-parent",
+                    "slug": "",
+                    "code": "",
+                    "name": "Empty parent",
+                    "order": 15,
+                    "parentRef": ""
+                },
+                {
+                    "id": "same",
+                    "slug": "same",
+                    "code": "",
+                    "name": "Same id and slug",
+                    "order": 10,
+                    "parentRef": null
+                }
+            ],
+            "keyToIndex": {
+                "g-root-b": 0,
+                "root-b": 0,
+                "g-root-a": 1,
+                "root-a": 1,
+                "g-child-2": 2,
+                "g-child-1": 3,
+                "g-grand": 4,
+                "grand": 4,
+                "orphan": 5,
+                "g-empty-parent": 6,
+                "same": 7
+            },
+            "childrenByIndex": {
+                "1": [
+                    3,
+                    2
+                ],
+                "3": [
+                    4
+                ]
+            },
+            "rootIndexes": [
+                5,
+                1,
+                7,
+                6,
+                0
+            ]
+        },
+        "columns": [
+            {
+                "key": "2026-11",
+                "label": "November 2026",
+                "granularity": "month",
+                "startDate": "2026-11-01",
+                "endDate": "2026-11-30",
+                "monthKeys": [
+                    "2026-11"
+                ],
+                "isPast": false,
+                "fiscalYears": [
+                    2026
+                ]
+            },
+            {
+                "key": "2026-12",
+                "label": "December 2026",
+                "granularity": "month",
+                "startDate": "2026-12-01",
+                "endDate": "2026-12-31",
+                "monthKeys": [
+                    "2026-12"
+                ],
+                "isPast": false,
+                "fiscalYears": [
+                    2026
+                ]
+            },
+            {
+                "key": "2027-01",
+                "label": "January 2027",
+                "granularity": "month",
+                "startDate": "2027-01-01",
+                "endDate": "2027-01-31",
+                "monthKeys": [
+                    "2027-01"
+                ],
+                "isPast": true,
+                "fiscalYears": [
+                    2027
+                ]
+            },
+            {
+                "key": "2027-02",
+                "label": "February 2027",
+                "granularity": "month",
+                "startDate": "2027-02-01",
+                "endDate": "2027-02-28",
+                "monthKeys": [
+                    "2027-02"
+                ],
+                "isPast": true,
+                "fiscalYears": [
+                    2027
+                ]
+            }
+        ],
+        "bvaContext": {
+            "accounts": [
+                {
+                    "accountNumber": "4000",
+                    "name": "Salarissen",
+                    "accountType": "expenses",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "8000",
+                    "name": "Omzet",
+                    "accountType": "",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "",
+                    "name": "Nameless",
+                    "accountType": "assets",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "1000",
+                    "name": "Kas",
+                    "administrationId": "adm-1"
+                }
+            ],
+            "actualsByAccountMonth": [],
+            "ledgerGroupEntries": [
+                {
+                    "id": "g-root-b",
+                    "slug": "root-b",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-root-a",
+                    "slug": "root-a",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-child-2",
+                    "slug": "",
+                    "parentRef": "root-a",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-child-1",
+                    "slug": "",
+                    "parentRef": "g-root-a",
+                    "memberAccountNumbers": [
+                        "4000"
+                    ]
+                },
+                {
+                    "id": "g-grand",
+                    "slug": "grand",
+                    "parentRef": "g-child-1",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "",
+                    "slug": "orphan",
+                    "parentRef": "missing",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-empty-parent",
+                    "slug": "",
+                    "parentRef": "",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "same",
+                    "slug": "same",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                }
+            ],
+            "ledgerGroupKeyToIndex": {
+                "g-root-b": 0,
+                "root-b": 0,
+                "B": 0,
+                "g-root-a": 1,
+                "root-a": 1,
+                "A": 1,
+                "g-child-2": 2,
+                "A2": 2,
+                "g-child-1": 3,
+                "A1": 3,
+                "g-grand": 4,
+                "grand": 4,
+                "A11": 4,
+                "orphan": 5,
+                "g-empty-parent": 6,
+                "same": 7
+            },
+            "ledgerGroupChildrenByIndex": {
+                "1": [
+                    2,
+                    3
+                ],
+                "3": [
+                    4
+                ]
+            },
+            "budgetLines": []
+        },
+        "accountTypeByNumber": {
+            "4000": "expenses"
+        },
+        "accountByNumber": {
+            "4000": {
+                "accountNumber": "4000",
+                "name": "Salarissen",
+                "accountType": "expenses",
+                "administrationId": "adm-1"
+            },
+            "8000": {
+                "accountNumber": "8000",
+                "name": "Omzet",
+                "accountType": "",
+                "administrationId": "adm-1"
+            },
+            "1000": {
+                "accountNumber": "1000",
+                "name": "Kas",
+                "administrationId": "adm-1"
+            }
+        },
+        "annualBudgetIdByYear": {
+            "2026": null,
+            "2027": "ab-2027"
+        },
+        "budgetLinesByFiscalYear": {
+            "2026": null,
+            "2027": [
+                {
+                    "id": "bl-1",
+                    "annualBudgetId": "ab-2027",
+                    "ledgerGroupId": "g-child-1",
+                    "month01Amount": 100
+                },
+                {
+                    "id": "bl-2",
+                    "annualBudgetId": "ab-2027",
+                    "ledgerGroupId": "root-b",
+                    "month02Amount": 5.5
+                }
+            ]
+        }
+    },
+    "gridQuarter": {
+        "rowTree": {
+            "entries": [
+                {
+                    "id": "g-root-b",
+                    "slug": "root-b",
+                    "code": "B",
+                    "name": "Root B",
+                    "order": 20,
+                    "parentRef": null
+                },
+                {
+                    "id": "g-root-a",
+                    "slug": "root-a",
+                    "code": "A",
+                    "name": "Root A",
+                    "order": 10,
+                    "parentRef": null
+                },
+                {
+                    "id": "g-child-2",
+                    "slug": "",
+                    "code": "A2",
+                    "name": "Child 2",
+                    "order": 5,
+                    "parentRef": "root-a"
+                },
+                {
+                    "id": "g-child-1",
+                    "slug": "",
+                    "code": "A1",
+                    "name": "Child 1",
+                    "order": 1,
+                    "parentRef": "g-root-a"
+                },
+                {
+                    "id": "g-grand",
+                    "slug": "grand",
+                    "code": "A11",
+                    "name": "Grandchild",
+                    "order": 3,
+                    "parentRef": "g-child-1"
+                },
+                {
+                    "id": "",
+                    "slug": "orphan",
+                    "code": "",
+                    "name": "Orphan",
+                    "order": 0,
+                    "parentRef": "missing"
+                },
+                {
+                    "id": "g-empty-parent",
+                    "slug": "",
+                    "code": "",
+                    "name": "Empty parent",
+                    "order": 15,
+                    "parentRef": ""
+                },
+                {
+                    "id": "same",
+                    "slug": "same",
+                    "code": "",
+                    "name": "Same id and slug",
+                    "order": 10,
+                    "parentRef": null
+                }
+            ],
+            "keyToIndex": {
+                "g-root-b": 0,
+                "root-b": 0,
+                "g-root-a": 1,
+                "root-a": 1,
+                "g-child-2": 2,
+                "g-child-1": 3,
+                "g-grand": 4,
+                "grand": 4,
+                "orphan": 5,
+                "g-empty-parent": 6,
+                "same": 7
+            },
+            "childrenByIndex": {
+                "1": [
+                    3,
+                    2
+                ],
+                "3": [
+                    4
+                ]
+            },
+            "rootIndexes": [
+                5,
+                1,
+                7,
+                6,
+                0
+            ]
+        },
+        "columns": [
+            {
+                "key": "2027-Q1",
+                "label": "Q1 2027",
+                "granularity": "quarter",
+                "startDate": "2027-01-01",
+                "endDate": "2027-03-31",
+                "monthKeys": [
+                    "2027-01",
+                    "2027-02",
+                    "2027-03"
+                ],
+                "isPast": true,
+                "fiscalYears": [
+                    2027
+                ]
+            },
+            {
+                "key": "2027-Q2",
+                "label": "Q2 2027",
+                "granularity": "quarter",
+                "startDate": "2027-04-01",
+                "endDate": "2027-06-30",
+                "monthKeys": [
+                    "2027-04",
+                    "2027-05",
+                    "2027-06"
+                ],
+                "isPast": false,
+                "fiscalYears": [
+                    2027
+                ]
+            }
+        ],
+        "bvaContext": {
+            "accounts": [
+                {
+                    "accountNumber": "4000",
+                    "name": "Salarissen",
+                    "accountType": "expenses",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "8000",
+                    "name": "Omzet",
+                    "accountType": "",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "",
+                    "name": "Nameless",
+                    "accountType": "assets",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "1000",
+                    "name": "Kas",
+                    "administrationId": "adm-1"
+                }
+            ],
+            "actualsByAccountMonth": [],
+            "ledgerGroupEntries": [
+                {
+                    "id": "g-root-b",
+                    "slug": "root-b",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-root-a",
+                    "slug": "root-a",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-child-2",
+                    "slug": "",
+                    "parentRef": "root-a",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-child-1",
+                    "slug": "",
+                    "parentRef": "g-root-a",
+                    "memberAccountNumbers": [
+                        "4000"
+                    ]
+                },
+                {
+                    "id": "g-grand",
+                    "slug": "grand",
+                    "parentRef": "g-child-1",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "",
+                    "slug": "orphan",
+                    "parentRef": "missing",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "g-empty-parent",
+                    "slug": "",
+                    "parentRef": "",
+                    "memberAccountNumbers": []
+                },
+                {
+                    "id": "same",
+                    "slug": "same",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                }
+            ],
+            "ledgerGroupKeyToIndex": {
+                "g-root-b": 0,
+                "root-b": 0,
+                "B": 0,
+                "g-root-a": 1,
+                "root-a": 1,
+                "A": 1,
+                "g-child-2": 2,
+                "A2": 2,
+                "g-child-1": 3,
+                "A1": 3,
+                "g-grand": 4,
+                "grand": 4,
+                "A11": 4,
+                "orphan": 5,
+                "g-empty-parent": 6,
+                "same": 7
+            },
+            "ledgerGroupChildrenByIndex": {
+                "1": [
+                    2,
+                    3
+                ],
+                "3": [
+                    4
+                ]
+            },
+            "budgetLines": []
+        },
+        "accountTypeByNumber": {
+            "4000": "expenses"
+        },
+        "accountByNumber": {
+            "4000": {
+                "accountNumber": "4000",
+                "name": "Salarissen",
+                "accountType": "expenses",
+                "administrationId": "adm-1"
+            },
+            "8000": {
+                "accountNumber": "8000",
+                "name": "Omzet",
+                "accountType": "",
+                "administrationId": "adm-1"
+            },
+            "1000": {
+                "accountNumber": "1000",
+                "name": "Kas",
+                "administrationId": "adm-1"
+            }
+        },
+        "annualBudgetIdByYear": {
+            "2027": "ab-2027"
+        },
+        "budgetLinesByFiscalYear": {
+            "2027": [
+                {
+                    "id": "bl-1",
+                    "annualBudgetId": "ab-2027",
+                    "ledgerGroupId": "g-child-1",
+                    "month01Amount": 100
+                },
+                {
+                    "id": "bl-2",
+                    "annualBudgetId": "ab-2027",
+                    "ledgerGroupId": "root-b",
+                    "month02Amount": 5.5
+                }
+            ]
+        }
+    },
+    "gridOtherAdmin": {
+        "rowTree": {
+            "entries": [
+                {
+                    "id": "g-other",
+                    "slug": "",
+                    "code": "",
+                    "name": "Other admin",
+                    "order": 0,
+                    "parentRef": null
+                }
+            ],
+            "keyToIndex": {
+                "g-other": 0
+            },
+            "childrenByIndex": [],
+            "rootIndexes": [
+                0
+            ]
+        },
+        "columns": [
+            {
+                "key": "2027-01",
+                "label": "January 2027",
+                "granularity": "month",
+                "startDate": "2027-01-01",
+                "endDate": "2027-01-31",
+                "monthKeys": [
+                    "2027-01"
+                ],
+                "isPast": false,
+                "fiscalYears": [
+                    2027
+                ]
+            }
+        ],
+        "bvaContext": {
+            "accounts": [],
+            "actualsByAccountMonth": [],
+            "ledgerGroupEntries": [
+                {
+                    "id": "g-other",
+                    "slug": "",
+                    "parentRef": null,
+                    "memberAccountNumbers": []
+                }
+            ],
+            "ledgerGroupKeyToIndex": {
+                "g-other": 0
+            },
+            "ledgerGroupChildrenByIndex": [],
+            "budgetLines": []
+        },
+        "accountTypeByNumber": [],
+        "accountByNumber": [],
+        "annualBudgetIdByYear": {
+            "2027": "ab-other"
+        },
+        "budgetLinesByFiscalYear": {
+            "2027": [
+                {
+                    "id": "bl-4",
+                    "annualBudgetId": "ab-other",
+                    "ledgerGroupId": "g-other",
+                    "month01Amount": 7
+                }
+            ]
+        }
+    },
+    "gridNoBudgets": {
+        "rowTree": {
+            "entries": [],
+            "keyToIndex": [],
+            "childrenByIndex": [],
+            "rootIndexes": []
+        },
+        "columns": [
+            {
+                "key": "2027-01",
+                "label": "January 2027",
+                "granularity": "month",
+                "startDate": "2027-01-01",
+                "endDate": "2027-01-31",
+                "monthKeys": [
+                    "2027-01"
+                ],
+                "isPast": false,
+                "fiscalYears": [
+                    2027
+                ]
+            },
+            {
+                "key": "2027-02",
+                "label": "February 2027",
+                "granularity": "month",
+                "startDate": "2027-02-01",
+                "endDate": "2027-02-28",
+                "monthKeys": [
+                    "2027-02"
+                ],
+                "isPast": false,
+                "fiscalYears": [
+                    2027
+                ]
+            }
+        ],
+        "bvaContext": {
+            "accounts": [
+                {
+                    "accountNumber": "4000",
+                    "name": "Salarissen",
+                    "accountType": "expenses",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "8000",
+                    "name": "Omzet",
+                    "accountType": "",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "",
+                    "name": "Nameless",
+                    "accountType": "assets",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "accountNumber": "1000",
+                    "name": "Kas",
+                    "administrationId": "adm-1"
+                }
+            ],
+            "actualsByAccountMonth": [],
+            "ledgerGroupEntries": [],
+            "ledgerGroupKeyToIndex": [],
+            "ledgerGroupChildrenByIndex": [],
+            "budgetLines": []
+        },
+        "accountTypeByNumber": {
+            "4000": "expenses"
+        },
+        "accountByNumber": {
+            "4000": {
+                "accountNumber": "4000",
+                "name": "Salarissen",
+                "accountType": "expenses",
+                "administrationId": "adm-1"
+            },
+            "8000": {
+                "accountNumber": "8000",
+                "name": "Omzet",
+                "accountType": "",
+                "administrationId": "adm-1"
+            },
+            "1000": {
+                "accountNumber": "1000",
+                "name": "Kas",
+                "administrationId": "adm-1"
+            }
+        },
+        "annualBudgetIdByYear": {
+            "2027": null
+        },
+        "budgetLinesByFiscalYear": {
+            "2027": null
+        }
+    },
+    "rows": {
+        "entries": [
+            {
+                "id": "g-root-b",
+                "slug": "root-b",
+                "code": "B",
+                "name": "Root B",
+                "order": 20,
+                "parentRef": null
+            },
+            {
+                "id": "g-root-a",
+                "slug": "root-a",
+                "code": "A",
+                "name": "Root A",
+                "order": 10,
+                "parentRef": null
+            },
+            {
+                "id": "g-child-2",
+                "slug": "",
+                "code": "A2",
+                "name": "Child 2",
+                "order": 5,
+                "parentRef": "root-a"
+            },
+            {
+                "id": "g-child-1",
+                "slug": "",
+                "code": "A1",
+                "name": "Child 1",
+                "order": 1,
+                "parentRef": "g-root-a"
+            },
+            {
+                "id": "g-grand",
+                "slug": "grand",
+                "code": "A11",
+                "name": "Grandchild",
+                "order": 3,
+                "parentRef": "g-child-1"
+            },
+            {
+                "id": "",
+                "slug": "orphan",
+                "code": "",
+                "name": "Orphan",
+                "order": 0,
+                "parentRef": "missing"
+            },
+            {
+                "id": "g-empty-parent",
+                "slug": "",
+                "code": "",
+                "name": "Empty parent",
+                "order": 15,
+                "parentRef": ""
+            },
+            {
+                "id": "same",
+                "slug": "same",
+                "code": "",
+                "name": "Same id and slug",
+                "order": 10,
+                "parentRef": null
+            }
+        ],
+        "keyToIndex": {
+            "g-root-b": 0,
+            "root-b": 0,
+            "g-root-a": 1,
+            "root-a": 1,
+            "g-child-2": 2,
+            "g-child-1": 3,
+            "g-grand": 4,
+            "grand": 4,
+            "orphan": 5,
+            "g-empty-parent": 6,
+            "same": 7
+        },
+        "childrenByIndex": {
+            "1": [
+                3,
+                2
+            ],
+            "3": [
+                4
+            ]
+        },
+        "rootIndexes": [
+            5,
+            1,
+            7,
+            6,
+            0
+        ]
+    },
+    "past": {
+        "a": true
+    },
+    "pastNoPeriods": []
+}

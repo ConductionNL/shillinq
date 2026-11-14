@@ -6,7 +6,9 @@ status: done
 
 ## Purpose
 Manages recurring billing definitions as OpenRegister-managed profiles that reference Nextcloud addressbook contacts and generate ordinary AR invoices per period through a scheduled OpenRegister workflow, with no app-local cron or parallel invoice type. The capability covers declarative next-run-date calculation with month-end clamping, idempotent generation with bounded catch-up after downtime, a draft-to-ended profile lifecycle, optional annual price indexation, declarative notifications, and a manifest-driven UI with an exact next-invoice preview.
+
 ## Requirements
+
 ### Requirement: REQ-RIN-001 — The system SHALL store recurring billing definitions as an OpenRegister-managed `RecurringInvoiceProfile` schema with the customer referencing the Nextcloud addressbook
 
 The `RecurringInvoiceProfile` schema MUST be declared in the ADR-037
@@ -294,3 +296,91 @@ ENGLISH source keys with Dutch translations in the same change (e.g.
 - **WHEN** the profiles index is rendered
 - **THEN** labels MUST appear in Dutch, resolved from English source keys present in `l10n/en.json` and `l10n/nl.json`, and no Dutch source keys MUST exist in `t('shillinq', …)` calls
 
+### Requirement: REQ-RIN-009: A generated invoice SHALL carry its lines as invoiceLines
+
+`RecurringInvoiceGenerator::buildArInvoicePayload()` SHALL write each profile line
+to `invoiceLines` with `lineId`, `itemName` (the description with its period
+tokens expanded), `quantity`, `unitCode` `C62`, `netPrice`, `netAmount`,
+`vatRate` and `vatCategory` (`S` above zero, `Z` at zero), and SHALL NOT write
+`lines`. The totals SHALL stay as they are.
+
+#### Scenario: A monthly retainer invoice keeps its line
+
+- GIVEN a profile line "Retainer {month}", quantity 1, unit price 500, VAT 21, for period 2026-10
+- WHEN the payload is built in Dutch
+- THEN `invoiceLines[0]` has `itemName` "Retainer oktober", `netPrice` 500, `netAmount` 500, `vatRate` 21 and `vatCategory` S
+- AND the payload has no `lines` key, and net 500, VAT 105, gross 605
+- @e2e exclude payload builder; covered by `RecurringInvoiceGeneratorTest::testTheGeneratedInvoiceCarriesItsLinesAsInvoiceLines`
+
+### Requirement: REQ-RIN-010: A generated invoice SHALL write only declared fields and carry its number and period
+
+ARInvoice SHALL declare `recurringProfileId` and `billingPeriod`, so the
+double-billing guard of REQ-RIN-004 filters on fields OpenRegister keeps. The
+payload SHALL carry `periodId` (the billing period, `YYYY-MM`) and an
+`invoiceNumber` `REC-<yyyymm>-<first 8 of the profile id, upper case>-<nn>`, where
+`nn` is one more than the invoices of that profile and period already present. Each
+line SHALL carry the profile's `revenueAccount` as `glAccount`. Every payload key
+and every line key SHALL be a declared ARInvoice property.
+
+#### Scenario: The payload writes only declared fields
+
+- GIVEN a profile with a revenue account and one line, for period 2026-10
+- WHEN the payload is built
+- THEN every key is declared on the effective ARInvoice and every line key on its lines
+- AND `periodId` is `2026-10`, `invoiceNumber` starts `REC-202610-` and each line's `glAccount` is the revenue account
+- @e2e exclude payload builder; covered by `BillingPayloadDeclaredFieldsTest`
+
+#### Scenario: A regenerated invoice after a cancellation gets its own number
+
+- GIVEN a cancelled invoice for the profile and period
+- WHEN the period is generated again
+- THEN the new invoice's number ends in `-02`
+- @e2e exclude generator; covered by `RecurringInvoiceGeneratorTest`
+
+### Requirement: REQ-RIN-011: Invoices generated before ARInvoice 0.16.0 SHALL get their provenance back where it can be derived
+
+A post-migration repair step SHALL fill `recurringProfileId`, `billingPeriod` and
+each line's `glAccount` on an ARInvoice that lacks them when exactly one
+RecurringInvoiceProfile fits it: the same customer and administration, an invoice
+date equal to the profile's invoice day clamped to that month, a month between the
+profile's start and its last generated period, and the profile's net amount. The
+period SHALL be the invoice date's month and a line's account the profile line's
+`revenueAccount` at the same position. A field holding a value SHALL NOT be
+written. When two profiles fit, the invoice SHALL be left alone. A second run SHALL
+save nothing. A failure SHALL warn and never block the upgrade.
+
+#### Scenario: A generated invoice gets its profile, period and line accounts
+
+- GIVEN a monthly profile invoiced on the 5th, generated up to 2026-09, with two lines on accounts 8000 and 8010
+- AND an invoice of 2026-03-05 for its customer and amount, without provenance
+- WHEN the repair step runs
+- THEN the invoice carries the profile id, billing period `2026-03` and the two accounts on its lines
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testAGeneratedInvoiceGetsItsProfilePeriodAndLineAccounts`
+
+#### Scenario: An invoice that does not fit is left alone
+
+- GIVEN invoices on another day, with another amount, in a month never generated, or in another administration
+- WHEN the repair step runs
+- THEN none of them is saved
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testAnInvoiceThatDoesNotFitTheProfileIsLeftAlone`
+
+#### Scenario: Two fitting profiles leave the invoice alone
+
+- GIVEN two profiles that both fit one invoice
+- WHEN the repair step runs
+- THEN the invoice is not saved and the summary counts one ambiguous invoice
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testAnInvoiceTwoProfilesFitIsLeftAlone`
+
+#### Scenario: A value already there is never overwritten
+
+- GIVEN an invoice with its profile id and one line account already set
+- WHEN the repair step runs
+- THEN only the billing period and the other line's account are filled
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testAValueAlreadyThereIsNeverOverwritten`
+
+#### Scenario: A second run saves nothing
+
+- GIVEN the repair step ran once
+- WHEN it runs again
+- THEN it saves nothing
+- @e2e exclude repair step; covered by `BackfillArInvoiceProvenanceTest::testASecondRunSavesNothing`

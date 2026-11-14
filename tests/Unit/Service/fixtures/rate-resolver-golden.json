@@ -1,0 +1,271 @@
+{
+    "march": {
+        "result": {
+            "rateCents": 12000,
+            "currency": "EUR",
+            "rateCardVersion": "v1",
+            "effectiveDate": "2026-03-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "rc",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "april": {
+        "result": {
+            "rateCents": 99999,
+            "currency": "EUR",
+            "rateCardVersion": "v1",
+            "effectiveDate": "2026-03-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "rc",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "february": {
+        "result": {
+            "rateCents": 9550,
+            "currency": "USD",
+            "rateCardVersion": "v2",
+            "effectiveDate": "2026-01-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "rc",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "undated": {
+        "result": {
+            "rateCents": 0,
+            "currency": "EUR",
+            "rateCardVersion": "rv",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "rc",
+                    "resourceType": "jr",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "cardBySchedule": {
+        "result": {
+            "rateCents": 8000,
+            "currency": "EUR",
+            "rateCardVersion": "v1",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "card-s",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "scheduleId": "card-s",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "cardById": {
+        "result": {
+            "rateCents": 70,
+            "currency": "GBP",
+            "rateCardVersion": "v9",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "card-i",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "scheduleId": "card-i",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "id": "card-i",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "cardDefault": {
+        "result": {
+            "rateCents": 10000,
+            "currency": "EUR",
+            "rateCardVersion": "v1",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "card-x",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "scheduleId": "card-x",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "id": "card-x",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "foreignRecord": {
+        "result": {
+            "rateCents": 10000,
+            "currency": "EUR",
+            "rateCardVersion": "fallback",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "rc",
+                    "resourceType": "sr",
+                    "administrationId": "a3"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "scheduleId": "rc",
+                    "administrationId": "a3"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "id": "rc",
+                    "administrationId": "a3"
+                }
+            ],
+            [
+                "warning",
+                "RateCardResolver: no rate found for rc\/sr on 2026-02-01, falling back to €100\/hr"
+            ]
+        ]
+    },
+    "unscoped": {
+        "result": {
+            "rateCents": 10000,
+            "currency": "EUR",
+            "rateCardVersion": "fallback",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "warning",
+                "RateCardResolver: refusing unscoped lookup for rc\/sr on 2026-02-01 (no administrationId), falling back to €100\/hr"
+            ]
+        ]
+    },
+    "failing": {
+        "result": {
+            "rateCents": 10000,
+            "currency": "EUR",
+            "rateCardVersion": "fallback",
+            "effectiveDate": "2026-02-01"
+        },
+        "events": [
+            [
+                "find",
+                "RateRecord",
+                {
+                    "rateCardId": "rc",
+                    "resourceType": "sr",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "error",
+                "RateCardResolver findAll failed: down"
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "scheduleId": "rc",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "find",
+                "RateCard",
+                {
+                    "id": "rc",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "warning",
+                "RateCardResolver: no rate found for rc\/sr on 2026-02-01, falling back to €100\/hr"
+            ]
+        ]
+    }
+}

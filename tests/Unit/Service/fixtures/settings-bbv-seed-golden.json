@@ -1,0 +1,2064 @@
+{
+    "budget containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: BudgetBBVMapping demo seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "budget dated": {
+        "result": {
+            "success": true,
+            "message": "BudgetBBVMapping demo records seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 20,
+            "sha256": "e8d26b620e0a5edf172c1efe99a8c26773f8c26f268213279a73f178d6223099",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "allocationPercentage": 50,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "allocationPercentage": 30,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "2.4.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "2.4.1",
+                            "allocationPercentage": 20,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BudgetBBVMapping demo records seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "budget existing": {
+        "result": {
+            "success": true,
+            "message": "BudgetBBVMapping demo records seeded successfully.",
+            "seeded": 2,
+            "skipped": 3
+        },
+        "calls": {
+            "count": 17,
+            "sha256": "da305a38f2d4ce20a025c455baf37316d6e55c51c1704b0ad0e1c5be4194ce6e",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "allocationPercentage": 30,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "shillinq",
+                        "schema": "BudgetBBVMapping"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "2.4.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BudgetBBVMapping demo records seeded",
+                "context": {
+                    "seeded": 2,
+                    "skipped": 3
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "budget fresh": {
+        "result": {
+            "success": true,
+            "message": "BudgetBBVMapping demo records seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 20,
+            "sha256": "e8d26b620e0a5edf172c1efe99a8c26773f8c26f268213279a73f178d6223099",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "allocationPercentage": 50,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "allocationPercentage": 30,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "2.4.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "2.4.1",
+                            "allocationPercentage": 20,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BudgetBBVMapping demo records seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "budget noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId is required for BudgetBBVMapping seed."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "budget saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "21a79b85e7dfd804cf83f346301473cf3354e77dcfd92641f01f4a56c345c139",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.1.1",
+                            "allocationPercentage": 50,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BudgetBBVMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "effectiveFrom": "2026-01-01"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "glAccountNumber": "4100",
+                            "programmeCode": "1.2.1",
+                            "allocationPercentage": 30,
+                            "effectiveFrom": "2026-01-01",
+                            "effectiveTo": "2026-12-31",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BudgetBBVMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: BudgetBBVMapping demo seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "budget unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany containerFails": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany dated": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany existing": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany fresh": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany noAdmin": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany saveFails": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsCompany unavailable": {
+        "result": {
+            "success": true,
+            "seeded": 0,
+            "skipped": 0,
+            "message": "Administration type \"bv\" is non-municipal; BBV mapping seed skipped per REQ-BBV-006."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsMunicipality containerFails": {
+        "result": {
+            "success": false,
+            "message": "BBV mapping seed failed: no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "warning",
+                "message": "Shillinq: BBV account mapping seed failed",
+                "context": {
+                    "administrationId": "adm-7",
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "mappingsMunicipality dated": {
+        "result": {
+            "success": true,
+            "seeded": 114,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 456,
+            "sha256": "df1fe96054ad5717f53ac11e277aac9021700896de122915bed4484e27ac60f3",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0120"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0120",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBV account mappings seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "administrationType": "municipality",
+                    "seeded": 114,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "mappingsMunicipality existing": {
+        "result": {
+            "success": true,
+            "seeded": 57,
+            "skipped": 57
+        },
+        "calls": {
+            "count": 399,
+            "sha256": "d544808eab16283a4074e631376bce06f56ab89799f2f0645523ebb859dea3cc",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "shillinq",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0120"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBV account mappings seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "administrationType": "municipality",
+                    "seeded": 57,
+                    "skipped": 57
+                }
+            }
+        ],
+        "configWrites": [
+            [
+                "shillinq",
+                "bbv_gate_install_date",
+                "(today)"
+            ]
+        ]
+    },
+    "mappingsMunicipality fresh": {
+        "result": {
+            "success": true,
+            "seeded": 114,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 456,
+            "sha256": "df1fe96054ad5717f53ac11e277aac9021700896de122915bed4484e27ac60f3",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0120"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0120",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBV account mappings seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "administrationType": "municipality",
+                    "seeded": 114,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": [
+            [
+                "shillinq",
+                "bbv_gate_install_date",
+                "(today)"
+            ]
+        ]
+    },
+    "mappingsMunicipality noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsMunicipality saveFails": {
+        "result": {
+            "success": false,
+            "message": "BBV mapping seed failed: save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "a3c89519cf8651ca9cdf3bf7b673fcd6d1223141db29746311571af0b0ffcdae",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "warning",
+                "message": "Shillinq: BBV account mapping seed failed",
+                "context": {
+                    "administrationId": "adm-7",
+                    "exception": "save refused"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "mappingsMunicipality unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsWaterschap containerFails": {
+        "result": {
+            "success": false,
+            "message": "BBV mapping seed failed: no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "warning",
+                "message": "Shillinq: BBV account mapping seed failed",
+                "context": {
+                    "administrationId": "adm-7",
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "mappingsWaterschap dated": {
+        "result": {
+            "success": true,
+            "seeded": 114,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 456,
+            "sha256": "df1fe96054ad5717f53ac11e277aac9021700896de122915bed4484e27ac60f3",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0120"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0120",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBV account mappings seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "administrationType": "waterschap",
+                    "seeded": 114,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "mappingsWaterschap existing": {
+        "result": {
+            "success": true,
+            "seeded": 57,
+            "skipped": 57
+        },
+        "calls": {
+            "count": 399,
+            "sha256": "d544808eab16283a4074e631376bce06f56ab89799f2f0645523ebb859dea3cc",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "shillinq",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0120"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBV account mappings seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "administrationType": "waterschap",
+                    "seeded": 57,
+                    "skipped": 57
+                }
+            }
+        ],
+        "configWrites": [
+            [
+                "shillinq",
+                "bbv_gate_install_date",
+                "(today)"
+            ]
+        ]
+    },
+    "mappingsWaterschap fresh": {
+        "result": {
+            "success": true,
+            "seeded": 114,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 456,
+            "sha256": "df1fe96054ad5717f53ac11e277aac9021700896de122915bed4484e27ac60f3",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0120"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0120",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBV account mappings seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "administrationType": "waterschap",
+                    "seeded": 114,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": [
+            [
+                "shillinq",
+                "bbv_gate_install_date",
+                "(today)"
+            ]
+        ]
+    },
+    "mappingsWaterschap noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "mappingsWaterschap saveFails": {
+        "result": {
+            "success": false,
+            "message": "BBV mapping seed failed: save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "a3c89519cf8651ca9cdf3bf7b673fcd6d1223141db29746311571af0b0ffcdae",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0100"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0100",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BbvAccountMapping"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "accountNumber": "0110"
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "accountNumber": "0110",
+                            "taskField": "0.1",
+                            "programmeCode": "0",
+                            "paragraphCode": null,
+                            "bcfCompensable": false,
+                            "compensablePercentage": 0,
+                            "iv3Bucket": "bestuur",
+                            "autorisatieniveau": "I",
+                            "_meta": {
+                                "source": "seeded",
+                                "bbvVersion": "2024"
+                            },
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BbvAccountMapping"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "warning",
+                "message": "Shillinq: BBV account mapping seed failed",
+                "context": {
+                    "administrationId": "adm-7",
+                    "exception": "save refused"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "mappingsWaterschap unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "programmes containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: BBVProgramme demo seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "programmes dated": {
+        "result": {
+            "success": true,
+            "message": "BBVProgramme demo records seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 20,
+            "sha256": "a7c62417d7e3d9037092e4aa59a2c53cab1bafe00c539a7d93b7e0dccb723f10",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.1.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.1.1",
+                            "programmeName": "Core Administration",
+                            "description": "Core administrative programme covering general administration, board support and shared services.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.2.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.2.1",
+                            "programmeName": "HR & Payroll",
+                            "description": "Human resources, payroll, training and personnel administration across the waterboard.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "2.3.2",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "2.3.2",
+                            "programmeName": "Water Quality Monitoring",
+                            "description": "Surface- and ground-water quality monitoring, sampling and laboratory analysis aligned with the Kaderrichtlijn Water programme.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBVProgramme demo records seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "programmes existing": {
+        "result": {
+            "success": true,
+            "message": "BBVProgramme demo records seeded successfully.",
+            "seeded": 2,
+            "skipped": 3
+        },
+        "calls": {
+            "count": 17,
+            "sha256": "973270200d9d0ffc120fae5fdb971f88964db6d3d5d190ff90c5eade75d71872",
+            "head": [
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.1.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.2.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.2.1",
+                            "programmeName": "HR & Payroll",
+                            "description": "Human resources, payroll, training and personnel administration across the waterboard.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "shillinq",
+                        "schema": "BBVProgramme"
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "2.3.2",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "setRegister": "shillinq"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBVProgramme demo records seeded",
+                "context": {
+                    "seeded": 2,
+                    "skipped": 3
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "programmes fresh": {
+        "result": {
+            "success": true,
+            "message": "BBVProgramme demo records seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": {
+            "count": 20,
+            "sha256": "a7c62417d7e3d9037092e4aa59a2c53cab1bafe00c539a7d93b7e0dccb723f10",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.1.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.1.1",
+                            "programmeName": "Core Administration",
+                            "description": "Core administrative programme covering general administration, board support and shared services.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.2.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.2.1",
+                            "programmeName": "HR & Payroll",
+                            "description": "Human resources, payroll, training and personnel administration across the waterboard.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "2.3.2",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "2.3.2",
+                            "programmeName": "Water Quality Monitoring",
+                            "description": "Surface- and ground-water quality monitoring, sampling and laboratory analysis aligned with the Kaderrichtlijn Water programme.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: BBVProgramme demo records seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "programmes noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId is required for BBVProgramme seed."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    },
+    "programmes saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": {
+            "count": 8,
+            "sha256": "1cd1580fcdca95e53fc37737c58dda38b613f23784afaa7c7d992858c2688eaf",
+            "head": [
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.1.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.1.1",
+                            "programmeName": "Core Administration",
+                            "description": "Core administrative programme covering general administration, board support and shared services.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                },
+                {
+                    "setRegister": "books"
+                },
+                {
+                    "setSchema": "BBVProgramme"
+                },
+                {
+                    "findAll": {
+                        "filters": {
+                            "administrationId": "adm-7",
+                            "programmeCode": "1.2.1",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1
+                    }
+                },
+                {
+                    "saveObject": {
+                        "object": {
+                            "programmeCode": "1.2.1",
+                            "programmeName": "HR & Payroll",
+                            "description": "Human resources, payroll, training and personnel administration across the waterboard.",
+                            "fiscalYear": 2026,
+                            "status": "active",
+                            "administrationId": "adm-7"
+                        },
+                        "register": "books",
+                        "schema": "BBVProgramme"
+                    }
+                }
+            ]
+        },
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: BBVProgramme demo seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ],
+        "configWrites": []
+    },
+    "programmes unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": {
+            "count": 0,
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "head": []
+        },
+        "log": [],
+        "configWrites": []
+    }
+}

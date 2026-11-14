@@ -3,6 +3,9 @@
 /**
  * Intercompany Transaction Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the treasury / in-house-bank
  * registers (bookkeeping-treasury-ihb, T3). Two preconditions are referenced
  * from schema x-openregister-lifecycle transitions because they require
@@ -32,16 +35,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -198,21 +198,7 @@ class IntercompanyTransactionGuard {
 	 */
 	private function isPeriodOpen(string $administrationId, string $postingDate): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->getRegisterSlug();
-
-			$years = $objectService
-				->setRegister(register: $register)
-				->setSchema(schema: 'FiscalYear')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'startDate' => ['lte' => $postingDate],
-							'endDate' => ['gte' => $postingDate],
-						],
-					]
-				);
+			$years = $this->fiscalYearsCovering(administrationId: $administrationId, date: $postingDate);
 		} catch (\Throwable) {
 			// FiscalYear register not yet available (T1 state) — permit posting.
 			$this->logger->debug(
@@ -234,6 +220,31 @@ class IntercompanyTransactionGuard {
 		$year = reset($years);
 		return is_array($year) === true && ($year['state'] ?? '') === 'open';
 	}//end isPeriodOpen()
+
+	/**
+	 * The administration's FiscalYears whose period covers the date.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $date The ISO date.
+	 *
+	 * @return array<int|string, mixed> The fiscal years.
+	 */
+	private function fiscalYearsCovering(string $administrationId, string $date): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $objectService
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: 'FiscalYear')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'startDate' => ['lte' => $date],
+						'endDate' => ['gte' => $date],
+					],
+				]
+			);
+
+	}//end fiscalYearsCovering()
 
 	/**
 	 * Resolve an IntercompanyTransaction object by id via the ObjectService.
@@ -278,7 +289,7 @@ class IntercompanyTransactionGuard {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

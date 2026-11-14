@@ -24,6 +24,9 @@
  * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.Commenting.InlineComment
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -34,6 +37,39 @@ namespace OCA\Shillinq\Standards\Checks;
  * Executable OSS/IOSS VAT rules over OssThresholdCounter + OssReturn.
  */
 final class OssIossChecks implements CheckProvider, SeedsObjects {
+	/**
+	 * The compliant samples seedObjects() returns.
+	 *
+	 * @var array<string, array<int, array<string, mixed>>>
+	 */
+	private const SEED_OBJECTS = [
+		'OssThresholdCounter' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'calendarYear' => 2026,
+				'totalB2cEuTurnover' => 5000.00,
+				'byQuarter' => ['Q1' => 5000.00],
+				'byCountry' => ['DE' => 5000.00],
+			],
+		],
+		'OssReturn' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'periodYear' => 2026,
+				'periodQuarter' => 'Q1',
+				'registrationId' => 'oss-reg-shillinq-1',
+				'type' => 'regular',
+				'status' => 'submitted',
+				'totalTaxableBase' => 1000.00,
+				'totalVatAmount' => 190.00,
+				'lineItems' => [
+					['countryCode' => 'DE', 'rateCategory' => 'standard', 'taxableBase' => 1000.00, 'vatRate' => 19, 'vatAmount' => 190.00],
+				],
+				'perCountryDistribution' => ['DE' => 190.00],
+			],
+		],
+	];
+
 	/**
 	 * OSS/IOSS predicates keyed by object type then rule id.
 	 *
@@ -75,33 +111,7 @@ final class OssIossChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'OssThresholdCounter' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'calendarYear' => 2026,
-					'totalB2cEuTurnover' => 5000.00,
-					'byQuarter' => ['Q1' => 5000.00],
-					'byCountry' => ['DE' => 5000.00],
-				],
-			],
-			'OssReturn' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'periodYear' => 2026,
-					'periodQuarter' => 'Q1',
-					'registrationId' => 'oss-reg-shillinq-1',
-					'type' => 'regular',
-					'status' => 'submitted',
-					'totalTaxableBase' => 1000.00,
-					'totalVatAmount' => 190.00,
-					'lineItems' => [
-						['countryCode' => 'DE', 'rateCategory' => 'standard', 'taxableBase' => 1000.00, 'vatRate' => 19, 'vatAmount' => 190.00],
-					],
-					'perCountryDistribution' => ['DE' => 190.00],
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 

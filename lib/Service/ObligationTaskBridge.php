@@ -3,6 +3,9 @@
 /**
  * Obligation Task Bridge
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Thin, fail-closed integration glue between a ContractObligation register row
  * and a Nextcloud Tasks VTODO (CalDAV) — or a Deck card where Deck is enabled
  * and selected — per REQ-CLM-003 (ADR-031 exception path: integration glue, not
@@ -28,19 +31,17 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/contract-lifecycle-management/spec.md
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObligationTaskBridgeInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Creates / links the NC Tasks VTODO (or Deck card) for a ContractObligation.
@@ -49,13 +50,13 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * returns ['taskUri' => null, 'taskLinkStatus' => 'failed'] and logs the
  * reason; it never throws into the obligation CRUD path (REQ-CLM-003).
  *
- * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+ * @spec openspec/specs/contract-lifecycle-management/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ObligationTaskBridge {
+class ObligationTaskBridge implements ObligationTaskBridgeInterface {
 	/**
 	 * Construct the bridge with DI dependencies.
 	 *
@@ -95,56 +96,7 @@ class ObligationTaskBridge {
 	 */
 	public function createTaskForObligation(array $obligation): array {
 		try {
-			$title = trim((string)($obligation['title'] ?? ''));
-			$dueDate = trim((string)($obligation['dueDate'] ?? ''));
-			$responsible = trim((string)($obligation['responsible'] ?? ''));
-
-			if ($title === '' || $dueDate === '') {
-				$this->logger->info(
-					'ObligationTaskBridge: cannot create task — obligation lacks title or dueDate (fail-closed)',
-					['hasTitle' => ($title !== ''), 'hasDueDate' => ($dueDate !== '')]
-				);
-				return $this->failed();
-			}
-
-			$backend = $this->resolveTaskBackend();
-			if ($backend === null) {
-				// Documented fail-closed degrade path: no CalDAV/Deck backend is
-				// resolvable in this environment. We tried; we record why.
-				$this->logger->warning(
-					'ObligationTaskBridge: no NC Tasks/Deck backend available — degrading fail-closed',
-					['title' => $title, 'responsible' => $responsible]
-				);
-				return $this->failed();
-			}
-
-			$taskUri = $this->writeVtodo(
-				backend: $backend,
-				title: $title,
-				dueDate: $dueDate,
-				responsible: $responsible
-			);
-
-			// REQ-CDC-005 — additive deadline VEVENT alongside the VTODO.
-			// Both surfaces share this bridge's backend resolution; a VEVENT
-			// failure never blocks the VTODO result (and vice versa).
-			$event = $this->publishDeadlineEvent(obligation: $obligation);
-
-			if ($taskUri === null || $taskUri === '') {
-				$this->logger->warning(
-					'ObligationTaskBridge: backend resolved but VTODO write returned no URI — fail-closed',
-					['title' => $title]
-				);
-				return array_merge($this->failed(), $event);
-			}
-
-			return array_merge(
-				[
-					'taskUri' => $taskUri,
-					'taskLinkStatus' => 'linked',
-				],
-				$event
-			);
+			return $this->createTask(obligation: $obligation);
 		} catch (\Throwable $e) {
 			// Never throw into the CRUD path: log and degrade fail-closed.
 			$this->logger->error(
@@ -155,6 +107,82 @@ class ObligationTaskBridge {
 		}//end try
 
 	}//end createTaskForObligation()
+
+	/**
+	 * Create the VTODO and the deadline VEVENT, failing closed when the obligation or backend is lacking.
+	 *
+	 * @param array<string,mixed> $obligation The ContractObligation field map.
+	 *
+	 * @return array{taskUri: ?string, taskLinkStatus: string, eventUri?: ?string, eventLinkStatus?: string} Bridge result.
+	 *
+	 * @throws \Throwable When the backend fails.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function createTask(array $obligation): array {
+		$title = trim((string)($obligation['title'] ?? ''));
+		$dueDate = trim((string)($obligation['dueDate'] ?? ''));
+		$responsible = trim((string)($obligation['responsible'] ?? ''));
+
+		if ($title === '' || $dueDate === '') {
+			$this->logger->info(
+				'ObligationTaskBridge: cannot create task — obligation lacks title or dueDate (fail-closed)',
+				['hasTitle' => ($title !== ''), 'hasDueDate' => ($dueDate !== '')]
+			);
+			return $this->failed();
+		}
+
+		$backend = $this->resolveTaskBackend();
+		if ($backend === null) {
+			// Documented fail-closed degrade path: no CalDAV/Deck backend is
+			// resolvable in this environment. We tried; we record why.
+			$this->logger->warning(
+				'ObligationTaskBridge: no NC Tasks/Deck backend available — degrading fail-closed',
+				['title' => $title, 'responsible' => $responsible]
+			);
+			return $this->failed();
+		}
+
+		return $this->writeTask(backend: $backend, obligation: $obligation);
+	}//end createTask()
+
+	/**
+	 * Write the VTODO and the deadline VEVENT through a resolved backend.
+	 *
+	 * @param object              $backend    The resolved task backend.
+	 * @param array<string,mixed> $obligation The ContractObligation field map (has a title and dueDate).
+	 *
+	 * @return array{taskUri: ?string, taskLinkStatus: string, eventUri: ?string, eventLinkStatus: string} Bridge result.
+	 *
+	 * @throws \Throwable When the backend fails.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function writeTask(object $backend, array $obligation): array {
+		$title = trim((string)($obligation['title'] ?? ''));
+
+		$taskUri = $this->writeVtodo(
+			backend: $backend,
+			title: $title,
+			dueDate: trim((string)($obligation['dueDate'] ?? '')),
+			responsible: trim((string)($obligation['responsible'] ?? ''))
+		);
+
+		// REQ-CDC-005 — additive deadline VEVENT alongside the VTODO.
+		// Both surfaces share this bridge's backend resolution; a VEVENT
+		// failure never blocks the VTODO result (and vice versa).
+		$event = $this->publishDeadlineEvent(obligation: $obligation);
+
+		if ($taskUri === null || $taskUri === '') {
+			$this->logger->warning(
+				'ObligationTaskBridge: backend resolved but VTODO write returned no URI — fail-closed',
+				['title' => $title]
+			);
+			return array_merge($this->failed(), $event);
+		}
+
+		return array_merge(['taskUri' => $taskUri, 'taskLinkStatus' => 'linked'], $event);
+	}//end writeTask()
 
 	/**
 	 * Publish the deadline VEVENT for a ContractObligation (REQ-CDC-005).
@@ -175,34 +203,7 @@ class ObligationTaskBridge {
 	 */
 	public function publishDeadlineEvent(array $obligation): array {
 		try {
-			$title = trim((string)($obligation['title'] ?? ''));
-			$dueDate = trim((string)($obligation['dueDate'] ?? ''));
-			if ($title === '' || $dueDate === '') {
-				return $this->eventFailed();
-			}
-
-			$backend = $this->resolveTaskBackend();
-			if ($backend === null) {
-				$this->logger->warning(
-					'ObligationTaskBridge: no calendar backend for deadline VEVENT — degrading fail-soft',
-					['title' => $title]
-				);
-				return $this->eventFailed();
-			}
-
-			if (method_exists($backend, 'createFromString') === false) {
-				return $this->eventFailed();
-			}
-
-			$uid = 'contract:' . $this->stableObjectId(obligation: $obligation);
-			$vevent = $this->buildDeadlineVevent(uid: $uid, title: $title, dueDate: $dueDate);
-			$name = strtolower((string)preg_replace('/[^A-Za-z0-9\\-]+/', '-', $uid));
-			$backend->createFromString('shillinq-' . trim($name, '-') . '.ics', $vevent);
-
-			return [
-				'eventUri' => 'caldav://shillinq/deadlines/shillinq-' . trim($name, '-') . '.ics',
-				'eventLinkStatus' => 'linked',
-			];
+			return $this->publishEvent(obligation: $obligation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ObligationTaskBridge: deadline VEVENT publication failed — degrading fail-soft',
@@ -212,6 +213,67 @@ class ObligationTaskBridge {
 		}//end try
 
 	}//end publishDeadlineEvent()
+
+	/**
+	 * Publish the deadline VEVENT, failing soft when the obligation or backend is lacking.
+	 *
+	 * @param array<string,mixed> $obligation The ContractObligation field map.
+	 *
+	 * @return array{eventUri: ?string, eventLinkStatus: string} Event result.
+	 *
+	 * @throws \Throwable When the backend fails.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function publishEvent(array $obligation): array {
+		$title = trim((string)($obligation['title'] ?? ''));
+		$dueDate = trim((string)($obligation['dueDate'] ?? ''));
+		if ($title === '' || $dueDate === '') {
+			return $this->eventFailed();
+		}
+
+		$backend = $this->resolveTaskBackend();
+		if ($backend === null) {
+			$this->logger->warning(
+				'ObligationTaskBridge: no calendar backend for deadline VEVENT — degrading fail-soft',
+				['title' => $title]
+			);
+			return $this->eventFailed();
+		}
+
+		if (method_exists($backend, 'createFromString') === false) {
+			return $this->eventFailed();
+		}
+
+		return $this->writeDeadlineEvent(backend: $backend, obligation: $obligation);
+	}//end publishEvent()
+
+	/**
+	 * Write the deadline VEVENT through a resolved calendar backend.
+	 *
+	 * @param object              $backend    The resolved backend (has createFromString()).
+	 * @param array<string,mixed> $obligation The ContractObligation field map (has a title and dueDate).
+	 *
+	 * @return array{eventUri: string, eventLinkStatus: string} Event result.
+	 *
+	 * @throws \Throwable When the backend fails.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function writeDeadlineEvent(object $backend, array $obligation): array {
+		$title = trim((string)($obligation['title'] ?? ''));
+		$dueDate = trim((string)($obligation['dueDate'] ?? ''));
+
+		$uid = 'contract:' . $this->stableObjectId(obligation: $obligation);
+		$vevent = $this->buildDeadlineVevent(uid: $uid, title: $title, dueDate: $dueDate);
+		$name = strtolower((string)preg_replace('/[^A-Za-z0-9\\-]+/', '-', $uid));
+		$backend->createFromString('shillinq-' . trim($name, '-') . '.ics', $vevent);
+
+		return [
+			'eventUri' => 'caldav://shillinq/deadlines/shillinq-' . trim($name, '-') . '.ics',
+			'eventLinkStatus' => 'linked',
+		];
+	}//end writeDeadlineEvent()
 
 	/**
 	 * List the OPEN ContractObligation deadlines as calendar-ready
@@ -235,38 +297,7 @@ class ObligationTaskBridge {
 				->setSchema(schema: 'ContractObligation')
 				->findAll([]);
 
-
-			$deadlines = [];
-			foreach (array_values($rows) as $row) {
-				if (is_array($row) === false) {
-					continue;
-				}
-
-				$status = (string)($row['status'] ?? 'open');
-				if (in_array($status, ['open', 'in-progress', 'overdue'], true) === false) {
-					// Done / waived → deadline no longer open.
-					continue;
-				}
-
-				$dueDate = trim((string)($row['dueDate'] ?? ''));
-				$title = trim((string)($row['title'] ?? ''));
-				if ($dueDate === '' || $title === '') {
-					continue;
-				}
-
-				$objectId = $this->stableObjectId(obligation: $row);
-
-				$deadlines[] = [
-					'uid' => 'contract:' . $objectId,
-					'category' => 'contract',
-					'summary' => $title,
-					'dueDate' => $dueDate,
-					'source' => 'contract',
-					'objectId' => $objectId,
-				];
-			}//end foreach
-
-			return $deadlines;
+			return $this->openDeadlines(rows: $rows);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'ObligationTaskBridge: ContractObligation read unavailable — treating as empty',
@@ -276,6 +307,65 @@ class ObligationTaskBridge {
 		}//end try
 
 	}//end listOpenObligationDeadlines()
+
+	/**
+	 * The calendar entries of the open obligations among the rows.
+	 *
+	 * @param array<mixed> $rows ContractObligation rows.
+	 *
+	 * @return array<int,array<string,string>> Deadline entries.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function openDeadlines(array $rows): array {
+		$deadlines = [];
+		foreach (array_values($rows) as $row) {
+			$entry = $this->deadlineEntry(row: $row);
+			if ($entry !== null) {
+				$deadlines[] = $entry;
+			}
+		}
+
+		return $deadlines;
+	}//end openDeadlines()
+
+	/**
+	 * The calendar entry of one obligation row, or null when it is not an open deadline.
+	 *
+	 * @param mixed $row A ContractObligation row.
+	 *
+	 * @return array<string,string>|null
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function deadlineEntry(mixed $row): array|null {
+		if (is_array($row) === false) {
+			return null;
+		}
+
+		$status = (string)($row['status'] ?? 'open');
+		if (in_array($status, ['open', 'in-progress', 'overdue'], true) === false) {
+			// Done / waived → deadline no longer open.
+			return null;
+		}
+
+		$dueDate = trim((string)($row['dueDate'] ?? ''));
+		$title = trim((string)($row['title'] ?? ''));
+		if ($dueDate === '' || $title === '') {
+			return null;
+		}
+
+		$objectId = $this->stableObjectId(obligation: $row);
+
+		return [
+			'uid' => 'contract:' . $objectId,
+			'category' => 'contract',
+			'summary' => $title,
+			'dueDate' => $dueDate,
+			'source' => 'contract',
+			'objectId' => $objectId,
+		];
+	}//end deadlineEntry()
 
 	/**
 	 * Resolve an NC Tasks (CalDAV) or Deck backend if one is available.

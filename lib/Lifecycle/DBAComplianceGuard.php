@@ -3,6 +3,9 @@
 /**
  * DBA Compliance Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path guard for the DBA compliance marker registers
  * (dba-compliance-marker, T2). The bulk of the DBA surface is declarative
  * (six schemas + x-openregister-lifecycle + x-openregister-calculations +
@@ -52,16 +55,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -306,17 +306,7 @@ class DBAComplianceGuard {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function computeCompleteness(array $documents): array {
-		$presentTypes = [];
-		foreach ($documents as $stuk) {
-			if (is_array($stuk) === false) {
-				continue;
-			}
-
-			$type = (string)($stuk['type'] ?? '');
-			if ($type !== '') {
-				$presentTypes[$type] = true;
-			}
-		}
+		$presentTypes = self::presentTypesOf(documents: $documents);
 
 		$missing = [];
 		$present = 0;
@@ -340,6 +330,31 @@ class DBAComplianceGuard {
 		];
 
 	}//end computeCompleteness()
+
+	/**
+	 * The distinct stuk types present in the dossier.
+	 *
+	 * @param array<int,mixed> $documents The dossier stukken.
+	 *
+	 * @return array<string,bool> Type => true.
+	 *
+	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 */
+	private static function presentTypesOf(array $documents): array {
+		$presentTypes = [];
+		foreach ($documents as $stuk) {
+			if (is_array($stuk) === false) {
+				continue;
+			}
+
+			$type = (string)($stuk['type'] ?? '');
+			if ($type !== '') {
+				$presentTypes[$type] = true;
+			}
+		}
+
+		return $presentTypes;
+	}//end presentTypesOf()
 
 	/**
 	 * Determine whether an invoice's effective hourly rate breaches the VBAR
@@ -413,7 +428,7 @@ class DBAComplianceGuard {
 	 * @return float The effective VBAR grens in EUR.
 	 */
 	private function resolveVbarGrens(): float {
-		$override = $this->appConfig->getValueString(Application::APP_ID, 'dba_vbar_grens', '');
+		$override = $this->appConfig->getValueString(AppIdentity::APP_ID, 'dba_vbar_grens', '');
 		if ($override !== '' && is_numeric($override) === true) {
 			$value = (float)$override;
 			if ($value > 0.0) {
@@ -435,41 +450,8 @@ class DBAComplianceGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
-
-	/**
-	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-	 *
-	 * @return string The register slug.
-	 */
-	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end resolveRegister()
 }//end class

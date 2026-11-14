@@ -3,6 +3,9 @@
 /**
  * Inventory Posting Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception path lifecycle guard for the perpetual inventory
  * GL-posting envelope (inventory-cogs-posting REQ-CG-002 / REQ-CG-003 /
  * REQ-CG-004). Four predicates:
@@ -49,16 +52,13 @@
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-7
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-8
  * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-9
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -74,6 +74,18 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/specs/inventory-cogs-posting/spec.md
  */
 class InventoryPostingGuard {
+	/**
+	 * The InventoryGLConfig account FK fields (REQ-CG-001).
+	 *
+	 * @var array<int,string>
+	 */
+	private const ACCOUNT_FK_FIELDS = [
+		'cogsAccountNumber',
+		'inventoryAssetAccountNumber',
+		'grIrClearingAccountNumber',
+		'inventoryAdjustmentAccountNumber',
+	];
+
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
@@ -109,48 +121,7 @@ class InventoryPostingGuard {
 	 */
 	public function canPost(array $valuation): bool {
 		try {
-			$unitCost = ($valuation['unitCost'] ?? null);
-			if ($unitCost === null) {
-				$this->logger->warning(
-					'InventoryPostingGuard: posting skipped — unitCost_missing',
-					[
-						'valuationId' => (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? '')),
-						'administrationId' => (string)($valuation['administrationId'] ?? ''),
-						'reason' => 'unitCost_missing',
-					]
-				);
-				return false;
-			}
-
-			$config = $this->resolveActiveConfig(
-				administrationId: (string)($valuation['administrationId'] ?? '')
-			);
-
-			if ($config === null) {
-				$this->logger->warning(
-					'InventoryPostingGuard: posting skipped — config_missing',
-					[
-						'valuationId' => (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? '')),
-						'administrationId' => (string)($valuation['administrationId'] ?? ''),
-						'reason' => 'config_missing',
-					]
-				);
-				return false;
-			}
-
-			if (((bool)($config['isActive'] ?? false)) === false) {
-				$this->logger->warning(
-					'InventoryPostingGuard: posting skipped — posting_disabled',
-					[
-						'valuationId' => (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? '')),
-						'administrationId' => (string)($valuation['administrationId'] ?? ''),
-						'reason' => 'posting_disabled',
-					]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->postingAllowed(valuation: $valuation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InventoryPostingGuard: canPost failed — denying (fail-closed)',
@@ -160,6 +131,68 @@ class InventoryPostingGuard {
 		}//end try
 
 	}//end canPost()
+
+	/**
+	 * A unit cost is known and an active GL config exists for the administration.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 *
+	 * @return bool True when posting may proceed.
+	 */
+	private function postingAllowed(array $valuation): bool {
+		$unitCost = ($valuation['unitCost'] ?? null);
+		if ($unitCost === null) {
+			return $this->skipPosting(valuation: $valuation, reason: 'unitCost_missing');
+		}
+
+		$config = $this->resolveActiveConfig(
+			administrationId: (string)($valuation['administrationId'] ?? '')
+		);
+
+		if ($config === null) {
+			return $this->skipPosting(valuation: $valuation, reason: 'config_missing');
+		}
+
+		if (((bool)($config['isActive'] ?? false)) === false) {
+			return $this->skipPosting(valuation: $valuation, reason: 'posting_disabled');
+		}
+
+		return true;
+
+	}//end postingAllowed()
+
+	/**
+	 * Emit the structured posting-skipped warning and deny.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 * @param string $reason The skip reason.
+	 *
+	 * @return false Always.
+	 */
+	private function skipPosting(array $valuation, string $reason): bool {
+		$this->logger->warning(
+			'InventoryPostingGuard: posting skipped — ' . $reason,
+			[
+				'valuationId' => $this->valuationId(valuation: $valuation),
+				'administrationId' => (string)($valuation['administrationId'] ?? ''),
+				'reason' => $reason,
+			]
+		);
+		return false;
+
+	}//end skipPosting()
+
+	/**
+	 * The valuation's id, from `id` or `@self.id`.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 *
+	 * @return string The id, or ''.
+	 */
+	private function valuationId(array $valuation): string {
+		return (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? ''));
+
+	}//end valuationId()
 
 	/**
 	 * REQ-CG-004 gate: permit the count-variance lifecycle posting when
@@ -185,30 +218,7 @@ class InventoryPostingGuard {
 				return false;
 			}
 
-			$delta = $this->deltaQuantity(valuation: $valuation);
-			if ($delta === null) {
-				$this->logger->warning(
-					'InventoryPostingGuard: countVariance posting denied — missing variance / actualQuantity',
-					[
-						'valuationId' => (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? '')),
-						'reason' => 'variance_missing',
-					]
-				);
-				return false;
-			}
-
-			if ($delta === 0) {
-				$this->logger->info(
-					'InventoryPostingGuard: countVariance posting skipped — zero delta',
-					[
-						'valuationId' => (string)($valuation['id'] ?? ($valuation['@self']['id'] ?? '')),
-						'reason' => 'zero_variance',
-					]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->deltaPostable(valuation: $valuation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InventoryPostingGuard: canPostVariance failed — denying (fail-closed)',
@@ -218,6 +228,41 @@ class InventoryPostingGuard {
 		}//end try
 
 	}//end canPostVariance()
+
+	/**
+	 * The valuation carries a parseable, non-zero inventory delta.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 *
+	 * @return bool True when the variance may be posted.
+	 */
+	private function deltaPostable(array $valuation): bool {
+		$delta = $this->deltaQuantity(valuation: $valuation);
+		if ($delta === null) {
+			$this->logger->warning(
+				'InventoryPostingGuard: countVariance posting denied — missing variance / actualQuantity',
+				[
+					'valuationId' => $this->valuationId(valuation: $valuation),
+					'reason' => 'variance_missing',
+				]
+			);
+			return false;
+		}
+
+		if ($delta === 0) {
+			$this->logger->info(
+				'InventoryPostingGuard: countVariance posting skipped — zero delta',
+				[
+					'valuationId' => $this->valuationId(valuation: $valuation),
+					'reason' => 'zero_variance',
+				]
+			);
+			return false;
+		}
+
+		return true;
+
+	}//end deltaPostable()
 
 	/**
 	 * REQ-CG-004 direction resolver — returns `'positive'` for a stock
@@ -272,52 +317,7 @@ class InventoryPostingGuard {
 	 */
 	public function accountExists(array $proposed): bool {
 		try {
-			$administrationId = (string)($proposed['administrationId'] ?? '');
-			if ($administrationId === '') {
-				return true;
-			}
-
-			$fields = [
-				'cogsAccountNumber',
-				'inventoryAssetAccountNumber',
-				'grIrClearingAccountNumber',
-				'inventoryAdjustmentAccountNumber',
-			];
-
-
-			foreach ($fields as $field) {
-				$accountNumber = (string)($proposed[$field] ?? '');
-				if ($accountNumber === '') {
-					continue;
-				}
-
-				$matches = $this->objectService
-					->setRegister($this->register())
-					->setSchema('Account')
-					->findAll(
-						[
-							'filters' => [
-								'accountNumber' => $accountNumber,
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if ($matches === []) {
-					$this->logger->info(
-						'InventoryPostingGuard: account FK does not resolve',
-						[
-							'administrationId' => $administrationId,
-							'field' => $field,
-							'accountNumber' => $accountNumber,
-						]
-					);
-					return false;
-				}
-			}//end foreach
-
-			return true;
+			return $this->accountsResolve(proposed: $proposed);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InventoryPostingGuard: accountExists failed — denying (fail-closed)',
@@ -327,6 +327,64 @@ class InventoryPostingGuard {
 		}//end try
 
 	}//end accountExists()
+
+	/**
+	 * Every present account FK resolves to an Account in the administration.
+	 *
+	 * @param array<string,mixed> $proposed The proposed InventoryGLConfig record.
+	 *
+	 * @return bool False at the first dangling FK.
+	 */
+	private function accountsResolve(array $proposed): bool {
+		$administrationId = (string)($proposed['administrationId'] ?? '');
+		if ($administrationId === '') {
+			return true;
+		}
+
+		foreach (self::ACCOUNT_FK_FIELDS as $field) {
+			$accountNumber = (string)($proposed[$field] ?? '');
+			if ($accountNumber !== '' && $this->accountMissing(accountNumber: $accountNumber, administrationId: $administrationId) === true) {
+				$this->logger->info(
+					'InventoryPostingGuard: account FK does not resolve',
+					[
+						'administrationId' => $administrationId,
+						'field' => $field,
+						'accountNumber' => $accountNumber,
+					]
+				);
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end accountsResolve()
+
+	/**
+	 * Whether no Account with this number exists in the administration.
+	 *
+	 * @param string $accountNumber The account number.
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return bool True when the account does not resolve.
+	 */
+	private function accountMissing(string $accountNumber, string $administrationId): bool {
+		$matches = $this->objectService
+			->setRegister($this->register())
+			->setSchema('Account')
+			->findAll(
+				[
+					'filters' => [
+						'accountNumber' => $accountNumber,
+						'administrationId' => $administrationId,
+					],
+					'limit' => 1,
+				]
+			);
+
+		return $matches === [];
+
+	}//end accountMissing()
 
 	/**
 	 * Resolve the active InventoryGLConfig for an administration, or
@@ -355,7 +413,17 @@ class InventoryPostingGuard {
 			return null;
 		}
 
-		$row = $matches[0];
+		return self::configPayload(row: $matches[0]);
+	}//end resolveActiveConfig()
+
+	/**
+	 * The payload of a findAll() row: the array itself, or a serialisable entity's array.
+	 *
+	 * @param mixed $row One InventoryGLConfig row.
+	 *
+	 * @return array<string,mixed>|null The payload, or null when the row is unusable.
+	 */
+	private static function configPayload(mixed $row): array|null {
 		if (is_array($row) === true) {
 			return $row;
 		}
@@ -368,7 +436,7 @@ class InventoryPostingGuard {
 		}
 
 		return null;
-	}//end resolveActiveConfig()
+	}//end configPayload()
 
 	/**
 	 * Extract the inventory delta from the proposed valuation. Accepts
@@ -400,7 +468,7 @@ class InventoryPostingGuard {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

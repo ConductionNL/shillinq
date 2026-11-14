@@ -3,6 +3,9 @@
 /**
  * Aansluiting Calculator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic helper for the Aansluiting (tie-out) framework (REQ-AANS-003,
  * REQ-AANS-004, REQ-AANS-005). Holds the side-effect-free arithmetic
  * AansluitingService applies after resolving a source A / source B total
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

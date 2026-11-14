@@ -18,7 +18,7 @@ This specification defines the requirements for rate card management in the Shil
 @e2e exclude pure backend/schema: rate card register — not browser-testable
 
 
-### REQ-RATE-001: Rate cards SHALL be declared as `RateCardTemplate` + `RateCardVersion` + `RateSchedule` registers
+### Requirement: REQ-RATE-001: Rate cards SHALL be declared as `RateCardTemplate` + `RateCardVersion` + `RateSchedule` registers
 
 Rate-card management MUST be expressed as three new registers in
 `lib/Settings/shillinq_register.json` per ADR-024:
@@ -51,7 +51,7 @@ declarative aggregation per REQ-RATE-005.
 - **THEN** the version SHALL NOT be used; prior version or error
   SHALL be returned.
 
-### REQ-RATE-002: The `RateCardTemplate` schema SHALL declare a minimum field set
+### Requirement: REQ-RATE-002: The `RateCardTemplate` schema SHALL declare a minimum field set
 
 The system SHALL satisfy this requirement: The `RateCardTemplate` schema SHALL declare a minimum field set.
 
@@ -74,7 +74,7 @@ Schema.org annotation: `schema:Thing`.
 - **WHEN** `{templateId:"RCT-2026-001", name:"Consulting Rates", tierStructure:["user","role","project","client","blended"], currency:"EUR", administrationId:"adm-1", lifecycleState:"active", createdAt:"2026-01-01T00:00:00Z"}` is saved
 - **THEN** validation MUST pass.
 
-### REQ-RATE-003: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window
+### Requirement: REQ-RATE-003: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window
 
 The system SHALL satisfy this requirement: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window.
 
@@ -103,7 +103,7 @@ Schema.org annotation: `schema:Thing`.
 - **WHEN** rate lookup occurs on 2026-03-31
 - **THEN** V1 SHALL still be applicable; lookup must succeed.
 
-### REQ-RATE-004: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle
+### Requirement: REQ-RATE-004: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle
 
 The system SHALL satisfy this requirement: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle.
 
@@ -136,7 +136,7 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** validation MUST pass and this schedule SHALL be used for
   tier-precedence fallback.
 
-### REQ-RATE-005: Rate resolution SHALL apply tier-precedence aggregation query
+### Requirement: REQ-RATE-005: Rate resolution SHALL apply tier-precedence aggregation query
 
 Rate lookup aggregation (no PHP service) MUST:
 
@@ -174,7 +174,7 @@ Rate lookup aggregation (no PHP service) MUST:
 - **THEN** blended-default rate (tier="blended", entityId=null) MUST
   be returned if status="active".
 
-### REQ-RATE-006: Rate lookup MUST be non-overlapping per (tier, entity, date)
+### Requirement: REQ-RATE-006: Rate lookup MUST be non-overlapping per (tier, entity, date)
 
 Effective-date windows for the same (tier, entityId) pair MUST NOT
 overlap. Validation MUST enforce this at schema or aggregation-precondition
@@ -196,7 +196,7 @@ level.
 - **THEN** validation MUST fail with error:
   "Effective-date window overlaps with existing schedule".
 
-### REQ-RATE-007: Resolved rates MUST be materialized into a `RateRecord` register for audit trail
+### Requirement: REQ-RATE-007: Resolved rates MUST be materialized into a `RateRecord` register for audit trail
 
 Each rate lookup (whether via aggregation query or fallback) MUST be
 materialized into a `RateRecord` entry with:
@@ -233,7 +233,7 @@ materialized into a `RateRecord` entry with:
 - **THEN** the `RateRecord` MUST retain the historical resolved rate
   (immutable).
 
-### REQ-RATE-008: Manifest navigation SHALL provide rate-card views
+### Requirement: REQ-RATE-008: Manifest navigation SHALL provide rate-card views
 
 The application MUST declare three manifest entries with `type: index`
 / `type: detail` pages:
@@ -261,7 +261,7 @@ The application MUST declare three manifest entries with `type: index`
 - **THEN** all `RateRecord` entries matching the filter SHALL be
   displayed with resolvedRate and effective-window information.
 
-### REQ-RATE-009: Effective-date changes MUST be forward-effective (future-dated)
+### Requirement: REQ-RATE-009: Effective-date changes MUST be forward-effective (future-dated)
 
 Rate changes (new `RateCardVersion`, new `RateSchedule`) MUST have
 `effectiveDate` ≥ today. Retroactive rate changes (effectiveDate <
@@ -281,7 +281,7 @@ today) MUST be rejected.
 - **THEN** validation MUST fail with error:
   "Effective-date must be today or later".
 
-### REQ-RATE-010: Rate-card engine SHALL support historical rate queries
+### Requirement: REQ-RATE-010: Rate-card engine SHALL support historical rate queries
 
 The application MUST allow querying historical rates:
 

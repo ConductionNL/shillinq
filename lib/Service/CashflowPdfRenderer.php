@@ -3,6 +3,9 @@
 /**
  * Shillinq Cashflow PDF Renderer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Generates a PDF summary of a CashflowForecastHorizon (+ optional scenario)
  * for bank or accountant meetings. Per REQ-CF-016 the renderer is pure
  * data-to-PDF mapping: it does no forecasting and no aggregation — it reads
@@ -40,9 +43,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-27
  */
@@ -124,6 +124,21 @@ class CashflowPdfRenderer {
 	private const CHART_ZERO_Y = 420;
 
 	/**
+	 * The methodology section closing every text report.
+	 *
+	 * @var list<string>
+	 */
+	private const METHODOLOGY_LINES = [
+		'',
+		'METHODOLOGY',
+		'-----------',
+		'BTW: Belastingdienst calendar (Q1 due Apr 30, Q2 due Jul 31, Q3 due Oct 31, Q4 due Jan 31).',
+		'IB/VPB: peilmaanden May/Sep/Nov, basis = prior-year aanslag x growth rate.',
+		'AR projection: customer-specific 12-month rolling betalingsgedrag with confidence score.',
+		'Recurring costs: declarative registry with CPI indexing on annual items.',
+	];
+
+	/**
 	 * Maximum bar length in points, in either direction from the zero line.
 	 *
 	 * @var integer
@@ -180,28 +195,71 @@ class CashflowPdfRenderer {
 		array $topCustomers = [],
 		array $recurringBreakdown = [],
 	): array {
-		$lines = [];
-		$lines[] = '13-WEEK CASHFLOW FORECAST';
-		$lines[] = '==========================';
-		$lines[] = '';
-		$lines[] = 'Horizon: ' . ($horizon['horizonStart'] ?? '?') . ' .. ' . ($horizon['horizonEnd'] ?? '?');
-		$lines[] = 'Administration: ' . ($horizon['administrationId'] ?? '?');
-		$lines[] = 'Model: ' . ($horizon['modelVersion'] ?? '?');
-		$lines[] = 'Rolled on: ' . ($horizon['rolledOn'] ?? '?');
-		$lines[] = '';
+		$report = new CashflowReport(horizon: $horizon, weeks: $weeks);
+		$report->scenario = $scenario;
+		$report->topCustomers = $topCustomers;
+		$report->recurringBreakdown = $recurringBreakdown;
+		return $this->renderText(report: $report);
 
-		$lines[] = 'WEEK-BY-WEEK SUMMARY';
-		$lines[] = '--------------------';
-		$lines[] = sprintf(
-			'%-6s %-12s %-12s %-12s %-12s %s',
-			'Week',
-			'Inflows',
-			'Outflows',
-			'Net',
-			'Eind Saldo',
-			'Buffer'
+	}//end render()
+
+	/**
+	 * The text report of a cashflow report, section by section.
+	 *
+	 * @param CashflowReport $report The report content.
+	 *
+	 * @return array{filename:string,mimeType:string,payload:string}
+	 */
+	private function renderText(CashflowReport $report): array {
+		$lines = array_merge(
+			$this->headerLines(horizon: $report->horizon),
+			$this->weekTableLines(weeks: $report->weeks),
+			$this->topCustomerLines(topCustomers: $report->topCustomers),
+			$this->recurringLines(recurringBreakdown: $report->recurringBreakdown),
+			$this->scenarioLines(scenario: $report->scenario),
+			self::METHODOLOGY_LINES
 		);
 
+		return [
+			'filename' => 'cashflow-' . ($report->horizon['horizonId'] ?? 'horizon') . '-' . date('Y-m-d') . '.txt',
+			'mimeType' => 'text/plain; charset=utf-8',
+			'payload' => implode("\n", $lines),
+		];
+	}//end renderText()
+
+	/**
+	 * The report title and horizon summary.
+	 *
+	 * @param array<string,mixed> $horizon CashflowForecastHorizon as array.
+	 *
+	 * @return list<string> The lines.
+	 */
+	private function headerLines(array $horizon): array {
+		return [
+			'13-WEEK CASHFLOW FORECAST',
+			'==========================',
+			'',
+			'Horizon: ' . ($horizon['horizonStart'] ?? '?') . ' .. ' . ($horizon['horizonEnd'] ?? '?'),
+			'Administration: ' . ($horizon['administrationId'] ?? '?'),
+			'Model: ' . ($horizon['modelVersion'] ?? '?'),
+			'Rolled on: ' . ($horizon['rolledOn'] ?? '?'),
+			'',
+		];
+	}//end headerLines()
+
+	/**
+	 * The week-by-week summary table.
+	 *
+	 * @param list<array<string,mixed>> $weeks The CashflowWeek records.
+	 *
+	 * @return list<string> The lines.
+	 */
+	private function weekTableLines(array $weeks): array {
+		$lines = [
+			'WEEK-BY-WEEK SUMMARY',
+			'--------------------',
+			sprintf('%-6s %-12s %-12s %-12s %-12s %s', 'Week', 'Inflows', 'Outflows', 'Net', 'Eind Saldo', 'Buffer'),
+		];
 		foreach ($weeks as $week) {
 			$lines[] = sprintf(
 				'%-6s %-12.2f %-12.2f %-12.2f %-12.2f %s',
@@ -214,71 +272,99 @@ class CashflowPdfRenderer {
 			);
 		}
 
-		if (empty($topCustomers) === false) {
-			$lines[] = '';
-			$lines[] = 'TOP CUSTOMERS (BETALINGSGEDRAG)';
-			$lines[] = '--------------------------------';
-			foreach ($topCustomers as $cust) {
-				$lines[] = sprintf(
-					'%-30s avg offset %s, confidence %.2f',
-					(string)($cust['customerId'] ?? '?'),
-					(string)($cust['gemiddeldeAfwijking'] ?? '?'),
-					(float)($cust['reliabilityScore'] ?? 0)
-				);
-			}
+		return $lines;
+	}//end weekTableLines()
+
+	/**
+	 * The top-customers section, when there are any.
+	 *
+	 * @param list<array<string,mixed>> $topCustomers Top customers with betalingsgedrag offsets.
+	 *
+	 * @return list<string> The lines (none without customers).
+	 */
+	private function topCustomerLines(array $topCustomers): array {
+		if (empty($topCustomers) === true) {
+			return [];
 		}
 
-		if (empty($recurringBreakdown) === false) {
-			$lines[] = '';
-			$lines[] = 'RECURRING COSTS';
-			$lines[] = '---------------';
-			foreach ($recurringBreakdown as $rec) {
-				$lines[] = sprintf(
-					'%-30s %-12s %.2f EUR (%s)',
-					(string)($rec['label'] ?? '?'),
-					(string)($rec['frequency'] ?? '?'),
-					(float)($rec['standardAmount'] ?? 0),
-					(string)($rec['indexationRule'] ?? 'FIXED')
-				);
-			}
+		$lines = ['', 'TOP CUSTOMERS (BETALINGSGEDRAG)', '--------------------------------'];
+		foreach ($topCustomers as $cust) {
+			$lines[] = sprintf(
+				'%-30s avg offset %s, confidence %.2f',
+				(string)($cust['customerId'] ?? '?'),
+				(string)($cust['gemiddeldeAfwijking'] ?? '?'),
+				(float)($cust['reliabilityScore'] ?? 0)
+			);
 		}
 
-		if ($scenario !== null) {
-			$lines[] = '';
-			$lines[] = 'SCENARIO: ' . ($scenario['name'] ?? '?');
-			$lines[] = '---------';
-			$lines[] = ($scenario['description'] ?? '');
-			if (isset($scenario['result']) === true && is_array($scenario['result']) === true) {
-				$lines[] = 'Min buffer week: ' . ($scenario['result']['minBufferWeek'] ?? '?');
-				$lines[] = 'Min buffer bedrag: ' . ($scenario['result']['minBufferAmount'] ?? '?');
-				if (($scenario['result']['onderschrijdingBuffer'] ?? false) === true) {
-					$bufferBreached = 'YES';
-				} else {
-					$bufferBreached = 'NO';
-				}
+		return $lines;
+	}//end topCustomerLines()
 
-				$lines[] = 'Buffer breached: ' . $bufferBreached;
-			}
+	/**
+	 * The recurring-costs section, when there are any.
+	 *
+	 * @param list<array<string,mixed>> $recurringBreakdown CashflowRecurring rows.
+	 *
+	 * @return list<string> The lines (none without recurring costs).
+	 */
+	private function recurringLines(array $recurringBreakdown): array {
+		if (empty($recurringBreakdown) === true) {
+			return [];
 		}
 
-		$lines[] = '';
-		$lines[] = 'METHODOLOGY';
-		$lines[] = '-----------';
-		$lines[] = 'BTW: Belastingdienst calendar (Q1 due Apr 30, Q2 due Jul 31, Q3 due Oct 31, Q4 due Jan 31).';
-		$lines[] = 'IB/VPB: peilmaanden May/Sep/Nov, basis = prior-year aanslag x growth rate.';
-		$lines[] = 'AR projection: customer-specific 12-month rolling betalingsgedrag with confidence score.';
-		$lines[] = 'Recurring costs: declarative registry with CPI indexing on annual items.';
+		$lines = ['', 'RECURRING COSTS', '---------------'];
+		foreach ($recurringBreakdown as $rec) {
+			$lines[] = sprintf(
+				'%-30s %-12s %.2f EUR (%s)',
+				(string)($rec['label'] ?? '?'),
+				(string)($rec['frequency'] ?? '?'),
+				(float)($rec['standardAmount'] ?? 0),
+				(string)($rec['indexationRule'] ?? 'FIXED')
+			);
+		}
 
-		$payload = implode("\n", $lines);
-		$filename = 'cashflow-' . ($horizon['horizonId'] ?? 'horizon') . '-' . date('Y-m-d') . '.txt';
+		return $lines;
+	}//end recurringLines()
+
+	/**
+	 * The scenario section, when a scenario is overlaid.
+	 *
+	 * @param array<string,mixed>|null $scenario The CashflowScenario.
+	 *
+	 * @return list<string> The lines (none without a scenario).
+	 */
+	private function scenarioLines(?array $scenario): array {
+		if ($scenario === null) {
+			return [];
+		}
+
+		$lines = ['', 'SCENARIO: ' . ($scenario['name'] ?? '?'), '---------', ($scenario['description'] ?? '')];
+		if (isset($scenario['result']) === true && is_array($scenario['result']) === true) {
+			$lines = array_merge($lines, $this->scenarioResultLines(result: $scenario['result']));
+		}
+
+		return $lines;
+	}//end scenarioLines()
+
+	/**
+	 * The minimum-buffer lines of a scenario result.
+	 *
+	 * @param array<string,mixed> $result The scenario result.
+	 *
+	 * @return list<string> The lines.
+	 */
+	private function scenarioResultLines(array $result): array {
+		$bufferBreached = 'NO';
+		if (($result['onderschrijdingBuffer'] ?? false) === true) {
+			$bufferBreached = 'YES';
+		}
 
 		return [
-			'filename' => $filename,
-			'mimeType' => 'text/plain; charset=utf-8',
-			'payload' => $payload,
+			'Min buffer week: ' . ($result['minBufferWeek'] ?? '?'),
+			'Min buffer bedrag: ' . ($result['minBufferAmount'] ?? '?'),
+			'Buffer breached: ' . $bufferBreached,
 		];
-
-	}//end render()
+	}//end scenarioResultLines()
 
 	/**
 	 * Render the same report as a real PDF binary (REQ-CF-016).
@@ -393,46 +479,14 @@ class CashflowPdfRenderer {
 	 * @return string A PDF content stream.
 	 */
 	private function chartStream(array $horizon, array $weeks): string {
-		$balances = [];
-		foreach ($weeks as $week) {
-			$balances[] = (float)($week['closingBalance'] ?? 0);
-		}
-
-		$scale = 0.0;
-		foreach ($balances as $balance) {
-			$scale = max($scale, abs($balance));
-		}
-
-		if ($scale <= 0.0) {
-			$scale = 1.0;
-		}
+		$scale = $this->chartScale(weeks: $weeks);
 
 		$plotWidth = (self::PAGE_WIDTH - (2 * self::MARGIN_X));
 		$slot = ($plotWidth / max(count($weeks), 1));
 		$barWidth = max(($slot * 0.6), 1.0);
 		$zeroY = self::CHART_ZERO_Y;
 
-		$ops = [
-			'BT',
-			'/F2 14 Tf',
-			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y)),
-			'(13-WEEK CLOSING BALANCE) Tj',
-			'ET',
-			'BT',
-			'/F1 9 Tf',
-			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y - 18)),
-			'(' . $this->pdf->escapeString(
-				'Horizon ' . (string)($horizon['horizonStart'] ?? '?') . ' .. ' . (string)($horizon['horizonEnd'] ?? '?')
-				. '   blue = above buffer, amber = pre-alert, red = below buffer'
-			) . ') Tj',
-			'ET',
-			// Zero line.
-			'0.4 0.4 0.4 RG',
-			'0.8 w',
-			sprintf('%d %d m', self::MARGIN_X, $zeroY),
-			sprintf('%d %d l', (self::PAGE_WIDTH - self::MARGIN_X), $zeroY),
-			'S',
-		];
+		$ops = $this->chartHeaderOps(horizon: $horizon, zeroY: $zeroY);
 
 		foreach ($weeks as $index => $week) {
 			$balance = (float)($week['closingBalance'] ?? 0);
@@ -460,6 +514,63 @@ class CashflowPdfRenderer {
 
 		return implode("\n", $ops);
 	}//end chartStream()
+
+	/**
+	 * The largest absolute closing balance in the horizon, or 1.0 when every balance is zero.
+	 *
+	 * @param list<array<string,mixed>> $weeks The weeks to plot.
+	 *
+	 * @return float The bar scale.
+	 */
+	private function chartScale(array $weeks): float {
+		$balances = [];
+		foreach ($weeks as $week) {
+			$balances[] = (float)($week['closingBalance'] ?? 0);
+		}
+
+		$scale = 0.0;
+		foreach ($balances as $balance) {
+			$scale = max($scale, abs($balance));
+		}
+
+		if ($scale <= 0.0) {
+			$scale = 1.0;
+		}
+
+		return $scale;
+	}//end chartScale()
+
+	/**
+	 * The chart title, legend and zero line operators.
+	 *
+	 * @param array<string,mixed> $horizon The horizon (title metadata only).
+	 * @param int $zeroY The y coordinate of the zero line.
+	 *
+	 * @return list<string> PDF content-stream operators.
+	 */
+	private function chartHeaderOps(array $horizon, int $zeroY): array {
+		return [
+			'BT',
+			'/F2 14 Tf',
+			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y)),
+			'(13-WEEK CLOSING BALANCE) Tj',
+			'ET',
+			'BT',
+			'/F1 9 Tf',
+			sprintf('%d %d Td', self::MARGIN_X, (self::PAGE_HEIGHT - self::MARGIN_Y - 18)),
+			'(' . $this->pdf->escapeString(
+				'Horizon ' . (string)($horizon['horizonStart'] ?? '?') . ' .. ' . (string)($horizon['horizonEnd'] ?? '?')
+				. '   blue = above buffer, amber = pre-alert, red = below buffer'
+			) . ') Tj',
+			'ET',
+			// Zero line.
+			'0.4 0.4 0.4 RG',
+			'0.8 w',
+			sprintf('%d %d m', self::MARGIN_X, $zeroY),
+			sprintf('%d %d l', (self::PAGE_WIDTH - self::MARGIN_X), $zeroY),
+			'S',
+		];
+	}//end chartHeaderOps()
 
 	/**
 	 * Map a week's buffer status onto a PDF fill colour operator.

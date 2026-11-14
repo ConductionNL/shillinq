@@ -74,11 +74,7 @@ function draftPayload(administrationId = 'adm-e2e-cbs') {
 		reportingPeriodEndDate: '2026-03-31',
 		organizationLegalName: 'Shillinq E2E Test BV',
 		kvkNumber: '12345678',
-		// Schema pattern (lib/Settings/register.d/bookkeeping-cbs-bestanden-
-		// extended.json) is `^NL[0-9]{10}B[0-9]{2}$` — 10 digits, not the 9 a
-		// real Dutch BTW-nummer carries. Matching the DEPLOYED pattern here
-		// (not the real-world format) so seeding actually validates.
-		taxIdentificationNumber: 'NL1234567890B01',
+		taxIdentificationNumber: 'NL123456789B01',
 		administrationId,
 		currency: 'EUR',
 	}

@@ -1,0 +1,62 @@
+{
+    "domestic": {
+        "filename": "arinvoice-VF-1.pdf",
+        "html": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>[Invoice] VF-1<\/title><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:16px 0 8px;}.party{display:inline-block;width:48%;vertical-align:top;}.icp-overlay{border:1px solid #aaa;padding:12px 16px;margin:16px 0;background:#fafafa;}.icp-notice{font-size:13pt;}.icp-note{font-size:9pt;color:#555;}<\/style><\/head><body><h1>[Invoice] VF-1<\/h1><div class=\"party\"><strong>Shillinq Operator<\/strong><br>[Seller]<br>[Seller VAT-ID]: <\/div><div class=\"party\"><strong>[Buyer]:<\/strong> cm-1<br>[Buyer VAT-ID]: <\/div><p>[Invoice date]: 2026-03-01 &nbsp; [Due date]: 2026-03-31<\/p><p><strong>[Total amount]:<\/strong> &euro; 1.234.567,89<\/p><\/body><\/html>",
+        "mimeType": "application\/pdf",
+        "icp": {
+            "treatAsIcp": false,
+            "supplyType": "",
+            "buyerVatId": "",
+            "sellerVatId": "",
+            "reverseChargeKey": "shillinq.icp.invoice.reverseChargeNotice",
+            "supplyLabelKey": "",
+            "viesValidationId": "",
+            "triangulation": false
+        }
+    },
+    "icp-goods": {
+        "filename": "arinvoice-VF-<2>.pdf",
+        "html": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>[Invoice] VF-&lt;2&gt;<\/title><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:16px 0 8px;}.party{display:inline-block;width:48%;vertical-align:top;}.icp-overlay{border:1px solid #aaa;padding:12px 16px;margin:16px 0;background:#fafafa;}.icp-notice{font-size:13pt;}.icp-note{font-size:9pt;color:#555;}<\/style><\/head><body><h1>[Invoice] VF-&lt;2&gt;<\/h1><div class=\"party\"><strong>Verkoper &amp; Zn<\/strong><br>[Seller]<br>[Seller VAT-ID]: NL001234567B01<\/div><div class=\"party\"><strong>[Buyer]:<\/strong> Käufer &quot;GmbH&quot;<br>[Buyer VAT-ID]: DE123456789<\/div><p>[Invoice date]: 2026-03-02 &nbsp; [Due date]: <\/p><section class=\"icp-overlay\"><h2>[Intra-Community Supply]<\/h2><p class=\"icp-notice\"><strong>[VAT reverse-charged]<\/strong><\/p><p>[Supply type]: <strong>[Goods]<\/strong><\/p><\/section><p><strong>[Total amount]:<\/strong> &euro; 99,50<\/p><\/body><\/html>",
+        "mimeType": "application\/pdf",
+        "icp": {
+            "treatAsIcp": true,
+            "supplyType": "L",
+            "buyerVatId": "DE123456789",
+            "sellerVatId": "NL001234567B01",
+            "reverseChargeKey": "shillinq.icp.invoice.reverseChargeNotice",
+            "supplyLabelKey": "Goods",
+            "viesValidationId": "VIES-9",
+            "triangulation": false
+        }
+    },
+    "triangulation": {
+        "filename": "arinvoice-VF-3.pdf",
+        "html": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>[Invoice] VF-3<\/title><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:16px 0 8px;}.party{display:inline-block;width:48%;vertical-align:top;}.icp-overlay{border:1px solid #aaa;padding:12px 16px;margin:16px 0;background:#fafafa;}.icp-notice{font-size:13pt;}.icp-note{font-size:9pt;color:#555;}<\/style><\/head><body><h1>[Invoice] VF-3<\/h1><div class=\"party\"><strong>Legal BV<\/strong><br>[Seller]<br>[Seller VAT-ID]: NL009<\/div><div class=\"party\"><strong>[Buyer]:<\/strong> B-party<br>[Buyer VAT-ID]: FR99999<\/div><p>[Invoice date]:  &nbsp; [Due date]: <\/p><section class=\"icp-overlay\"><h2>[Intra-Community Supply]<\/h2><p class=\"icp-notice\"><strong>[VAT reverse-charged]<\/strong><\/p><p>[Supply type]: <strong>[Triangulation]<\/strong><\/p><p class=\"icp-note\"><em>[Triangulation supply per Article 141 of VAT Directive 2006\/112\/EC.]<\/em><\/p><\/section><p><strong>[Total amount]:<\/strong> &euro; -10,00<\/p><\/body><\/html>",
+        "mimeType": "application\/pdf",
+        "icp": {
+            "treatAsIcp": true,
+            "supplyType": "T",
+            "buyerVatId": "FR99999",
+            "sellerVatId": "NL009",
+            "reverseChargeKey": "shillinq.icp.invoice.reverseChargeNotice",
+            "supplyLabelKey": "Triangulation",
+            "viesValidationId": "",
+            "triangulation": true
+        }
+    },
+    "services-unknown": {
+        "filename": "arinvoice-VF-4.pdf",
+        "html": "<!doctype html><html lang=\"nl\"><head><meta charset=\"utf-8\"><title>[Invoice] VF-4<\/title><style>body{font-family:Helvetica,Arial,sans-serif;color:#222;font-size:11pt;margin:24px;}h1{font-size:20pt;margin:0 0 12px;}h2{font-size:14pt;margin:16px 0 8px;}.party{display:inline-block;width:48%;vertical-align:top;}.icp-overlay{border:1px solid #aaa;padding:12px 16px;margin:16px 0;background:#fafafa;}.icp-notice{font-size:13pt;}.icp-note{font-size:9pt;color:#555;}<\/style><\/head><body><h1>[Invoice] VF-4<\/h1><div class=\"party\"><strong>Verkoper &amp; Zn<\/strong><br>[Seller]<br>[Seller VAT-ID]: NL001234567B01<\/div><div class=\"party\"><strong>[Buyer]:<\/strong> C<br>[Buyer VAT-ID]: <\/div><p>[Invoice date]:  &nbsp; [Due date]: <\/p><p><strong>[Total amount]:<\/strong> &euro; 0,00<\/p><\/body><\/html>",
+        "mimeType": "application\/pdf",
+        "icp": {
+            "treatAsIcp": false,
+            "supplyType": "S",
+            "buyerVatId": "",
+            "sellerVatId": "NL001234567B01",
+            "reverseChargeKey": "shillinq.icp.invoice.reverseChargeNotice",
+            "supplyLabelKey": "Services",
+            "viesValidationId": "",
+            "triangulation": true
+        }
+    }
+}

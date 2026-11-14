@@ -285,35 +285,25 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retainer-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "approver": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "read": [
+            "shillinq_approver",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "update": [
+            "shillinq_approver",
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "delete": [
+            "shillinq_retainer_administrator"
+          ]
         }
       },
       "RetainerDrawdown": {
@@ -423,33 +413,23 @@
             "title": "Description"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retainer-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "approver": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "read": [
+            "shillinq_approver",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "update": [
+            "shillinq_retainer_administrator"
+          ],
+          "delete": [
+            "shillinq_retainer_administrator"
+          ]
         }
       },
       "RetainerRollover": {
@@ -556,33 +536,23 @@
             "title": "Adjustment Reason"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retainer-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "approver": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "read": [
+            "shillinq_approver",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "update": [
+            "shillinq_retainer_administrator"
+          ],
+          "delete": [
+            "shillinq_retainer_administrator"
+          ]
         }
       },
       "RetainerTrueUp": {
@@ -825,35 +795,25 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retainer-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "approver": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "read": [
+            "shillinq_approver",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "update": [
+            "shillinq_approver",
+            "shillinq_bookkeeper",
+            "shillinq_retainer_administrator"
+          ],
+          "delete": [
+            "shillinq_retainer_administrator"
+          ]
         }
       }
     },

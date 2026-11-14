@@ -3,6 +3,9 @@
 /**
  * Shillinq Portal Contribution Provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Shillinq's Wave-1 contribution to the shared Portaliq external portal
  * (hydra ADR-046 + 2026-07-06 amendment, contribution contract v2). Portaliq
  * — the one shared external portal for people WITHOUT Nextcloud accounts —
@@ -56,9 +59,6 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
@@ -103,6 +103,513 @@ namespace OCA\Shillinq\Portal;
  */
 class PortalContributionProvider {
 	/**
+	 * The collections a parent sees: their own school contribution invoices
+	 * and the payment requests on them (extracurricular-fee-to-shillinq).
+	 *
+	 * @var array<int, string>
+	 */
+	private const PARENT_COLLECTIONS = ['salesInvoices', 'paymentRequests'];
+
+	/**
+	 * The customer actions a parent keeps: pay. A contribution always has an
+	 * invoice, so pay-request (a request without one) is not theirs.
+	 *
+	 * @var array<int, string>
+	 */
+	private const PARENT_ACTIONS = ['pay'];
+
+	/**
+	 * The parent-only `decline` action, "I will not pay", for a voluntary
+	 * contribution (REQ-SCON-013).
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const DECLINE_ACTION = [
+		'id' => 'decline',
+		// The name the Dutch reminder tells the parent to choose
+		// (docudesk-templates.json, the voluntary reminder).
+		'label' => 'Ik betaal niet',
+		'type' => 'endpoint-forward',
+		'endpoint' => '/apps/shillinq/api/portal/contributions/decline',
+		'method' => 'POST',
+		'fields' => ['invoiceId'],
+		'minTrust' => 'low',
+	];
+
+	/**
+	 * The RecurringInvoiceProfile fields a customer reads (sales-cancellation REQ-SCX-003).
+	 *
+	 * @var array<int, string>
+	 */
+	private const SUBSCRIPTION_FIELDS = [
+		'name',
+		'status',
+		'frequency',
+		'startDate',
+		'nextRunDate',
+		'currency',
+	];
+
+	/**
+	 * The ARInvoice fields a customer reads, in the list and on the detail card.
+	 *
+	 * @var array<int, string>
+	 */
+	private const SALES_INVOICE_FIELDS = [
+		'invoiceNumber',
+		'invoiceType',
+		'invoiceDate',
+		'dueDate',
+		'currency',
+		'grossAmount',
+		'vatAmount',
+		'invoiceLines',
+		'lifecycleState',
+		'sourceDocumentUri',
+		'ublRef',
+		'dunning',
+	];
+
+	/**
+	 * The PaymentRequest fields a customer reads on an invoice's payment request, in the list and on the detail card.
+	 *
+	 * @var array<int, string>
+	 */
+	private const PAYMENT_REQUEST_FIELDS = [
+		'invoiceReference',
+		'amount',
+		'currency',
+		'paymentGateway',
+		'state',
+		'paymentLink',
+		'expiresAt',
+		'capturedAt',
+		'failureReason',
+		'confirmationSummary',
+	];
+
+	/**
+	 * The PaymentRequest fields a customer reads on a request without an invoice, in the list and on the detail card.
+	 *
+	 * @var array<int, string>
+	 */
+	private const REQUEST_PAYMENT_FIELDS = [
+		'description',
+		'requestType',
+		'amount',
+		'currency',
+		'state',
+		'dueAt',
+		'legalBasis',
+		'paymentLink',
+		'capturedAt',
+		'failureReason',
+		'confirmationSummary',
+	];
+
+	/**
+	 * The amount column of a payment request list.
+	 *
+	 * @var array<string, string>
+	 */
+	private const AMOUNT_COLUMN = [
+		'field' => 'amount',
+		'label' => 'Bedrag',
+		'render' => 'currency',
+	];
+
+	/**
+	 * The status column of a payment request list.
+	 *
+	 * @var array<string, string>
+	 */
+	private const STATE_COLUMN = [
+		'field' => 'state',
+		'label' => 'Status',
+		'render' => 'badge',
+	];
+
+	/**
+	 * The customer (AR-side) manifest; customerManifest() documents every collection and the pay action.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const CUSTOMER_MANIFEST = [
+		'label' => 'Bestellingen en facturen',
+		'collections' => [
+			[
+				'id' => 'invoices',
+				'register' => 'shillinq',
+				'schema' => 'Invoice',
+				'scopeField' => 'customerReference',
+				'scopeClaim' => 'customerId',
+				'label' => 'Mijn facturen',
+				'listable' => true,
+			],
+			[
+				'id' => 'projectInvoices',
+				'register' => 'shillinq',
+				'schema' => 'BillableInvoice',
+				'scopeField' => 'customerId',
+				'scopeClaim' => 'customerId',
+				'label' => 'Mijn projectfacturen',
+				'listable' => true,
+			],
+			[
+				'id' => 'quotes',
+				'register' => 'shillinq',
+				'schema' => 'Quote',
+				'scopeField' => 'customerReference',
+				'scopeClaim' => 'customerId',
+				'label' => 'Mijn offertes',
+				'listable' => true,
+			],
+			[
+				'id' => 'salesOrders',
+				'register' => 'shillinq',
+				'schema' => 'SalesOrder',
+				'scopeField' => 'customerReference',
+				'scopeClaim' => 'customerId',
+				'label' => 'Mijn bestellingen',
+				'listable' => true,
+			],
+			[
+				'id' => 'contracts',
+				'register' => 'shillinq',
+				'schema' => 'RevenueContract',
+				'scopeField' => 'customerId',
+				'scopeClaim' => 'customerId',
+				'label' => 'Mijn contracten',
+				'listable' => true,
+			],
+			[
+				'id' => 'salesInvoices',
+				'register' => 'shillinq',
+				'schema' => 'ARInvoice',
+				'scopeField' => 'customerId',
+				'scopeClaim' => 'customerMasterId',
+				'label' => 'Mijn rekeningen',
+				'listable' => true,
+				'rowAction' => 'pay',
+				// ARInvoice's declared names: the amounts, lines, status and UBL
+				// reference were listed as totalAmount, taxAmount, lines, state and
+				// ublXml, which carry nothing (REQ-SPPI-007).
+				'fields' => self::SALES_INVOICE_FIELDS,
+				'columns' => [
+					[
+						'field' => 'invoiceNumber',
+						'label' => 'Factuur',
+						'render' => 'text',
+					],
+					[
+						'field' => 'invoiceDate',
+						'label' => 'Datum',
+						'render' => 'date',
+					],
+					[
+						'field' => 'dueDate',
+						'label' => 'Vervaldatum',
+						'render' => 'date',
+					],
+					[
+						'field' => 'grossAmount',
+						'label' => 'Bedrag',
+						'render' => 'currency',
+					],
+					[
+						'field' => 'lifecycleState',
+						'label' => 'Status',
+						'render' => 'badge',
+					],
+				],
+				'detail' => [
+					'layout' => 'card',
+					'fields' => self::SALES_INVOICE_FIELDS,
+				],
+				'defaultSort' => [
+					'field' => 'invoiceDate',
+					'direction' => 'desc',
+				],
+			],
+			[
+				'id' => 'paymentRequests',
+				'register' => 'shillinq',
+				'schema' => 'PaymentRequest',
+				'scopeField' => 'invoiceReference',
+				'scopeClaim' => 'customerMasterId',
+				'via' => [
+					'register' => 'shillinq',
+					'schema' => 'ARInvoice',
+					'scopeField' => 'customerId',
+					'targetField' => 'id',
+					'match' => 'scopeField',
+				],
+				'label' => 'Mijn facturen betalen',
+				'listable' => true,
+				// No row action: pay forwards the row id as invoiceId, and a
+				// row here is a payment request. Its invoice is paid from
+				// salesInvoices (REQ-SPPI-009).
+				'fields' => self::PAYMENT_REQUEST_FIELDS,
+				'columns' => [
+					[
+						'field' => 'invoiceReference',
+						'label' => 'Factuur',
+						'render' => 'text',
+					],
+					self::AMOUNT_COLUMN,
+					self::STATE_COLUMN,
+					[
+						'field' => 'paymentLink',
+						'label' => 'Nu betalen',
+						'render' => 'link',
+					],
+				],
+				'detail' => [
+					'layout' => 'card',
+					'fields' => self::PAYMENT_REQUEST_FIELDS,
+				],
+				'defaultSort' => [
+					'field' => 'expiresAt',
+					'direction' => 'desc',
+				],
+			],
+			// A payment request that stands without an invoice (leges on a
+			// case, a dwangsom, a deposit) is scoped by its own customerId,
+			// stamped from its debtor, because the invoice join above cannot
+			// reach it (REQ-SOPR-005, REQ-SPPI-008). Paid from its row with
+			// pay-request, which charges the request's own amount.
+			[
+				'id' => 'requestPayments',
+				'register' => 'shillinq',
+				'schema' => 'PaymentRequest',
+				'scopeField' => 'customerId',
+				'scopeClaim' => 'customerMasterId',
+				'label' => 'Mijn betaalverzoeken',
+				'listable' => true,
+				'rowAction' => 'pay-request',
+				'fields' => self::REQUEST_PAYMENT_FIELDS,
+				'columns' => [
+					[
+						'field' => 'description',
+						'label' => 'Waarvoor',
+						'render' => 'text',
+					],
+					self::AMOUNT_COLUMN,
+					[
+						'field' => 'dueAt',
+						'label' => 'Vervaldatum',
+						'render' => 'date',
+					],
+					self::STATE_COLUMN,
+				],
+				'detail' => [
+					'layout' => 'card',
+					'fields' => self::REQUEST_PAYMENT_FIELDS,
+				],
+				'defaultSort' => [
+					'field' => 'dueAt',
+					'direction' => 'desc',
+				],
+			],
+			// The customer's own subscriptions (sales-cancellation REQ-SCX-003),
+			// scoped on the CustomerMaster the profile bills. An active or
+			// paused one can be ended from its row with cancel-subscription.
+			[
+				'id' => 'subscriptions',
+				'register' => 'shillinq',
+				'schema' => 'RecurringInvoiceProfile',
+				'scopeField' => 'customerMasterId',
+				'scopeClaim' => 'customerMasterId',
+				'label' => 'Mijn abonnementen',
+				'listable' => true,
+				'rowAction' => 'cancel-subscription',
+				'fields' => self::SUBSCRIPTION_FIELDS,
+				'columns' => [
+					[
+						'field' => 'name',
+						'label' => 'Abonnement',
+						'render' => 'text',
+					],
+					[
+						'field' => 'nextRunDate',
+						'label' => 'Volgende factuur',
+						'render' => 'date',
+					],
+					[
+						'field' => 'status',
+						'label' => 'Status',
+						'render' => 'badge',
+					],
+				],
+				'detail' => [
+					'layout' => 'card',
+					'fields' => self::SUBSCRIPTION_FIELDS,
+				],
+			],
+		],
+		// Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
+		// action, forwarded server-to-server by portaliq to
+		// PortalPaymentInitiationController (route declared in
+		// appinfo/routes.php). minTrust tracks the AR surface — salesInvoices /
+		// paymentRequests above declare no explicit minTrust (default 'low'), so
+		// the action does not gate any tighter than the data it acts on; bump
+		// both together if/when the AR surface moves to 'substantial' (Wave 2
+		// note above).
+		'actions' => [
+			// The rowField and rowWhen keys make pay a per-row action in
+			// portaliq (#805): the portal forwards the proven row id as invoiceId,
+			// only for a row whose lifecycleState is one the receiver
+			// accepts (PortalPaymentSessionService::PAYABLE_STATES). An
+			// ARInvoice row has no `state` (REQ-SPPI-009).
+			[
+				'id' => 'pay',
+				'label' => 'Nu betalen',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'invoiceId',
+				'rowWhen' => [
+					'field' => 'lifecycleState',
+					'in' => ['issued', 'partially-paid', 'overdue'],
+				],
+			],
+			// The row action of requestPayments: portaliq forwards the
+			// proven row id under rowField, only while the request is
+			// pending (REQ-SPPI-008).
+			[
+				'id' => 'pay-request',
+				'label' => 'Nu betalen',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'paymentRequestId',
+				'rowWhen' => [
+					'field' => 'state',
+					'in' => ['pending'],
+				],
+			],
+			// The row action of subscriptions (sales-cancellation REQ-SCX-003):
+			// portaliq forwards the proven row id as profileId, only while the
+			// profile runs, with the reason the customer may give.
+			[
+				'id' => 'cancel-subscription',
+				'label' => 'Abonnement opzeggen',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/subscriptions/cancel',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'profileId',
+				'rowWhen' => [
+					'field' => 'status',
+					'in' => ['active', 'paused'],
+				],
+				'fields' => ['reasonCode', 'reasonText'],
+			],
+		],
+		'notifications' => [],
+	];
+
+	/**
+	 * The read-only supplier (AP-side) manifest; supplierManifest() documents the scoping.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SUPPLIER_MANIFEST = [
+		'label' => 'Opdrachten en facturen',
+		'collections' => [
+			[
+				'id' => 'purchaseOrders',
+				'register' => 'shillinq',
+				'schema' => 'PurchaseOrder',
+				'scopeField' => 'supplierId',
+				'scopeClaim' => 'supplierId',
+				'label' => 'Inkooporders',
+				'listable' => true,
+			],
+			[
+				'id' => 'supplierInvoices',
+				'register' => 'shillinq',
+				'schema' => 'SupplierInvoice',
+				'scopeField' => 'supplierId',
+				'scopeClaim' => 'supplierId',
+				'label' => 'Mijn facturen',
+				'listable' => true,
+			],
+		],
+		'actions' => [],
+		'notifications' => [],
+	];
+
+	/**
+	 * The read-only accountant manifest; accountantManifest() documents the scoping.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const ACCOUNTANT_MANIFEST = [
+		'label' => 'Administratie',
+		'collections' => [
+			[
+				'id' => 'salesInvoices',
+				'register' => 'shillinq',
+				'schema' => 'ARInvoice',
+				'scopeField' => 'administrationId',
+				'scopeClaim' => 'accountantAdministrationId',
+				'label' => 'Verkoopfacturen',
+				'listable' => true,
+			],
+			[
+				'id' => 'purchaseInvoices',
+				'register' => 'shillinq',
+				'schema' => 'SupplierInvoice',
+				'scopeField' => 'administrationId',
+				'scopeClaim' => 'accountantAdministrationId',
+				'label' => 'Inkoopfacturen',
+				'listable' => true,
+			],
+			[
+				'id' => 'journalEntries',
+				'register' => 'shillinq',
+				'schema' => 'JournalEntry',
+				'scopeField' => 'administrationId',
+				'scopeClaim' => 'accountantAdministrationId',
+				'label' => 'Journaalposten',
+				'listable' => true,
+			],
+			[
+				'id' => 'generalLedger',
+				'register' => 'shillinq',
+				'schema' => 'GLTransaction',
+				'scopeField' => 'administrationId',
+				'scopeClaim' => 'accountantAdministrationId',
+				'label' => 'Grootboek',
+				'listable' => true,
+			],
+			[
+				'id' => 'trialBalance',
+				'register' => 'shillinq',
+				'schema' => 'TrialBalance',
+				'scopeField' => 'administrationId',
+				'scopeClaim' => 'accountantAdministrationId',
+				'label' => 'Proefbalans',
+				'listable' => true,
+			],
+			[
+				'id' => 'vatReturns',
+				'register' => 'shillinq',
+				'schema' => 'VatReturn',
+				'scopeField' => 'administrationId',
+				'scopeClaim' => 'accountantAdministrationId',
+				'label' => 'Btw-aangiften',
+				'listable' => true,
+			],
+		],
+		'actions' => [],
+		'notifications' => [],
+	];
+
+	/**
 	 * The audiences this provider contributes to (contract v2, preferred).
 	 *
 	 * The registry probes for this method first; the audience vocabulary is
@@ -118,6 +625,7 @@ class PortalContributionProvider {
 			'customer',
 			'supplier',
 			'accountant',
+			'parent',
 		];
 
 	}//end getAudiences()
@@ -157,20 +665,56 @@ class PortalContributionProvider {
 	public function getContribution(array $subject): ?array {
 		$audience = $subject['audience'] ?? '';
 
-		if ($audience === 'customer') {
-			return $this->customerManifest();
+		$manifest = match ($audience) {
+			'customer' => $this->customerManifest(),
+			'supplier' => $this->supplierManifest(),
+			'accountant' => $this->accountantManifest(),
+			'parent' => $this->parentManifest(),
+			default => null,
+		};
+		if ($manifest === null) {
+			return null;
 		}
 
-		if ($audience === 'supplier') {
-			return $this->supplierManifest();
-		}
+		$manifest['pages'] = $this->pagesFor(collections: $manifest['collections'], group: (string)$manifest['label']);
 
-		if ($audience === 'accountant') {
-			return $this->accountantManifest();
-		}
-
-		return null;
+		return $manifest;
 	}//end getContribution()
+
+	/**
+	 * One page per collection, under the audience's menu group.
+	 *
+	 * The pages portaliq would make when an app declares none (the list and
+	 * the selected row; shillinq declares no create action), so the screens
+	 * stay as they were. They are declared because only a declared page
+	 * carries a `group`, the heading the site's menu shows above it instead of
+	 * the app's name.
+	 *
+	 * @param array<int, array<string, mixed>> $collections The audience's collections.
+	 * @param string                           $group       The menu heading.
+	 *
+	 * @return array<int, array<string, mixed>> The pages.
+	 *
+	 * @spec openspec/changes/portal-pages-in-dutch-groups/specs/portal-contribution/spec.md#requirement-every-portal-page-names-its-menu-group-in-dutch
+	 */
+	private function pagesFor(array $collections, string $group): array {
+		$pages = [];
+		// Every shillinq collection is listable, so every one gets a page.
+		foreach ($collections as $collection) {
+			$id = (string)$collection['id'];
+			$pages[] = [
+				'id' => $id,
+				'label' => (string)($collection['label'] ?? $id),
+				'group' => $group,
+				'blocks' => [
+					['type' => 'collection', 'collection' => $id],
+					['type' => 'detail', 'collection' => $id],
+				],
+			];
+		}
+
+		return $pages;
+	}//end pagesFor()
 
 	/**
 	 * The read-only customer (AR-side) manifest.
@@ -220,219 +764,104 @@ class PortalContributionProvider {
 	 * @spec openspec/specs/portal-contribution/spec.md
 	 */
 	private function customerManifest(): array {
-		return [
-			'label' => 'Shillinq',
-			'collections' => [
-				[
-					'id' => 'invoices',
-					'register' => 'shillinq',
-					'schema' => 'Invoice',
-					'scopeField' => 'customerReference',
-					'scopeClaim' => 'customerId',
-					'label' => 'My invoices',
-					'listable' => true,
-				],
-				[
-					'id' => 'projectInvoices',
-					'register' => 'shillinq',
-					'schema' => 'BillableInvoice',
-					'scopeField' => 'customerId',
-					'scopeClaim' => 'customerId',
-					'label' => 'My project invoices',
-					'listable' => true,
-				],
-				[
-					'id' => 'quotes',
-					'register' => 'shillinq',
-					'schema' => 'Quote',
-					'scopeField' => 'customerReference',
-					'scopeClaim' => 'customerId',
-					'label' => 'My quotes',
-					'listable' => true,
-				],
-				[
-					'id' => 'salesOrders',
-					'register' => 'shillinq',
-					'schema' => 'SalesOrder',
-					'scopeField' => 'customerReference',
-					'scopeClaim' => 'customerId',
-					'label' => 'My orders',
-					'listable' => true,
-				],
-				[
-					'id' => 'contracts',
-					'register' => 'shillinq',
-					'schema' => 'RevenueContract',
-					'scopeField' => 'customerId',
-					'scopeClaim' => 'customerId',
-					'label' => 'My contracts',
-					'listable' => true,
-				],
-				[
-					'id' => 'salesInvoices',
-					'register' => 'shillinq',
-					'schema' => 'ARInvoice',
-					'scopeField' => 'customerId',
-					'scopeClaim' => 'customerMasterId',
-					'label' => 'My invoices',
-					'listable' => true,
-					'rowAction' => 'pay',
-					'fields' => [
-						'invoiceNumber',
-						'invoiceType',
-						'invoiceDate',
-						'dueDate',
-						'currency',
-						'totalAmount',
-						'taxAmount',
-						'lines',
-						'state',
-						'sourceDocumentUri',
-						'ublXml',
-						'dunning',
-					],
-					'columns' => [
-						[
-							'field' => 'invoiceNumber',
-							'label' => 'Invoice',
-							'render' => 'text',
-						],
-						[
-							'field' => 'invoiceDate',
-							'label' => 'Date',
-							'render' => 'date',
-						],
-						[
-							'field' => 'dueDate',
-							'label' => 'Due',
-							'render' => 'date',
-						],
-						[
-							'field' => 'totalAmount',
-							'label' => 'Amount',
-							'render' => 'currency',
-						],
-						[
-							'field' => 'state',
-							'label' => 'Status',
-							'render' => 'badge',
-						],
-					],
-					'detail' => [
-						'layout' => 'card',
-						'fields' => [
-							'invoiceNumber',
-							'invoiceType',
-							'invoiceDate',
-							'dueDate',
-							'currency',
-							'totalAmount',
-							'taxAmount',
-							'lines',
-							'state',
-							'sourceDocumentUri',
-							'ublXml',
-							'dunning',
-						],
-					],
-					'defaultSort' => [
-						'field' => 'invoiceDate',
-						'direction' => 'desc',
-					],
-				],
-				[
-					'id' => 'paymentRequests',
-					'register' => 'shillinq',
-					'schema' => 'PaymentRequest',
-					'scopeField' => 'invoiceReference',
-					'scopeClaim' => 'customerMasterId',
-					'via' => [
-						'register' => 'shillinq',
-						'schema' => 'ARInvoice',
-						'scopeField' => 'customerId',
-						'targetField' => 'id',
-						'match' => 'scopeField',
-					],
-					'label' => 'Pay my invoices',
-					'listable' => true,
-					'rowAction' => 'pay',
-					'fields' => [
-						'invoiceReference',
-						'amount',
-						'currency',
-						'paymentGateway',
-						'state',
-						'paymentLink',
-						'expiresAt',
-						'capturedAt',
-						'failureReason',
-						'confirmationSummary',
-					],
-					'columns' => [
-						[
-							'field' => 'invoiceReference',
-							'label' => 'Invoice',
-							'render' => 'text',
-						],
-						[
-							'field' => 'amount',
-							'label' => 'Amount',
-							'render' => 'currency',
-						],
-						[
-							'field' => 'state',
-							'label' => 'Status',
-							'render' => 'badge',
-						],
-						[
-							'field' => 'paymentLink',
-							'label' => 'Pay now',
-							'render' => 'link',
-						],
-					],
-					'detail' => [
-						'layout' => 'card',
-						'fields' => [
-							'invoiceReference',
-							'amount',
-							'currency',
-							'paymentGateway',
-							'state',
-							'paymentLink',
-							'expiresAt',
-							'capturedAt',
-							'failureReason',
-							'confirmationSummary',
-						],
-					],
-					'defaultSort' => [
-						'field' => 'expiresAt',
-						'direction' => 'desc',
-					],
-				],
-			],
-			// Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
-			// action, forwarded server-to-server by portaliq to
-			// PortalPaymentInitiationController (route declared in
-			// appinfo/routes.php). minTrust tracks the AR surface — salesInvoices /
-			// paymentRequests above declare no explicit minTrust (default 'low'), so
-			// the action does not gate any tighter than the data it acts on; bump
-			// both together if/when the AR surface moves to 'substantial' (Wave 2
-			// note above).
-			'actions' => [
-				[
-					'id' => 'pay',
-					'label' => 'Pay now',
-					'type' => 'endpoint-forward',
-					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
-					'method' => 'POST',
-					'minTrust' => 'low',
-				],
-			],
-			'notifications' => [],
-		];
-
+		return self::CUSTOMER_MANIFEST;
 	}//end customerManifest()
+
+	/**
+	 * The parent manifest: a guardian's own school contribution invoices and
+	 * their payment requests, with the `pay` action (REQ-SCON-010).
+	 *
+	 * Guardians sign in to the portal with audience `parent`, and until this
+	 * manifest existed they saw no shillinq invoice at all. It reuses the
+	 * customer's AR collections and scoping (the `customerMasterId` claim, which
+	 * the contribution raise links) and adds the voluntary notice and the
+	 * request's description.
+	 * It also carries the `decline` action, "I will not pay", for a voluntary
+	 * contribution.
+	 *
+	 * @return array<string, mixed> The parent manifest.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-009)
+	 */
+	private function parentManifest(): array {
+		$manifest = self::CUSTOMER_MANIFEST;
+
+		$manifest['label'] = 'Schoolbijdragen';
+		$manifest['collections'] = $this->parentCollections(collections: $manifest['collections']);
+		$manifest['actions'] = $this->parentActions(actions: $manifest['actions']);
+
+		return $manifest;
+	}//end parentManifest()
+
+	/**
+	 * The customer collections a parent sees, reworded and re-fielded.
+	 *
+	 * @param array<int, array<string, mixed>> $collections The customer collections.
+	 *
+	 * @return array<int, array<string, mixed>> The parent collections.
+	 */
+	private function parentCollections(array $collections): array {
+		$parent = [];
+		foreach ($collections as $collection) {
+			if (in_array($collection['id'], self::PARENT_COLLECTIONS, true) === true) {
+				$parent[] = $this->forParents(collection: $collection);
+			}
+		}
+
+		return $parent;
+	}//end parentCollections()
+
+	/**
+	 * The customer actions a parent may use, plus "I will not pay".
+	 *
+	 * "I will not pay" answers the one reminder of a voluntary contribution
+	 * and closes it without dunning (REQ-SCON-013). Parents only: the
+	 * receiver refuses anything but the guardian's own open voluntary
+	 * contribution, and a business customer has none.
+	 *
+	 * @param array<int, array<string, mixed>> $actions The customer actions.
+	 *
+	 * @return array<int, array<string, mixed>> The parent actions.
+	 */
+	private function parentActions(array $actions): array {
+		$parent = array_values(
+			array_filter(
+				$actions,
+				static fn (array $action): bool => in_array($action['id'], self::PARENT_ACTIONS, true)
+			)
+		);
+		$parent[] = self::DECLINE_ACTION;
+
+		return $parent;
+	}//end parentActions()
+
+	/**
+	 * One customer AR collection, reworded and re-fielded for a parent.
+	 *
+	 * @param array<string, mixed> $collection The customer collection.
+	 *
+	 * @return array<string, mixed> The parent collection.
+	 */
+	private function forParents(array $collection): array {
+		$extra = 'description';
+		$collection['label'] = 'Mijn bijdragen betalen';
+		if ($collection['id'] === 'salesInvoices') {
+			$extra = 'invoiceNote';
+			$collection['label'] = 'Mijn bijdragen';
+			// Portaliq shows this field as a notice on the card and in the
+			// confirm step: the voluntary sentence (portaliq #805, REQ-SPPI-009).
+			$collection['noticeField'] = 'invoiceNote';
+		}
+
+		// The customer collections name ARInvoice's declared fields, so a
+		// parent sees the same fields plus one (REQ-SPPI-007).
+		$collection['fields'][] = $extra;
+		$collection['detail']['fields'][] = $extra;
+
+		return $collection;
+	}//end forParents()
 
 	/**
 	 * The read-only supplier (AP-side) manifest.
@@ -449,32 +878,7 @@ class PortalContributionProvider {
 	 * @spec openspec/changes/portal-contribution/tasks.md#task-2
 	 */
 	private function supplierManifest(): array {
-		return [
-			'label' => 'Shillinq',
-			'collections' => [
-				[
-					'id' => 'purchaseOrders',
-					'register' => 'shillinq',
-					'schema' => 'PurchaseOrder',
-					'scopeField' => 'supplierId',
-					'scopeClaim' => 'supplierId',
-					'label' => 'Purchase orders',
-					'listable' => true,
-				],
-				[
-					'id' => 'supplierInvoices',
-					'register' => 'shillinq',
-					'schema' => 'SupplierInvoice',
-					'scopeField' => 'supplierId',
-					'scopeClaim' => 'supplierId',
-					'label' => 'My invoices',
-					'listable' => true,
-				],
-			],
-			'actions' => [],
-			'notifications' => [],
-		];
-
+		return self::SUPPLIER_MANIFEST;
 	}//end supplierManifest()
 
 	/**
@@ -512,67 +916,6 @@ class PortalContributionProvider {
 	 * @spec openspec/specs/portal-contribution/spec.md
 	 */
 	private function accountantManifest(): array {
-		return [
-			'label' => 'Shillinq',
-			'collections' => [
-				[
-					'id' => 'salesInvoices',
-					'register' => 'shillinq',
-					'schema' => 'ARInvoice',
-					'scopeField' => 'administrationId',
-					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Sales invoices',
-					'listable' => true,
-				],
-				[
-					'id' => 'purchaseInvoices',
-					'register' => 'shillinq',
-					'schema' => 'SupplierInvoice',
-					'scopeField' => 'administrationId',
-					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Purchase invoices',
-					'listable' => true,
-				],
-				[
-					'id' => 'journalEntries',
-					'register' => 'shillinq',
-					'schema' => 'JournalEntry',
-					'scopeField' => 'administrationId',
-					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Journal entries',
-					'listable' => true,
-				],
-				[
-					'id' => 'generalLedger',
-					'register' => 'shillinq',
-					'schema' => 'GLTransaction',
-					'scopeField' => 'administrationId',
-					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'General ledger',
-					'listable' => true,
-				],
-				[
-					'id' => 'trialBalance',
-					'register' => 'shillinq',
-					'schema' => 'TrialBalance',
-					'scopeField' => 'administrationId',
-					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Trial balance',
-					'listable' => true,
-				],
-				[
-					'id' => 'vatReturns',
-					'register' => 'shillinq',
-					'schema' => 'VatReturn',
-					'scopeField' => 'administrationId',
-					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'VAT returns',
-					'listable' => true,
-				],
-			],
-			'actions' => [],
-			'notifications' => [],
-		];
-
+		return self::ACCOUNTANT_MANIFEST;
 	}//end accountantManifest()
 }//end class

@@ -27,8 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\Pipelinq\PipelinqConfig;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqConfigInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -62,13 +62,13 @@ class PipelinqSettingsController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The current HTTP request.
-	 * @param PipelinqConfig $pipelinqConfig The connection config service.
+	 * @param PipelinqConfigInterface $pipelinqConfig The connection config service.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly PipelinqConfig $pipelinqConfig,
+		private readonly PipelinqConfigInterface $pipelinqConfig,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -84,7 +84,7 @@ class PipelinqSettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function index(): JSONResponse {
 		return new JSONResponse(
 			[
@@ -108,7 +108,7 @@ class PipelinqSettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function create(): JSONResponse {
 		$endpoint = (string)($this->request->getParam('endpoint') ?? '');
 		$this->pipelinqConfig->setPipelinqEndpoint($endpoint);
@@ -140,7 +140,7 @@ class PipelinqSettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function test(): JSONResponse {
 		return new JSONResponse(
 			$this->pipelinqConfig->testConnection()

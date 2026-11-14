@@ -34,6 +34,9 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -243,17 +246,14 @@ final class CommitmentTransitionListenerTest extends TestCase {
 		$listener = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1089', [
-				'source' => 'tenderned',
-				'status' => 'active',
-				'amount' => 5000.0,
-			]),
-			'activeren',
-			'draft',
-			'active',
-			'admin',
-			'shillinq',
-			'Commitment'
+			object: $this->entity('1089', [
+					'source' => 'tenderned',
+					'status' => 'active',
+					'amount' => 5000.0,
+				]),
+			move: new TransitionMove(action: 'activeren', from: 'draft', to: 'active'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'Commitment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);
@@ -273,17 +273,14 @@ final class CommitmentTransitionListenerTest extends TestCase {
 		$listener = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
 		$event = new ObjectTransitionedEvent(
-			$this->entity('1089', [
-				'source' => 'tenderned',
-				'status' => 'draft',
-				'amount' => 5000.0,
-			]),
-			'reactiveren',
-			'active',
-			'draft',
-			'admin',
-			'shillinq',
-			'Commitment'
+			object: $this->entity('1089', [
+					'source' => 'tenderned',
+					'status' => 'draft',
+					'amount' => 5000.0,
+				]),
+			move: new TransitionMove(action: 'reactiveren', from: 'active', to: 'draft'),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: 'Commitment'),
+			actor: new TransitionActor(userId: 'admin'),
 		);
 
 		$listener->handle($event);

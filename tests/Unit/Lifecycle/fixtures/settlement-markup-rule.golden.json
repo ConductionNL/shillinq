@@ -1,0 +1,224 @@
+{
+    "exact": {
+        "rule": {
+            "id": "cust-a-travel",
+            "targetCustomerId": "cust-a",
+            "targetCategory": "travel"
+        },
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "effectiveFromYear": {
+                            "lte": 2026
+                        }
+                    }
+                }
+            ]
+        ]
+    },
+    "customerOnly": {
+        "rule": {
+            "id": "cust-a",
+            "targetCustomerId": "cust-a"
+        },
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "effectiveFromYear": {
+                            "lte": 2026
+                        }
+                    }
+                }
+            ]
+        ]
+    },
+    "categoryOnly": {
+        "rule": {
+            "id": "cat-travel",
+            "targetCategory": "travel"
+        },
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "wildcardOnly": {
+        "rule": {
+            "id": "any",
+            "targetCustomerId": "",
+            "targetCategory": ""
+        },
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "otherScopesOnly": {
+        "rule": null,
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "effectiveFromYear": {
+                            "lte": 2026
+                        }
+                    }
+                }
+            ]
+        ]
+    },
+    "noRules": {
+        "rule": null,
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "effectiveFromYear": {
+                            "lte": 2026
+                        }
+                    }
+                }
+            ]
+        ]
+    },
+    "notArray": {
+        "rule": null,
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "effectiveFromYear": {
+                            "lte": 2026
+                        }
+                    }
+                }
+            ]
+        ]
+    },
+    "storeThrows": {
+        "rule": null,
+        "calls": [
+            [
+                "setRegister",
+                "reg-x"
+            ],
+            [
+                "setSchema",
+                "PassThroughMarkupRule"
+            ],
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "administrationId": "adm-2",
+                        "effectiveFromYear": {
+                            "lte": 2027
+                        }
+                    }
+                }
+            ],
+            [
+                "log",
+                "warning",
+                "SettlementGuard: markup-rule lookup failed",
+                {
+                    "customerId": "cust-a",
+                    "exception": "store down"
+                }
+            ]
+        ]
+    },
+    "noObjectService": {
+        "rule": null,
+        "calls": [
+            [
+                "log",
+                "debug",
+                "SettlementGuard: OpenRegister ObjectService unavailable",
+                {
+                    "exception": "no object service"
+                }
+            ]
+        ]
+    }
+}

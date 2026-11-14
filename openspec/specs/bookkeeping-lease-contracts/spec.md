@@ -18,7 +18,7 @@ The lease-contract register is the master record for every lease under IFRS 16 t
 @e2e exclude unbuilt UI: lease register detail via OR API, page not yet implemented
 
 
-### REQ-LC-001: The system SHALL store lease contracts as an OpenRegister-managed `lease-contract` register
+### Requirement: REQ-LC-001: The system SHALL store lease contracts as an OpenRegister-managed `lease-contract` register
 
 Lease contracts MUST be declared as a register in `lib/Settings/shillinq_register.json` per ADR-024, with the `lease-contract` schema as the canonical entity. No custom PHP model, no parallel table. The register is exposed through OpenRegister's generic CRUD HTTP surface; shillinq adds no per-app endpoint.
 
@@ -28,7 +28,7 @@ Lease contracts MUST be declared as a register in `lib/Settings/shillinq_registe
 - **WHEN** an authenticated operator calls `GET /index.php/apps/openregister/api/objects/shillinq/lease-contract`
 - **THEN** the response MUST list all lease-contract records, paginated per OR's standard list contract
 
-### REQ-LC-002: The `lease-contract` schema SHALL declare core lease attributes
+### Requirement: REQ-LC-002: The `lease-contract` schema SHALL declare core lease attributes
 
 The schema MUST declare:
 
@@ -60,7 +60,7 @@ The schema MUST declare:
 - **WHEN** a new lease-contract object is validated with only required fields (lease-number, counterparty, description, asset-class, commencement-date, end-date, non-cancellable-term-months, payment-frequency, payment-timing, base-payment-amount, payment-currency, ibr-percent, ibr-derivation-method, classification, status)
 - **THEN** validation MUST pass
 
-### REQ-LC-003: Lease contracts SHALL support a classification wizard workflow
+### Requirement: REQ-LC-003: Lease contracts SHALL support a classification wizard workflow
 
 The system SHALL provide a classification wizard workflow for transitioning a lease from draft to active.
 
@@ -87,7 +87,7 @@ The classification rationale (checklist + free-text) is stored in the `classific
 - **THEN** the wizard MUST display a screen: "Non-cancellable term is 12 months. Does IFRS 16.5 short-term exemption apply?" with options Yes / No / Unsure
 - **AND** if Yes is selected, the lease is classified `short-term-exempt` and the operator is informed it will post as monthly expense, not capitalised asset
 
-### REQ-LC-004: The lease-contract status machine SHALL be declarative
+### Requirement: REQ-LC-004: The lease-contract status machine SHALL be declarative
 
 The schema MUST declare an `x-openregister-lifecycle` block with states and transitions:
 
@@ -107,7 +107,7 @@ Once a lease is `active`, the `lease-payment-schedule` is generated (one row per
 - **THEN** the lifecycle transition `draft → active` is allowed; the lease status changes to `active`
 - **AND** a `lease-payment-schedule` is generated for the full term
 
-### REQ-LC-005: Lease contracts MUST reference source documents via docudesk FKs
+### Requirement: REQ-LC-005: Lease contracts MUST reference source documents via docudesk FKs
 
 The `ibr-source-document` field MUST be a FK to a docudesk DigitalDocument. The source document is the supporting evidence for the IBR derivation (group IBR policy matrix, external bank quote, yield-curve snapshot, etc.). Auditors can download the source document from docudesk without leaving shillinq.
 
@@ -118,7 +118,7 @@ The `ibr-source-document` field MUST be a FK to a docudesk DigitalDocument. The 
 - **THEN** the FK is validated to confirm the docudesk document exists and is readable
 - **AND** the document is marked with a tag "IFRS16-IBR-Quote" (or similar) in docudesk for future discovery
 
-### REQ-LC-006: Extension and termination options MUST be traceable to reassessment events
+### Requirement: REQ-LC-006: Extension and termination options MUST be traceable to reassessment events
 
 The system MUST keep extension and termination options traceable to their reassessment events.
 
@@ -133,7 +133,7 @@ Auditors can walk from `lease-contract` → `lease-reassessment-event` (filtered
 - **THEN** the auditor sees the old value (exercise-likelihood = "possible") and new value (= "reasonably-certain")
 - **AND** the event links to GL postings that adjust the lease liability and RoU asset for the extended term
 
-### REQ-LC-007: Lease contracts SHALL be immutable after activation, changes trigger reassessment events
+### Requirement: REQ-LC-007: Lease contracts SHALL be immutable after activation, changes trigger reassessment events
 
 The system SHALL make a lease contract immutable after activation, with changes triggering reassessment events.
 
@@ -152,7 +152,7 @@ Once a lease transitions to `active`, direct edits to the contract (e.g., changi
 - **WHEN** the operator tries to edit the `end-date` field directly via the OR CRUD interface
 - **THEN** the lifecycle guard (x-openregister-lifecycle.requires) MUST reject the edit with a message: "Lease is active. To modify, use the Reassessment workflow (Menu > Lease Reassessment > New Event > Modification)."
 
-### REQ-LC-008: The lease-contract register SHALL support full-text search and filtering
+### Requirement: REQ-LC-008: The lease-contract register SHALL support full-text search and filtering
 
 The system SHALL support full-text search and filtering on the lease-contract register.
 
@@ -172,7 +172,7 @@ Full-text search on `description`, `lease-number`, and `counterparty.name` MUST 
 - **THEN** the list shows only vehicle leases (e.g., 12 leases)
 - **AND** each row displays lease-number, description, commencement-date, IBR, and status
 
-### REQ-LC-009: Deletion of a lease contract SHALL cascade delete child records
+### Requirement: REQ-LC-009: Deletion of a lease contract SHALL cascade delete child records
 
 When a lease-contract is deleted (only allowed in `draft` status), all related records MUST be deleted via OR's cascade-delete:
 - All `lease-payment-schedule` rows for this lease

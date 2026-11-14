@@ -3,6 +3,9 @@
 /**
  * Period Close Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the period-close feature. Four
  * declarative-precondition methods, each referenced from a register fragment
  * lifecycle transition that the OpenRegister x-openregister-lifecycle engine
@@ -37,17 +40,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\SuspenseAgeingService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SuspenseAgeingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -152,7 +152,9 @@ class PeriodCloseGuard {
 	/**
 	 * Returns true iff total posted debits equal total posted credits for the
 	 * period (REQ-TB-003), computed directly from GLLine records (`side` +
-	 * `amount`) filtered by the period's business `periodId`. A period with
+	 * `amount`) filtered by the period's business `periodId`. When the period
+	 * carries an administrationId, only lines whose parent GLTransaction belongs
+	 * to that administration count. A period with
 	 * no posted lines yet is trivially balanced (0 === 0) and permitted to
 	 * begin closing, mirroring periodOpen()'s "no scope, allow" convention.
 	 * Fail-closed on any error.
@@ -166,44 +168,7 @@ class PeriodCloseGuard {
 	public function trialBalanceVerifies(array|string $period): bool {
 		try {
 			$resolved = $this->resolvePeriod(period: $period);
-			if ($resolved === null) {
-				return false;
-			}
-
-			$periodId = (string)($resolved['periodId'] ?? '');
-			if ($periodId === '') {
-				return true;
-			}
-
-			$lines = $this->objectService
-				->setRegister($this->register())
-				->setSchema('GLLine')
-				->findAll(['filters' => ['periodId' => $periodId]]);
-
-			if ($lines === []) {
-				return true;
-			}
-
-			$debitCents = 0;
-			$creditCents = 0;
-			foreach ($lines as $line) {
-				$amountCents = (int)round(((float)($line['amount'] ?? 0)) * 100);
-				if ((string)($line['side'] ?? '') === 'debit') {
-					$debitCents += $amountCents;
-				} elseif ((string)($line['side'] ?? '') === 'credit') {
-					$creditCents += $amountCents;
-				}
-			}
-
-			if ($debitCents !== $creditCents) {
-				$this->logger->info(
-					'PeriodCloseGuard: trial balance does not verify — denying beginClose',
-					['periodId' => $periodId, 'debitCents' => $debitCents, 'creditCents' => $creditCents]
-				);
-				return false;
-			}
-
-			return true;
+			return $resolved !== null && $this->periodBalances(period: $resolved);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PeriodCloseGuard: trialBalanceVerifies check failed — denying beginClose (fail-closed)',
@@ -213,6 +178,97 @@ class PeriodCloseGuard {
 		}//end try
 
 	}//end trialBalanceVerifies()
+
+	/**
+	 * Compare the period's posted debit and credit cents (REQ-TB-003). A period
+	 * without a periodId, or an administration with no transactions in it, is
+	 * trivially balanced.
+	 *
+	 * @param array<string,mixed> $period The resolved FiscalPeriod record.
+	 *
+	 * @return bool True when debits equal credits.
+	 */
+	private function periodBalances(array $period): bool {
+		$periodId = (string)($period['periodId'] ?? '');
+		$scope = $this->lineScope(period: $period);
+		if ($periodId === '' || $scope === []) {
+			return true;
+		}
+
+		$cents = $this->sideTotals(lines: $this->periodLines(periodId: $periodId), scope: $scope);
+		return $cents['debit'] === $cents['credit'] || $this->refuseUnbalanced(periodId: $periodId, cents: $cents);
+	}//end periodBalances()
+
+	/**
+	 * Log an unbalanced trial balance and refuse.
+	 *
+	 * @param string                      $periodId The period identifier.
+	 * @param array{debit:int,credit:int} $cents    The side totals.
+	 *
+	 * @return false
+	 */
+	private function refuseUnbalanced(string $periodId, array $cents): bool {
+		$this->logger->info(
+			'PeriodCloseGuard: trial balance does not verify — denying beginClose',
+			['periodId' => $periodId, 'debitCents' => $cents['debit'], 'creditCents' => $cents['credit']]
+		);
+		return false;
+	}//end refuseUnbalanced()
+
+	/**
+	 * The transaction ids a period's lines are limited to: null when the period
+	 * has no administration (every line counts), else that administration's
+	 * transactions in the period.
+	 *
+	 * @param array<string,mixed> $period The resolved FiscalPeriod record.
+	 *
+	 * @return array<string,true>|null
+	 */
+	private function lineScope(array $period): array|null {
+		$periodId = (string)($period['periodId'] ?? '');
+		$administrationId = (string)($period['administrationId'] ?? '');
+		if ($periodId === '' || $administrationId === '') {
+			return null;
+		}
+
+		return $this->transactionIds(administrationId: $administrationId, periodId: $periodId);
+	}//end lineScope()
+
+	/**
+	 * Every GLLine posted in a period.
+	 *
+	 * @param string $periodId The period identifier.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function periodLines(string $periodId): array {
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema('GLLine')
+			->findAll(['filters' => ['periodId' => $periodId]]);
+	}//end periodLines()
+
+	/**
+	 * Sum in-scope lines per side, in rounded cents; other sides are ignored.
+	 *
+	 * @param array<int,mixed>        $lines The period's GLLine rows.
+	 * @param array<string,true>|null $scope Allowed transaction ids, or null for all.
+	 *
+	 * @return array{debit:int,credit:int}
+	 */
+	private function sideTotals(array $lines, array|null $scope): array {
+		$cents = ['debit' => 0, 'credit' => 0];
+		foreach ($lines as $rawLine) {
+			$line = $this->asArray(row: $rawLine);
+			$side = (string)($line['side'] ?? '');
+			$inScope = ($scope === null || isset($scope[(string)($line['transactionId'] ?? '')]) === true);
+			if ($inScope === true && isset($cents[$side]) === true) {
+				$cents[$side] += (int)round(((float)($line['amount'] ?? 0)) * 100);
+			}
+		}
+
+		return $cents;
+	}//end sideTotals()
 
 	/**
 	 * Returns true iff every mandatory checklist item on the period is resolved (REQ-PC-002).
@@ -239,22 +295,7 @@ class PeriodCloseGuard {
 				return true;
 			}
 
-			foreach ($items as $item) {
-				if (is_array($item) === false) {
-					continue;
-				}
-
-				$category = (string)($item['category'] ?? '');
-				if (in_array($category, self::MANDATORY_CATEGORIES, true) === false) {
-					continue;
-				}
-
-				if (($item['resolved'] ?? false) !== true) {
-					return false;
-				}
-			}
-
-			return true;
+			return self::hasOpenMandatoryItem(items: $items) === false;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PeriodCloseGuard: mandatoryChecklistResolved check failed — denying close (fail-closed)',
@@ -264,6 +305,30 @@ class PeriodCloseGuard {
 		}//end try
 
 	}//end mandatoryChecklistResolved()
+
+	/**
+	 * Whether any checklist item of a mandatory category is not resolved
+	 * (`resolved` strictly true); non-array items are ignored.
+	 *
+	 * @param array<mixed> $items The period's taskChecklistItems.
+	 *
+	 * @return bool
+	 */
+	private static function hasOpenMandatoryItem(array $items): bool {
+		foreach ($items as $item) {
+			if (is_array($item) === false) {
+				continue;
+			}
+
+			$mandatory = in_array((string)($item['category'] ?? ''), self::MANDATORY_CATEGORIES, true);
+			if ($mandatory === true && ($item['resolved'] ?? false) !== true) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end hasOpenMandatoryItem()
 
 	/**
 	 * Returns true iff the bank-reconciliation suspense worklist is empty for the
@@ -301,7 +366,7 @@ class PeriodCloseGuard {
 				return true;
 			}
 
-			$ageing = $this->container->get(SuspenseAgeingService::class);
+			$ageing = $this->container->get(SuspenseAgeingServiceInterface::class);
 			if ($ageing->hasUnresolvedItems($administrationId) === true) {
 				$this->logger->info(
 					'PeriodCloseGuard: suspense worklist non-empty — denying close',
@@ -366,7 +431,7 @@ class PeriodCloseGuard {
 			->findAll(['filters' => ['id' => $transaction], 'limit' => 1]);
 
 		if ($found !== []) {
-			return (array)$found[0];
+			return $this->asArray(row: $found[0]);
 		}
 
 		return [];
@@ -390,7 +455,7 @@ class PeriodCloseGuard {
 			->findAll(['filters' => ['id' => $period], 'limit' => 1]);
 
 		if ($found !== []) {
-			return (array)$found[0];
+			return $this->asArray(row: $found[0]);
 		}
 
 		return null;
@@ -416,11 +481,62 @@ class PeriodCloseGuard {
 			->findAll(['filters' => $filters, 'limit' => 1]);
 
 		if ($found !== []) {
-			return (array)$found[0];
+			return $this->asArray(row: $found[0]);
 		}
 
 		return null;
 	}//end findPeriod()
+
+	/**
+	 * Collect the ids of the GLTransactions posted in a period for one administration.
+	 *
+	 * GLTransaction.administrationId is the source of truth for a line's
+	 * administration, so lines are scoped through their parent transaction.
+	 *
+	 * @param string $administrationId The administration scope.
+	 * @param string $periodId         The period identifier.
+	 *
+	 * @return array<string,true> Transaction id => true.
+	 */
+	private function transactionIds(string $administrationId, string $periodId): array {
+		$transactions = $this->objectService
+			->setRegister($this->register())
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]);
+
+		$ids = [];
+		foreach ($transactions as $rawTransaction) {
+			$transaction = $this->asArray(row: $rawTransaction);
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$ids[(string)$id] = true;
+			}
+		}
+
+		return $ids;
+	}//end transactionIds()
+
+	/**
+	 * Normalise an OpenRegister row (ObjectEntity or array) to a plain array.
+	 *
+	 * @param mixed $row The row returned by ObjectService::findAll().
+	 *
+	 * @return array<string,mixed> The row's data, or [] when it has none.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return [];
+	}//end asArray()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
@@ -428,7 +544,7 @@ class PeriodCloseGuard {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

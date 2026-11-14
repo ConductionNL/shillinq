@@ -1,0 +1,185 @@
+{
+    "behandelen.complete": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "behandelen.missing": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "behandelen.noNominale": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "behandelen.silentOk": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "behandelen.byLookup": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Programmabegroting",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "behandelen.noBudget": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "vaststellen.complete": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "vaststellen.silent": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "vaststellen.missing": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "vaststellen.noDecision": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "vaststellen.idFromObject": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    },
+    "vaststellen.idFromArgument": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-9"
+                    }
+                }
+            }
+        ]
+    },
+    "vaststellen.storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "ProgrammabegrotingGuard: vaststellen check failed — denying transition (fail-closed)",
+                {
+                    "budgetId": "pb-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Paragraaf",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    }
+}

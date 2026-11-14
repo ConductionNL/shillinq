@@ -3,6 +3,9 @@
 /**
  * Peppol Access Point Transmission Port (generalised, document-type-agnostic)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Generalises the PO-only {@see \OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface}
  * into a shared port usable by both Order (PO) and Invoice (AR e-invoicing,
  * REQ-EINV-004) documents. `lookupParticipant()` resolves a party's Peppol
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

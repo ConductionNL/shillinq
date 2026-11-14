@@ -1,0 +1,130 @@
+{
+    "noYear": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "noPeriods": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalPeriod",
+            {
+                "findAll": {
+                    "filters": {
+                        "fiscalYear": 2026,
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "nonArray": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalPeriod",
+            {
+                "findAll": {
+                    "filters": {
+                        "fiscalYear": 2026,
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "allClosed": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalPeriod",
+            {
+                "findAll": {
+                    "filters": {
+                        "fiscalYear": 2026,
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "openPeriod": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "FiscalYearGuard: beginClose rejected — an open FiscalPeriod remains",
+                {
+                    "yearNumber": 2026,
+                    "periodId": "P-03",
+                    "state": "open"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalPeriod",
+            {
+                "findAll": {
+                    "filters": {
+                        "fiscalYear": 2026,
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "stateless": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "FiscalYearGuard: beginClose rejected — an open FiscalPeriod remains",
+                {
+                    "yearNumber": "2025",
+                    "periodId": null,
+                    "state": ""
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalPeriod",
+            {
+                "findAll": {
+                    "filters": {
+                        "fiscalYear": "2025"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "FiscalYearGuard: requireAllPeriodsClosedForYear check failed — denying (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalPeriod",
+            {
+                "findAll": {
+                    "filters": {
+                        "fiscalYear": 2026,
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    }
+}

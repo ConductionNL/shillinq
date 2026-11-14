@@ -378,4 +378,73 @@ final class IcpServiceTest extends TestCase {
 	}//end testSuppliesInPeriodFiltersByPeriod()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+
+	/**
+	 * Pin which supplies fall in which period, over every date and period shape.
+	 *
+	 * @return void
+	 */
+	public function testSupplyPeriodMembershipOverEveryShape(): void {
+		$supplies = [];
+		foreach (['2026-01-31', '2026-03-01', '2026-04-15', '2026-12-31', '2025-12-31', '2026-13-01', '2026-00-10', '2026-4-15', '26-04-15', ''] as $i => $date) {
+			$supplies[] = ['id' => 's' . $i, 'administrationId' => 'adm', 'supplyDate' => $date];
+		}
+		$supplies[] = ['id' => 'nodate', 'administrationId' => 'adm'];
+		$service = $this->buildService($supplies, []);
+		$actual = [];
+		foreach (['2026-Q1', '2026-Q2', '2026-Q4', '2026-Q5', '2026-Q0', '2026-01', '2026-04', '2026-13', '2026-00', '2026-4', '2026', 'Q1', ''] as $period) {
+			$actual[$period] = array_column($service->suppliesInPeriod('adm', $period), 'id');
+		}
+
+		self::assertSame(
+			[
+				'2026-Q1' => ['s0', 's1'],
+				'2026-Q2' => ['s2'],
+				'2026-Q4' => ['s3'],
+				'2026-Q5' => [],
+				'2026-Q0' => [],
+				'2026-01' => ['s0'],
+				'2026-04' => ['s2'],
+				'2026-13' => ['s5'],
+				'2026-00' => ['s6'],
+				'2026-4' => [],
+				'2026' => [],
+				'Q1' => [],
+				'' => [],
+			],
+			$actual
+		);
+
+	}//end testSupplyPeriodMembershipOverEveryShape()
+
+	/**
+	 * Pin the rubriek 3b read over every VatReturn period shape and field.
+	 *
+	 * @return void
+	 */
+	public function testRubriek3bOverEveryReturnShape(): void {
+		$returns = [
+			['administrationId' => 'adm', 'periodYear' => 2026, 'periodType' => 'quarterly', 'periodQuarter' => 'Q1', 'rubriek3b' => '100.5', 'amount' => 9],
+			['administrationId' => 'adm', 'periodYear' => '2026', 'periodType' => 'quarter', 'periodQuarter' => 2, 'rubriek3b' => null, 'amount' => 20],
+			['administrationId' => 'adm', 'periodYear' => 2026, 'periodType' => 'quarter', 'periodQuarter' => '', 'period' => '2026-Q3', 'amount' => null],
+			['administrationId' => 'adm', 'periodYear' => 2026, 'periodType' => 'monthly', 'periodMonth' => 5, 'rubriek3b' => 0],
+			['administrationId' => 'adm', 'periodYear' => 2026, 'periodType' => 'month', 'periodMonth' => '11'],
+			['administrationId' => 'adm', 'periodYear' => 2026, 'periodType' => 'month', 'periodMonth' => '', 'period' => '2026-07', 'amount' => '7'],
+			['administrationId' => 'adm', 'periodYear' => 2026, 'periodType' => 'yearly', 'period' => '2026-08', 'rubriek3b' => 8],
+			['administrationId' => 'adm', 'period' => '2026-09', 'rubriek3b' => 9],
+			['administrationId' => 'adm', 'period' => '2026-09', 'rubriek3b' => 99],
+			['administrationId' => 'other', 'period' => '2026-10', 'rubriek3b' => 10],
+		];
+		$service = $this->buildService([], $returns);
+		$actual = [];
+		foreach (['2026-Q1', '2026-Q2', '2026-Q3', '2026-05', '2026-11', '2026-07', '2026-08', '2026-09', '2026-10', '2026-12'] as $period) {
+			$actual[$period] = $service->reconcile('adm', $period)['rubriek3b'];
+		}
+
+		self::assertSame(
+			['2026-Q1' => 100.5, '2026-Q2' => 20.0, '2026-Q3' => 0.0, '2026-05' => 0.0, '2026-11' => 0.0, '2026-07' => 7.0, '2026-08' => 8.0, '2026-09' => 9.0, '2026-10' => null, '2026-12' => null],
+			$actual
+		);
+
+	}//end testRubriek3bOverEveryReturnShape()
 }//end class

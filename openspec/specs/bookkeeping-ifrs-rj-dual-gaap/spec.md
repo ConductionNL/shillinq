@@ -20,7 +20,7 @@ This specification defines the requirements for bookkeeping ifrs rj dual gaap in
 @e2e exclude unbuilt UI: IFRS/RJ dual GAAP pages not yet implemented
 
 
-### REQ-DGAAP-001: Dual GAAP reporting SHALL be declared via six register schemas and parallel GL materialisation
+### Requirement: REQ-DGAAP-001: Dual GAAP reporting SHALL be declared via six register schemas and parallel GL materialisation
 
 Dual GAAP (IFRS and RJ simultaneously) MUST be expressed as six new registers in
 `lib/Settings/shillinq_register.json` per ADR-024:
@@ -61,7 +61,7 @@ and `GLLine.frameworkJournalEntry` FK link the dual entries.
   €9,744 / Account "2532 Lease liability non-current" €14,556) with `DualTransaction.divergence_reason_code`
   = "LEASE_IFRS16".
 
-### REQ-DGAAP-002: ChartOfAccountsMapping SHALL support one-to-many cardinality, allocation rules, and validation
+### Requirement: REQ-DGAAP-002: ChartOfAccountsMapping SHALL support one-to-many cardinality, allocation rules, and validation
 
 The `ChartOfAccountsMapping` register MUST declare:
 
@@ -96,7 +96,7 @@ MUST be blocked until the test passes or exceptions are approved.
 - **THEN** the system MUST reject activation with a list of unmatched transactions and their
   account numbers; **AND** require either (a) exception documentation or (b) mapping refinement.
 
-### REQ-DGAAP-003: DualTransaction SHALL classify divergence reason and permanence
+### Requirement: REQ-DGAAP-003: DualTransaction SHALL classify divergence reason and permanence
 
 Every GL transaction booked under RJ MUST automatically spawn a `DualTransaction` record
 capturing divergence classification. The `divergence_reason_code` enum MUST include:
@@ -138,7 +138,7 @@ audit-trail reason.
 - **THEN** the override MUST be saved; **AND** the audit trail MUST record the change with
   timestamp and actor.
 
-### REQ-DGAAP-004: IAS 19 pension calculations SHALL import actuarial reports and materialise adjustments
+### Requirement: REQ-DGAAP-004: IAS 19 pension calculations SHALL import actuarial reports and materialise adjustments
 
 An underneming with a defined-benefit-regeling MUST support import of actuarial rapportages
 (XBRL-NT or PDF with OCR extraction) to populate IAS 19 calculations. On jaarafsluiting:
@@ -162,7 +162,7 @@ An underneming with a defined-benefit-regeling MUST support import of actuarial 
   cost €180k in P&L, remeasurement €50k in OCI); **AND** generate reconciliation line with
   €150k delta explained as discount-rate impact €80k + demographic assumption revision €70k.
 
-### REQ-DGAAP-005: IFRS 9 expected credit loss vs. RJ 290 incurred loss SHALL be calculated separately
+### Requirement: REQ-DGAAP-005: IFRS 9 expected credit loss vs. RJ 290 incurred loss SHALL be calculated separately
 
 On monthly maandafsluiting, the system MUST calculate IFRS 9 ECL and RJ 290 incurred-loss
 provisioning in parallel:
@@ -190,7 +190,7 @@ debtor segment, with underlying standard-specific calculations stored in `Standa
   Stage 3 €1.2M @ 100% = €1.2M; total €1.335M) with macro-overlay (±5% GDP growth adjustment);
   **AND** bridge MUST show €459k delta with explanation per segment.
 
-### REQ-DGAAP-006: Temporary vs. permanent divergences SHALL be classified and tracked for IAS 12 deferred tax
+### Requirement: REQ-DGAAP-006: Temporary vs. permanent divergences SHALL be classified and tracked for IAS 12 deferred tax
 
 On every GL posting creating a divergence, the system MUST classify whether the divergence
 is temporary (deferred-tax item under IAS 12) or permanent (no tax effect). The `DualTransaction.divergence_classification`
@@ -215,7 +215,7 @@ total deferred-tax impact.
   **AND** include in the reconciliation bridge as a separate line "Deferred tax on lease ROU divergence:
   €6,075 asset".
 
-### REQ-DGAAP-007: Version management and effective dates SHALL support retrospective and modified-retrospective application
+### Requirement: REQ-DGAAP-007: Version management and effective dates SHALL support retrospective and modified-retrospective application
 
 The system SHALL satisfy this requirement: Version management and effective dates SHALL support retrospective and modified-retrospective application.
 
@@ -240,7 +240,7 @@ of the stelselwijziging.
   toelichting paragraph: "On 1 January 2027, RJ 271 was revised to clarify VPL-regeling
   treatment, resulting in a €50k adjustment to opening retained earnings."
 
-### REQ-DGAAP-008: Drill-down from consolidated IFRS number to source transaction SHALL be one-click navigable
+### Requirement: REQ-DGAAP-008: Drill-down from consolidated IFRS number to source transaction SHALL be one-click navigable
 
 Every line in the `ReconciliationBridge` (e.g., "IAS 19 service cost €234k") MUST be
 clickable and drill down to:
@@ -263,7 +263,7 @@ for audit evidence review.
   **AND** all documents MUST be available for download (actuariële rapportage, calculation
   supporting sheets).
 
-### REQ-DGAAP-009: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS
+### Requirement: REQ-DGAAP-009: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS
 
 The system SHALL satisfy this requirement: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS.
 
@@ -287,7 +287,7 @@ the system MUST:
   parent + dochter A (IFRS €540k) + dochter B (IFRS €300k) = €840k group equity (before eliminations);
   **AND** create consolidation blad showing per-dochter RJ-IFRS conversion + final eliminations.
 
-### REQ-DGAAP-010: Comply-or-explain and framework-election documentation SHALL enforce scope and auto-warn on criteria overflow
+### Requirement: REQ-DGAAP-010: Comply-or-explain and framework-election documentation SHALL enforce scope and auto-warn on criteria overflow
 
 A legal entity administrator setting up framework choice for a new BV MUST:
 

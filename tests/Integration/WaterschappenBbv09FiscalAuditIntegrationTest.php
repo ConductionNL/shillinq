@@ -4,6 +4,9 @@
  * Fiscal-scoping + audit-trail integration test for member 09 of the
  * bookkeeping-waterschappen-bbv-variant chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The slice has two cross-cutting deliverables (REQ-BBVW-006 +
  * REQ-BBVW-007). This integration test asserts the static / declarative
  * half of both:
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

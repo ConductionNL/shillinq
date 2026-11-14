@@ -67,19 +67,31 @@ class KiaSchalenLookup {
 	 */
 	public function resolveTier(array $tiers, int $jaartotaal): ?array {
 		foreach ($tiers as $tier) {
-			$from = (int)($tier['from'] ?? 0);
-			$tot = $tier['tot'];
-			if ($jaartotaal < $from) {
-				continue;
-			}
-
-			if ($tot === null || $jaartotaal < (int)$tot) {
+			if (self::coversAmount(tier: $tier, jaartotaal: $jaartotaal) === true) {
 				return $tier;
 			}
 		}
 
 		return null;
 	}//end resolveTier()
+
+	/**
+	 * Whether the tier's band [from, tot) holds the amount; from defaults to 0, and a null tot leaves the band open.
+	 *
+	 * @param array<string, mixed> $tier       One tier.
+	 * @param int                  $jaartotaal The year's total investment.
+	 *
+	 * @return bool
+	 */
+	private static function coversAmount(array $tier, int $jaartotaal): bool {
+		$from = (int)($tier['from'] ?? 0);
+		$tot  = $tier['tot'];
+		if ($jaartotaal < $from) {
+			return false;
+		}
+
+		return $tot === null || $jaartotaal < (int)$tot;
+	}//end coversAmount()
 
 	/**
 	 * Compute the total KIA-aftrek for a boekjaar investment total (REQ-INV-006).

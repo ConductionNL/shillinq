@@ -347,26 +347,6 @@
               ]
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "period-closer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "GLTransaction": {

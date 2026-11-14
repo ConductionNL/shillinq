@@ -67,6 +67,28 @@ final class PaymentRunCsvGenerator implements PaymentRunGeneratorInterface {
 	 */
 	public function render(array $paymentRun): RenderedFile {
 		$runNumber = (string)($paymentRun['runNumber'] ?? '');
+		$stem = 'payment-run';
+		if ($runNumber !== '') {
+			$stem = $runNumber;
+		}
+
+		return new RenderedFile(
+			fileName: $stem . '.csv',
+			mimeType: 'text/csv',
+			format: self::format(),
+			content: $this->csv(rows: $this->rows(paymentRun: $paymentRun)),
+		);
+
+	}//end render()
+
+	/**
+	 * The header and one row per payment line (non-array lines skipped).
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array.
+	 *
+	 * @return list<list<string>>
+	 */
+	private function rows(array $paymentRun): array {
 		$currency = strtoupper(trim((string)($paymentRun['currency'] ?? 'EUR')));
 		if ($currency === '') {
 			$currency = 'EUR';
@@ -77,30 +99,47 @@ final class PaymentRunCsvGenerator implements PaymentRunGeneratorInterface {
 			$lines = [];
 		}
 
+		$rows = [self::COLUMNS];
+		foreach (array_values(array_filter($lines, 'is_array')) as $line) {
+			$rows[] = $this->row(line: $line, currency: $currency);
+		}
+
+		return $rows;
+
+	}//end rows()
+
+	/**
+	 * One payment line as a CSV row.
+	 *
+	 * @param array<string, mixed> $line     The payment line.
+	 * @param string               $currency The run currency.
+	 *
+	 * @return list<string>
+	 */
+	private function row(array $line, string $currency): array {
+		return [
+			(string)($line['payeeName'] ?? ''),
+			(string)($line['creditorIban'] ?? ''),
+			number_format((float)($line['amount'] ?? 0), 2, '.', ''),
+			$currency,
+			(string)($line['remittanceInfo'] ?? ''),
+			(string)($line['apTransactionRef'] ?? ''),
+		];
+
+	}//end row()
+
+	/**
+	 * The rows written as CSV (comma, double quote, no escape character).
+	 *
+	 * @param list<list<string>> $rows The rows.
+	 *
+	 * @return string
+	 */
+	private function csv(array $rows): string {
 		$handle = fopen('php://temp', 'r+');
-
-		// Explicit empty escape ('') — PHP 8.4 deprecates the default escape arg.
-		fputcsv($handle, self::COLUMNS, ',', '"', '');
-
-		foreach (array_values($lines) as $line) {
-			if (is_array($line) === false) {
-				continue;
-			}
-
-			fputcsv(
-				$handle,
-				[
-					(string)($line['payeeName'] ?? ''),
-					(string)($line['creditorIban'] ?? ''),
-					number_format((float)($line['amount'] ?? 0), 2, '.', ''),
-					$currency,
-					(string)($line['remittanceInfo'] ?? ''),
-					(string)($line['apTransactionRef'] ?? ''),
-				],
-				',',
-				'"',
-				''
-			);
+		foreach ($rows as $row) {
+			// Explicit empty escape ('') — PHP 8.4 deprecates the default escape arg.
+			fputcsv($handle, $row, ',', '"', '');
 		}
 
 		rewind($handle);
@@ -108,20 +147,10 @@ final class PaymentRunCsvGenerator implements PaymentRunGeneratorInterface {
 		fclose($handle);
 
 		if (is_string($content) === false) {
-			$content = '';
+			return '';
 		}
 
-		$stem = 'payment-run';
-		if ($runNumber !== '') {
-			$stem = $runNumber;
-		}
+		return $content;
 
-		return new RenderedFile(
-			fileName: $stem . '.csv',
-			mimeType: 'text/csv',
-			format: self::format(),
-			content: $content,
-		);
-
-	}//end render()
+	}//end csv()
 }//end class

@@ -1,0 +1,37 @@
+{
+    "noDb": {
+        "locked": false,
+        "calls": []
+    },
+    "outsideTransaction": {
+        "exception": [
+            "LogicException",
+            "lockResourceRow must be called inside a transaction"
+        ],
+        "calls": [
+            [
+                "inTransaction"
+            ]
+        ]
+    },
+    "builderThrows": {
+        "locked": false,
+        "calls": [
+            [
+                "inTransaction"
+            ],
+            [
+                "getQueryBuilder"
+            ],
+            [
+                "log",
+                "info",
+                "Shillinq: resource row-lock unavailable, falling back to advisory check",
+                {
+                    "resourceId": "res-\"2\"",
+                    "reason": "no builder"
+                }
+            ]
+        ]
+    }
+}

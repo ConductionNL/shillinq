@@ -18,7 +18,7 @@ TenderNed Integratie enables Shillinq to automatically import publicly awarded p
 @e2e exclude pure backend/integration: TenderNed connector — not browser-testable
 
 
-### REQ-001: Manual TenderNed dossier import
+### Requirement: REQ-001: Manual TenderNed dossier import
 
 The system SHALL satisfy this requirement: Manual TenderNed dossier import.
 
@@ -40,7 +40,7 @@ The system SHALL satisfy this requirement: Manual TenderNed dossier import.
 
 ---
 
-### REQ-002: Automatic gunning trigger on status change
+### Requirement: REQ-002: Automatic gunning trigger on status change
 
 The system SHALL satisfy this requirement: Automatic gunning trigger on status change.
 
@@ -63,7 +63,7 @@ The system SHALL satisfy this requirement: Automatic gunning trigger on status c
 
 ---
 
-### REQ-003: Milestone-planning generation
+### Requirement: REQ-003: Milestone-planning generation
 
 The system SHALL satisfy this requirement: Milestone-planning generation.
 
@@ -86,7 +86,7 @@ The system SHALL satisfy this requirement: Milestone-planning generation.
 
 ---
 
-### REQ-004: Proof-of-delivery (bewijsstuk) enforcement
+### Requirement: REQ-004: Proof-of-delivery (bewijsstuk) enforcement
 
 The system SHALL satisfy this requirement: Proof-of-delivery (bewijsstuk) enforcement.
 
@@ -108,7 +108,7 @@ The system SHALL satisfy this requirement: Proof-of-delivery (bewijsstuk) enforc
 
 ---
 
-### REQ-005: ENSIA-compliant audit-trail
+### Requirement: REQ-005: ENSIA-compliant audit-trail
 
 The system SHALL satisfy this requirement: ENSIA-compliant audit-trail.
 
@@ -139,7 +139,7 @@ An ENSIA auditor querying the audit-trail can reconstruct the full lineage: awar
 
 ---
 
-### REQ-006: Status-sync back to TenderNed
+### Requirement: REQ-006: Status-sync back to TenderNed
 
 The system SHALL satisfy this requirement: Status-sync back to TenderNed.
 
@@ -162,7 +162,7 @@ The system SHALL satisfy this requirement: Status-sync back to TenderNed.
 
 ---
 
-### REQ-007: Real-time budget-impact widget update (60-second SLA)
+### Requirement: REQ-007: Real-time budget-impact widget update (60-second SLA)
 
 The system SHALL satisfy this requirement: Real-time budget-impact widget update (60-second SLA).
 
@@ -185,7 +185,7 @@ The system SHALL satisfy this requirement: Real-time budget-impact widget update
 
 ---
 
-### REQ-008: Vendor cashflow-forecast integration (omzet-prognose)
+### Requirement: REQ-008: Vendor cashflow-forecast integration (omzet-prognose)
 
 The system SHALL satisfy this requirement: Vendor cashflow-forecast integration (omzet-prognose).
 

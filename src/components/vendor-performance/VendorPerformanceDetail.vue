@@ -207,6 +207,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { formatBp, scoreBand, trendLabel } from './vendorScorecard.js'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -270,36 +271,13 @@ export default {
 			}
 		},
 
-		formatBp(bp) {
-			if (bp === null || bp === undefined) {
-				return '—'
-			}
-			const value = Number(bp)
-			if (!Number.isFinite(value)) {
-				return '—'
-			}
-			return `${(value / 100).toFixed(2)} %`
-		},
+		formatBp,
 
 		scoreClass(bp) {
-			const value = Number(bp || 0)
-			if (value >= 9600) {
-				return 'vp-detail__score--high'
-			}
-			if (value >= 8500) {
-				return 'vp-detail__score--mid'
-			}
-			return 'vp-detail__score--low'
+			return `vp-detail__score--${scoreBand(bp)}`
 		},
 
-		trendLabel(trend) {
-			const labels = {
-				improving: this.t('shillinq', 'Improving'),
-				stable: this.t('shillinq', 'Stable'),
-				declining: this.t('shillinq', 'Declining'),
-			}
-			return labels[trend] || this.t('shillinq', 'Stable')
-		},
+		trendLabel,
 	},
 }
 </script>

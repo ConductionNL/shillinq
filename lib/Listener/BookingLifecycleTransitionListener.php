@@ -3,6 +3,9 @@
 /**
  * Booking lifecycle timeline publish listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Slice 07 published the `booking.created` event from
  * {@see \OCA\OpenRegister\Event\ObjectCreatedEvent}; slice 08 extends
@@ -34,9 +37,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -46,11 +46,11 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\Pipelinq\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -85,13 +85,13 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	/**
 	 * Construct the listener with its DI deps.
 	 *
-	 * @param PipelinqContactAdapter $pipelinq Slice-02 adapter (publishWithOutcome).
+	 * @param PipelinqContactAdapterInterface $pipelinq Slice-02 adapter (publishWithOutcome).
 	 * @param TimelineRetryQueue $retryQueue Async-retry queue (slice 09 binding).
 	 * @param PipelinqAdminNotifier $adminAlerts Admin alerter for permanent (401) failures.
 	 * @param LoggerInterface $logger PSR logger for fail-soft observability.
 	 */
 	public function __construct(
-		private readonly PipelinqContactAdapter $pipelinq,
+		private readonly PipelinqContactAdapterInterface $pipelinq,
 		private readonly TimelineRetryQueue $retryQueue,
 		private readonly PipelinqAdminNotifier $adminAlerts,
 		private readonly LoggerInterface $logger,
@@ -105,6 +105,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * @param Event $event Event from OpenRegister.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectTransitionedEvent) === false) {
@@ -112,67 +113,85 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 		}
 
 		try {
-			if ($this->isAppointmentSchema(schema: $event->getSchema()) === false) {
-				return;
-			}
-
-			$to = strtolower(trim($event->getTo()));
-			$typeMap = self::TRANSITION_TYPE_MAP;
-			$eventType = ($typeMap[$to] ?? null);
-			if ($eventType === null) {
-				// Transition to a state we don't publish (e.g. drafted,
-				// rescheduled, pending_confirmation); silently ignore.
-				return;
-			}
-
-			$entity = $event->getObject();
-			$appointment = $entity->getObject();
-			if (is_array($appointment) === false) {
-				return;
-			}
-
-			$pipelinqContactId = trim((string)($appointment['pipelinqContactId'] ?? ''));
-			if ($pipelinqContactId === '') {
-				// Slice 06 already labels these "not linked"; nothing to
-				// publish to pipelinq.
-				return;
-			}
-
-			$externalId = trim((string)($appointment['appointmentId'] ?? ''));
-			if ($externalId === '') {
-				$this->logger->warning(
-					'BookingLifecycleTransitionListener: missing appointmentId — skipping publish',
-					[
-						'app' => Application::APP_ID,
-						'type' => $eventType,
-					]
-				);
-				return;
-			}
-
-			$dto = $this->buildEvent(
-				eventType: $eventType,
-				externalId: $externalId,
-				contactId: $pipelinqContactId,
-				appointment: $appointment
-			);
-
-			$outcome = $this->pipelinq->publishWithOutcome(event: $dto);
-
-			$this->dispatchOutcome(outcome: $outcome, dto: $dto);
+			$this->publishTransition(event: $event);
 		} catch (Throwable $e) {
 			// The booking commit must NEVER fail because of a downstream
 			// publish issue (D3). Log + continue.
 			$this->logger->error(
 				'BookingLifecycleTransitionListener: publish errored',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'exception' => $e->getMessage(),
 				]
 			);
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The Appointment fields shared with the other booking timeline listener.
+	 *
+	 * @return BookingTimelineFields
+	 */
+	private function fields(): BookingTimelineFields {
+		return new BookingTimelineFields();
+
+	}//end fields()
+
+	/**
+	 * Publish an Appointment's transition to a published state when the
+	 * appointment is linked to a pipelinq contact.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return void
+	 */
+	private function publishTransition(ObjectTransitionedEvent $event): void {
+		$eventType = $this->publishedType(event: $event);
+		if ($eventType === null) {
+			return;
+		}
+
+		$appointment = $event->getObject()->getObject();
+		// Without a linked contact (slice 06 labels these "not linked")
+		// there is nothing to publish to pipelinq.
+		if (is_array($appointment) === false || $this->fields()->contactId(appointment: $appointment) === '') {
+			return;
+		}
+
+		if ($this->fields()->externalId(appointment: $appointment) === '') {
+			$this->logger->warning(
+				'BookingLifecycleTransitionListener: missing appointmentId — skipping publish',
+				[
+					'app' => AppIdentity::APP_ID,
+					'type' => $eventType,
+				]
+			);
+			return;
+		}
+
+		$dto = $this->buildEvent(eventType: $eventType, appointment: $appointment);
+		$this->dispatchOutcome(outcome: $this->pipelinq->publishWithOutcome(event: $dto), dto: $dto);
+
+	}//end publishTransition()
+
+	/**
+	 * The `booking.*` type an Appointment transition publishes, or null for
+	 * other schemas and for states that are not published (e.g. drafted,
+	 * rescheduled, pending_confirmation).
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return string|null
+	 */
+	private function publishedType(ObjectTransitionedEvent $event): string|null {
+		if ($this->fields()->isAppointmentSchema(schema: $event->getSchema()) === false) {
+			return null;
+		}
+
+		return (self::TRANSITION_TYPE_MAP[strtolower(trim($event->getTo()))] ?? null);
+
+	}//end publishedType()
 
 	/**
 	 * Take the appropriate follow-up action for a publish outcome.
@@ -193,7 +212,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 			$this->logger->debug(
 				'BookingLifecycleTransitionListener: published',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'type' => $dto->type(),
 					'externalId' => $dto->externalId(),
 					'contactId' => $dto->contactId(),
@@ -216,65 +235,31 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	}//end dispatchOutcome()
 
 	/**
-	 * Whether the supplied schema string identifies the Appointment schema.
-	 *
-	 * Mirrors the slice-07 listener's matcher — schema strings may be
-	 * plain slugs or fully-qualified register/schema pairs depending on
-	 * OR config.
-	 *
-	 * @param string $schema Schema identifier from the event.
-	 *
-	 * @return bool TRUE when the schema is "Appointment".
-	 */
-	private function isAppointmentSchema(string $schema): bool {
-		$normalised = strtolower(trim($schema));
-		return ($normalised === 'appointment' || str_ends_with($normalised, '/appointment'));
-	}//end isAppointmentSchema()
-
-	/**
 	 * Compose a {@see TimelineEventDto} from the persisted appointment row.
 	 *
-	 * Mirrors the slice-07 metadata contract (bookingNumber / service /
-	 * startTime / endTime / resourceId / status) and adds a
-	 * `cancellationReason` field for the `booking.cancelled` event when
-	 * the appointment row carries one (REQ — slice 08 spec scenario 2).
+	 * Uses the slice-07 metadata contract ({@see $this->fields()->metadata()})
+	 * and adds a `cancellationReason` field for the `booking.cancelled` event
+	 * when the appointment row carries one (REQ — slice 08 spec scenario 2).
 	 *
-	 * @param string $eventType CloudEvents `type`.
-	 * @param string $externalId Booking id used as the timeline externalId.
-	 * @param string $contactId Linked pipelinq Contact id.
+	 * @param string               $eventType   CloudEvents `type`.
 	 * @param array<string, mixed> $appointment Persisted appointment row.
 	 *
 	 * @return TimelineEventDto
 	 */
-	private function buildEvent(
-		string $eventType,
-		string $externalId,
-		string $contactId,
-		array $appointment,
-	): TimelineEventDto {
+	private function buildEvent(string $eventType, array $appointment): TimelineEventDto {
 		$timestamp = $this->resolveTimestamp(appointment: $appointment);
 
-		$metadata = [
-			'bookingNumber' => $externalId,
-			'service' => (string)($appointment['serviceId'] ?? ''),
-			'startTime' => (string)($appointment['startTime'] ?? ''),
-			'endTime' => (string)($appointment['endTime'] ?? ''),
-			'resourceId' => (string)($appointment['resourceId'] ?? ''),
-			'status' => (string)($appointment['status'] ?? ''),
-		];
-
-		if ($eventType === TimelineEventDto::TYPE_BOOKING_CANCELLED) {
-			$reason = trim((string)($appointment['cancellationReason'] ?? ''));
-			if ($reason !== '') {
-				$metadata['cancellationReason'] = $reason;
-			}
+		$metadata = $this->fields()->metadata(appointment: $appointment);
+		$reason = trim((string)($appointment['cancellationReason'] ?? ''));
+		if ($eventType === TimelineEventDto::TYPE_BOOKING_CANCELLED && $reason !== '') {
+			$metadata['cancellationReason'] = $reason;
 		}
 
 		return new TimelineEventDto(
 			type: $eventType,
-			externalId: $externalId,
+			externalId: $this->fields()->externalId(appointment: $appointment),
 			timestamp: $timestamp,
-			contactId: $contactId,
+			contactId: $this->fields()->contactId(appointment: $appointment),
 			metadata: $metadata
 		);
 
@@ -304,7 +289,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 				$this->logger->debug(
 					'BookingLifecycleTransitionListener: timestamp field unparseable',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'field' => $key,
 						'reason' => $e->getMessage(),
 					]

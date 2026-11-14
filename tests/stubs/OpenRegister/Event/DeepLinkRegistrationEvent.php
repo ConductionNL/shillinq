@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Minimal DeepLinkRegistrationEvent stub for unit tests.
+ * DeepLinkRegistrationEvent stub mirroring openregister main: registrations go to the registry.
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -15,33 +15,44 @@ declare(strict_types=1);
 
 namespace OCA\OpenRegister\Event;
 
+use OCA\OpenRegister\Dto\DeepLinkRegistration;
+use OCA\OpenRegister\Service\DeepLinkRegistryServiceInterface;
 use OCP\EventDispatcher\Event;
 
 /**
- * Stub for OCA\OpenRegister\Event\DeepLinkRegistrationEvent.
+ * Stub for OCA\OpenRegister\Event\DeepLinkRegistrationEvent mirroring openregister main.
  */
 class DeepLinkRegistrationEvent extends Event {
 
 	/**
-	 * Registered deep links keyed by schema / register tuple.
+	 * Constructor.
 	 *
-	 * @var array<int,array<string,mixed>>
+	 * @param DeepLinkRegistryServiceInterface $registry The registry the links are added to.
 	 */
-	private array $registrations = [];
+	public function __construct(
+		private readonly DeepLinkRegistryServiceInterface $registry,
+	) {
+		parent::__construct();
+	}//end __construct()
 
 	/**
-	 * Register a deep link.
+	 * The registry the links are added to.
 	 *
-	 * Mirrors the real `OCA\OpenRegister\Event\DeepLinkRegistrationEvent::register()`
-	 * signature (named parameters), so listener code under test can be
-	 * exercised unchanged against this stub.
+	 * @return DeepLinkRegistryServiceInterface
+	 */
+	public function getRegistry(): DeepLinkRegistryServiceInterface {
+		return $this->registry;
+	}//end getRegistry()
+
+	/**
+	 * Register one deep link.
 	 *
-	 * @param string $appId The consuming app ID.
-	 * @param string $registerSlug The register slug.
-	 * @param string $schemaSlug The schema slug.
-	 * @param string $urlTemplate URL template with placeholders (e.g. "{uuid}").
-	 * @param string $icon Optional icon identifier.
-	 * @param string|null $displayName Optional human-readable label.
+	 * @param string      $appId        The app.
+	 * @param string      $registerSlug The register slug.
+	 * @param string      $schemaSlug   The schema slug.
+	 * @param string      $urlTemplate  The url template.
+	 * @param string      $icon         The icon.
+	 * @param string|null $displayName  The display name.
 	 *
 	 * @return void
 	 */
@@ -53,23 +64,15 @@ class DeepLinkRegistrationEvent extends Event {
 		string $icon = '',
 		?string $displayName = null,
 	): void {
-		$this->registrations[] = [
-			'appId' => $appId,
-			'registerSlug' => $registerSlug,
-			'schemaSlug' => $schemaSlug,
-			'urlTemplate' => $urlTemplate,
-			'icon' => $icon,
-			'displayName' => $displayName,
-		];
-
+		$this->registry->add(
+			registration: new DeepLinkRegistration(
+				appId: $appId,
+				registerSlug: $registerSlug,
+				schemaSlug: $schemaSlug,
+				urlTemplate: $urlTemplate,
+				icon: $icon,
+				displayName: $displayName
+			)
+		);
 	}//end register()
-
-	/**
-	 * Return all registered deep links.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	public function getRegistrations(): array {
-		return $this->registrations;
-	}//end getRegistrations()
 }//end class

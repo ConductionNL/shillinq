@@ -3,6 +3,9 @@
 /**
  * Extraction Prefill Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-001 / REQ-RXC-004) — maps a
  * docudesk `nl.conduction.docudesk.extraction.completed` payload onto a
  * confidence-scored `SupplierInvoice` (docType supplier-invoice) or `Receipt`
@@ -34,14 +37,13 @@
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @spec openspec/specs/receipt-extraction-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
+
+use OCA\Shillinq\Kernel\Contracts\ExtractionPrefillServiceInterface;
 
 /**
  * Maps docudesk extraction payloads onto shillinq drafts and records
@@ -53,20 +55,7 @@ namespace OCA\Shillinq\Service\Extraction;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ExtractionPrefillService {
-	/**
-	 * The SupplierInvoice schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_SUPPLIER_INVOICE = 'SupplierInvoice';
-
-	/**
-	 * The Receipt schema slug.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_RECEIPT = 'Receipt';
+class ExtractionPrefillService implements ExtractionPrefillServiceInterface {
 
 	/**
 	 * Extraction status recorded on an uncommitted draft (REQ-RXC-001).

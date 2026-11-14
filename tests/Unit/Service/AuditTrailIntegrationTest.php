@@ -3,6 +3,9 @@
 /**
  * Integration tests for the slice-11 audit-trail export (REQ-PO3W-010).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Exercises the full PO → approval → GRN → invoice → match → exception →
  * resolution → GR/IR → payment lifecycle end-to-end and asserts that the
  * audit-trail export captures every transition with the correct actor +
@@ -35,9 +38,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -86,7 +86,7 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'currency' => 'EUR',
 					'costCenter' => 'FAC-2026',
 					'projectCode' => 'PRJ-A',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['userId' => '', 'decision' => 'pending'],
 					],
@@ -151,12 +151,12 @@ final class AuditTrailIntegrationTest extends TestCase {
 			decision: PurchaseOrderApprovalService::DECISION_APPROVED,
 			comment: 'within budget'
 		);
-		self::assertSame('approved', $purchaseOrder['lifecycleState']);
+		self::assertSame('approved', $purchaseOrder['statusCode']);
 		self::assertSame('bob', $purchaseOrder['approvalChain'][0]['userId']);
 		self::assertNotEmpty($purchaseOrder['approvalChain'][0]['decidedAt']);
 
-		// ---- Step 2: simulate Peppol send + PO lifecycleState=sent ----
-		$purchaseOrder['lifecycleState'] = 'sent';
+		// ---- Step 2: simulate Peppol send + PO statusCode=sent ----
+		$purchaseOrder['statusCode'] = 'sent';
 		$purchaseOrder['peppolSentAt'] = '2026-02-15T08:00:00+00:00';
 		$purchaseOrder['peppolMessageId'] = 'urn:uuid:peppol-100';
 		$stub->saveObject($purchaseOrder);

@@ -39,6 +39,9 @@ use Psr\Log\NullLogger;
 
 /**
  * Verifies the narrowed dormant Mollie port and the removal of verifyWebhook().
+ *
+ * @covers \OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter
+ * @uses \OCA\Shillinq\Service\External\Mollie\MolliePaymentResult
  */
 final class LogMolliePaymentAdapterTest extends TestCase {
 	/**

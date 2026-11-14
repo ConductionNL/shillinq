@@ -178,24 +178,19 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "operator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Operators manage cancellation policies for their administration."
-            },
-            "customer": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Customers may read the policy terms applicable to their bookings."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_operator"
+          ],
+          "read": [
+            "shillinq_operator"
+          ],
+          "update": [
+            "shillinq_operator"
+          ],
+          "delete": [
+            "shillinq_operator"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
@@ -354,24 +349,16 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "operator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Operators record and view cancellations. No delete: cancellation records are immutable."
-            },
-            "customer": {
-              "permissions": [
-                "create",
-                "read"
-              ],
-              "description": "Customers may self-cancel their own appointments and read the resulting record."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_operator"
+          ],
+          "read": [
+            "shillinq_operator"
+          ],
+          "update": [
+            "shillinq_operator"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,

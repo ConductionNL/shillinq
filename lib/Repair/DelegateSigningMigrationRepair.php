@@ -3,6 +3,9 @@
 /**
  * Shillinq DelegateSigningMigrationRepair Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent migration that backfills the delegation consumer fields on
  * finance objects that carry a legacy PKI signatureFingerprint (REQ-SIGN-009).
  *
@@ -41,17 +44,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-14
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -71,12 +71,12 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocationInterface $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 	) {
@@ -108,7 +108,7 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 	public function run(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			$output->info('Shillinq: DelegateSigningMigrationRepair — backfilling legacy ACMReport signing fields …');
 
@@ -151,8 +151,7 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function backfillAcmReports(object $objectService, string $registerSlug, IOutput $output): array {
-		$updated = 0;
-		$skipped = 0;
+		$counts = ['updated' => 0, 'skipped' => 0, 'none' => 0];
 
 		$reports = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ACMReport');
 
@@ -163,45 +162,60 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 
 		foreach ($reports as $report) {
 			$arr = $this->rowPayload(row: $report);
-			$fingerprint = (string)($arr['signatureFingerprint'] ?? '');
-			$signingRef = (string)($arr['signingRequestRef'] ?? '');
+			$outcome = $this->backfillAcmReport(objectService: $objectService, registerSlug: $registerSlug, arr: $arr, output: $output);
+			$counts[$outcome]++;
+		}
 
-			// Skip objects that have no legacy fingerprint.
-			if ($fingerprint === '') {
-				$skipped++;
-				continue;
-			}
-
-			// Idempotency: skip objects already migrated.
-			if ($signingRef !== '') {
-				$skipped++;
-				continue;
-			}
-
-			$id = (string)($arr['id'] ?? $arr['_id'] ?? '');
-
-			try {
-				$arr['signingRequestRef'] = 'legacy-local:' . $fingerprint;
-				$arr['signingStatus'] = 'signed';
-
-				$objectService->saveObject(
-					object: $arr,
-					register: $registerSlug,
-					schema: 'ACMReport',
-					_rbac: false,
-					_multitenancy: false,
-				);
-				$updated++;
-			} catch (\Throwable $e) {
-				// Per-record failure is soft — log and continue.
-				$output->warning('Shillinq: DelegateSigningMigrationRepair failed for ACMReport id=' . $id . ': ' . $e->getMessage());
-				$this->logger->warning(
-					'Shillinq: DelegateSigningMigrationRepair — ACMReport backfill failed for id=' . $id,
-					['exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
-
-		return ['updated' => $updated, 'skipped' => $skipped];
+		return ['updated' => $counts['updated'], 'skipped' => $counts['skipped']];
 	}//end backfillAcmReports()
+
+	/**
+	 * Backfill one ACMReport that carries a legacy fingerprint and is not yet migrated;
+	 * a per-record failure is soft.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param array<string,mixed> $arr The ACMReport row.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return string One of 'updated', 'skipped', 'none'.
+	 */
+	private function backfillAcmReport(object $objectService, string $registerSlug, array $arr, IOutput $output): string {
+		$fingerprint = (string)($arr['signatureFingerprint'] ?? '');
+		$signingRef = (string)($arr['signingRequestRef'] ?? '');
+
+		// Skip objects that have no legacy fingerprint.
+		if ($fingerprint === '') {
+			return 'skipped';
+		}
+
+		// Idempotency: skip objects already migrated.
+		if ($signingRef !== '') {
+			return 'skipped';
+		}
+
+		$id = (string)($arr['id'] ?? $arr['_id'] ?? '');
+
+		try {
+			$arr['signingRequestRef'] = 'legacy-local:' . $fingerprint;
+			$arr['signingStatus'] = 'signed';
+
+			$objectService->saveObject(
+				object: $arr,
+				register: $registerSlug,
+				schema: 'ACMReport',
+				_rbac: false,
+				_multitenancy: false,
+			);
+			return 'updated';
+		} catch (\Throwable $e) {
+			// Per-record failure is soft — log and continue.
+			$output->warning('Shillinq: DelegateSigningMigrationRepair failed for ACMReport id=' . $id . ': ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: DelegateSigningMigrationRepair — ACMReport backfill failed for id=' . $id,
+				['exception' => $e->getMessage()]
+			);
+			return 'none';
+		}//end try
+	}//end backfillAcmReport()
 }//end class

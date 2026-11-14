@@ -18,7 +18,7 @@ This specification defines the requirements for dba compliance marker in the Shi
 @e2e exclude unbuilt UI: DBA compliance intake/monitoring pages not yet implemented
 
 
-### REQ-DBA-000: Compliance-modus instelling per ondernemer
+### Requirement: REQ-DBA-000: Compliance-modus instelling per ondernemer
 
 Shillinq SHALL allow each ZZP-ondernemer or MKB-opdrachtgever to choose a compliance mode
 at initial configuration: **soft mode** (waarschuwingen, geen blokkades), **hard mode**
@@ -37,7 +37,7 @@ Once set, the mode applies to all future opdrachtnen under that administration.
 - **THEN** the first factuur MUST be blocked with "DBA HOOG-risico; require management override" message
 - **AND** override requires a reason-text that is recorded in audit-trail
 
-### REQ-DBA-001: Intake verplicht before first factuur, with eenmalig skip-rule
+### Requirement: REQ-DBA-001: Intake verplicht before first factuur, with eenmalig skip-rule
 
 The system SHALL satisfy this requirement: Intake verplicht before first factuur, with eenmalig skip-rule.
 
@@ -61,7 +61,7 @@ of 20) SHALL be offered, and risk-score SHALL be marked `VERKORT_LAGE_DREMPEL`.
 - **AND** risk-score MUST be marked `VERKORT_LAGE_DREMPEL`
 - **AND** full assessment is not triggered
 
-### REQ-DBA-002: Modelovereenkomst register with Belastingdienst-approved templates
+### Requirement: REQ-DBA-002: Modelovereenkomst register with Belastingdienst-approved templates
 
 Shillinq SHALL maintain a register of DBA modelovereenkomsten with version history
 and validity tracking. Each modelovereenkomst SHALL carry:
@@ -87,7 +87,7 @@ v2, etc.) SHALL be seeded. Operators MAY upload custom models.
 - **THEN** a flag MUST be generated: "MODELOVEREENKOMST_VERLOPEN"
 - **AND** user MUST receive advisory to select current modelovereenkomst
 
-### REQ-DBA-003: Risk-score on three pillars + Deliveroo criteria (0–100, four bands)
+### Requirement: REQ-DBA-003: Risk-score on three pillars + Deliveroo criteria (0–100, four bands)
 
 Shillinq SHALL compute a single risk-score (0–100) from the three Wet-DBA pillars
 (gezagsverhouding, persoonlijke arbeid, financieel risico, 0–20 each) plus Deliveroo-arrest
@@ -113,7 +113,7 @@ if the calculation engine cannot express the logic, a single-method PHP helper
 - **THEN** Deliveroo-criteria subtotal MUST be <5 of 20
 - **AND** total score MUST fall into LAAG bracket (<25)
 
-### REQ-DBA-004: Periodieke monitoring on factuurpatronen
+### Requirement: REQ-DBA-004: Periodieke monitoring on factuurpatronen
 
 Shillinq SHALL run a daily monitoring job that inspects all active DBAOpdrachten
 and generates flags when factuurpatterns match high-risk signatures.
@@ -134,7 +134,7 @@ The system MUST detect:
 - **WHEN** monitoring runs
 - **THEN** no `FACTUURFREQUENTIE_LIJKT_OP_LOON` flag MUST be generated
 
-### REQ-DBA-005: Concentratie- en exclusiviteit-monitoring
+### Requirement: REQ-DBA-005: Concentratie- en exclusiviteit-monitoring
 
 Shillinq SHALL compute portfolio-risk aggregation monthly (or on-demand) and flag
 when omzetconcentratie > 70% on a single klant (12-month rolling), or when langjarige
@@ -152,7 +152,7 @@ when omzetconcentratie > 70% on a single klant (12-month rolling), or when langj
 - **THEN** flag MUST be generated: `LANGJARIGE_HOOFDRELATIE`
 - **AND** flag.details MUST include: "Duur: 2.5 jaar, Omzetaandeel: 55%"
 
-### REQ-DBA-006: Multiple engagement signaal voor zelfde concern
+### Requirement: REQ-DBA-006: Multiple engagement signaal voor zelfde concern
 
 The system SHALL satisfy this requirement: Multiple engagement signaal voor zelfde concern.
 
@@ -166,7 +166,7 @@ When an ondernemer creates multiple opdrachten for juridisch gerelateerde entiti
 - **THEN** flag MUST be generated: `MULTIPLE_ENGAGEMENT_ZELFDE_CONCERN`
 - **AND** flag.details MUST list the three opdrachtnen + their risk-scores
 
-### REQ-DBA-007: Evidence-dossier per opdracht
+### Requirement: REQ-DBA-007: Evidence-dossier per opdracht
 
 Shillinq SHALL automatically build an evidence-dossier (`DBAEvidenceDossier`) per opdracht
 containing:
@@ -189,7 +189,7 @@ Compleetheids-score SHALL be 0–1; missing urenstaten lower the score.
 - **THEN** compleetheidsScore MUST be ~0.6 (60%)
 - **AND** UI MUST show: "Missing: hourly tracking sheets (urenstaten per kwartaal)"
 
-### REQ-DBA-008: Audit-rapport per opdracht for Belastingdienst
+### Requirement: REQ-DBA-008: Audit-rapport per opdracht for Belastingdienst
 
 On request, Shillinq SHALL generate an audit-ready PDF per opdracht containing:
 - Intake answers
@@ -206,7 +206,7 @@ The PDF MUST be suitable for submission to Belastingdienst in case of control/co
 - **THEN** PDF-A3 MUST be generated with intake + score + flags + evidence inventory
 - **AND** SHA-256 hash of the PDF MUST be recorded in audit-trail
 
-### REQ-DBA-009: Periodieke herbeoordeling
+### Requirement: REQ-DBA-009: Periodieke herbeoordeling
 
 For opdrachtnen running longer than 12 months, Shillinq SHALL trigger a yearly
 herbeoordeling request on the intake's anniversary.
@@ -217,7 +217,7 @@ herbeoordeling request on the intake's anniversary.
 - **THEN** system MUST send notification: "Bevestig of update DBA intake voor <opdrachtNaam>"
 - **AND** if no response within 30 days, flag MUST be generated: `HERBEOORDELING_OVERDUE`
 
-### REQ-DBA-010: Opdrachtgever-perspektief (inhuur-flow)
+### Requirement: REQ-DBA-010: Opdrachtgever-perspektief (inhuur-flow)
 
 The system SHALL satisfy this requirement: Opdrachtgever-perspektief (inhuur-flow).
 
@@ -230,7 +230,7 @@ SHALL be enforced before PO/inkoopfactuur is created.
 - **THEN** DBA-inhuur-intake MUST appear (mirror of supplier-side)
 - **AND** at HOOG-risico, PO MUST be blocked for approval without management-override
 
-### REQ-DBA-011: Belastingdienst-correctieverplichting workflow
+### Requirement: REQ-DBA-011: Belastingdienst-correctieverplichting workflow
 
 When an ondernemer receives a Belastingdienst correctie-brief, Shillinq SHALL enable
 creation of a correctie-dossier with all relevant opdracht-evidence + boekingen.
@@ -241,7 +241,7 @@ creation of a correctie-dossier with all relevant opdracht-evidence + boekingen.
 - **THEN** system MUST create workmap with all opdracht-related bookings
 - **AND** herclassificatie-scenario (loon i.p.v. winst) MUST be calculable (optional: via `bookkeeping-payroll-engine-nl`)
 
-### REQ-DBA-012: Privacy and AVG compliance
+### Requirement: REQ-DBA-012: Privacy and AVG compliance
 
 E-mail and communication archives included as evidence MUST be processed AVG-compliant:
 opt-in for archival, 7-year retention per AWR art. 52, subject access rights.
@@ -252,7 +252,7 @@ opt-in for archival, 7-year retention per AWR art. 52, subject access rights.
 - **THEN** explicit opt-in for processing wederpartij persoonsgegevens MUST be shown
 - **AND** retention period MUST be displayed: "7 years from engagement end-date"
 
-### REQ-DBA-013: Webmodule-Beoordeling-Arbeidsrelatie (WBA) integratie
+### Requirement: REQ-DBA-013: Webmodule-Beoordeling-Arbeidsrelatie (WBA) integratie
 
 If the Belastingdienst WBA-webmodule result is available, Shillinq SHALL allow upload
 and storage of the WBA-assessment as a formal beoordelingsresultaat per opdracht.
@@ -263,7 +263,7 @@ and storage of the WBA-assessment as a formal beoordelingsresultaat per opdracht
 - **THEN** result MUST be stored as formal `wbaBeoordelingResultaat` on DBAOpdracht
 - **AND** validity period (1 year per WBA-policy) MUST be tracked
 
-### REQ-DBA-014: VBAR (Vervangbaarheid) bewijslast
+### Requirement: REQ-DBA-014: VBAR (Vervangbaarheid) bewijslast
 
 The vervangbaarheid criterion is legally weighted heavily. Shillinq SHALL explicitly
 ask for evidence of actual (not just contractual) substitutions and store proofs in
@@ -275,7 +275,7 @@ evidence-dossier.
 - **THEN** `vervangingFeitelijkScore` MUST be 0
 - **AND** flag MUST be generated: `VERVANGBAARHEID_THEORETISCH`
 
-### REQ-DBA-015: Branchekader interpretation
+### Requirement: REQ-DBA-015: Branchekader interpretation
 
 Shillinq SHALL recognize branch-specific DBA frameworks (ICT-kader, Zorg-kader, Bouw-kader,
 Onderwijs-kader) and generate branch-specific flags when applicable.
@@ -286,7 +286,7 @@ Onderwijs-kader) and generate branch-specific flags when applicable.
 - **WHEN** ICT-kader-check runs
 - **THEN** flag MUST be generated: `ICT_INTEGRATIE_IN_TEAM` with scrum-participation details
 
-### REQ-DBA-016: VBAR uurtarief-grens monitoring
+### Requirement: REQ-DBA-016: VBAR uurtarief-grens monitoring
 
 For every outgoing factuur, Shillinq SHALL compute effective hourly rate and warn
 (or block, depending on mode) if rate falls below VBAR-threshold (EUR 33, peil 2024,
@@ -305,7 +305,7 @@ indexed annually).
 - **THEN** no VBAR-flag MUST be generated
 - **AND** uurtarief MUST be stored in evidence for portfolio-aggregatie
 
-### REQ-DBA-017: Tussenkomst-driehoek modelleren (optional)
+### Requirement: REQ-DBA-017: Tussenkomst-driehoek modelleren (optional)
 
 For opdrachtnen via intermediary (broker, staffing agency), Shillinq SHALL model
 the three-party relationship (ZZP–intermediair–eindklant) with separate DBA-assessments
@@ -318,7 +318,7 @@ per relationship.
 - **AND** separate risk-scores MUST be computed for (a) ZZP–Yacht and (b) Yacht–Belastingdienst
 - **AND** Waadi + Wka compliance MUST be flagged as applicable
 
-### REQ-DBA-018: Beëindiging-procedure with evidence-cap
+### Requirement: REQ-DBA-018: Beëindiging-procedure with evidence-cap
 
 When an opdracht is marked beëindigd, Shillinq SHALL close the evidence-trail,
 generate an end-report, and start the 7-year retention-period clock per AWR art. 52.

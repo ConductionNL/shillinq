@@ -1,0 +1,308 @@
+{
+    "bestOfLocations": {
+        "result": true,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "bestOfShort": {
+        "result": false,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "lineLocation": {
+        "result": true,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "lineLocationShort": {
+        "result": false,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "deliveryLocation": {
+        "result": false,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "unknownLocation": {
+        "result": false,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-b"
+                }
+            ]
+        ]
+    },
+    "serviceLine": {
+        "result": true,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "svc-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-b"
+                }
+            ]
+        ]
+    },
+    "secondLineShort": {
+        "result": false,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-b"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "negativeAllowed": {
+        "result": true,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-1"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-a"
+                }
+            ]
+        ]
+    },
+    "zeroQuantity": {
+        "result": false,
+        "calls": []
+    },
+    "otherAdministration": {
+        "result": true,
+        "calls": [
+            [
+                "SalesOrder",
+                {
+                    "id": "so-1"
+                }
+            ],
+            [
+                "CreditHold",
+                {
+                    "customerReference": "cust-1"
+                }
+            ],
+            [
+                "InventoryGLConfig",
+                {
+                    "administrationId": "adm-2"
+                }
+            ],
+            [
+                "InventoryStock",
+                {
+                    "sku": "sku-b"
+                }
+            ]
+        ]
+    }
+}

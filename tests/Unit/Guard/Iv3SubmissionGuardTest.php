@@ -86,4 +86,18 @@ final class Iv3SubmissionGuardTest extends TestCase {
 		self::assertFalse($allowed);
 
 	}//end testSubmitDeniedWithoutXmlAttachment()
+	/**
+	 * Bad path: an export without any buckets, or with buckets that are not a list, is denied.
+	 *
+	 * @return void
+	 */
+	public function testSubmitDeniedWithoutBuckets(): void {
+		$export = ['submittedAt' => null, 'xmlAttachmentUri' => 'iv3/2026-q1.xml'];
+
+		self::assertFalse($this->guard->requireApproval(export: $export + ['buckets' => []]));
+		self::assertFalse($this->guard->requireApproval(export: $export + ['buckets' => 'none']));
+		self::assertFalse($this->guard->requireApproval(export: $export));
+		self::assertTrue($this->guard->requireApproval(export: $export + ['buckets' => [['code' => '1A', 'amount' => 1]]]));
+
+	}//end testSubmitDeniedWithoutBuckets()
 }//end class

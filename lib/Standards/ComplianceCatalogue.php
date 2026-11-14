@@ -3,6 +3,9 @@
 /**
  * Compliance Catalogue
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Versioned, read-only catalogue of digital-compliance / tax-data obligations
  * (Category B of the standards model — see docs/standards/digital-compliance.md).
  *

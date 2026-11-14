@@ -3,6 +3,9 @@
 /**
  * Dual GAAP Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the dual GAAP reporting registers
  * (bookkeeping-ifrs-rj-dual-gaap, T3). The bulk of the dual-GAAP measurement
  * model is declarative (schema metadata + x-openregister-lifecycle +
@@ -37,16 +40,12 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -94,29 +93,7 @@ class DualGaapGuard {
 	 */
 	public function canReconcileTransaction(string $transactionId, ?array $object = null): bool {
 		try {
-			$transaction = $this->resolveObject(schema: 'DualTransaction', id: $transactionId, object: $object);
-			if ($transaction === null) {
-				return false;
-			}
-
-			$reasonCode = trim((string)($transaction['divergenceReasonCode'] ?? ''));
-			if ($reasonCode === '') {
-				return false;
-			}
-
-			$classification = (string)($transaction['divergenceClassification'] ?? '');
-			if ($classification === 'temporary') {
-				$taxEffect = $transaction['deferredTaxEffect'] ?? null;
-				if ($taxEffect === null || is_numeric($taxEffect) === false) {
-					return false;
-				}
-
-				if (abs((float)$taxEffect) < 0.005) {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->reconcilable(transactionId: $transactionId, object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'DualGaapGuard: reconcile check failed — denying transition (fail-closed)',
@@ -126,6 +103,57 @@ class DualGaapGuard {
 		}//end try
 
 	}//end canReconcileTransaction()
+
+	/**
+	 * Whether the transaction carries a divergence reason and, when temporary, a deferred tax effect.
+	 *
+	 * @param string                   $transactionId The DualTransaction id.
+	 * @param array<string,mixed>|null $object        The transaction being transitioned.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When the transaction lookup fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+	 */
+	private function reconcilable(string $transactionId, array|null $object): bool {
+		$transaction = $this->resolveObject(schema: 'DualTransaction', id: $transactionId, object: $object);
+		if ($transaction === null) {
+			return false;
+		}
+
+		$reasonCode = trim((string)($transaction['divergenceReasonCode'] ?? ''));
+		if ($reasonCode === '') {
+			return false;
+		}
+
+		return $this->hasTaxEffectWhenTemporary(transaction: $transaction);
+	}//end reconcilable()
+
+	/**
+	 * Whether a temporary divergence carries a non-zero numeric deferred tax effect; other divergences pass.
+	 *
+	 * @param array<string,mixed> $transaction The DualTransaction.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+	 */
+	private function hasTaxEffectWhenTemporary(array $transaction): bool {
+		$classification = (string)($transaction['divergenceClassification'] ?? '');
+		if ($classification === 'temporary') {
+			$taxEffect = $transaction['deferredTaxEffect'] ?? null;
+			if ($taxEffect === null || is_numeric($taxEffect) === false) {
+				return false;
+			}
+
+			if (abs((float)$taxEffect) < 0.005) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end hasTaxEffectWhenTemporary()
 
 	/**
 	 * Returns true iff a FrameworkElection may transition from draft to active.
@@ -212,41 +240,8 @@ class DualGaapGuard {
 	 * @return array<string,mixed>|null The resolved object, or null when unavailable.
 	 */
 	private function resolveObject(string $schema, string $id, ?array $object): ?array {
-		if ($object !== null) {
-			return $object;
-		}
+		$lookup = new GuardObjectLookup(appConfig: $this->appConfig, objectService: $this->objectService);
 
-		if ($id === '') {
-			return null;
-		}
-
-		$register = $this->resolveRegister();
-
-		$results = $this->objectService
-			->setRegister($register)
-			->setSchema($schema)
-			->findAll(['filters' => ['id' => $id]]);
-
-		foreach ($results as $result) {
-			if (is_array($result) === true) {
-				return $result;
-			}
-		}
-
-		return null;
+		return $lookup->resolve(subject: new GuardSubject(schema: $schema, id: $id), object: $object);
 	}//end resolveObject()
-
-	/**
-	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-	 *
-	 * @return string The register slug.
-	 */
-	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end resolveRegister()
 }//end class

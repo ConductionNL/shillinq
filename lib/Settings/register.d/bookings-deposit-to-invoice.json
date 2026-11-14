@@ -288,26 +288,17 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "scheduler": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "customer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_scheduler"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_scheduler"
+          ],
+          "update": [
+            "shillinq_scheduler"
+          ]
         },
         "x-openregister-aggregations": {
           "countByState": {
@@ -528,26 +519,18 @@
             "title": "State"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "scheduler": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_accountant"
+          ],
+          "read": [
+            "shillinq_accountant",
+            "shillinq_auditor",
+            "shillinq_scheduler"
+          ],
+          "update": [
+            "shillinq_accountant"
+          ]
         },
         "x-openregister-aggregations": {
           "countByState": {
@@ -565,6 +548,27 @@
         }
       },
       "InvoiceLine": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "InvoiceLine",
         "icon": "FormatListBulletedType",
         "version": "0.1.0",
@@ -658,6 +662,27 @@
         }
       },
       "CreditNote": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "CreditNote",
         "icon": "FileDocumentMinusOutline",
         "version": "0.1.0",
@@ -783,9 +808,11 @@
       "orderId": "ord-1001",
       "amount": 7500,
       "currency": "EUR",
-      "arInvoiceId": "inv-deposit-1500",
+      "arInvoiceId": null,
       "refundPolicy": "manual",
-      "state": "authorized"
+      "state": "authorized",
+      "bookingTypeId": "bt-001",
+      "currencyCode": "EUR"
     }
   ]
 }

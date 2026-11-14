@@ -190,4 +190,23 @@ class RoleFallbackResolverTest extends TestCase {
 		$this->assertSame([], $resolver->resolve($object, []));
 
 	}//end testGroupLookupFailureIsFailSafe()
+	/**
+	 * An empty primary group id is not looked up; the fallback answers.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyPrimaryGroupIdIsNotLookedUp(): void {
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->expects($this->once())->method('get')->with('shillinq_admins')->willReturn($this->makeGroup(['admin']));
+
+		$resolver = new RoleFallbackResolver(
+			groupManager: $groupManager,
+			logger: $this->createMock(LoggerInterface::class),
+			primaryGroup: '',
+			fallbackGroup: 'shillinq_admins',
+		);
+
+		$this->assertSame(['admin'], $resolver->resolve($this->createMock(ObjectEntity::class), []));
+
+	}//end testAnEmptyPrimaryGroupIdIsNotLookedUp()
 }//end class

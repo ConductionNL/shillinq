@@ -3,6 +3,9 @@
 /**
  * Subsidie Verantwoording Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the SubsidieVerantwoording register
  * (bookkeeping-subsidie-verantwoording, T3 governance). The canApprove()
  * precondition is referenced from the SubsidieVerantwoording schema's
@@ -30,9 +33,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
  */
 
@@ -40,7 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -108,19 +108,7 @@ class SubsidieVerantwoordingGuard {
 				return false;
 			}
 
-			$awardedAmount = (float)($object['awardedAmount'] ?? 0.0);
-			if ($awardedAmount < $this->resolveThreshold()) {
-				// Below threshold: no auditor statement required, approval permitted.
-				return true;
-			}
-
-			$grantId = (string)($object['grantId'] ?? '');
-			if ($grantId === '') {
-				// Large grant with no grant reference cannot be reconciled — fail closed.
-				return false;
-			}
-
-			return $this->hasApprovedAuditorStatement(grantId: $grantId);
+			return $this->isApprovable(object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SubsidieVerantwoordingGuard: approve check failed — denying approve transition (fail-closed)',
@@ -129,6 +117,31 @@ class SubsidieVerantwoordingGuard {
 			return false;
 		}//end try
 	}//end canApprove()
+
+	/**
+	 * Whether the report is below the threshold, or its grant has an approved auditor statement.
+	 *
+	 * @param array<string,mixed> $object The SubsidieVerantwoording.
+	 *
+	 * @return bool True when the accountability report may be approved.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	private function isApprovable(array $object): bool {
+		$awardedAmount = (float)($object['awardedAmount'] ?? 0.0);
+		if ($awardedAmount < $this->resolveThreshold()) {
+			// Below threshold: no auditor statement required, approval permitted.
+			return true;
+		}
+
+		$grantId = (string)($object['grantId'] ?? '');
+		if ($grantId === '') {
+			// Large grant with no grant reference cannot be reconciled — fail closed.
+			return false;
+		}
+
+		return $this->hasApprovedAuditorStatement(grantId: $grantId);
+	}//end isApprovable()
 
 	/**
 	 * Returns true iff the grant has at least one AuditorStatement in approved or conditional state.
@@ -210,7 +223,7 @@ class SubsidieVerantwoordingGuard {
 	 * @return float The auditor threshold in the base currency.
 	 */
 	private function resolveThreshold(): float {
-		$raw = $this->appConfig->getValueString(Application::APP_ID, 'auditor_threshold', '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, 'auditor_threshold', '');
 		if ($raw === '' || is_numeric($raw) === false) {
 			return self::DEFAULT_AUDIT_THRESHOLD;
 		}
@@ -224,7 +237,7 @@ class SubsidieVerantwoordingGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

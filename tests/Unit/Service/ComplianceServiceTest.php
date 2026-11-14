@@ -4,6 +4,9 @@
  * Unit tests for ComplianceService (slice 08 of the
  * bookkeeping-waterschappen-bbv-variant chain).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 11 (testing) of the chain. Asserts the imperative orchestration
  * + caching surface around the declarative aggregation defined on the
  * BBVProgramme schema by slice 02. Covers spend levels (on-track,
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-11-testing/tasks.md#unit-tests
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\ComplianceService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -66,9 +66,9 @@ final class ComplianceServiceTest extends TestCase {
 	/**
 	 * Settings stub.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Cache factory stub.
@@ -113,7 +113,7 @@ final class ComplianceServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->cacheFactory = $this->createMock(ICacheFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 
@@ -147,7 +147,7 @@ final class ComplianceServiceTest extends TestCase {
 
 		$this->service = new ComplianceService(
 			container: $this->container,
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			cacheFactory: $this->cacheFactory,
 			logger: $this->logger,
 		);

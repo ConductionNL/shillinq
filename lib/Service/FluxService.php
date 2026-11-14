@@ -3,6 +3,9 @@
 /**
  * Flux Analysis Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 post-soft-close variance analysis (REQ-CLS-005..007). Computes per-GL
  * variance vs the chosen comparison basis (budget | forecast | prior-period |
  * prior-year), classifies materiality per the configured MaterialityPolicy,
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -37,10 +37,11 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\FluxServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Variance calculation + driver decomposition for continuous-close (REQ-CLS-005..007).
@@ -53,7 +54,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class FluxService {
+class FluxService implements FluxServiceInterface {
 	/**
 	 * Auto-explanation coverage threshold (REQ-CLS-006).
 	 *
@@ -131,14 +132,7 @@ class FluxService {
 	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
 	 */
 	public function classifyMateriality(int $varianceCents, int $basisCents, array $policy, string $accountGroup = 'operational'): string {
-		$absoluteThreshold = (int)($policy['absoluteThresholdCents'] ?? 0);
-		$percentageThreshold = (float)($policy['percentageThreshold'] ?? 0.0);
-
-		$specials = (array)($policy['specialRules'] ?? []);
-		if (isset($specials[$accountGroup]) === true && is_array($specials[$accountGroup]) === true) {
-			$absoluteThreshold = (int)($specials[$accountGroup]['absoluteThresholdCents'] ?? $absoluteThreshold);
-			$percentageThreshold = (float)($specials[$accountGroup]['percentageThreshold'] ?? $percentageThreshold);
-		}
+		[$absoluteThreshold, $percentageThreshold] = $this->materialityThresholds(policy: $policy, accountGroup: $accountGroup);
 
 		$absoluteVariance = abs($varianceCents);
 		$percentageThresholdCents = (int)round(abs($basisCents) * $percentageThreshold);
@@ -163,6 +157,28 @@ class FluxService {
 
 		return 'material';
 	}//end classifyMateriality()
+
+	/**
+	 * Resolve the absolute and percentage thresholds, applying an account
+	 * group's special rule when the policy has one.
+	 *
+	 * @param array<string,mixed> $policy The MaterialityPolicy record.
+	 * @param string $accountGroup Account group.
+	 *
+	 * @return array{0: int, 1: float} Absolute threshold in cents and percentage threshold.
+	 */
+	private function materialityThresholds(array $policy, string $accountGroup): array {
+		$absoluteThreshold = (int)($policy['absoluteThresholdCents'] ?? 0);
+		$percentageThreshold = (float)($policy['percentageThreshold'] ?? 0.0);
+
+		$specials = (array)($policy['specialRules'] ?? []);
+		if (isset($specials[$accountGroup]) === true && is_array($specials[$accountGroup]) === true) {
+			$absoluteThreshold = (int)($specials[$accountGroup]['absoluteThresholdCents'] ?? $absoluteThreshold);
+			$percentageThreshold = (float)($specials[$accountGroup]['percentageThreshold'] ?? $percentageThreshold);
+		}
+
+		return [$absoluteThreshold, $percentageThreshold];
+	}//end materialityThresholds()
 
 	/**
 	 * Sum every driver contribution to the total reconstructed variance (REQ-CLS-006).
@@ -263,72 +279,21 @@ class FluxService {
 		$comparisonBasis = (string)($inputs['comparisonBasis'] ?? 'budget');
 		$accounts = (array)($inputs['accounts'] ?? []);
 		$policy = (array)($inputs['materialityPolicy'] ?? []);
-		$runTimestamp = ($inputs['runTimestamp'] ?? new DateTimeImmutable());
-		if (($runTimestamp instanceof DateTimeImmutable) === false) {
-			$runTimestamp = new DateTimeImmutable();
-		}
+		$runTimestamp = $this->resolveRunTimestamp(inputs: $inputs);
 
 		$fluxRunId = $this->generateRunId(administrationId: $administrationId, periodId: $periodId, asOf: $runTimestamp);
 		$items = [];
-		$material = 0;
-		$auto = 0;
-		$escalated = 0;
-		$totalVar = 0;
 
 		foreach ($accounts as $account) {
-			$glAccount = (string)($account['glAccountNumber'] ?? '');
-			$group = (string)($account['accountGroupCode'] ?? 'operational');
-			$actualCents = (int)($account['actualCents'] ?? 0);
-			$basisCents = (int)($account['basisCents'] ?? 0);
-			$attribs = (array)($account['attributions'] ?? []);
-
-			$variance = $this->computeVarianceCents(actualCents: $actualCents, basisCents: $basisCents);
-			$percentage = $this->computePercentageVariance(varianceCents: $variance, basisCents: $basisCents);
-			$materiality = $this->classifyMateriality(
-				varianceCents: $variance,
-				basisCents: $basisCents,
+			$items[] = $this->buildFluxItem(
+				account: $account,
 				policy: $policy,
-				accountGroup: $group
+				fluxRunId: $fluxRunId,
+				runTimestamp: $runTimestamp
 			);
-			$coverage = $this->computeAutoExplanationCoverage(attributions: $attribs, varianceCents: $variance);
-			$status = $this->decideStatus(materiality: $materiality, coverage: $coverage);
-			$totalVar += abs($variance);
+		}
 
-			if ($materiality !== 'immaterial') {
-				$material++;
-			}
-
-			if ($status === 'auto-explained') {
-				$auto++;
-			} elseif ($status === 'escalated') {
-				$escalated++;
-			}
-
-			$escalationSla = null;
-			$escalatedTo = '';
-			if ($status === 'escalated') {
-				$escalationSla = $runTimestamp->modify('+' . self::OWNER_SLA_HOURS . ' hours')
-					->format(DateTimeInterface::ATOM);
-				$escalatedTo = $this->ownerForAccount(group: $group);
-			}
-
-			$items[] = [
-				'fluxRunId' => $fluxRunId,
-				'glAccountNumber' => $glAccount,
-				'budgetCents' => $basisCents,
-				'actualCents' => $actualCents,
-				'varianceCents' => $variance,
-				'percentageVariance' => $percentage,
-				'materialityClassification' => $materiality,
-				'autoExplanation' => $this->formatAutoExplanation(attributions: $attribs),
-				'autoExplanationCoverage' => $coverage,
-				'ownerExplanation' => '',
-				'status' => $status,
-				'ownerEscalationSLA' => $escalationSla,
-				'ownerEscalatedTo' => $escalatedTo,
-				'attributions' => $attribs,
-			];
-		}//end foreach
+		$summary = $this->summariseFluxItems(items: $items);
 
 		$this->persistRun(
 			fluxRunId: $fluxRunId,
@@ -339,25 +304,132 @@ class FluxService {
 			policy: $policy,
 			runTimestamp: $runTimestamp,
 			items: $items,
-			summary: [
-				'materialCount' => $material,
-				'autoExplainedCount' => $auto,
-				'escalatedCount' => $escalated,
-				'totalVarianceCents' => $totalVar,
-			]
+			summary: $summary
 		);
+
+		return ['fluxRunId' => $fluxRunId, 'itemCount' => count($items)] + $summary + ['items' => $items];
+
+	}//end run()
+
+	/**
+	 * Read the run timestamp from the inputs, defaulting to now.
+	 *
+	 * @param array<string,mixed> $inputs Run inputs.
+	 *
+	 * @return DateTimeImmutable The run timestamp.
+	 */
+	private function resolveRunTimestamp(array $inputs): DateTimeImmutable {
+		$runTimestamp = ($inputs['runTimestamp'] ?? new DateTimeImmutable());
+		if (($runTimestamp instanceof DateTimeImmutable) === false) {
+			$runTimestamp = new DateTimeImmutable();
+		}
+
+		return $runTimestamp;
+	}//end resolveRunTimestamp()
+
+	/**
+	 * Compute the flux item for one account.
+	 *
+	 * @param array<string,mixed> $account Account input row.
+	 * @param array<string,mixed> $policy The MaterialityPolicy record.
+	 * @param string $fluxRunId The run id.
+	 * @param DateTimeImmutable $runTimestamp The run timestamp.
+	 *
+	 * @return array<string,mixed> The flux item.
+	 */
+	private function buildFluxItem(array $account, array $policy, string $fluxRunId, DateTimeImmutable $runTimestamp): array {
+		$glAccount = (string)($account['glAccountNumber'] ?? '');
+		$group = (string)($account['accountGroupCode'] ?? 'operational');
+		$actualCents = (int)($account['actualCents'] ?? 0);
+		$basisCents = (int)($account['basisCents'] ?? 0);
+		$attribs = (array)($account['attributions'] ?? []);
+
+		$variance = $this->computeVarianceCents(actualCents: $actualCents, basisCents: $basisCents);
+		$percentage = $this->computePercentageVariance(varianceCents: $variance, basisCents: $basisCents);
+		$materiality = $this->classifyMateriality(
+			varianceCents: $variance,
+			basisCents: $basisCents,
+			policy: $policy,
+			accountGroup: $group
+		);
+		$coverage = $this->computeAutoExplanationCoverage(attributions: $attribs, varianceCents: $variance);
+		$status = $this->decideStatus(materiality: $materiality, coverage: $coverage);
+
+		[$escalationSla, $escalatedTo] = $this->escalationFor(status: $status, group: $group, runTimestamp: $runTimestamp);
 
 		return [
 			'fluxRunId' => $fluxRunId,
-			'itemCount' => count($items),
+			'glAccountNumber' => $glAccount,
+			'budgetCents' => $basisCents,
+			'actualCents' => $actualCents,
+			'varianceCents' => $variance,
+			'percentageVariance' => $percentage,
+			'materialityClassification' => $materiality,
+			'autoExplanation' => $this->formatAutoExplanation(attributions: $attribs),
+			'autoExplanationCoverage' => $coverage,
+			'ownerExplanation' => '',
+			'status' => $status,
+			'ownerEscalationSLA' => $escalationSla,
+			'ownerEscalatedTo' => $escalatedTo,
+			'attributions' => $attribs,
+		];
+	}//end buildFluxItem()
+
+	/**
+	 * Return the owner escalation SLA and owner for an escalated item.
+	 *
+	 * @param string $status The item status.
+	 * @param string $group The account group.
+	 * @param DateTimeImmutable $runTimestamp The run timestamp.
+	 *
+	 * @return array{0: string|null, 1: string} SLA timestamp (null unless escalated) and owner.
+	 */
+	private function escalationFor(string $status, string $group, DateTimeImmutable $runTimestamp): array {
+		$escalationSla = null;
+		$escalatedTo = '';
+		if ($status === 'escalated') {
+			$escalationSla = $runTimestamp->modify('+' . self::OWNER_SLA_HOURS . ' hours')
+				->format(DateTimeInterface::ATOM);
+			$escalatedTo = $this->ownerForAccount(group: $group);
+		}
+
+		return [$escalationSla, $escalatedTo];
+	}//end escalationFor()
+
+	/**
+	 * Count material, auto-explained and escalated items and sum the absolute variance.
+	 *
+	 * @param array<int,array<string,mixed>> $items Flux items.
+	 *
+	 * @return array{materialCount: int, autoExplainedCount: int, escalatedCount: int, totalVarianceCents: int}
+	 */
+	private function summariseFluxItems(array $items): array {
+		$material = 0;
+		$auto = 0;
+		$escalated = 0;
+		$totalVar = 0;
+
+		foreach ($items as $item) {
+			$totalVar += abs($item['varianceCents']);
+
+			if ($item['materialityClassification'] !== 'immaterial') {
+				$material++;
+			}
+
+			if ($item['status'] === 'auto-explained') {
+				$auto++;
+			} elseif ($item['status'] === 'escalated') {
+				$escalated++;
+			}
+		}
+
+		return [
 			'materialCount' => $material,
 			'autoExplainedCount' => $auto,
 			'escalatedCount' => $escalated,
 			'totalVarianceCents' => $totalVar,
-			'items' => $items,
 		];
-
-	}//end run()
+	}//end summariseFluxItems()
 
 	/**
 	 * Aggregate run items into a flux narrative ordered by absolute variance (REQ-CLS-007).
@@ -672,7 +744,7 @@ class FluxService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

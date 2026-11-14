@@ -158,26 +158,18 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator"
+          ]
         }
       },
       "EuVatRate": {
@@ -275,24 +267,12 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ]
         }
       },
       "OssThresholdCounter": {
@@ -379,24 +359,12 @@
             "from": "Invoice"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ]
         }
       },
       "OssReturn": {
@@ -647,26 +615,18 @@
             "from": "Invoice"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator"
+          ]
         }
       },
       "OssPayment": {
@@ -809,26 +769,18 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_vat_administrator"
+          ],
+          "read": [
+            "shillinq_vat_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_vat_administrator"
+          ]
         }
       },
       "Invoice": {

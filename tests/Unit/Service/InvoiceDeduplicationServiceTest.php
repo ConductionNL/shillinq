@@ -354,4 +354,43 @@ final class InvoiceDeduplicationServiceTest extends TestCase {
 
 	}//end testMultipleConflictingInvoicesAreAllReported()
 
+	/**
+	 * Pin the full conflict report over a mixed set of invoices: id fallback,
+	 * exclusion, status filter (missing status counts as draft), id
+	 * normalisation, overlap order and partial overlaps.
+	 *
+	 * @return void
+	 */
+	public function testConflictReportOverMixedInvoicesIsExact(): void {
+		$this->arrangeFindAll(
+			[
+				['id' => 'a', 'invoiceNumber' => 'A', 'timeEntryIds' => ['t3', 't1'], 'expenseIds' => []],
+				['@self' => ['id' => 'b'], 'status' => 'posted', 'expenseIds' => 'e2'],
+				['id' => 'self', 'status' => 'draft', 'timeEntryIds' => ['t1']],
+				['id' => '', '@self' => ['id' => 'ignored'], 'timeEntryIds' => ['t1']],
+				['id' => 'c', 'status' => 'paid', 'timeEntryIds' => ['t1']],
+				['id' => 7, 'status' => 'draft', 'timeEntryIds' => [1, 't9'], 'expenseIds' => [5]],
+				['id' => 'd', 'status' => 'draft', 'timeEntryIds' => ['tx'], 'expenseIds' => ['ex']],
+			]
+		);
+
+		$result = $this->svc()->deduplicateSourceIds('admin-1', [3 => 't1', 0 => '1', 1 => 't3'], ['e2', '5'], 'self');
+
+		self::assertSame(
+			[
+				'hasConflicts' => true,
+				'conflicts' => [
+					['invoiceId' => 'a', 'invoiceNumber' => 'A', 'status' => 'draft', 'timeEntryIds' => ['t1', 't3'], 'expenseIds' => []],
+					['invoiceId' => 'b', 'invoiceNumber' => '', 'status' => 'posted', 'timeEntryIds' => [], 'expenseIds' => ['e2']],
+					['invoiceId' => '7', 'invoiceNumber' => '', 'status' => 'draft', 'timeEntryIds' => ['1'], 'expenseIds' => ['5']],
+				],
+			],
+			$result
+		);
+		self::assertSame(
+			['invoiceId' => 'self', 'invoiceNumber' => '', 'status' => 'draft', 'timeEntryIds' => ['t1'], 'expenseIds' => []],
+			$this->svc()->deduplicateSourceIds('admin-1', ['t1'], [])['conflicts'][1]
+		);
+
+	}//end testConflictReportOverMixedInvoicesIsExact()
 }//end class

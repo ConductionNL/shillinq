@@ -98,34 +98,54 @@ class OssThresholdGuard {
 	public function currentB2cEuTurnover(array $invoices, string $administrationId, int $year): float {
 		$cents = 0;
 		foreach ($invoices as $invoice) {
-			if ((string)($invoice['administrationId'] ?? '') !== $administrationId) {
-				continue;
+			if (self::isOwnOssSale(invoice: $invoice, administrationId: $administrationId) === true
+				&& self::countsInYear(invoice: $invoice, year: $year) === true
+			) {
+				$cents += $this->toCents(amount: ($invoice['netAmount'] ?? ($invoice['amount'] ?? 0)));
 			}
-
-			$ossContext = ($invoice['ossContext'] ?? null);
-			if (is_array($ossContext) === false || ($ossContext['ossEligible'] ?? false) !== true) {
-				continue;
-			}
-
-			$invoiceDate = (string)($invoice['invoiceDate'] ?? ($invoice['issueDate'] ?? ''));
-			if (substr($invoiceDate, 0, 4) !== (string)$year) {
-				continue;
-			}
-
-			$state = (string)($invoice['state'] ?? ($invoice['status'] ?? ''));
-			if ($state === 'cancelled' || $state === 'credited') {
-				continue;
-			}
-
-			if ((string)($invoice['documentType'] ?? '') === 'credit-note') {
-				continue;
-			}
-
-			$cents += $this->toCents(amount: ($invoice['netAmount'] ?? ($invoice['amount'] ?? 0)));
-		}//end foreach
+		}
 
 		return ($cents / 100);
 	}//end currentB2cEuTurnover()
+
+	/**
+	 * Whether the invoice belongs to the administration and is marked OSS-eligible.
+	 *
+	 * @param array<string,mixed> $invoice          The invoice.
+	 * @param string              $administrationId The administration.
+	 *
+	 * @return bool
+	 */
+	private static function isOwnOssSale(array $invoice, string $administrationId): bool {
+		if ((string)($invoice['administrationId'] ?? '') !== $administrationId) {
+			return false;
+		}
+
+		$ossContext = ($invoice['ossContext'] ?? null);
+		return is_array($ossContext) === true && ($ossContext['ossEligible'] ?? false) === true;
+	}//end isOwnOssSale()
+
+	/**
+	 * Whether the invoice is dated in the year and is a live sale: not cancelled or credited (state before status), not a credit note.
+	 *
+	 * @param array<string,mixed> $invoice The invoice.
+	 * @param int                 $year    The year.
+	 *
+	 * @return bool
+	 */
+	private static function countsInYear(array $invoice, int $year): bool {
+		$invoiceDate = (string)($invoice['invoiceDate'] ?? ($invoice['issueDate'] ?? ''));
+		if (substr($invoiceDate, 0, 4) !== (string)$year) {
+			return false;
+		}
+
+		$state = (string)($invoice['state'] ?? ($invoice['status'] ?? ''));
+		if ($state === 'cancelled' || $state === 'credited') {
+			return false;
+		}
+
+		return (string)($invoice['documentType'] ?? '') !== 'credit-note';
+	}//end countsInYear()
 
 	/**
 	 * Evaluate the threshold outcome for a prospective invoice (REQ-OSS-002).

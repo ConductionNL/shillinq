@@ -3,6 +3,9 @@
 /**
  * Shillinq Reporting & Compliance controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The HTTP surface for the consolidated "Reporting & Compliance" section. It
  * exposes the static report catalogue grouped by category (the overview cards),
  * triggers generation of a chosen report (rendering + Files storage + tagging +
@@ -49,24 +52,22 @@
  * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
  * directory, so pointing there would report conformance to a rule this code
  * breaks.
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
 use OCA\Shillinq\Reporting\ReportCatalogue;
-use OCA\Shillinq\Reporting\ReportGenerationService;
-use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\Files\File;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -97,18 +98,18 @@ class ReportingController extends Controller {
 	 *
 	 * @param IRequest $request The current request.
 	 * @param IUserSession $userSession Anonymous-rejection guard (ADR-005).
-	 * @param ReportGenerationService $service The generation/orchestration service.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param ReportGenerationServiceInterface $service The generation/orchestration service.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IUserSession $userSession,
-		private readonly ReportGenerationService $service,
-		private readonly AdministrationContextService $context,
+		private readonly ReportGenerationServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $context,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -188,15 +189,9 @@ class ReportingController extends Controller {
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
 		$format = trim((string)$this->request->getParam('format', ''));
 
-		if ($reportType === '') {
-			return new JSONResponse(['error' => 'missing-report-type'], Http::STATUS_BAD_REQUEST);
-		}
-
-		// ADR-005 / REQ-MA-001 — generating a report against another tenant's
-		// ledger. An empty administrationId means "no administration scope" and
-		// is left to the service; a NAMED administration must be one of ours.
-		if ($administrationId !== '' && $this->context->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
+		$refusal = $this->generateRefusal(reportType: $reportType, administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$result = $this->service->generate(
@@ -206,6 +201,46 @@ class ReportingController extends Controller {
 			format: $format,
 		);
 
+		return $this->generatedResponse(result: $result);
+	}//end generate()
+
+	/**
+	 * The error response for a generate request that names no report type or an administration the caller may not use.
+	 *
+	 * @param string $reportType       The requested report type.
+	 * @param string $administrationId The requested administration.
+	 *
+	 * @return JSONResponse|null The error response, or null when the request may proceed.
+	 *
+	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
+	 */
+	private function generateRefusal(string $reportType, string $administrationId): JSONResponse|null {
+		if ($reportType === '') {
+			return new JSONResponse(['error' => 'missing-report-type'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'missing-administration'], Http::STATUS_BAD_REQUEST);
+		}
+
+		// ADR-005 / REQ-MA-001: the administration must be one of the caller's.
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end generateRefusal()
+
+	/**
+	 * The response for a generate result: 201 with the record, 503 when docudesk is unavailable, 422 on any other error.
+	 *
+	 * @param array<string, mixed> $result The service result.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
+	 */
+	private function generatedResponse(array $result): JSONResponse {
 		if (isset($result['error']) === true) {
 			$status = Http::STATUS_UNPROCESSABLE_ENTITY;
 			if ($result['error'] === 'docudesk-unavailable') {
@@ -216,7 +251,7 @@ class ReportingController extends Controller {
 		}
 
 		return new JSONResponse($result, Http::STATUS_CREATED);
-	}//end generate()
+	}//end generatedResponse()
 
 	/**
 	 * GET /api/reporting/generated — list previously generated reports.
@@ -295,10 +330,8 @@ class ReportingController extends Controller {
 			return new JSONResponse(['error' => 'missing-id'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$record = $this->service->findRecord($id);
-		if ($record === null
-			|| $this->context->canAccess(administrationId: (string)($record['administrationId'] ?? '')) === false
-		) {
+		$record = $this->accessibleRecord(id: $id);
+		if ($record === null) {
 			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
 		}
 
@@ -307,6 +340,40 @@ class ReportingController extends Controller {
 			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return $this->fileDownload(file: $file);
+
+	}//end download()
+
+	/**
+	 * The GeneratedReport record, only when it belongs to an administration the caller may use.
+	 *
+	 * @param string $id The GeneratedReport id.
+	 *
+	 * @return array<string, mixed>|null The record, or null when absent or not the caller's.
+	 *
+	 * @spec exclude No canonical requirement exists for the reporting capability — see #525.
+	 */
+	private function accessibleRecord(string $id): array|null {
+		$record = $this->service->findRecord($id);
+		if ($record === null
+			|| $this->context->canAccess(administrationId: (string)($record['administrationId'] ?? '')) === false
+		) {
+			return null;
+		}
+
+		return $record;
+	}//end accessibleRecord()
+
+	/**
+	 * Stream a stored report file.
+	 *
+	 * @param File $file The stored report file.
+	 *
+	 * @return DataDownloadResponse|JSONResponse The streamed file, or a 404 JSON envelope when it cannot be read.
+	 *
+	 * @spec exclude No canonical requirement exists for the reporting capability — see #525.
+	 */
+	private function fileDownload(File $file): DataDownloadResponse|JSONResponse {
 		try {
 			$content = $file->getContent();
 			$fileName = $file->getName();
@@ -320,6 +387,5 @@ class ReportingController extends Controller {
 			filename: $fileName,
 			contentType: $mimeType,
 		);
-
-	}//end download()
+	}//end fileDownload()
 }//end class

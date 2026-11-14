@@ -3,6 +3,9 @@
 /**
  * Log-only Credit-Note Request Adapter (default DI binding).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the bookkeeping-purchase-order-3way chain — default binding
  * for {@see CreditNoteRequestAdapterInterface}. Records the dispute payload
  * through the standard application logger, fabricates a deterministic
@@ -29,10 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ use Psr\Log\NullLogger;
 /**
  * Log-only credit-note dispatch adapter (default DI binding).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInterface {
 
@@ -76,31 +76,15 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
 	 *
 	 * @return array{accepted:bool,dispatchId:?string,error:?string}
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function submitDisputeCreditNote(array $payload): array {
-		$matchId = (string)($payload['matchId'] ?? '');
-		$invoiceId = (string)($payload['invoiceId'] ?? '');
-		$invoiceNumber = (string)($payload['invoiceNumber'] ?? '');
-		$supplierId = (string)($payload['supplierId'] ?? '');
-		$administrationId = (string)($payload['administrationId'] ?? '');
-		$currency = (string)($payload['currency'] ?? 'EUR');
-		$totalInclVat = (int)($payload['totalInclVat'] ?? 0);
-
+		$envelope   = $this->envelope(payload: $payload);
 		$dispatchId = 'urn:uuid:cn-' . bin2hex(random_bytes(8));
 
 		$this->logger->info(
 			'LogCreditNoteRequestAdapter: dispute UBL CreditNote queued',
-			[
-				'matchId' => $matchId,
-				'invoiceId' => $invoiceId,
-				'invoiceNumber' => $invoiceNumber,
-				'supplierId' => $supplierId,
-				'administrationId' => $administrationId,
-				'currency' => $currency,
-				'totalInclVat' => $totalInclVat,
-				'dispatchId' => $dispatchId,
-			]
+			$envelope + ['dispatchId' => $dispatchId]
 		);
 
 		return [
@@ -110,4 +94,24 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
 		];
 
 	}//end submitDisputeCreditNote()
+
+	/**
+	 * The dispute envelope's fields as they are logged.
+	 *
+	 * @param array<string,mixed> $payload Dispute envelope (see interface).
+	 *
+	 * @return array{matchId:string,invoiceId:string,invoiceNumber:string,supplierId:string,administrationId:string,currency:string,totalInclVat:int}
+	 */
+	private function envelope(array $payload): array {
+		return [
+			'matchId' => (string)($payload['matchId'] ?? ''),
+			'invoiceId' => (string)($payload['invoiceId'] ?? ''),
+			'invoiceNumber' => (string)($payload['invoiceNumber'] ?? ''),
+			'supplierId' => (string)($payload['supplierId'] ?? ''),
+			'administrationId' => (string)($payload['administrationId'] ?? ''),
+			'currency' => (string)($payload['currency'] ?? 'EUR'),
+			'totalInclVat' => (int)($payload['totalInclVat'] ?? 0),
+		];
+
+	}//end envelope()
 }//end class

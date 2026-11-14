@@ -30,6 +30,12 @@ Typical use: you allocate shared overhead (rent, utilities, management salaries)
 
 Go to **Bookkeeping → Projects** to create and manage projects. All bills, invoices, and journal lines can be tagged with a project for project P&L reporting.
 
+### Hours budget
+
+Give each person on a project an estimate of their hours. The project page then shows, per assignment and for the whole project, the estimated, logged and remaining hours and the share of the estimate used. The logged hours follow every hour that is booked, changed or removed on the assignment.
+
+The project's responsible user gets a notification when an assignment reaches 80 percent of its hours and again at 100 percent, once for each. Changing the estimate starts the count again. Filter the projects list on **Over hours budget** to find every project with an assignment past 100 percent.
+
 ## Cost projects
 
 **Cost projects** are a simpler variant — just cost tracking without revenue or budgets. Use them for internal initiatives where you want to accumulate costs but don't invoice customers.

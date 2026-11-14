@@ -17,6 +17,29 @@ import { useFinancialData } from './useFinancialData.js'
 
 export const TRAILING_MONTHS = 12
 
+/**
+ * The injected date range, unwrapped when it is a ref (the options-API
+ * inject may give either shape).
+ *
+ * @param {unknown} injected The injected value.
+ * @return {unknown} The range.
+ */
+function unwrapRange(injected) {
+	return injected && typeof injected === 'object' && 'value' in injected
+		? injected.value
+		: injected
+}
+
+/**
+ * The month keys of a range with both bounds, else none.
+ *
+ * @param {unknown} range The date range.
+ * @return {string[]}
+ */
+function rangeMonths(range) {
+	return range && range.from && range.to ? monthsInRange(range.from, range.to) : []
+}
+
 export default {
 	props: {
 		/** Layout item from CnDashboardPage's widget slot scope. */
@@ -60,17 +83,8 @@ export default {
 		},
 		/** @return {string[]} Month keys for the current date range, ascending. */
 		months() {
-			// Unwrap ref (Vue 2.7 options-API inject may give either shape).
-			const injected = this.cnDashboardDateRange
-			const range =
-				injected && typeof injected === 'object' && 'value' in injected
-					? injected.value
-					: injected
-			if (range && range.from && range.to) {
-				const ms = monthsInRange(range.from, range.to)
-				if (ms.length > 0) return ms
-			}
-			return lastMonths(TRAILING_MONTHS)
+			const ms = rangeMonths(unwrapRange(this.cnDashboardDateRange))
+			return ms.length > 0 ? ms : lastMonths(TRAILING_MONTHS)
 		},
 		/** @return {string[]} Localised x-axis labels. */
 		monthLabels() {

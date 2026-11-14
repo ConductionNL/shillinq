@@ -3,6 +3,9 @@
 /**
  * Shillinq Treasury Rate Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Consumer of the `TreasuryRateAdapterInterface` port that the
  * bookkeeping-treasury-ihb surface uses to fetch floating reference-rate
  * snapshots (EURIBOR-3M, SOFR, SARON, ESTR — REQ-IHB-004 / Task 15) and
@@ -45,9 +48,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-treasury-ihb/tasks.md#external-adapter
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

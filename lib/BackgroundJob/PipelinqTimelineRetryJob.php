@@ -3,6 +3,9 @@
 /**
  * Pipelinq Timeline Retry Job.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Background job that drives the async-retry fallback: each tick reads the
  * persisted {@see TimelinePublishRetryEntry} pointed to by the job
@@ -39,9 +42,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,10 +50,11 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;
@@ -96,7 +97,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 *
 	 * @param ITimeFactory $time Time factory (also passed to
 	 *                           QueuedJob parent for scheduling).
-	 * @param SettingsService $settings Resolves the active OR register
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 *                                  slug.
 	 * @param ContainerInterface $container DI container for the late-bound
 	 *                                      OR ObjectService lookup (the
@@ -110,7 +111,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly LoggerInterface $logger,
@@ -137,113 +138,182 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 *                        TimelinePublishRetryEntry to attempt.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
 	protected function run($argument): void {
-		if (is_array($argument) === false || isset($argument['entryId']) === false) {
-			$this->logger->warning(
-				'PipelinqTimelineRetryJob: invalid argument, skipping',
-				['app' => Application::APP_ID]
-			);
+		$entryId = $this->entryIdFromArgument(argument: $argument);
+		if ($entryId === null || $this->openRegisterAvailable() === false) {
 			return;
+		}
+
+		$this->attemptSafely(entryId: $entryId);
+
+	}//end run()
+
+	/**
+	 * Read the entry id from the job argument, logging and returning null when it is unusable.
+	 *
+	 * @param mixed $argument Job argument from PersistentTimelineRetryQueue.
+	 *
+	 * @return string|null The entry id, or null when the job must skip.
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function entryIdFromArgument(mixed $argument): string|null {
+		if (is_array($argument) === false || isset($argument['entryId']) === false) {
+			$this->logger->warning('PipelinqTimelineRetryJob: invalid argument, skipping', ['app' => AppIdentity::APP_ID]);
+			return null;
 		}
 
 		$entryId = (string)$argument['entryId'];
 		if ($entryId === '') {
-			$this->logger->warning(
-				'PipelinqTimelineRetryJob: empty entryId, skipping',
-				['app' => Application::APP_ID]
-			);
-			return;
+			$this->logger->warning('PipelinqTimelineRetryJob: empty entryId, skipping', ['app' => AppIdentity::APP_ID]);
+			return null;
 		}
 
-		if ($this->settings->isOpenRegisterAvailable() === false) {
+		return $entryId;
+
+	}//end entryIdFromArgument()
+
+	/**
+	 * Whether OpenRegister is available, logging when it is not.
+	 *
+	 * @return bool
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function openRegisterAvailable(): bool {
+		if ($this->registerLocation->isOpenRegisterAvailable() === false) {
 			$this->logger->info(
 				'PipelinqTimelineRetryJob: OpenRegister not available, skipping',
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
-			return;
+			return false;
 		}
 
+		return true;
+
+	}//end openRegisterAvailable()
+
+	/**
+	 * Attempt the entry, logging any unexpected failure instead of throwing.
+	 *
+	 * @param string $entryId Entry id of the TimelinePublishRetryEntry.
+	 *
+	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function attemptSafely(string $entryId): void {
 		try {
-			$registerSlug = $this->settings->getRegisterSlug();
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-
-			$entry = $this->loadEntry(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				entryId: $entryId
-			);
-
-			if ($entry === null) {
-				// Entry already deleted (successful retry in a previous tick,
-				// or admin-removed); idempotent no-op.
-				$this->logger->debug(
-					'PipelinqTimelineRetryJob: entry not found, treating as already drained',
-					[
-						'app' => Application::APP_ID,
-						'entryId' => $entryId,
-					]
-				);
-				return;
-			}
-
-			$nowDt = $this->nowDateTime();
-			if ($this->isDue(entry: $entry, now: $nowDt) === false) {
-				// Reschedule for the next backoff window; the runner saw us
-				// too early.
-				$this->enqueueNextTick(entryId: $entryId);
-				$this->logger->debug(
-					'PipelinqTimelineRetryJob: entry not yet due, re-queued',
-					[
-						'app' => Application::APP_ID,
-						'entryId' => $entryId,
-						'nextRetryAt' => (string)($entry['nextRetryAt'] ?? ''),
-					]
-				);
-				return;
-			}
-
-			$dto = $this->reconstructDto(entry: $entry);
-			$adapter = $this->container->get(PipelinqContactAdapter::class);
-
-			$ok = $adapter->publishTimelineEvent(event: $dto);
-			if ($ok === true) {
-				$this->deleteEntry(
-					objectService: $objectService,
-					registerSlug: $registerSlug,
-					entryId: $entryId
-				);
-				$this->logger->debug(
-					'PipelinqTimelineRetryJob: retry succeeded, entry drained',
-					[
-						'app' => Application::APP_ID,
-						'entryId' => $entryId,
-						'type' => $dto->type(),
-						'externalId' => $dto->externalId(),
-					]
-				);
-				return;
-			}
-
-			$this->handleFailure(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				entry: $entry,
-				entryId: $entryId,
-				now: $nowDt
-			);
+			$this->attempt(entryId: $entryId);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'PipelinqTimelineRetryJob: tick failed unexpectedly',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
 			);
 		}//end try
 
-	}//end run()
+	}//end attemptSafely()
+
+	/**
+	 * Load the entry, re-queue it when not yet due, otherwise publish it and drain or back off.
+	 *
+	 * @param string $entryId Entry id of the TimelinePublishRetryEntry.
+	 *
+	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function attempt(string $entryId): void {
+		$registerSlug  = $this->registerLocation->getRegisterSlug();
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+
+		$entry = $this->loadEntry(objectService: $objectService, registerSlug: $registerSlug, entryId: $entryId);
+		if ($entry === null) {
+			$this->logAlreadyDrained(entryId: $entryId);
+			return;
+		}
+
+		$nowDt = $this->nowDateTime();
+		if ($this->isDue(entry: $entry, now: $nowDt) === false) {
+			$this->requeueNotYetDue(entryId: $entryId, entry: $entry);
+			return;
+		}
+
+		$dto     = $this->reconstructDto(entry: $entry);
+		$adapter = $this->container->get(PipelinqContactAdapterInterface::class);
+
+		$ok = $adapter->publishTimelineEvent(event: $dto);
+		if ($ok === true) {
+			$this->deleteEntry(objectService: $objectService, registerSlug: $registerSlug, entryId: $entryId);
+			$this->logDrained(entryId: $entryId, dto: $dto);
+			return;
+		}
+
+		$this->handleFailure(objectService: $objectService, registerSlug: $registerSlug, entry: $entry, entryId: $entryId, now: $nowDt);
+
+	}//end attempt()
+
+	/**
+	 * Log that the entry is gone (successful retry in a previous tick, or admin-removed); idempotent no-op.
+	 *
+	 * @param string $entryId Entry id of the TimelinePublishRetryEntry.
+	 *
+	 * @return void
+	 */
+	private function logAlreadyDrained(string $entryId): void {
+		$this->logger->debug(
+			'PipelinqTimelineRetryJob: entry not found, treating as already drained',
+			[
+				'app' => AppIdentity::APP_ID,
+				'entryId' => $entryId,
+			]
+		);
+
+	}//end logAlreadyDrained()
+
+	/**
+	 * Reschedule for the next backoff window; the runner saw the entry too early.
+	 *
+	 * @param string               $entryId Entry id of the TimelinePublishRetryEntry.
+	 * @param array<string, mixed> $entry   Loaded retry entry.
+	 *
+	 * @return void
+	 */
+	private function requeueNotYetDue(string $entryId, array $entry): void {
+		$this->enqueueNextTick(entryId: $entryId);
+		$this->logger->debug(
+			'PipelinqTimelineRetryJob: entry not yet due, re-queued',
+			[
+				'app' => AppIdentity::APP_ID,
+				'entryId' => $entryId,
+				'nextRetryAt' => (string)($entry['nextRetryAt'] ?? ''),
+			]
+		);
+
+	}//end requeueNotYetDue()
+
+	/**
+	 * Log a successful retry that drained the entry.
+	 *
+	 * @param string           $entryId Entry id of the TimelinePublishRetryEntry.
+	 * @param TimelineEventDto $dto     The published event.
+	 *
+	 * @return void
+	 */
+	private function logDrained(string $entryId, TimelineEventDto $dto): void {
+		$this->logger->debug(
+			'PipelinqTimelineRetryJob: retry succeeded, entry drained',
+			[
+				'app' => AppIdentity::APP_ID,
+				'entryId' => $entryId,
+				'type' => $dto->type(),
+				'externalId' => $dto->externalId(),
+			]
+		);
+
+	}//end logDrained()
 
 	/**
 	 * Increment retryCount, then either advance nextRetryAt + re-queue or
@@ -281,7 +351,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->error(
 				'PipelinqTimelineRetryJob: max retries exhausted, dead-lettered',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'type' => (string)($entry['type'] ?? ''),
 					'externalId' => (string)($entry['externalId'] ?? ''),
@@ -311,7 +381,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		$this->logger->info(
 			'PipelinqTimelineRetryJob: retry failed, re-queued with backoff',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'entryId' => $entryId,
 				'retryCount' => $nextCount,
 				'nextRetryAt' => $entry['nextRetryAt'],
@@ -391,10 +461,10 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 */
 	private function loadEntry(mixed $objectService, string $registerSlug, string $entryId): ?array {
 		try {
-			$record = $objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelinePublishRetryEntry')
-				->find($entryId);
+			$record = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('TimelinePublishRetryEntry'),
+				id: $entryId
+			);
 		} catch (Throwable $e) {
 			return null;
 		}
@@ -444,7 +514,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->warning(
 				'PipelinqTimelineRetryJob: failed to delete retry entry',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
@@ -498,7 +568,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->error(
 				'PipelinqTimelineRetryJob: failed to write dead-letter entry',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
@@ -531,7 +601,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->warning(
 				'PipelinqTimelineRetryJob: failed to re-queue retry tick',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
@@ -570,32 +640,71 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		}
 
 		if (is_object($object) === true) {
-			if (method_exists($object, 'jsonSerialize') === true) {
-				$serialised = $object->jsonSerialize();
-				if (is_array($serialised) === true) {
-					return $serialised;
-				}
-			}
-
-			if (method_exists($object, 'getObject') === true) {
-				$inner = $object->getObject();
-				if (is_array($inner) === true) {
-					// The id lives on the entity, fold it into the payload
-					// so subsequent saveObject() targets the same row.
-					if (method_exists($object, 'getUuid') === true) {
-						$uuid = (string)$object->getUuid();
-						if ($uuid !== '' && isset($inner['id']) === false) {
-							$inner['id'] = $uuid;
-						}
-					}
-
-					return $inner;
-				}
-			}
-
-			return (array)$object;
-		}//end if
+			return $this->objectToArray(object: $object);
+		}
 
 		return null;
 	}//end toArray()
+
+	/**
+	 * Normalise an OR entity or result object into a flat array.
+	 *
+	 * @param object $object OR ObjectService payload object.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function objectToArray(object $object): array {
+		if (method_exists($object, 'jsonSerialize') === true) {
+			$serialised = $object->jsonSerialize();
+			if (is_array($serialised) === true) {
+				return $serialised;
+			}
+		}
+
+		$inner = $this->innerObjectPayload(object: $object);
+		if ($inner !== null) {
+			return $inner;
+		}
+
+		return (array)$object;
+	}//end objectToArray()
+
+	/**
+	 * The entity's getObject() payload with its uuid folded in, or null when it has none.
+	 *
+	 * @param object $object OR ObjectService payload object.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function innerObjectPayload(object $object): array|null {
+		if (method_exists($object, 'getObject') === false) {
+			return null;
+		}
+
+		$inner = $object->getObject();
+		if (is_array($inner) === false) {
+			return null;
+		}
+
+		return $this->withEntityUuid(object: $object, inner: $inner);
+	}//end innerObjectPayload()
+
+	/**
+	 * The id lives on the entity, fold it into the payload so subsequent saveObject() targets the same row.
+	 *
+	 * @param object               $object OR entity.
+	 * @param array<string, mixed> $inner  The entity's object payload.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withEntityUuid(object $object, array $inner): array {
+		if (method_exists($object, 'getUuid') === true) {
+			$uuid = (string)$object->getUuid();
+			if ($uuid !== '' && isset($inner['id']) === false) {
+				$inner['id'] = $uuid;
+			}
+		}
+
+		return $inner;
+	}//end withEntityUuid()
 }//end class

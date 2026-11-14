@@ -1,0 +1,89 @@
+{
+    "calculated": {
+        "id": "44444444-2026-4000-8000-000000002026",
+        "administrationId": "adm-gov-1",
+        "year": 2026,
+        "omslagrentePercentage": 1.2,
+        "interestCostAccountNumber": "4810",
+        "treasuryAccountNumber": "8050",
+        "state": "draft",
+        "lines": [
+            {
+                "investmentId": "22222222-0001-4000-8000-000000000001",
+                "description": "Sporthal De Wielewaal",
+                "taskFieldCode": "5.2",
+                "interest": 54000.0,
+                "bookValue": 4500000.0
+            },
+            {
+                "investmentId": "no-field",
+                "description": "Fietspad",
+                "taskFieldCode": "",
+                "interest": 0.0,
+                "bookValue": 870000.0,
+                "excludedReason": "No task field to charge the interest to."
+            }
+        ],
+        "reserveLines": [
+            {
+                "reserveId": "11111111-0002-4000-8000-000000000002",
+                "name": "Reserve onderhoud sportaccommodaties",
+                "balance": 800000.0,
+                "interest": 9600.0
+            }
+        ],
+        "investmentInterestTotal": 54000.0,
+        "reserveInterestTotal": 9600.0
+    },
+    "journal": {
+        "journalNumber": "RENTE-2026-1037237a",
+        "entryDate": "2026-12-31",
+        "description": "Rentetoerekening 2026 (omslagrente 1.2%)",
+        "lines": [
+            {
+                "accountNumber": "4810",
+                "side": "debit",
+                "amount": 3.5,
+                "description": "Rente 2026 taakveld 2"
+            },
+            {
+                "accountNumber": "4810",
+                "side": "debit",
+                "amount": 54010,
+                "description": "Rente 2026 taakveld 5.2"
+            },
+            {
+                "accountNumber": "4810",
+                "side": "debit",
+                "amount": 1.01,
+                "description": "Rente 2026 taakveld 10.1"
+            },
+            {
+                "accountNumber": "8050",
+                "side": "credit",
+                "amount": 54014.51,
+                "description": "Rente 2026 taakveld 0.5 Treasury"
+            },
+            {
+                "accountNumber": "8990",
+                "side": "debit",
+                "amount": 9600,
+                "description": "Rente 2026 toegevoegd aan Reserve onderhoud sportaccommodaties"
+            },
+            {
+                "accountNumber": "0520",
+                "side": "credit",
+                "amount": 9600,
+                "description": "Rente 2026 toegevoegd aan Reserve onderhoud sportaccommodaties"
+            }
+        ],
+        "journalType": "manual",
+        "approvalState": "not-required",
+        "administrationId": "adm-gov-1",
+        "state": "draft"
+    },
+    "refused no cost account": "Enter the interest cost account and the Treasury account on the run.",
+    "refused no treasury account": "Enter the interest cost account and the Treasury account on the run.",
+    "refused nothing to post": "There is no interest to post. Calculate the run first.",
+    "refused reserve without accounts": "Enter the reserve account and the result account on reserve Weg first."
+}

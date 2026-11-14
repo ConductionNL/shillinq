@@ -1,0 +1,4300 @@
+{
+	"0": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"1": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"2": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"3": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"4": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"5": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"6": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"7": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"8": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"9": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"10": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"11": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"12": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"13": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"14": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"15": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"16": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"17": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"18": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"19": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"20": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"21": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"22": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"23": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"24": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"25": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"26": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"27": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"28": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"29": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"30": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"31": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"32": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"33": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"34": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"35": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"36": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"37": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"38": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"39": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"40": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"41": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"42": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"43": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"44": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"45": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"46": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"47": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"48": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"49": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"50": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"51": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"52": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"53": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"54": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"55": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"56": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"57": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"58": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"59": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"60": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"61": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"62": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"63": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"64": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"65": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"66": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"67": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"68": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"69": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"70": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"71": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"72": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"73": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"74": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"75": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"76": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"77": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"78": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"79": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"80": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"81": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"82": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"83": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"84": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"85": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"86": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"87": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"88": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"89": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"90": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"91": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"92": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"93": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"94": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"95": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"96": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"97": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"98": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"99": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"100": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"101": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"102": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"103": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"104": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"105": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"106": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"107": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"108": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"109": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"110": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"111": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"112": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"113": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"114": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"115": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"116": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"117": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"118": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"119": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"120": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"121": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"122": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"123": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"124": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"125": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"126": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"127": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"128": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"129": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"130": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"131": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"132": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"133": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"134": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"135": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"136": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"137": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"138": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"139": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"140": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"141": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"142": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"143": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"144": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"145": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"146": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"147": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"148": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"149": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"150": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"151": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"152": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"153": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"154": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"155": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"156": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"157": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"158": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"159": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"160": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"161": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"162": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"163": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"164": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"165": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"166": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"167": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"168": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"169": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"170": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"171": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"172": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"173": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"174": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"175": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"176": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"177": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"178": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"179": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"180": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"181": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"182": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"183": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"184": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"185": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"186": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"187": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"188": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"189": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"190": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"191": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"192": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"193": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"194": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"195": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"196": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"197": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"198": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"199": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"200": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"201": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"202": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"203": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"204": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"205": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"206": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"207": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"208": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"209": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"210": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"211": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"212": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"213": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"214": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"215": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"216": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"217": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"218": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"219": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"220": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"221": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"222": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"223": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"224": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"225": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"226": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"227": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"228": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"229": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"230": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"231": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"232": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"233": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"234": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"235": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"236": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"237": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"238": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"239": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"240": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"241": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"242": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"243": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"244": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"245": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"246": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"247": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"248": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"249": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"250": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"251": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"252": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"253": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"254": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"255": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"256": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"257": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"258": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"259": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"260": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"261": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"262": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"263": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"264": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 2
+	},
+	"265": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"266": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"267": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"268": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"269": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"270": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"271": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"272": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"273": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": 1
+			}
+		],
+		"pendingCount": 2
+	},
+	"274": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"275": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"276": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"277": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"278": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"279": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"280": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"281": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"282": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"283": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"284": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 2000,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"285": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"286": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"287": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"288": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"289": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"290": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": null,
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"291": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "syncing",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"292": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"293": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": 1
+			}
+		],
+		"pendingCount": 0
+	},
+	"294": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	},
+	"295": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": null,
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": "3",
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 2
+	},
+	"296": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 2
+	},
+	"297": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "pending",
+		"lastSyncedAt": "before",
+		"lastError": "offline",
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [
+			{
+				"at": "2026-11-03T11:00:00.000Z",
+				"applied": 2,
+				"kept": 0
+			}
+		],
+		"pendingCount": 0
+	},
+	"298": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "failed",
+		"lastSyncedAt": "before",
+		"lastError": null,
+		"retryInMs": 0,
+		"rejected": [],
+		"conflicts": [],
+		"pendingCount": 0
+	},
+	"299": {
+		"result": {
+			"value": "__undefined"
+		},
+		"syncState": "synced",
+		"lastSyncedAt": "2026-11-03T10:00:00Z",
+		"lastError": "offline",
+		"retryInMs": 2000,
+		"rejected": [
+			"op-1"
+		],
+		"conflicts": [
+			{
+				"at": "2026-11-03T10:00:00Z",
+				"applied": 2,
+				"kept": "__undefined"
+			}
+		],
+		"pendingCount": 0
+	}
+}

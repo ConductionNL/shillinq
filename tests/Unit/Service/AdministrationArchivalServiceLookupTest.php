@@ -3,6 +3,9 @@
 /**
  * Unit tests for AdministrationArchivalService's administration lookup.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The pre-existing suite constructs the service with a bare mocked container, so
  * `$container->get('OCA\OpenRegister\Service\ObjectService')` yields nothing
  * usable and `findAdministration()` always failed into its `catch`. Every
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

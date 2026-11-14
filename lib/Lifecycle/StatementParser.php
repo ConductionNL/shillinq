@@ -3,6 +3,9 @@
 /**
  * Statement Parser
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard + parser for bank reconciliation.
  * Provides two single-purpose, stateless methods:
  *  - parse(): converts a CAMT.053 / MT940 / CSV bank-statement file into an
@@ -30,16 +33,14 @@
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md#req-br-003
  * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\StatementParserInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -50,7 +51,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md#req-br-003
  * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
  */
-class StatementParser {
+class StatementParser implements StatementParserInterface {
 	/**
 	 * Construct the parser with DI dependencies.
 	 *
@@ -119,7 +120,7 @@ class StatementParser {
 	public function allLinesResolved(string $statementId): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
 			}
@@ -163,43 +164,84 @@ class StatementParser {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function parseCamt053(string $contents): array {
-		// Reject any DOCTYPE/ENTITY declaration before touching the parser
-		// (XXE hardening — fail closed with the empty-return discipline).
-		if (stripos($contents, '<!DOCTYPE') !== false || stripos($contents, '<!ENTITY') !== false) {
+		$xml = $this->loadCamtXml(contents: $contents);
+		if ($xml === null) {
 			return [];
+		}
+
+		$lines = [];
+		foreach ($xml->xpath('//*[local-name()="Ntry"]') as $entry) {
+			$lines[] = $this->camtEntryLine(entry: $entry);
+		}
+
+		return $lines;
+	}//end parseCamt053()
+
+	/**
+	 * Load CAMT.053 XML, or null when it declares a DOCTYPE/ENTITY or is not XML.
+	 *
+	 * Any DOCTYPE/ENTITY declaration is rejected before touching the parser
+	 * (XXE hardening — fail closed with the empty-return discipline).
+	 *
+	 * @param string $contents Raw CAMT.053 XML.
+	 *
+	 * @return \SimpleXMLElement|null The document, or null.
+	 */
+	private function loadCamtXml(string $contents): ?\SimpleXMLElement {
+		if (stripos($contents, '<!DOCTYPE') !== false || stripos($contents, '<!ENTITY') !== false) {
+			return null;
 		}
 
 		$previous = libxml_use_internal_errors(true);
 		$xml = simplexml_load_string($contents, \SimpleXMLElement::class, LIBXML_NONET);
 		libxml_use_internal_errors($previous);
 		if ($xml === false) {
-			return [];
+			return null;
 		}
 
-		$lines = [];
-		foreach ($xml->xpath('//*[local-name()="Ntry"]') as $entry) {
-			$amount = (float)((string)($entry->xpath('.//*[local-name()="Amt"]')[0] ?? '0'));
-			$cdtDbt = (string)($entry->xpath('.//*[local-name()="CdtDbtInd"]')[0] ?? 'CRDT');
-			if ($cdtDbt === 'DBIT') {
-				$amount = (-1 * $amount);
-			}
+		return $xml;
+	}//end loadCamtXml()
 
-			$valueDate = (string)($entry->xpath('.//*[local-name()="ValDt"]/*[local-name()="Dt"]')[0] ?? '');
-			$remit = (string)($entry->xpath('.//*[local-name()="RmtInf"]//*[local-name()="Ustrd"]')[0] ?? '');
-			$e2e = (string)($entry->xpath('.//*[local-name()="EndToEndId"]')[0] ?? '');
+	/**
+	 * The normalised line map of one CAMT.053 `Ntry`.
+	 *
+	 * @param \SimpleXMLElement $entry The entry.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function camtEntryLine(\SimpleXMLElement $entry): array {
+		$amount = (float)($this->firstText(entry: $entry, path: './/*[local-name()="Amt"]') ?? '0');
+		$cdtDbt = ($this->firstText(entry: $entry, path: './/*[local-name()="CdtDbtInd"]') ?? 'CRDT');
+		if ($cdtDbt === 'DBIT') {
+			$amount = (-1 * $amount);
+		}
 
-			$lines[] = [
-				'valueDate' => $valueDate,
-				'amount' => $amount,
-				'currency' => 'EUR',
-				'remittanceInfo' => $remit,
-				'endToEndRef' => $e2e,
-				'status' => 'unmatched',
-			];
-		}//end foreach
+		return [
+			'valueDate' => ($this->firstText(entry: $entry, path: './/*[local-name()="ValDt"]/*[local-name()="Dt"]') ?? ''),
+			'amount' => $amount,
+			'currency' => 'EUR',
+			'remittanceInfo' => ($this->firstText(entry: $entry, path: './/*[local-name()="RmtInf"]//*[local-name()="Ustrd"]') ?? ''),
+			'endToEndRef' => ($this->firstText(entry: $entry, path: './/*[local-name()="EndToEndId"]') ?? ''),
+			'status' => 'unmatched',
+		];
+	}//end camtEntryLine()
 
-		return $lines;
-	}//end parseCamt053()
+	/**
+	 * The text of the first node matching an XPath under an entry, or null.
+	 *
+	 * @param \SimpleXMLElement $entry The entry.
+	 * @param string            $path  The XPath, relative to the entry.
+	 *
+	 * @return string|null The first match's text, or null when nothing matches.
+	 */
+	private function firstText(\SimpleXMLElement $entry, string $path): ?string {
+		$match = ($entry->xpath($path)[0] ?? null);
+		if ($match === null) {
+			return null;
+		}
+
+		return (string) $match;
+	}//end firstText()
 
 	/**
 	 * Parse an MT940 (SWIFT) statement into normalised line maps.

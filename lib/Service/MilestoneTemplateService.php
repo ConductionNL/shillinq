@@ -3,6 +3,9 @@
 /**
  * Milestone Template Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure (environment-free) service that turns a TenderNed contract into a
  * milestone plan (REQ-003) and a vendor cashflow forecast (REQ-008).
  *
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\MilestoneTemplateServiceInterface;
 use RuntimeException;
 
 /**
@@ -49,7 +50,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
  */
-class MilestoneTemplateService {
+class MilestoneTemplateService implements MilestoneTemplateServiceInterface {
 
 	/**
 	 * Absolute path to the milestone-templates seed file.
@@ -124,6 +125,32 @@ class MilestoneTemplateService {
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
 	 */
 	public function generatePlan(string $assignmentType, string $termStart, string $termEnd): array {
+		[$start, $end] = self::termBounds(termStart: $termStart, termEnd: $termEnd);
+
+		$template = $this->getTemplate(assignmentType: $assignmentType);
+		$milestones = [];
+		$index = 0;
+		foreach (($template['milestones'] ?? []) as $row) {
+			$index++;
+			$milestones[] = self::plannedMilestone(row: $row, index: $index, start: $start, end: $end);
+		}
+
+		return $milestones;
+	}//end generatePlan()
+
+	/**
+	 * The contract term as timestamps.
+	 *
+	 * @param string $termStart Contract start date (ISO 8601).
+	 * @param string $termEnd   Contract end date (ISO 8601).
+	 *
+	 * @return array{0: int, 1: int} [start, end].
+	 *
+	 * @throws \InvalidArgumentException When the dates are unparseable or end is not after start.
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+	 */
+	private static function termBounds(string $termStart, string $termEnd): array {
 		$start = strtotime($termStart);
 		$end = strtotime($termEnd);
 		if ($start === false || $end === false) {
@@ -134,32 +161,40 @@ class MilestoneTemplateService {
 			throw new InvalidArgumentException('looptijdEind must be after looptijdStart.');
 		}
 
-		$template = $this->getTemplate(assignmentType: $assignmentType);
+		return [$start, $end];
+	}//end termBounds()
+
+	/**
+	 * One planned milestone, dated at its fraction of the term and clamped to the term end.
+	 *
+	 * @param array<string, mixed> $row   The template milestone.
+	 * @param int                  $index The milestone's 1-based position.
+	 * @param int                  $start The term start timestamp.
+	 * @param int                  $end   The term end timestamp.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+	 */
+	private static function plannedMilestone(array $row, int $index, int $start, int $end): array {
 		$termSeconds = ($end - $start);
-		$milestones = [];
-		$index = 0;
-		foreach (($template['milestones'] ?? []) as $row) {
-			$index++;
-			$fraction = (float)($row['fractionOfTerm'] ?? 0.0);
-			$fraction = max(0.0, min(1.0, $fraction));
-			$date = ($start + (int)round($termSeconds * $fraction));
-			if ($date > $end) {
-				$date = $end;
-			}
+		$fraction = (float)($row['fractionOfTerm'] ?? 0.0);
+		$fraction = max(0.0, min(1.0, $fraction));
+		$date = ($start + (int)round($termSeconds * $fraction));
+		if ($date > $end) {
+			$date = $end;
+		}
 
-			$milestones[] = [
-				'milestoneId' => 'MS-' . str_pad((string)$index, 3, '0', STR_PAD_LEFT),
-				'date' => gmdate('Y-m-d', $date),
-				'description' => (string)($row['label'] ?? ('Mijlpaal ' . $index)),
-				'percentage' => (float)($row['percentage'] ?? 0.0),
-				'deliveryType' => (string)($row['deliveryType'] ?? 'deeloplevering'),
-				'status' => 'planned',
-				'invoiceNumber' => null,
-			];
-		}//end foreach
-
-		return $milestones;
-	}//end generatePlan()
+		return [
+			'milestoneId' => 'MS-' . str_pad((string)$index, 3, '0', STR_PAD_LEFT),
+			'date' => gmdate('Y-m-d', $date),
+			'description' => (string)($row['label'] ?? ('Mijlpaal ' . $index)),
+			'percentage' => (float)($row['percentage'] ?? 0.0),
+			'deliveryType' => (string)($row['deliveryType'] ?? 'deeloplevering'),
+			'status' => 'planned',
+			'invoiceNumber' => null,
+		];
+	}//end plannedMilestone()
 
 	/**
 	 * Sum the percentage across a milestone plan.

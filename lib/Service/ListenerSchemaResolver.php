@@ -3,6 +3,9 @@
 /**
  * Resolves an OpenRegister object's schema **slug** for shillinq's listeners.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * OpenRegister's {@see \OCA\OpenRegister\Db\MagicMapper} stamps the numeric
  * **ids** of the register and schema onto every {@see
  * \OCA\OpenRegister\Db\ObjectEntity} it materialises:
@@ -43,9 +46,6 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
@@ -55,6 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -65,7 +66,7 @@ use Throwable;
  *
  * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
-class ListenerSchemaResolver {
+class ListenerSchemaResolver implements ListenerSchemaResolverInterface {
 
 	/**
 	 * FQCN of OpenRegister's schema mapper.
@@ -87,7 +88,7 @@ class ListenerSchemaResolver {
 	 * @param ContainerInterface $container DI container — OpenRegister mappers
 	 *                                      are resolved lazily so shillinq boots
 	 *                                      without it.
-	 * @param SettingsService $settingsService Supplies shillinq's configured register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ListenerSlugContract $contract Default-off gate for the corrected matching.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 *
@@ -95,7 +96,7 @@ class ListenerSchemaResolver {
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ListenerSlugContract $contract,
 		private readonly LoggerInterface $logger,
 	) {
@@ -225,6 +226,61 @@ class ListenerSchemaResolver {
 	}//end matchesSchema()
 
 	/**
+	 * Whether an entity sits in a named register AND schema, both matched by slug.
+	 *
+	 * For listeners that consume ANOTHER app's objects. {@see matchesSchema()}
+	 * cannot serve them: it is scoped to shillinq's own register on purpose.
+	 * integriq, for one, saves every CloudEvent as an object in its `integriq`
+	 * register, `event` schema, and OpenRegister stamps both as numeric ids.
+	 *
+	 * Each side accepts a raw value that already is the slug (a hand-built
+	 * entity), or an id resolved through OpenRegister's mapper. Like
+	 * matchesSchema() this does not depend on {@see ListenerSlugContract}: a
+	 * listener that can only match through the gate never fires by default.
+	 *
+	 * @param object|null $entity The OpenRegister ObjectEntity from the event.
+	 * @param string $registerSlug The register slug to match (e.g. 'integriq').
+	 * @param string $schemaSlug The schema slug to match (e.g. 'event').
+	 *
+	 * @return bool True when the entity is in that register and schema.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
+	 */
+	public function matchesRegisterAndSchema(?object $entity, string $registerSlug, string $schemaSlug): bool {
+		return $this->matchesSlug(entity: $entity, getter: 'getRegister', mapper: self::REGISTER_MAPPER, expected: $registerSlug) === true
+			&& $this->matchesSlug(entity: $entity, getter: 'getSchema', mapper: self::SCHEMA_MAPPER, expected: $schemaSlug) === true;
+	}//end matchesRegisterAndSchema()
+
+	/**
+	 * Whether one of an entity's id-or-slug accessors names the expected slug.
+	 *
+	 * @param object|null $entity The OpenRegister ObjectEntity.
+	 * @param string $getter The accessor ('getRegister' or 'getSchema').
+	 * @param string $mapper The mapper FQCN that resolves that accessor's id.
+	 * @param string $expected The slug to match.
+	 *
+	 * @return bool True on a match.
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
+	 */
+	private function matchesSlug(?object $entity, string $getter, string $mapper, string $expected): bool {
+		if ($expected === '') {
+			return false;
+		}
+
+		$raw = $this->readAccessor(entity: $entity, getter: $getter);
+		if ($raw === '') {
+			return false;
+		}
+
+		if (strcasecmp($raw, $expected) === 0) {
+			return true;
+		}
+
+		return strcasecmp($this->resolveSlug(service: $mapper, id: $raw), $expected) === 0;
+	}//end matchesSlug()
+
+	/**
 	 * Whether the entity belongs to shillinq's own OpenRegister register.
 	 *
 	 * This is the guard that keeps a schema-only literal (for example the two
@@ -243,7 +299,7 @@ class ListenerSchemaResolver {
 			return false;
 		}
 
-		$expected = $this->settingsService->getRegisterSlug();
+		$expected = $this->registerLocation->getRegisterSlug();
 
 		// Tolerate an entity that already carries a slug (a hand-built entity in
 		// a test, or a future OpenRegister that stops stamping ids).

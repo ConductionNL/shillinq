@@ -1,0 +1,1216 @@
+[
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2027,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "fiscalYear": 2025,
+                            "programmeCode": "1.2"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P09"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "The allocations of this ledger account in this fiscal year would add up to more than 100%. Lower one of them first."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2027
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "The ledger account does not exist in the chart of accounts of this administration."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "accountNumber": "5000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "glAccountNumber": "5000",
+                            "fiscalYear": 2025
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "The allocations of this ledger account in this fiscal year would add up to more than 100%. Lower one of them first."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2027,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "fiscalYear": 2025,
+                            "programmeCode": "1.2"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P01"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BBVProgramme"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "fiscalYear": 2026,
+                            "programmeCode": "P09"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "A BBV programme with this code already exists for the selected fiscal year. Programme codes are unique per administration and fiscal year."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2027
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "The ledger account does not exist in the chart of accounts of this administration."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "accountNumber": "5000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "B",
+                            "glAccountNumber": "5000",
+                            "fiscalYear": 2025
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": {
+            "message": "The allocations of this ledger account in this fiscal year would add up to more than 100%. Lower one of them first."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "Account"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "accountNumber": "4000"
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "setRegister": "shillinq-register"
+            },
+            {
+                "setSchema": "BudgetBBVMapping"
+            },
+            {
+                "findAll": [
+                    {
+                        "filters": {
+                            "administrationId": "A",
+                            "glAccountNumber": "4000",
+                            "fiscalYear": 2026
+                        },
+                        "limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            }
+        ],
+        "errors": {
+            "message": "The BBV rules could not be checked, so the save is refused. Try again."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [
+            {
+                "setRegister": "shillinq-register"
+            }
+        ],
+        "errors": {
+            "message": "The BBV rules could not be checked, so the save is refused. Try again."
+        },
+        "stopped": true
+    },
+    {
+        "reads": [],
+        "errors": [],
+        "stopped": false
+    },
+    {
+        "reads": [],
+        "errors": null,
+        "stopped": false
+    }
+]

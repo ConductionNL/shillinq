@@ -1,0 +1,824 @@
+{
+	"confirmRelationSuggestion 0 ok": {
+		"result": {
+			"value": true
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c1",
+					"payeeId": "p1",
+					"matchedOn": "iban"
+				}
+			],
+			[
+				"showSuccess",
+				"Linked Acme to its supplier record."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"confirmRelationSuggestion 0 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c1",
+					"payeeId": "p1",
+					"matchedOn": "iban"
+				}
+			],
+			[
+				"showError",
+				"Already linked"
+			]
+		]
+	},
+	"confirmRelationSuggestion 0 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c1",
+					"payeeId": "p1",
+					"matchedOn": "iban"
+				}
+			],
+			[
+				"showError",
+				"The link could not be made."
+			]
+		]
+	},
+	"confirmRelationSuggestion 0 network": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c1",
+					"payeeId": "p1",
+					"matchedOn": "iban"
+				}
+			],
+			[
+				"showError",
+				"The link could not be made."
+			]
+		]
+	},
+	"confirmRelationSuggestion 0 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c1",
+					"payeeId": "p1",
+					"matchedOn": "iban"
+				}
+			],
+			[
+				"showError",
+				"The link could not be made."
+			]
+		]
+	},
+	"confirmRelationSuggestion 1 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 1 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 1 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 1 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 1 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 2 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 2 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 2 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 2 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 2 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 3 ok": {
+		"result": {
+			"value": true
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c2",
+					"payeeId": "p2",
+					"matchedOn": "__undefined"
+				}
+			],
+			[
+				"showSuccess",
+				"Linked undefined to its supplier record."
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"confirmRelationSuggestion 3 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c2",
+					"payeeId": "p2",
+					"matchedOn": "__undefined"
+				}
+			],
+			[
+				"showError",
+				"Already linked"
+			]
+		]
+	},
+	"confirmRelationSuggestion 3 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c2",
+					"payeeId": "p2",
+					"matchedOn": "__undefined"
+				}
+			],
+			[
+				"showError",
+				"The link could not be made."
+			]
+		]
+	},
+	"confirmRelationSuggestion 3 network": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c2",
+					"payeeId": "p2",
+					"matchedOn": "__undefined"
+				}
+			],
+			[
+				"showError",
+				"The link could not be made."
+			]
+		]
+	},
+	"confirmRelationSuggestion 3 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/links",
+				{
+					"customerId": "c2",
+					"payeeId": "p2",
+					"matchedOn": "__undefined"
+				}
+			],
+			[
+				"showError",
+				"The link could not be made."
+			]
+		]
+	},
+	"confirmRelationSuggestion 4 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 4 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 4 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 4 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 4 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 5 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 5 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 5 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 5 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 5 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 6 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 6 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 6 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 6 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 6 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 7 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 7 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 7 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 7 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 7 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 8 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 8 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 8 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 8 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"confirmRelationSuggestion 8 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 0 ok": {
+		"result": {
+			"value": true
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c1",
+					"payeeId": "p1"
+				}
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"dismissRelationSuggestion 0 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c1",
+					"payeeId": "p1"
+				}
+			],
+			[
+				"showError",
+				"Already linked"
+			]
+		]
+	},
+	"dismissRelationSuggestion 0 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c1",
+					"payeeId": "p1"
+				}
+			],
+			[
+				"showError",
+				"The suggestion could not be dismissed."
+			]
+		]
+	},
+	"dismissRelationSuggestion 0 network": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c1",
+					"payeeId": "p1"
+				}
+			],
+			[
+				"showError",
+				"The suggestion could not be dismissed."
+			]
+		]
+	},
+	"dismissRelationSuggestion 0 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c1",
+					"payeeId": "p1"
+				}
+			],
+			[
+				"showError",
+				"The suggestion could not be dismissed."
+			]
+		]
+	},
+	"dismissRelationSuggestion 1 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 1 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 1 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 1 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 1 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 2 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 2 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 2 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 2 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 2 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 3 ok": {
+		"result": {
+			"value": true
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c2",
+					"payeeId": "p2"
+				}
+			],
+			[
+				"emit",
+				"cn:page:refresh",
+				{}
+			]
+		]
+	},
+	"dismissRelationSuggestion 3 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c2",
+					"payeeId": "p2"
+				}
+			],
+			[
+				"showError",
+				"Already linked"
+			]
+		]
+	},
+	"dismissRelationSuggestion 3 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c2",
+					"payeeId": "p2"
+				}
+			],
+			[
+				"showError",
+				"The suggestion could not be dismissed."
+			]
+		]
+	},
+	"dismissRelationSuggestion 3 network": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c2",
+					"payeeId": "p2"
+				}
+			],
+			[
+				"showError",
+				"The suggestion could not be dismissed."
+			]
+		]
+	},
+	"dismissRelationSuggestion 3 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": [
+			[
+				"post",
+				"/apps/shillinq/api/relations/suggestions/dismiss",
+				{
+					"customerId": "c2",
+					"payeeId": "p2"
+				}
+			],
+			[
+				"showError",
+				"The suggestion could not be dismissed."
+			]
+		]
+	},
+	"dismissRelationSuggestion 4 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 4 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 4 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 4 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 4 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 5 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 5 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 5 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 5 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 5 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 6 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 6 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 6 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 6 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 6 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 7 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 7 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 7 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 7 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 7 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 8 ok": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 8 refused": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 8 emptyReason": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 8 network": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	},
+	"dismissRelationSuggestion 8 nothing": {
+		"result": {
+			"value": false
+		},
+		"calls": []
+	}
+}

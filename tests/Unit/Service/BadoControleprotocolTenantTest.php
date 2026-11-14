@@ -3,6 +3,9 @@
 /**
  * Unit tests for BadoControleprotocolService::organisationIdFor().
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `Controleprotocol.organisationId` is the ONLY tenant field in the whole BADO
  * bundle — the six child schemas carry none and hang off the protocol's FK — so
  * this accessor is what the ADR-005 membership check in
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Lot-tracking goods-receipt guard — ADR-031 exception-path guard.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Enforces REQ-LOT-008 / REQ-LOT-012: when a Product (the shillinq catalogue
  * slug for the spec's 'InventoryItem' entity) carries
  * `requiresLotTracking: true`, any GoodsReceipt of that SKU MUST reference a
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

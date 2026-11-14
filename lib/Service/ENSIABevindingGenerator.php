@@ -68,54 +68,75 @@ class ENSIABevindingGenerator {
 	 *
 	 * @return array<int,array<string,mixed>> Concept Bevinding records ready
 	 *                                        for ObjectService::saveObject.
+	 *
+	 * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
 	 */
 	public function generate(array $cyclus, array $vragen): array {
-		$cyclusId = (string)($cyclus['id'] ?? $cyclus['uuid'] ?? '');
-		$administrationId = (string)($cyclus['administrationId'] ?? '');
-
 		$findings = [];
-		foreach ($vragen as $v) {
-			$status = (string)($v['peerReviewStatus'] ?? 'nog-niet-beoordeeld');
-			if ($status !== 'akkoord') {
-				continue;
+		foreach ($vragen as $vraag) {
+			if ($this->isShortfall(vraag: $vraag) === true) {
+				$findings[] = $this->finding(cyclus: $cyclus, vraag: $vraag);
 			}
-
-			$score = $v['maturityScore'] ?? null;
-			$normniveau = $v['normniveau'] ?? null;
-			if (is_int($score) === false || is_int($normniveau) === false) {
-				continue;
-			}
-
-			if ($score >= $normniveau) {
-				continue;
-			}
-
-			$questionCode = (string)($v['questionCode'] ?? '');
-			$questionTxt = (string)($v['questionText'] ?? '');
-			$questionId = (string)($v['id'] ?? $v['uuid'] ?? '');
-
-			if ($questionTxt !== '') {
-				$questionLabel = $questionTxt;
-			} else {
-				$questionLabel = 'evaluatievraag';
-			}
-
-			$findings[] = [
-				'cyclusId' => $cyclusId,
-				'administrationId' => $administrationId,
-				'questionId' => $questionId,
-				'type' => 'tekortkoming',
-				'description' => sprintf(
-					'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
-					$questionCode,
-					$questionLabel,
-					$score,
-					$normniveau
-				),
-				'status' => 'open',
-			];
-		}//end foreach
+		}
 
 		return $findings;
 	}//end generate()
+
+	/**
+	 * Whether a peer-reviewed question scores strictly below its normniveau.
+	 *
+	 * @param array<string,mixed> $vraag One Evaluatievraag.
+	 *
+	 * @return boolean
+	 */
+	private function isShortfall(array $vraag): bool {
+		$score = $vraag['maturityScore'] ?? null;
+		$normniveau = $vraag['normniveau'] ?? null;
+
+		return (string)($vraag['peerReviewStatus'] ?? 'nog-niet-beoordeeld') === 'akkoord'
+			&& is_int($score) === true
+			&& is_int($normniveau) === true
+			&& $score < $normniveau;
+	}//end isShortfall()
+
+	/**
+	 * The concept Bevinding for a shortfall question.
+	 *
+	 * @param array<string,mixed> $cyclus The parent ENSIAJaarcyclus.
+	 * @param array<string,mixed> $vraag  The shortfall Evaluatievraag.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function finding(array $cyclus, array $vraag): array {
+		return [
+			'cyclusId' => (string)($cyclus['id'] ?? $cyclus['uuid'] ?? ''),
+			'administrationId' => (string)($cyclus['administrationId'] ?? ''),
+			'questionId' => (string)($vraag['id'] ?? $vraag['uuid'] ?? ''),
+			'type' => 'tekortkoming',
+			'description' => $this->description(vraag: $vraag),
+			'status' => 'open',
+		];
+	}//end finding()
+
+	/**
+	 * The auto-populated description: question code, label and score gap.
+	 *
+	 * @param array<string,mixed> $vraag The shortfall Evaluatievraag.
+	 *
+	 * @return string
+	 */
+	private function description(array $vraag): string {
+		$questionLabel = (string)($vraag['questionText'] ?? '');
+		if ($questionLabel === '') {
+			$questionLabel = 'evaluatievraag';
+		}
+
+		return sprintf(
+			'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
+			(string)($vraag['questionCode'] ?? ''),
+			$questionLabel,
+			$vraag['maturityScore'],
+			$vraag['normniveau']
+		);
+	}//end description()
 }//end class

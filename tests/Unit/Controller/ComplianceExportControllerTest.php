@@ -40,7 +40,6 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -112,9 +111,11 @@ final class ComplianceExportControllerTest extends TestCase {
 	/**
 	 * Build the controller under test.
 	 *
+	 * @param LoggerInterface|null $logger Logger to observe, or a silent mock.
+	 *
 	 * @return ComplianceExportController
 	 */
-	private function controller(): ComplianceExportController {
+	private function controller(?LoggerInterface $logger = null): ComplianceExportController {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
@@ -123,8 +124,7 @@ final class ComplianceExportControllerTest extends TestCase {
 			$this->complianceExportService,
 			$this->userSession,
 			$this->groupManager,
-			$this->createMock(ContainerInterface::class),
-			$this->createMock(LoggerInterface::class),
+			($logger ?? $this->createMock(LoggerInterface::class)),
 			$l10n,
 		);
 
@@ -172,4 +172,49 @@ final class ComplianceExportControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 
 	}//end testExportRejectsNonAuditorCaller()
+	/**
+	 * A successful export records the request itself as a structured log
+	 * entry naming the caller and the window (REQ-RAP-005 scenario 3).
+	 *
+	 * @return void
+	 */
+	public function testSuccessfulExportRecordsTheExportRequest(): void {
+		$this->request = $this->createMock(IRequest::class);
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) {
+				$params = ['from' => '2026-01-01', 'to' => '2026-03-31', 'format' => 'json'];
+				return ($params[$key] ?? $default);
+			}
+		);
+		$this->complianceExportService->method('generateExport')->willReturn(
+			[
+				'from' => '2026-01-01',
+				'to' => '2026-03-31',
+				'scope' => 'all',
+				'format' => 'json',
+				'actorFilter' => null,
+				'generatedAt' => '2026-04-01T09:00:00+00:00',
+				'generatedBy' => 'auditor-alice',
+				'eventCount' => 2,
+				'headers' => [],
+				'rows' => [],
+			]
+		);
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('info')->with(
+			'shillinq.compliance.export_request',
+			self::callback(
+				static fn (array $context): bool => $context['actor'] === 'auditor-alice'
+					&& $context['from'] === '2026-01-01'
+					&& $context['to'] === '2026-03-31'
+					&& $context['eventCount'] === 2
+			)
+		);
+
+		$response = $this->controller(logger: $logger)->export();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+
+	}//end testSuccessfulExportRecordsTheExportRequest()
 }//end class

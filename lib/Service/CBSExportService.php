@@ -3,6 +3,9 @@
 /**
  * CBS Export Service.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3+ extended capability — aggregates Chart-of-Accounts + General-Ledger
  * data into a CBS (Centraal Bureau voor de Statistiek) IV3-extended submission
  * package per REQ-CBS-004. The service is the imperative engine-side fallback
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,10 +50,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Aggregates GL data into a CBS IV3-extended submission with declarative
@@ -61,7 +62,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
  */
-class CBSExportService {
+class CBSExportService implements CBSExportServiceInterface {
 	/**
 	 * IV3-extended file format identifier (REQ-CBS-006).
 	 *
@@ -129,6 +130,7 @@ class CBSExportService {
 	 * @param array $organization Required organization metadata: legalName, kvkNumber, taxIdentificationNumber.
 	 *
 	 * @return array<string,mixed> The persisted CBSSubmission (id + fields).
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function generateSubmission(
 		string $administrationId,
@@ -136,90 +138,131 @@ class CBSExportService {
 		DateTimeInterface $periodEnd,
 		array $organization,
 	): array {
+		$run = new CbsSubmissionRun(administrationId: $administrationId, periodStart: $periodStart, periodEnd: $periodEnd, organization: $organization);
+		$this->logGenerating(run: $run);
+		$aggregations = $this->aggregatePeriod(run: $run);
+
+		$run->submissionNumber = $this->buildSubmissionNumber(periodEnd: $periodEnd);
+		$persistedSubmission = $this->saveObject(object: $this->submissionRecord(run: $run), schema: 'CBSSubmission');
+		$run->lines = $this->persistLines(submission: $persistedSubmission, aggregations: $aggregations);
+
+		return $this->attachIv3(submission: $persistedSubmission, run: $run);
+	}//end generateSubmission()
+
+	/**
+	 * Log the start of a generation.
+	 *
+	 * @param CbsSubmissionRun $run The run.
+	 *
+	 * @return void
+	 */
+	private function logGenerating(CbsSubmissionRun $run): void {
 		$this->logger->info(
 			'CBSExportService: generating submission',
 			[
-				'administrationId' => $administrationId,
-				'periodStart' => $periodStart->format('Y-m-d'),
-				'periodEnd' => $periodEnd->format('Y-m-d'),
+				'administrationId' => $run->administrationId,
+				'periodStart' => $run->startDate(),
+				'periodEnd' => $run->endDate(),
 			]
 		);
+	}//end logGenerating()
 
-		$accounts = $this->loadAccounts(administrationId: $administrationId);
-		$glLines = $this->loadGlLines(
-			administrationId: $administrationId,
-			periodStart: $periodStart,
-			periodEnd: $periodEnd,
-		);
+	/**
+	 * Aggregate the period's GL lines by CBS classification (steps 1-4).
+	 *
+	 * @param CbsSubmissionRun $run The run.
+	 *
+	 * @return array<int,array{classification:string,lineNumber:string,accountRangeStart:string,accountRangeEnd:string,aggregatedAmount:int,glLineCount:int}>
+	 */
+	private function aggregatePeriod(CbsSubmissionRun $run): array {
+		$accounts = $this->loadAccounts(administrationId: $run->administrationId);
+		$glLines = $this->loadGlLines(run: $run);
+		$mapping = $this->getMappingFromSettings(administrationId: $run->administrationId);
 
-		$mapping = $this->getMappingFromSettings(administrationId: $administrationId);
+		return $this->aggregateLines(glLines: $glLines, accounts: $accounts, mapping: $mapping);
+	}//end aggregatePeriod()
 
-		$aggregations = $this->aggregateLines(
-			glLines: $glLines,
-			accounts: $accounts,
-			mapping: $mapping,
-		);
-
-		$submissionNumber = $this->buildSubmissionNumber(periodEnd: $periodEnd);
-
-		$submission = [
-			'submissionNumber' => $submissionNumber,
-			'reportingPeriodStartDate' => $periodStart->format('Y-m-d'),
-			'reportingPeriodEndDate' => $periodEnd->format('Y-m-d'),
-			'organizationLegalName' => (string)($organization['legalName'] ?? ''),
-			'kvkNumber' => (string)($organization['kvkNumber'] ?? ''),
-			'taxIdentificationNumber' => (string)($organization['taxIdentificationNumber'] ?? ''),
-			'administrationId' => $administrationId,
+	/**
+	 * Build the draft CBSSubmission row.
+	 *
+	 * @param CbsSubmissionRun $run The run, with its submission number.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function submissionRecord(CbsSubmissionRun $run): array {
+		return [
+			'submissionNumber' => $run->submissionNumber,
+			'reportingPeriodStartDate' => $run->startDate(),
+			'reportingPeriodEndDate' => $run->endDate(),
+			'organizationLegalName' => (string)($run->organization['legalName'] ?? ''),
+			'kvkNumber' => (string)($run->organization['kvkNumber'] ?? ''),
+			'taxIdentificationNumber' => (string)($run->organization['taxIdentificationNumber'] ?? ''),
+			'administrationId' => $run->administrationId,
 			'status' => 'draft',
 			'submissionDate' => null,
 			'currency' => 'EUR',
-			'description' => 'Generated by CBSExportService for period '
-				. $periodStart->format('Y-m-d') . ' — ' . $periodEnd->format('Y-m-d'),
+			'description' => 'Generated by CBSExportService for period ' . $run->startDate() . ' — ' . $run->endDate(),
 		];
+	}//end submissionRecord()
 
-		$persistedSubmission = $this->saveObject(
-			object: $submission,
-			schema: 'CBSSubmission',
-		);
-
-		$submissionId = (string)($persistedSubmission['id'] ?? $persistedSubmission['uuid'] ?? '');
+	/**
+	 * Persist a CBSLine record for each classification of the submission (step 5).
+	 *
+	 * @param array<string,mixed> $submission The persisted CBSSubmission.
+	 * @param array<int,array<string,mixed>> $aggregations The per-classification aggregations.
+	 *
+	 * @return array<int,array<string,mixed>> The persisted CBSLine rows.
+	 */
+	private function persistLines(array $submission, array $aggregations): array {
+		$submissionId = (string)($submission['id'] ?? $submission['uuid'] ?? '');
 
 		$persistedLines = [];
 		foreach ($aggregations as $aggregation) {
-			$line = [
-				'cbsSubmissionId' => $submissionId,
-				'cbsLineClassification' => $aggregation['classification'],
-				'cbsLineNumber' => $aggregation['lineNumber'],
-				'accountRangeStart' => $aggregation['accountRangeStart'],
-				'accountRangeEnd' => $aggregation['accountRangeEnd'],
-				'aggregatedAmount' => $aggregation['aggregatedAmount'],
-				'glLineCount' => $aggregation['glLineCount'],
-				'currency' => 'EUR',
-				'description' => 'Aggregated GL lines for ' . $aggregation['classification'],
-			];
-			$persistedLines[] = $this->saveObject(object: $line, schema: 'CBSLine');
+			$persistedLines[] = $this->saveObject(object: $this->lineRecord(submissionId: $submissionId, aggregation: $aggregation), schema: 'CBSLine');
 		}
 
-		$iv3Json = $this->generateIV3Json(
-			submission: $persistedSubmission,
-			lines: $persistedLines,
-		);
+		return $persistedLines;
+	}//end persistLines()
+
+	/**
+	 * Build the CBSLine row of one classification.
+	 *
+	 * @param string $submissionId The CBSSubmission id.
+	 * @param array<string,mixed> $aggregation The classification's aggregation.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function lineRecord(string $submissionId, array $aggregation): array {
+		return [
+			'cbsSubmissionId' => $submissionId,
+			'cbsLineClassification' => $aggregation['classification'],
+			'cbsLineNumber' => $aggregation['lineNumber'],
+			'accountRangeStart' => $aggregation['accountRangeStart'],
+			'accountRangeEnd' => $aggregation['accountRangeEnd'],
+			'aggregatedAmount' => $aggregation['aggregatedAmount'],
+			'glLineCount' => $aggregation['glLineCount'],
+			'currency' => 'EUR',
+			'description' => 'Aggregated GL lines for ' . $aggregation['classification'],
+		];
+	}//end lineRecord()
+
+	/**
+	 * Generate the IV3 JSON and store its reference and checksum on the submission (steps 6-8).
+	 *
+	 * @param array<string,mixed> $submission The persisted CBSSubmission.
+	 * @param CbsSubmissionRun $run The run, with its number and persisted lines.
+	 *
+	 * @return array<string,mixed> The final CBSSubmission.
+	 */
+	private function attachIv3(array $submission, CbsSubmissionRun $run): array {
+		$iv3Json = $this->generateIV3Json(submission: $submission, lines: $run->lines);
 		$checksum = 'sha256:' . hash('sha256', json_encode($iv3Json, JSON_THROW_ON_ERROR));
-		$fileUri = sprintf(
-			'shillinq://cbs-submissions/%s/iv3.json',
-			$submissionNumber,
-		);
 
-		$persistedSubmission['iv3FileUri'] = $fileUri;
-		$persistedSubmission['iv3Checksum'] = $checksum;
+		$submission['iv3FileUri'] = sprintf('shillinq://cbs-submissions/%s/iv3.json', $run->submissionNumber);
+		$submission['iv3Checksum'] = $checksum;
 
-		$finalSubmission = $this->saveObject(
-			object: $persistedSubmission,
-			schema: 'CBSSubmission',
-		);
-
-		return $finalSubmission;
-	}//end generateSubmission()
+		return $this->saveObject(object: $submission, schema: 'CBSSubmission');
+	}//end attachIv3()
 
 	/**
 	 * Validate a CBSSubmission against the four CBS rule families (REQ-CBS-008).
@@ -236,20 +279,12 @@ class CBSExportService {
 	 * @param array $submission The CBSSubmission record (with id).
 	 *
 	 * @return array{valid:bool,errors:array<int,string>,warnings:array<int,string>}
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function validateSubmission(array $submission): array {
-		$errors = [];
 		$warnings = [];
 
-		$kvk = (string)($submission['kvkNumber'] ?? '');
-		if (preg_match('/^[0-9]{8}$/', $kvk) !== 1) {
-			$errors[] = 'kvkNumber must match the pattern ^[0-9]{8}$';
-		}
-
-		$taxId = (string)($submission['taxIdentificationNumber'] ?? '');
-		if (preg_match('/^NL[0-9]{10}B[0-9]{2}$/', $taxId) !== 1) {
-			$errors[] = 'taxIdentificationNumber must match the pattern ^NL[0-9]{10}B[0-9]{2}$';
-		}
+		$errors = $this->organizationErrors(submission: $submission);
 
 		$submissionId = (string)($submission['id'] ?? '');
 		$lines = $this->loadLinesForSubmission(submissionId: $submissionId);
@@ -258,6 +293,53 @@ class CBSExportService {
 			$errors[] = 'CBSSubmission has no CBSLine records; cannot validate structure';
 		}
 
+		$errors = array_merge($errors, $this->rangeConflictErrors(lines: $lines));
+		$errors = array_merge($errors, $this->periodErrors(submission: $submission));
+
+		return [
+			'valid' => ($errors === []),
+			'errors' => $errors,
+			'warnings' => $warnings,
+		];
+
+	}//end validateSubmission()
+
+	/**
+	 * Completeness errors for the organization KvK number and tax id.
+	 *
+	 * @param array $submission The CBSSubmission record.
+	 *
+	 * @return array<int,string> The errors.
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function organizationErrors(array $submission): array {
+		$errors = [];
+
+		$kvk = (string)($submission['kvkNumber'] ?? '');
+		if (preg_match('/^[0-9]{8}$/', $kvk) !== 1) {
+			$errors[] = 'kvkNumber must match the pattern ^[0-9]{8}$';
+		}
+
+		$taxId = (string)($submission['taxIdentificationNumber'] ?? '');
+		if (preg_match('/^NL[0-9]{9}B[0-9]{2}$/', $taxId) !== 1) {
+			$errors[] = 'taxIdentificationNumber must match the pattern ^NL[0-9]{9}B[0-9]{2}$';
+		}
+
+		return $errors;
+	}//end organizationErrors()
+
+	/**
+	 * Accounting errors for account ranges that appear under multiple classifications.
+	 *
+	 * @param array<int,array> $lines The CBSLine records.
+	 *
+	 * @return array<int,string> The errors.
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function rangeConflictErrors(array $lines): array {
+		$errors = [];
 		$rangeKeys = [];
 		foreach ($lines as $line) {
 			$start = (string)($line['accountRangeStart'] ?? '');
@@ -275,18 +357,27 @@ class CBSExportService {
 			$rangeKeys[$key] = (string)($line['cbsLineClassification'] ?? '');
 		}
 
+		return $errors;
+	}//end rangeConflictErrors()
+
+	/**
+	 * The error for a missing reporting period.
+	 *
+	 * @param array $submission The CBSSubmission record.
+	 *
+	 * @return array<int,string> The errors.
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function periodErrors(array $submission): array {
+		$errors = [];
 		$period = ($submission['reportingPeriodStartDate'] ?? '');
 		if ($period === '' || ($submission['reportingPeriodEndDate'] ?? '') === '') {
 			$errors[] = 'reportingPeriodStartDate and reportingPeriodEndDate are required';
 		}
 
-		return [
-			'valid' => ($errors === []),
-			'errors' => $errors,
-			'warnings' => $warnings,
-		];
-
-	}//end validateSubmission()
+		return $errors;
+	}//end periodErrors()
 
 	/**
 	 * Produce the IV3-extended JSON envelope (REQ-CBS-006).
@@ -298,6 +389,7 @@ class CBSExportService {
 	 * @param array<int,array> $lines The persisted CBSLine records.
 	 *
 	 * @return array<string,mixed> The IV3-extended JSON envelope.
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function generateIV3Json(array $submission, array $lines): array {
 		$linePayload = [];
@@ -350,10 +442,11 @@ class CBSExportService {
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return array<int,array{start:string,end:string,classification:string,lineNumber:string}>
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function getMappingFromSettings(string $administrationId): array {
 		$key = 'cbs_account_mapping_' . $administrationId;
-		$raw = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 		if ($raw === '') {
 			return self::DEFAULT_MAPPING;
 		}
@@ -367,27 +460,7 @@ class CBSExportService {
 			return self::DEFAULT_MAPPING;
 		}
 
-		$mapping = [];
-		foreach ($decoded as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$start = (string)($entry['start'] ?? '');
-			$end = (string)($entry['end'] ?? '');
-			$classification = (string)($entry['classification'] ?? '');
-			$lineNumber = (string)($entry['lineNumber'] ?? '');
-			if ($start === '' || $end === '' || $classification === '' || $lineNumber === '') {
-				continue;
-			}
-
-			$mapping[] = [
-				'start' => $start,
-				'end' => $end,
-				'classification' => $classification,
-				'lineNumber' => $lineNumber,
-			];
-		}
+		$mapping = $this->mappingEntries(decoded: $decoded);
 
 		if ($mapping === []) {
 			return self::DEFAULT_MAPPING;
@@ -395,6 +468,72 @@ class CBSExportService {
 
 		return $mapping;
 	}//end getMappingFromSettings()
+
+	/**
+	 * Keep the complete mapping entries of a decoded override.
+	 *
+	 * @param array<mixed> $decoded The decoded mapping override.
+	 *
+	 * @return array<int,array{start:string,end:string,classification:string,lineNumber:string}>
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function mappingEntries(array $decoded): array {
+		$mapping = [];
+		foreach ($decoded as $entry) {
+			$row = $this->mappingEntry(entry: $entry);
+			if ($row === null) {
+				continue;
+			}
+
+			$mapping[] = $row;
+		}
+
+		return $mapping;
+	}//end mappingEntries()
+
+	/**
+	 * One mapping entry, or null when it is not an array or misses a field.
+	 *
+	 * @param mixed $entry The decoded entry.
+	 *
+	 * @return array{start:string,end:string,classification:string,lineNumber:string}|null
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function mappingEntry(mixed $entry): array|null {
+		if (is_array($entry) === false) {
+			return null;
+		}
+
+		return $this->completeMappingEntry(entry: $entry);
+	}//end mappingEntry()
+
+	/**
+	 * The mapping entry with its four fields, or null when one is missing.
+	 *
+	 * @param array<mixed> $entry The decoded entry.
+	 *
+	 * @return array{start:string,end:string,classification:string,lineNumber:string}|null
+	 *
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
+	 */
+	private function completeMappingEntry(array $entry): array|null {
+		$start = (string)($entry['start'] ?? '');
+		$end = (string)($entry['end'] ?? '');
+		$classification = (string)($entry['classification'] ?? '');
+		$lineNumber = (string)($entry['lineNumber'] ?? '');
+		if ($start === '' || $end === '' || $classification === '' || $lineNumber === '') {
+			return null;
+		}
+
+		return [
+			'start' => $start,
+			'end' => $end,
+			'classification' => $classification,
+			'lineNumber' => $lineNumber,
+		];
+	}//end completeMappingEntry()
 
 	/**
 	 * Aggregate GL lines by CBS classification using the mapping table.
@@ -408,6 +547,7 @@ class CBSExportService {
 	 * @param array<int,array> $mapping The account-range → classification mapping.
 	 *
 	 * @return array<int,array{classification:string,lineNumber:string,accountRangeStart:string,accountRangeEnd:string,aggregatedAmount:int,glLineCount:int}>
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function aggregateLines(array $glLines, array $accounts, array $mapping): array {
 		// Index accounts by accountNumber for fast lookup (currently unused
@@ -549,72 +689,121 @@ class CBSExportService {
 	 * yet express the join declaratively, so this is the engine-side
 	 * fallback (ADR-031).
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param DateTimeInterface $periodStart Period start.
-	 * @param DateTimeInterface $periodEnd Period end.
+	 * @param CbsSubmissionRun $run The run (administration scope and period).
 	 *
 	 * @return array<int,array<string,mixed>> GL lines in the period.
 	 */
-	private function loadGlLines(
-		string $administrationId,
-		DateTimeInterface $periodStart,
-		DateTimeInterface $periodEnd,
-	): array {
+	private function loadGlLines(CbsSubmissionRun $run): array {
+		$transactions = $this->postedTransactions(administrationId: $run->administrationId);
+		if ($transactions === null) {
+			return [];
+		}
+
+		$glLines = [];
+		foreach ($transactions as $transaction) {
+			foreach ($this->periodLines(transaction: $transaction, run: $run) as $line) {
+				$glLines[] = $line;
+			}
+		}
+
+		return $glLines;
+	}//end loadGlLines()
+
+	/**
+	 * The GL lines of a transaction posted in the run's period; none for any other transaction.
+	 *
+	 * @param array<string,mixed> $transaction The GLTransaction row.
+	 * @param CbsSubmissionRun $run The run.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function periodLines(array $transaction, CbsSubmissionRun $run): array {
+		$txId = $this->periodTransactionId(transaction: $transaction, run: $run);
+		if ($txId === '') {
+			return [];
+		}
+
+		return $this->transactionLines(txId: $txId);
+	}//end periodLines()
+
+	/**
+	 * The administration's posted GL transactions; null when the query fails.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,array<string,mixed>>|null
+	 */
+	private function postedTransactions(string $administrationId): ?array {
 		try {
-			$transactions = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('GLTransaction')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'state' => 'posted',
-						],
-					]
-				);
+			return $this->findPostedTransactions(administrationId: $administrationId);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'CBSExportService: loadGlLines transactions failed',
 				['exception' => $e->getMessage()]
 			);
-			return [];
+			return null;
+		}
+	}//end postedTransactions()
+
+	/**
+	 * Query the administration's posted GL transactions.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findPostedTransactions(string $administrationId): array {
+		return $this->objectService()
+			->setRegister($this->register())
+			->setSchema('GLTransaction')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'state' => 'posted',
+					],
+				]
+			);
+	}//end findPostedTransactions()
+
+	/**
+	 * The id of a transaction posted in the run's period; '' when it falls outside it or has no id.
+	 *
+	 * @param array<string,mixed> $transaction The GLTransaction row.
+	 * @param CbsSubmissionRun $run The run.
+	 *
+	 * @return string
+	 */
+	private function periodTransactionId(array $transaction, CbsSubmissionRun $run): string {
+		$postingDate = (string)($transaction['postingDate'] ?? '');
+		if ($postingDate === '' || $postingDate < $run->startDate() || $postingDate > $run->endDate()) {
+			return '';
 		}
 
-		$startStr = $periodStart->format('Y-m-d');
-		$endStr = $periodEnd->format('Y-m-d');
+		return (string)($transaction['id'] ?? $transaction['uuid'] ?? '');
+	}//end periodTransactionId()
 
-		$glLines = [];
-		foreach ($transactions as $transaction) {
-			$postingDate = (string)($transaction['postingDate'] ?? '');
-			if ($postingDate === '' || $postingDate < $startStr || $postingDate > $endStr) {
-				continue;
-			}
-
-			$txId = (string)($transaction['id'] ?? $transaction['uuid'] ?? '');
-			if ($txId === '') {
-				continue;
-			}
-
-			try {
-				$lines = $this->objectService()
-					->setRegister($this->register())
-					->setSchema('GLLine')
-					->findAll(['filters' => ['transactionId' => $txId]]);
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'CBSExportService: loadGlLines child query failed',
-					['transactionId' => $txId, 'exception' => $e->getMessage()]
-				);
-				continue;
-			}
-
-			foreach ($lines as $line) {
-				$glLines[] = $line;
-			}
-		}//end foreach
-
-		return $glLines;
-	}//end loadGlLines()
+	/**
+	 * The GLLine children of a transaction; none when the query fails.
+	 *
+	 * @param string $txId The GLTransaction id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function transactionLines(string $txId): array {
+		try {
+			return $this->objectService()
+				->setRegister($this->register())
+				->setSchema('GLLine')
+				->findAll(['filters' => ['transactionId' => $txId]]);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'CBSExportService: loadGlLines child query failed',
+				['transactionId' => $txId, 'exception' => $e->getMessage()]
+			);
+			return [];
+		}
+	}//end transactionLines()
 
 	/**
 	 * Load CBSLine records for a CBSSubmission via ObjectService.
@@ -695,7 +884,7 @@ class CBSExportService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

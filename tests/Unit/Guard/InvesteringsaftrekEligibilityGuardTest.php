@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
+use OCA\Shillinq\Guard\AssetEligibilityCheck;
 use OCA\Shillinq\Guard\InvesteringsaftrekEligibilityGuard;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -70,11 +71,13 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testFullEligibilityWhenAllConditionsMet(): void {
 		$result = $this->guard->classify(
-			acquisitionValue: 5000000,
-			energyListHit: true,
-			environmentListHit: true,
-			vamilPermitted: true,
-			kiaExcluded: false
+			new AssetEligibilityCheck(
+				acquisitionValue: 5000000,
+				energyListHit: true,
+				environmentListHit: true,
+				vamilPermitted: true,
+				kiaExcluded: false
+			)
 		);
 
 		self::assertTrue($result['kia']);
@@ -91,11 +94,13 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testKiaExcludedAssetIsNotEligible(): void {
 		$result = $this->guard->classify(
-			acquisitionValue: 5000000,
-			energyListHit: false,
-			environmentListHit: false,
-			vamilPermitted: false,
-			kiaExcluded: true
+			new AssetEligibilityCheck(
+				acquisitionValue: 5000000,
+				energyListHit: false,
+				environmentListHit: false,
+				vamilPermitted: false,
+				kiaExcluded: true
+			)
 		);
 
 		self::assertFalse($result['kia']);
@@ -110,11 +115,13 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testKiaBelowMinimumNotEligible(): void {
 		$result = $this->guard->classify(
-			acquisitionValue: 40000,
-			energyListHit: false,
-			environmentListHit: false,
-			vamilPermitted: false,
-			kiaExcluded: false
+			new AssetEligibilityCheck(
+				acquisitionValue: 40000,
+				energyListHit: false,
+				environmentListHit: false,
+				vamilPermitted: false,
+				kiaExcluded: false
+			)
 		);
 
 		self::assertFalse($result['kia']);
@@ -128,11 +135,13 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testKiaAbovePlafondNotEligible(): void {
 		$result = $this->guard->classify(
-			acquisitionValue: 40000000,
-			energyListHit: false,
-			environmentListHit: false,
-			vamilPermitted: false,
-			kiaExcluded: false
+			new AssetEligibilityCheck(
+				acquisitionValue: 40000000,
+				energyListHit: false,
+				environmentListHit: false,
+				vamilPermitted: false,
+				kiaExcluded: false
+			)
 		);
 
 		self::assertFalse($result['kia']);
@@ -146,11 +155,13 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testEiaMiaVamilBelowMinimumNotEligible(): void {
 		$result = $this->guard->classify(
-			acquisitionValue: 200000,
-			energyListHit: true,
-			environmentListHit: true,
-			vamilPermitted: true,
-			kiaExcluded: false
+			new AssetEligibilityCheck(
+				acquisitionValue: 200000,
+				energyListHit: true,
+				environmentListHit: true,
+				vamilPermitted: true,
+				kiaExcluded: false
+			)
 		);
 
 		self::assertFalse($result['eia']);
@@ -166,11 +177,13 @@ class InvesteringsaftrekEligibilityGuardTest extends TestCase {
 	 */
 	public function testVamilRequiresVamilToegestaan(): void {
 		$result = $this->guard->classify(
-			acquisitionValue: 5000000,
-			energyListHit: false,
-			environmentListHit: true,
-			vamilPermitted: false,
-			kiaExcluded: false
+			new AssetEligibilityCheck(
+				acquisitionValue: 5000000,
+				energyListHit: false,
+				environmentListHit: true,
+				vamilPermitted: false,
+				kiaExcluded: false
+			)
 		);
 
 		self::assertTrue($result['mia']);

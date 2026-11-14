@@ -1,0 +1,68 @@
+{
+	"channel EMAIL": {
+		"value": "Email"
+	},
+	"channel eMAILPostRegistration": {
+		"value": "Email and registered post"
+	},
+	"channel REGISTERED_POST": {
+		"value": "Registered post"
+	},
+	"channel COLLECTION_AGENCY_API": {
+		"value": "Collection agency"
+	},
+	"channel email": {
+		"value": "email"
+	},
+	"channel LETTER": {
+		"value": "LETTER"
+	},
+	"channel ": {
+		"value": ""
+	},
+	"channel null": {
+		"value": ""
+	},
+	"channel undefined": {
+		"value": ""
+	},
+	"channel 0": {
+		"value": ""
+	},
+	"channel toString": {
+		"value": "toString"
+	},
+	"channel __proto__": {
+		"value": "__proto__"
+	},
+	"channel constructor": {
+		"value": "constructor"
+	},
+	"channel hasOwnProperty": {
+		"value": "hasOwnProperty"
+	},
+	"report 0": {
+		"value": "The daily run has not run for this administration yet."
+	},
+	"report 1": {
+		"value": "The daily run has not run for this administration yet."
+	},
+	"report 2": {
+		"value": "Last run : 0 marked overdue, 0 sent, 0 to send by hand, 0 failed, 0 with nothing due."
+	},
+	"report 3": {
+		"value": "Last run 2026-11-02: skipped, another run was still busy."
+	},
+	"report 4": {
+		"value": "Last run 2026-11-02: 3 marked overdue, 2 sent, 0 to send by hand, NaN failed, 0 with nothing due."
+	},
+	"report 5": {
+		"value": "Last run : 1 marked overdue, 1 sent, 1 to send by hand, 1 failed, 1 with nothing due."
+	},
+	"report 6": {
+		"value": "Last run 20261102: 0 marked overdue, -1 sent, 0 to send by hand, 0 failed, 0 with nothing due."
+	},
+	"report 7": {
+		"value": "Last run 2026-11: 7 marked overdue, 0 sent, 0 to send by hand, 0 failed, 0 with nothing due."
+	}
+}

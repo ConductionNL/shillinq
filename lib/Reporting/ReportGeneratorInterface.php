@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+/**
  * Report generator interface
  *
  * One implementation per report type. A generator renders the report for a given
@@ -53,6 +58,8 @@
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting;
+
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 
 /**
  * Contract for a single report type's generator.

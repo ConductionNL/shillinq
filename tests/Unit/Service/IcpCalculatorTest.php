@@ -288,4 +288,42 @@ final class IcpCalculatorTest extends TestCase {
 	}//end testBuildSuppliesCsv()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+
+	/**
+	 * Pin aggregation and totals over merging, credit notes, ordering, blank
+	 * keys, unknown types and rounding.
+	 *
+	 * @return void
+	 */
+	public function testAggregateAndTotalsAreExact(): void {
+		$supplies = [
+			['buyerVatId' => 'DE2', 'supplyType' => 'S', 'amountExclVat' => 100.005],
+			['buyerVatId' => 'BE1', 'supplyType' => 'T', 'amountExclVat' => '50'],
+			['buyerVatId' => 'BE1', 'supplyType' => 'L', 'amountExclVat' => 20],
+			['buyerVatId' => 'DE2', 'supplyType' => 'S', 'amountExclVat' => -30.5],
+			['buyerVatId' => 'BE1', 'supplyType' => 'T', 'amountExclVat' => 5],
+			['buyerVatId' => 'AT9', 'supplyType' => 'X', 'amountExclVat' => 1],
+			['buyerVatId' => '', 'supplyType' => 'L', 'amountExclVat' => 999],
+			['buyerVatId' => 'NL1', 'amountExclVat' => 999],
+			['buyerVatId' => 'AT9', 'supplyType' => 'L'],
+		];
+		$lines = $this->calc->aggregateLines($supplies);
+
+		self::assertSame(
+			[
+				['buyerVatId' => 'AT9', 'supplyType' => 'L', 'amountExclVat' => 0.0],
+				['buyerVatId' => 'AT9', 'supplyType' => 'X', 'amountExclVat' => 1.0],
+				['buyerVatId' => 'BE1', 'supplyType' => 'L', 'amountExclVat' => 20.0],
+				['buyerVatId' => 'BE1', 'supplyType' => 'T', 'amountExclVat' => 55.0],
+				['buyerVatId' => 'DE2', 'supplyType' => 'S', 'amountExclVat' => 69.5],
+			],
+			$lines
+		);
+		self::assertSame(
+			['total' => 145.5, 'totalGoods' => 75.0, 'totalServices' => 69.5, 'totalTriangulation' => 55.0],
+			$this->calc->totals($lines + [9 => ['amountExclVat' => 0.004]])
+		);
+		self::assertSame(['total' => 0.0, 'totalGoods' => 0.0, 'totalServices' => 0.0, 'totalTriangulation' => 0.0], $this->calc->totals([]));
+
+	}//end testAggregateAndTotalsAreExact()
 }//end class

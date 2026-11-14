@@ -3,6 +3,9 @@
 /**
  * CSRD / ESRS XBRL taxonomy + instance build adapter port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The Shillinq sustainability surface (`bookkeeping-csrd-esrs`) needs
  * three artefacts to close out the CSRD reporting lifecycle:
  *
@@ -51,9 +54,6 @@
  * @link https://www.efrag.org/lab6
  *
  * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

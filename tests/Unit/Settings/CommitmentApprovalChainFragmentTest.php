@@ -157,15 +157,20 @@ final class CommitmentApprovalChainFragmentTest extends TestCase {
 	}//end testChainDeclaresOrderedApproverTiers()
 
 	/**
-	 * Approver roles are declared in the schema's own RBAC block, so the gate
-	 * resolves them against real groups.
+	 * Approver roles are assigned to groups in the schema's authorization
+	 * `roles` map, so the gate resolves them against real groups.
 	 *
 	 * @return void
 	 */
 	public function testApproverRolesAreDeclaredRbacRoles(): void {
-		$roles = ($this->commitment()['x-openregister-rbac']['roles'] ?? []);
+		$roles = [];
+		foreach (glob(dirname($this->fragmentPath) . '/*.json') as $file) {
+			$schema = (json_decode((string)file_get_contents($file), true)['components']['schemas']['Commitment'] ?? []);
+			$roles += ($schema['authorization']['roles'] ?? []);
+		}
+
 		foreach ($this->chain()['approvers'] as $tier) {
-			self::assertArrayHasKey($tier['role'], $roles, $tier['role'] . ' must be a declared RBAC role');
+			self::assertArrayHasKey($tier['role'], $roles, $tier['role'] . ' must be assigned to a group in authorization.roles');
 		}
 
 	}//end testApproverRolesAreDeclaredRbacRoles()

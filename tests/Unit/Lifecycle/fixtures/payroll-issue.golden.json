@@ -1,0 +1,135 @@
+{
+    "noPayroll": {
+        "result": false,
+        "logs": [],
+        "calls": [],
+        "configReads": []
+    },
+    "zeroGross": {
+        "result": false,
+        "logs": [],
+        "calls": [],
+        "configReads": []
+    },
+    "underDefault": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Deduction",
+            {
+                "findAll": {
+                    "filters": {
+                        "payrollId": "pr-1"
+                    }
+                }
+            }
+        ],
+        "configReads": [
+            "register",
+            "payroll_income_tax_ceiling_2026"
+        ]
+    },
+    "overConfigured": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Deduction",
+            {
+                "findAll": {
+                    "filters": {
+                        "payrollId": "pr-1"
+                    }
+                }
+            }
+        ],
+        "configReads": [
+            "register",
+            "payroll_income_tax_ceiling_2026"
+        ]
+    },
+    "exactConfigured": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Deduction",
+            {
+                "findAll": {
+                    "filters": {
+                        "payrollId": "pr-1"
+                    }
+                }
+            }
+        ],
+        "configReads": [
+            "register",
+            "payroll_income_tax_ceiling_2026"
+        ]
+    },
+    "badConfig": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Deduction",
+            {
+                "findAll": {
+                    "filters": {
+                        "payrollId": "pr-1"
+                    }
+                }
+            }
+        ],
+        "configReads": [
+            "register",
+            "payroll_income_tax_ceiling_2026"
+        ]
+    },
+    "noPeriod": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Deduction",
+            {
+                "findAll": {
+                    "filters": {
+                        "payrollId": "pr-9"
+                    }
+                }
+            }
+        ],
+        "configReads": [
+            "register"
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "PayrollGuard: issue check failed — denying transition (fail-closed)",
+                {
+                    "payrollId": "pr-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Deduction",
+            {
+                "findAll": {
+                    "filters": {
+                        "payrollId": "pr-1"
+                    }
+                }
+            }
+        ],
+        "configReads": [
+            "register"
+        ]
+    }
+}

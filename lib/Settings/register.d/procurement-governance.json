@@ -145,17 +145,28 @@
           "enabled": true,
           "description": "Every registration/qualification/revocation of a SupplierQualification is logged to OR's immutable audit trail with actor + timestamp."
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "procurement-officer": {
-              "scope": "administration",
-              "capabilities": ["create", "read", "update"]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": ["read"]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "FrameworkAgreement": {
@@ -273,17 +284,28 @@
           "enabled": true,
           "description": "Every call-off drawdown and status change of a FrameworkAgreement is logged to OR's immutable audit trail with actor + timestamp."
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "procurement-officer": {
-              "scope": "administration",
-              "capabilities": ["create", "read", "update"]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": ["read"]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

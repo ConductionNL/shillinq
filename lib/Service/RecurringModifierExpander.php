@@ -4,6 +4,9 @@
  * Hypothetical-schedule arithmetic for the two `RECURRING_*` budget-scenario
  * modifier kinds (REQ-BSC-006).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Split out of {@see BudgetScenarioEvaluator}, which owns the base-vs-scenario
  * cell model (LedgerGroup indexing, account-range resolution, parent rollup)
  * and had grown past PHPMD's `ExcessiveClassComplexity` threshold. This class
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

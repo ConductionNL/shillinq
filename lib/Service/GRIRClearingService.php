@@ -3,6 +3,9 @@
 /**
  * GR/IR Clearing Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the bookkeeping-purchase-order-3way chain
  * (REQ-PO3W-009). Materialises the two-stage Goods-Received/Invoice-Received
  * clearing GL postings that make the "no GRN -> no invoice approval"
@@ -68,21 +71,19 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\GRIRClearingServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 09 of bookkeeping-purchase-order-3way: GR/IR clearing + settlement
@@ -121,14 +122,15 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * reflects the GRN-accept + settlement + reconciliation triad — each path
  * is a single straight-through compute + post pipeline.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
  * @spec openspec/specs/grir-accrual-wiring/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
-class GRIRClearingService {
+class GRIRClearingService implements GRIRClearingServiceInterface {
 
 	/**
 	 * App-config key for the GR/IR clearing account number.
@@ -323,11 +325,8 @@ class GRIRClearingService {
 	 *                           referenced PO line is missing, or the GL
 	 *                           balance invariant fails.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Straight-through
-	 * clearing pipeline (resolve → compute → guard → post); splitting it
-	 * obscures the single source of the GR/IR posting shape (design D6).
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
+
 	 */
 	public function createGRIRPosting(
 		string $administrationId,
@@ -337,113 +336,150 @@ class GRIRClearingService {
 	): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$poLineId = (string)($grnLine['poLineId'] ?? '');
+		$run = new GRIRClearingRun(administrationId: $administrationId, grnLine: $grnLine);
+		$run->grn = $grn;
+		$run->threeWayMatchId = $threeWayMatchId;
+		$this->loadClearingPoLine(run: $run);
+		$skipped = $this->prepareClearing(run: $run);
+		if ($skipped !== null) {
+			return $skipped;
+		}
+
+		return $this->postBalancedTransaction(
+			administrationId: $administrationId,
+			transaction: $this->clearingHeader(run: $run),
+			lines: $run->lines()
+		);
+
+	}//end createGRIRPosting()
+
+	/**
+	 * Load the PO line the GRN line receives against.
+	 *
+	 * @param GRIRClearingRun $run The clearing run.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the GRN line names no PO line or it is missing.
+	 */
+	private function loadClearingPoLine(GRIRClearingRun $run): void {
+		$poLineId = (string)($run->grnLine['poLineId'] ?? '');
 		if ($poLineId === '') {
 			throw new RuntimeException('GR/IR posting requires a poLineId on the GRN line');
 		}
 
-		$poLine = $this->findOne(
+		$poLine = $this->records()->findOne(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'id' => $poLineId,
-				'administrationId' => $administrationId,
+				'administrationId' => $run->administrationId,
 			]
 		);
 		if ($poLine === null) {
 			throw new RuntimeException('Purchase order line not found');
 		}
 
-		// QuantityAccepted is multipleOf 0.001 on the GRN line; unitPrice is
-		// integer cents on the PO line (ADR-022). Compute the clearing
-		// amount as a single integer-cent value with HALF-UP rounding.
-		$quantityAccepted = (float)($grnLine['quantityAccepted'] ?? 0);
-		$unitPriceCents = (int)($poLine['unitPrice'] ?? 0);
-		$amountCents = $this->computeAmountCents(
-			quantity: $quantityAccepted,
-			unitPriceCents: $unitPriceCents
-		);
+		$run->poLine = $poLine;
+	}//end loadClearingPoLine()
 
-		if ($amountCents <= 0) {
-			return [
-				'posted' => false,
-				'message' => 'Accepted quantity yields a zero or negative clearing amount; skipped',
-			];
+	/**
+	 * Resolve the clearing amount, accounts and labels, or the not-posted
+	 * result that stops the posting.
+	 *
+	 * QuantityAccepted is multipleOf 0.001 on the GRN line; unitPrice is
+	 * integer cents on the PO line (ADR-022). The clearing amount is a single
+	 * integer-cent value with HALF-UP rounding.
+	 *
+	 * @param GRIRClearingRun $run The clearing run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null to post.
+	 */
+	private function prepareClearing(GRIRClearingRun $run): ?array {
+		$run->amountCents = $this->computeAmountCents(
+			quantity: (float)($run->grnLine['quantityAccepted'] ?? 0),
+			unitPriceCents: (int)($run->poLine['unitPrice'] ?? 0)
+		);
+		if ($run->amountCents <= 0) {
+			return $this->notPosted(message: 'Accepted quantity yields a zero or negative clearing amount; skipped');
 		}
 
-		$debitAccount = $this->resolvePoLineAccount(poLine: $poLine);
-		$creditAccount = $this->grIrClearingAccount(toleranceProfileId: $this->toleranceProfileId(poLine: $poLine));
+		$run->debitAccount = $this->resolvePoLineAccount(poLine: $run->poLine);
+		$run->creditAccount = $this->grIrClearingAccount(toleranceProfileId: $this->toleranceProfileId(poLine: $run->poLine));
+		$refusal = $this->clearingAccountRefusal(run: $run);
+		if ($refusal === null) {
+			$this->describeClearing(run: $run);
+		}
 
-		if ($debitAccount === '' || $creditAccount === '') {
+		return $refusal;
+	}//end prepareClearing()
+
+	/**
+	 * The not-posted result when a clearing account is not configured.
+	 *
+	 * @param GRIRClearingRun $run The clearing run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null.
+	 */
+	private function clearingAccountRefusal(GRIRClearingRun $run): ?array {
+		if ($run->debitAccount === '' || $run->creditAccount === '') {
 			$this->logger->warning(
 				'GRIRClearingService: GL accounts not configured; clearing posting skipped',
 				[
-					'grnLineId' => ($grnLine['id'] ?? null),
-					'debitAccount' => $debitAccount,
-					'creditAccount' => $creditAccount,
+					'grnLineId' => ($run->grnLine['id'] ?? null),
+					'debitAccount' => $run->debitAccount,
+					'creditAccount' => $run->creditAccount,
 				]
 			);
-			return [
-				'posted' => false,
-				'message' => 'GR/IR clearing accounts not configured',
-			];
+			return $this->notPosted(message: 'GR/IR clearing accounts not configured');
 		}
 
-		$costCenter = trim((string)($poLine['costCenter'] ?? ''));
-		$projectCode = trim((string)($poLine['projectCode'] ?? ''));
+		return null;
+	}//end clearingAccountRefusal()
 
-		$grnNumber = (string)($grn['grnNumber'] ?? '');
-		$grnLineId = (string)($grnLine['id'] ?? ($grnLine['@self']['id'] ?? ''));
-		$sourceReference = $threeWayMatchId ?? $grnLineId;
-		$grnLabel = 'GRN';
-		if ($grnNumber !== '') {
-			$grnLabel = $grnNumber;
-		}
+	/**
+	 * Derive the dimensions, GRN number and line id, description and posting
+	 * date of the clearing posting.
+	 *
+	 * @param GRIRClearingRun $run The clearing run.
+	 *
+	 * @return void
+	 */
+	private function describeClearing(GRIRClearingRun $run): void {
+		$run->costCenter = trim((string)($run->poLine['costCenter'] ?? ''));
+		$run->projectCode = trim((string)($run->poLine['projectCode'] ?? ''));
+		$run->grnNumber = (string)($run->grn['grnNumber'] ?? '');
+		$run->grnLineId = (string)($run->grnLine['id'] ?? ($run->grnLine['@self']['id'] ?? ''));
 
-		$description = sprintf(
+		$run->description = sprintf(
 			'GR/IR clearing — %s line %s — %d cents',
-			$grnLabel,
-			$grnLineId,
-			$amountCents
+			$this->nonEmptyOr(value: $run->grnNumber, fallback: 'GRN'),
+			$run->grnLineId,
+			$run->amountCents
 		);
-		$postingDate = $this->postingDate(grn: $grn);
+		$run->postingDate = $this->postingDate(grn: $run->grn);
+	}//end describeClearing()
 
-		$transactionData = [
-			'transactionNumber' => $this->clearingTransactionNumber(grnNumber: $grnNumber, grnLineId: $grnLineId),
+	/**
+	 * The clearing GLTransaction header.
+	 *
+	 * @param GRIRClearingRun $run The clearing run.
+	 *
+	 * @return array<string,mixed> The transaction header.
+	 */
+	private function clearingHeader(GRIRClearingRun $run): array {
+		return [
+			'transactionNumber' => $this->clearingTransactionNumber(grnNumber: $run->grnNumber, grnLineId: $run->grnLineId),
 			'journalCode' => self::JOURNAL_CODE_CLEARING,
-			'postingDate' => $postingDate,
-			'periodId' => $this->periodId(postingDate: $postingDate),
+			'postingDate' => $run->postingDate,
+			'periodId' => $this->periodId(postingDate: $run->postingDate),
 			'currency' => 'EUR',
-			'description' => $description,
-			'sourceReference' => $sourceReference,
-			'threeWayMatchId' => $threeWayMatchId,
+			'description' => $run->description,
+			'sourceReference' => $run->threeWayMatchId ?? $run->grnLineId,
+			'threeWayMatchId' => $run->threeWayMatchId,
 			'state' => 'draft',
-			'administrationId' => $administrationId,
+			'administrationId' => $run->administrationId,
 		];
-
-		return $this->postBalancedTransaction(
-			administrationId: $administrationId,
-			transaction: $transactionData,
-			lines: [
-				[
-					'accountNumber' => $debitAccount,
-					'side' => 'debit',
-					'amountCents' => $amountCents,
-					'description' => $description,
-					'costCenter' => $costCenter,
-					'projectCode' => $projectCode,
-				],
-				[
-					'accountNumber' => $creditAccount,
-					'side' => 'credit',
-					'amountCents' => $amountCents,
-					'description' => $description,
-					'costCenter' => $costCenter,
-					'projectCode' => $projectCode,
-				],
-			]
-		);
-
-	}//end createGRIRPosting()
+	}//end clearingHeader()
 
 	/**
 	 * Materialise the settlement GL posting on ThreeWayMatch approval
@@ -475,202 +511,238 @@ class GRIRClearingService {
 	 *                           invoice is missing, or the GL balance
 	 *                           invariant fails.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Settlement pipeline
-	 * mirrors createGRIRPosting() — splitting would scatter the balance
-	 * invariant across helpers.
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)  Multiple guard branches
-	 * cover the configured-account, tax-only, and missing-line edges; all
-	 * paths converge on the same balanced-posting call.
-	 * @SuppressWarnings(PHPMD.NPathComplexity)       Same as CyclomaticComplexity.
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
 	 */
 	public function settleGRIRPosting(string $administrationId, array $threeWayMatch): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$invoiceId = (string)($threeWayMatch['invoiceId'] ?? '');
-		if ($invoiceId === '') {
+		$run = new GRIRSettlementRun(administrationId: $administrationId, threeWayMatch: $threeWayMatch);
+		$this->loadSettlementInvoice(run: $run);
+		$skipped = $this->prepareSettlement(run: $run);
+		if ($skipped !== null) {
+			return $skipped;
+		}
+
+		$lines = $run->lines();
+		return $this->postBalancedTransaction(
+			administrationId: $administrationId,
+			transaction: $this->settlementHeader(run: $run),
+			lines: $lines
+		);
+
+	}//end settleGRIRPosting()
+
+	/**
+	 * Load the invoice the match names and read its totals.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the match names no invoice or it is missing.
+	 */
+	private function loadSettlementInvoice(GRIRSettlementRun $run): void {
+		if ($run->invoiceId === '') {
 			throw new RuntimeException('settleGRIRPosting requires invoiceId on the ThreeWayMatch');
 		}
 
-		$invoice = $this->findOne(
+		$invoice = $this->records()->findOne(
 			schema: self::SCHEMA_INVOICE,
 			filters: [
-				'id' => $invoiceId,
-				'administrationId' => $administrationId,
+				'id' => $run->invoiceId,
+				'administrationId' => $run->administrationId,
 			]
 		);
 		if ($invoice === null) {
 			throw new RuntimeException('Supplier invoice not found for settlement');
 		}
 
-		$totalExclVat = (int)($invoice['totalExclVat'] ?? 0);
-		$totalVat = (int)($invoice['totalVat'] ?? 0);
-		$totalInclVat = (int)($invoice['totalInclVat'] ?? ($totalExclVat + $totalVat));
+		$run->useInvoice(invoice: $invoice);
+	}//end loadSettlementInvoice()
 
-		if ($totalExclVat <= 0 && $totalInclVat <= 0) {
-			return [
-				'posted' => false,
-				'message' => 'Invoice has no monetary value to settle',
-			];
+	/**
+	 * Resolve everything the posting needs, or the not-posted result that
+	 * stops it: an invoice without value, unconfigured accounts, or nothing
+	 * left to post on the excl/VAT legs.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null to post.
+	 */
+	private function prepareSettlement(GRIRSettlementRun $run): ?array {
+		if ($run->hasMonetaryValue() === false) {
+			return $this->notPosted(message: 'Invoice has no monetary value to settle');
 		}
 
-		// Resolve the first matched PO line so we can preserve costCenter +
-		// projectCode on every settlement line (REQ-PO3W-009 — dimensional
-		// reporting contract). The matching engine guarantees at least one
-		// PO line is present on an approved match.
+		$this->resolveSettlementAccounts(run: $run);
+		$refusal = $this->settlementAccountRefusal(run: $run);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$this->describeSettlement(run: $run);
+		if ($run->hasLegAmounts() === false) {
+			// Defensive: nothing to post.
+			return $this->notPosted(message: 'Invoice carries no excl/vat amount to settle');
+		}
+
+		return null;
+	}//end prepareSettlement()
+
+	/**
+	 * Resolve the first matched PO line so costCenter + projectCode are
+	 * preserved on every settlement line (REQ-PO3W-009 — dimensional
+	 * reporting contract), and the accounts the posting uses. The matching
+	 * engine guarantees at least one PO line is present on an approved match.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return void
+	 */
+	private function resolveSettlementAccounts(GRIRSettlementRun $run): void {
 		$matchedPoLine = $this->resolveFirstMatchedPoLine(
-			administrationId: $administrationId,
-			threeWayMatch: $threeWayMatch
+			administrationId: $run->administrationId,
+			threeWayMatch: $run->threeWayMatch
 		);
 
-		$costCenter = trim((string)(($matchedPoLine['costCenter'] ?? '')));
-		$projectCode = trim((string)(($matchedPoLine['projectCode'] ?? '')));
+		$run->costCenter = trim((string)(($matchedPoLine['costCenter'] ?? '')));
+		$run->projectCode = trim((string)(($matchedPoLine['projectCode'] ?? '')));
 		$toleranceProfileId = $this->toleranceProfileId(poLine: $matchedPoLine);
 
-		$clearingAccount = $this->grIrClearingAccount(toleranceProfileId: $toleranceProfileId);
-		$apAccount = $this->accountsPayableAccount();
-		$vatAccount = $this->vatPayableAccount();
+		$run->clearingAccount = $this->grIrClearingAccount(toleranceProfileId: $toleranceProfileId);
+		$run->apAccount = $this->accountsPayableAccount();
+		$run->vatAccount = $this->vatPayableAccount();
+	}//end resolveSettlementAccounts()
 
-		if ($clearingAccount === '' || $apAccount === '') {
+	/**
+	 * The not-posted result when a settlement account is not configured.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null.
+	 */
+	private function settlementAccountRefusal(GRIRSettlementRun $run): ?array {
+		if ($run->clearingAccount === '' || $run->apAccount === '') {
 			$this->logger->warning(
 				'GRIRClearingService: settlement accounts not configured; settlement posting skipped',
 				[
-					'invoiceId' => $invoiceId,
-					'clearingAccount' => $clearingAccount,
-					'apAccount' => $apAccount,
+					'invoiceId' => $run->invoiceId,
+					'clearingAccount' => $run->clearingAccount,
+					'apAccount' => $run->apAccount,
 				]
 			);
-			return [
-				'posted' => false,
-				'message' => 'Settlement accounts not configured',
-			];
+			return $this->notPosted(message: 'Settlement accounts not configured');
 		}
 
-		if ($totalVat > 0 && $vatAccount === '') {
+		return $this->vatAccountRefusal(run: $run);
+	}//end settlementAccountRefusal()
+
+	/**
+	 * The not-posted result when the invoice carries VAT but no VAT account
+	 * is configured.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null.
+	 */
+	private function vatAccountRefusal(GRIRSettlementRun $run): ?array {
+		if ($run->totalVat > 0 && $run->vatAccount === '') {
 			$this->logger->warning(
 				'GRIRClearingService: VAT account not configured; settlement posting skipped',
-				['invoiceId' => $invoiceId]
+				['invoiceId' => $run->invoiceId]
 			);
-			return [
-				'posted' => false,
-				'message' => 'VAT settlement account not configured',
-			];
+			return $this->notPosted(message: 'VAT settlement account not configured');
 		}
 
-		$matchId = (string)($threeWayMatch['id'] ?? ($threeWayMatch['@self']['id'] ?? ''));
-		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? '');
+		return null;
+	}//end vatAccountRefusal()
 
-		$sourceReference = $invoiceId;
-		if ($matchId !== '') {
-			$sourceReference = $matchId;
-		}
+	/**
+	 * A not-posted result envelope.
+	 *
+	 * @param string $message Why nothing was posted.
+	 *
+	 * @return array{posted:false,message:string}
+	 */
+	private function notPosted(string $message): array {
+		return [
+			'posted' => false,
+			'message' => $message,
+		];
+	}//end notPosted()
 
-		$invoiceLabel = $invoiceId;
-		if ($invoiceNumber !== '') {
-			$invoiceLabel = $invoiceNumber;
-		}
+	/**
+	 * Derive the match id, invoice number, description and posting date.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return void
+	 */
+	private function describeSettlement(GRIRSettlementRun $run): void {
+		$match = $run->threeWayMatch;
+		$run->matchId = (string)($match['id'] ?? ($match['@self']['id'] ?? ''));
+		$run->invoiceNumber = (string)($run->invoice['invoiceNumber'] ?? '');
 
-		$matchLabel = 'n/a';
-		if ($matchId !== '') {
-			$matchLabel = $matchId;
-		}
-
-		$description = sprintf(
+		$run->description = sprintf(
 			'GR/IR settlement — invoice %s — match %s',
-			$invoiceLabel,
-			$matchLabel
+			$this->nonEmptyOr(value: $run->invoiceNumber, fallback: $run->invoiceId),
+			$this->nonEmptyOr(value: $run->matchId, fallback: 'n/a')
 		);
-		$postingDate = $this->postingDate(grn: $invoice);
+		$run->postingDate = $this->postingDate(grn: $run->invoice);
+	}//end describeSettlement()
 
-		// Build settlement lines per REQ-PO3W-009 settlement leg:
-		// DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
-		// balance accumulated at GRN time;
-		// DR VAT Input       (VAT)      - the input VAT the supplier charged
-		// us, which we'll reclaim on our VAT
-		// return (RGS 3.5 "inputVat").
-		// The spec calls this account "VAT
-		// Payable" by its credit-side label;
-		// on a purchase invoice the entry is
-		// on the debit side, so the entry
-		// balances against the AP leg below.
-		// CR Accounts Payable (incl VAT) - what we owe the supplier.
-		//
-		// Tax-only edge (excl == 0, vat > 0) materialises a balanced
-		// 2-line DR VAT / CR AP entry without the clearing leg.
-		$clearingDebit = $totalExclVat;
-		$vatDebit = $totalVat;
-		$apCredit = ($clearingDebit + $vatDebit);
-
-		if ($clearingDebit === 0 && $vatDebit === 0) {
-			// Defensive: nothing to post.
-			return [
-				'posted' => false,
-				'message' => 'Invoice carries no excl/vat amount to settle',
-			];
+	/**
+	 * A value, or a fallback when the value is empty.
+	 *
+	 * @param string      $value    The preferred value.
+	 * @param string|null $fallback The value used when it is empty.
+	 *
+	 * @return string|null The value or the fallback.
+	 */
+	private function nonEmptyOr(string $value, ?string $fallback): ?string {
+		if ($value !== '') {
+			return $value;
 		}
 
-		$lines = [];
-		if ($clearingDebit > 0) {
-			$lines[] = [
-				'accountNumber' => $clearingAccount,
-				'side' => 'debit',
-				'amountCents' => $clearingDebit,
-				'description' => $description,
-				'costCenter' => $costCenter,
-				'projectCode' => $projectCode,
-			];
-		}
+		return $fallback;
+	}//end nonEmptyOr()
 
-		if ($vatDebit > 0) {
-			$lines[] = [
-				'accountNumber' => $vatAccount,
-				'side' => 'debit',
-				'amountCents' => $vatDebit,
-				'description' => $description,
-				'costCenter' => $costCenter,
-				'projectCode' => $projectCode,
-			];
-		}
-
-		$lines[] = [
-			'accountNumber' => $apAccount,
-			'side' => 'credit',
-			'amountCents' => $apCredit,
-			'description' => $description,
-			'costCenter' => $costCenter,
-			'projectCode' => $projectCode,
-		];
-
-		$headerMatchId = null;
-		if ($matchId !== '') {
-			$headerMatchId = $matchId;
-		}
-
-		$transactionData = [
-			'transactionNumber' => $this->settlementTransactionNumber(
-				invoiceNumber: $invoiceNumber,
-				matchId: $matchId,
-				invoiceId: $invoiceId
-			),
+	/**
+	 * The settlement GLTransaction header.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed> The transaction header.
+	 */
+	private function settlementHeader(GRIRSettlementRun $run): array {
+		return [
+			'transactionNumber' => $this->settlementNumber(run: $run),
 			'journalCode' => self::JOURNAL_CODE_SETTLEMENT,
-			'postingDate' => $postingDate,
-			'periodId' => $this->periodId(postingDate: $postingDate),
+			'postingDate' => $run->postingDate,
+			'periodId' => $this->periodId(postingDate: $run->postingDate),
 			'currency' => 'EUR',
-			'description' => $description,
-			'sourceReference' => $sourceReference,
-			'threeWayMatchId' => $headerMatchId,
+			'description' => $run->description,
+			'sourceReference' => $this->nonEmptyOr(value: $run->matchId, fallback: $run->invoiceId),
+			'threeWayMatchId' => $this->nonEmptyOr(value: $run->matchId, fallback: null),
 			'state' => 'draft',
-			'administrationId' => $administrationId,
+			'administrationId' => $run->administrationId,
 		];
+	}//end settlementHeader()
 
-		return $this->postBalancedTransaction(
-			administrationId: $administrationId,
-			transaction: $transactionData,
-			lines: $lines
+	/**
+	 * The settlement transaction number for the run's invoice and match.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return string The transaction number.
+	 */
+	private function settlementNumber(GRIRSettlementRun $run): string {
+		return $this->settlementTransactionNumber(
+			invoiceNumber: $run->invoiceNumber,
+			matchId: $run->matchId,
+			invoiceId: $run->invoiceId
 		);
-
-	}//end settleGRIRPosting()
+	}//end settlementNumber()
 
 	/**
 	 * Compute the GR/IR clearing account saldo for a fiscal period
@@ -690,13 +762,13 @@ class GRIRClearingService {
 	 *
 	 * @throws \RuntimeException When the administration is inaccessible.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
 	 */
 	public function reconcileGRIRSaldoForPeriod(string $administrationId, string $periodId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
 		$clearingAccount = $this->grIrClearingAccount(toleranceProfileId: null);
-		$lines = $this->findAll(
+		$lines = $this->records()->findAll(
 			schema: self::SCHEMA_GL_LINE,
 			filters: [
 				'accountNumber' => $clearingAccount,
@@ -746,12 +818,13 @@ class GRIRClearingService {
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
 	public function postGRIRForGoodsReceiptAccept(string $administrationId, array $grn): array {
-		return $this->postGRIRForReceiptLines(
+		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
 			receipt: $grn,
 			lineSchema: self::SCHEMA_GRN_LINE,
 			parentField: 'grnId'
 		);
+		return $this->postGRIRForReceiptLines(fanOut: $fanOut);
 
 	}//end postGRIRForGoodsReceiptAccept()
 
@@ -773,21 +846,13 @@ class GRIRClearingService {
 	 * @spec openspec/specs/grir-accrual-wiring/spec.md
 	 */
 	public function postGRIRForServiceReceiptAccept(string $administrationId, array $receipt): array {
-		$normalised = $receipt;
-		if (trim((string)($normalised['grnNumber'] ?? '')) === '') {
-			$normalised['grnNumber'] = (string)($receipt['receiptNumber'] ?? '');
-		}
-
-		if (trim((string)($normalised['receivedAt'] ?? '')) === '') {
-			$normalised['receivedAt'] = (string)($receipt['periodEnd'] ?? ($receipt['confirmedAt'] ?? ''));
-		}
-
-		return $this->postGRIRForReceiptLines(
+		$fanOut = new GRIRReceiptFanOut(
 			administrationId: $administrationId,
-			receipt: $normalised,
+			receipt: $receipt,
 			lineSchema: self::SCHEMA_SVC_RECEIPT_LINE,
 			parentField: 'serviceReceiptId'
 		);
+		return $this->postGRIRForReceiptLines(fanOut: $fanOut->grnShaped());
 
 	}//end postGRIRForServiceReceiptAccept()
 
@@ -818,7 +883,7 @@ class GRIRClearingService {
 			];
 		}
 
-		$matches = $this->findAll(
+		$matches = $this->records()->findAll(
 			schema: self::SCHEMA_THREE_WAY_MATCH,
 			filters: [
 				'invoiceId' => $invoiceId,
@@ -826,20 +891,7 @@ class GRIRClearingService {
 			]
 		);
 
-		$candidate = null;
-		$candidateTime = '';
-		foreach ($matches as $match) {
-			$status = (string)($match['matchStatus'] ?? '');
-			if ($status !== self::MATCH_STATUS_AUTO_APPROVED && $status !== self::MATCH_STATUS_WITHIN_TOLERANCE) {
-				continue;
-			}
-
-			$createdAt = (string)($match['createdAt'] ?? '');
-			if ($candidate === null || $createdAt > $candidateTime) {
-				$candidate = $match;
-				$candidateTime = $createdAt;
-			}
-		}
+		$candidate = $this->latestApprovedMatch(matches: $matches);
 
 		if ($candidate === null) {
 			$this->logger->debug(
@@ -856,71 +908,91 @@ class GRIRClearingService {
 	}//end settleGRIRForMatchedInvoice()
 
 	/**
+	 * The most recently created auto_approved / within_tolerance match.
+	 *
+	 * @param iterable<mixed> $matches The invoice's ThreeWayMatch records.
+	 *
+	 * @return array<string,mixed>|null The match, or null when none qualifies.
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	private function latestApprovedMatch(iterable $matches): array|null {
+		$candidate = null;
+		$candidateTime = '';
+		foreach ($matches as $match) {
+			if ($this->isApprovedMatch(threeWayMatch: $match) === false) {
+				continue;
+			}
+
+			$createdAt = (string)($match['createdAt'] ?? '');
+			if ($candidate === null || $createdAt > $candidateTime) {
+				$candidate = $match;
+				$candidateTime = $createdAt;
+			}
+		}
+
+		return $candidate;
+	}//end latestApprovedMatch()
+
+	/**
+	 * Whether a match's status lets it settle the GR/IR posting.
+	 *
+	 * @param array<string,mixed> $threeWayMatch A ThreeWayMatch record.
+	 *
+	 * @return bool True for auto_approved and within_tolerance.
+	 *
+	 * @spec openspec/specs/grir-accrual-wiring/spec.md
+	 */
+	private function isApprovedMatch(array $threeWayMatch): bool {
+		$status = (string)($threeWayMatch['matchStatus'] ?? '');
+		return $status === self::MATCH_STATUS_AUTO_APPROVED || $status === self::MATCH_STATUS_WITHIN_TOLERANCE;
+	}//end isApprovedMatch()
+
+	/**
 	 * Shared per-line fan-out for {@see postGRIRForGoodsReceiptAccept()}
 	 * and {@see postGRIRForServiceReceiptAccept()}: loads every child line
 	 * row for the given receipt (by parent-FK field) and posts
 	 * {@see createGRIRPosting()} for every line with `quantityAccepted > 0`.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param array<string,mixed> $receipt The accepted receipt (GRN or SvcReceipt).
-	 * @param string $lineSchema Child line schema slug.
-	 * @param string $parentField FK field on the line row that references the receipt id.
+	 * @param GRIRReceiptFanOut $fanOut The receipt, its line schema and parent field, in its administration.
 	 *
 	 * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
 	 */
-	private function postGRIRForReceiptLines(
-		string $administrationId,
-		array $receipt,
-		string $lineSchema,
-		string $parentField,
-	): array {
-		$receiptId = (string)($receipt['id'] ?? ($receipt['@self']['id'] ?? ''));
+	private function postGRIRForReceiptLines(GRIRReceiptFanOut $fanOut): array {
+		$tally = new GRIRFanOutTally();
+		$receiptId = $fanOut->receiptId();
 		if ($receiptId === '') {
-			return [
-				'posted' => 0,
-				'skipped' => 0,
-				'results' => [],
-			];
+			return $tally->envelope();
 		}
 
-		$lines = $this->findAll(
-			schema: $lineSchema,
-			filters: [
-				$parentField => $receiptId,
-				'administrationId' => $administrationId,
-			]
-		);
-
-		$posted = 0;
-		$skipped = 0;
-		$results = [];
+		$lines = $this->records()->findAll(schema: $fanOut->lineSchema, filters: $fanOut->lineFilters(receiptId: $receiptId));
 		foreach ($lines as $line) {
-			$accepted = (float)($line['quantityAccepted'] ?? 0);
-			if ($accepted <= 0.0) {
-				$skipped++;
-				continue;
-			}
+			$tally->count(result: $this->postAcceptedReceiptLine(fanOut: $fanOut, line: $line));
+		}
 
-			$result = $this->createGRIRPosting(
-				administrationId: $administrationId,
-				grn: $receipt,
-				grnLine: $line
-			);
-			$results[] = $result;
-			if (($result['posted'] ?? false) === true) {
-				$posted++;
-			} else {
-				$skipped++;
-			}
-		}//end foreach
-
-		return [
-			'posted' => $posted,
-			'skipped' => $skipped,
-			'results' => $results,
-		];
+		return $tally->envelope();
 
 	}//end postGRIRForReceiptLines()
+
+	/**
+	 * Post one receipt line to GR/IR; null when nothing on it was accepted.
+	 *
+	 * @param GRIRReceiptFanOut $fanOut The fan-out.
+	 * @param array<string,mixed> $line The receipt line row.
+	 *
+	 * @return array<string,mixed>|null The createGRIRPosting() result, or null.
+	 */
+	private function postAcceptedReceiptLine(GRIRReceiptFanOut $fanOut, array $line): ?array {
+		if ((float)($line['quantityAccepted'] ?? 0) <= 0.0) {
+			return null;
+		}
+
+		return $this->createGRIRPosting(
+			administrationId: $fanOut->administrationId,
+			grn: $fanOut->receipt,
+			grnLine: $line
+		);
+	}//end postAcceptedReceiptLine()
 
 	/**
 	 * Compute the clearing line amount in integer cents.
@@ -968,6 +1040,36 @@ class GRIRClearingService {
 		array $transaction,
 		array $lines,
 	): array {
+		$debitCents = $this->assertBalanced(lines: $lines);
+
+		try {
+			return $this->persistPosting(administrationId: $administrationId, transaction: $transaction, lines: $lines, debitCents: $debitCents);
+		} catch (RuntimeException $e) {
+			// Re-raise balance failure as-is.
+			throw $e;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'GRIRClearingService: failed to persist GL posting',
+				[
+					'transactionNumber' => ($transaction['transactionNumber'] ?? null),
+					'exception' => $e->getMessage(),
+				]
+			);
+			throw new RuntimeException('Failed to persist GR/IR posting');
+		}//end try
+
+	}//end postBalancedTransaction()
+
+	/**
+	 * Assert the double-entry balance invariant over the lines and return the debit total.
+	 *
+	 * @param array<int,array> $lines Per-line entries.
+	 *
+	 * @return int The debit (= credit) total in cents.
+	 *
+	 * @throws \RuntimeException When the lines do not balance.
+	 */
+	private function assertBalanced(array $lines): int {
 		$debitCents = 0;
 		$creditCents = 0;
 		foreach ($lines as $line) {
@@ -988,55 +1090,56 @@ class GRIRClearingService {
 			);
 		}
 
-		try {
-			$header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
-			$headerId = (string)($header['id'] ?? ($header['@self']['id'] ?? ''));
+		return $debitCents;
+	}//end assertBalanced()
 
-			$lineNumber = 1;
-			$persistedLines = [];
-			foreach ($lines as $line) {
-				$persistedLines[] = $this->saveOnSchema(
-					schema: self::SCHEMA_GL_LINE,
-					data: [
-						'transactionId' => $headerId,
-						'lineNumber' => $lineNumber,
-						'accountNumber' => $line['accountNumber'],
-						'side' => $line['side'],
-						'amount' => round(($line['amountCents'] / 100.0), 2),
-						'currency' => 'EUR',
-						'description' => $line['description'],
-						'costCenter' => $line['costCenter'],
-						'costCenterCode' => $line['costCenter'],
-						'projectCode' => $line['projectCode'],
-						'periodId' => ($transaction['periodId'] ?? ''),
-						'administrationId' => $administrationId,
-					]
-				);
-				$lineNumber++;
-			}
+	/**
+	 * Save the balanced GLTransaction header and its GLLines.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $transaction      Header data.
+	 * @param array<int,array>    $lines            Per-line entries.
+	 * @param int                 $debitCents       The posting total in cents.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 *
+	 * @throws \Throwable When a save fails.
+	 */
+	private function persistPosting(string $administrationId, array $transaction, array $lines, int $debitCents): array {
+		$header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
+		$headerId = (string)($header['id'] ?? ($header['@self']['id'] ?? ''));
 
-			return [
-				'posted' => true,
-				'transaction' => $header,
-				'lines' => $persistedLines,
-				'amountCents' => $debitCents,
-				'message' => 'GR/IR posting materialised',
-			];
-		} catch (RuntimeException $e) {
-			// Re-raise balance failure as-is.
-			throw $e;
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GRIRClearingService: failed to persist GL posting',
-				[
-					'transactionNumber' => ($transaction['transactionNumber'] ?? null),
-					'exception' => $e->getMessage(),
+		$lineNumber = 1;
+		$persistedLines = [];
+		foreach ($lines as $line) {
+			$persistedLines[] = $this->saveOnSchema(
+				schema: self::SCHEMA_GL_LINE,
+				data: [
+					'transactionId' => $headerId,
+					'lineNumber' => $lineNumber,
+					'accountNumber' => $line['accountNumber'],
+					'side' => $line['side'],
+					'amount' => round(($line['amountCents'] / 100.0), 2),
+					'currency' => 'EUR',
+					'description' => $line['description'],
+					'costCenter' => $line['costCenter'],
+					'costCenterCode' => $line['costCenter'],
+					'projectCode' => $line['projectCode'],
+					'periodId' => ($transaction['periodId'] ?? ''),
+					'administrationId' => $administrationId,
 				]
 			);
-			throw new RuntimeException('Failed to persist GR/IR posting');
-		}//end try
+			$lineNumber++;
+		}
 
-	}//end postBalancedTransaction()
+		return [
+			'posted' => true,
+			'transaction' => $header,
+			'lines' => $persistedLines,
+			'amountCents' => $debitCents,
+			'message' => 'GR/IR posting materialised',
+		];
+	}//end persistPosting()
 
 	/**
 	 * Resolve the GL account number from the PO line, with a defensive
@@ -1054,7 +1157,7 @@ class GRIRClearingService {
 			return $account;
 		}
 
-		$fallback = trim($this->appConfig->getValueString(Application::APP_ID, 'inventory_account', ''));
+		$fallback = trim($this->appConfig->getValueString(AppIdentity::APP_ID, 'inventory_account', ''));
 		return $fallback;
 	}//end resolvePoLineAccount()
 
@@ -1074,7 +1177,7 @@ class GRIRClearingService {
 	 */
 	private function grIrClearingAccount(?string $toleranceProfileId): string {
 		if ($toleranceProfileId !== null && $toleranceProfileId !== '') {
-			$profile = $this->findOne(
+			$profile = $this->records()->findOne(
 				schema: self::SCHEMA_TOLERANCE_PROFILE,
 				filters: ['id' => $toleranceProfileId]
 			);
@@ -1088,7 +1191,7 @@ class GRIRClearingService {
 
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_GR_IR_CLEARING_ACCOUNT,
 				self::DEFAULT_GR_IR_CLEARING_ACCOUNT
 			)
@@ -1108,7 +1211,7 @@ class GRIRClearingService {
 	private function accountsPayableAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_ACCOUNTS_PAYABLE_ACCOUNT,
 				self::DEFAULT_AP_ACCOUNT
 			)
@@ -1128,7 +1231,7 @@ class GRIRClearingService {
 	private function vatPayableAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_VAT_PAYABLE_ACCOUNT,
 				self::DEFAULT_VAT_ACCOUNT
 			)
@@ -1185,7 +1288,7 @@ class GRIRClearingService {
 	private function resolveFirstMatchedPoLine(string $administrationId, array $threeWayMatch): array {
 		$matchedPoLineIds = $this->stringArray(input: ($threeWayMatch['matchedPoLineIds'] ?? []));
 		foreach ($matchedPoLineIds as $poLineId) {
-			$poLine = $this->findOne(
+			$poLine = $this->records()->findOne(
 				schema: self::SCHEMA_PO_LINE,
 				filters: [
 					'id' => $poLineId,
@@ -1199,7 +1302,7 @@ class GRIRClearingService {
 
 		$matchedPoIds = $this->stringArray(input: ($threeWayMatch['matchedPoIds'] ?? []));
 		foreach ($matchedPoIds as $poId) {
-			$rows = $this->findAll(
+			$rows = $this->records()->findAll(
 				schema: self::SCHEMA_PO_LINE,
 				filters: [
 					'poId' => $poId,
@@ -1290,6 +1393,18 @@ class GRIRClearingService {
 	}//end postingDate()
 
 	/**
+	 * The record store on the app's register, logging as this service.
+	 *
+	 * @return SchemaRecordStore The record store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'GRIRClearingService')
+		);
+	}//end records()
+
+	/**
 	 * Quarter identifier (yyyy-Qn) from a yyyy-mm-dd posting date.
 	 *
 	 * @param string $postingDate Posting date.
@@ -1365,61 +1480,12 @@ class GRIRClearingService {
 	}//end saveOnSchema()
 
 	/**
-	 * Find one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema Schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			return $row;
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Find all records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema Schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GRIRClearingService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
 	 * Resolve the OR register slug from app config.
 	 *
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

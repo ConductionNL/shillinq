@@ -3,6 +3,9 @@
 /**
  * Credit-note dispatch port for the 3-way-match exception workflow.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the bookkeeping-purchase-order-3way chain — when the
  * crediteuren-administrateur files a dispute on an out-of-tolerance
  * ThreeWayMatch the exception workflow auto-generates a UBL CreditNote
@@ -27,10 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
  * the PO; the port implementation owns the wire format (UBL XML body,
  * envelope metadata) and the HTTP transport.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 interface CreditNoteRequestAdapterInterface {
 	/**
@@ -73,7 +73,7 @@ interface CreditNoteRequestAdapterInterface {
 	 *                                                               outcome on the ThreeWayMatch but never blocks the
 	 *                                                               resolution flow on the dispatch outcome.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function submitDisputeCreditNote(array $payload): array;
 }//end interface

@@ -8,9 +8,8 @@
 export function generateUrl(url, params) {
 	let path = url
 	// Substitute {param} placeholders like the real @nextcloud/router does, so
-	// callers passing a params map (e.g. the W8 external-adapter detail page's
-	// `/api/admin/external-adapters/{id}`) resolve to a concrete path. Callers
-	// that pass no params (the settings store) are unaffected.
+	// callers passing a params map resolve to a concrete path. Callers that
+	// pass no params (the settings store) are unaffected.
 	if (params && typeof params === 'object') {
 		for (const [key, value] of Object.entries(params)) {
 			path = path.replace(

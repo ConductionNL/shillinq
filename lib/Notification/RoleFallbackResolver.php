@@ -37,7 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Notification;
 
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\OpenRegister\Service\Notification\RecipientResolverInterface;
+use OCA\OpenRegister\Notifications\Service\Notification\RecipientResolverInterface;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Throwable;

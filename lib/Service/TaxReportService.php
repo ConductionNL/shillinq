@@ -34,9 +34,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\TaxReportServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes a period-scoped Vpb quarterly tax statement from the general ledger.
@@ -51,7 +52,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-22
  */
-class TaxReportService {
+class TaxReportService implements TaxReportServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -117,42 +118,71 @@ class TaxReportService {
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-25
 	 */
 	public function computeAnnual(string $administrationId, int $fiscalYear): array {
-		$quarters = [];
-		$revenue = 0.0;
-		$operating = 0.0;
-		$nonOperating = 0.0;
-		$special = 0.0;
-		$untagged = 0;
-		for ($quarter = 1; $quarter <= 4; $quarter++) {
-			$statement = $this->computeQuarter(
-				administrationId: $administrationId,
-				fiscalYear: $fiscalYear,
-				quarter: $quarter
-			);
-			$quarters[] = $statement;
-			$revenue += $statement['revenue'];
-			$operating += $statement['operatingExpenses'];
-			$nonOperating += $statement['nonOperating'];
-			$special += $statement['specialDeductions'];
-			$untagged += $statement['untaggedCount'];
-		}
-
-		$net = ($revenue - $operating + $nonOperating - $special);
+		$quarters = $this->quarterStatements(administrationId: $administrationId, fiscalYear: $fiscalYear);
+		$totals = $this->annualTotals(quarters: $quarters);
+		$net = ($totals['revenue'] - $totals['operatingExpenses'] + $totals['nonOperating'] - $totals['specialDeductions']);
 
 		return [
 			'administrationId' => $administrationId,
 			'fiscalYear' => $fiscalYear,
 			'quarters' => $quarters,
-			'revenue' => $revenue,
-			'operatingExpenses' => $operating,
-			'nonOperating' => $nonOperating,
-			'specialDeductions' => $special,
+			'revenue' => $totals['revenue'],
+			'operatingExpenses' => $totals['operatingExpenses'],
+			'nonOperating' => $totals['nonOperating'],
+			'specialDeductions' => $totals['specialDeductions'],
 			'netTaxableIncome' => $net,
-			'untaggedCount' => $untagged,
+			'untaggedCount' => $totals['untaggedCount'],
 			'estimatedLiability' => $this->calculator->estimateLiability(netTaxableIncome: $net),
 		];
 
 	}//end computeAnnual()
+
+	/**
+	 * The four quarterly statements of a fiscal year, Q1 first.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param int    $fiscalYear       Fiscal year.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function quarterStatements(string $administrationId, int $fiscalYear): array {
+		$quarters = [];
+		for ($quarter = 1; $quarter <= 4; $quarter++) {
+			$quarters[] = $this->computeQuarter(
+				administrationId: $administrationId,
+				fiscalYear: $fiscalYear,
+				quarter: $quarter
+			);
+		}
+
+		return $quarters;
+
+	}//end quarterStatements()
+
+	/**
+	 * The bucket totals and untagged count summed over the quarters, in order.
+	 *
+	 * @param array<int,array<string,mixed>> $quarters The quarterly statements.
+	 *
+	 * @return array{revenue:float,operatingExpenses:float,nonOperating:float,specialDeductions:float,untaggedCount:int}
+	 */
+	private function annualTotals(array $quarters): array {
+		$totals = [
+			'revenue' => 0.0,
+			'operatingExpenses' => 0.0,
+			'nonOperating' => 0.0,
+			'specialDeductions' => 0.0,
+			'untaggedCount' => 0,
+		];
+		foreach ($quarters as $statement) {
+			foreach (array_keys($totals) as $key) {
+				$totals[$key] += $statement[$key];
+			}
+		}
+
+		return $totals;
+
+	}//end annualTotals()
 
 	/**
 	 * Fetch the GLLine rows for a period, joined with their Account type.
@@ -177,13 +207,7 @@ class TaxReportService {
 				['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]
 			);
 
-		$transactionIds = [];
-		foreach ($transactions as $transaction) {
-			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
-			if ($id !== null) {
-				$transactionIds[(string)$id] = true;
-			}
-		}
+		$transactionIds = self::transactionIdSet(transactions: $transactions);
 
 		$accounts = $this->fetchAccounts(administrationId: $administrationId);
 
@@ -194,33 +218,75 @@ class TaxReportService {
 
 		$rows = [];
 		foreach ($lines as $line) {
-			if (($line['eliminationFlag'] ?? false) === true) {
-				continue;
+			if (self::isTaxRowLine(line: $line, transactionIds: $transactionIds) === true) {
+				$rows[] = self::taxRow(line: $line, accounts: $accounts);
 			}
-
-			$transactionId = (string)($line['transactionId'] ?? '');
-			if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
-				continue;
-			}
-
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$account = ($accounts[$accountNumber] ?? []);
-			$rows[] = [
-				'accountNumber' => $accountNumber,
-				'accountName' => ($account['name'] ?? null),
-				'accountType' => (string)($account['accountType'] ?? ''),
-				'taxTreatment' => (string)($line['taxTreatment'] ?? ''),
-				'amount' => ($line['amount'] ?? 0),
-				'side' => (string)($line['side'] ?? ''),
-			];
-		}//end foreach
+		}
 
 		return $rows;
 	}//end fetchTaxRows()
+
+	/**
+	 * The ids of the period's transactions, as a set.
+	 *
+	 * @param iterable<mixed> $transactions The GLTransaction rows.
+	 *
+	 * @return array<string, true>
+	 */
+	private static function transactionIdSet(iterable $transactions): array {
+		$transactionIds = [];
+		foreach ($transactions as $transaction) {
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$transactionIds[(string)$id] = true;
+			}
+		}
+
+		return $transactionIds;
+	}//end transactionIdSet()
+
+	/**
+	 * Whether a GL line counts: not an elimination, in the period's transactions (when any), and on an account.
+	 *
+	 * @param mixed               $line           The GLLine row.
+	 * @param array<string, true> $transactionIds The period's transaction ids.
+	 *
+	 * @return bool
+	 */
+	private static function isTaxRowLine(mixed $line, array $transactionIds): bool {
+		if (($line['eliminationFlag'] ?? false) === true) {
+			return false;
+		}
+
+		$transactionId = (string)($line['transactionId'] ?? '');
+		if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
+			return false;
+		}
+
+		return (string)($line['accountNumber'] ?? '') !== '';
+	}//end isTaxRowLine()
+
+	/**
+	 * The tax row for one GL line, with its account's name and type.
+	 *
+	 * @param mixed                $line     The GLLine row.
+	 * @param array<string, mixed> $accounts The accounts by number.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function taxRow(mixed $line, array $accounts): array {
+		$accountNumber = (string)($line['accountNumber'] ?? '');
+		$account       = ($accounts[$accountNumber] ?? []);
+
+		return [
+			'accountNumber' => $accountNumber,
+			'accountName' => ($account['name'] ?? null),
+			'accountType' => (string)($account['accountType'] ?? ''),
+			'taxTreatment' => (string)($line['taxTreatment'] ?? ''),
+			'amount' => ($line['amount'] ?? 0),
+			'side' => (string)($line['side'] ?? ''),
+		];
+	}//end taxRow()
 
 	/**
 	 * Fetch the administration's chart-of-accounts keyed by accountNumber.
@@ -252,7 +318,7 @@ class TaxReportService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

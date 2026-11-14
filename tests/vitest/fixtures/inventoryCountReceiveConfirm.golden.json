@@ -1,0 +1,905 @@
+{
+	"CountOp / valid": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":3}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / valid without a system quantity": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":null}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / valid with a zero count": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":-4}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 0,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / valid with a text count": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":-1}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": "3",
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / valid without reconcile": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":3}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": false
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / missing location": {
+		"data": {
+			"location": "",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a non-negative physical count are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / missing sku": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a non-negative physical count are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / null count": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": null,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a non-negative physical count are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / undefined count": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":null}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / negative count": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": -1,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a non-negative physical count are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / missing sku and recently submitted": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a non-negative physical count are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 99999,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submitted 4999 ms ago": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"successMessage": null,
+			"lastSubmittedAt": 95001,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submitted 5000 ms ago": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"physicalQuantity": null,
+			"systemQuantity": null,
+			"reconcile": false,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Count recorded: variance {variance} (pending sync)|{\"variance\":3}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submitted in the future": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"successMessage": null,
+			"lastSubmittedAt": 100001,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submit fails with a message": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "server said no",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submit fails without a message": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record count.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submit fails with null": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record count.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submit fails with a string": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record count.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"CountOp / submit fails with a message object": {
+		"data": {
+			"location": "L1",
+			"sku": "S1",
+			"physicalQuantity": 7,
+			"systemQuantity": 4,
+			"reconcile": true,
+			"scanning": false,
+			"submitting": false,
+			"error": "obj",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "count",
+					"sku": "S1",
+					"location": "L1",
+					"physicalQuantity": 7,
+					"reconcile": true
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / valid": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Received {qty} units (pending sync)|{\"qty\":5}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "tx-9"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / valid without a result": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": "Cannot read properties of undefined (reading 'transactionId')",
+			"successMessage": "shillinq:Received {qty} units (pending sync)|{\"qty\":5}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / valid with a result without id": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Received {qty} units (pending sync)|{\"qty\":5}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / valid with a fractional quantity": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Received {qty} units (pending sync)|{\"qty\":0.5}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "tx-1"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 0.5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / missing location": {
+		"data": {
+			"location": "",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / missing sku": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / null quantity": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / undefined quantity": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": "(undefined)",
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / zero quantity": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 0,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / negative quantity": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": -1,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / text quantity": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Received {qty} units (pending sync)|{\"qty\":\"abc\"}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": "abc"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / missing sku and recently submitted": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 99999,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submitted 4999 ms ago": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"successMessage": null,
+			"lastSubmittedAt": 95001,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submitted 5000 ms ago": {
+		"data": {
+			"location": "L2",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": "Cannot read properties of undefined (reading 'transactionId')",
+			"successMessage": "shillinq:Received {qty} units (pending sync)|{\"qty\":5}",
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submitted in the future": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"successMessage": null,
+			"lastSubmittedAt": 100001,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submit fails with a message": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "server said no",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submit fails without a message": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record receipt.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submit fails with null": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record receipt.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submit fails with a string": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record receipt.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"ReceiveOp / submit fails with a message object": {
+		"data": {
+			"location": "L2",
+			"sku": "S2",
+			"quantity": 5,
+			"scanning": false,
+			"submitting": false,
+			"error": "obj",
+			"successMessage": null,
+			"lastSubmittedAt": 100000,
+			"lastTransactionId": "(undefined)"
+		},
+		"submits": [
+			{
+				"op": {
+					"type": "receive",
+					"sku": "S2",
+					"location": "L2",
+					"quantity": 5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	}
+}

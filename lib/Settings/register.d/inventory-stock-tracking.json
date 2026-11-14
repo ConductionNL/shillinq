@@ -182,31 +182,19 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_bookkeeper"
+          ]
         }
       }
     }

@@ -15,7 +15,7 @@ This specification defines the requirements for bookkeeping trial balance in the
 
 ## Requirements
 
-### REQ-TB-001: The system SHALL produce a trial balance as a declarative aggregation over `GLLine`, not a PHP report builder
+### Requirement: REQ-TB-001: The system SHALL produce a trial balance as a declarative aggregation over `GLLine`, not a PHP report builder
 
 The trial balance MUST be expressed as one (or composed three)
 `x-openregister-aggregations` query against T1's `GLLine` register,
@@ -49,7 +49,7 @@ discovery; both shapes satisfy this requirement.
   per OR convention) naming the trial balance grouping and
   reduction.
 
-### REQ-TB-002: The trial balance SHALL report opening balance, period movement, and closing balance per account per period
+### Requirement: REQ-TB-002: The trial balance SHALL report opening balance, period movement, and closing balance per account per period
 
 For each `(period_id, account_number)` pair, the aggregation MUST
 produce three buckets:
@@ -96,7 +96,7 @@ canonical four-column shape: opening Dr / opening Cr / movement Dr
   (`T1` is excluded because it is `reversed`); the net effect on
   account `4100` MUST be `-€100` credit.
 
-### REQ-TB-003: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion
+### Requirement: REQ-TB-003: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion
 
 The system SHALL satisfy this requirement: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion.
 
@@ -132,7 +132,7 @@ report-building logic.
   the delta to the cent and listing the offending
   `(transaction_id, account_number)` pairs.
 
-### REQ-TB-004: Each trial-balance row SHALL be drill-through-able to the underlying GL transactions
+### Requirement: REQ-TB-004: Each trial-balance row SHALL be drill-through-able to the underlying GL transactions
 
 Every row in the trial-balance output MUST carry sufficient
 identifiers (`period_id`, `account_number`) to construct a
@@ -163,7 +163,7 @@ filtered query.
   `2026-Q1` and account `4100`, showing all posted lines in
   that slice with their parent transaction reference.
 
-### REQ-TB-005: Trial balance SHALL be reachable through the shillinq manifest navigation as a `type: report` (or `type: index`) page
+### Requirement: REQ-TB-005: Trial balance SHALL be reachable through the shillinq manifest navigation as a `type: report` (or `type: index`) page
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Trial Balance`) with a page binding the trial-balance aggregation
@@ -199,7 +199,7 @@ MUST default to the currently-open `FiscalPeriod` from the
   parameter
 - **THEN** the page MUST default to `period=2026-Q2`.
 
-### REQ-TB-006: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder
+### Requirement: REQ-TB-006: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder
 
 The system SHALL satisfy this requirement: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder.
 

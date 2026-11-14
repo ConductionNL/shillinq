@@ -3,6 +3,9 @@
 /**
  * Timeline Dead-Letter Controller.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 09 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Admin-only REST endpoints over the {@see TimelineDeadLetter} register
  * populated by {@see PipelinqTimelineRetryJob} once a queued event
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -42,9 +42,10 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -66,7 +67,7 @@ class TimelineDeadLetterController extends Controller {
 	 * Construct the controller with its dependencies.
 	 *
 	 * @param IRequest $request The current HTTP request.
-	 * @param SettingsService $settings Resolves OR register slug + availability.
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for OR ObjectService.
 	 * @param IJobList $jobList Background-job list for manual re-queue.
 	 * @param ITimeFactory $time Time factory for stamping dispatchedAt.
@@ -74,13 +75,13 @@ class TimelineDeadLetterController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly ContainerInterface $container,
 		private readonly IJobList $jobList,
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -96,7 +97,7 @@ class TimelineDeadLetterController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function index(): JSONResponse {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(
@@ -139,7 +140,7 @@ class TimelineDeadLetterController extends Controller {
 			$this->logger->error(
 				'TimelineDeadLetterController: index failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -166,8 +167,56 @@ class TimelineDeadLetterController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function retry(string $id): JSONResponse {
+		$guard = $this->retryGuard(id: $id);
+		if ($guard !== null) {
+			return $guard;
+		}
+
+		try {
+			return $this->requeue(id: $id);
+		} catch (Throwable $e) {
+			return $this->retryFailed(id: $id, e: $e);
+		}
+
+	}//end retry()
+
+	/**
+	 * Log a failed retry and build the error response.
+	 *
+	 * @param string    $id Dead-letter entry id (UUID).
+	 * @param Throwable $e  The failure.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function retryFailed(string $id, Throwable $e): JSONResponse {
+		$this->logger->error(
+			'TimelineDeadLetterController: retry failed',
+			[
+				'app' => AppIdentity::APP_ID,
+				'id' => $id,
+				'exception' => $e->getMessage(),
+			]
+		);
+		return new JSONResponse(
+			['error' => 'Failed to re-queue dead-letter entry'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end retryFailed()
+
+	/**
+	 * Reject a retry request when OpenRegister is missing or the id is empty.
+	 *
+	 * @param string $id Dead-letter entry id (UUID).
+	 *
+	 * @return JSONResponse|null The rejection, or null when the request may proceed.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function retryGuard(string $id): JSONResponse|null {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(
 				['error' => 'OpenRegister is not available'],
@@ -182,117 +231,177 @@ class TimelineDeadLetterController extends Controller {
 			);
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
+		return null;
+	}//end retryGuard()
 
-			$dead = $this->loadDead(
-				objectService: $objectService,
-				registerSlug: $registerSlug,
-				id: $id
-			);
+	/**
+	 * Load the dead-letter entry and re-queue it.
+	 *
+	 * @param string $id Dead-letter entry id (UUID).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @throws Throwable When the container or OpenRegister fails.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function requeue(string $id): JSONResponse {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$registerSlug = $this->settings->getRegisterSlug();
 
-			if ($dead === null) {
-				return new JSONResponse(
-					['error' => 'Dead-letter entry not found'],
-					Http::STATUS_NOT_FOUND
-				);
-			}
+		$dead = $this->loadDead(objectService: $objectService, registerSlug: $registerSlug, id: $id);
 
-			$nowIso = $this->nowIso();
-
-			$retry = [
-				'type' => (string)($dead['type'] ?? ''),
-				'externalId' => (string)($dead['externalId'] ?? ''),
-				'contactId' => (string)($dead['contactId'] ?? ''),
-				'timestampIso' => (string)($dead['timestampIso'] ?? ''),
-				'metadata' => ($dead['metadata'] ?? null),
-				'retryCount' => 0,
-				'maxRetries' => PipelinqTimelineRetryJob::DEFAULT_MAX_RETRIES,
-				'nextRetryAt' => $nowIso,
-				'lastError' => null,
-				'lastAttemptAt' => null,
-			];
-
-			$saved = $objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelinePublishRetryEntry')
-				->saveObject(
-					object: $retry,
-					register: $registerSlug,
-					schema: 'TimelinePublishRetryEntry'
-				);
-
-			$entryId = $this->extractId(result: $saved);
-			if ($entryId === null || $entryId === '') {
-				return new JSONResponse(
-					['error' => 'Failed to persist re-queued entry'],
-					Http::STATUS_INTERNAL_SERVER_ERROR
-				);
-			}
-
-			$this->jobList->add(
-				PipelinqTimelineRetryJob::class,
-				['entryId' => $entryId]
-			);
-
-			// Stamp dispatchedAt on the dead-letter row so audit shows it
-			// was manually handled — preserve the row for post-mortem.
-			$dead['dispatchedAt'] = $nowIso;
-			$deadId = (string)($dead['id'] ?? $id);
-			if ($deadId === '') {
-				$deadId = $id;
-			}
-
-			// Ensure the saveObject() target stays the same row.
-			if (isset($dead['id']) === false) {
-				$dead['id'] = $deadId;
-			}
-
-			$objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelineDeadLetter')
-				->saveObject(
-					object: $dead,
-					register: $registerSlug,
-					schema: 'TimelineDeadLetter'
-				);
-
-			$this->logger->info(
-				'TimelineDeadLetterController: dead-letter manually re-queued',
-				[
-					'app' => Application::APP_ID,
-					'deadLetter' => $deadId,
-					'retryEntry' => $entryId,
-					'type' => $retry['type'],
-					'externalId' => $retry['externalId'],
-				]
-			);
-
+		if ($dead === null) {
 			return new JSONResponse(
-				[
-					'success' => true,
-					'entryId' => $entryId,
-					'deadLetter' => $deadId,
-				],
-				Http::STATUS_OK
+				['error' => 'Dead-letter entry not found'],
+				Http::STATUS_NOT_FOUND
 			);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'TimelineDeadLetterController: retry failed',
-				[
-					'app' => Application::APP_ID,
-					'id' => $id,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(
-				['error' => 'Failed to re-queue dead-letter entry'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+		}
 
-	}//end retry()
+		return $this->requeueDead(objectService: $objectService, registerSlug: $registerSlug, dead: $dead, id: $id);
+	}//end requeue()
+
+	/**
+	 * Write a fresh retry entry for a dead-letter row, schedule a tick and stamp the row.
+	 *
+	 * @param mixed                $objectService OR ObjectService.
+	 * @param string               $registerSlug  Register slug.
+	 * @param array<string, mixed> $dead          Dead-letter row.
+	 * @param string               $id            Dead-letter entry id (UUID).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @throws Throwable When OpenRegister fails to save.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function requeueDead(mixed $objectService, string $registerSlug, array $dead, string $id): JSONResponse {
+		$nowIso = $this->nowIso();
+
+		$retry = $this->buildRetryEntry(dead: $dead, nowIso: $nowIso);
+
+		$saved = $this->saveTo(objectService: $objectService, registerSlug: $registerSlug, schema: 'TimelinePublishRetryEntry', object: $retry);
+
+		$entryId = $this->extractId(result: $saved);
+		if ($entryId === null || $entryId === '') {
+			return new JSONResponse(['error' => 'Failed to persist re-queued entry'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		$this->jobList->add(PipelinqTimelineRetryJob::class, ['entryId' => $entryId]);
+
+		// Stamp dispatchedAt on the dead-letter row so audit shows it
+		// was manually handled — preserve the row for post-mortem.
+		$dead['dispatchedAt'] = $nowIso;
+		$deadId = $this->saveDead(objectService: $objectService, registerSlug: $registerSlug, dead: $dead, id: $id);
+
+		return $this->requeuedResponse(deadId: $deadId, entryId: $entryId, retry: $retry);
+	}//end requeueDead()
+
+	/**
+	 * Build the fresh retry entry for a dead-letter row.
+	 *
+	 * @param array<string, mixed> $dead   Dead-letter row.
+	 * @param string               $nowIso Current UTC time as ISO-8601.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function buildRetryEntry(array $dead, string $nowIso): array {
+		return [
+			'type' => (string)($dead['type'] ?? ''),
+			'externalId' => (string)($dead['externalId'] ?? ''),
+			'contactId' => (string)($dead['contactId'] ?? ''),
+			'timestampIso' => (string)($dead['timestampIso'] ?? ''),
+			'metadata' => ($dead['metadata'] ?? null),
+			'retryCount' => 0,
+			'maxRetries' => PipelinqTimelineRetryJob::DEFAULT_MAX_RETRIES,
+			'nextRetryAt' => $nowIso,
+			'lastError' => null,
+			'lastAttemptAt' => null,
+		];
+	}//end buildRetryEntry()
+
+	/**
+	 * Save an object into a schema of the register.
+	 *
+	 * @param mixed                $objectService OR ObjectService.
+	 * @param string               $registerSlug  Register slug.
+	 * @param string               $schema        Schema slug.
+	 * @param array<string, mixed> $object        Object to save.
+	 *
+	 * @return mixed saveObject() return value.
+	 *
+	 * @throws Throwable When OpenRegister fails to save.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function saveTo(mixed $objectService, string $registerSlug, string $schema, array $object): mixed {
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema($schema)
+			->saveObject(
+				object: $object,
+				register: $registerSlug,
+				schema: $schema
+			);
+	}//end saveTo()
+
+	/**
+	 * Save the stamped dead-letter row back onto the same row.
+	 *
+	 * @param mixed                $objectService OR ObjectService.
+	 * @param string               $registerSlug  Register slug.
+	 * @param array<string, mixed> $dead          Stamped dead-letter row.
+	 * @param string               $id            Dead-letter entry id (UUID).
+	 *
+	 * @return string The dead-letter id.
+	 *
+	 * @throws Throwable When OpenRegister fails to save.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function saveDead(mixed $objectService, string $registerSlug, array $dead, string $id): string {
+		$deadId = (string)($dead['id'] ?? $id);
+		if ($deadId === '') {
+			$deadId = $id;
+		}
+
+		// Ensure the saveObject() target stays the same row.
+		if (isset($dead['id']) === false) {
+			$dead['id'] = $deadId;
+		}
+
+		$this->saveTo(objectService: $objectService, registerSlug: $registerSlug, schema: 'TimelineDeadLetter', object: $dead);
+
+		return $deadId;
+	}//end saveDead()
+
+	/**
+	 * Log the manual re-queue and build the success response.
+	 *
+	 * @param string               $deadId  Dead-letter id.
+	 * @param string               $entryId New retry entry id.
+	 * @param array<string, mixed> $retry   The retry entry that was saved.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+	 */
+	private function requeuedResponse(string $deadId, string $entryId, array $retry): JSONResponse {
+		$this->logger->info(
+			'TimelineDeadLetterController: dead-letter manually re-queued',
+			[
+				'app' => AppIdentity::APP_ID,
+				'deadLetter' => $deadId,
+				'retryEntry' => $entryId,
+				'type' => $retry['type'],
+				'externalId' => $retry['externalId'],
+			]
+		);
+
+		return new JSONResponse(['success' => true, 'entryId' => $entryId, 'deadLetter' => $deadId], Http::STATUS_OK);
+	}//end requeuedResponse()
 
 	/**
 	 * Look up a dead-letter entry by id.
@@ -305,10 +414,10 @@ class TimelineDeadLetterController extends Controller {
 	 */
 	private function loadDead(mixed $objectService, string $registerSlug, string $id): ?array {
 		try {
-			$record = $objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelineDeadLetter')
-				->find($id);
+			$record = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('TimelineDeadLetter'),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			return null;
 		}
@@ -334,33 +443,90 @@ class TimelineDeadLetterController extends Controller {
 		}
 
 		if (is_object($result) === true) {
-			if (method_exists($result, 'getUuid') === true) {
-				$uuid = (string)$result->getUuid();
-				if ($uuid !== '') {
-					return $uuid;
-				}
-			}
+			return $this->extractObjectId(result: $result);
+		}
 
-			if (method_exists($result, 'jsonSerialize') === true) {
-				$payload = $result->jsonSerialize();
-				if (is_array($payload) === true) {
-					$id = (string)($payload['id'] ?? ($payload['@self']['id'] ?? ''));
-					if ($id !== '') {
-						return $id;
-					}
-				}
-			}
+		return null;
+	}//end extractId()
 
-			if (method_exists($result, 'getId') === true) {
-				$id = (string)$result->getId();
+	/**
+	 * Extract a string id from an object saveObject() return value.
+	 *
+	 * Tries getUuid(), then the serialised payload, then getId().
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function extractObjectId(object $result): string|null {
+		$id = $this->uuidIdOf(result: $result);
+		if ($id === null) {
+			$id = $this->payloadIdOf(result: $result);
+		}
+
+		if ($id === null) {
+			$id = $this->getIdOf(result: $result);
+		}
+
+		return $id;
+	}//end extractObjectId()
+
+	/**
+	 * Non-empty getUuid() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function uuidIdOf(object $result): string|null {
+		if (method_exists($result, 'getUuid') === true) {
+			$uuid = (string)$result->getUuid();
+			if ($uuid !== '') {
+				return $uuid;
+			}
+		}
+
+		return null;
+	}//end uuidIdOf()
+
+	/**
+	 * Non-empty id from an object's jsonSerialize() payload.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function payloadIdOf(object $result): string|null {
+		if (method_exists($result, 'jsonSerialize') === true) {
+			$payload = $result->jsonSerialize();
+			if (is_array($payload) === true) {
+				$id = (string)($payload['id'] ?? ($payload['@self']['id'] ?? ''));
 				if ($id !== '') {
 					return $id;
 				}
 			}
-		}//end if
+		}
 
 		return null;
-	}//end extractId()
+	}//end payloadIdOf()
+
+	/**
+	 * Non-empty getId() value of an object.
+	 *
+	 * @param object $result saveObject() return value.
+	 *
+	 * @return string|null
+	 */
+	private function getIdOf(object $result): string|null {
+		if (method_exists($result, 'getId') === true) {
+			$id = (string)$result->getId();
+			if ($id !== '') {
+				return $id;
+			}
+		}
+
+		return null;
+	}//end getIdOf()
 
 	/**
 	 * Current UTC time as ISO-8601.
@@ -391,30 +557,71 @@ class TimelineDeadLetterController extends Controller {
 		}
 
 		if (is_object($object) === true) {
-			if (method_exists($object, 'jsonSerialize') === true) {
-				$serialised = $object->jsonSerialize();
-				if (is_array($serialised) === true) {
-					return $serialised;
-				}
-			}
-
-			if (method_exists($object, 'getObject') === true) {
-				$inner = $object->getObject();
-				if (is_array($inner) === true) {
-					if (method_exists($object, 'getUuid') === true) {
-						$uuid = (string)$object->getUuid();
-						if ($uuid !== '' && isset($inner['id']) === false) {
-							$inner['id'] = $uuid;
-						}
-					}
-
-					return $inner;
-				}
-			}
-
-			return (array)$object;
-		}//end if
+			return $this->objectToArray(object: $object);
+		}
 
 		return null;
 	}//end toArray()
+
+	/**
+	 * Normalise an OR record object into a flat array.
+	 *
+	 * @param object $object OR ObjectService payload.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function objectToArray(object $object): array {
+		if (method_exists($object, 'jsonSerialize') === true) {
+			$serialised = $object->jsonSerialize();
+			if (is_array($serialised) === true) {
+				return $serialised;
+			}
+		}
+
+		$inner = $this->innerObjectOf(object: $object);
+		if ($inner !== null) {
+			return $inner;
+		}
+
+		return (array)$object;
+	}//end objectToArray()
+
+	/**
+	 * The getObject() array of a record, with its uuid copied in as id.
+	 *
+	 * @param object $object OR ObjectService payload.
+	 *
+	 * @return array<string, mixed>|null Null when the record has no array getObject().
+	 */
+	private function innerObjectOf(object $object): array|null {
+		if (method_exists($object, 'getObject') === false) {
+			return null;
+		}
+
+		$inner = $object->getObject();
+		if (is_array($inner) === false) {
+			return null;
+		}
+
+		return $this->withUuidId(object: $object, inner: $inner);
+	}//end innerObjectOf()
+
+	/**
+	 * Copy the record's uuid into the inner array as id when it has none.
+	 *
+	 * @param object               $object OR ObjectService payload.
+	 * @param array<string, mixed> $inner  The record's getObject() array.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withUuidId(object $object, array $inner): array {
+		if (method_exists($object, 'getUuid') === true) {
+			$uuid = (string)$object->getUuid();
+			if ($uuid !== '' && isset($inner['id']) === false) {
+				$inner['id'] = $uuid;
+			}
+		}
+
+		return $inner;
+	}//end withUuidId()
 }//end class

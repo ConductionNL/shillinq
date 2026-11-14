@@ -1,0 +1,1266 @@
+{
+	"TransferOp / valid without a db": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":3,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / valid with more stock": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":3,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / valid with exactly the stock": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":3,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / valid with less stock": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Only {onHand} units at {loc}, cannot transfer {qty}.|{\"onHand\":2,\"loc\":\"A\",\"qty\":3}",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / valid with an undefined stock": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":3,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / stock read throws": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":3,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / missing source": {
+		"data": {
+			"fromLocation": "",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / missing destination": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / missing sku": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / null quantity": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / zero quantity": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 0,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / negative quantity": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": -1,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / text quantity": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":\"abc\",\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": "abc"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / fractional quantity": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":0.5,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 0.5
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / same locations": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "A",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source and destination must differ.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / same locations and no sku": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "A",
+			"sku": "",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Source, destination, SKU and a positive quantity are required.",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submitted 4999 ms ago": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"successMessage": null,
+			"lastSubmittedAt": 95001
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submitted 5000 ms ago": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"successMessage": "shillinq:Transferred {qty} units {from} → {to} (pending sync)|{\"qty\":3,\"from\":\"A\",\"to\":\"B\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submitted in the future": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"successMessage": null,
+			"lastSubmittedAt": 100001
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / less stock and recently submitted": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Only {onHand} units at {loc}, cannot transfer {qty}.|{\"onHand\":1,\"loc\":\"A\",\"qty\":3}",
+			"successMessage": null,
+			"lastSubmittedAt": 99999
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submit fails with a message": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "server said no",
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submit fails without a message": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record transfer.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submit fails with null": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record transfer.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submit fails with a string": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record transfer.",
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"TransferOp / submit fails with a message object": {
+		"data": {
+			"fromLocation": "A",
+			"toLocation": "B",
+			"sku": "S1",
+			"quantity": 3,
+			"scanning": false,
+			"submitting": false,
+			"error": "obj",
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S1",
+				"location": "A"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "transfer",
+					"sku": "S1",
+					"location": "A",
+					"toLocation": "B",
+					"quantity": 3
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / valid without a db": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / valid without an order line": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": null
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / valid with more stock": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / valid with exactly the stock": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / valid with less stock": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": "shillinq:Only {onHand} units available; reduce quantity or cancel.|{\"onHand\":3}",
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / valid with an undefined stock": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / stock read throws": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / missing location": {
+		"data": {
+			"location": "",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / missing sku": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / null quantity": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / zero quantity": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 0,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / negative quantity": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": -2,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Location, SKU and a positive quantity are required.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 0
+		},
+		"reads": [],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / text quantity": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":\"abc\",\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": "abc",
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submitted 4999 ms ago": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 95001
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submitted 5000 ms ago": {
+		"data": {
+			"location": "L1",
+			"sku": "",
+			"orderLineId": "",
+			"quantity": null,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": null,
+			"successMessage": "shillinq:Picked {qty} × {sku} (pending sync)|{\"qty\":4,\"sku\":\"S9\"}",
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submitted in the future": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Already submitted; waiting for server ACK.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 100001
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / less stock and recently submitted": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": null,
+			"warning": "shillinq:Only {onHand} units available; reduce quantity or cancel.|{\"onHand\":1}",
+			"successMessage": null,
+			"lastSubmittedAt": 99999
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submit fails with a message": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "server said no",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submit fails without a message": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record pick.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submit fails with null": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record pick.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	},
+	"PickOp / submit fails with a string": {
+		"data": {
+			"location": "L1",
+			"sku": "S9",
+			"orderLineId": "OL-7",
+			"quantity": 4,
+			"scanning": false,
+			"submitting": false,
+			"error": "shillinq:Could not record pick.",
+			"warning": null,
+			"successMessage": null,
+			"lastSubmittedAt": 100000
+		},
+		"reads": [
+			{
+				"db": "db",
+				"sku": "S9",
+				"location": "L1"
+			}
+		],
+		"submits": [
+			{
+				"op": {
+					"type": "pick",
+					"sku": "S9",
+					"location": "L1",
+					"quantity": 4,
+					"orderLineId": "OL-7"
+				},
+				"submitting": true
+			}
+		],
+		"returned": "(undefined)",
+		"thrown": null
+	}
+}

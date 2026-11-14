@@ -17,6 +17,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -25,13 +28,13 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\BookingNotificationService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BookingNotificationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Hourly cron job that evaluates reminder triggers for upcoming bookings.
@@ -67,7 +70,7 @@ class BookingReminderJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time The time factory.
-	 * @param BookingNotificationService $notificationService The notification service.
+	 * @param BookingNotificationServiceInterface $notificationService The notification service.
 	 * @param IAppConfig $appConfig The app config.
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -76,7 +79,7 @@ class BookingReminderJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private BookingNotificationService $notificationService,
+		private BookingNotificationServiceInterface $notificationService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
@@ -134,54 +137,86 @@ class BookingReminderJob extends TimedJob {
 	 */
 	private function processReminderWindow(int $windowMinutes): int {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-			if ($registerSlug === '') {
-				$registerSlug = 'shillinq';
-			}
-
-			$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-			$windowStart = $now->modify('+' . ($windowMinutes - self::MATCH_TOLERANCE_MINUTES) . ' minutes');
-			$windowEnd = $now->modify('+' . ($windowMinutes + self::MATCH_TOLERANCE_MINUTES) . ' minutes');
-
-			// ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
-			// findObjects() does not exist on OpenRegister's ObjectService.
-			$bookings = $this->objectService
-				->setRegister($registerSlug)
-				->setSchema('Booking')
-				->findAll(
-					[
-						'filters' => [
-							'status' => 'confirmed',
-							'startTime[gte]' => $windowStart->format('c'),
-							'startTime[lte]' => $windowEnd->format('c'),
-						],
-						'limit' => 500,
-					]
-				);
-
-			$fired = 0;
-			foreach ($bookings as $booking) {
-				$hoursUntil = round(num: $windowMinutes / 60, precision: 1);
-				$bookingWithCtx = array_merge(
-					$booking,
-					['hoursUntilEvent' => $hoursUntil]
-				);
-
-				$this->notificationService->evaluateEventTrigger(
-					eventType: 'reminder',
-					booking: $bookingWithCtx
-				);
-				$fired++;
-			}
-
-			return $fired;
+			return $this->remind(bookings: $this->bookingsInWindow(windowMinutes: $windowMinutes), windowMinutes: $windowMinutes);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: BookingReminderJob window failed',
 				['windowMinutes' => $windowMinutes, 'exception' => $e->getMessage()]
 			);
 			return 0;
-		}//end try
-
+		}
 	}//end processReminderWindow()
+
+	/**
+	 * The confirmed bookings starting within windowMinutes ± tolerance (at most 500).
+	 *
+	 * ADR-022: uses the real ObjectService fluent API (setRegister/setSchema/findAll);
+	 * findObjects() does not exist on OpenRegister's ObjectService.
+	 *
+	 * @param int $windowMinutes Minutes before booking start for this reminder.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function bookingsInWindow(int $windowMinutes): array {
+		$registerSlug = $this->registerSlug();
+		$filters = self::windowFilters(windowMinutes: $windowMinutes);
+
+		return $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('Booking')
+			->findAll(['filters' => $filters, 'limit' => 500]);
+	}//end bookingsInWindow()
+
+	/**
+	 * The configured register slug, 'shillinq' when blank.
+	 *
+	 * @return string
+	 */
+	private function registerSlug(): string {
+		$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
+		if ($registerSlug === '') {
+			return 'shillinq';
+		}
+
+		return $registerSlug;
+	}//end registerSlug()
+
+	/**
+	 * The booking filter: confirmed, starting between now + window - tolerance and now + window + tolerance (UTC, ISO 8601).
+	 *
+	 * @param int $windowMinutes Minutes before booking start for this reminder.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function windowFilters(int $windowMinutes): array {
+		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		$windowStart = $now->modify('+' . ($windowMinutes - self::MATCH_TOLERANCE_MINUTES) . ' minutes');
+		$windowEnd = $now->modify('+' . ($windowMinutes + self::MATCH_TOLERANCE_MINUTES) . ' minutes');
+
+		return [
+			'status' => 'confirmed',
+			'startTime[gte]' => $windowStart->format('c'),
+			'startTime[lte]' => $windowEnd->format('c'),
+		];
+	}//end windowFilters()
+
+	/**
+	 * Fire one booking.reminder event per booking, with the hours until it starts.
+	 *
+	 * @param array<int, mixed> $bookings      The bookings in the window.
+	 * @param int               $windowMinutes Minutes before booking start for this reminder.
+	 *
+	 * @return int Number of reminder events fired.
+	 */
+	private function remind(array $bookings, int $windowMinutes): int {
+		$fired = 0;
+		foreach ($bookings as $booking) {
+			$hoursUntil = round(num: $windowMinutes / 60, precision: 1);
+			$bookingWithCtx = array_merge($booking, ['hoursUntilEvent' => $hoursUntil]);
+			$this->notificationService->evaluateEventTrigger(eventType: 'reminder', booking: $bookingWithCtx);
+			$fired++;
+		}
+
+		return $fired;
+	}//end remind()
 }//end class

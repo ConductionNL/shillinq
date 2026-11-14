@@ -1,0 +1,73 @@
+{
+    "voldoet": {
+        "result": true,
+        "logs": []
+    },
+    "noOutcome": {
+        "result": true,
+        "logs": []
+    },
+    "shortSubstantiation": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden",
+                {
+                    "toetsId": "t-1",
+                    "outcome": "voldoet_niet",
+                    "length": 4
+                }
+            ]
+        ]
+    },
+    "multibyteShort": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden",
+                {
+                    "toetsId": "unknown",
+                    "outcome": "voldoet_niet",
+                    "length": 10
+                }
+            ]
+        ]
+    },
+    "noBevinding": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden",
+                {
+                    "toetsId": "t-2",
+                    "outcome": "voldoet_niet"
+                }
+            ]
+        ]
+    },
+    "complete": {
+        "result": true,
+        "logs": []
+    },
+    "other.onzeker": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden",
+                {
+                    "toetsId": "unknown",
+                    "outcome": "onzeker",
+                    "length": 1
+                }
+            ]
+        ]
+    },
+    "other.deels": {
+        "result": true,
+        "logs": []
+    }
+}

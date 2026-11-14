@@ -4,17 +4,10 @@
  */
 
 import type { DefineComponent } from 'vue'
+import type { BookingWidgetConfig } from './index.js'
 
-export interface BookingWidgetProps {
-	businessId: string
-	apiBase: string
-	apiKey: string
-	resourceId?: string
-	lang?: string
-	primaryColor?: string
-	darkMode?: boolean
-	translations?: Record<string, string>
-}
+/** The init() config without its mount target: the component is the mount. */
+export type BookingWidgetProps = Omit<BookingWidgetConfig, 'containerId' | 'element'>
 
 declare const BookingWidget: DefineComponent<BookingWidgetProps>
 export { BookingWidget }

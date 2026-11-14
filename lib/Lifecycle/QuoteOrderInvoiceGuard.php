@@ -3,6 +3,9 @@
 /**
  * Quote -> Order -> Invoice Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the Sales Funnel (Q2C) registers
  * (bookkeeping-quote-order-invoice, T3). The bulk of the quote-to-cash model is
  * declarative (schema metadata + x-openregister-lifecycle +
@@ -57,9 +60,6 @@
  *
  * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -67,7 +67,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use Closure;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -212,35 +212,65 @@ class QuoteOrderInvoiceGuard {
 		return $this->evaluate(
 			context: 'confirm-delivery',
 			id: $deliveryId,
-			check: function () use ($deliveryId, $object): bool {
-				$delivery = $this->resolveObject(schema: 'Delivery', id: $deliveryId, object: $object);
-				if ($delivery === null || $this->deliveryLinesComplete(delivery: $delivery) === false) {
-					return false;
-				}
-
-				$order = $this->resolveObject(
-					schema: 'SalesOrder',
-					id: (string)($delivery['sourceOrderReference'] ?? ''),
-					object: null
-				);
-				$customer = trim((string)($order['customerReference'] ?? ''));
-				if ($order === null || $customer === '') {
-					return false;
-				}
-
-				if ($this->customerIsBlocked(
-					customerReference: $customer,
-					blockingSeverities: ['block-delivery']
-				) === true
-				) {
-					return false;
-				}
-
-				return $this->deliveryStockAvailable(delivery: $delivery);
-			}
+			check: fn (): bool => $this->deliveryConfirmable(deliveryId: $deliveryId, object: $object)
 		);
 
 	}//end canConfirmDelivery()
+
+	/**
+	 * Whether the delivery is complete, its order's customer is known and not delivery-blocked, and the stock is there.
+	 *
+	 * @param string                   $deliveryId The Delivery id.
+	 * @param array<string,mixed>|null $object     The delivery being transitioned.
+	 *
+	 * @return bool True when the delivery may be confirmed.
+	 *
+	 * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
+	 */
+	private function deliveryConfirmable(string $deliveryId, array|null $object): bool {
+		$delivery = $this->resolveObject(schema: 'Delivery', id: $deliveryId, object: $object);
+		if ($delivery === null || $this->deliveryLinesComplete(delivery: $delivery) === false) {
+			return false;
+		}
+
+		$customer = $this->deliveryCustomer(delivery: $delivery);
+		if ($customer === '') {
+			return false;
+		}
+
+		if ($this->customerIsBlocked(
+			customerReference: $customer,
+			blockingSeverities: ['block-delivery']
+		) === true
+		) {
+			return false;
+		}
+
+		return $this->deliveryStockAvailable(delivery: $delivery);
+	}//end deliveryConfirmable()
+
+	/**
+	 * The customer of the delivery's sales order.
+	 *
+	 * @param array<string,mixed> $delivery The Delivery.
+	 *
+	 * @return string The customer reference, or '' when the order or its customer is missing.
+	 *
+	 * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
+	 */
+	private function deliveryCustomer(array $delivery): string {
+		$order = $this->resolveObject(
+			schema: 'SalesOrder',
+			id: (string)($delivery['sourceOrderReference'] ?? ''),
+			object: null
+		);
+		$customer = trim((string)($order['customerReference'] ?? ''));
+		if ($order === null) {
+			return '';
+		}
+
+		return $customer;
+	}//end deliveryCustomer()
 
 	/**
 	 * Returns true iff a Delivery may be cancelled (draft|confirmed -> cancelled).
@@ -442,42 +472,68 @@ class QuoteOrderInvoiceGuard {
 		$allowNegative = $this->allowNegativeStockOnDispatch(administrationId: $administrationId);
 
 		foreach ($lines as $line) {
-			if (is_array($line) === false) {
-				continue;
-			}
-
-			$sku = trim((string)($line['productReference'] ?? ''));
-			$quantity = (float)($line['quantityShipped'] ?? 0);
-			if ($sku === '' || $quantity <= 0) {
-				continue;
-			}
-
-			$stockRows = $this->findChildren(schema: 'InventoryStock', field: 'sku', parentId: $sku);
-			$stockRows = array_values(
-				array_filter(
-					$stockRows,
-					static fn (array $row): bool => ((string)($row['administrationId'] ?? '')) === $administrationId
-				)
-			);
-
-			if (count($stockRows) === 0) {
-				// Not stock-tracked (service line) — nothing to check.
-				continue;
-			}
-
-			$locationId = trim(
-				(string)($line['sourceLocationId'] ?? ($delivery['sourceLocationId'] ?? ''))
-			);
-
-			$available = $this->availableForLocation(rows: $stockRows, locationId: $locationId);
-
-			if ($available < $quantity && $allowNegative === false) {
+			if (is_array($line) === true
+				&& $this->lineShortOfStock(delivery: $delivery, line: $line) === true
+				&& $allowNegative === false
+			) {
 				return false;
 			}
-		}//end foreach
+		}
 
 		return true;
 	}//end deliveryStockAvailable()
+
+	/**
+	 * Whether a stock-tracked line ships more than is available at its location.
+	 *
+	 * A line without SKU or positive quantity, or one whose SKU has no
+	 * InventoryStock row in the delivery's administration (a service line),
+	 * is never short.
+	 *
+	 * @param array<string,mixed> $delivery The delivery.
+	 * @param array<string,mixed> $line The delivery line.
+	 *
+	 * @return bool True when the line is short of stock.
+	 */
+	private function lineShortOfStock(array $delivery, array $line): bool {
+		$sku = trim((string)($line['productReference'] ?? ''));
+		$quantity = (float)($line['quantityShipped'] ?? 0);
+		if ($sku === '' || $quantity <= 0) {
+			return false;
+		}
+
+		$stockRows = $this->stockRowsFor(sku: $sku, administrationId: trim((string)($delivery['administrationId'] ?? '')));
+		if (count($stockRows) === 0) {
+			// Not stock-tracked (service line) — nothing to check.
+			return false;
+		}
+
+		$locationId = trim(
+			(string)($line['sourceLocationId'] ?? ($delivery['sourceLocationId'] ?? ''))
+		);
+
+		return $this->availableForLocation(rows: $stockRows, locationId: $locationId) < $quantity;
+
+	}//end lineShortOfStock()
+
+	/**
+	 * The SKU's InventoryStock rows within the administration.
+	 *
+	 * @param string $sku The product reference.
+	 * @param string $administrationId The delivery's administration.
+	 *
+	 * @return array<int,array<string,mixed>> The stock rows.
+	 */
+	private function stockRowsFor(string $sku, string $administrationId): array {
+		$stockRows = $this->findChildren(schema: 'InventoryStock', field: 'sku', parentId: $sku);
+		return array_values(
+			array_filter(
+				$stockRows,
+				static fn (array $row): bool => ((string)($row['administrationId'] ?? '')) === $administrationId
+			)
+		);
+
+	}//end stockRowsFor()
 
 	/**
 	 * Resolve available quantity (quantity - reservedQuantity) for the given
@@ -652,7 +708,7 @@ class QuoteOrderInvoiceGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = trim($this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq'));
+		$register = trim($this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq'));
 		if ($register === '') {
 			return 'shillinq';
 		}

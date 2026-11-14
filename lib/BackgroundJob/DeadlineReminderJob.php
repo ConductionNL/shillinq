@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
-use OCA\Shillinq\Service\ComplianceDeadlineCalendarService;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -49,12 +49,12 @@ class DeadlineReminderJob extends TimedJob {
 	 * Construct the job with a daily interval.
 	 *
 	 * @param ITimeFactory $time The Nextcloud time factory.
-	 * @param ComplianceDeadlineCalendarService $calendarService The deadline publication + reminder service.
+	 * @param ComplianceDeadlineCalendarServiceInterface $calendarService The deadline publication + reminder service.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly ComplianceDeadlineCalendarService $calendarService,
+		private readonly ComplianceDeadlineCalendarServiceInterface $calendarService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
@@ -76,6 +76,16 @@ class DeadlineReminderJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	protected function run($argument): void {
+		$this->publishDeadlines();
+		$this->dispatchReminders();
+	}//end run()
+
+	/**
+	 * Publish the deadline VEVENTs; a failure is logged and does not stop the reminders.
+	 *
+	 * @return void
+	 */
+	private function publishDeadlines(): void {
 		try {
 			$users = $this->calendarService->publishAll();
 			$this->logger->debug('DeadlineReminderJob: published deadline VEVENTs for ' . $users . ' user(s)');
@@ -85,7 +95,14 @@ class DeadlineReminderJob extends TimedJob {
 				['exception' => $e->getMessage()]
 			);
 		}
+	}//end publishDeadlines()
 
+	/**
+	 * Raise the reminders that are due; a failure is logged.
+	 *
+	 * @return void
+	 */
+	private function dispatchReminders(): void {
 		try {
 			$count = $this->calendarService->dispatchDueReminders();
 			$this->logger->debug('DeadlineReminderJob: raised ' . $count . ' deadline reminder(s)');
@@ -95,6 +112,5 @@ class DeadlineReminderJob extends TimedJob {
 				['exception' => $e->getMessage()]
 			);
 		}
-
-	}//end run()
+	}//end dispatchReminders()
 }//end class

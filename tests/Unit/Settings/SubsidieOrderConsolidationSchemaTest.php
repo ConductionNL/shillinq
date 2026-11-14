@@ -3,6 +3,9 @@
 /**
  * Register schema-diff tests for consolidate-order-subsidie-collisions.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Asserts the non-destructive schema consolidation against the shipped register
  * JSON:
  *  - exactly ONE `Subsidie` schema definition survives (no duplicate blocks);
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/schema-consolidation/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */

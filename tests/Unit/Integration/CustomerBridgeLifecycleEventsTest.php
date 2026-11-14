@@ -3,6 +3,9 @@
 /**
  * Lifecycle-event integration tests for the customer-bridge chain.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 10 of the `bookings-pipelinq-customer-bridge` chain (ADR-032).
  * Verifies that the publish path is symmetric across the four booking
  * lifecycle event types (created / confirmed / cancelled / completed)
@@ -36,9 +39,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-10-integration-e2e-tests/tasks.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,7 +50,7 @@ use DateTimeZone;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Tests\Integration\Pipelinq\PipelinqMockServer;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;

@@ -83,39 +83,21 @@ class PreNotificationGuard {
 		?int $requiredDays = null,
 	): bool {
 		try {
-			if ($preNotification === null) {
+			if ($preNotification === null || $this->hasProof(preNotification: $preNotification) === false) {
 				return false;
 			}
 
-			$channel = (string)($preNotification['channel'] ?? '');
+			$required = $this->requiredDays(preNotification: $preNotification, override: $requiredDays);
 			$sentAt = (string)($preNotification['sentAt'] ?? '');
-
-			// Proof of notification: either explicitly sent, or carried on the invoice line.
-			$hasProof = ($sentAt !== '' || $channel === 'invoice_line');
-			if ($hasProof === false) {
-				return false;
-			}
-
-			$required = $requiredDays;
-			if ($required === null) {
-				$required = (int)($preNotification['noticeDays'] ?? self::DEFAULT_NOTICE_DAYS);
-			}
-
 			$dueRaw = (string)($collection['requestedCollectionDate'] ?? '');
 			if ($dueRaw === '' || $sentAt === '') {
 				// Invoice-line carrier without an explicit sentAt is accepted as
 				// proof but its lead time cannot be measured here; the invoice
 				// issue date governs the contractual lead (REQ-SDD-003 scenario 2).
-				return $channel === 'invoice_line';
+				return (string)($preNotification['channel'] ?? '') === 'invoice_line';
 			}
 
-			// Compare calendar days only (REQ-SDD-003): drop the time component
-			// so a notice sent any time on day D-14 counts as a full 14-day lead.
-			$due = (new DateTimeImmutable($dueRaw))->setTime(0, 0);
-			$sent = (new DateTimeImmutable($sentAt))->setTime(0, 0);
-			$leadDays = (int)$sent->diff($due)->format('%r%a');
-
-			return $leadDays >= $required;
+			return $this->leadDays(sentAt: $sentAt, due: $dueRaw) >= $required;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PreNotificationGuard: batch-inclusion check failed — denying (fail-closed)',
@@ -124,4 +106,52 @@ class PreNotificationGuard {
 			return false;
 		}//end try
 	}//end canIncludeInBatch()
+
+	/**
+	 * Proof of notification: either explicitly sent, or carried on the invoice line.
+	 *
+	 * @param array<string,mixed> $preNotification The PreNotification record.
+	 *
+	 * @return bool True when the notification is proven.
+	 */
+	private function hasProof(array $preNotification): bool {
+		return (string)($preNotification['sentAt'] ?? '') !== ''
+			|| (string)($preNotification['channel'] ?? '') === 'invoice_line';
+
+	}//end hasProof()
+
+	/**
+	 * The required notice days: the override, else the record's, else the default.
+	 *
+	 * @param array<string,mixed> $preNotification The PreNotification record.
+	 * @param int|null $override The caller's override.
+	 *
+	 * @return integer The required lead time in calendar days.
+	 */
+	private function requiredDays(array $preNotification, int|null $override): int {
+		if ($override !== null) {
+			return $override;
+		}
+
+		return (int)($preNotification['noticeDays'] ?? self::DEFAULT_NOTICE_DAYS);
+
+	}//end requiredDays()
+
+	/**
+	 * The lead time in calendar days from the notice to the collection date.
+	 *
+	 * Compares calendar days only (REQ-SDD-003): the time component is dropped
+	 * so a notice sent any time on day D-14 counts as a full 14-day lead.
+	 *
+	 * @param string $sentAt When the notice was sent.
+	 * @param string $due The requested collection date.
+	 *
+	 * @return integer The signed number of days.
+	 */
+	private function leadDays(string $sentAt, string $due): int {
+		$dueDay = (new DateTimeImmutable($due))->setTime(0, 0);
+		$sentDay = (new DateTimeImmutable($sentAt))->setTime(0, 0);
+		return (int)$sentDay->diff($dueDay)->format('%r%a');
+
+	}//end leadDays()
 }//end class

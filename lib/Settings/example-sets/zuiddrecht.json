@@ -1,0 +1,237 @@
+{
+	"set": "zuiddrecht",
+	"$comment": "shillinq's part of the Zuiddrecht example set: the finance records the ShActief, ShBtwAangifte, ShBegroting, ShBetaalrun and ShInkooporder boards open, in the shipped default administration ADM-001 that the demo employee Pieter is a member of (the fixed asset names it by uuid, the other records by code, as their schemas declare). A fixed asset (the parking enforcement truck), the VAT return for Q3 2026 ready to file, the draft budget 2027, a payment run waiting for its second approval, and a partly received purchase order with the green maintenance supplier, who is also a payee of the run. Install with `occ openregister:example-set:install zuiddrecht`. Three fee rules for dossiq's omgevingsvergunning (bouwen per euro bouwkosten, kappen per boom on the Kappen variant, a refund on withdrawal within four weeks) fill the Legesregels of dossiq's VTH settings.",
+	"appConfig": [
+		{
+			"key": "paymentActionApps",
+			"value": "{\"payment.request\": [\"dossiq\"]}",
+			"$comment": "dossiq raises payment requests in the demo: the leges at intake and the invoice for a forfeited penalty (financial-documents-on-any-object, REQ-FDO-005)."
+		}
+	],
+	"objects": [
+		{
+			"key": "payee-de-linde",
+			"register": "shillinq",
+			"schema": "Payee",
+			"data": {
+				"vendorNumber": "CRED-2026-0412",
+				"name": "Groenvoorziening De Linde BV",
+				"payeeType": "supplier",
+				"paymentTermDays": 30,
+				"bankAccount": {
+					"iban": "NL00DEMO0000000412"
+				},
+				"email": "facturen.delinde@zuiddrecht.example",
+				"administrationId": "ADM-001",
+				"lifecycleState": "active"
+			}
+		},
+		{
+			"key": "payee-interim-finance",
+			"register": "shillinq",
+			"schema": "Payee",
+			"data": {
+				"vendorNumber": "CRED-2026-0381",
+				"name": "Interim Finance Partners",
+				"payeeType": "contractor",
+				"paymentTermDays": 14,
+				"bankAccount": {
+					"iban": "NL00DEMO0000000381"
+				},
+				"administrationId": "ADM-001",
+				"lifecycleState": "active"
+			}
+		},
+		{
+			"key": "fixed-asset-vrachtwagen",
+			"register": "shillinq",
+			"schema": "FixedAsset",
+			"lookups": {
+				"administration": {
+					"register": "shillinq",
+					"schema": "Administration",
+					"where": {
+						"administrationCode": "ADM-001"
+					}
+				}
+			},
+			"data": {
+				"assetNumber": "VA-2024-0007",
+				"name": "Vrachtwagen 62-BKZ-4",
+				"assetCategory": "vehicles",
+				"description": "Vrachtwagen van handhaving parkeren.",
+				"acquisitionDate": "2024-01-02",
+				"acquisitionCost": 110000,
+				"currency": "EUR",
+				"usefulLifeMonths": 96,
+				"residualValue": 10000,
+				"depreciationMethod": "linear",
+				"monthlyDepreciation": 1145.83,
+				"currentBookValue": 82500,
+				"assetAccountNumber": "0310",
+				"accumulatedDepAccountNumber": "0319",
+				"depreciationExpenseAccountNumber": "4310",
+				"costCenterCode": "KP 310",
+				"lifecycleState": "active",
+				"administrationId": "{{lookup:administration}}"
+			}
+		},
+		{
+			"key": "btw-aangifte-2026-q3",
+			"register": "shillinq",
+			"schema": "BtwAangifte",
+			"data": {
+				"returnNumber": "BTW-2026-Q3",
+				"period": "quarter",
+				"periodYear": 2026,
+				"periodNumber": 3,
+				"startDate": "2026-07-01",
+				"endDate": "2026-09-30",
+				"regime": "standard",
+				"statusCode": "draft",
+				"totalTaxableAmount": 412880,
+				"totalVATCollected": 86705,
+				"totalVATPaid": 38494,
+				"vatBalance": 48211,
+				"notes": "Klaar om in te dienen, uiterlijk 31 oktober 2026.",
+				"administrationId": "ADM-001"
+			}
+		},
+		{
+			"key": "annual-budget-2027",
+			"register": "shillinq",
+			"schema": "AnnualBudget",
+			"data": {
+				"name": "Begroting 2027",
+				"fiscalYear": 2027,
+				"isDefault": true,
+				"state": "draft",
+				"administrationId": "ADM-001"
+			}
+		},
+		{
+			"key": "payment-run-2026-41",
+			"register": "shillinq",
+			"schema": "PaymentRun",
+			"data": {
+				"runNumber": "2026-41",
+				"executionDate": "{{date:16}}",
+				"debtorAccountIban": "NL00DEMO0000002641",
+				"status": "draft",
+				"lifecycleState": "draft",
+				"totalAmount": 24312.5,
+				"currency": "EUR",
+				"administrationId": "ADM-001",
+				"paymentLines": [
+					{
+						"payeeId": "{{object:payee-de-linde.id}}",
+						"payeeName": "Groenvoorziening De Linde BV",
+						"creditorIban": "NL00DEMO0000000412",
+						"amount": 18412.5,
+						"apTransactionRef": "IK-2026-0877"
+					},
+					{
+						"payeeId": "{{object:payee-interim-finance.id}}",
+						"payeeName": "Interim Finance Partners",
+						"creditorIban": "NL00DEMO0000000381",
+						"amount": 5900,
+						"apTransactionRef": "IK-2026-0881"
+					}
+				]
+			}
+		},
+		{
+			"key": "purchase-order-io-2026-0087",
+			"register": "shillinq",
+			"schema": "PurchaseOrder",
+			"data": {
+				"poNumber": "IO-2026-0087",
+				"supplierId": "{{object:payee-de-linde.id}}",
+				"requester": "{{cast:pieter.uid}}",
+				"costCenter": "KP 310",
+				"currency": "EUR",
+				"paymentTerms": "30 dagen",
+				"expectedDeliveryDate": "{{date:-5}}",
+				"totalExclVat": 4860000,
+				"totalVat": 1020600,
+				"totalInclVat": 5880600,
+				"statusCode": "partial_received",
+				"administrationId": "ADM-001"
+			}
+		},
+		{
+			"key": "leges-bouwen",
+			"register": "shillinq",
+			"schema": "FeeSchedule",
+			"data": {
+				"targetApp": "dossiq",
+				"register": "dossiq",
+				"schema": "case",
+				"typeProperty": "caseTypeIdentifier",
+				"typeValue": "omgevingsvergunning",
+				"currency": "EUR",
+				"payAtIntake": "later",
+				"validFrom": "2026-01-01",
+				"name": "Bouwen, per euro bouwkosten",
+				"calculation": "percentage",
+				"percentage": 2.35,
+				"minimumAmount": 125,
+				"baseProperty": "bouwkosten",
+				"legalBasis": {
+					"regulation": "Legesverordening 2026",
+					"article": "2.3.1",
+					"effectiveDate": "2026-01-01"
+				}
+			}
+		},
+		{
+			"key": "leges-kappen",
+			"register": "shillinq",
+			"schema": "FeeSchedule",
+			"data": {
+				"targetApp": "dossiq",
+				"register": "dossiq",
+				"schema": "case",
+				"typeProperty": "caseTypeIdentifier",
+				"typeValue": "omgevingsvergunning",
+				"currency": "EUR",
+				"payAtIntake": "later",
+				"validFrom": "2026-01-01",
+				"name": "Kappen",
+				"variantValue": "Kappen",
+				"calculation": "per_unit",
+				"unitPrice": 82.4,
+				"unitLabel": "boom",
+				"baseProperty": "aantalBomen",
+				"legalBasis": {
+					"regulation": "Legesverordening 2026",
+					"article": "2.3.8",
+					"effectiveDate": "2026-01-01"
+				}
+			}
+		},
+		{
+			"key": "leges-intrekken",
+			"register": "shillinq",
+			"schema": "FeeSchedule",
+			"data": {
+				"targetApp": "dossiq",
+				"register": "dossiq",
+				"schema": "case",
+				"typeProperty": "caseTypeIdentifier",
+				"typeValue": "omgevingsvergunning",
+				"currency": "EUR",
+				"payAtIntake": "later",
+				"validFrom": "2026-01-01",
+				"name": "Intrekken binnen 4 weken",
+				"calculation": "refund_percentage",
+				"percentage": 75,
+				"legalBasis": {
+					"regulation": "Legesverordening 2026",
+					"article": "1.4",
+					"effectiveDate": "2026-01-01"
+				}
+			}
+		}
+	]
+}

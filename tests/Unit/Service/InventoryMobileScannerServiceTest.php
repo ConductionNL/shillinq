@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\InventoryMobileScannerService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -48,9 +49,9 @@ final class InventoryMobileScannerServiceTest extends TestCase {
 	/**
 	 * Mock SettingsService.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Mock container.
@@ -94,7 +95,7 @@ final class InventoryMobileScannerServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->time = $this->createMock(ITimeFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -102,7 +103,7 @@ final class InventoryMobileScannerServiceTest extends TestCase {
 		$this->time->method('getTime')->willReturn($this->fixedEpoch);
 
 		$this->service = new InventoryMobileScannerService(
-			settings: $this->settings,
+			registerLocation: $this->settings,
 			container: $this->container,
 			time: $this->time,
 			logger: $this->logger,

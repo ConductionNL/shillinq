@@ -3,6 +3,9 @@
 /**
  * Compliance Export Controller.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Backs the REQ-RAP-005 manifest entry `BookkeepingComplianceExport`.
  *
  *   GET /api/audit/export
@@ -22,10 +25,10 @@
  *  - Cross-tenant access is masked as 404 by AdministrationContextService
  *    (not used here — exports are tenant-agnostic per REQ-RAP-005).
  *
- * The export request itself is recorded in the OR audit-trail by
- * passing through a synthetic `export_request` event when the OR
- * AuditTrailService::recordEvent() method is available, so REQ-RAP-005
- * scenario 3 ("Export audit trail is itself audited") is honoured.
+ * The export request itself is recorded as a structured
+ * `shillinq.compliance.export_request` log entry (REQ-RAP-005 scenario 3).
+ * OpenRegister's audit trail only records events about an object, so an
+ * export, which concerns no single object, cannot go on that chain.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -37,17 +40,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\ComplianceExportService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceExportServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -58,7 +58,6 @@ use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -84,29 +83,23 @@ class ComplianceExportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param ComplianceExportService $complianceExportService Read-filter-render service.
+	 * @param ComplianceExportServiceInterface $complianceExportService Read-filter-render service.
 	 * @param IUserSession $userSession Session guard.
 	 * @param IGroupManager $groupManager Group RBAC.
-	 * @param ContainerInterface $container DI container — OR
-	 *                                      audit-trail service is
-	 *                                      fetched lazily for the
-	 *                                      REQ-RAP-005 scenario 3
-	 *                                      export-of-export logging.
-	 * @param LoggerInterface $logger Logger (no PII).
+		 * @param LoggerInterface $logger Logger (no PII).
 	 * @param IL10N $l10n Translation service for ADR-050 error-response messages.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ComplianceExportService $complianceExportService,
+		private readonly ComplianceExportServiceInterface $complianceExportService,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -133,22 +126,67 @@ class ComplianceExportController extends Controller {
 		$adminBypass = $this->groupManager->isAdmin($uid);
 		$isAuditor = $this->groupManager->isInGroup($uid, self::AUDITOR_GROUP);
 		if ($adminBypass !== true && $isAuditor !== true) {
-			return new JSONResponse(
-				['error' => 'Compliance export requires the auditor group (REQ-RAP-005)'],
-				Http::STATUS_FORBIDDEN
-			);
+			return new JSONResponse(['error' => 'Compliance export requires the auditor group (REQ-RAP-005)'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->exportFor(uid: $uid);
+	}//end export()
+
+	/**
+	 * Generate and stream the compliance export for an authorised caller.
+	 *
+	 * @param string $uid Caller UID.
+	 *
+	 * @return Response
+	 *
+	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 */
+	private function exportFor(string $uid): Response {
 		$from = (string)$this->request->getParam('from', '');
 		$to = (string)$this->request->getParam('to', '');
-		$scope = (string)$this->request->getParam('scope', ComplianceExportService::SCOPE_ALL);
-		$format = (string)$this->request->getParam('format', ComplianceExportService::FORMAT_CSV);
+		$scope = (string)$this->request->getParam('scope', ComplianceExportServiceInterface::SCOPE_ALL);
+		$format = (string)$this->request->getParam('format', ComplianceExportServiceInterface::FORMAT_CSV);
+
+		$envelope = $this->generate(from: $from, to: $to, scope: $scope, format: $format);
+		if ($envelope instanceof Response) {
+			return $envelope;
+		}
+
+		$this->logExportRequest(envelope: $envelope, uid: $uid);
+
+		return $this->exportResponse(envelope: $envelope, format: $format);
+	}//end exportFor()
+
+	/**
+	 * The actor filter from the request, or null when none is given.
+	 *
+	 * @return string|null
+	 */
+	private function actorFilter(): string|null {
 		$actor = $this->request->getParam('actor');
 		if (is_string($actor) === true && $actor !== '') {
 			$actorFilter = $actor;
 		} else {
 			$actorFilter = null;
 		}
+
+		return $actorFilter;
+	}//end actorFilter()
+
+	/**
+	 * Generate the export envelope, or the error response when that fails.
+	 *
+	 * @param string $from   Period start.
+	 * @param string $to     Period end.
+	 * @param string $scope  Export scope.
+	 * @param string $format Export format.
+	 *
+	 * @return array<string,mixed>|JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 */
+	private function generate(string $from, string $to, string $scope, string $format): array|JSONResponse {
+		$actorFilter = $this->actorFilter();
 
 		try {
 			$envelope = $this->complianceExportService->generateExport(
@@ -159,57 +197,92 @@ class ComplianceExportController extends Controller {
 				actorFilter: $actorFilter,
 			);
 		} catch (RuntimeException $e) {
-			$this->logger->error('ComplianceExportController.export failed', ['exception' => $e]);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to generate the compliance export'),
-					'error' => 'compliance-export-invalid-request',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			return $this->invalidRequest(e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ComplianceExportController: failed to generate export',
-				[
-					'from' => $from,
-					'to' => $to,
-					'scope' => $scope,
-					'format' => $format,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(['error' => 'Could not generate compliance export'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+			return $this->generationFailed(context: ['from' => $from, 'to' => $to, 'scope' => $scope, 'format' => $format], e: $e);
+		}
 
-		$this->logExportRequest(envelope: $envelope, uid: $uid);
+		return $envelope;
+	}//end generate()
 
-		if ($format === ComplianceExportService::FORMAT_CSV) {
+	/**
+	 * Log a rejected export request and build the 400 response.
+	 *
+	 * @param RuntimeException $e The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidRequest(RuntimeException $e): JSONResponse {
+		$this->logger->error('ComplianceExportController.export failed', ['exception' => $e]);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to generate the compliance export'),
+				'error' => 'compliance-export-invalid-request',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+	}//end invalidRequest()
+
+	/**
+	 * Log a failed export and build the 500 response, without a stack trace.
+	 *
+	 * @param array<string,string> $context The request's from, to, scope and format.
+	 * @param \Throwable           $e       The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function generationFailed(array $context, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'ComplianceExportController: failed to generate export',
+			$context + ['exception' => $e->getMessage()]
+		);
+		return new JSONResponse(['error' => 'Could not generate compliance export'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end generationFailed()
+
+	/**
+	 * Stream the envelope as CSV download or JSON.
+	 *
+	 * @param array<string,mixed> $envelope Export envelope.
+	 * @param string              $format   Export format.
+	 *
+	 * @return Response
+	 */
+	private function exportResponse(array $envelope, string $format): Response {
+		if ($format === ComplianceExportServiceInterface::FORMAT_CSV) {
 			$csv = $this->complianceExportService->renderCsv(envelope: $envelope);
 			return new DataDisplayResponse(
 				data:        $csv,
 				statusCode:  Http::STATUS_OK,
 				headers:     [
 					'Content-Type' => 'text/csv; charset=utf-8',
-					'Content-Disposition' => sprintf(
-						'attachment; filename="shillinq-audit-export-%s_%s.csv"',
-						preg_replace('/[^0-9-]/', '', $envelope['from']),
-						preg_replace('/[^0-9-]/', '', $envelope['to'])
-					),
+					'Content-Disposition' => $this->csvDisposition(envelope: $envelope),
 				]
 			);
 		}
 
 		return new JSONResponse($envelope, Http::STATUS_OK);
-	}//end export()
+	}//end exportResponse()
 
 	/**
-	 * Record the export request itself in the OR audit-trail per
-	 * REQ-RAP-005 scenario 3 — the export operation is auditable on
-	 * the same hash-chained channel it queries.
+	 * The Content-Disposition header of the CSV download.
 	 *
-	 * Best-effort: if OR's audit-trail service does not expose a
-	 * recordEvent / log method, we log to the app logger instead so
-	 * the request is not silently lost (the controller still succeeds).
+	 * @param array<string,mixed> $envelope Export envelope.
+	 *
+	 * @return string
+	 */
+	private function csvDisposition(array $envelope): string {
+		return sprintf(
+			'attachment; filename="shillinq-audit-export-%s_%s.csv"',
+			preg_replace('/[^0-9-]/', '', $envelope['from']),
+			preg_replace('/[^0-9-]/', '', $envelope['to'])
+		);
+	}//end csvDisposition()
+
+	/**
+	 * Record the export request itself per REQ-RAP-005 scenario 3.
+	 *
+	 * OpenRegister's audit trail records events about one object; an export
+	 * concerns none, so the request goes to the app log as a structured entry.
 	 *
 	 * @param array<string,mixed> $envelope Export envelope.
 	 * @param string $uid Caller UID.
@@ -217,35 +290,21 @@ class ComplianceExportController extends Controller {
 	 * @return void
 	 */
 	private function logExportRequest(array $envelope, string $uid): void {
-		$payload = [
-			'action' => 'export_request',
-			'actor' => $uid,
-			'timestamp' => $envelope['generatedAt'],
-			'scope' => $envelope['scope'],
-			'format' => $envelope['format'],
-			'from' => $envelope['from'],
-			'to' => $envelope['to'],
-			'eventCount' => $envelope['eventCount'],
-			'actorFilter' => $envelope['actorFilter'],
-			'requirementId' => 'REQ-RAP-005',
-		];
-
-		try {
-			$auditService = $this->container->get('OCA\OpenRegister\Service\AuditTrailService');
-			if (method_exists($auditService, 'recordEvent') === true) {
-				$auditService->recordEvent($payload);
-				return;
-			}
-
-			if (method_exists($auditService, 'log') === true) {
-				$auditService->log($payload);
-				return;
-			}
-		} catch (\Throwable $e) {
-			// Fall through to logger fallback below.
-		}
-
-		$this->logger->info('shillinq.compliance.export_request', $payload);
+		$this->logger->info(
+			'shillinq.compliance.export_request',
+			[
+				'action' => 'export_request',
+				'actor' => $uid,
+				'timestamp' => $envelope['generatedAt'],
+				'scope' => $envelope['scope'],
+				'format' => $envelope['format'],
+				'from' => $envelope['from'],
+				'to' => $envelope['to'],
+				'eventCount' => $envelope['eventCount'],
+				'actorFilter' => $envelope['actorFilter'],
+				'requirementId' => 'REQ-RAP-005',
+			]
+		);
 
 	}//end logExportRequest()
 }//end class

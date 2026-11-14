@@ -18,7 +18,7 @@ This specification defines the requirements for bookings confirm flow in the Shi
 @e2e exclude unbuilt UI: appointment confirmation portal not yet implemented
 
 
-### REQ-BCF-001: The system SHALL store confirmation tokens as an OpenRegister-managed `ConfirmationToken` register
+### Requirement: REQ-BCF-001: The system SHALL store confirmation tokens as an OpenRegister-managed `ConfirmationToken` register
 
 The confirmation token data MUST be declared as a register in `lib/Settings/bookings_register.json` per ADR-024, with the `ConfirmationToken` schema as the canonical entity. No custom PHP model, no custom database table. The register is exposed through OpenRegister's generic CRUD HTTP surface at `GET/POST /ocs/v2.php/apps/openregister/api/objects/bookings/ConfirmationToken`.
 
@@ -39,7 +39,7 @@ The confirmation token data MUST be declared as a register in `lib/Settings/book
 - **WHEN** an admin calls `GET /index.php/ocs/v2.php/apps/openregister/api/objects/bookings/ConfirmationToken/{tokenId}`
 - **THEN** the response MUST return the token record with all fields (excluding tokenString for security)
 
-### REQ-BCF-002: The `ConfirmationToken` schema SHALL declare the minimum field set with typed relations
+### Requirement: REQ-BCF-002: The `ConfirmationToken` schema SHALL declare the minimum field set with typed relations
 
 The `ConfirmationToken` schema MUST declare the following fields. Additional fields MAY be added in future tiers (additive only).
 
@@ -68,7 +68,7 @@ OpenRegister's built-in fields (`id`, `uuid`, `version`, `owner`, `auditTrail`, 
 - **WHEN** validation is performed
 - **THEN** validation MUST fail with error "Field 'appointmentId' is required"
 
-### REQ-BCF-003: Confirmation email SHALL include ICS attachment and fallback web link
+### Requirement: REQ-BCF-003: Confirmation email SHALL include ICS attachment and fallback web link
 
 When a confirmation token is generated, the system MUST send an email to the customer containing:
 1. Confirmation details (appointment date/time, service name, provider name)
@@ -102,7 +102,7 @@ The email is sent via openconnector email channel using templates from `bookings
   - `DESCRIPTION: {appointmentNotes}` (if present)
   - `ATTACH;FMTTYPE=text/calendar` property with ICS file reference
 
-### REQ-BCF-004: Appointment SHALL transition from `pending_confirmation` to `confirmed` on token validation
+### Requirement: REQ-BCF-004: Appointment SHALL transition from `pending_confirmation` to `confirmed` on token validation
 
 When a customer redeems a confirmation token (via web link or calendar app), the appointment's status MUST transition from `pending_confirmation` to `confirmed`. The transition is guarded by token validation (expiration check, status check).
 
@@ -147,7 +147,7 @@ When a customer redeems a confirmation token (via web link or calendar app), the
   2. Reject the confirmation attempt with HTTP 403 Forbidden
   3. Respond with error "Token has already been used"
 
-### REQ-BCF-005: Appointment SHALL auto-cancel if confirmation deadline passes
+### Requirement: REQ-BCF-005: Appointment SHALL auto-cancel if confirmation deadline passes
 
 Appointments in `pending_confirmation` status with confirmationDeadline in the past MUST be automatically cancelled by a background job. The transition is:
 `pending_confirmation` → `cancelled` (with reason "Confirmation deadline passed").
@@ -173,7 +173,7 @@ Appointments in `pending_confirmation` status with confirmationDeadline in the p
 - **WHEN** the background job runs
 - **THEN** the appointment MUST remain `confirmed` (no change)
 
-### REQ-BCF-006: Confirmation token resend MUST generate a new token with fresh expiration
+### Requirement: REQ-BCF-006: Confirmation token resend MUST generate a new token with fresh expiration
 
 When a customer requests a new confirmation email (e.g., "resend confirmation link"), the system MUST:
 1. Generate a new `ConfirmationToken` record
@@ -199,7 +199,7 @@ When a customer requests a new confirmation email (e.g., "resend confirmation li
 - **WHEN** a customer attempts to confirm using this token
 - **THEN** the system MUST reject with HTTP 403 Forbidden and error "Token is no longer valid; request a new confirmation email"
 
-### REQ-BCF-007: Web confirmation portal SHALL validate token and display appointment details
+### Requirement: REQ-BCF-007: Web confirmation portal SHALL validate token and display appointment details
 
 The web confirmation portal (`src/views/ConfirmationPortal.vue`) MUST:
 1. Accept token via URL query parameter (`?token={tokenString}`)
@@ -235,7 +235,7 @@ The web confirmation portal (`src/views/ConfirmationPortal.vue`) MUST:
   2. Display confirmation message "Appointment confirmed!"
   3. Redirect to success page or close modal after 2 seconds
 
-### REQ-BCF-008: Audit trail SHALL record all confirmation events
+### Requirement: REQ-BCF-008: Audit trail SHALL record all confirmation events
 
 Every confirmation action (token generation, email sent, confirmation attempt, token expiration, cancellation) MUST be logged in the appointment's auditTrail (per OpenRegister ADR-022).
 
@@ -262,7 +262,7 @@ Audit entry format:
   - `action: "confirmation_failed"`
   - `details: {"reason": "Token expired", "attemptedTokenId": "..."}`
 
-### REQ-BCF-009: Timezone MUST be preserved in email and ICS
+### Requirement: REQ-BCF-009: Timezone MUST be preserved in email and ICS
 
 The customer's timezone (derived from Nextcloud user account locale or GeoIP) MUST be used in:
 1. ICS TZID and VTIMEZONE block (RFC 5545 compliant)
@@ -288,7 +288,7 @@ Timezone identifiers MUST use IANA timezone names (e.g., "Europe/Amsterdam", "Am
   - "May 22, 2026 at 10:30 AM Eastern Time (UTC-4)"
   - Not: "2:30 PM UTC"
 
-### REQ-BCF-010: Confirmation shall work for both admin-created and customer self-booked appointments
+### Requirement: REQ-BCF-010: Confirmation shall work for both admin-created and customer self-booked appointments
 
 Appointments created by admin (initial status: `confirmed`) do not require confirmation. Appointments created by customers via self-service (initial status: `pending_confirmation`) MUST be confirmed before they are considered active.
 
