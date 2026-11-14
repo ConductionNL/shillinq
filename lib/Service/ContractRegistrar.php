@@ -70,6 +70,7 @@ use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SubscriptionCancellationServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\DBAVbarMonitorServiceInterface;
@@ -370,6 +371,7 @@ final class ContractRegistrar {
 		$context->registerServiceAlias(ConnectionReportServiceInterface::class, ConnectionReportService::class);
 		$context->registerServiceAlias(ContractCostRollupServiceInterface::class, ContractCostRollupService::class);
 		$context->registerServiceAlias(ContributionDeclineServiceInterface::class, ContributionDeclineService::class);
+		$context->registerServiceAlias(SubscriptionCancellationServiceInterface::class, SubscriptionCancellationService::class);
 		$context->registerServiceAlias(ContributionRaiseServiceInterface::class, ContributionRaiseService::class);
 		$context->registerServiceAlias(CustomerBridgeMetricsServiceInterface::class, CustomerBridgeMetricsService::class);
 		$context->registerServiceAlias(DBAVbarMonitorServiceInterface::class, DBAVbarMonitorService::class);

@@ -55,6 +55,9 @@ class CancellationService {
 		'payment_issue',
 		'no_show',
 		'other',
+		// A consumer's withdrawal from a booking made online: cancelled
+		// without a fee (sales-cancellation REQ-SCX-006).
+		'withdrawal',
 	];
 
 	/**
