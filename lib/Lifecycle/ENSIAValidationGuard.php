@@ -217,10 +217,7 @@ class ENSIAValidationGuard {
 		if (self::hasSupportingDocuments(question: $question) === false) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires evidence',
-				[
-					'questionCode' => (string)($question['questionCode'] ?? ''),
-					'score' => $score,
-				]
+				['questionCode' => (string)($question['questionCode'] ?? ''), 'score' => $score]
 			);
 			return false;
 		}
@@ -229,10 +226,7 @@ class ENSIAValidationGuard {
 		if (mb_strlen($notes) < 50) {
 			$this->logger->info(
 				'ENSIAValidationGuard: REQ-ENSIA-003 — score ≥ 3 requires toelichting ≥ 50 chars',
-				[
-					'questionCode' => (string)($question['questionCode'] ?? ''),
-					'toelichtingChars' => mb_strlen($notes),
-				]
+				['questionCode' => (string)($question['questionCode'] ?? ''), 'toelichtingChars' => mb_strlen($notes)]
 			);
 			return false;
 		}

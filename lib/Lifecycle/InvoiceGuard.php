@@ -214,30 +214,41 @@ class InvoiceGuard {
 		$ownId = (string)($invoice['id'] ?? '');
 
 		$register = $this->resolveRegister();
-
-		$others = $this->objectService
-			->setRegister($register)
-			->setSchema('Invoice')
-			->findAll([]);
+		$others   = $this->objectService->setRegister($register)->setSchema('Invoice')->findAll([]);
 
 		foreach ($others as $other) {
-			if (self::isOtherLiveInvoice(other: $other, ownId: $ownId) === false) {
-				continue;
-			}
-
-			$otherId      = (string)($other['id'] ?? '');
-			$otherSources = $this->collectSourceIds(invoice: $other);
-			if (array_intersect($ownSources, $otherSources) !== []) {
-				$this->logger->warning(
-					'InvoiceGuard: double-invoicing denied — overlapping source ids',
-					['invoiceId' => $ownId, 'conflictingInvoiceId' => $otherId]
-				);
+			if (self::isOtherLiveInvoice(other: $other, ownId: $ownId) === true
+				&& $this->sharesSourceWith(other: $other, ownSources: $ownSources, ownId: $ownId) === true
+			) {
 				return false;
 			}
-		}//end foreach
+		}
 
 		return true;
 	}//end sourceIdsAreUnique()
+
+	/**
+	 * Whether another invoice references one of the invoice's sources; logged as a denied double-invoicing.
+	 *
+	 * @param array<string, mixed> $other      The other, live invoice.
+	 * @param array<int, string>   $ownSources The invoice's own source ids.
+	 * @param string               $ownId      The invoice's id.
+	 *
+	 * @return bool
+	 */
+	private function sharesSourceWith(array $other, array $ownSources, string $ownId): bool {
+		$otherId      = (string)($other['id'] ?? '');
+		$otherSources = $this->collectSourceIds(invoice: $other);
+		if (array_intersect($ownSources, $otherSources) !== []) {
+			$this->logger->warning(
+				'InvoiceGuard: double-invoicing denied — overlapping source ids',
+				['invoiceId' => $ownId, 'conflictingInvoiceId' => $otherId]
+			);
+			return true;
+		}
+
+		return false;
+	}//end sharesSourceWith()
 
 	/**
 	 * Whether a row is another invoice that is not cancelled.
