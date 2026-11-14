@@ -117,20 +117,8 @@ class IntegriqCloudEventListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::TYPE_PAYMENT_STATUS) {
-				return;
-			}
-
-			// The type is cheap to read; the register and schema cost a mapper
-			// lookup each, so they are checked only for a matching type.
-			if ($this->schemaResolver->matchesRegisterAndSchema(
-				entity: $entity,
-				registerSlug: self::REGISTER_SLUG,
-				schemaSlug: self::SCHEMA_SLUG
-			) === false
-			) {
+			$cloudEvent = $this->paymentStatusCloudEvent(entity: $event->getObject());
+			if ($cloudEvent === null) {
 				return;
 			}
 
@@ -142,6 +130,33 @@ class IntegriqCloudEventListener implements IEventListener {
 			);
 		}//end try
 	}//end handle()
+
+	/**
+	 * The created object's CloudEvent when it is an integriq payment status in the CloudEvent schema, else null.
+	 *
+	 * @param mixed $entity The created ObjectEntity, or null.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function paymentStatusCloudEvent(mixed $entity): array|null {
+		$cloudEvent = $entity?->getObject();
+		if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::TYPE_PAYMENT_STATUS) {
+			return null;
+		}
+
+		// The type is cheap to read; the register and schema cost a mapper
+		// lookup each, so they are checked only for a matching type.
+		if ($this->schemaResolver->matchesRegisterAndSchema(
+			entity: $entity,
+			registerSlug: self::REGISTER_SLUG,
+			schemaSlug: self::SCHEMA_SLUG
+		) === false
+		) {
+			return null;
+		}
+
+		return $cloudEvent;
+	}//end paymentStatusCloudEvent()
 
 	/**
 	 * Feed a payment status envelope into the shared reconciliation.
