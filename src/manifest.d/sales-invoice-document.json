@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-invoice-document",
+    "adr": "ADR-037 modular manifest fragment: never edit src/manifest.json",
+    "description": "REQ-SID-001: the invoice layout of each administration (logo, primary and accent colour, layout variant, footer text, QR codes on or off). An index over InvoiceLayout and a detail page whose preview widget shows a sample invoice head in the layout and states whether the primary colour reaches 4.5:1 against white."
+  },
+  "menu": [
+    {
+      "id": "InvoiceLayouts",
+      "label": "Invoice layout",
+      "icon": "PaletteOutline",
+      "route": "InvoiceLayouts",
+      "order": 26
+    }
+  ],
+  "pages": [
+    {
+      "id": "InvoiceLayouts",
+      "route": "/bookkeeping/invoice-layouts",
+      "type": "index",
+      "title": "Invoice layout",
+      "config": {
+        "register": "shillinq",
+        "schema": "InvoiceLayout",
+        "columns": [
+          { "key": "administrationId", "label": "Administration", "sortable": true },
+          { "key": "variant", "label": "Layout variant", "sortable": true },
+          { "key": "primaryColor", "label": "Primary colour" },
+          { "key": "showQr", "label": "Show QR codes" }
+        ],
+        "defaultSort": "administrationId",
+        "detailRoute": "InvoiceLayoutDetail"
+      }
+    },
+    {
+      "id": "InvoiceLayoutDetail",
+      "route": "/bookkeeping/invoice-layouts/:id",
+      "type": "detail",
+      "title": "Invoice layout",
+      "slots": {
+        "widget-invoice-layout-preview": "InvoiceLayoutPreview"
+      },
+      "config": {
+        "_note": "MASTER archetype: one layout per administration, edited in place. The preview widget renders the sample invoice head in the layout's colours and variant and the contrast verdict for the primary colour (REQ-SID-001).",
+        "register": "shillinq",
+        "schema": "InvoiceLayout",
+        "indexRoute": "InvoiceLayouts",
+        "fields": [
+          { "key": "administrationId", "label": "Administration", "type": "string" },
+          { "key": "variant", "label": "Layout variant", "type": "string" },
+          { "key": "primaryColor", "label": "Primary colour", "type": "string" },
+          { "key": "accentColor", "label": "Accent colour", "type": "string" },
+          { "key": "logoFileId", "label": "Logo", "type": "string" },
+          { "key": "footerText", "label": "Footer text", "type": "string" },
+          { "key": "showQr", "label": "Show QR codes", "type": "boolean" }
+        ],
+        "widgets": [
+          {
+            "id": "invoice-layout-preview",
+            "type": "custom",
+            "title": "Preview",
+            "icon": "Eye",
+            "_note": "Rendered through the page slot widget-invoice-layout-preview -> InvoiceLayoutPreview (src/registry.js)."
+          }
+        ],
+        "layout": [
+          { "id": "1", "widgetId": "invoice-layout-preview", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 6 }
+        ]
+      }
+    }
+  ]
+}

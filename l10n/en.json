@@ -4691,7 +4691,15 @@
         "No free draft number was found. Try again.": "No free draft number was found. Try again.",
         "Total net": "Total net",
         "Scan to pay": "Scan to pay",
-        "Pay online": "Pay online"
+        "Pay online": "Pay online",
+        "Contrast against white is {ratio}:1, below {minimum}:1. Choose a darker primary colour: text printed in this one is hard to read.": "Contrast against white is {ratio}:1, below {minimum}:1. Choose a darker primary colour: text printed in this one is hard to read.",
+        "Contrast against white is {ratio}:1, enough for text.": "Contrast against white is {ratio}:1, enough for text.",
+        "Invoice 2026-0042": "Invoice 2026-0042",
+        "Invoice preview": "Invoice preview",
+        "Loading preview…": "Loading preview…",
+        "Logo": "Logo",
+        "The invoice layout could not be loaded.": "The invoice layout could not be loaded.",
+        "The primary colour is not a valid colour; use #RRGGBB.": "The primary colour is not a valid colour; use #RRGGBB."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

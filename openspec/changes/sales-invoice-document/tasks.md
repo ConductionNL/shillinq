@@ -20,8 +20,8 @@
 
 ## 4. Pages, end to end and strings
 
-- [ ] 4.1 Invoice layout settings page with preview and the contrast check (REQ-SID-001). Verify: `npm run check:manifest`; vitest for the contrast check.
+- [x] 4.1 Invoice layout settings page with preview and the contrast check (REQ-SID-001). Verify: `npm run check:manifest`; vitest for the contrast check.
 - [ ] 4.2 Playwright `tests/e2e/sales-invoice-document.spec.ts`: set a layout, produce an English GBP invoice and a Dutch EUR invoice with QR. Verify: passes locally with docudesk installed.
-- [ ] 4.3 Dutch and English strings, and invoice labels in de and fr. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
+- [x] 4.3 Dutch and English strings, and invoice labels in de and fr. Verify: `npm run test:l10n`, `npm run test:l10n-parity`.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

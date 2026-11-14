@@ -136,6 +136,7 @@ import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNo
 // per REQ-SPVP-004.
 import ProductAttributeCatalogIndex from './components/inventory/ProductAttributeCatalogIndex.vue'
 import ProductCatalogIndex from './components/inventory/ProductCatalogIndex.vue'
+import InvoiceLayoutPreview from './components/invoice-layout/InvoiceLayoutPreview.vue'
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -537,6 +538,16 @@ export default {
 		kind: 'widget',
 		component: ArDownPaymentPanel,
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// sales-invoice-document (REQ-SID-001): the invoice layout preview with the
+	// contrast check, on InvoiceLayoutDetail through the slot
+	// widget-invoice-layout-preview.
+	InvoiceLayoutPreview: {
+		// @custom-widget-ratchet exclude the preview draws the layout's own colours, variant and logo on a sample invoice head and measures the primary colour's WCAG contrast against white; no declarative widget renders an object's field values as styling or computes a contrast ratio.
+		kind: 'widget',
+		component: InvoiceLayoutPreview,
+		_note: 'Shows the invoice head in the layout\'s colours and variant with the logo, and states whether the primary colour reaches 4.5:1 against white (REQ-SID-001). A data widget prints field values as text and cannot style a sample with them.',
 	},
 
 	// ledger-booking-rules (REQ-LBR-003): the booking lines with each

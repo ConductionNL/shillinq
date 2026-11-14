@@ -5409,6 +5409,33 @@
 		{
 			"menu": [
 				{
+					"id": "InvoiceLayouts",
+					"label": "Invoice layout",
+					"icon": "PaletteOutline",
+					"route": "InvoiceLayouts",
+					"order": 26
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-document",
+					"id": "InvoiceLayouts",
+					"route": "/bookkeeping/invoice-layouts",
+					"type": "index",
+					"title": "Invoice layout"
+				},
+				{
+					"_fragment": "sales-invoice-document",
+					"id": "InvoiceLayoutDetail",
+					"route": "/bookkeeping/invoice-layouts/:id",
+					"type": "detail",
+					"title": "Invoice layout"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "MeterReadings",
 					"label": "Meter readings",
 					"icon": "Counter",

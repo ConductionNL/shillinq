@@ -6879,7 +6879,15 @@
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
         "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
         "Scan to pay": "Scan om te betalen",
-        "Pay online": "Online betalen"
+        "Pay online": "Online betalen",
+        "Contrast against white is {ratio}:1, below {minimum}:1. Choose a darker primary colour: text printed in this one is hard to read.": "Contrast met wit is {ratio}:1, lager dan {minimum}:1. Kies een donkerdere hoofdkleur: tekst in deze kleur is slecht leesbaar.",
+        "Contrast against white is {ratio}:1, enough for text.": "Contrast met wit is {ratio}:1, voldoende voor tekst.",
+        "Invoice 2026-0042": "Factuur 2026-0042",
+        "Invoice preview": "Voorbeeld van de factuur",
+        "Loading preview…": "Voorbeeld laden…",
+        "Logo": "Logo",
+        "The invoice layout could not be loaded.": "De factuuropmaak kon niet worden geladen.",
+        "The primary colour is not a valid colour; use #RRGGBB.": "De hoofdkleur is geen geldige kleur; gebruik #RRGGBB."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
