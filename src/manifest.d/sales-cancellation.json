@@ -1,0 +1,22 @@
+{
+	"_meta": {"spdx-license": "EUPL-1.2", "spdx-copyright": "2026 Conduction B.V.", "change": "sales-cancellation", "adr": "ADR-037 modular manifest fragment", "description": "REQ-SCX-002, opened from Reports."},
+	"pages": [{
+		"id": "CancellationReasons",
+		"route": "/reports/cancellation-reasons",
+		"type": "dashboard",
+		"title": "Cancellation reasons",
+		"config": {
+			"description": "Why subscriptions ended, per quarter.",
+			"widgets": [
+				{"id":"per-quarter","title":"Ended subscriptions per quarter","type":"chart","content":{"chartKind":"bar","dataSource":{"register":"shillinq","schema":"RecurringInvoiceProfile","filter":{"status":"ended"},"aggregate":{"groupBy":"cancellationQuarter","metric":"count"}}}},
+				{"id":"lost-per-reason","title":"Lost monthly amount per reason","type":"chart","content":{"chartKind":"bar","valueFormat":"currency","options":{"plotOptions":{"bar":{"horizontal":true}}},"dataSource":{"register":"shillinq","schema":"RecurringInvoiceProfile","filter":{"status":"ended"},"aggregate":{"groupBy":"cancellationReasonCode","metric":"sum","sumField":"cancellationMonthlyAmount"}}}},
+				{"id":"ended","title":"Ended subscriptions","type":"object-table","content":{"source":{"register":"shillinq","schema":"RecurringInvoiceProfile","filter":{"status":"ended"},"order":{"cancellationQuarter":"desc"},"limit":20},"rowRoute":"RecurringInvoiceProfileDetail","columns":[{"key":"name","label":"Subscription"},{"key":"cancellationQuarter","label":"Quarter"},{"key":"cancellationReasonCode","label":"Reason"},{"key":"cancellationMonthlyAmount","label":"Lost per month","formatter":"currency","formatterOptions":{"currency":"EUR","decimals":2}}]}}
+			],
+			"layout": [
+				{"id":"l-quarter","widgetId":"per-quarter","gridX":0,"gridY":0,"gridWidth":6,"gridHeight":5},
+				{"id":"l-lost","widgetId":"lost-per-reason","gridX":6,"gridY":0,"gridWidth":6,"gridHeight":5},
+				{"id":"l-ended","widgetId":"ended","gridX":0,"gridY":5,"gridWidth":12,"gridHeight":5}
+			]
+		}
+	}]
+}

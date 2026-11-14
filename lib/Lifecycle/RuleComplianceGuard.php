@@ -133,17 +133,7 @@ class RuleComplianceGuard {
 				return false;
 			}
 
-			// A person's posting is checked against the booking rules. A
-			// transaction a sub-ledger prepared carries its journal code (the
-			// GR/IR and inventory posters) or the journal entry it books, which
-			// JournalEntryGuard already checked (ledger-booking-rules D2).
-			if ($this->fromSubLedger(transaction: $transaction) === false) {
-				$this->restrictions->assertAllowed(
-					lines: $transaction['lines'],
-					administrationId: (string)($transaction['administrationId'] ?? ''),
-					postingDate: (string)($transaction['postingDate'] ?? '')
-				);
-			}
+			$this->assertBookingRules(transaction: $transaction);
 
 			return true;
 		} catch (PostingRefusedException $e) {
@@ -157,6 +147,30 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * Check a person's posting against the booking rules. A transaction a
+	 * sub-ledger prepared carries its journal code (the GR/IR and inventory
+	 * posters) or the journal entry it books, which JournalEntryGuard already
+	 * checked (ledger-booking-rules D2).
+	 *
+	 * @param array<string,mixed> $transaction The transaction as posted.
+	 *
+	 * @return void
+	 *
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
+	 */
+	private function assertBookingRules(array $transaction): void {
+		if ($this->fromSubLedger(transaction: $transaction) === false) {
+			$this->restrictions->assertAllowed(
+				lines: $transaction['lines'],
+				administrationId: (string)($transaction['administrationId'] ?? ''),
+				postingDate: (string)($transaction['postingDate'] ?? '')
+			);
+		}
+	}//end assertBookingRules()
 
 	/**
 	 * The transaction as the post leaves it, with its stored lines; null when
@@ -304,12 +318,8 @@ class RuleComplianceGuard {
 
 			// ADR-084: findAll() is declared `: array` — never null.
 			foreach ($rows as $row) {
-				$line = $row;
-				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$line = (array)$row->jsonSerialize();
-				}
-
-				if (is_array($line) === true) {
+				$line = $this->lineRow(row: $row);
+				if ($line !== null) {
 					$lineId = (string)($line['id'] ?? $line['@self']['id'] ?? count($lines));
 					$lines[$lineId] = $line;
 				}
@@ -318,6 +328,26 @@ class RuleComplianceGuard {
 
 		return array_values($lines);
 	}//end loadLines()
+
+	/**
+	 * A GLLine row as an array, or null when it is neither an array nor serialisable to one.
+	 *
+	 * @param mixed $row The findAll() row.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function lineRow(mixed $row): array|null {
+		$line = $row;
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$line = (array)$row->jsonSerialize();
+		}
+
+		if (is_array($line) === true) {
+			return $line;
+		}
+
+		return null;
+	}//end lineRow()
 
 	/**
 	 * Log violations (mandatory at warning level, others at info).

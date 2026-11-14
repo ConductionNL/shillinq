@@ -109,6 +109,43 @@ class ARInvoiceEInvoiceController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function send(string $invoiceNumber): JSONResponse {
+		$refusal = $this->refuseSendRequest(invoiceNumber: $invoiceNumber);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		$refusal          = $this->refuseAdministration(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		try {
+			$result = $this->eInvoiceService->sendEInvoice(
+				administrationId: $administrationId,
+				invoiceNumber: $invoiceNumber
+			);
+		} catch (\RuntimeException $e) {
+			return self::refusedSend(e: $e);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'ARInvoiceEInvoiceController: send-einvoice failed',
+				['invoiceNumber' => $invoiceNumber, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(['error' => 'Could not send e-invoice'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end send()
+
+	/**
+	 * Refuse a send without a logged-in user or with a malformed invoice number.
+	 *
+	 * @param string $invoiceNumber The invoice number.
+	 *
+	 * @return JSONResponse|null The 401/400 refusal, or null when the send may proceed.
+	 */
+	private function refuseSendRequest(string $invoiceNumber): JSONResponse|null {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -117,7 +154,17 @@ class ARInvoiceEInvoiceController extends Controller {
 			return new JSONResponse(['error' => 'Invalid invoice number'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$administrationId = $this->scopeParam(name: 'administrationId');
+		return null;
+	}//end refuseSendRequest()
+
+	/**
+	 * Refuse a missing administration, or one the caller is not a member of.
+	 *
+	 * @param string $administrationId The administration id from the request.
+	 *
+	 * @return JSONResponse|null The 400/404 refusal, or null when the caller may send in it.
+	 */
+	private function refuseAdministration(string $administrationId): JSONResponse|null {
 		if ($administrationId === '') {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
@@ -129,28 +176,24 @@ class ARInvoiceEInvoiceController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		try {
-			$result = $this->eInvoiceService->sendEInvoice(
-				administrationId: $administrationId,
-				invoiceNumber: $invoiceNumber
-			);
-		} catch (\RuntimeException $e) {
-			$message = $e->getMessage();
-			if (str_contains($message, 'not found') === true) {
-				return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-			}
+		return null;
+	}//end refuseAdministration()
 
-			return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'ARInvoiceEInvoiceController: send-einvoice failed',
-				['invoiceNumber' => $invoiceNumber, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not send e-invoice'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	/**
+	 * Answer a refused send: 404 when the invoice is not found, else 400, with the service's message.
+	 *
+	 * @param \RuntimeException $e The refusal.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function refusedSend(\RuntimeException $e): JSONResponse {
+		$message = $e->getMessage();
+		if (str_contains($message, 'not found') === true) {
+			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
 		}
 
-		return new JSONResponse($result, Http::STATUS_OK);
-	}//end send()
+		return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
+	}//end refusedSend()
 
 	/**
 	 * Resolve + validate a scope parameter from the request body/query.

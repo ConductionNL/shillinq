@@ -32,6 +32,8 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Integriq\Event\ConnectionStatusReportedEvent;
 use OCA\Shillinq\Service\ConnectionReportService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
@@ -49,6 +51,7 @@ use RuntimeException;
  *
  * @covers \OCA\Shillinq\Service\ConnectionReportService
  * @uses   \OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter
+ * @uses   \OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter
  * @uses   \OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter
  */
 class ConnectionReportServiceTest extends TestCase {
@@ -121,6 +124,7 @@ class ConnectionReportServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		return [
+			DigipoortSbrAdapterInterface::class => new LogDigipoortSbrAdapter(logger: $logger),
 			TreasuryRateAdapterInterface::class => new LogTreasuryRateAdapter(logger: $logger),
 			DepositPaymentAdapterInterface::class => new LogDepositPaymentAdapter(logger: $logger),
 		];
@@ -165,10 +169,10 @@ class ConnectionReportServiceTest extends TestCase {
 		$result = $this->service(bindings: $this->shippedBindings())->reportAdapterBindings();
 
 		$this->assertSame(
-			expected: ['treasury-rates' => 'simulated', 'deposit-payment' => 'simulated'],
+			expected: ['digipoort-sbr' => 'simulated', 'treasury-rates' => 'simulated', 'deposit-payment' => 'simulated'],
 			actual: $result
 		);
-		$this->assertCount(expectedCount: 2, haystack: $this->sent);
+		$this->assertCount(expectedCount: 3, haystack: $this->sent);
 
 		$deposit = $this->sentByKey()['deposit-payment'];
 		$this->assertSame(expected: 'shillinq', actual: $deposit->app);
@@ -291,7 +295,7 @@ class ConnectionReportServiceTest extends TestCase {
 	public function testAThrowingListenerNeverEscapes(): void {
 		$dispatcher = $this->createMock(originalClassName: IEventDispatcher::class);
 		$dispatcher->method('dispatchTyped')->willThrowException(new RuntimeException('registry down'));
-		$this->logger->expects($this->exactly(count: 2))->method('warning')
+		$this->logger->expects($this->exactly(count: 3))->method('warning')
 			->with($this->stringContains(string: 'could not send'), $this->arrayHasKey(key: 'key'));
 
 		$service = new ConnectionReportService(

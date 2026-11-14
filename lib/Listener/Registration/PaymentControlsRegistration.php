@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Listener\Registration;
 
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\LinkedObjectsLockListener;
+use OCA\Shillinq\Listener\PaymentBlockReleaseListener;
 use OCA\Shillinq\Listener\PaymentRunLineLockListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -48,5 +49,6 @@ final class PaymentControlsRegistration {
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: PaymentRunLineLockListener::class);
 		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: LinkedObjectsLockListener::class);
+		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: PaymentBlockReleaseListener::class);
 	}//end register()
 }//end class

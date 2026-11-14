@@ -100,22 +100,7 @@ final class InvoiceNumberAuditService {
 
 		[$regex, $width] = $this->compile(pattern: $pattern, year: $year);
 
-		$counts = [];
-		$outside = [];
-		$checked = 0;
-		foreach ($this->numbers(administrationId: $administrationId) as $number) {
-			if (preg_match($regex, $number, $match) !== 1) {
-				if ($this->isOfYear(number: $number, year: $year) === true) {
-					$outside[] = $number;
-				}
-
-				continue;
-			}
-
-			$checked += 1;
-			$sequence = (int)$match['seq'];
-			$counts[$sequence] = (($counts[$sequence] ?? 0) + 1);
-		}
+		[$counts, $outside, $checked] = $this->tallySequences(administrationId: $administrationId, year: $year, regex: $regex);
 
 		ksort($counts);
 		$format = fn (int $sequence): string => $this->format(pattern: $pattern, year: $year, sequence: $sequence, width: $width);
@@ -123,18 +108,8 @@ final class InvoiceNumberAuditService {
 		$missing = [];
 		$duplicates = [];
 		if ($counts !== []) {
-			$last = max(array_keys($counts));
-			for ($sequence = 1; $sequence <= $last; $sequence++) {
-				if (isset($counts[$sequence]) === false) {
-					$missing[] = $format($sequence);
-				}
-			}
-
-			foreach ($counts as $sequence => $count) {
-				if ($count > 1) {
-					$duplicates[] = $format($sequence);
-				}
-			}
+			$missing = $this->missingSequences(counts: $counts, format: $format);
+			$duplicates = $this->duplicateSequences(counts: $counts, format: $format);
 		}
 
 		sort($outside, SORT_STRING);
@@ -156,6 +131,81 @@ final class InvoiceNumberAuditService {
 			'outsideSeries' => array_values(array_unique($outside)),
 		];
 	}//end gaps()
+
+	/**
+	 * Count the administration's numbers per sequence in the series, and collect the year's numbers outside it.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param int    $year             The fiscal year.
+	 * @param string $regex            The compiled series pattern.
+	 *
+	 * @return array{0: array<int,int>, 1: list<string>, 2: int} [counts per sequence, numbers outside the series, numbers checked].
+	 *
+	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 */
+	private function tallySequences(string $administrationId, int $year, string $regex): array {
+		$counts = [];
+		$outside = [];
+		$checked = 0;
+		foreach ($this->numbers(administrationId: $administrationId) as $number) {
+			if (preg_match($regex, $number, $match) !== 1) {
+				if ($this->isOfYear(number: $number, year: $year) === true) {
+					$outside[] = $number;
+				}
+
+				continue;
+			}
+
+			$checked += 1;
+			$sequence = (int)$match['seq'];
+			$counts[$sequence] = (($counts[$sequence] ?? 0) + 1);
+		}
+
+		return [$counts, $outside, $checked];
+	}//end tallySequences()
+
+	/**
+	 * The formatted numbers of the sequences below the highest one that never occur.
+	 *
+	 * @param array<int,int> $counts Occurrences per sequence, not empty.
+	 * @param callable       $format Formats a sequence as an invoice number.
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 */
+	private function missingSequences(array $counts, callable $format): array {
+		$missing = [];
+		$last = max(array_keys($counts));
+		for ($sequence = 1; $sequence <= $last; $sequence++) {
+			if (isset($counts[$sequence]) === false) {
+				$missing[] = $format($sequence);
+			}
+		}
+
+		return $missing;
+	}//end missingSequences()
+
+	/**
+	 * The formatted numbers of the sequences that occur more than once.
+	 *
+	 * @param array<int,int> $counts Occurrences per sequence.
+	 * @param callable       $format Formats a sequence as an invoice number.
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/changes/sales-invoice-issue-controls/tasks.md#task-3.1
+	 */
+	private function duplicateSequences(array $counts, callable $format): array {
+		$duplicates = [];
+		foreach ($counts as $sequence => $count) {
+			if ($count > 1) {
+				$duplicates[] = $format($sequence);
+			}
+		}
+
+		return $duplicates;
+	}//end duplicateSequences()
 
 	/**
 	 * Every number of the administration's numbered sales invoices.

@@ -514,6 +514,47 @@ class ConfirmationTokenServiceTest extends TestCase {
 	}//end testTheRequestIsMailed()
 
 	/**
+	 * A stored appointment records the request as sent, or as failed when the
+	 * mail server refused it (REQ-BCF-013).
+	 *
+	 * @return void
+	 */
+	public function testTheSendIsRecordedOnAStoredAppointment(): void {
+		$appointment = ['id' => 'uuid-a-1', 'appointmentId' => 'a-1', 'status' => 'pending_confirmation', 'serviceName' => 'Paspoort'];
+
+		$this->service()->issueAndSend($appointment, ['email' => 'jan@example.org']);
+
+		$this->assertCount(2, $this->saves);
+		[$recorded, $register, $schema, $rbac] = $this->saves[1];
+		$this->assertSame(['afspraken', 'Appointment', false], [$register, $schema, $rbac]);
+		$this->assertSame('uuid-a-1', $recorded['id']);
+		$this->assertSame('pending_confirmation', $recorded['status'], 'the rest of the appointment is kept');
+		$this->assertSame('sent', $recorded['confirmationRequestStatus']);
+		$this->assertSame('2026-05-16T10:00:00Z', $recorded['confirmationRequestAt']);
+
+		$this->saves = [];
+		$this->sendOutcome = ['jan@example.org'];
+		$this->service()->resend($appointment, ['email' => 'jan@example.org'], 'admin');
+
+		$this->assertSame('failed', end($this->saves)[0]['confirmationRequestStatus']);
+		$this->assertSame('Appointment', end($this->saves)[2]);
+	}//end testTheSendIsRecordedOnAStoredAppointment()
+
+	/**
+	 * Without OpenRegister the send still counts and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testWithoutOpenRegisterNothingIsRecorded(): void {
+		$service = $this->service();
+		$this->openRegister = false;
+		$result = $service->issueAndSend(['id' => 'uuid-a-1', 'appointmentId' => 'a-1'], ['email' => 'jan@example.org']);
+
+		$this->assertTrue($result['sent']);
+		$this->assertSame([], $this->saves, 'without OpenRegister nothing is written');
+	}//end testWithoutOpenRegisterNothingIsRecorded()
+
+	/**
 	 * Without a customer email nothing is sent, and that is logged.
 	 *
 	 * @return void

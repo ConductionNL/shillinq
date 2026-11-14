@@ -413,7 +413,17 @@ class InventoryPostingGuard {
 			return null;
 		}
 
-		$row = $matches[0];
+		return self::configPayload(row: $matches[0]);
+	}//end resolveActiveConfig()
+
+	/**
+	 * The payload of a findAll() row: the array itself, or a serialisable entity's array.
+	 *
+	 * @param mixed $row One InventoryGLConfig row.
+	 *
+	 * @return array<string,mixed>|null The payload, or null when the row is unusable.
+	 */
+	private static function configPayload(mixed $row): array|null {
 		if (is_array($row) === true) {
 			return $row;
 		}
@@ -426,7 +436,7 @@ class InventoryPostingGuard {
 		}
 
 		return null;
-	}//end resolveActiveConfig()
+	}//end configPayload()
 
 	/**
 	 * Extract the inventory delta from the proposed valuation. Accepts

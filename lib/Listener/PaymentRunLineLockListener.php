@@ -80,31 +80,75 @@ class PaymentRunLineLockListener implements IEventListener {
 			return;
 		}
 
+		$field = $this->lockedFieldViolation(event: $event);
+		if ($field !== null) {
+			$event->setErrors(['message' => self::MESSAGE, 'field' => $field]);
+			$event->stopPropagation();
+		}
+	}//end handle()
+
+	/**
+	 * The first locked field the update changes on a PaymentRun past `draft`, or null.
+	 *
+	 * @param ObjectUpdatingEvent $event The pre-save event.
+	 *
+	 * @return string|null The changed locked field, or null.
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.1
+	 */
+	private function lockedFieldViolation(ObjectUpdatingEvent $event): string|null {
 		$old = $event->getOldObject();
 		$new = $event->getNewObject();
 		if ($old === null || $new === null) {
-			return;
+			return null;
 		}
 
 		$before = $old->getObject();
+		if ($this->isLockedRun(new: $new, before: $before) === false) {
+			return null;
+		}
+
+		return $this->firstChangedLockedField(before: $before, after: $new->getObject());
+	}//end lockedFieldViolation()
+
+	/**
+	 * Whether the object is a PaymentRun whose stored state is past `draft`.
+	 *
+	 * @param object $new The object being saved.
+	 * @param array<string, mixed> $before The stored object data.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.1
+	 */
+	private function isLockedRun(object $new, array $before): bool {
 		$state  = (string)($before['lifecycleState'] ?? ($before['status'] ?? 'draft'));
 		if ($state === 'draft' || $state === '') {
-			return;
+			return false;
 		}
 
-		if ($this->schemaResolver->matchesSchema(entity: $new, expectedSlug: 'PaymentRun') === false) {
-			return;
-		}
+		return $this->schemaResolver->matchesSchema(entity: $new, expectedSlug: 'PaymentRun') === true;
+	}//end isLockedRun()
 
-		$after = $new->getObject();
+	/**
+	 * The first locked field whose value differs, or null.
+	 *
+	 * @param array<string, mixed> $before The stored object data.
+	 * @param array<string, mixed> $after The object data being saved.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.1
+	 */
+	private function firstChangedLockedField(array $before, array $after): string|null {
 		foreach (self::LOCKED_FIELDS as $field) {
 			if (self::normalise(value: ($before[$field] ?? null)) !== self::normalise(value: ($after[$field] ?? null))) {
-				$event->setErrors(['message' => self::MESSAGE, 'field' => $field]);
-				$event->stopPropagation();
-				return;
+				return $field;
 			}
 		}
-	}//end handle()
+
+		return null;
+	}//end firstChangedLockedField()
 
 	/**
 	 * A value with every number as a float, so 100 and 100.0 compare equal.
