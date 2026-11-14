@@ -118,7 +118,8 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 		self::assertSame(['properties', 'x-openregister-lifecycle'], array_keys($schemas['XbrlInstance']));
 		self::assertSame(['transitions', 'states'], array_keys($schemas['XbrlInstance']['x-openregister-lifecycle']));
 		self::assertSame(['validate', 'submit', 'deliver', 'retract'], array_keys($schemas['XbrlInstance']['x-openregister-lifecycle']['transitions']));
-		self::assertSame(['properties'], array_keys($schemas['BtwAangifte']));
+		self::assertSame(['properties', 'x-openregister-lifecycle'], array_keys($schemas['BtwAangifte']));
+		self::assertSame(['submit', 'deliver', 'retract'], array_keys($schemas['BtwAangifte']['x-openregister-lifecycle']['transitions']));
 		self::assertSame(['properties'], array_keys($schemas['XBRLTaxonomy']));
 		}//end testTheFragmentAddsPropertiesTheGuardsAndTheHandOff()
 
@@ -157,4 +158,21 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 			self::assertTrue(class_exists($class), $class . ' exists');
 		}
 	}//end testSubmitHandsOffAndOnlyTheDeliveryReportMakesItSubmitted()
+
+	public function testSubmittingAReturnFilesItAndOnlyTheDeliveryReportMakesItSubmitted(): void {
+		$before = $this->before()['components']['schemas']['BtwAangifte'];
+		$after  = $this->merge($this->before(), $this->decode('register.d/tax-digipoort-filing.json'))['components']['schemas']['BtwAangifte'];
+		$t      = $after['x-openregister-lifecycle']['transitions'];
+
+		self::assertSame(array_merge($before['properties']['statusCode']['enum'], ['handed-off']), $after['properties']['statusCode']['enum']);
+		self::assertSame('statusCode', $after['x-openregister-lifecycle']['field']);
+		self::assertSame(['draft', 'handed-off', 'Indienen'], [$t['submit']['from'], $t['submit']['to'], $t['submit']['label']]);
+		self::assertSame(['OCA\\Shillinq\\Lifecycle\\Action\\FileVatReturnAction'], array_column($t['submit']['actions'], 'action'));
+		self::assertSame(['handed-off', 'submitted', 'inbound'], [$t['deliver']['from'], $t['deliver']['to'], $t['deliver']['trigger']]);
+		self::assertSame('OCA\\Shillinq\\Guard\\XbrlDeliveryGuard::requireFilingReference', $t['deliver']['requires']);
+		self::assertSame(['handed-off', 'draft'], [$t['retract']['from'], $t['retract']['to']]);
+		self::assertSame($before['x-openregister-lifecycle']['transitions']['verify'], $t['verify']);
+		self::assertSame($before['x-openregister-lifecycle']['transitions']['rebase'], $t['rebase']);
+		self::assertTrue(class_exists($t['submit']['actions'][0]['action']));
+	}//end testSubmittingAReturnFilesItAndOnlyTheDeliveryReportMakesItSubmitted()
 }//end class

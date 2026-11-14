@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "tax-digipoort-filing",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating. The taxonomy record also names, per release, the entry point schemas (`schemaRefs`), the concept namespaces (`namespaces`) and any concept it renames (`conceptMap`), which the XBRL builders write. Filing follows integriq: `submit` now stores the file and hands it to integriq (state handed-off, action hand-to-digipoort), `deliver` moves it to submitted only on integriq's delivery report carrying the Digipoort reference, and `retract` returns an undeliverable filing to validated; accept and reject stay inbound from submitted.",
+    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating. The taxonomy record also names, per release, the entry point schemas (`schemaRefs`), the concept namespaces (`namespaces`) and any concept it renames (`conceptMap`), which the XBRL builders write. Filing follows integriq: `submit` now stores the file and hands it to integriq (state handed-off, action hand-to-digipoort), `deliver` moves it to submitted only on integriq's delivery report carrying the Digipoort reference, and `retract` returns an undeliverable filing to validated; accept and reject stay inbound from submitted. A VAT return files the same way: its `submit` runs FileVatReturnAction (build, validate and hand off its instance) into handed-off, and only integriq's delivery report moves it on to submitted (`deliver`), or back to draft (`retract`).",
     "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
   },
   "info": {
@@ -17,7 +17,9 @@
           "entryPoint": {
             "enum": [
               "belastingdienst-ob"
-            ]
+            ],
+            "title": "Entry Point",
+            "description": "Canonical SBR entry point. Each pins a Logius-published NL-taxonomie version."
           },
           "filingType": {
             "type": "string",
@@ -40,7 +42,9 @@
           "state": {
             "enum": [
               "handed-off"
-            ]
+            ],
+            "title": "State",
+            "description": "Lifecycle state. Transitions are declared in x-openregister-lifecycle below; no PHP XbrlReportService authors transitions (ADR-031)."
           },
           "payloadFileUri": {
             "type": "string",
@@ -106,6 +110,49 @@
             "description": "The XbrlInstance that files this return through Digipoort. The return mirrors that instance's state: submitted once the delivery is reported, accepted or rejected once the Belastingdienst's outcome is reported.",
             "example": "xbrl-2026-0042",
             "title": "XBRL instance"
+          },
+          "statusCode": {
+            "enum": [
+              "handed-off"
+            ],
+            "title": "Status Code",
+            "description": "Lifecycle status."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "states": {
+            "handed-off": {
+              "label": "Aangeboden",
+              "description": "The return's XBRL instance is handed to integriq's Digipoort connector. Not yet submitted: the return shows submitted, with the Digipoort reference, once integriq reports the delivery."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "to": "handed-off",
+              "description": "File the return through its XBRL instance: build it on the Belastingdienst OB entry point, validate it and hand it to integriq's Digipoort connector. Refused, and the return stays in draft, when no filing connection is configured or the instance does not validate.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\FileVatReturnAction",
+                  "description": "Build, validate and submit the return's XbrlInstance; set xbrlInstanceId."
+                }
+              ]
+            },
+            "deliver": {
+              "from": "handed-off",
+              "to": "submitted",
+              "trigger": "inbound",
+              "label": "Afgeleverd bij Digipoort",
+              "description": "integriq reported the delivery of the return's XBRL instance; filingReference holds the Digipoort reference. Refused without it.",
+              "requires": "OCA\\Shillinq\\Guard\\XbrlDeliveryGuard::requireFilingReference"
+            },
+            "retract": {
+              "from": "handed-off",
+              "to": "draft",
+              "trigger": "inbound",
+              "label": "Niet afgeleverd",
+              "description": "integriq could not deliver the return's XBRL instance; the notes say why and the return can be submitted again."
+            }
           }
         }
       },
@@ -148,16 +195,22 @@
               "type": "object",
               "properties": {
                 "entryPoint": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Entry point",
+                  "description": "The entry point whose instances this summation applies to."
                 },
                 "total": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Total",
+                  "description": "The concept that must equal the sum of the parts."
                 },
                 "parts": {
                   "type": "array",
                   "items": {
                     "type": "string"
-                  }
+                  },
+                  "title": "Parts",
+                  "description": "The concepts that add up to the total."
                 }
               }
             },

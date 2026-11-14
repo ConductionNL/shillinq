@@ -45,9 +45,9 @@ use Throwable;
  * - `failed`: integriq could not deliver; `retract` returns the instance to
  *   validated with the reason, so it can be filed again.
  *
- * A VAT return filed through the instance follows it: submitted (with the
- * reference) on delivery, verified on acceptance, back to draft with the
- * errors in its notes on rejection. Every transition is declared on the
+ * A VAT return handed off through the instance follows it: submitted (with
+ * the reference) on delivery, verified on acceptance, back to draft with the
+ * errors in its notes on rejection or a failed delivery. Every transition is declared on the
  * schema and run as the system, its guards still applying. Fail-soft: a
  * report that does not fit is logged and skipped.
  *
@@ -241,6 +241,12 @@ class SbrFilingStatusListener implements IEventListener {
 	/**
 	 * Let the VAT return the instance files follow it.
 	 *
+	 * A return handed off with its instance is delivered with it (the
+	 * reference in filingReference), verified when the instance is accepted,
+	 * reopened to draft with the errors in its notes when it is rejected, and
+	 * retracted to draft when integriq could not deliver. A return in draft
+	 * (its instance filed from the SBR filings page) is left alone.
+	 *
 	 * @param array<string,mixed> $instance  The XbrlInstance.
 	 * @param string              $state     The instance's state now.
 	 * @param string              $reference The Digipoort delivery reference.
@@ -250,34 +256,62 @@ class SbrFilingStatusListener implements IEventListener {
 	 */
 	private function mirrorOnReturn(array $instance, string $state, string $reference, string $errors): void {
 		$vatReturn = $this->records->find(schema: 'BtwAangifte', id: (string) ($instance['sourceReturnId'] ?? ''));
-		if ($vatReturn === null || $state === 'validated') {
+		if ($vatReturn === null) {
 			return;
 		}
 
 		$status = (string) ($vatReturn['statusCode'] ?? 'draft');
 		$id     = (string) $vatReturn['id'];
-		if ($status === 'draft' && $state !== 'rejected') {
+		if ($status === 'handed-off' && $state === 'validated') {
+			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Not delivered to Digipoort: ' . $errors);
+			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
+			$this->transitions->runAsSystem(objectId: $id, action: 'retract');
+			return;
+		}
+
+		if ($status === 'handed-off') {
 			if ($reference === '') {
 				$reference = (string) ($instance['digipoortReceiptId'] ?? '');
 			}
 
 			$vatReturn['filingReference'] = $reference;
 			$vatReturn['submissionDate']  = gmdate('Y-m-d');
+			if ($state === 'rejected') {
+				$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Rejected by the Belastingdienst: ' . $errors);
+			}
+
 			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
-			$this->transitions->runAsSystem(objectId: $id, action: 'submit');
+			$this->transitions->runAsSystem(objectId: $id, action: 'deliver');
 			$status = 'submitted';
+		} else if ($status === 'submitted' && $state === 'rejected') {
+			$vatReturn['notes'] = self::note(notes: (string) ($vatReturn['notes'] ?? ''), line: 'Rejected by the Belastingdienst: ' . $errors);
+			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
 		}
 
-		if ($status === 'submitted' && $state === 'accepted') {
+		if ($status !== 'submitted') {
+			return;
+		}
+
+		if ($state === 'accepted') {
 			$this->transitions->runAsSystem(objectId: $id, action: 'verify');
 		}
 
-		if ($status === 'submitted' && $state === 'rejected') {
-			$vatReturn['notes'] = trim((string) ($vatReturn['notes'] ?? '') . "\n" . 'Rejected by the Belastingdienst: ' . $errors);
-			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
+		if ($state === 'rejected') {
 			$this->transitions->runAsSystem(objectId: $id, action: 'rebase');
 		}
 	}//end mirrorOnReturn()
+
+	/**
+	 * The notes with one line added.
+	 *
+	 * @param string $notes The notes.
+	 * @param string $line  The line.
+	 *
+	 * @return string The notes.
+	 */
+	private static function note(string $notes, string $line): string {
+		return trim($notes . "\n" . $line);
+	}//end note()
 
 	/**
 	 * The XbrlInstance an `openregister://<register>/XbrlInstance/<id>` URI points at.

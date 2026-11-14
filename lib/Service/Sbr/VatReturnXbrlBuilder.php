@@ -108,9 +108,6 @@ class VatReturnXbrlBuilder {
 	/**
 	 * Build (or rebuild, while it is a draft) the instance of a return and link the return to it.
 	 *
-	 * An instance that left draft is returned as it is: what was validated or
-	 * filed is never rewritten.
-	 *
 	 * @param array<string,mixed> $vatReturn The BtwAangifte.
 	 *
 	 * @return array<string,mixed> The saved XbrlInstance.
@@ -120,6 +117,32 @@ class VatReturnXbrlBuilder {
 	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
 	 */
 	public function build(array $vatReturn): array {
+		$saved = $this->instanceFor(vatReturn: $vatReturn);
+		if ((string) ($vatReturn['xbrlInstanceId'] ?? '') !== $saved['id']) {
+			$vatReturn['id']             = trim((string) ($vatReturn['id'] ?? ($vatReturn['@self']['id'] ?? '')));
+			$vatReturn['xbrlInstanceId'] = $saved['id'];
+			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
+		}
+
+		return $saved;
+	}//end build()
+
+	/**
+	 * Build (or rebuild, while it is a draft) the instance of a return, without saving the return.
+	 *
+	 * For the return's own transition, which saves the return itself. An
+	 * instance that left draft is returned as it is: what was validated or
+	 * filed is never rewritten.
+	 *
+	 * @param array<string,mixed> $vatReturn The BtwAangifte.
+	 *
+	 * @return array<string,mixed> The saved XbrlInstance.
+	 *
+	 * @throws RuntimeException When the return has no id or no period.
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
+	 */
+	public function instanceFor(array $vatReturn): array {
 		$returnId = trim((string) ($vatReturn['id'] ?? ($vatReturn['@self']['id'] ?? '')));
 		if ($returnId === '') {
 			throw new RuntimeException('The VAT return has no id; save it before filing it.');
@@ -138,7 +161,7 @@ class VatReturnXbrlBuilder {
 			fallback: 'administrationCode'
 		);
 		$instance       = $this->instance(
-			vatReturn: $vatReturn,
+			vatReturn: ['id' => $returnId] + $vatReturn,
 			declarations: $this->records->findAll(schema: 'VATDeclaration', filters: ['returnId' => $returnId]),
 			administration: ($administration ?? []),
 			taxonomy: $this->taxonomies->effectiveFor(entryPoint: self::ENTRY_POINT, start: $start, end: $end)
@@ -147,15 +170,8 @@ class VatReturnXbrlBuilder {
 			$instance = array_merge($existing, $instance);
 		}
 
-		$saved = $this->records->save(schema: 'XbrlInstance', record: $instance);
-		if ((string) ($vatReturn['xbrlInstanceId'] ?? '') !== $saved['id']) {
-			$vatReturn['id']             = $returnId;
-			$vatReturn['xbrlInstanceId'] = $saved['id'];
-			$this->records->save(schema: 'BtwAangifte', record: $vatReturn);
-		}
-
-		return $saved;
-	}//end build()
+		return $this->records->save(schema: 'XbrlInstance', record: $instance);
+	}//end instanceFor()
 
 	/**
 	 * The draft XbrlInstance of a return.

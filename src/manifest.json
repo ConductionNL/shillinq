@@ -2931,7 +2931,7 @@
 			"title": "SBR/XBRL Filing",
 			"config": {
 				"register": "shillinq",
-				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection.",
+				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection. The filing type, the Digipoort reference, the errors of a rejection and the Download XBRL action follow the filing through integriq (tax-digipoort-filing REQ-TDF-002, REQ-TDF-004).",
 				"auditTrail": true,
 				"schema": "XbrlInstance",
 				"fields": [
@@ -2943,6 +2943,11 @@
 					{
 						"key": "entryPoint",
 						"label": "Entry point",
+						"type": "string"
+					},
+					{
+						"key": "filingType",
+						"label": "Filing type",
 						"type": "string"
 					},
 					{
@@ -2966,6 +2971,11 @@
 						"type": "string"
 					},
 					{
+						"key": "sourceReturnId",
+						"label": "Source VAT return",
+						"type": "string"
+					},
+					{
 						"key": "mappingId",
 						"label": "Mapping",
 						"type": "string"
@@ -2982,7 +2992,12 @@
 					},
 					{
 						"key": "digipoortReceiptId",
-						"label": "Digipoort receipt id",
+						"label": "Digipoort reference",
+						"type": "string"
+					},
+					{
+						"key": "handOffReference",
+						"label": "Hand-off reference",
 						"type": "string"
 					},
 					{
@@ -2997,7 +3012,7 @@
 					},
 					{
 						"key": "rejectionReason",
-						"label": "Rejection reason",
+						"label": "Errors",
 						"type": "string"
 					},
 					{
@@ -3006,9 +3021,29 @@
 						"type": "string"
 					},
 					{
+						"key": "payloadFileUri",
+						"label": "Filed file",
+						"type": "string"
+					},
+					{
 						"key": "instanceXml",
 						"label": "XBRL instance",
 						"type": "code"
+					}
+				],
+				"actions": [
+					{
+						"id": "download-xbrl",
+						"label": "Download XBRL",
+						"icon": "DownloadOutline",
+						"type": "api-call",
+						"method": "GET",
+						"url": "/apps/shillinq/api/sbr-filings/@objectId/xbrl",
+						"download": true,
+						"filename": "sbr-filing.xbrl",
+						"successMessage": "XBRL file downloaded.",
+						"errorMessage": "The XBRL file could not be downloaded.",
+						"description": "Download the filing's XBRL instance, in any state."
 					}
 				],
 				"indexRoute": "SbrXbrlFilings",

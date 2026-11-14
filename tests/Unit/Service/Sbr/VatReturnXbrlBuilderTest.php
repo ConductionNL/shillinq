@@ -206,4 +206,12 @@ final class VatReturnXbrlBuilderTest extends TestCase {
 
 		$this->builder()->build(['startDate' => '2026-07-01']);
 	}
+	public function testTheReturnsOwnTransitionLinksTheReturnItself(): void {
+		$records = $this->createMock(SbrRecords::class);
+		$records->method('find')->willReturn(null);
+		$records->method('findAll')->willReturn([]);
+		$records->expects($this->once())->method('save')->with('XbrlInstance')->willReturnCallback(static fn (string $s, array $r): array => $r + ['id' => 'xbrl-3']);
+
+		$this->assertSame('xbrl-3', $this->builder($records)->instanceFor(self::RETURN)['id']);
+	}
 }

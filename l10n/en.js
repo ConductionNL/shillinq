@@ -4712,7 +4712,23 @@ OC.L10N.register(
         "The entity identifier is missing.": "The entity identifier is missing.",
         "The instance names no period in its context.": "The instance names no period in its context.",
         "The required concept %s is missing.": "The required concept %s is missing.",
-        "The total %1$s (%2$s) is not the sum of %3$s (%4$s).": "The total %1$s (%2$s) is not the sum of %3$s (%4$s)."
+        "The total %1$s (%2$s) is not the sum of %3$s (%4$s).": "The total %1$s (%2$s) is not the sum of %3$s (%4$s).",
+        "Concept map": "Concept map",
+        "Concept namespaces": "Concept namespaces",
+        "Entry point": "Entry point",
+        "Entry point schemas": "Entry point schemas",
+        "Entry points": "Entry points",
+        "Filed file": "Filed file",
+        "Hand-off reference": "Hand-off reference",
+        "Filing type": "Filing type",
+        "Source VAT return": "Source VAT return",
+        "Digipoort reference": "Digipoort reference",
+        "Errors": "Errors",
+        "Download XBRL": "Download XBRL",
+        "XBRL file downloaded.": "XBRL file downloaded.",
+        "The XBRL file could not be downloaded.": "The XBRL file could not be downloaded.",
+        "Download the filing's XBRL instance, in any state.": "Download the filing's XBRL instance, in any state.",
+        "Parts": "Parts"
     },
     "nplurals=2; plural=(n != 1);"
 )

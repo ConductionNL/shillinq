@@ -251,5 +251,17 @@ final class GuardRegistrar {
 				);
 			}
 		);
+
+		$context->registerService(
+			'OCA\Shillinq\Guard\XbrlDeliveryGuard::requireFilingReference',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(XbrlDeliveryGuard::class),
+					method: 'requireFilingReference',
+					denyMessage: 'The VAT return could not be checked for its Digipoort delivery reference; it cannot be marked submitted now.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
 	}//end register()
 }//end class

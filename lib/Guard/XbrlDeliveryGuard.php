@@ -23,7 +23,7 @@ namespace OCA\Shillinq\Guard;
 use OCA\Shillinq\Lifecycle\PostingRefusedException;
 
 /**
- * The `requires` of XbrlInstance `deliver` (handed-off to submitted):
+ * The `requires` of XbrlInstance `deliver` (handed-off to submitted), and of BtwAangifte `deliver`:
  * refused until the filing carries the Digipoort delivery reference, which
  * only integriq's delivery report writes, so no one marks a filing submitted
  * that Digipoort never received.
@@ -52,4 +52,29 @@ class XbrlDeliveryGuard {
 
 		return true;
 	}//end requireDeliveryReference()
+
+	/**
+	 * Whether a VAT return may count as submitted: its filing reference is recorded.
+	 *
+	 * The `requires` of BtwAangifte `deliver` (handed-off to submitted), run
+	 * by SbrFilingStatusListener once integriq reports the delivery of the
+	 * return's XBRL instance.
+	 *
+	 * @param array<string, mixed> $vatReturn The BtwAangifte under transition.
+	 *
+	 * @return bool True when the Digipoort reference is recorded.
+	 *
+	 * @throws PostingRefusedException When it is not.
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
+	 */
+	public function requireFilingReference(array $vatReturn): bool {
+		if (trim((string) ($vatReturn['filingReference'] ?? '')) === '') {
+			throw new PostingRefusedException(
+				message: 'The VAT return has no Digipoort delivery reference yet. It counts as submitted once integriq reports the delivery.'
+			);
+		}
+
+		return true;
+	}//end requireFilingReference()
 }//end class

@@ -88,11 +88,11 @@ final class SbrFilingStatusListenerTest extends TestCase {
 	}
 
 	public function testADeliveryRecordsTheReferenceAndMakesTheFilingAndItsReturnSubmitted(): void {
-		$this->given('handed-off');
+		$this->given('handed-off', 'handed-off');
 
 		$this->listener()->handle(self::event(['objectUri' => self::URI, 'status' => 'Delivered', 'deliveryReference' => 'KN-123']));
 
-		$this->assertSame(['xbrl-1:deliver', 'ret-1:submit'], $this->runs);
+		$this->assertSame(['xbrl-1:deliver', 'ret-1:deliver'], $this->runs);
 		$this->assertSame('KN-123', $this->store['XbrlInstance']['xbrl-1']['digipoortReceiptId']);
 		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $this->store['XbrlInstance']['xbrl-1']['submittedAt']);
 		$this->assertSame('KN-123', $this->store['BtwAangifte']['ret-1']['filingReference']);
@@ -118,11 +118,12 @@ final class SbrFilingStatusListenerTest extends TestCase {
 	}
 
 	public function testAnAcceptanceWhoseDeliveryReportNeverCameDeliversFirst(): void {
-		$this->given('handed-off');
+		$this->given('handed-off', 'handed-off');
 
 		$this->assertSame('accepted', $this->listener()->apply(['objectUri' => self::URI, 'status' => 'accepted', 'deliveryReference' => 'KN-9']));
 
-		$this->assertSame(['xbrl-1:deliver', 'xbrl-1:accept', 'ret-1:submit', 'ret-1:verify'], $this->runs);
+		$this->assertSame(['xbrl-1:deliver', 'xbrl-1:accept', 'ret-1:deliver', 'ret-1:verify'], $this->runs);
+		$this->assertSame('KN-9', $this->store['BtwAangifte']['ret-1']['filingReference']);
 		$this->assertSame('KN-9', $this->store['XbrlInstance']['xbrl-1']['digipoortReceiptId']);
 		$this->assertCount(2, $this->saves, 'one save of the filing before its transitions, one of the return');
 	}
@@ -138,14 +139,32 @@ final class SbrFilingStatusListenerTest extends TestCase {
 		$this->assertSame("Q3\nRejected by the Belastingdienst: OB-0042: Rubriek 5g klopt niet; Tweede fout; Zonder code", $this->store['BtwAangifte']['ret-1']['notes']);
 	}
 
-	public function testAFailedDeliveryRetractsTheFilingAndLeavesTheReturnInDraft(): void {
-		$this->given('handed-off');
+	public function testAFailedDeliveryRetractsTheFilingAndItsReturn(): void {
+		$this->given('handed-off', 'handed-off');
 
 		$this->assertSame('validated', $this->listener()->apply(['objectUri' => self::URI, 'status' => 'failed', 'errors' => 'certificate expired']));
 
-		$this->assertSame(['xbrl-1:retract'], $this->runs);
+		$this->assertSame(['xbrl-1:retract', 'ret-1:retract'], $this->runs);
 		$this->assertSame('certificate expired', $this->store['XbrlInstance']['xbrl-1']['rejectionReason']);
-		$this->assertSame('draft', $this->store['BtwAangifte']['ret-1']['statusCode']);
+		$this->assertSame("Q3\nNot delivered to Digipoort: certificate expired", $this->store['BtwAangifte']['ret-1']['notes']);
+	}
+
+	public function testARejectionBeforeTheDeliveryReportDeliversTheReturnThenReopensIt(): void {
+		$this->given('handed-off', 'handed-off');
+
+		$this->assertSame('rejected', $this->listener()->apply(['objectUri' => self::URI, 'status' => 'rejected', 'deliveryReference' => 'KN-5', 'errors' => [['code' => 'E', 'message' => 'x']]]));
+
+		$this->assertSame(['xbrl-1:deliver', 'xbrl-1:reject', 'ret-1:deliver', 'ret-1:rebase'], $this->runs);
+		$this->assertSame("Q3\nRejected by the Belastingdienst: E: x", $this->store['BtwAangifte']['ret-1']['notes']);
+	}
+
+	public function testAReturnInDraftIsLeftAlone(): void {
+		$this->given('handed-off', 'draft');
+
+		$this->assertSame('submitted', $this->listener()->apply(['objectUri' => self::URI, 'status' => 'delivered', 'deliveryReference' => 'KN-1']));
+
+		$this->assertSame(['xbrl-1:deliver'], $this->runs);
+		$this->assertArrayNotHasKey('filingReference', $this->store['BtwAangifte']['ret-1']);
 	}
 
 	public function testRepeatedOrUnfittingReportsChangeNothing(): void {
@@ -161,7 +180,7 @@ final class SbrFilingStatusListenerTest extends TestCase {
 		$this->given('submitted');
 		$this->assertSame('submitted', $listener->apply(['objectUri' => self::URI, 'status' => 'delivered', 'deliveryReference' => 'KN-1']));
 
-		$this->assertSame(['ret-1:submit'], $this->runs, 'only the return of a delivered filing still in draft catches up');
+		$this->assertSame([], $this->runs);
 	}
 
 	public function testAReportForAnotherObjectOrAnUnknownFilingIsSkipped(): void {

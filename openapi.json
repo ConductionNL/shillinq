@@ -356,6 +356,10 @@
             "description": "GET /api/revenue-cutoff — per-contract IFRS 15 revenue cut-off for a period."
         },
         {
+            "name": "sbr-filing",
+            "description": "HTTP API for downloading the XBRL file of an SBR filing."
+        },
+        {
             "name": "sepa-audit",
             "description": "Audit-dossier export endpoint for SEPA mandates (REQ-SDD-010)."
         },
@@ -12240,6 +12244,54 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/sbr-filings/{id}/xbrl": {
+            "get": {
+                "operationId": "sbr-filing-download",
+                "summary": "Download the XBRL file of an SBR filing (GET /api/v1/sbr-filings/{id}/xbrl)",
+                "description": "Download the XBRL file of an SBR filing (an XbrlInstance: a VAT return or a set of annual accounts), in any state, so a filing can be checked before it is submitted. Answers 404 for a filing outside the caller's administrations, or one without a document. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "sbr-filing"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The XbrlInstance uuid.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/Problem401"

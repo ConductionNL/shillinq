@@ -189,6 +189,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // appointments (skipping availability/conflict violations).
             ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
             ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
+        // The XBRL file of an SBR filing, in any state (tax-digipoort-filing task 4.2).
+            ['name' => 'sbrFiling#download', 'url' => '/api/sbr-filings/{id}/xbrl', 'verb' => 'GET'],
+
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.

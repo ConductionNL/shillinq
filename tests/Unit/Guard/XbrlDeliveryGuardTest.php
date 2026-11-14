@@ -42,4 +42,13 @@ final class XbrlDeliveryGuardTest extends TestCase {
 
 		(new XbrlDeliveryGuard())->requireDeliveryReference(['digipoortReceiptId' => '  ', 'state' => 'handed-off']);
 	}
+	public function testAVatReturnCountsAsSubmittedOnlyWithItsFilingReference(): void {
+		$guard = new XbrlDeliveryGuard();
+		$this->assertTrue($guard->requireFilingReference(['filingReference' => 'KN-123']));
+
+		$this->expectException(PostingRefusedException::class);
+		$this->expectExceptionMessage('The VAT return has no Digipoort delivery reference yet.');
+
+		$guard->requireFilingReference(['filingReference' => null]);
+	}
 }
