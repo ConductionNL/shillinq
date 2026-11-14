@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -5423,6 +5437,33 @@
 					"route": "/retainer-true-ups/:id",
 					"type": "detail",
 					"title": "True-Up"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Quotes",
+					"label": "Quotes",
+					"icon": "FileDocumentEditOutline",
+					"route": "Quotes",
+					"order": 27
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-quotes",
+					"id": "Quotes",
+					"route": "/quotes",
+					"type": "index",
+					"title": "Quotes"
+				},
+				{
+					"_fragment": "sales-quotes",
+					"id": "QuoteDetail",
+					"route": "/quotes/:id",
+					"type": "detail",
+					"title": "Quote"
 				}
 			]
 		},

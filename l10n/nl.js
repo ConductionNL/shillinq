@@ -6910,7 +6910,16 @@ OC.L10N.register(
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Draft invoice written for the order.": "Conceptfactuur voor de order aangemaakt.",
+        "Sales order created from the quote.": "Verkooporder aangemaakt uit de offerte.",
+        "The order could not be invoiced.": "De order kon niet worden gefactureerd.",
+        "The sales order could not be created.": "De verkooporder kon niet worden aangemaakt.",
+        "Invoice order": "Order factureren",
+        "Quotes": "Offertes",
+        "Quote lines": "Offerteregels",
+        "Create sales order": "Verkooporder maken",
+        "{total} quotes": "{total} offertes"
     },
     "nplurals=2; plural=(n != 1);"
 )

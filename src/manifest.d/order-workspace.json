@@ -28,7 +28,8 @@
 					{ "label": "All", "filter": {}, "default": true, "showCount": true },
 					{ "label": "Purchase", "filter": { "orderType": "purchase" }, "showCount": true },
 					{ "label": "Subsidie", "filter": { "orderType": "subsidy" }, "showCount": true },
-					{ "label": "Engagement", "filter": { "orderType": "engagement" }, "showCount": true }
+					{ "label": "Engagement", "filter": { "orderType": "engagement" }, "showCount": true },
+					{ "label": "Sales", "filter": { "orderType": "sales" }, "showCount": true }
 				],
 				"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"],
 				"detailRoute": "OrderDetail"
@@ -43,6 +44,16 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "OrderPrimitive",
+				"headerActions": [
+					{
+						"id": "invoice-sales-order",
+						"label": "Invoice order",
+						"type": "handler",
+						"handler": "invoiceSalesOrder",
+						"icon": "FileDocumentOutline",
+						"visibleWhen": { "field": "orderType", "op": "eq", "value": "sales" }
+					}
+				],
 				"_widgetsNote": "These live under config.widgets[] + config.layout[], NOT as a page-level widgets[] block. A page-level widgets[] on a type:\"detail\" page makes CnPageRenderer render a bare CnWidgetGrid INSTEAD of the typed detail component, so the page silently loses its header, max-width, padding, sidebar and grid discipline — and the sidebarProps/relatedCollections below would never render at all. The v2 schema calls page-level widgets[] 'preferred'; for a TYPED page it is the broken spelling. gate-69 page-type-discipline catches it.",
 				"widgets": [
 					{

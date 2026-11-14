@@ -4733,7 +4733,16 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Draft invoice written for the order.": "Draft invoice written for the order.",
+        "Sales order created from the quote.": "Sales order created from the quote.",
+        "The order could not be invoiced.": "The order could not be invoiced.",
+        "The sales order could not be created.": "The sales order could not be created.",
+        "Invoice order": "Invoice order",
+        "Quotes": "Quotes",
+        "Quote lines": "Quote lines",
+        "Create sales order": "Create sales order",
+        "{total} quotes": "{total} quotes"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

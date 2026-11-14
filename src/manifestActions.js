@@ -34,6 +34,7 @@ import {
 	openPayeeRelation,
 	openRelationsExport,
 } from './utils/relationActions.js'
+import { createSalesOrderFromQuote, invoiceSalesOrder } from './utils/salesOrderActions.js'
 import {
 	openMeterReadingImport,
 	rateMeterReadings,
@@ -94,6 +95,10 @@ export const manifestActions = Object.freeze({
 	openDunningSwitchOn,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// sales-quote-and-order-to-invoice 2.1: Create sales order on a quote,
+	// Invoice order on a sales order.
+	createSalesOrderFromQuote,
+	invoiceSalesOrder,
 })
 
 /**
