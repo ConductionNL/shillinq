@@ -646,11 +646,54 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 			[
 				['7100', 'debit', 2000.0, 'reverse-charge', '2a', 'base'],
 				['7110', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['2110', 'credit', 420.0, 'reverse-charge', '2a', 'vat'],
+				['1230', 'debit', 420.0, 'reverse-charge', '5b', 'vat'],
+				['2110', 'credit', 210.0, 'intra-eu-acquisition', '4b', 'vat'],
+				['1230', 'debit', 210.0, 'intra-eu-acquisition', '5b', 'vat'],
 				['2000', 'credit', 3000.0, null, null, null],
 			],
 			$this->stampedLines()
 		);
 	}//end testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff()
+
+	/**
+	 * A reverse-charged line that names its own rate self-assesses at that
+	 * rate, not at the general one; a line at a zero rate tariff that is not
+	 * reverse-charged books no self-assessed VAT.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ap-11', 'invoiceNumber' => 'INK-92', 'invoiceDate' => '2026-08-04', 'administrationId' => 'adm-1',
+				'totalAmount' => 1500.0, 'taxAmount' => 0,
+				'lines' => [
+					['accountNumber' => '7120', 'amount' => 1000.0, 'description' => 'Boeken uit Belgie', 'taxCode' => 'intra-eu-acquisition', 'vatRate' => 9],
+					['accountNumber' => '7130', 'amount' => 500.0, 'description' => 'Vrijgesteld', 'taxCode' => 'zero'],
+				],
+				'state' => 'posted',
+			],
+			[],
+			['sourceSchema' => 'APInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['7120', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['7130', 'debit', 500.0, 'zero', null, 'base'],
+				['2110', 'credit', 90.0, 'intra-eu-acquisition', '4b', 'vat'],
+				['1230', 'debit', 90.0, 'intra-eu-acquisition', '5b', 'vat'],
+				['2000', 'credit', 1500.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testAReverseChargedLineAtItsOwnRateOwesAndDeductsThatRate()
 
 	/**
 	 * Without tariff records the lines still carry their tariff code and

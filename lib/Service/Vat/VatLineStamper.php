@@ -49,6 +49,11 @@ class VatLineStamper {
 	public const INPUT_VAT_BOX = '5b';
 
 	/**
+	 * The tariff of the general rate, used for reverse-charged VAT when a line names no rate.
+	 */
+	public const GENERAL_TARIFF = 'high';
+
+	/**
 	 * Sales VAT categories (UNTDID 5305) that map to one tariff whatever the rate.
 	 */
 	private const SALE_CATEGORIES = [
@@ -184,6 +189,38 @@ class VatLineStamper {
 	public function isReverseCharge(string $code): bool {
 		return (($this->tariff(code: $code)['reverseCharge'] ?? false) === true);
 	}//end isReverseCharge()
+
+	/**
+	 * The rate at which a reverse-charged purchase line self-assesses its VAT.
+	 *
+	 * The tariffs of reverse charge carry rate 0, because the supplier charges
+	 * nothing; the buyer owes VAT at the rate of the goods or services. That
+	 * rate is the line's own `vatRate` when it names one above zero, else the
+	 * general rate: the `high` tariff's percentage (Wet OB 1968 art. 9 lid 1).
+	 *
+	 * @param array<string,mixed> $line The APInvoice line.
+	 *
+	 * @return float|null The percentage, null when the line is not reverse-charged or no rate is known.
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function selfAssessedRate(array $line): ?float {
+		if ($this->isReverseCharge(code: $this->purchaseTariff(line: $line)) === false) {
+			return null;
+		}
+
+		$own = $this->percentage(rate: ($line['vatRate'] ?? null));
+		if ($own !== null && $own > 0) {
+			return $own;
+		}
+
+		$general = $this->ratePercentage(code: self::GENERAL_TARIFF);
+		if ($general === null || $general <= 0) {
+			return null;
+		}
+
+		return $general;
+	}//end selfAssessedRate()
 
 	/**
 	 * The statutory percentage of a tariff, null when there is no record.
