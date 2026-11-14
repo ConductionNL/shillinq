@@ -77,6 +77,7 @@ class PlatformPropertiesTest extends TestCase {
 		// Calls from the portal: its signed assertion.
 		'PortalPaymentInitiationController::initiate' => ['file' => 'PortalPaymentInitiationController.php', 'check' => '$this->verifier->verify('],
 		'PortalContributionDeclineController::decline' => ['file' => 'PortalContributionDeclineController.php', 'check' => '$this->verifier->verify('],
+		'PortalSubscriptionCancelController::cancel' => ['file' => 'PortalSubscriptionCancelController.php', 'check' => '$this->verifier->verify('],
 	];
 
 	/**

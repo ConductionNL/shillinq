@@ -1,0 +1,463 @@
+{
+ "_meta": {
+  "spdx-license": "EUPL-1.2",
+  "spdx-copyright": "2026 Conduction B.V.",
+  "change": "sales-cancellation",
+  "description": "RecurringInvoiceProfile learns the CustomerMaster it bills (customerMasterId, design D2) and records why it ended (cancellation, design D1). Every generated invoice copies customerMasterId into customerId; the LinkRecurringProfilesToCustomers repair step fills it on existing profiles. Both end transitions ask for a reason code: CancellationReasonGuard refuses a staff end without one, RecordCancellationAction writes the cancellation record. Version bumped past recurring-invoicing (0.1.0) so the import writes the change."
+ },
+ "components": {
+  "schemas": {
+   "RecurringInvoiceProfile": {
+    "slug": "RecurringInvoiceProfile",
+    "version": "0.3.0",
+    "properties": {
+     "customerMasterId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Customer record",
+      "description": "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice.",
+      "format": "uuid",
+      "$ref": "CustomerMaster"
+     },
+     "cancellationReasonCode": {
+      "type": "string",
+      "nullable": true,
+      "enum": [
+       "too-expensive",
+       "not-using",
+       "switched-provider",
+       "missing-feature",
+       "service-quality",
+       "business-closed",
+       "other",
+       "not-given"
+      ],
+      "title": "Cancellation reason",
+      "description": "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out."
+     },
+     "cancellationReasonText": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 1000,
+      "title": "Cancellation note",
+      "description": "Optional free text with the cancellation reason."
+     },
+     "cancellation": {
+      "type": "object",
+      "nullable": true,
+      "title": "Cancellation",
+      "description": "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.",
+      "properties": {
+       "reasonCode": {
+        "type": "string",
+        "enum": [
+         "too-expensive",
+         "not-using",
+         "switched-provider",
+         "missing-feature",
+         "service-quality",
+         "business-closed",
+         "other",
+         "not-given"
+        ],
+        "title": "Reason"
+       },
+       "reasonText": {
+        "type": "string",
+        "nullable": true,
+        "title": "Note"
+       },
+       "cancelledBy": {
+        "type": "string",
+        "enum": [
+         "staff",
+         "customer"
+        ],
+        "title": "Cancelled by"
+       },
+       "requestedAt": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Requested at"
+       },
+       "effectiveDate": {
+        "type": "string",
+        "format": "date",
+        "title": "Effective date"
+       }
+      }
+     },
+     "cancellationQuarter": {
+      "type": "string",
+      "nullable": true,
+      "pattern": "^\\d{4}-Q[1-4]$",
+      "title": "Cancellation quarter",
+      "description": "The quarter the cancellation takes effect, as YYYY-Qn. Written with the cancellation, for the cancellation reasons report."
+     },
+     "cancellationMonthlyAmount": {
+      "type": "number",
+      "nullable": true,
+      "title": "Lost monthly amount",
+      "description": "What the profile billed per month before VAT when it ended. Written with the cancellation, for the cancellation reasons report."
+     }
+    },
+    "x-openregister-lifecycle": {
+     "transitions": {
+      "endFromActive": {
+       "inputs": [
+        {
+         "field": "cancellationReasonCode",
+         "required": true
+        },
+        {
+         "field": "cancellationReasonText",
+         "required": false
+        }
+       ],
+       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard",
+       "actions": [
+        {
+         "trigger": "x-openregister-lifecycle-action",
+         "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCancellationAction",
+         "description": "Write the cancellation record: reason, note, who ended it, when it was asked and when it takes effect (RecordCancellationAction)."
+        }
+       ]
+      },
+      "endFromPaused": {
+       "inputs": [
+        {
+         "field": "cancellationReasonCode",
+         "required": true
+        },
+        {
+         "field": "cancellationReasonText",
+         "required": false
+        }
+       ],
+       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard",
+       "actions": [
+        {
+         "trigger": "x-openregister-lifecycle-action",
+         "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCancellationAction",
+         "description": "Write the cancellation record: reason, note, who ended it, when it was asked and when it takes effect (RecordCancellationAction)."
+        }
+       ]
+      }
+     }
+    },
+    "x-openregister-aggregations": {
+     "cancellationReasons": {
+      "description": "Ended subscriptions per quarter of the effective date and per reason code: how many, and the monthly recurring amount lost (REQ-SCX-002).",
+      "filter": {
+       "status": "ended"
+      },
+      "groupBy": [
+       "cancellationQuarter",
+       "cancellationReasonCode"
+      ],
+      "metrics": [
+       {
+        "metric": "count",
+        "field": "id",
+        "as": "endedCount"
+       },
+       {
+        "metric": "sum",
+        "field": "cancellationMonthlyAmount",
+        "as": "lostMonthlyAmount"
+       }
+      ]
+     }
+    }
+   },
+   "Service": {
+    "slug": "Service",
+    "version": "0.3.0",
+    "properties": {
+     "withdrawalExempt": {
+      "type": "boolean",
+      "default": false,
+      "title": "Exempt from withdrawal",
+      "description": "A consumer who books this service online cannot withdraw, for example a leisure service on a specific date. Counts only with a named exemption reason."
+     },
+     "withdrawalExemptionReason": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 200,
+      "title": "Exemption reason",
+      "description": "Why this service is exempt from the right of withdrawal, shown to the consumer, for example: leisure service on a specific date."
+     }
+    }
+   },
+   "Appointment": {
+    "slug": "Appointment",
+    "version": "0.2.0",
+    "properties": {
+     "depositPaymentId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Deposit payment",
+      "description": "The DepositPayment taken for this booking, refunded in full on a withdrawal."
+     },
+     "withdrawal": {
+      "type": "object",
+      "nullable": true,
+      "title": "Withdrawal",
+      "description": "Set when the consumer withdrew from the booking.",
+      "properties": {
+       "withdrawalId": {
+        "type": "string",
+        "title": "Withdrawal record"
+       },
+       "withdrawnAt": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Withdrawn at"
+       }
+      }
+     }
+    }
+   },
+   "Withdrawal": {
+    "slug": "Withdrawal",
+    "version": "0.1.0",
+    "title": "Withdrawal",
+    "description": "A consumer's withdrawal from a booking made online (Directive 2011/83/EU article 11a): cancelled without a fee, every payment refunded, acknowledged by e-mail.",
+    "type": "object",
+    "required": [
+     "appointmentId",
+     "requestedAt",
+     "channel",
+     "refundStatus"
+    ],
+    "properties": {
+     "appointmentId": {
+      "type": "string",
+      "title": "Appointment",
+      "description": "The appointment withdrawn from."
+     },
+     "administrationId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Administration",
+      "description": "Tenant administration scope (ADR-005)."
+     },
+     "requestedAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Withdrawn at",
+      "description": "The moment the consumer confirmed the withdrawal."
+     },
+     "channel": {
+      "type": "string",
+      "enum": [
+       "portal",
+       "guest-link"
+      ],
+      "title": "Channel",
+      "description": "Where the consumer withdrew: the portal, or the signed link from the confirmation."
+     },
+     "acknowledgedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true,
+      "title": "Acknowledged at",
+      "description": "When the acknowledgement e-mail was sent."
+     },
+     "refundAmount": {
+      "type": "integer",
+      "minimum": 0,
+      "title": "Refund (cents)",
+      "description": "Everything paid for the booking, refunded in full, in cents."
+     },
+     "refundStatus": {
+      "type": "string",
+      "enum": [
+       "none",
+       "initiated",
+       "due",
+       "failed"
+      ],
+      "title": "Refund status",
+      "description": "none: nothing was paid; initiated: the payment adapter started the refund; due: staff must pay it by refundDueBy; failed: the adapter refused, staff must pay it."
+     },
+     "refundDueBy": {
+      "type": "string",
+      "format": "date",
+      "nullable": true,
+      "title": "Refund due by",
+      "description": "The latest day the refund must be paid: 14 days after the withdrawal (article 13)."
+     },
+     "depositPaymentId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Deposit payment",
+      "description": "The deposit refunded."
+     },
+     "invoiceId": {
+      "type": "string",
+      "nullable": true,
+      "title": "Invoice to credit",
+      "description": "The deposit's invoice, credited in full for the withdrawal."
+     }
+    },
+    "x-openregister-audit-trail": {
+     "enabled": true
+    },
+    "x-openregister-notifications": {
+     "onWithdrawal": {
+      "trigger": {
+       "type": "created"
+      },
+      "description": "Tell the booking operators a consumer withdrew, and whether a refund is due by hand.",
+      "enabled": true,
+      "channels": [
+       "nc-notification"
+      ],
+      "recipients": [
+       {
+        "kind": "groups",
+        "groups": [
+         "booking-operator"
+        ]
+       }
+      ],
+      "subject": {
+       "nl": "Herroeping van afspraak {{appointmentId}}: terugbetaling {{refundAmount}} cent, status {{refundStatus}}, uiterlijk {{refundDueBy}}",
+       "en": "Withdrawal from appointment {{appointmentId}}: refund {{refundAmount}} cents, status {{refundStatus}}, by {{refundDueBy}}"
+      }
+     }
+    }
+   }
+  },
+  "objects": [
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "Administration",
+     "slug": "adm-kapsalon-knip"
+    },
+    "administrationCode": "KNIP-001",
+    "name": "Kapsalon Knip",
+    "legalForm": "eenmanszaak",
+    "presentationCurrency": "EUR",
+    "functionalCurrency": "EUR",
+    "vatRegime": "standard",
+    "status": "actief"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "Administration",
+     "slug": "adm-sportschool-de-kracht"
+    },
+    "administrationCode": "KRACHT-001",
+    "name": "Sportschool De Kracht",
+    "legalForm": "eenmanszaak",
+    "presentationCurrency": "EUR",
+    "functionalCurrency": "EUR",
+    "vatRegime": "standard",
+    "status": "actief"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "RecurringInvoiceProfile",
+     "slug": "rip-kracht-basis-fysio-linde"
+    },
+    "name": "Maandabonnement Kracht Basis",
+    "customerReference": "contact-fysio-linde",
+    "lines": [
+     {
+      "description": "Maandabonnement Kracht Basis {month} {year}",
+      "quantity": 1,
+      "unitPrice": 49.0,
+      "vatCode": 21
+     }
+    ],
+    "frequency": "monthly",
+    "interval": 1,
+    "startDate": "2025-10-01",
+    "invoiceDay": 1,
+    "issueMode": "draft-for-review",
+    "paymentTermsDays": 14,
+    "currency": "EUR",
+    "administrationId": "adm-sportschool-de-kracht",
+    "status": "ended",
+    "cancellationReasonCode": "switched-provider",
+    "cancellationReasonText": "We trainen voortaan bij een partner van onze huisarts",
+    "cancellation": {
+     "reasonCode": "switched-provider",
+     "reasonText": "We trainen voortaan bij een partner van onze huisarts",
+     "cancelledBy": "customer",
+     "requestedAt": "2026-09-12T09:30:00+02:00",
+     "effectiveDate": "2026-09-30"
+    },
+    "cancellationQuarter": "2026-Q3",
+    "cancellationMonthlyAmount": 49.0,
+    "deliveryChannel": "email"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "RecurringInvoiceProfile",
+     "slug": "rip-kracht-personal-training"
+    },
+    "name": "Personal training 10 lessen",
+    "customerReference": "contact-kracht-member-pt",
+    "lines": [
+     {
+      "description": "Personal training {month} {year}",
+      "quantity": 1,
+      "unitPrice": 350.0,
+      "vatCode": 21
+     }
+    ],
+    "frequency": "quarterly",
+    "interval": 1,
+    "startDate": "2026-01-01",
+    "invoiceDay": 1,
+    "issueMode": "draft-for-review",
+    "paymentTermsDays": 14,
+    "currency": "EUR",
+    "administrationId": "adm-sportschool-de-kracht",
+    "status": "ended",
+    "cancellationReasonCode": "too-expensive",
+    "cancellationReasonText": null,
+    "cancellation": {
+     "reasonCode": "too-expensive",
+     "reasonText": null,
+     "cancelledBy": "staff",
+     "requestedAt": "2026-08-20T14:00:00+02:00",
+     "effectiveDate": "2026-09-30"
+    },
+    "cancellationQuarter": "2026-Q3",
+    "cancellationMonthlyAmount": 116.67,
+    "deliveryChannel": "email"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "Service",
+     "slug": "svc-workshop-bloemschikken-12-oktober"
+    },
+    "serviceId": "svc-workshop-bloemschikken-12-oktober",
+    "name": "Workshop bloemschikken 12 oktober",
+    "description": "Workshop van drie uur op 12 oktober 2026.",
+    "duration": 180,
+    "currency": "EUR",
+    "status": "active",
+    "withdrawalExempt": true,
+    "withdrawalExemptionReason": "leisure service on a specific date",
+    "basePrice": 45.0,
+    "administrationId": "adm-kapsalon-knip",
+    "code": "workshop-bloemschikken-12-oktober",
+    "prepareTime": 0,
+    "bufferBefore": 0,
+    "bufferAfter": 15,
+    "dynamicPricing": false,
+    "serviceCategory": "Workshops"
+   }
+  ]
+ }
+}
