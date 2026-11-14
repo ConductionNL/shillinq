@@ -651,6 +651,11 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
             // BADO accountantsdossier export (bookkeeping-bado-controleprotocol, REQ-010, Task 16).
             ['name' => 'badoControleprotocol#exportAccountantsdossier', 'url' => '/api/bado/controleprotocol/accountantsdossier', 'verb' => 'GET'],
+            // public-sector-council-and-auditor-statements REQ-011/REQ-012: draw an
+            // audit sample from the protocol's posted ledger lines.
+            // #[NoAdminRequired], the protocol's administration checked in the
+            // controller (another administration's protocol is masked as 404).
+            ['name' => 'auditSample#draw', 'url' => '/api/bado/controleprotocol/samples', 'verb' => 'POST'],
 
             // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
             // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.

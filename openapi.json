@@ -2097,6 +2097,81 @@
                 }
             }
         },
+        "/bado/controleprotocol/samples": {
+            "post": {
+                "operationId": "audit-sample-draw",
+                "summary": "Draw an audit sample for a protocol from its posted ledger lines",
+                "description": "Draw an audit sample for a Controleprotocol from the posted ledger lines of its administration and audit year, optionally on the accounts whose number starts with account_prefix. The same seed over the same population draws the same lines. 201 with the stored sample; 400 on a malformed request; 404 for a protocol of another administration; 422 when the size does not fit the population. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "bado-controleprotocol"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "protocol_id": {
+                                        "description": "The Controleprotocol id.",
+                                        "type": "string"
+                                    },
+                                    "size": {
+                                        "description": "The number of lines to draw.",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "seed": {
+                                        "description": "The seed; leave it out for a new one.",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "account_prefix": {
+                                        "description": "Only accounts whose number starts with this.",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "protocol_id",
+                                    "size"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The sample was drawn and stored.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/Problem422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/bank-lines/{lineId}/match": {
             "post": {
                 "operationId": "manual-match-match",
