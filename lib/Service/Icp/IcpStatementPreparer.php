@@ -114,8 +114,8 @@ class IcpStatementPreparer {
 		];
 
 		$uuid = null;
-		if ($existing !== null && self::idOf(record: $existing) !== '') {
-			$uuid = self::idOf(record: $existing);
+		if ($existing !== null && $this->idOf(record: $existing) !== '') {
+			$uuid = $this->idOf(record: $existing);
 		}
 
 		$saved = $this->objectService->saveObject(
@@ -177,7 +177,7 @@ class IcpStatementPreparer {
 	 *
 	 * @spec openspec/changes/tax-icp-and-reverse-charge/tasks.md#task-2.1
 	 */
-	public static function idOf(array $record): string {
+	public function idOf(array $record): string {
 		return trim((string)($record['@self']['id'] ?? ($record['id'] ?? ($record['uuid'] ?? ''))));
 	}//end idOf()
 

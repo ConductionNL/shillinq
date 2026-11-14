@@ -141,7 +141,7 @@ class IcpStatementFiler {
 
 		$administration = $this->administration(administrationId: $administrationId);
 		$xml = $this->compose(statement: $statement, administration: $administration);
-		$statementId = IcpStatementPreparer::idOf(record: $statement);
+		$statementId = $this->preparer->idOf(record: $statement);
 		$dates = $this->periodDates(period: $period);
 
 		$result = $this->digipoort->submit(

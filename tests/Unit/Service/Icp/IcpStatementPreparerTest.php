@@ -234,9 +234,10 @@ final class IcpStatementPreparerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheIdOfARecord(): void {
-		$this->assertSame('a', IcpStatementPreparer::idOf(record: ['@self' => ['id' => 'a'], 'id' => 'b']));
-		$this->assertSame('b', IcpStatementPreparer::idOf(record: ['id' => 'b', 'uuid' => 'c']));
-		$this->assertSame('c', IcpStatementPreparer::idOf(record: ['uuid' => 'c']));
-		$this->assertSame('', IcpStatementPreparer::idOf(record: []));
+		$preparer = $this->preparer(rows: []);
+		$this->assertSame('a', $preparer->idOf(record: ['@self' => ['id' => 'a'], 'id' => 'b']));
+		$this->assertSame('b', $preparer->idOf(record: ['id' => 'b', 'uuid' => 'c']));
+		$this->assertSame('c', $preparer->idOf(record: ['uuid' => 'c']));
+		$this->assertSame('', $preparer->idOf(record: []));
 	}//end testTheIdOfARecord()
 }//end class
