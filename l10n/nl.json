@@ -6904,7 +6904,15 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Save as template": "Opslaan als sjabloon",
+        "Let other administrations start from this chart of accounts. Postings, relations and balances are not copied.": "Laat andere administraties starten met dit rekeningschema. Boekingen, relaties en saldi worden niet gekopieerd.",
+        "Other administrations can start from this chart of accounts. Postings, relations and balances are not copied.": "Andere administraties kunnen met dit rekeningschema starten. Boekingen, relaties en saldi worden niet gekopieerd.",
+        "Template name": "Naam van het sjabloon",
+        "Save template": "Sjabloon opslaan",
+        "Give the template a name.": "Geef het sjabloon een naam.",
+        "Template saved.": "Sjabloon opgeslagen.",
+        "The template could not be saved.": "Het sjabloon kon niet worden opgeslagen."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
