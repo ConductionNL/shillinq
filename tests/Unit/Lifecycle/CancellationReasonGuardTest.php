@@ -22,35 +22,40 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use DateTimeImmutable;
 use OCA\Shillinq\Lifecycle\CancellationReasonGuard;
-use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 
 /**
- * Staff say why a subscription ends; a customer may not.
+ * Staff say why a subscription ends; a customer and the generator need not.
  *
  * @covers \OCA\Shillinq\Lifecycle\CancellationReasonGuard
  */
 class CancellationReasonGuardTest extends TestCase {
 
 	/**
-	 * A staff end without a code is refused.
+	 * A staff end without a code is refused, with the reason.
 	 *
 	 * @return void
 	 */
 	public function testAStaffEndWithoutACodeIsRefused(): void {
-		$this->assertFalse((new CancellationReasonGuard())->requireReason(['status' => 'ended']));
+		$result = (new CancellationReasonGuard())->check(['status' => 'ended'], 'endFromActive', 'anna');
+
+		$this->assertFalse($result->isAllowed());
+		$this->assertSame('A cancellation reason is required to end this subscription.', $result->getMessage());
 	}//end testAStaffEndWithoutACodeIsRefused()
 
 	/**
-	 * Staff cannot use not-given as their reason.
+	 * Staff cannot use not-given, nor a code outside the list.
 	 *
 	 * @return void
 	 */
-	public function testAStaffEndWithNotGivenIsRefused(): void {
-		$this->assertFalse((new CancellationReasonGuard())->requireReason(['cancellationReasonCode' => 'not-given']));
-	}//end testAStaffEndWithNotGivenIsRefused()
+	public function testAStaffEndWithNotGivenOrAnUnlistedCodeIsRefused(): void {
+		$guard = new CancellationReasonGuard();
+
+		$this->assertFalse($guard->check(['cancellationReasonCode' => 'not-given'], 'endFromActive', 'anna')->isAllowed());
+		$this->assertFalse($guard->check(['cancellationReasonCode' => 'bored'], 'endFromPaused', 'anna')->isAllowed());
+	}//end testAStaffEndWithNotGivenOrAnUnlistedCodeIsRefused()
 
 	/**
 	 * A staff end with a listed code proceeds.
@@ -58,46 +63,34 @@ class CancellationReasonGuardTest extends TestCase {
 	 * @return void
 	 */
 	public function testAStaffEndWithACodeProceeds(): void {
-		$this->assertTrue((new CancellationReasonGuard())->requireReason(['cancellationReasonCode' => 'too-expensive']));
+		$this->assertTrue((new CancellationReasonGuard())->check(['cancellationReasonCode' => 'too-expensive'], 'endFromActive', 'anna')->isAllowed());
 	}//end testAStaffEndWithACodeProceeds()
 
 	/**
-	 * A code outside the fixed list is refused.
-	 *
-	 * @return void
-	 */
-	public function testAnUnlistedCodeIsRefused(): void {
-		$this->assertFalse((new CancellationReasonGuard())->requireReason(['cancellationReasonCode' => 'bored']));
-	}//end testAnUnlistedCodeIsRefused()
-
-	/**
-	 * A customer end recorded by the portal may leave the reason out.
+	 * With nobody signed in (the portal's forward) the reason may be left out.
 	 *
 	 * @return void
 	 */
 	public function testACustomerEndWithoutAReasonProceeds(): void {
 		$guard = new CancellationReasonGuard();
 
-		$this->assertTrue($guard->requireReason(['cancellation' => ['cancelledBy' => 'customer']]));
-		$this->assertTrue($guard->requireReason(['cancellation' => ['cancelledBy' => 'customer'], 'cancellationReasonCode' => 'not-given']));
+		$this->assertTrue($guard->check(['status' => 'ended'], 'endFromActive', '')->isAllowed());
+		$this->assertTrue($guard->check(['cancellationReasonCode' => 'not-given'], 'endFromActive', '')->isAllowed());
 	}//end testACustomerEndWithoutAReasonProceeds()
 
 	/**
-	 * Through the registered adapter the refusal names the missing reason.
+	 * A profile that reached its own end is not refused, whoever saves it.
 	 *
 	 * @return void
 	 */
-	public function testTheRefusalSaysAReasonIsRequired(): void {
-		$adapter = new RegisterRequiresGuardAdapter(
-			guard: new CancellationReasonGuard(),
-			method: 'requireReason',
-			denyMessage: 'A cancellation reason is required to end this subscription.',
-			logger: new NullLogger(),
-		);
+	public function testAProfileAtItsOwnEndIsNotRefused(): void {
+		$guard = new CancellationReasonGuard();
+		$today = new DateTimeImmutable('2026-09-15');
 
-		$result = $adapter->check(['status' => 'active'], 'endFromActive', 'anna');
-
-		$this->assertFalse($result->isAllowed());
-		$this->assertSame('A cancellation reason is required to end this subscription.', $result->getMessage());
-	}//end testTheRefusalSaysAReasonIsRequired()
+		$this->assertTrue($guard->requireReason(profile: ['remainingOccurrences' => 0], userId: 'anna', today: $today));
+		$this->assertTrue($guard->requireReason(profile: ['endCondition' => ['endDate' => '2026-09-15']], userId: 'anna', today: $today));
+		$this->assertFalse($guard->requireReason(profile: ['endCondition' => ['endDate' => '2026-09-16']], userId: 'anna', today: $today));
+		$this->assertFalse($guard->requireReason(profile: ['remainingOccurrences' => 3], userId: 'anna', today: $today));
+		$this->assertFalse($guard->requireReason(profile: ['remainingOccurrences' => null], userId: 'anna', today: $today));
+	}//end testAProfileAtItsOwnEndIsNotRefused()
 }//end class

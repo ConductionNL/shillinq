@@ -26,6 +26,8 @@ use DateTime;
 use DateTimeZone;
 use OCA\Shillinq\Lifecycle\Action\RecordCancellationAction;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -37,15 +39,19 @@ use PHPUnit\Framework\TestCase;
 class RecordCancellationActionTest extends TestCase {
 
 	/**
-	 * The action with the clock at 2026-09-15 10:00 UTC.
+	 * The action with the clock at 2026-09-15 10:00 UTC, staff signed in or nobody.
+	 *
+	 * @param bool $signedIn Whether a staff member is signed in.
 	 *
 	 * @return RecordCancellationAction
 	 */
-	private function action(): RecordCancellationAction {
+	private function action(bool $signedIn = true): RecordCancellationAction {
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('getDateTime')->willReturn(new DateTime('2026-09-15T10:00:00', new DateTimeZone('UTC')));
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($signedIn === true ? $this->createMock(IUser::class) : null);
 
-		return new RecordCancellationAction(time: $time);
+		return new RecordCancellationAction(time: $time, session: $session);
 	}//end action()
 
 	/**
@@ -80,45 +86,31 @@ class RecordCancellationActionTest extends TestCase {
 	}//end testAStaffEndIsRecordedWithTheReasonAndTheEndOfThePeriod()
 
 	/**
-	 * A customer end keeps what the portal set and fills not-given.
+	 * With nobody signed in the end is the customer's, and may carry no reason.
 	 *
 	 * @return void
 	 */
-	public function testACustomerEndKeepsThePortalsMomentAndDate(): void {
-		$saved = $this->action()->execute(
-			[
-				'cancellation' => ['cancelledBy' => 'customer', 'requestedAt' => '2026-09-14T08:00:00+00:00', 'effectiveDate' => '2026-09-30'],
-				'nextRunDate' => '2026-12-01',
-			],
-			[],
-			[],
-			'endFromActive'
-		);
+	public function testAnEndWithNobodySignedInIsTheCustomers(): void {
+		$saved = $this->action(signedIn: false)->execute(['nextRunDate' => '2026-12-01'], [], [], 'endFromActive');
 
 		$this->assertSame('not-given', $saved['cancellation']['reasonCode']);
 		$this->assertNull($saved['cancellation']['reasonText']);
 		$this->assertSame('customer', $saved['cancellation']['cancelledBy']);
-		$this->assertSame('2026-09-14T08:00:00+00:00', $saved['cancellation']['requestedAt']);
-		$this->assertSame('2026-09-30', $saved['cancellation']['effectiveDate']);
-	}//end testACustomerEndKeepsThePortalsMomentAndDate()
+		$this->assertSame('2026-09-15T10:00:00+00:00', $saved['cancellation']['requestedAt']);
+		$this->assertSame('2026-11-30', $saved['cancellation']['effectiveDate']);
+		$this->assertSame('2026-Q4', $saved['cancellationQuarter']);
+	}//end testAnEndWithNobodySignedInIsTheCustomers()
 
 	/**
-	 * A staff end ignores a preset that claims to be the customer's moment.
+	 * A profile that ran out of occurrences was not cancelled: no record.
 	 *
 	 * @return void
 	 */
-	public function testAStaffEndDoesNotTakeAPresetMoment(): void {
-		$saved = $this->action()->execute(
-			['cancellationReasonCode' => 'other', 'cancellation' => ['requestedAt' => '2020-01-01T00:00:00+00:00']],
-			[],
-			[],
-			'endFromPaused'
-		);
+	public function testAnEndByTheProfilesOwnConditionIsNoCancellation(): void {
+		$profile = ['status' => 'ended', 'remainingOccurrences' => 0];
 
-		$this->assertSame('staff', $saved['cancellation']['cancelledBy']);
-		$this->assertSame('2026-09-15T10:00:00+00:00', $saved['cancellation']['requestedAt']);
-		$this->assertSame('2026-09-15', $saved['cancellation']['effectiveDate']);
-	}//end testAStaffEndDoesNotTakeAPresetMoment()
+		$this->assertSame($profile, $this->action(signedIn: false)->execute($profile, [], [], 'endFromActive'));
+	}//end testAnEndByTheProfilesOwnConditionIsNoCancellation()
 
 	/**
 	 * The effective date is today when no later run is planned.
@@ -156,18 +148,6 @@ class RecordCancellationActionTest extends TestCase {
 		$this->assertSame('2026-Q3', $saved['cancellationQuarter']);
 		$this->assertSame(116.67, $saved['cancellationMonthlyAmount']);
 	}//end testTheReportFieldsAreWrittenWithTheCancellation()
-
-	/**
-	 * A customer end without a reason is reported as not-given.
-	 *
-	 * @return void
-	 */
-	public function testAMissingReasonIsReportedAsNotGiven(): void {
-		$saved = $this->action()->execute(['cancellation' => ['cancelledBy' => 'customer']], [], [], 'endFromActive');
-
-		$this->assertSame('not-given', $saved['cancellationReasonCode']);
-		$this->assertSame(0.0, $saved['cancellationMonthlyAmount']);
-	}//end testAMissingReasonIsReportedAsNotGiven()
 
 	/**
 	 * Quarters and monthly amounts for each cadence.

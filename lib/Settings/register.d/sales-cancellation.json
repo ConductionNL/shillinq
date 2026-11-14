@@ -112,7 +112,7 @@
          "required": false
         }
        ],
-       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard::requireReason",
+       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard",
        "actions": [
         {
          "trigger": "x-openregister-lifecycle-action",
@@ -132,7 +132,7 @@
          "required": false
         }
        ],
-       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard::requireReason",
+       "requires": "OCA\\Shillinq\\Lifecycle\\CancellationReasonGuard",
        "actions": [
         {
          "trigger": "x-openregister-lifecycle-action",

@@ -25,17 +25,24 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use DateTimeImmutable;
+use OCA\OpenRegister\Lifecycle\GuardResult;
+use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
+
 /**
- * Whether a profile may end: with a reason code from the fixed list.
+ * Whether a profile may end: staff give a reason code from the fixed list.
  *
- * Staff choose a reason other than `not-given`. A customer may leave the
- * reason out; a customer end is one whose `cancellation.cancelledBy` the
- * portal endpoint has already set server-side to `customer`. That value is
- * never a transition input, so a staff member cannot claim it.
+ * Three ends, told apart without anything a person can type:
+ * - the profile reached its own end condition (the occurrences ran out, or its
+ *   end date passed): the generator ends it, and that is no cancellation;
+ * - nobody is signed in: the customer's portal request, forwarded server to
+ *   server, or another system run. A customer may leave the reason out;
+ * - a signed-in user ends it: staff, who must choose a reason other than
+ *   `not-given`.
  *
  * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
  */
-class CancellationReasonGuard {
+class CancellationReasonGuard implements LifecycleGuardInterface {
 
 	/**
 	 * The reason codes a cancellation may carry (design D1).
@@ -61,37 +68,77 @@ class CancellationReasonGuard {
 	public const NOT_GIVEN = 'not-given';
 
 	/**
-	 * The precondition of `endFromActive` and `endFromPaused`.
+	 * The refusal a staff end without a reason gets.
 	 *
-	 * @param array<string, mixed> $profile The profile, with the transition's inputs merged in.
+	 * @var string
+	 */
+	public const REFUSAL = 'A cancellation reason is required to end this subscription.';
+
+	/**
+	 * Judge an end of the profile.
+	 *
+	 * @param array<string, mixed> $object The profile, with the transition's inputs merged in.
+	 * @param string               $action The transition.
+	 * @param string               $userId The signed-in caller, or '' with nobody signed in.
+	 *
+	 * @return GuardResult Allowed, or refused with the reason.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
+	 */
+	public function check(array $object, string $action, string $userId): GuardResult {
+		if ($this->requireReason(profile: $object, userId: $userId) === true) {
+			return GuardResult::allow();
+		}
+
+		return GuardResult::deny(self::REFUSAL);
+	}//end check()
+
+	/**
+	 * Whether the end may proceed.
+	 *
+	 * @param array<string, mixed>   $profile The profile, with the transition's inputs merged in.
+	 * @param string                 $userId  The signed-in caller, or ''.
+	 * @param DateTimeImmutable|null $today   Today, for the end date; null for now.
 	 *
 	 * @return bool True when the end may proceed.
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
 	 */
-	public function requireReason(array $profile): bool {
-		$code = trim((string)($profile['cancellationReasonCode'] ?? ''));
-		$byCustomer = self::endedByCustomer(profile: $profile);
-
-		if ($code === '' || $code === self::NOT_GIVEN) {
-			return $byCustomer;
+	public function requireReason(array $profile, string $userId, ?DateTimeImmutable $today = null): bool {
+		if ($userId === '' || self::endConditionReached(profile: $profile, today: ($today ?? new DateTimeImmutable('today'))) === true) {
+			return true;
 		}
 
-		return in_array($code, self::REASON_CODES, true);
+		$code = trim((string)($profile['cancellationReasonCode'] ?? ''));
+
+		return $code !== self::NOT_GIVEN && in_array($code, self::REASON_CODES, true);
 	}//end requireReason()
 
 	/**
-	 * Whether the portal recorded this end as the customer's own.
+	 * Whether the profile reached its own end: no occurrences left, or past its end date.
 	 *
 	 * @param array<string, mixed> $profile The profile.
+	 * @param DateTimeImmutable    $today   Today.
 	 *
-	 * @return bool True for a customer end.
+	 * @return bool True when the profile ends by itself.
 	 *
 	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
 	 */
-	public static function endedByCustomer(array $profile): bool {
-		$cancellation = ($profile['cancellation'] ?? null);
+	public static function endConditionReached(array $profile, DateTimeImmutable $today): bool {
+		if (array_key_exists('remainingOccurrences', $profile) === true
+			&& $profile['remainingOccurrences'] !== null
+			&& (int)$profile['remainingOccurrences'] <= 0
+		) {
+			return true;
+		}
 
-		return is_array($cancellation) === true && ($cancellation['cancelledBy'] ?? null) === 'customer';
-	}//end endedByCustomer()
+		$endDate = (string)(((array)($profile['endCondition'] ?? []))['endDate'] ?? '');
+		if (preg_match('/^\d{4}-\d{2}-\d{2}/', $endDate) !== 1) {
+			return false;
+		}
+
+		return substr($endDate, 0, 10) <= $today->format('Y-m-d');
+	}//end endConditionReached()
 }//end class

@@ -30,15 +30,17 @@ use DateTimeInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Lifecycle\CancellationReasonGuard;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\IUserSession;
 
 /**
  * Write `cancellation`: reason, note, who ended it, when it was asked and when it takes effect.
  *
- * A staff end is recorded as `staff` at the moment of the transition. A
- * customer end keeps the `cancelledBy`, `requestedAt` and `effectiveDate` the
- * portal endpoint set. The effective date is the end of the current billing
- * period: the day before the next run, or today when no later run is planned
- * (design, Open Questions).
+ * Staff end it signed in; with nobody signed in it is the customer's own
+ * request, forwarded by the portal. A profile that reached its own end
+ * condition, with no reason given, was not cancelled and gets no record. The
+ * effective date is the end of the current billing period: the day before
+ * the next run, or today when no later run is planned (design, Open
+ * Questions).
  *
  * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
  */
@@ -47,12 +49,14 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ITimeFactory $time The clock.
+	 * @param ITimeFactory $time    The clock.
+	 * @param IUserSession $session Who is signed in: staff, or nobody for a portal request.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ITimeFactory $time,
+		private readonly IUserSession $session,
 	) {
 	}//end __construct()
 
@@ -69,16 +73,15 @@ class RecordCancellationAction implements LifecycleActionInterface {
 	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.1
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
+	 * @SuppressWarnings(PHPMD.StaticAccess) CancellationReasonGuard::endConditionReached() is the one reading of the end condition.
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
-		$now = $this->time->getDateTime();
-		$preset = $objectData['cancellation'] ?? [];
-		if (is_array($preset) === false) {
-			$preset = [];
+		$now = DateTimeImmutable::createFromInterface($this->time->getDateTime());
+		$code = trim((string)($objectData['cancellationReasonCode'] ?? ''));
+		if ($code === '' && CancellationReasonGuard::endConditionReached(profile: $objectData, today: $now) === true) {
+			return $objectData;
 		}
 
-		$byCustomer = (($preset['cancelledBy'] ?? null) === 'customer');
-		$code = trim((string)($objectData['cancellationReasonCode'] ?? ''));
 		if (in_array($code, CancellationReasonGuard::REASON_CODES, true) === false) {
 			$code = CancellationReasonGuard::NOT_GIVEN;
 		}
@@ -89,28 +92,24 @@ class RecordCancellationAction implements LifecycleActionInterface {
 		}
 
 		$cancelledBy = 'staff';
-		if ($byCustomer === true) {
+		if ($this->session->getUser() === null) {
 			$cancelledBy = 'customer';
 		}
 
+		$effectiveDate = self::effectiveDate(nextRunDate: ($objectData['nextRunDate'] ?? null), today: $now);
 		$objectData['cancellation'] = [
 			'reasonCode' => $code,
 			'reasonText' => $text,
 			'cancelledBy' => $cancelledBy,
-			'requestedAt' => $this->presetOr(preset: $preset, key: 'requestedAt', byCustomer: $byCustomer, fallback: $now->format(DateTimeInterface::ATOM)),
-			'effectiveDate' => $this->presetOr(
-				preset: $preset,
-				key: 'effectiveDate',
-				byCustomer: $byCustomer,
-				fallback: self::effectiveDate(nextRunDate: ($objectData['nextRunDate'] ?? null), today: $now)
-			),
+			'requestedAt' => $now->format(DateTimeInterface::ATOM),
+			'effectiveDate' => $effectiveDate,
 		];
 
 		// Flat copies for the cancellation reasons report (REQ-SCX-002): an
 		// aggregation groups on top-level fields, and may not combine a group
 		// with a date bucket, so the quarter is stored as a value.
 		$objectData['cancellationReasonCode'] = $code;
-		$objectData['cancellationQuarter'] = self::quarterOf(date: $objectData['cancellation']['effectiveDate']);
+		$objectData['cancellationQuarter'] = self::quarterOf(date: $effectiveDate);
 		$objectData['cancellationMonthlyAmount'] = self::monthlyAmount(profile: $objectData);
 
 		return $objectData;
@@ -163,25 +162,6 @@ class RecordCancellationAction implements LifecycleActionInterface {
 
 		return round($net / ($months * $interval), 2);
 	}//end monthlyAmount()
-
-	/**
-	 * A value the portal set on a customer end, else the fallback.
-	 *
-	 * @param array<string, mixed> $preset     The cancellation the portal set.
-	 * @param string               $key        The field.
-	 * @param bool                 $byCustomer Whether this is a customer end.
-	 * @param string               $fallback   The value otherwise.
-	 *
-	 * @return string The value.
-	 */
-	private function presetOr(array $preset, string $key, bool $byCustomer, string $fallback): string {
-		$value = trim((string)($preset[$key] ?? ''));
-		if ($byCustomer === true && $value !== '') {
-			return $value;
-		}
-
-		return $fallback;
-	}//end presetOr()
 
 	/**
 	 * The end of the current billing period: the day before the next run, or today.

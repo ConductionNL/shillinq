@@ -2491,14 +2491,6 @@
     [
         "registerService",
         [
-            "'OCA\\\\Shillinq\\\\Lifecycle\\\\CancellationReasonGuard::requireReason'",
-            "Closure",
-            "true"
-        ]
-    ],
-    [
-        "registerService",
-        [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\FiscalYearGuard::requireAllPeriodsClosedForYear'",
             "Closure",
             "true"
