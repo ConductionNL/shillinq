@@ -3499,6 +3499,7 @@
         "Every open supplier invoice due by the date you choose goes on a draft run. Blocked, disputed and already batched invoices stay off it.": "Every open supplier invoice due by the date you choose goes on a draft run. Blocked, disputed and already batched invoices stay off it.",
         "Execution date": "Execution date",
         "Give a reason for the payment block.": "Give a reason for the payment block.",
+        "Give a reason for releasing the payment block.": "Give a reason for releasing the payment block.",
         "Invoice blocked": "Invoice blocked",
         "Invoice blocked: {detail}": "Invoice blocked: {detail}",
         "Invoice disputed": "Invoice disputed",
@@ -4716,7 +4717,9 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Payment block release reason": "Payment block release reason",
+        "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

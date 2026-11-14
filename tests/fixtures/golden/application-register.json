@@ -294,6 +294,14 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\PaymentBlockReleaseListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\GLLineResultStampListener'",
             "0"

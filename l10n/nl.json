@@ -5728,6 +5728,7 @@
         "Every open supplier invoice due by the date you choose goes on a draft run. Blocked, disputed and already batched invoices stay off it.": "Elke openstaande inkoopfactuur die uiterlijk op de gekozen datum vervalt, komt op een conceptrun. Geblokkeerde, betwiste en al ingeplande facturen blijven erbuiten.",
         "Execution date": "Uitvoeringsdatum",
         "Give a reason for the payment block.": "Geef een reden voor de betalingsblokkade.",
+        "Give a reason for releasing the payment block.": "Geef een reden voor het opheffen van de betalingsblokkade.",
         "Invoice blocked": "Factuur geblokkeerd",
         "Invoice blocked: {detail}": "Factuur geblokkeerd: {detail}",
         "Invoice disputed": "Factuur betwist",
@@ -6904,7 +6905,9 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Payment block release reason": "Reden voor opheffen betalingsblokkade",
+        "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.": "Waarom de betalingsblokkade is opgeheven; gevraagd wanneer een controller of treasurer de blokkade opheft. De reden van de blokkade blijft bewaard."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
