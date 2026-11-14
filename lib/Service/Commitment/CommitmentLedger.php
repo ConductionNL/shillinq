@@ -448,9 +448,23 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 			return [0 => $amount];
 		}
 
+		return self::proportionalShares(weights: $weights, amount: $amount, last: array_key_last($lines));
+
+	}//end allocate()
+
+	/**
+	 * Split the amount over the weights, rounding down; the last line takes the remainder.
+	 *
+	 * @param array<int|string, int> $weights The lines' remaining committed amounts.
+	 * @param int                    $amount  The amount to split.
+	 * @param int|string|null        $last    The key of the last line.
+	 *
+	 * @return array<int|string, int>
+	 */
+	private static function proportionalShares(array $weights, int $amount, int|string|null $last): array {
+		$total  = array_sum($weights);
 		$shares = [];
-		$given = 0;
-		$last = array_key_last($lines);
+		$given  = 0;
 		foreach ($weights as $index => $weight) {
 			$share = (int)floor($amount * $weight / $total);
 			if ($index === $last) {
@@ -458,12 +472,11 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 			}
 
 			$shares[$index] = $share;
-			$given += $share;
+			$given         += $share;
 		}
 
 		return $shares;
-
-	}//end allocate()
+	}//end proportionalShares()
 
 	/**
 	 * Sum of remaining amounts.
