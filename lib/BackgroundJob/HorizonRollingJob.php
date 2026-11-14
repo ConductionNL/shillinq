@@ -134,60 +134,92 @@ class HorizonRollingJob extends TimedJob {
 	private function runAsJob(mixed $argument): void {
 		$this->logger->info('Shillinq: HorizonRollingJob started');
 
+		$objectService = $this->objectServiceOrNull();
+		if ($objectService === null) {
+			return;
+		}
+
+		$register   = $this->getRegisterSlug();
+		$thisMonday = $this->currentIsoMonday();
+
+		$counts = ['rolled' => 0, 'skipped' => 0, 'errors' => 0];
+		foreach ($this->fetchActiveHorizons(objectService: $objectService, register: $register) as $horizon) {
+			$outcome = $this->rollOne(objectService: $objectService, register: $register, horizon: $horizon, monday: $thisMonday);
+			if ($outcome !== '') {
+				$counts[$outcome]++;
+			}
+		}
+
+		$this->logger->info(
+			sprintf('Shillinq HorizonRollingJob: rolled %d horizon(s), skipped %d, %d error(s)', $counts['rolled'], $counts['skipped'], $counts['errors'])
+		);
+
+	}//end runAsJob()
+
+	/**
+	 * OpenRegister's ObjectService, or null (with a warning) when it is not available.
+	 *
+	 * @return object|null
+	 */
+	private function objectServiceOrNull(): object|null {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'Shillinq HorizonRollingJob: OpenRegister not available, skipping.',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
+		}
+	}//end objectServiceOrNull()
+
+	/**
+	 * Roll one horizon unless it has no id or was already rolled to this Monday.
+	 *
+	 * @param object              $objectService The ObjectService instance.
+	 * @param string              $register      The register slug.
+	 * @param array<string,mixed> $horizon       The horizon object array.
+	 * @param string              $monday        ISO date of this week's Monday.
+	 *
+	 * @return string The outcome: rolled, skipped, errors, or '' for a horizon without an id.
+	 */
+	private function rollOne(object $objectService, string $register, array $horizon, string $monday): string {
+		$uuid = ($horizon['id'] ?? $horizon['uuid'] ?? null);
+		if ($uuid === null || $uuid === '') {
+			return '';
 		}
 
-		$register = $this->getRegisterSlug();
-		$thisMonday = $this->currentIsoMonday();
+		// Idempotency: skip a horizon already rolled to this ISO Monday.
+		if ($this->alreadyRolled(horizon: $horizon, monday: $monday) === true) {
+			return 'skipped';
+		}
 
-		$rolled = 0;
-		$skipped = 0;
-		$errors = 0;
+		return $this->rollHorizon(objectService: $objectService, register: $register, horizon: $horizon, monday: $monday);
+	}//end rollOne()
 
-		foreach ($this->fetchActiveHorizons(objectService: $objectService, register: $register) as $horizon) {
-			$uuid = ($horizon['id'] ?? $horizon['uuid'] ?? null);
-			if ($uuid === null || $uuid === '') {
-				continue;
-			}
-
-			// Idempotency: skip a horizon already rolled to this ISO Monday.
-			if ($this->alreadyRolled(horizon: $horizon, monday: $thisMonday) === true) {
-				$skipped++;
-				continue;
-			}
-
-			try {
-				$rolledHorizon = $this->shiftHorizon(horizon: $horizon, monday: $thisMonday);
-				$objectService->setRegister($register);
-				$objectService->setSchema('CashflowForecastHorizon');
-				$objectService->saveObject($rolledHorizon, $register, 'CashflowForecastHorizon', $uuid);
-				$rolled++;
-			} catch (\Throwable $e) {
-				$errors++;
-				$this->logger->error(
-					'Shillinq HorizonRollingJob: failed to roll horizon',
-					['uuid' => $uuid, 'exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
-
-		$this->logger->info(
-			sprintf(
-				'Shillinq HorizonRollingJob: rolled %d horizon(s), skipped %d, %d error(s)',
-				$rolled,
-				$skipped,
-				$errors
-			)
-		);
-
-	}//end runAsJob()
+	/**
+	 * Shift the horizon to this Monday and save it.
+	 *
+	 * @param object              $objectService The ObjectService instance.
+	 * @param string              $register      The register slug.
+	 * @param array<string,mixed> $horizon       The horizon object array, carrying its id.
+	 * @param string              $monday        ISO date of this week's Monday.
+	 *
+	 * @return string The outcome: rolled, or errors when the save failed.
+	 */
+	private function rollHorizon(object $objectService, string $register, array $horizon, string $monday): string {
+		$uuid = ($horizon['id'] ?? $horizon['uuid'] ?? null);
+		try {
+			$rolledHorizon = $this->shiftHorizon(horizon: $horizon, monday: $monday);
+			$objectService->setRegister($register);
+			$objectService->setSchema('CashflowForecastHorizon');
+			$objectService->saveObject($rolledHorizon, $register, 'CashflowForecastHorizon', $uuid);
+			return 'rolled';
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq HorizonRollingJob: failed to roll horizon', ['uuid' => $uuid, 'exception' => $e->getMessage()]);
+			return 'errors';
+		}
+	}//end rollHorizon()
 
 	/**
 	 * Return the ISO date (YYYY-MM-DD) of the Monday of the current week, UTC.
@@ -246,29 +278,7 @@ class HorizonRollingJob extends TimedJob {
 
 		while (true) {
 			try {
-				$objectService->setRegister($register);
-				$objectService->setSchema('CashflowForecastHorizon');
-				$entities = $objectService->findAll(
-					[
-						'filters' => [
-							'register' => $register,
-							'schema' => 'CashflowForecastHorizon',
-							'lifecycleState' => 'active',
-						],
-						'limit' => self::PAGE_SIZE,
-						'offset' => $offset,
-					]
-				);
-
-				$batch = [];
-				foreach ($entities as $entity) {
-					if (method_exists($entity, 'getObject') === true) {
-						$batch[] = $entity->getObject();
-					} elseif (is_array($entity) === true) {
-						$batch[] = $entity;
-					}
-				}
-
+				$batch  = $this->fetchHorizonPage(objectService: $objectService, register: $register, offset: $offset);
 				$result = array_merge($result, $batch);
 				$offset += count($batch);
 
@@ -276,14 +286,58 @@ class HorizonRollingJob extends TimedJob {
 					break;
 				}
 			} catch (\Throwable $e) {
-				$this->logger->error(
-					'Shillinq HorizonRollingJob: failed to fetch horizons',
-					['offset' => $offset, 'exception' => $e->getMessage()]
-				);
+				$this->logger->error('Shillinq HorizonRollingJob: failed to fetch horizons', ['offset' => $offset, 'exception' => $e->getMessage()]);
 				break;
-			}//end try
-		}//end while
+			}
+		}
 
 		return $result;
 	}//end fetchActiveHorizons()
+
+	/**
+	 * Fetch one page of active CashflowForecastHorizon records.
+	 *
+	 * @param object $objectService The ObjectService instance.
+	 * @param string $register      The register slug.
+	 * @param int    $offset        The page offset.
+	 *
+	 * @return array<int,array<string,mixed>> The page's horizon object arrays.
+	 */
+	private function fetchHorizonPage(object $objectService, string $register, int $offset): array {
+		$objectService->setRegister($register);
+		$objectService->setSchema('CashflowForecastHorizon');
+		$entities = $objectService->findAll(
+			[
+				'filters' => [
+					'register' => $register,
+					'schema' => 'CashflowForecastHorizon',
+					'lifecycleState' => 'active',
+				],
+				'limit' => self::PAGE_SIZE,
+				'offset' => $offset,
+			]
+		);
+
+		return self::horizonRows(entities: $entities);
+	}//end fetchHorizonPage()
+
+	/**
+	 * The object arrays of the fetched entities.
+	 *
+	 * @param iterable<mixed> $entities The findAll() results.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function horizonRows(iterable $entities): array {
+		$batch = [];
+		foreach ($entities as $entity) {
+			if (method_exists($entity, 'getObject') === true) {
+				$batch[] = $entity->getObject();
+			} elseif (is_array($entity) === true) {
+				$batch[] = $entity;
+			}
+		}
+
+		return $batch;
+	}//end horizonRows()
 }//end class
