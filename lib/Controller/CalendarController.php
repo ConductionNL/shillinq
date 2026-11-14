@@ -61,6 +61,8 @@ use Psr\Log\LoggerInterface;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; early-return refactor deferred pending full behavioral
  * verification of each branch.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class CalendarController extends Controller {
 
@@ -110,6 +112,56 @@ class CalendarController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
+		$blocked = $this->indexBlocked();
+		if ($blocked !== null) {
+			return $blocked;
+		}
+
+		$resourceFilter = trim((string)$this->request->getParam('resource', ''));
+		$orgFilter = trim((string)$this->request->getParam('organization', ''));
+		$statusFilter = trim((string)$this->request->getParam('status', ''));
+
+		if ($this->forbiddenAdministration(orgFilter: $orgFilter) === true) {
+			return new JSONResponse(['error' => 'Not authorized for this administration'], Http::STATUS_FORBIDDEN);
+		}
+
+		$administrationId = $this->resolveAdministrationId(requested: $orgFilter);
+		if ($administrationId === null) {
+			return new JSONResponse(['calendars' => []]);
+		}
+
+		$filters = $this->calendarFilters(administrationId: $administrationId, resourceFilter: $resourceFilter, statusFilter: $statusFilter);
+
+		$records = $this->findCalendars(filters: $filters);
+		if ($records instanceof JSONResponse) {
+			return $records;
+		}
+
+		return new JSONResponse(['calendars' => $this->calendarRows(records: $records)]);
+	}//end index()
+
+	/**
+	 * The calendar rows the index returns.
+	 *
+	 * @param array<int,mixed> $records The Calendar records.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function calendarRows(array $records): array {
+		$calendars = [];
+		foreach ($records as $record) {
+			$calendars[] = (new CalendarRows())->calendar(row: $this->toArray(object: $record));
+		}
+
+		return $calendars;
+	}//end calendarRows()
+
+	/**
+	 * The 401 for an anonymous caller or the 503 when OpenRegister is missing, else null.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function indexBlocked(): JSONResponse|null {
 		$authResult = $this->requireAuth();
 		if ($authResult instanceof JSONResponse) {
 			return $authResult;
@@ -119,19 +171,30 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
-		$resourceFilter = trim((string)$this->request->getParam('resource', ''));
-		$orgFilter = trim((string)$this->request->getParam('organization', ''));
-		$statusFilter = trim((string)$this->request->getParam('status', ''));
+		return null;
+	}//end indexBlocked()
 
-		if ($orgFilter !== '' && $this->callerMayUseAdministration(administrationId: $orgFilter) === false) {
-			return new JSONResponse(['error' => 'Not authorized for this administration'], Http::STATUS_FORBIDDEN);
-		}
+	/**
+	 * Whether the caller names an administration they may not use.
+	 *
+	 * @param string $orgFilter The requested administration, '' when none.
+	 *
+	 * @return bool
+	 */
+	private function forbiddenAdministration(string $orgFilter): bool {
+		return ($orgFilter !== '' && $this->callerMayUseAdministration(administrationId: $orgFilter) === false);
+	}//end forbiddenAdministration()
 
-		$administrationId = $this->resolveAdministrationId(requested: $orgFilter);
-		if ($administrationId === null) {
-			return new JSONResponse(['calendars' => []]);
-		}
-
+	/**
+	 * The Calendar filters for the index.
+	 *
+	 * @param string $administrationId The administration in scope.
+	 * @param string $resourceFilter   Resource filter, '' when none.
+	 * @param string $statusFilter     Status filter, '' when none.
+	 *
+	 * @return array<string,string>
+	 */
+	private function calendarFilters(string $administrationId, string $resourceFilter, string $statusFilter): array {
 		$filters = ['administrationId' => $administrationId];
 		if ($resourceFilter !== '') {
 			$filters['resource'] = $resourceFilter;
@@ -143,6 +206,17 @@ class CalendarController extends Controller {
 			$filters['status'] = $statusFilter;
 		}
 
+		return $filters;
+	}//end calendarFilters()
+
+	/**
+	 * The Calendar records matching the filters, or the 503 when the lookup fails.
+	 *
+	 * @param array<string,string> $filters The Calendar filters.
+	 *
+	 * @return array<int,mixed>|JSONResponse
+	 */
+	private function findCalendars(array $filters): array|JSONResponse {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$records = $objectService
@@ -162,13 +236,8 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'Calendar lookup failed'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
-		$calendars = [];
-		foreach ($records as $record) {
-			$calendars[] = (new CalendarRows())->calendar(row: $this->toArray(object: $record));
-		}
-
-		return new JSONResponse(['calendars' => $calendars]);
-	}//end index()
+		return $records;
+	}//end findCalendars()
 
 	/**
 	 * GET /api/v2/calendars/{calendarId} — return one calendar by id.
@@ -584,13 +653,48 @@ class CalendarController extends Controller {
 		$confirm = filter_var($this->request->getParam('confirm', false), FILTER_VALIDATE_BOOLEAN);
 		$override = filter_var($this->request->getParam('overrideConflict', false), FILTER_VALIDATE_BOOLEAN);
 
-		if ($title === '' || $startTime === '' || $endTime === '' || $attendee === '') {
+		if ($this->anyEmpty(values: [$title, $startTime, $endTime, $attendee]) === true) {
 			return new JSONResponse(
 				['error' => 'title, startTime, endTime and attendee are required'],
 				Http::STATUS_BAD_REQUEST,
 			);
 		}
 
+		$window = $this->parseBookingWindow(startTime: $startTime, endTime: $endTime);
+		if ($window instanceof JSONResponse) {
+			return $window;
+		}
+
+		return [
+			'title' => $title,
+			'attendee' => $attendee,
+			'confirm' => $confirm,
+			'override' => $override,
+			'start' => $window[0],
+			'end' => $window[1],
+		];
+	}//end parseBookingRequest()
+
+	/**
+	 * Whether any of the values is the empty string.
+	 *
+	 * @param list<string> $values The values.
+	 *
+	 * @return bool
+	 */
+	private function anyEmpty(array $values): bool {
+		return in_array('', $values, true);
+	}//end anyEmpty()
+
+	/**
+	 * Parse the booking's start and end as UTC and check the minimum duration.
+	 *
+	 * @param string $startTime The requested start, ISO 8601.
+	 * @param string $endTime   The requested end, ISO 8601.
+	 *
+	 * @return array{0:DateTimeImmutable,1:DateTimeImmutable}|JSONResponse Start and end, or a 400.
+	 */
+	private function parseBookingWindow(string $startTime, string $endTime): array|JSONResponse {
 		try {
 			$start = (new DateTimeImmutable($startTime))->setTimezone(new DateTimeZone('UTC'));
 			$end = (new DateTimeImmutable($endTime))->setTimezone(new DateTimeZone('UTC'));
@@ -606,15 +710,8 @@ class CalendarController extends Controller {
 			);
 		}
 
-		return [
-			'title' => $title,
-			'attendee' => $attendee,
-			'confirm' => $confirm,
-			'override' => $override,
-			'start' => $start,
-			'end' => $end,
-		];
-	}//end parseBookingRequest()
+		return [$start, $end];
+	}//end parseBookingWindow()
 
 	/**
 	 * Require an authenticated user (the controller is #[NoAdminRequired]

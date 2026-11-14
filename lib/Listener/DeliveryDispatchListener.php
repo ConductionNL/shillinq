@@ -94,15 +94,7 @@ class DeliveryDispatchListener implements IEventListener {
 				return;
 			}
 
-			$to = (string)$event->getTo();
-			if ($to === 'confirmed') {
-				$this->dispatchService->issueForDelivery(delivery: $delivery);
-				return;
-			}
-
-			if ($to === 'cancelled') {
-				$this->dispatchService->reverseForDelivery(delivery: $delivery);
-			}
+			$this->dispatchFor(transitionTo: (string)$event->getTo(), delivery: $delivery);
 		} catch (Throwable $e) {
 			// Fail-soft: the Delivery transition itself already committed;
 			// never bubble up and block it. Mirrors
@@ -114,6 +106,27 @@ class DeliveryDispatchListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Issue the stock for a confirmed delivery, or reverse it for a cancelled one.
+	 *
+	 * @param string              $transitionTo The state the delivery moved to.
+	 * @param array<string,mixed> $delivery     The Delivery.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
+	 */
+	private function dispatchFor(string $transitionTo, array $delivery): void {
+		if ($transitionTo === 'confirmed') {
+			$this->dispatchService->issueForDelivery(delivery: $delivery);
+			return;
+		}
+
+		if ($transitionTo === 'cancelled') {
+			$this->dispatchService->reverseForDelivery(delivery: $delivery);
+		}
+	}//end dispatchFor()
 
 	/**
 	 * Schema-name match for Delivery (plain slug or namespaced).
