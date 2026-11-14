@@ -4769,6 +4769,34 @@
 		{
 			"menu": [
 				{
+					"id": "ReportingCompliance",
+					"label": "Reporting & Compliance",
+					"icon": "ChartBoxOutline",
+					"order": 70,
+					"children": [
+						{
+							"id": "RetentionDueRecords",
+							"label": "Due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"route": "RetentionDueRecords",
+							"order": 25
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-retention-due-records",
+					"id": "RetentionDueRecords",
+					"route": "/reporting/retention-due",
+					"type": "logs",
+					"title": "Due for destruction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "NavSalesCaption",
 					"label": "Sales",
 					"type": "caption",
