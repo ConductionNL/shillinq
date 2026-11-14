@@ -947,7 +947,8 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			toolId: $toolId,
 			userId: $this->gate->userId(),
 			administrationId: $this->administrationOf(arguments: $arguments),
-			result: $result
+			result: $result,
+			arguments: $arguments
 		);
 
 		return $result;
