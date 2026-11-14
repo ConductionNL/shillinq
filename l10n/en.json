@@ -4716,7 +4716,14 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "The reporting period is missing.": "The reporting period is missing.",
+        "No taxonomy is effective for this period that carries the entry point %s.": "No taxonomy is effective for this period that carries the entry point %s.",
+        "The instance has no valid XBRL document.": "The instance has no valid XBRL document.",
+        "The entity identifier is missing.": "The entity identifier is missing.",
+        "The instance names no period in its context.": "The instance names no period in its context.",
+        "The required concept %s is missing.": "The required concept %s is missing.",
+        "The total %1$s (%2$s) is not the sum of %3$s (%4$s).": "The total %1$s (%2$s) is not the sum of %3$s (%4$s)."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -53,6 +53,7 @@ class GuardRegistrarTest extends TestCase {
 		'OCA\Shillinq\Service\OssPaymentReconciliation::canMarkPaid' => 'OCA\Shillinq\Guard\OssPaymentGuard',
 		'OCA\Shillinq\Guard\IntercompanyEliminationGuard::requireReconciledPair' => 'OCA\Shillinq\Guard\IntercompanyEliminationGuard',
 		'OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave' => 'OCA\Shillinq\Guard\BudgetScenarioModifierGuard',
+		'OCA\Shillinq\Guard\XbrlInstanceValidationGuard::requireValidInstance' => 'OCA\Shillinq\Guard\XbrlInstanceValidationGuard',
 	];
 
 	/**

@@ -109,13 +109,35 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 		self::assertSame(array_diff_key($before, ['enum' => 1]), array_diff_key($after, ['enum' => 1]));
 	}//end testTheEntryPointListGainsTheObEntryPointOnceAndKeepsTheRest()
 
-	public function testTheFragmentOnlyAddsProperties(): void {
+	public function testTheFragmentAddsPropertiesAndOnlyTheValidateGuard(): void {
 		$fragment = $this->decode('register.d/tax-digipoort-filing.json');
+		$schemas  = $fragment['components']['schemas'];
 
 		self::assertSame([], $fragment['objects']);
-		self::assertSame(['XbrlInstance', 'BtwAangifte', 'XBRLTaxonomy'], array_keys($fragment['components']['schemas']));
-		foreach ($fragment['components']['schemas'] as $schema) {
-			self::assertSame(['properties'], array_keys($schema));
-		}
-	}//end testTheFragmentOnlyAddsProperties()
+		self::assertSame(['XbrlInstance', 'BtwAangifte', 'XBRLTaxonomy'], array_keys($schemas));
+		self::assertSame(['properties', 'x-openregister-lifecycle'], array_keys($schemas['XbrlInstance']));
+		self::assertSame(
+			['transitions' => ['validate' => ['requires' => 'OCA\\Shillinq\\Guard\\XbrlInstanceValidationGuard::requireValidInstance']]],
+			$schemas['XbrlInstance']['x-openregister-lifecycle']
+		);
+		self::assertSame(['properties'], array_keys($schemas['BtwAangifte']));
+		self::assertSame(['properties'], array_keys($schemas['XBRLTaxonomy']));
+	}//end testTheFragmentAddsPropertiesAndOnlyTheValidateGuard()
+
+	public function testTheMergedValidateTransitionKeepsItsStatesAndGainsTheGuard(): void {
+		$before = $this->before()['components']['schemas']['XbrlInstance']['x-openregister-lifecycle']['transitions']['validate'];
+		$after  = $this->merge($this->before(), $this->decode('register.d/tax-digipoort-filing.json'))['components']['schemas']['XbrlInstance']['x-openregister-lifecycle']['transitions']['validate'];
+
+		self::assertArrayNotHasKey('requires', $before);
+		self::assertSame($before + ['requires' => 'OCA\\Shillinq\\Guard\\XbrlInstanceValidationGuard::requireValidInstance'], $after);
+	}//end testTheMergedValidateTransitionKeepsItsStatesAndGainsTheGuard()
+
+	public function testTheTaxonomyCarriesWhatTheGuardReads(): void {
+		$properties = $this->decode('register.d/tax-digipoort-filing.json')['components']['schemas']['XBRLTaxonomy']['properties'];
+
+		self::assertSame('object', $properties['requiredConcepts']['type']);
+		self::assertSame('array', $properties['summations']['type']);
+		self::assertTrue($properties['requiredConcepts']['nullable']);
+		self::assertTrue($properties['summations']['nullable']);
+	}//end testTheTaxonomyCarriesWhatTheGuardReads()
 }//end class
