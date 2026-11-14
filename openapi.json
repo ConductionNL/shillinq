@@ -172,6 +172,10 @@
             "description": "The Next run preview, the last run report and a ladder's stage texts."
         },
         {
+            "name": "ensia-cycle",
+            "description": "The files an ENSIA self-evaluation cycle's transitions store: the college statement and the submission XML."
+        },
+        {
             "name": "extraction-request",
             "description": "HTTP API for the extraction re-request proxy, correction commit, and GL-account suggestion proxy (receipt-extraction-consume, gl-account-suggestion-consume)."
         },
@@ -8740,6 +8744,101 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
+        "/public-sector/ensia/{id}/xml": {
+            "get": {
+                "operationId": "ensia-cycle-xml",
+                "summary": "Download the submission XML of a submitted ENSIA cycle",
+                "description": "Download the ENSIA submission XML that the cycle's submit transition produced, as an attachment. 404 for a missing cycle or one of another administration; 409 when the cycle has no XML yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "ensia-cycle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ENSIAJaarcyclus id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The submission XML.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "text/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    }
+                }
+            }
+        },
+        "/public-sector/ensia/{id}/statement": {
+            "get": {
+                "operationId": "ensia-cycle-statement",
+                "summary": "Download the college statement of an ENSIA cycle",
+                "description": "Download the college statement DOCX that the cycle's move to college approval rendered, as an attachment. 404 for a missing cycle or one of another administration; 409 when no statement is rendered yet. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "ensia-cycle"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ENSIAJaarcyclus id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The college statement.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
                     }
                 }
             }

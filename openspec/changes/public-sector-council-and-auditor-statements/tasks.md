@@ -13,7 +13,7 @@
 
 ## 3. ENSIA
 
-- [ ] 3.1 Transition actions for findings, statement and XML (REQ-ENSIA-011). Verify: PHPUnit red first with the real generators; the stored `Bevinding` payload validates.
+- [x] 3.1 Transition actions for findings, statement and XML (REQ-ENSIA-011). Verify: PHPUnit red first with the real generators; the stored `Bevinding` payload validates.
 - [ ] 3.2 XML download (REQ-ENSIA-012). Verify: controller test, route-auth and IDOR gates.
 
 ## 4. Strings and live check

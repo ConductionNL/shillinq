@@ -84,6 +84,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114200000",
             "versionsSha256": "6a1363d580ac350e138cb636c91b4fb3c88ebca75baf56a2c6dae4a0cd161778"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114210000",
+            "versionsSha256": "bdffadbfc5a1e87d09e6461471b65d308a4adb74e5284128a38b4246520f85af"
         }
     ],
     "versions": {
@@ -259,7 +263,7 @@
         "schema:EInvoiceMandate": "0.1.0",
         "schema:EMUAdjustment": "0.1.0",
         "schema:EMUReport": "0.1.0",
-        "schema:ENSIAJaarcyclus": "0.1.0",
+        "schema:ENSIAJaarcyclus": "0.2.0",
         "schema:EconomischeCategorie": "0.1.0",
         "schema:EligibilityRule": "0.1.0",
         "schema:EliminationEntry": "0.1.1",
