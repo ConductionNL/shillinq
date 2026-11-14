@@ -17,6 +17,7 @@
 ## 3. Report
 
 - [ ] 3.1 `InvoiceNumberAuditService` and its card on the Reports page (REQ-SIIC-004). Verify: PHPUnit for gaps and duplicates.
+  Service built (`lib/Service/InvoiceNumberAuditService.php::gaps()`, `InvoiceNumberAuditServiceTest`, 8 tests); the Reports card and the endpoint that feeds it are still open.
 
 ## 4. End to end and strings
 

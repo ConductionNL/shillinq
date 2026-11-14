@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\Shillinq\Kernel\Contracts\ContractLeafProviderInterface;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -44,13 +45,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
  */
-final class ContractLeafProvider implements IntegrationProvider {
-	/**
-	 * The leaf id, equal on both halves so gate-24 can pair them.
-	 *
-	 * @var string
-	 */
-	public const LEAF_ID = 'shillinq-contracts';
+final class ContractLeafProvider implements IntegrationProvider, ContractLeafProviderInterface {
 
 	/**
 	 * The schema holding contracts.

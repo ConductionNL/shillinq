@@ -45,6 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Kernel\Contracts\UrenDagregistratieGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,7 +55,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-24
  */
-class UrenDagregistratieGuard {
+class UrenDagregistratieGuard implements UrenDagregistratieGuardInterface {
 
 	/**
 	 * Maximum number of reistijd hours counted per day (REQ-URC-001).

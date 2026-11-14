@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;

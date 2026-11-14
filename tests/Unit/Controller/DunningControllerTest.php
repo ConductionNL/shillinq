@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\DunningController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BIKStaffelCalculator;
-use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\IncassoDossierComposer;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;

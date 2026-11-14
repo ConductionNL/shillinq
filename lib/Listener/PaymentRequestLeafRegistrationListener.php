@@ -36,9 +36,9 @@ use OCA\OpenRegister\Service\Integration\LeafAvailability;
 use OCA\OpenRegister\Service\Integration\LeafDescriptor;
 use OCA\OpenRegister\Service\Integration\LeafIdentity;
 use OCA\OpenRegister\Service\Integration\LeafRendering;
-use OCA\Shillinq\Integration\ContractLeafProvider;
-use OCA\Shillinq\Integration\FinancialDocumentLeafProvider;
-use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
+use OCA\Shillinq\Kernel\Contracts\ContractLeafProviderInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentLeafProviderInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -90,16 +90,16 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param PaymentRequestLeafProvider $provider The data-provider half.
-	 * @param ContractLeafProvider $contracts The contract a case is handled under.
-	 * @param FinancialDocumentLeafProvider $documents Every financial document linked to an object.
+	 * @param PaymentRequestLeafProviderInterface $provider The data-provider half.
+	 * @param ContractLeafProviderInterface $contracts The contract a case is handled under.
+	 * @param FinancialDocumentLeafProviderInterface $documents Every financial document linked to an object.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly PaymentRequestLeafProvider $provider,
-		private readonly ContractLeafProvider $contracts,
-		private readonly FinancialDocumentLeafProvider $documents,
+		private readonly PaymentRequestLeafProviderInterface $provider,
+		private readonly ContractLeafProviderInterface $contracts,
+		private readonly FinancialDocumentLeafProviderInterface $documents,
 	) {
 	}//end __construct()
 
@@ -120,7 +120,7 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 		$event->registerLeaf(
 			new LeafDescriptor(
 				identity: new LeafIdentity(
-					id: PaymentRequestLeafProvider::LEAF_ID,
+					id: PaymentRequestLeafProviderInterface::LEAF_ID,
 					label: 'Payment requests',
 					icon: 'CreditCardOutline',
 					group: 'Finance',
@@ -128,7 +128,7 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
 				availability: new LeafAvailability(
 					requiredApp: 'shillinq',
-					requiresPermission: PaymentRequestLeafProvider::ACTION_REQUEST,
+					requiresPermission: PaymentRequestLeafProviderInterface::ACTION_REQUEST,
 				),
 			),
 			$this->provider,
@@ -158,7 +158,7 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 		$event->registerLeaf(
 			new LeafDescriptor(
 				identity: new LeafIdentity(
-					id: ContractLeafProvider::LEAF_ID,
+					id: ContractLeafProviderInterface::LEAF_ID,
 					label: 'Contract',
 					icon: 'FileDocumentOutline',
 					group: 'Finance',
@@ -174,7 +174,7 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 		$event->registerLeaf(
 			new LeafDescriptor(
 				identity: new LeafIdentity(
-					id: FinancialDocumentLeafProvider::LEAF_ID,
+					id: FinancialDocumentLeafProviderInterface::LEAF_ID,
 					label: 'Financial documents',
 					icon: 'FileDocumentMultipleOutline',
 					group: 'Finance',

@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
-use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Kernel\Model\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
 use OCA\Shillinq\Service\Dunning\DunningStageSelector;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;

@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Service\WbsoRbacResolver;
+use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IUserSession;
@@ -39,11 +39,11 @@ final class WbsoCallerCheck {
 	 * Constructor.
 	 *
 	 * @param IUserSession $userSession The session.
-	 * @param WbsoRbacResolver $rbac The WBSO roles of the caller.
+	 * @param WbsoRbacResolverInterface $rbac The WBSO roles of the caller.
 	 */
 	public function __construct(
 		private readonly IUserSession $userSession,
-		private readonly WbsoRbacResolver $rbac,
+		private readonly WbsoRbacResolverInterface $rbac,
 	) {
 	}//end __construct()
 

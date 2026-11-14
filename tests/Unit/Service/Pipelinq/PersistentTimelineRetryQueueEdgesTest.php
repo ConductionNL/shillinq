@@ -24,7 +24,7 @@ use DateTime;
 use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -41,7 +41,7 @@ use RuntimeException;
  * that throws falls back to a warning. A mutable timestamp is stored in UTC.
  *
  * @covers \OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue
- * @uses \OCA\Shillinq\Service\Pipelinq\TimelineEventDto
+ * @uses \OCA\Shillinq\Kernel\Model\TimelineEventDto
  */
 final class PersistentTimelineRetryQueueEdgesTest extends TestCase {
 

@@ -31,9 +31,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\KorMonitorServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Computes the KOR threshold-status for one administration + year from the AR ledger.
@@ -47,7 +48,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
-class KorMonitorService {
+class KorMonitorService implements KorMonitorServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

@@ -31,6 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BcfCompensationCalculatorInterface;
+
 /**
  * Side-effect-free BCF compensable-VAT arithmetic helper.
  *
@@ -40,7 +42,7 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
-class BcfCompensationCalculator {
+class BcfCompensationCalculator implements BcfCompensationCalculatorInterface {
 	/**
 	 * Convert a money amount to integer cents (REQ-BCF-002 precision rule).
 	 *

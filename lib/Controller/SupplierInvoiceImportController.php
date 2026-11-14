@@ -46,9 +46,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,8 +59,6 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -88,23 +88,23 @@ class SupplierInvoiceImportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request Request.
-	 * @param SupplierInvoiceService $supplierInvoiceService Deterministic UBL ingestion + parser.
-	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param SupplierInvoiceServiceInterface $supplierInvoiceService Deterministic UBL ingestion + parser.
+	 * @param AdministrationContextServiceInterface $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param SupplierInvoiceChecks  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
+	 * @param SupplierInvoiceChecksInterface  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SupplierInvoiceService $supplierInvoiceService,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly SupplierInvoiceServiceInterface $supplierInvoiceService,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SupplierInvoiceChecks $checks,
+		private readonly SupplierInvoiceChecksInterface $checks,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -315,7 +315,7 @@ class SupplierInvoiceImportController extends Controller {
 			'totalVat' => self::toCents($row['vatAmount'] ?? null),
 			'currency' => 'EUR',
 			'sourceFormat' => 'csv',
-			'statusCode' => SupplierInvoiceService::STATUS_RECEIVED,
+			'statusCode' => SupplierInvoiceServiceInterface::STATUS_RECEIVED,
 			'createdAt' => date('c'),
 		];
 	}//end csvRecord()

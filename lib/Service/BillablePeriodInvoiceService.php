@@ -42,17 +42,18 @@ namespace OCA\Shillinq\Service;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\BillablePeriodClosedEvent;
+use OCA\Shillinq\Kernel\Contracts\BillablePeriodInvoiceServiceInterface;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Drafts the invoice an BillablePeriodClosedEvent asks for, or refuses it.
  *
  * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
-class BillablePeriodInvoiceService {
+class BillablePeriodInvoiceService implements BillablePeriodInvoiceServiceInterface {
 
 	/**
 	 * The only currency this path bills in.

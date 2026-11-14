@@ -29,21 +29,17 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 
 /**
  * Issues an invoice on an object and requests payment of an invoice.
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-004)
  */
-class FinancialDocumentActions {
-	/**
-	 * The action that issues an invoice.
-	 *
-	 * @var string
-	 */
-	public const ACTION_ISSUE_INVOICE = 'invoice.issue';
+class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 
 	/**
 	 * Invoice states a payment can be asked for.

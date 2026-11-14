@@ -34,6 +34,18 @@ Vendors are created implicitly when you first use a contact in a bill. To pre-co
    - `iban` — payment bank account (used for payment runs)
 5. Save.
 
+## Look a company up in the KvK
+
+The **KvK number** field of a vendor is looked up in the KvK Handelsregister (the Dutch chamber of commerce register):
+
+1. Type a company name or a KvK number in **KvK number**.
+2. Pick the company from the list.
+3. The **name**, the **trading name** and the **address** of the main branch fill in; the country is set to NL.
+
+The lookup only fills fields that are still empty. When you already typed a name, you are asked before it is replaced. What fills in is a copy: a later change in the KvK does not change a saved vendor.
+
+The lookup needs the KvK source to be linked. Until an administrator links it in Integriq (**External connections → KvK Handelsregister**), the field is a plain text field: type the number and save, and the form says the KvK lookup is not set up.
+
 ## Vendor balance
 
 Click any vendor row to open their detail view. The **Balance** tab shows:

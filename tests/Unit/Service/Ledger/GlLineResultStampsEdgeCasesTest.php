@@ -34,7 +34,7 @@ use PHPUnit\Framework\TestCase;
  * Edge cases of the result stamps on GL lines.
  *
  * @covers \OCA\Shillinq\Service\Ledger\GlLineResultStamps
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  */
 class GlLineResultStampsEdgeCasesTest extends TestCase {

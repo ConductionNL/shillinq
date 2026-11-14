@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\AdministrationExportController;
+use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -114,7 +115,7 @@ final class AdministrationExportGoldenTest extends TestCase {
 
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static fn (string $id): object => ($id === XafAuditfileGenerator::class ? (($options['generator'] ?? true) === true ? $generator : new \stdClass()) : $store)
+			static fn (string $id): object => (($id === XafAuditfileGenerator::class || $id === XafAuditfileGeneratorInterface::class) ? (($options['generator'] ?? true) === true ? $generator : new \stdClass()) : $store)
 		);
 
 		$files = ($options['files'] ?? []);

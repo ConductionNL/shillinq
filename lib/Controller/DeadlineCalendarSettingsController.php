@@ -33,8 +33,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\ComplianceDeadlineCalendarService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ComplianceDeadlineCalendarServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -54,13 +54,13 @@ class DeadlineCalendarSettingsController extends Controller {
 	 *
 	 * @param IRequest $request The current HTTP request.
 	 * @param IUserSession $userSession The user session (current-user scoping).
-	 * @param ComplianceDeadlineCalendarService $calendarService The toggle store + publisher.
+	 * @param ComplianceDeadlineCalendarServiceInterface $calendarService The toggle store + publisher.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IUserSession $userSession,
-		private readonly ComplianceDeadlineCalendarService $calendarService,
+		private readonly ComplianceDeadlineCalendarServiceInterface $calendarService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -269,7 +269,7 @@ class DeadlineCalendarSettingsController extends Controller {
 	 */
 	private function currentSettings(string $userId): array {
 		$categories = [];
-		foreach (ComplianceDeadlineCalendarService::CATEGORIES as $category) {
+		foreach (ComplianceDeadlineCalendarServiceInterface::CATEGORIES as $category) {
 			$categories[$category] = [
 				'enabled' => $this->calendarService->isCategoryEnabled(userId: $userId, category: $category),
 				'leadDays' => $this->calendarService->leadTimeDays(userId: $userId, category: $category),

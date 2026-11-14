@@ -86,12 +86,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VendorPerformanceAggregationInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 10 of bookkeeping-purchase-order-3way: monthly vendor performance
@@ -121,7 +122,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): deferred pending a dedicated refactor
  * and rename pass.
  */
-class VendorPerformanceAggregation {
+class VendorPerformanceAggregation implements VendorPerformanceAggregationInterface {
 
 	/**
 	 * On-time-delivery weight in basis points (40 %).

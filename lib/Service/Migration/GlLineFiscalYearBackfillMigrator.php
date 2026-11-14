@@ -56,26 +56,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Migration;
 
+use OCA\Shillinq\Kernel\Contracts\GlLineFiscalYearBackfillMigratorInterface;
 use RuntimeException;
 
 /**
  * Resolves and stamps `GLLine.fiscalYearId` from the parent `GLTransaction`.
  */
-class GlLineFiscalYearBackfillMigrator {
-
-	/**
-	 * Schema slug of the line rows this migrator writes.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_GL_LINE = 'GLLine';
-
-	/**
-	 * Schema slug of the parent rows this migrator reads.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_GL_TRANSACTION = 'GLTransaction';
+class GlLineFiscalYearBackfillMigrator implements GlLineFiscalYearBackfillMigratorInterface {
 
 	/**
 	 * The property being backfilled, on both schemas.

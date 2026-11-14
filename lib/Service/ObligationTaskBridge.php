@@ -38,9 +38,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObligationTaskBridgeInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Creates / links the NC Tasks VTODO (or Deck card) for a ContractObligation.
@@ -55,7 +56,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class ObligationTaskBridge {
+class ObligationTaskBridge implements ObligationTaskBridgeInterface {
 	/**
 	 * Construct the bridge with DI dependencies.
 	 *
@@ -234,7 +235,6 @@ class ObligationTaskBridge {
 				->setRegister(register: $this->registerSlug())
 				->setSchema(schema: 'ContractObligation')
 				->findAll([]);
-
 
 			$deadlines = [];
 			foreach (array_values($rows) as $row) {

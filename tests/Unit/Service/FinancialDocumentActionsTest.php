@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentActions;
 use OCA\Shillinq\Service\FinancialDocumentGuard;
 use OCA\Shillinq\Service\ObjectRequestInvoiceService;

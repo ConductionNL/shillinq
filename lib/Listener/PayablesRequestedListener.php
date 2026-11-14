@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Event\PayablesRequestedEvent;
-use OCA\Shillinq\Service\InboundPayableReader;
+use OCA\Shillinq\Kernel\Contracts\InboundPayableReaderInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -39,12 +39,12 @@ class PayablesRequestedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param InboundPayableReader $payables Reads the payouts an app raised.
+	 * @param InboundPayableReaderInterface $payables Reads the payouts an app raised.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly InboundPayableReader $payables,
+		private readonly InboundPayableReaderInterface $payables,
 	) {
 	}//end __construct()
 

@@ -45,9 +45,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
-use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\CommitmentMaterialisationServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -75,13 +75,13 @@ class CommitmentMaterialisationListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param CommitmentMaterialisationService $materialiser Thin materialisation service.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param CommitmentMaterialisationServiceInterface $materialiser Thin materialisation service.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
-		private readonly CommitmentMaterialisationService $materialiser,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly CommitmentMaterialisationServiceInterface $materialiser,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

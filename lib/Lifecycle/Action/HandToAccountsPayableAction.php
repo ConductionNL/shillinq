@@ -33,9 +33,9 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use RuntimeException;
 
@@ -57,15 +57,15 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
-	 * @param SupplierInvoiceChecks  $checks        Payee lookup and the IBAN rule.
-	 * @param ObjectTransitionRunner $transitions   Runs the AP transaction's declared transitions.
+	 * @param RegisterLocationInterface        $settings Where the register lives (slug + OpenRegister availability).
+	 * @param SupplierInvoiceChecksInterface  $checks        Payee lookup and the IBAN rule.
+	 * @param ObjectTransitionRunnerInterface $transitions   Runs the AP transaction's declared transitions.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $settings,
-		private readonly SupplierInvoiceChecks $checks,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly RegisterLocationInterface $settings,
+		private readonly SupplierInvoiceChecksInterface $checks,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 	) {
 
 	}//end __construct()

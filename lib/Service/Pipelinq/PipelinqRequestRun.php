@@ -27,6 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
+
 /**
  * Per-call state of the pipelinq retry loop.
  *

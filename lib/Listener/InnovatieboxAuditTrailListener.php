@@ -56,9 +56,9 @@ use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\VsoLockingValidator;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxAuditEventLoggerInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\VsoLockingValidatorInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -130,14 +130,14 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 * @param AuditTrailMapper $auditTrail OpenRegister's hash-chained audit trail: every
 	 *                                     innovatiebox transition is recorded on the subject
 	 *                                     object's own trail (REQ-IBA-008, ADR-022).
-	 * @param VsoLockingValidator $vsoValidator VSO year-lock checker (task 4.3).
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param VsoLockingValidatorInterface $vsoValidator VSO year-lock checker (task 4.3).
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $psrLogger Psr logger for fail-soft.
 	 */
 	public function __construct(
 		private readonly AuditTrailMapper $auditTrail,
-		private readonly VsoLockingValidator $vsoValidator,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly VsoLockingValidatorInterface $vsoValidator,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $psrLogger,
 	) {
 	}//end __construct()
@@ -209,7 +209,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_NEXUS_CALCULATED,
 				'administrationId' => (string)($data['administrationId'] ?? ''),
 				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
 				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
@@ -234,7 +234,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: $row + [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_PROFIT_CREATED,
 				'details' => $this->slice(data: $data, keys: self::PROFIT_DETAIL_KEYS),
 			]
 		);
@@ -259,7 +259,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: $row + [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_FORFAITAIR_CAP_APPLIED,
 				'reason' => 'cap_hit',
 				'details' => $this->forfaitairCapDetails(data: $data),
 			]
@@ -314,7 +314,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_LOSS_CREATED,
 				'administrationId' => (string)($data['administrationId'] ?? ''),
 				'financialYear' => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
 				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
@@ -427,7 +427,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_PROFIT_FINALIZED,
 				'administrationId' => (string)($next['administrationId'] ?? ''),
 				'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
 				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
@@ -454,7 +454,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_PROFIT_AMENDMENT_BLOCKED,
 				'administrationId' => (string)($next['administrationId'] ?? ''),
 				'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
 				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
@@ -489,7 +489,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$this->append(
 			entity: $entity,
 			options: [
-				'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
+				'event_type' => InnovatieboxAuditEventLoggerInterface::EVENT_LOSS_OFFSET_APPLIED,
 				'administrationId' => (string)($next['administrationId'] ?? ''),
 				'financialYear' => $this->intOrNull(value: $next['origin_boekjaar'] ?? ($next['financialYear'] ?? null)),
 				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),

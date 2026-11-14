@@ -30,12 +30,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\Shillinq\Kernel\Contracts\ImportBatchGuardInterface;
+
 /**
  * Fail-closed guards for the ImportBatch lifecycle (REQ-AIM-002/009).
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-3
  */
-class ImportBatchGuard {
+class ImportBatchGuard implements ImportBatchGuardInterface {
 	/**
 	 * Whether a batch may leave draft for parsing (REQ-AIM-002).
 	 *

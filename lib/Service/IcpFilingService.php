@@ -34,18 +34,19 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\IcpFilingServiceInterface;
 use OCP\IAppConfig;
 use RuntimeException;
 use ZipArchive;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Owns the ICP filing write path: corrections, audit-export bundles, outage scan.
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class IcpFilingService {
+class IcpFilingService implements IcpFilingServiceInterface {
 	/**
 	 * Construct the service with OpenRegister's ObjectService injected
 	 * (ADR-083 rule 1).

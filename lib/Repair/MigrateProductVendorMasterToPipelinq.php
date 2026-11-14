@@ -28,8 +28,8 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
@@ -75,14 +75,14 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep {
 	 *
 	 * @param IConfig $config NC app-config for idempotency key + export payload.
 	 * @param LoggerInterface $logger Logger for fuzzy-match warnings and errors.
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ContainerInterface $container DI container for lazy OR ObjectService resolution (mirrors sibling repair steps).
 	 * @param IContactsManager $contactsManager NC Contacts API for KvK/BTW/name+IBAN vendor matching.
 	 */
 	public function __construct(
 		private readonly IConfig $config,
 		private readonly LoggerInterface $logger,
-		private readonly RegisterLocation $registerLocation,
+		private readonly RegisterLocationInterface $registerLocation,
 		private readonly ContainerInterface $container,
 		private readonly IContactsManager $contactsManager,
 	) {

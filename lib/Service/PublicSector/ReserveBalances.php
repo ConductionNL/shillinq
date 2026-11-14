@@ -34,13 +34,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\PublicSector;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\ReserveBalancesInterface;
 
 /**
  * Balances, the multi-year overview and the booking of reserve mutations.
  *
  * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
  */
-class ReserveBalances {
+class ReserveBalances implements ReserveBalancesInterface {
 	/**
 	 * How many years the overview shows: the year asked for and four ahead.
 	 *

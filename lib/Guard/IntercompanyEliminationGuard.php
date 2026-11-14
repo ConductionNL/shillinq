@@ -38,8 +38,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\Service\IntercompanyJournalService;
-use OCA\Shillinq\Service\IntercompanyLinkService;
+use OCA\Shillinq\Kernel\Contracts\IntercompanyJournalServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IntercompanyLinkServiceInterface;
 
 /**
  * Precondition for `eliminate`: the intercompany pair must reconcile.
@@ -56,12 +56,12 @@ class IntercompanyEliminationGuard {
 	/**
 	 * Construct the guard.
 	 *
-	 * @param IntercompanyLinkService $linkService Resolves the counter-side entry.
-	 * @param IntercompanyJournalService $journalService The pure-logic REQ-MA-004 kernel.
+	 * @param IntercompanyLinkServiceInterface $linkService Resolves the counter-side entry.
+	 * @param IntercompanyJournalServiceInterface $journalService The pure-logic REQ-MA-004 kernel.
 	 */
 	public function __construct(
-		private readonly IntercompanyLinkService $linkService,
-		private readonly IntercompanyJournalService $journalService,
+		private readonly IntercompanyLinkServiceInterface $linkService,
+		private readonly IntercompanyJournalServiceInterface $journalService,
 	) {
 
 	}//end __construct()

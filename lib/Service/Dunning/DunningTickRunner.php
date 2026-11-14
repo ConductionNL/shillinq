@@ -31,7 +31,8 @@ namespace OCA\Shillinq\Service\Dunning;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\DunningTickRunnerInterface;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
  */
-class DunningTickRunner {
+class DunningTickRunner implements DunningTickRunnerInterface {
 	/**
 	 * Invoices read per page.
 	 */
@@ -56,11 +57,6 @@ class DunningTickRunner {
 	 * App-config key holding the last run report per administration, as JSON.
 	 */
 	public const REPORT_KEY = 'dunning.job_report';
-
-	/**
-	 * The Administration property that switches automatic reminders on.
-	 */
-	public const ENABLED_PROPERTY = 'dunningEnabled';
 
 	/**
 	 * Constructor.

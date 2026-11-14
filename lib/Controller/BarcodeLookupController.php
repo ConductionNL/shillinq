@@ -34,7 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -59,6 +59,7 @@ use Psr\Log\LoggerInterface;
  * from app config and is never returned in any response.
  *
  * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-12
+ * @spec openspec/specs/platform-properties/spec.md#REQ-PLAT-001
  */
 class BarcodeLookupController extends Controller {
 

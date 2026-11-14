@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\SigningDelegationServiceInterface;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
@@ -53,7 +54,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
  */
-class SigningDelegationService {
+class SigningDelegationService implements SigningDelegationServiceInterface {
 
 	/**
 	 * Terminal signing statuses; a repeated callback is a no-op.

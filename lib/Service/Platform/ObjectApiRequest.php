@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Platform;
 
+use OCA\Shillinq\Kernel\Contracts\ObjectApiRequestInterface;
 use OCP\IRequest;
 use Throwable;
 
@@ -36,7 +37,7 @@ use Throwable;
  *
  * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
  */
-class ObjectApiRequest {
+class ObjectApiRequest implements ObjectApiRequestInterface {
 
 	/**
 	 * The object API's create and update paths: register, schema, optional id, nothing after.

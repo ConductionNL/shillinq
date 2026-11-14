@@ -29,6 +29,7 @@ namespace OCA\Shillinq\Service\Tax;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\ViesService;
 use Psr\Log\LoggerInterface;
@@ -36,17 +37,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Validates a record's VAT number through VIES and keeps the outcome on the record.
  */
-class VatNumberCheck {
-
-	/**
-	 * The records a person can check, by route type: schema and the field holding the number.
-	 *
-	 * @var array<string,array{schema:string,field:string}>
-	 */
-	public const RECORDS = [
-		'customer' => ['schema' => 'CustomerMaster', 'field' => 'vatId'],
-		'supplier' => ['schema' => 'Payee', 'field' => 'vatNumber'],
-	];
+class VatNumberCheck implements VatNumberCheckInterface {
 
 	/**
 	 * The VIES member state prefixes (Greece is EL, Northern Ireland XI).

@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service\Asset;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\DepreciationScheduleServiceInterface;
 
 /**
  * Plans, replans and posts depreciation schedule lines.
@@ -43,11 +44,9 @@ use DomainException;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One schedule, four operations on it.
  */
-class DepreciationScheduleService {
+class DepreciationScheduleService implements DepreciationScheduleServiceInterface {
 
 	public const SCHEDULE = 'DepreciationSchedule';
-
-	public const ASSET = 'FixedAsset';
 
 	public const POSTED = 'posted';
 

@@ -75,9 +75,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SpendAnalyticsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\SpendAnalyticsServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -108,8 +108,8 @@ class SpendAnalyticsController extends Controller {
 	 * Constructor for the SpendAnalyticsController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param SpendAnalyticsService $service The spend-aggregation service (consumes OR aggregation-api).
-	 * @param AdministrationContextService $context Authenticated-user context (ADR-005).
+	 * @param SpendAnalyticsServiceInterface $service The spend-aggregation service (consumes OR aggregation-api).
+	 * @param AdministrationContextServiceInterface $context Authenticated-user context (ADR-005).
 	 * @param IL10N $l10n Translation of the human-readable dimension label.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
@@ -117,8 +117,8 @@ class SpendAnalyticsController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly SpendAnalyticsService $service,
-		private readonly AdministrationContextService $context,
+		private readonly SpendAnalyticsServiceInterface $service,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {

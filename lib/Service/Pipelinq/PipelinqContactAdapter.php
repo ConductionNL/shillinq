@@ -67,13 +67,20 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\ICache;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Exception\PipelinqTransportException;
+use OCA\Shillinq\Kernel\Model\TimelinePublishOutcome;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\KlantbeeldTransaction;
 
 /**
  * Resilient HTTP transport for pipelinq calls.
@@ -88,7 +95,7 @@ use Psr\Log\LoggerInterface;
  * Pre-existing debt (issue #506): early-return refactor deferred pending
  * full behavioral verification of each branch.
  */
-class PipelinqContactAdapter {
+class PipelinqContactAdapter implements PipelinqContactAdapterInterface {
 	/**
 	 * Per-request HTTP timeout in seconds (giant decision D5).
 	 *

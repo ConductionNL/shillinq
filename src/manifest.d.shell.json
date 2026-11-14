@@ -4416,6 +4416,26 @@
 		{
 			"menu": [
 				{
+					"id": "InboundPayables",
+					"label": "Payouts to pay",
+					"icon": "CashFast",
+					"route": "InboundPayables",
+					"order": 26
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inbound-payable-from-another-app",
+					"id": "InboundPayables",
+					"route": "/banking/payouts-to-pay",
+					"type": "index",
+					"title": "Payouts to pay"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Inventory",
 					"label": "Inventory",
 					"icon": "Warehouse",

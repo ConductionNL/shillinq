@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\PayablesRequestedEvent;
+use OCA\Shillinq\Kernel\Contracts\InboundPayableReaderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -37,7 +38,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
  */
-class InboundPayableReader {
+class InboundPayableReader implements InboundPayableReaderInterface {
 	/**
 	 * The schema holding payouts.
 	 *

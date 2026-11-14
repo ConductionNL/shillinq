@@ -47,7 +47,7 @@ use RuntimeException;
  * Tests for FoldDunningWriteoffIntoArInvoice.
  *
  * @covers \OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
  */
 class FoldDunningWriteoffIntoArInvoiceTest extends TestCase {

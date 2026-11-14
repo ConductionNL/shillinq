@@ -58,9 +58,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -69,7 +70,6 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that re-saves every existing object on the 17 schemas whose
@@ -125,7 +125,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -133,7 +133,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 * @param IAppManager $appManager App manager (installed shillinq version).
 	 */
 	public function __construct(
-		private RegisterLocation $registerLocation,
+		private RegisterLocationInterface $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private readonly ObjectServiceInterface $objectService,

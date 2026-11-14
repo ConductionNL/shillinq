@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
-use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
+use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;

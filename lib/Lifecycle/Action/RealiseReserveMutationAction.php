@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\PublicSector\ReserveBalances;
+use OCA\Shillinq\Kernel\Contracts\ReserveBalancesInterface;
 
 /**
  * Posts a reserve mutation as it is realised.
@@ -42,10 +42,10 @@ class RealiseReserveMutationAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ReserveBalances $balances Books the mutation.
+	 * @param ReserveBalancesInterface $balances Books the mutation.
 	 */
 	public function __construct(
-		private readonly ReserveBalances $balances,
+		private readonly ReserveBalancesInterface $balances,
 	) {
 	}//end __construct()
 

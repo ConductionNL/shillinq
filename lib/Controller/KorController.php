@@ -32,9 +32,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\KorMonitorService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\KorMonitorServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,16 +52,16 @@ class KorController extends Controller {
 	 * Constructor for the KorController.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param KorMonitorService $korMonitorService The KOR drempel-bewaking service.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param KorMonitorServiceInterface $korMonitorService The KOR drempel-bewaking service.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly KorMonitorService $korMonitorService,
-		private readonly AdministrationContextService $context,
+		private readonly KorMonitorServiceInterface $korMonitorService,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

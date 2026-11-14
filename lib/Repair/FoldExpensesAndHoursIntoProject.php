@@ -42,14 +42,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that folds Receipt/MileageEntry/PerDiem into
@@ -61,13 +61,13 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param IGroupManager $groupManager The group manager (resolve an admin IUser).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private RegisterLocation $settingsService,
+		private RegisterLocationInterface $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

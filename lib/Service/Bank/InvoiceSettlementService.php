@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -45,7 +46,7 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
-class InvoiceSettlementService {
+class InvoiceSettlementService implements InvoiceSettlementServiceInterface {
 	/**
 	 * Outcome: the named transition ran.
 	 *

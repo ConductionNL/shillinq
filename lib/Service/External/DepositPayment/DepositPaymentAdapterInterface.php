@@ -54,6 +54,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\External\DepositPayment;
 
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
+
 /**
  * DepositPayment lifecycle adapter port.
  *

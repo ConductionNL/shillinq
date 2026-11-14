@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Commitment;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
-use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
+use OCA\Shillinq\Kernel\Exception\InsufficientCommitmentBudgetException;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;

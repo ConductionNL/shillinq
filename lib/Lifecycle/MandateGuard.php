@@ -44,6 +44,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use DateInterval;
 use DateTimeImmutable;
+use OCA\Shillinq\Kernel\Contracts\MandateGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -55,7 +56,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
-class MandateGuard {
+class MandateGuard implements MandateGuardInterface {
 
 	/**
 	 * SDD rulebook dormancy threshold in whole months (REQ-SDD-008).

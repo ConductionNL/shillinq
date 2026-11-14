@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestBankSettlementInterface;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -43,13 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
  */
-class ObjectRequestBankSettlement {
-	/**
-	 * Who a bank-match settlement is recorded for.
-	 *
-	 * @var string
-	 */
-	public const ACTOR = 'system:bank-match';
+class ObjectRequestBankSettlement implements ObjectRequestBankSettlementInterface {
 
 	/**
 	 * Constructor.

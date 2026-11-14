@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -40,7 +41,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
  */
-class ObjectRequestInvoiceService {
+class ObjectRequestInvoiceService implements ObjectRequestInvoiceServiceInterface {
 
 	/**
 	 * App config key: request type => VAT rate in percent, as JSON.

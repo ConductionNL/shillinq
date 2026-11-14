@@ -46,7 +46,7 @@ use Stringable;
  * @covers \OCA\Shillinq\Reporting\Generator\SaftReportGenerator
  * @covers \OCA\Shillinq\Reporting\Generator\ManagementLetterReportGenerator
  * @uses   \OCA\Shillinq\Reporting\Generator\AbstractDocumentReportGenerator
- * @uses   \OCA\Shillinq\Reporting\GeneratedFile
+ * @uses   \OCA\Shillinq\Kernel\Model\GeneratedFile
  * @uses   \OCA\Shillinq\Reporting\ReportSection
  * @uses   \OCA\Shillinq\Reporting\ReportTable
  *

@@ -26,9 +26,11 @@
  * schema fields declared by slice 01) so partial-receipt arithmetic stays
  * bit-exact across the multi-PO allocator.
  *
- * StockMove posting on accept reuses the
- * inventory-stock-movement-ledger StockMoveOffsetCreator pattern: we write a
- * lifecycleState="posted" + locked=true row directly via saveObject, with
+ * StockMove posting on accept creates the receipt move as a draft and posts
+ * it through OpenRegister's transition engine ({@see StockMovePosting}), the
+ * way SalesDispatchStockIssueService posts issues, so the valuation listener
+ * adds the receipt's cost layer (inventory-receipt-cost-layers REQ-IRCL-001);
+ * without the engine it falls back to a posted, locked create. The move has
  * movementType=receipt, movementReason=normal, and referenceDocumentUri
  * pointing back at the originating PO (shillinq://purchase-order/<poId>). The
  * GL posting on accept is fired declaratively by the OR lifecycle once the
@@ -51,10 +53,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\GoodsReceiptNoteServiceInterface;
 use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Member 04 of bookkeeping-purchase-order-3way: GRN lifecycle + inventory
@@ -88,7 +92,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * Pre-existing debt (issue #506): early-return refactor deferred pending
  * full behavioral verification of each branch.
  */
-class GoodsReceiptNoteService {
+class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 	/**
 	 * StockMove movementType for the GRN-accept inventory credit.
 	 *
@@ -145,20 +149,13 @@ class GoodsReceiptNoteService {
 	private const SCHEMA_PO_LINE = 'PurchaseOrderLine';
 
 	/**
-	 * Schema slug for the StockMove register (declared by
-	 * inventory-stock-movement-ledger).
-	 *
-	 * @var string
-	 */
-	private const SCHEMA_STOCK_MOVE = 'StockMove';
-
-	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param ContainerInterface|null $container The container OpenRegister's transition engine is resolved from; null posts receipt moves directly.
 	 *
 	 * @return void
 	 */
@@ -167,6 +164,7 @@ class GoodsReceiptNoteService {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?ContainerInterface $container = null,
 	) {
 	}//end __construct()
 
@@ -587,7 +585,7 @@ class GoodsReceiptNoteService {
 		}
 
 		$stockMove = $this->receiptStockMove(acceptance: $acceptance, line: new GrnLineReceipt(grnLine: $grnLine, poLine: $poLine));
-		$this->records()->saveObject(schema: self::SCHEMA_STOCK_MOVE, object: $stockMove);
+		$this->stockMovePosting()->post(move: $stockMove);
 
 	}//end postReceiptStockMove()
 
@@ -634,7 +632,7 @@ class GoodsReceiptNoteService {
 	}//end warnMissingPoLine()
 
 	/**
-	 * Build the posted StockMove credit of one accepted GRN line.
+	 * Build the draft StockMove credit of one accepted GRN line.
 	 *
 	 * @param GrnAcceptance $acceptance The GRN being accepted.
 	 * @param GrnLineReceipt $line The GRN line with its PO line.
@@ -642,7 +640,7 @@ class GoodsReceiptNoteService {
 	 * @return array<string,mixed>
 	 */
 	private function receiptStockMove(GrnAcceptance $acceptance, GrnLineReceipt $line): array {
-		return $this->receivedGoods(acceptance: $acceptance, line: $line) + $this->postedMoveState(administrationId: $acceptance->administrationId);
+		return $this->receivedGoods(acceptance: $acceptance, line: $line) + $this->draftMoveState(administrationId: $acceptance->administrationId);
 	}//end receiptStockMove()
 
 	/**
@@ -674,24 +672,27 @@ class GoodsReceiptNoteService {
 	}//end receivedGoods()
 
 	/**
-	 * The state part of a receipt StockMove: posted and locked straight away.
+	 * The state part of a receipt StockMove: a draft, which the `post`
+	 * transition posts and locks (REQ-IRCL-001).
 	 *
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
 	 */
-	private function postedMoveState(string $administrationId): array {
+	private function draftMoveState(string $administrationId): array {
 		return [
 			'draftedAt' => $this->nowIso(),
-			'postedAt' => $this->nowIso(),
+			'postedAt' => null,
 			'cancelledAt' => null,
 			'administrationId' => $administrationId,
-			'locked' => true,
+			'locked' => false,
 			'glTransactionId' => null,
 			'offsetOfMoveId' => null,
-			'lifecycleState' => 'posted',
+			'lifecycleState' => 'draft',
 		];
-	}//end postedMoveState()
+	}//end draftMoveState()
 
 	/**
 	 * The destination location of a receipt: the line's, else the GRN's, else none.
@@ -798,6 +799,23 @@ class GoodsReceiptNoteService {
 
 		return $base . '-' . strtoupper(substr($suffix, 0, 12));
 	}//end buildMovementNumber()
+
+	/**
+	 * Posts a receipt StockMove through the transition engine, so the
+	 * valuation listener adds its cost layer.
+	 *
+	 * @return StockMovePosting The posting.
+	 *
+	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-an-accepted-receipt-adds-its-cost-layer-req-ircl-001
+	 */
+	private function stockMovePosting(): StockMovePosting {
+		return new StockMovePosting(
+			records: $this->records(),
+			container: $this->container,
+			logger: $this->logger,
+			source: 'GoodsReceiptNoteService'
+		);
+	}//end stockMovePosting()
 
 	/**
 	 * The record store on the app's register, logging as this service.

@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\AppInfo;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\AppInfo\OrderFulfilmentGateRegistration;
+use OCA\Shillinq\Listener\Registration\OrderFulfilmentGateRegistration;
 use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Listener\OrderFulfilmentEvidenceListener;

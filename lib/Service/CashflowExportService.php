@@ -53,6 +53,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CashflowExportServiceInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -61,7 +62,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
  */
-class CashflowExportService {
+class CashflowExportService implements CashflowExportServiceInterface {
 	/**
 	 * CashflowForecastHorizon schema slug.
 	 *

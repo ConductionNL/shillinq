@@ -36,7 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\Service\IcpService;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,11 +53,11 @@ class IcpFinalizeGuard {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
-	 * @param IcpService $icpService The ICP reconciliation service.
+	 * @param IcpServiceInterface $icpService The ICP reconciliation service.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
-		private readonly IcpService $icpService,
+		private readonly IcpServiceInterface $icpService,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

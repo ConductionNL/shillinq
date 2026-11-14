@@ -69,6 +69,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting;
 
+use OCA\Shillinq\Kernel\Contracts\ReportGenerationServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
@@ -77,12 +79,12 @@ use OCP\SystemTag\ISystemTagObjectMapper;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use OCA\Shillinq\Util\ObjectIdentifier;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 
 /**
  * Discovers generators, renders a report, stores + tags the file, records it.
  */
-class ReportGenerationService {
+class ReportGenerationService implements ReportGenerationServiceInterface {
 
 	/**
 	 * The OpenRegister register slug shillinq's objects live under.

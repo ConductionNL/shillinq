@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\DepositReconciliationService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;

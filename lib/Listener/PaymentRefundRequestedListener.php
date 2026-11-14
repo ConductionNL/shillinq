@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
-use OCA\Shillinq\Service\ObjectRequestCommandService;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestCommandServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -42,12 +42,12 @@ class PaymentRefundRequestedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param ObjectRequestCommandService $commands Checks and carries out the command.
+	 * @param ObjectRequestCommandServiceInterface $commands Checks and carries out the command.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ObjectRequestCommandService $commands,
+		private readonly ObjectRequestCommandServiceInterface $commands,
 	) {
 	}//end __construct()
 

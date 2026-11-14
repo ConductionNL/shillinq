@@ -308,7 +308,7 @@ final class MailDunningChannelAdapterTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheAppBindsTheMailAdapter(): void {
-		$source = (string)file_get_contents(__DIR__ . '/../../../../lib/AppInfo/Application.php');
+		$source = (string)file_get_contents(__DIR__ . '/../../../../lib/Service/ServiceRegistrar.php');
 		self::assertMatchesRegularExpression(
 			'/registerServiceAlias\(\s*DunningChannelAdapterInterface::class,\s*MailDunningChannelAdapter::class\s*\)/',
 			$source

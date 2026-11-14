@@ -42,10 +42,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Reporting\GeneratedFile;
-use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\XafAuditfileGeneratorInterface;
+use OCA\Shillinq\Kernel\Model\GeneratedFile;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -68,7 +68,7 @@ class AdministrationExportController extends Controller {
 	 * Constructor.
 	 *
 	 * @param mixed $request The request object (IRequest).
-	 * @param AdministrationContextService $context Administratie-aware RBAC context service.
+	 * @param AdministrationContextServiceInterface $context Administratie-aware RBAC context service.
 	 * @param ContainerInterface $container DI container — resolves the XAF generator.
 	 * @param IRootFolder $rootFolder Nextcloud Files root (attachment bundle).
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
@@ -77,7 +77,7 @@ class AdministrationExportController extends Controller {
 	 */
 	public function __construct(
 		$request,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly ContainerInterface $container,
 		private readonly IRootFolder $rootFolder,
 		private readonly LoggerInterface $logger,
@@ -200,13 +200,13 @@ class AdministrationExportController extends Controller {
 	/**
 	 * The XAF generator from the container.
 	 *
-	 * @return XafAuditfileGenerator
+	 * @return XafAuditfileGeneratorInterface
 	 *
 	 * @throws RuntimeException When the container does not hold one.
 	 */
-	private function xafGenerator(): XafAuditfileGenerator {
-		$generator = $this->container->get(XafAuditfileGenerator::class);
-		if (($generator instanceof XafAuditfileGenerator) === false) {
+	private function xafGenerator(): XafAuditfileGeneratorInterface {
+		$generator = $this->container->get(XafAuditfileGeneratorInterface::class);
+		if (($generator instanceof XafAuditfileGeneratorInterface) === false) {
 			throw new RuntimeException('XAF generator unavailable');
 		}
 

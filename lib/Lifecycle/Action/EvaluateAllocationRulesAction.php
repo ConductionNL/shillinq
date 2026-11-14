@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use RuntimeException;
 

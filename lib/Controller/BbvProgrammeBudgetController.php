@@ -46,9 +46,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\BbvProgrammeBudgetService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BbvProgrammeBudgetServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -77,15 +77,15 @@ class BbvProgrammeBudgetController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Translation service for response messages (ADR-007).
 	 * @param LoggerInterface $logger Logger — never receives a record body.
-	 * @param BbvProgrammeBudgetService $budgets Computes the envelopes.
-	 * @param AdministrationContextService $adminContext Authentication gate (ADR-005).
+	 * @param BbvProgrammeBudgetServiceInterface $budgets Computes the envelopes.
+	 * @param AdministrationContextServiceInterface $adminContext Authentication gate (ADR-005).
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly BbvProgrammeBudgetService $budgets,
-		private readonly AdministrationContextService $adminContext,
+		private readonly BbvProgrammeBudgetServiceInterface $budgets,
+		private readonly AdministrationContextServiceInterface $adminContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -180,7 +180,7 @@ class BbvProgrammeBudgetController extends Controller {
 	private function filteredQuery(int|null $fiscalYear): BbvDashboardQuery|JSONResponse {
 		$programmes = $this->listParam(
 			name: 'programme',
-			allowed: BbvProgrammeBudgetService::PROGRAMMES
+			allowed: BbvProgrammeBudgetServiceInterface::PROGRAMMES
 		);
 		if ($programmes === false) {
 			return $this->errorResponse(error: $this->l10n->t('programme must be one of the declared BBV programmes'), status: Http::STATUS_BAD_REQUEST);
