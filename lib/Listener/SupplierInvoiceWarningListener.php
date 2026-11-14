@@ -78,35 +78,68 @@ class SupplierInvoiceWarningListener implements IEventListener {
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function handle(Event $event): void {
-		if (($event instanceof ObjectCreatedEvent) === false && ($event instanceof ObjectUpdatedEvent) === false) {
-			return;
-		}
-
-		$entity = $event->getObject();
-		if ($entity === null || $this->schemaResolver->schemaSlug(entity: $entity) !== 'SupplierInvoice') {
+		$entity = $this->writtenInvoice(event: $event);
+		if ($entity === null) {
 			return;
 		}
 
 		try {
-			$invoice = $entity->getObject();
-			$id = (string)($invoice['id'] ?? ($entity->getUuid() ?? ''));
-			$invoice['id'] = $id;
-			$warnings = $this->checks->warnings(invoice: $invoice);
-			$unchanged = (string)($invoice['duplicateOfId'] ?? '') === $warnings['duplicateOfId']
-				&& (string)($invoice['ibanMismatch'] ?? '') === $warnings['ibanMismatch'];
-			if ($unchanged === true) {
-				return;
-			}
-
-			$this->objectService->patchObject(
-				objectId: $id,
-				data: $warnings,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'SupplierInvoice'
-			);
+			$this->refreshWarnings(entity: $entity);
 		} catch (Throwable $e) {
 			$this->logger->warning('SupplierInvoiceWarningListener: warnings not updated', ['exception' => $e->getMessage()]);
-		}//end try
+		}
 
 	}//end handle()
+
+	/**
+	 * The SupplierInvoice a created or updated event carries, or null.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md
+	 */
+	private function writtenInvoice(Event $event): mixed {
+		if (($event instanceof ObjectCreatedEvent) === false && ($event instanceof ObjectUpdatedEvent) === false) {
+			return null;
+		}
+
+		$entity = $event->getObject();
+		if ($entity === null || $this->schemaResolver->schemaSlug(entity: $entity) !== 'SupplierInvoice') {
+			return null;
+		}
+
+		return $entity;
+	}//end writtenInvoice()
+
+	/**
+	 * Patch the invoice's duplicate and IBAN warnings when they changed.
+	 *
+	 * @param mixed $entity The SupplierInvoice object.
+	 *
+	 * @return void
+	 *
+	 * @throws Throwable When the checks or the patch fail.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md
+	 */
+	private function refreshWarnings(mixed $entity): void {
+		$invoice = $entity->getObject();
+		$id = (string)($invoice['id'] ?? ($entity->getUuid() ?? ''));
+		$invoice['id'] = $id;
+		$warnings = $this->checks->warnings(invoice: $invoice);
+		$unchanged = (string)($invoice['duplicateOfId'] ?? '') === $warnings['duplicateOfId']
+			&& (string)($invoice['ibanMismatch'] ?? '') === $warnings['ibanMismatch'];
+		if ($unchanged === true) {
+			return;
+		}
+
+		$this->objectService->patchObject(
+			objectId: $id,
+			data: $warnings,
+			register: $this->settings->getRegisterSlug(),
+			schema: 'SupplierInvoice'
+		);
+	}//end refreshWarnings()
 }//end class
