@@ -154,6 +154,35 @@ final class BillableRateService {
 	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.1
 	 */
 	public function resolve(array $hour): array {
+		return $this->answer(hour: $hour, record: true);
+	}//end resolve()
+
+	/**
+	 * The billable rate one hour would get, without writing a `RateRecord`.
+	 *
+	 * For a display snapshot such as an assignment's current rate
+	 * (REQ-BRPH-004): the same answer as {@see resolve()}, with an empty
+	 * `recordId`.
+	 *
+	 * @param array<string, mixed> $hour The hour, as for {@see resolve()}.
+	 *
+	 * @return array<string, mixed> The answer, as for {@see resolve()}.
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-2.3
+	 */
+	public function preview(array $hour): array {
+		return $this->answer(hour: $hour, record: false);
+	}//end preview()
+
+	/**
+	 * Resolve the billable rate of one hour, recording it when asked.
+	 *
+	 * @param array<string, mixed> $hour   The hour.
+	 * @param bool                 $record Whether to write the `RateRecord`.
+	 *
+	 * @return array<string, mixed> The answer.
+	 */
+	private function answer(array $hour, bool $record): array {
 		$lookup = [
 			'personId' => trim((string)($hour['personId'] ?? '')),
 			'projectId' => trim((string)($hour['projectId'] ?? '')),
@@ -185,7 +214,7 @@ final class BillableRateService {
 			'user' => $lookup['personId'],
 			'role' => trim((string)($assignment['billingRoleId'] ?? '')),
 			'project' => $lookup['projectId'],
-			'client' => trim((string)($hour['clientId'] ?? '')),
+			'client' => $this->clientOf(hour: $hour, lookup: $lookup),
 			'blended' => '',
 		];
 		$match = $this->schedule(version: $version, lookup: $lookup);
@@ -197,7 +226,10 @@ final class BillableRateService {
 		$rate = (float)($schedule['rate'] ?? 0);
 		$unit = (string)($schedule['unit'] ?? 'hourly');
 		$value = round($rate * ((float)($hour['hours'] ?? 0) / $this->hoursPerUnit(unit: $unit, assignment: $assignment)), 2);
-		$recordId = $this->record(hour: $hour, match: ['tier' => $tier, 'schedule' => $schedule, 'entities' => $lookup['entities']]);
+		$recordId = '';
+		if ($record === true) {
+			$recordId = $this->record(hour: $hour, match: ['tier' => $tier, 'schedule' => $schedule, 'entities' => $lookup['entities']]);
+		}
 
 		return [
 			'status' => self::STATUS_RATED,
@@ -208,7 +240,31 @@ final class BillableRateService {
 			'value' => $value,
 			'recordId' => $recordId,
 		];
-	}//end resolve()
+	}//end answer()
+
+	/**
+	 * The client the client tier matches: the hour's own `clientId`, else the
+	 * customer of the project (`engagement.customerId`) in this administration.
+	 *
+	 * @param array<string, mixed>  $hour   The hour.
+	 * @param array<string, string> $lookup The hour's `projectId` and `administrationId`.
+	 *
+	 * @return string The client, or '' when none is known.
+	 */
+	private function clientOf(array $hour, array $lookup): string {
+		$client = trim((string)($hour['clientId'] ?? ''));
+		if ($client !== '') {
+			return $client;
+		}
+
+		foreach ($this->read(schema: 'engagement', filters: ['administrationId' => $lookup['administrationId']]) as $project) {
+			if ((string)($project['id'] ?? '') === $lookup['projectId']) {
+				return trim((string)($project['customerId'] ?? ''));
+			}
+		}
+
+		return '';
+	}//end clientOf()
 
 	/**
 	 * The person's assignment to the project that covers the date.

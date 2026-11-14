@@ -370,6 +370,22 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\AssignmentRateListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\AssignmentRateListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\ObjectRequestSettledListener'",
             "0"
