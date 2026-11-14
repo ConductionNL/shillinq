@@ -5294,6 +5294,80 @@
 		{
 			"menu": [
 				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "SepaMandates",
+							"label": "Direct debit mandates",
+							"icon": "FileDocumentEditOutline",
+							"route": "SepaMandates",
+							"order": 42
+						},
+						{
+							"id": "DirectDebitBatches",
+							"label": "Direct debit batches",
+							"icon": "BankTransferIn",
+							"route": "DirectDebitBatches",
+							"order": 42
+						},
+						{
+							"id": "DirectDebitCollections",
+							"label": "Direct debit collections",
+							"icon": "FormatListBulleted",
+							"route": "DirectDebitCollections",
+							"order": 42
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "SepaMandates",
+					"route": "/bookkeeping/sepa-mandates",
+					"type": "index",
+					"title": "Direct debit mandates"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "SepaMandateDetail",
+					"route": "/bookkeeping/sepa-mandates/:id",
+					"type": "detail",
+					"title": "Direct debit mandate"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitBatches",
+					"route": "/bookkeeping/direct-debit-batches",
+					"type": "index",
+					"title": "Direct debit batches"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitBatchDetail",
+					"route": "/bookkeeping/direct-debit-batches/:id",
+					"type": "detail",
+					"title": "Direct debit batch"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitCollections",
+					"route": "/bookkeeping/direct-debit-collections",
+					"type": "index",
+					"title": "Direct debit collections"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitCollectionDetail",
+					"route": "/bookkeeping/direct-debit-collections/:id",
+					"type": "detail",
+					"title": "Direct debit collection"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RecurringInvoicing",
 					"label": "Recurring Invoices",
 					"icon": "ReceiptTextOutline",
