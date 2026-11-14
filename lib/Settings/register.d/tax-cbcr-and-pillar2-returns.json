@@ -568,6 +568,36 @@
             "type": "string",
             "title": "Ultimate parent entity",
             "description": "The GroupEntityRegistry record of the group whose figures this summary sums."
+          },
+          "deferredTaxExpense": {
+            "type": "number",
+            "title": "Deferred tax expense",
+            "description": "Deferred tax expense of the year, for the simplified effective tax rate.",
+            "nullable": true
+          },
+          "eligiblePayroll": {
+            "type": "number",
+            "title": "Eligible payroll costs",
+            "description": "Payroll costs of the year that count for the substance-based income exclusion.",
+            "nullable": true
+          }
+        }
+      },
+      "Pillar2SafeHarbour": {
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group's ultimate parent."
+          }
+        }
+      },
+      "Pillar2JurisdictionComputation": {
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group's ultimate parent."
           }
         }
       }

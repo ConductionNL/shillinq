@@ -88,6 +88,13 @@ class CbcrFiguresService {
 	];
 
 	/**
+	 * The minimum tax inputs summed per jurisdiction next to the CbC figures.
+	 *
+	 * @var array<int,string>
+	 */
+	public const PILLAR2_INPUTS = ['deferredTaxExpense', 'eligiblePayroll'];
+
+	/**
 	 * Result figures, converted at the average rate; the others at the closing rate.
 	 *
 	 * @var array<int,string>
@@ -517,11 +524,12 @@ class CbcrFiguresService {
 	 * @return array<string,mixed>
 	 */
 	private static function sum(array $members): array {
-		$sum        = array_fill_keys(self::FIGURES, 0.0);
+		$keys       = array_merge(self::FIGURES, self::PILLAR2_INPUTS);
+		$sum        = array_fill_keys($keys, 0.0);
 		$activities = [];
 		$methods    = [];
 		foreach ($members as $member) {
-			foreach (self::FIGURES as $key) {
+			foreach ($keys as $key) {
 				$sum[$key] += (float)($member['figures'][$key] ?? 0);
 			}
 
