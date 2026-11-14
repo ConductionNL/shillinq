@@ -1145,5 +1145,102 @@
                 "profileId"
             ]
         }
+    },
+  {
+    "id": "shillinq.hours.book",
+    "name": "Book hours",
+    "description": "Book a batch of hours worked by the signed-in user in one administration, and draft the invoice for them as the billing time intake does. Use it when the user asks to book or register hours they worked; the hours are always booked for the signed-in user. Each entry needs an externalId, a date, the minutes and a description. Sending the same batchId again with the same entries answers the earlier booking; with different entries it is refused.",
+    "scope": "create",
+    "reach": "self",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "administrationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+          "description": "The administration the hours are booked in."
+        },
+        "batchId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "The id of this batch; it makes a resend safe."
+        },
+        "organisationRef": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "The organisation the hours are billed to."
+        },
+        "billingModel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64,
+          "description": "The billing model of the batch."
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 3,
+          "description": "The ISO 4217 currency code."
+        },
+        "periodStart": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 32,
+          "description": "The first day of the period, as YYYY-MM-DD."
+        },
+        "periodEnd": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 32,
+          "description": "The last day of the period, as YYYY-MM-DD."
+        },
+        "requestRateCardId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64,
+          "description": "The rate card to use."
+        },
+        "projectRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128,
+          "description": "The project the hours belong to."
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2000,
+          "description": "Notes for the invoice."
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "description": "The time entries: each an object with externalId, date (YYYY-MM-DD), minutes, description and optionally rateRef and projectRef."
+        }
+      },
+      "required": [
+        "administrationId",
+        "batchId",
+        "organisationRef",
+        "entries"
+      ]
     }
+  }
 ]
