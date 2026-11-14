@@ -36,7 +36,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\Service\EmuReportingService;
+use OCA\Shillinq\Kernel\Contracts\EmuReportingServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -80,12 +80,12 @@ class EmuQuarterlyDraftJob extends TimedJob {
 	 * Construct the job with a daily interval.
 	 *
 	 * @param ITimeFactory $time The Nextcloud time factory.
-	 * @param EmuReportingService $emuReportingService The EMU service (classifier + pipeline orchestration).
+	 * @param EmuReportingServiceInterface $emuReportingService The EMU service (classifier + pipeline orchestration).
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly EmuReportingService $emuReportingService,
+		private readonly EmuReportingServiceInterface $emuReportingService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

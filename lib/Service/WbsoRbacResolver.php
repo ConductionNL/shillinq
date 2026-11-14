@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
 use OCP\IGroupManager;
 use OCP\IUserSession;
 
@@ -38,7 +39,7 @@ use OCP\IUserSession;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-30
  */
-class WbsoRbacResolver {
+class WbsoRbacResolver implements WbsoRbacResolverInterface {
 
 	/**
 	 * Nextcloud group → WBSO role.

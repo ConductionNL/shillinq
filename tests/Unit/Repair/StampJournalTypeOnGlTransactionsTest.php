@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;

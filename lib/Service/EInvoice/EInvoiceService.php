@@ -37,7 +37,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\EInvoice;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\EInvoiceServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
@@ -48,14 +50,13 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Orchestrates ARInvoice e-invoice generation, validation and Peppol dispatch.
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-final class EInvoiceService {
+final class EInvoiceService implements EInvoiceServiceInterface {
 	/**
 	 * Cross-app cloud-event name emitted on a successful pre-send validation
 	 * (REQ-EINV-005). Consumed by openconnector's Peppol access point.

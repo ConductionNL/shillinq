@@ -38,10 +38,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Dashboard\BBVComplianceWidget;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\FiscalYearContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BBVComplianceWidgetInterface;
+use OCA\Shillinq\Kernel\Contracts\FiscalYearContextServiceInterface;
+use OCA\Shillinq\Service\PublicSector\TaskFieldRealisation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -90,23 +91,24 @@ class BBVDashboardController extends Controller {
 	 *                    to localise response
 	 *                    messages (ADR-007 / slice
 	 *                    10 i18n).
-	 * @param BBVComplianceWidget $widget Envelope assembler — reads
+	 * @param BBVComplianceWidgetInterface $widget Envelope assembler — reads
 	 *                                    the slice-02 declarative
 	 *                                    aggregation, cached for 1h
 	 *                                    by ComplianceService.
-	 * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+	 * @param AdministrationContextServiceInterface $administrationContext Admin RBAC + accessibility
 	 *                                                            checks (slice 09, ADR-005)
 	 *                                                            — server-side admin scope
 	 *                                                            so cross-tenant requests
 	 *                                                            cannot read another
 	 *                                                            administration's data.
-	 * @param FiscalYearContextService $fiscalYearContext Active fiscal-year resolver
+	 * @param FiscalYearContextServiceInterface $fiscalYearContext Active fiscal-year resolver
 	 *                                                    (slice 09, REQ-BBVW-006) —
 	 *                                                    collapses the client-
 	 *                                                    supplied fiscal year to
 	 *                                                    the active window
 	 *                                                    inherited from the
 	 *                                                    Administration context.
+	 * @param TaskFieldRealisation|null $realisation The year per task field (public-sector-task-field-allocation REQ-BBV-012).
 	 *
 	 * @return void
 	 */
@@ -114,9 +116,10 @@ class BBVDashboardController extends Controller {
 		IRequest $request,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly BBVComplianceWidget $widget,
-		private readonly AdministrationContextService $administrationContext,
-		private readonly FiscalYearContextService $fiscalYearContext,
+		private readonly BBVComplianceWidgetInterface $widget,
+		private readonly AdministrationContextServiceInterface $administrationContext,
+		private readonly FiscalYearContextServiceInterface $fiscalYearContext,
+		private readonly ?TaskFieldRealisation $realisation = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -250,6 +253,16 @@ class BBVDashboardController extends Controller {
 			'startDate' => $window['startDate'],
 			'endDate' => $window['endDate'],
 		];
+		if ($this->realisation !== null) {
+			// The year per task field from posted lines, and the accounts with
+			// postings but no mapping (public-sector-task-field-allocation REQ-BBV-012).
+			$envelope['taskFieldRealisation'] = $this->realisation->forYear(
+				administrationId: $administrationId,
+				fiscalYear: (string)$window['fiscalYear'],
+				startDate: (string)$window['startDate'],
+				endDate: (string)$window['endDate']
+			);
+		}
 
 		return $envelope;
 	}//end scopedEnvelope()

@@ -54,6 +54,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentData;
 use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentRenderer;
@@ -70,7 +71,7 @@ use OCA\Shillinq\Service\InvoiceDocument\InvoiceLabels;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InvoicePdfGenerator {
+class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	/**
 	 * Embedded-filename for the NLCIUS UBL hybrid attachment. Deliberately
 	 * NOT the Factur-X/ZUGFeRD well-known name (`factur-x.xml`) — the

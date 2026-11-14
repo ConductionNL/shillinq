@@ -70,8 +70,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\SalesDispatchStockIssueService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PosStockDecrementListenerInterface;
+use OCA\Shillinq\Kernel\Contracts\SalesDispatchStockIssueServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -79,7 +81,6 @@ use OCP\IGroupManager;
 use OCP\Notification\IManager;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatcher from pipelinq's PosStockMovedEvent -> SalesDispatchStockIssueService.
@@ -90,7 +91,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @spec openspec/changes/inventory-pos-decrement/specs/pos-stock-decrement/spec.md
  */
-class PosStockDecrementListener implements IEventListener {
+class PosStockDecrementListener implements IEventListener, PosStockDecrementListenerInterface {
 	/**
 	 * Prefix distinguishing a synthetic POS-sale "delivery" id (built from
 	 * the pipelinq posTxnId) from a real shillinq Delivery id in the
@@ -101,17 +102,9 @@ class PosStockDecrementListener implements IEventListener {
 	private const POS_DELIVERY_ID_PREFIX = 'pos-';
 
 	/**
-	 * Notification subject for an unmatched POS stock line, prepared for
-	 * display by {@see \OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier}.
-	 *
-	 * @var string
-	 */
-	public const NOTIFICATION_SUBJECT_UNMATCHED = 'pos_stock_unmatched_line';
-
-	/**
 	 * Construct the listener with DI dependencies.
 	 *
-	 * @param SalesDispatchStockIssueService $dispatchService The reused issue/reversal service.
+	 * @param SalesDispatchStockIssueServiceInterface $dispatchService The reused issue/reversal service.
 	 * @param IAppConfig $appConfig App config for the register slug (same key SalesDispatchStockIssueService reads).
 	 * @param IGroupManager $groupManager Resolves the `admin` group for the audit surface.
 	 * @param IManager $notificationMgr Nextcloud notification manager for the audit surface.
@@ -119,7 +112,7 @@ class PosStockDecrementListener implements IEventListener {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private readonly SalesDispatchStockIssueService $dispatchService,
+		private readonly SalesDispatchStockIssueServiceInterface $dispatchService,
 		private readonly IAppConfig $appConfig,
 		private readonly IGroupManager $groupManager,
 		private readonly IManager $notificationMgr,
