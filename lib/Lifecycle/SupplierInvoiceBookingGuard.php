@@ -30,7 +30,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceChecksInterface;
 use Throwable;
 
 /**
@@ -43,10 +43,10 @@ class SupplierInvoiceBookingGuard implements LifecycleGuardInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param SupplierInvoiceChecks $checks The shared supplier invoice checks.
+	 * @param SupplierInvoiceChecksInterface $checks The shared supplier invoice checks.
 	 */
 	public function __construct(
-		private readonly SupplierInvoiceChecks $checks,
+		private readonly SupplierInvoiceChecksInterface $checks,
 	) {
 
 	}//end __construct()
