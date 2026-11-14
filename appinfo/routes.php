@@ -903,6 +903,13 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // receivables-sepa-direct-debit (REQ-SDD-011, REQ-SDD-012): propose the
+            // draft batches for a collection date, and download a generated batch's
+            // pain.008 file. Both #[NoAdminRequired], administration checked in the
+            // controller (another administration's batch is masked as 404). The
+            // static /propose URL precedes the {id} route.
+            ['name' => 'directDebitBatch#propose', 'url' => '/api/v1/direct-debit-batches/propose', 'verb' => 'POST'],
+            ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
 
