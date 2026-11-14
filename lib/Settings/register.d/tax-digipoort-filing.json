@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "tax-digipoort-filing",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating.",
+    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating. The taxonomy record also names, per release, the entry point schemas (`schemaRefs`), the concept namespaces (`namespaces`) and any concept it renames (`conceptMap`), which the XBRL builders write.",
     "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
   },
   "info": {
@@ -121,6 +121,47 @@
               }
             ],
             "title": "Summations"
+          },
+          "schemaRefs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Per entry point, the URL of the entry point schema an instance refers to in its link:schemaRef, as the taxonomy release publishes it. Written into every instance the builders make for that entry point.",
+            "example": {
+              "kvk-jaarrekening": "https://www.nltaxonomie.nl/<release>/kvk/entrypoints/kvk-rpt-jaarverantwoording-<year>-nlgaap-klein.xsd"
+            },
+            "title": "Entry point schemas"
+          },
+          "namespaces": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "The namespace URI of each concept prefix the instances use, such as bd-i and jenv-bw2-i, as this taxonomy release defines them. A prefix this record does not name falls back to the builder's default.",
+            "example": {
+              "jenv-bw2-i": "http://www.nltaxonomie.nl/<release>/basis/jenv/items/jenv-bw2-data"
+            },
+            "title": "Concept namespaces"
+          },
+          "conceptMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "nullable": true,
+            "description": "Per entry point, the concept a builder writes for each amount when this release names it differently from the builder's default, such as {\"belastingdienst-ob\": {\"1a.vat\": \"bd-i:ValueAddedTaxSuppliesServicesGeneralTariff\"}} or {\"kvk-jaarrekening\": {\"equity\": \"jenv-bw2-i:Equity\"}}. Keys are the VAT return box and amount (1a.base, 1a.vat, ..., 5g.vat) or the annual accounts line (fixedAssets, currentAssets, assets, equity, provisions, liabilities, netTurnover, operatingExpenses, financialResult, result).",
+            "example": {
+              "belastingdienst-ob": {
+                "5g.vat": "bd-i:ValueAddedTaxOwedToBePaidBack"
+              }
+            },
+            "title": "Concept map"
           }
         }
       }
