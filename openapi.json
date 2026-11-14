@@ -12353,6 +12353,57 @@
                 }
             }
         },
+        "/fiscal-years/{fiscalYearId}/vat-corrections/check": {
+            "post": {
+                "operationId": "vat-fiscal-year-correction-check",
+                "summary": "Check a broken fiscal year's VAT returns for corrections (REQ-TVRB-002)",
+                "description": "For an administration whose fiscal year is not the calendar year, compares every accepted VAT return of the fiscal year with the books, writes a draft correction for each one that drifted, and answers the corrections, their total and whether the total exceeds the EUR 1,000 threshold. Needs a signed-in Nextcloud user who is a member of the fiscal year's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "fiscalYearId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The FiscalYear id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/vat-corrections/{correctionId}/prepare": {
             "post": {
                 "operationId": "vat-suppletie-prepare",

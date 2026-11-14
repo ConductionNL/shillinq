@@ -88,6 +88,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114210000",
             "versionsSha256": "ae456fde68f1de6ca046413e891bbb5091075e7fcc7daceb0dd10d50ac568c1e"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114220000",
+            "versionsSha256": "0d4639c955f1a061622a06a8bbb00477b06a035c5b632e8471dc76ba9bee4474"
         }
     ],
     "versions": {
@@ -586,7 +590,7 @@
         "schema:ValueChainActor": "0.1.0",
         "schema:VamilDepreciation": "0.1.0",
         "schema:VariableConsiderationAdjustment": "0.1.0",
-        "schema:VatCorrection": "0.1.0",
+        "schema:VatCorrection": "0.2.0",
         "schema:VatFiscalUnity": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",

@@ -291,6 +291,20 @@ class VatSuppletieDetectionService {
 	}//end prepare()
 
 	/**
+	 * The net change in VAT payable a detected correction amounts to, in
+	 * euros, read from its snapshots without preparing it (REQ-TVRB-002).
+	 *
+	 * @param array<string,mixed> $correction The VatCorrection with its filed and current snapshots.
+	 *
+	 * @return float
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-4.1
+	 */
+	public function correctionTotal(array $correction): float {
+		return $this->netCorrection(deltas: $this->snapshotDeltas(correction: $correction));
+	}//end correctionTotal()
+
+	/**
 	 * Fetch a VatCorrection that is still in the detected sub-state.
 	 *
 	 * @param string $vatCorrectionId The VatCorrection id.
@@ -375,6 +389,11 @@ class VatSuppletieDetectionService {
 		$correction['correctionAmount']  = $netCorrection;
 		$correction['adjustmentAmount']  = $netCorrection;
 		$correction['thresholdExceeded'] = (abs($netCorrection) >= self::SUPPLETIE_THRESHOLD_EUR);
+
+		// REQ-TVRB-002: in a broken fiscal year the grens applies to the total of the year's corrections.
+		if (is_numeric($correction['fiscalYearCorrectionTotal'] ?? null) === true) {
+			$correction['thresholdExceeded'] = (abs((float)$correction['fiscalYearCorrectionTotal']) >= self::SUPPLETIE_THRESHOLD_EUR);
+		}
 
 		return $correction;
 

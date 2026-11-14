@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "tax-vat-return-from-books",
     "adr": "ADR-037 modular register fragment",
-    "description": "Task 1.1 (REQ-VBTW-004): a posted ledger line carries the VAT tariff it was booked at, the VAT return box of that tariff (the tariff's `section`) and whether its amount is the base or the VAT, stamped when it is posted. VAT declarations and VAT lines of a prepared return carry the box they belong to. None of the fields is required: lines posted before this change have none until the backfill (task 1.3) stamps them. Task 5.1 (REQ-TVRB-003): a VAT fiscal unity (VatFiscalUnity) of a representative administration and its members; a VAT line names the administration whose ledger line it was taken from, and a unity's return carries the unity, its VAT number and a subtotal per administration.",
+    "description": "Task 1.1 (REQ-VBTW-004): a posted ledger line carries the VAT tariff it was booked at, the VAT return box of that tariff (the tariff's `section`) and whether its amount is the base or the VAT, stamped when it is posted. VAT declarations and VAT lines of a prepared return carry the box they belong to. None of the fields is required: lines posted before this change have none until the backfill (task 1.3) stamps them. Task 5.1 (REQ-TVRB-003): a VAT fiscal unity (VatFiscalUnity) of a representative administration and its members; a VAT line names the administration whose ledger line it was taken from, and a unity's return carries the unity, its VAT number and a subtotal per administration. Task 4.1 (REQ-TVRB-002): a VAT correction found by checking a broken fiscal year carries that fiscal year, its name and the year's correction total, to which the EUR 1,000 threshold then applies.",
     "spec": "openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing/spec.md"
   },
   "components": {
@@ -250,6 +250,32 @@
           "delete": [
             "shillinq_vat_administrator"
           ]
+        }
+      },
+      "VatCorrection": {
+        "version": "0.2.0",
+        "properties": {
+          "fiscalYearId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The fiscal year this correction was found in, when the administration's fiscal year is not the calendar year.",
+            "example": "fy-2025-2026",
+            "title": "Fiscal year"
+          },
+          "fiscalYearLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "The name of that fiscal year, such as 2025/2026; the corrections page groups by it.",
+            "example": "2025/2026",
+            "title": "Fiscal year"
+          },
+          "fiscalYearCorrectionTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "The total of the corrections of that fiscal year when it was checked. The EUR 1,000 threshold for a separate supplementary return applies to this total.",
+            "example": -1250.0,
+            "title": "Fiscal year correction total"
+          }
         }
       }
     }

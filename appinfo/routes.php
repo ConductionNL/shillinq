@@ -213,6 +213,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'vatPosition#show', 'url' => '/api/vat-position', 'verb' => 'GET'],
             // tax-vat-return-from-books (REQ-TVRB-001): the checks tab of a return.
             ['name' => 'vatReturnChecks#index', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
+            // tax-vat-return-from-books (REQ-TVRB-002): check a broken fiscal year's returns for corrections.
+            ['name' => 'vatFiscalYearCorrection#check', 'url' => '/api/fiscal-years/{fiscalYearId}/vat-corrections/check', 'verb' => 'POST'],
             ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
             ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
             ['name' => 'vATLine#listByDeclaration', 'url' => '/api/vat-declarations/{declarationId}/lines', 'verb' => 'GET'],

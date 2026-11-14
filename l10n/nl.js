@@ -7036,7 +7036,18 @@ OC.L10N.register(
         "The last day of the unity, empty while it runs.": "De laatste dag van de eenheid, leeg zolang zij bestaat.",
         "The member administrations whose posted lines the unity's return includes.": "De administraties van de leden waarvan de geboekte regels in de aangifte van de eenheid komen.",
         "The name of the unity as the returns and refusals show it.": "De naam van de eenheid zoals aangiftes en weigeringen die tonen.",
-        "The representative administration, which files the return for the unity.": "De vertegenwoordigende administratie, die de aangifte voor de eenheid doet."
+        "The representative administration, which files the return for the unity.": "De vertegenwoordigende administratie, die de aangifte voor de eenheid doet.",
+        "Fiscal year correction total": "Correctietotaal van het boekjaar",
+        "The fiscal year this correction was found in, when the administration's fiscal year is not the calendar year.": "Het boekjaar waarin deze correctie is gevonden, als het boekjaar van de administratie niet het kalenderjaar is.",
+        "The name of that fiscal year, such as 2025/2026; the corrections page groups by it.": "De naam van dat boekjaar, zoals 2025/2026; de correctiepagina groepeert erop.",
+        "The total of the corrections of that fiscal year when it was checked. The EUR 1,000 threshold for a separate supplementary return applies to this total.": "Het totaal van de correcties van dat boekjaar toen het werd gecontroleerd. De grens van EUR 1.000 voor een aparte suppletie geldt voor dit totaal.",
+        "Check fiscal year": "Boekjaar controleren",
+        "For an administration whose fiscal year is not the calendar year: compare every filed BTW return of this fiscal year with the books, write a correction for each one that differs and total them. The EUR 1,000 threshold applies to that total.": "Voor een administratie waarvan het boekjaar niet het kalenderjaar is: vergelijk elke ingediende btw-aangifte van dit boekjaar met de boekhouding, maak een correctie voor elke aangifte die afwijkt en tel ze op. De grens van EUR 1.000 geldt voor dat totaal.",
+        "Fiscal year total": "Totaal van het boekjaar",
+        "Fiscal year {year}: the books still match its returns.": "Boekjaar {year}: de boekhouding komt nog overeen met de aangiftes.",
+        "Fiscal year {year}: the corrections total EUR {total}, above EUR 1,000. File a supplementary return; the corrections are on the corrections page.": "Boekjaar {year}: de correcties zijn samen EUR {total}, meer dan EUR 1.000. Dien een suppletie in; de correcties staan op de correctiepagina.",
+        "Fiscal year {year}: the corrections total EUR {total}, EUR 1,000 or less, so they can go into the next return. The corrections are on the corrections page.": "Boekjaar {year}: de correcties zijn samen EUR {total}, EUR 1.000 of minder, en kunnen in de volgende aangifte mee. De correcties staan op de correctiepagina.",
+        "The fiscal year could not be checked for corrections.": "Het boekjaar kon niet op correcties worden gecontroleerd."
     },
     "nplurals=2; plural=(n != 1);"
 )

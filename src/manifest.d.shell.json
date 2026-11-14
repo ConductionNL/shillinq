@@ -5671,6 +5671,20 @@
 					"route": "/belastingen/btw-fiscale-eenheden/:id",
 					"type": "detail",
 					"title": "VAT fiscal unity"
+				},
+				{
+					"_fragment": "tax-vat-return-from-books",
+					"id": "FiscalYearDetail",
+					"route": "/bookkeeping/fiscal-years/:id",
+					"type": "detail",
+					"title": "Fiscal Year"
+				},
+				{
+					"_fragment": "tax-vat-return-from-books",
+					"id": "BtwCorrecties",
+					"route": "/belastingen/btw-correcties",
+					"type": "index",
+					"title": "BTW-correcties"
 				}
 			]
 		},

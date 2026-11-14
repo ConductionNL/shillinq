@@ -55,7 +55,18 @@
 
 ## 4. Broken year
 
-- [ ] 4.1 Group `BtwCorrecties` by fiscal year for administrations with `nonCalendarFiscalYear`, and add "Check fiscal year" running the detection for the year's accepted returns with the threshold on the total (REQ-TVRB-002). Verify: Playwright on Stichting Voorbeeld shows one 2025/2026 group with four returns.
+- [x] 4.1 Group `BtwCorrecties` by fiscal year for administrations with `nonCalendarFiscalYear`, and add "Check fiscal year" running the detection for the year's accepted returns with the threshold on the total (REQ-TVRB-002). Verify: Playwright on Stichting Voorbeeld shows one 2025/2026 group with four returns.
+      DONE 2026-11-14 (code and PHPUnit/vitest; the Playwright run is not done here): `VatFiscalYearCorrectionService`
+      runs `VatSuppletieDetectionService::detect()` for every submitted, verified or filed return whose period lies in
+      the fiscal year of an administration with `nonCalendarFiscalYear` (a calendar year is refused), totals the
+      corrections (`correctionTotal()`) and stamps each with `fiscalYearId`, `fiscalYearLabel` (2025/2026) and
+      `fiscalYearCorrectionTotal` (VatCorrection 0.2.0); `prepare()` then applies the EUR 1,000 threshold to that total.
+      `POST /api/fiscal-years/{fiscalYearId}/vat-corrections/check` (authorised on the year's administration) and the
+      "Check fiscal year" action on `FiscalYearDetail` (`checkVatFiscalYearCorrections`). `BtwCorrecties` shows the
+      fiscal year and its total and groups by `fiscalYearLabel` in the folder sidebar. The action sits on the fiscal
+      year's page rather than on the corrections page, because the check needs one fiscal year and that page has it.
+      Tests: `VatSuppletieDetectionServiceTest` (4 new), `VatFiscalYearCorrectionControllerTest` (4),
+      `vatSuppletieActions.spec.js` (2 new).
 
 ## 5. Fiscal unity
 

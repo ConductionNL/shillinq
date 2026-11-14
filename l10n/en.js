@@ -4861,7 +4861,18 @@ OC.L10N.register(
         "The last day of the unity, empty while it runs.": "The last day of the unity, empty while it runs.",
         "The member administrations whose posted lines the unity's return includes.": "The member administrations whose posted lines the unity's return includes.",
         "The name of the unity as the returns and refusals show it.": "The name of the unity as the returns and refusals show it.",
-        "The representative administration, which files the return for the unity.": "The representative administration, which files the return for the unity."
+        "The representative administration, which files the return for the unity.": "The representative administration, which files the return for the unity.",
+        "Fiscal year correction total": "Fiscal year correction total",
+        "The fiscal year this correction was found in, when the administration's fiscal year is not the calendar year.": "The fiscal year this correction was found in, when the administration's fiscal year is not the calendar year.",
+        "The name of that fiscal year, such as 2025/2026; the corrections page groups by it.": "The name of that fiscal year, such as 2025/2026; the corrections page groups by it.",
+        "The total of the corrections of that fiscal year when it was checked. The EUR 1,000 threshold for a separate supplementary return applies to this total.": "The total of the corrections of that fiscal year when it was checked. The EUR 1,000 threshold for a separate supplementary return applies to this total.",
+        "Check fiscal year": "Check fiscal year",
+        "For an administration whose fiscal year is not the calendar year: compare every filed BTW return of this fiscal year with the books, write a correction for each one that differs and total them. The EUR 1,000 threshold applies to that total.": "For an administration whose fiscal year is not the calendar year: compare every filed BTW return of this fiscal year with the books, write a correction for each one that differs and total them. The EUR 1,000 threshold applies to that total.",
+        "Fiscal year total": "Fiscal year total",
+        "Fiscal year {year}: the books still match its returns.": "Fiscal year {year}: the books still match its returns.",
+        "Fiscal year {year}: the corrections total EUR {total}, above EUR 1,000. File a supplementary return; the corrections are on the corrections page.": "Fiscal year {year}: the corrections total EUR {total}, above EUR 1,000. File a supplementary return; the corrections are on the corrections page.",
+        "Fiscal year {year}: the corrections total EUR {total}, EUR 1,000 or less, so they can go into the next return. The corrections are on the corrections page.": "Fiscal year {year}: the corrections total EUR {total}, EUR 1,000 or less, so they can go into the next return. The corrections are on the corrections page.",
+        "The fiscal year could not be checked for corrections.": "The fiscal year could not be checked for corrections."
     },
     "nplurals=2; plural=(n != 1);"
 )
