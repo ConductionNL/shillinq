@@ -36,6 +36,7 @@ use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\LineDimensionCheck;
 use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Service\Import\AuditfileParser;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
@@ -196,7 +197,8 @@ final class ImportBatchStepsTest extends TestCase {
 			$appConfig,
 			$this->createMock(LoggerInterface::class),
 			$this->store,
-			new PostingRestrictionGuard($appConfig, $this->store, $l10n)
+			new PostingRestrictionGuard($appConfig, $this->store, $l10n),
+			new LineDimensionCheck($appConfig, $this->store, $l10n)
 		);
 
 		return new class ($this->store, $guard, new LifecycleFaithfulTransitionEngine($this->store, ['JournalEntry'])) {

@@ -3,6 +3,9 @@
 /**
  * Integriq PaymentRequestedEvent test stub.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A verbatim copy of integriq's lib/Event/PaymentRequestedEvent.php
  * (development): parameter names, order, defaults and the result slot. A stub
  * that differs from the real class would encode the caller's bug as correct.
@@ -29,9 +32,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  *
  * @link https://www.Integriq.nl
  *
