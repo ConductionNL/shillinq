@@ -36,12 +36,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Commitment;
 
+use OCA\Shillinq\Kernel\Contracts\CommitmentCarryOverServiceInterface;
+
 /**
  * The year-end carry-over of open commitments.
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentCarryOverService {
+class CommitmentCarryOverService implements CommitmentCarryOverServiceInterface {
 	/**
 	 * Commitment states whose lines carry over.
 	 *

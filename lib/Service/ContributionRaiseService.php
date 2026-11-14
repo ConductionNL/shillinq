@@ -42,6 +42,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ContributionRaiseServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -54,7 +55,7 @@ use Throwable;
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
  */
-final class ContributionRaiseService {
+final class ContributionRaiseService implements ContributionRaiseServiceInterface {
 	/**
 	 * A recipient that was billed.
 	 *

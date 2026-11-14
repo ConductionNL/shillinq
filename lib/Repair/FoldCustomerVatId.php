@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -43,14 +43,14 @@ class FoldCustomerVatId implements IRepairStep {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
-	 * @param RegisterLocation        $settings Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface        $settings Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly RegisterLocation $settings,
+		private readonly RegisterLocationInterface $settings,
 		private readonly LoggerInterface $logger,
 	) {
 

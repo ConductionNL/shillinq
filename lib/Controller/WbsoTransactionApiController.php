@@ -32,10 +32,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\WbsoRbacResolver;
-use OCA\Shillinq\Service\WbsoTransactionService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoRbacResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\WbsoTransactionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -75,21 +75,21 @@ class WbsoTransactionApiController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
-	 * @param WbsoTransactionService $transactions Transaction service.
-	 * @param WbsoRbacResolver $rbac Role resolver.
+	 * @param WbsoTransactionServiceInterface $transactions Transaction service.
+	 * @param WbsoRbacResolverInterface $rbac Role resolver.
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
-	 * @param AdministrationContextService $administrationContext Membership check on the requested administration.
+	 * @param AdministrationContextServiceInterface $administrationContext Membership check on the requested administration.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly WbsoTransactionService $transactions,
-		private readonly WbsoRbacResolver $rbac,
+		private readonly WbsoTransactionServiceInterface $transactions,
+		private readonly WbsoRbacResolverInterface $rbac,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
-		private readonly AdministrationContextService $administrationContext,
+		private readonly AdministrationContextServiceInterface $administrationContext,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

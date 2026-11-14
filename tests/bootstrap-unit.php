@@ -107,6 +107,21 @@ if (class_exists('Doctrine\\DBAL\\ArrayParameterType', false) === false) {
 	);
 }
 
+// IQueryBuilder's PARAM_DATE / PARAM_BOOL constants reference
+// Doctrine\DBAL\Types\Types, and PHP resolves every constant of the interface
+// the first time any one of them (e.g. PARAM_STR_ARRAY) is read. Same
+// constant-only stub pattern; values mirror doctrine/dbal.
+if (class_exists('Doctrine\\DBAL\\Types\\Types', false) === false) {
+	eval(
+		'namespace Doctrine\\DBAL\\Types; '
+		. 'class Types { '
+		. "const BOOLEAN = 'boolean'; const DATE_MUTABLE = 'date'; "
+		. "const DATE_IMMUTABLE = 'date_immutable'; const DATETIME_MUTABLE = 'datetime'; "
+		. "const DATETIME_IMMUTABLE = 'datetime_immutable'; const DATETIMETZ_MUTABLE = 'datetimetz'; "
+		. "const DATETIMETZ_IMMUTABLE = 'datetimetz_immutable'; const TIME_MUTABLE = 'time'; }"
+	);
+}
+
 // OCP\Http\Client\IClient extends Psr\Http\Client\ClientInterface (since NC30+).
 // PSR-18 is not in composer.json (the real NC ships it at system level), so
 // declare a minimal stub so the OCP interface can be reflected in unit tests.
