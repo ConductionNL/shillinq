@@ -153,25 +153,12 @@ class IntegralCostPriceCalculator {
 		}
 
 		foreach ($ratios as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$entryDrager = (string)($entry['costObject'] ?? $entry['costObjectCode'] ?? '');
-			if ($entryDrager !== '' && $entryDrager !== $costObject) {
+			if (self::appliesToCostObject(entry: $entry, costObject: $costObject) === false) {
 				continue;
 			}
 
 			$bucket = (string)($entry['bucket'] ?? $entry['category'] ?? 'other');
-			$ratio = (float)($entry['ratio'] ?? 0);
-
-			if ($ratio < 0.0) {
-				$ratio = 0.0;
-			}
-
-			if ($ratio > 1.0) {
-				$ratio = 1.0;
-			}
+			$ratio  = self::clampRatio(ratio: (float)($entry['ratio'] ?? 0));
 
 			$bucketCents = (int)round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
 			$buckets[$bucket] = ($buckets[$bucket] ?? 0) + $bucketCents;
@@ -179,6 +166,42 @@ class IntegralCostPriceCalculator {
 
 		return $buckets;
 	}//end distributeOverhead()
+
+	/**
+	 * Whether a ratio entry is an object for this cost object, or for every cost object.
+	 *
+	 * @param mixed  $entry      One ratio entry.
+	 * @param string $costObject The cost object being priced.
+	 *
+	 * @return bool
+	 */
+	private static function appliesToCostObject(mixed $entry, string $costObject): bool {
+		if (is_array($entry) === false) {
+			return false;
+		}
+
+		$entryDrager = (string)($entry['costObject'] ?? $entry['costObjectCode'] ?? '');
+		return ($entryDrager !== '' && $entryDrager !== $costObject) === false;
+	}//end appliesToCostObject()
+
+	/**
+	 * The ratio, kept between 0 and 1.
+	 *
+	 * @param float $ratio The configured ratio.
+	 *
+	 * @return float
+	 */
+	private static function clampRatio(float $ratio): float {
+		if ($ratio < 0.0) {
+			$ratio = 0.0;
+		}
+
+		if ($ratio > 1.0) {
+			$ratio = 1.0;
+		}
+
+		return $ratio;
+	}//end clampRatio()
 
 	/**
 	 * Calculate capital_cost via WACC on invested book value (REQ-WMO-002).
