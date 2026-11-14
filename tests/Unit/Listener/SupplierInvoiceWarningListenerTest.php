@@ -137,7 +137,7 @@ class SupplierInvoiceWarningListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheAppRegistersTheListener(): void {
-		$application = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$application = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php') . (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ListenerRegistrar.php');
 
 		$this->assertMatchesRegularExpression(
 			'/registerFilteredObjectWriteListener\(\s*dispatcher: \$dispatcher,\s*listener: SupplierInvoiceWarningListener::class,\s*schemas: \[\'SupplierInvoice\'\]/',

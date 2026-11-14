@@ -32,8 +32,9 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
-use OCA\Shillinq\Util\LinkedObjectReferences;
+use OCA\Shillinq\Kernel\Contracts\InboundPayableServiceInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Util\LinkedObjectReferences;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-001)
  */
-class InboundPayableService {
+class InboundPayableService implements InboundPayableServiceInterface {
 
 	/**
 	 * App config key: the payables account an approved payout waits on.

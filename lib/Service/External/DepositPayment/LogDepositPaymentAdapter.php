@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\External\DepositPayment;
 
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Model\DepositPaymentResult;
 
 /**
  * Dormant log-backed DepositPayment lifecycle adapter.

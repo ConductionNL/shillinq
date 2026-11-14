@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ImportBatchStepsInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
@@ -38,7 +39,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  *
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
-class ImportBatchSteps {
+class ImportBatchSteps implements ImportBatchStepsInterface {
 
 	/**
 	 * Constructor.
