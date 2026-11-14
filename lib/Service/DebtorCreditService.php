@@ -114,21 +114,61 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 			throw new InvalidArgumentException('This debtor cannot be recognised again, so credit could never be used.');
 		}
 
+		$amount = $this->creditableAmount(request: $request);
+		$accounts = ['credit' => $this->requiredCreditAccount(), 'revenue' => $this->requiredRevenueAccount(request: $request)];
+
+		$journalId = $this->bookCreditKept(request: $request, accounts: $accounts, amount: $amount);
+		$this->recordCredit(request: $request, key: $key, amount: $amount, journalId: $journalId);
+
+		$request['state'] = 'credited';
+		return $request;
+	}//end credit()
+
+	/**
+	 * The request's amount, refused when it is not above zero.
+	 *
+	 * @param array<string, mixed> $request The settled request.
+	 *
+	 * @return float
+	 *
+	 * @throws InvalidArgumentException When the amount is not above zero.
+	 */
+	private function creditableAmount(array $request): float {
 		$amount = round((float)($request['amount'] ?? 0), 2);
 		if ($amount <= 0.0) {
 			throw new InvalidArgumentException('This payment request carries no amount above zero, so there is nothing to keep as credit.');
 		}
 
+		return $amount;
+	}//end creditableAmount()
+
+	/**
+	 * The customer credit account, refused when none is set.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When no customer credit account is set.
+	 */
+	private function requiredCreditAccount(): string {
 		$creditAccount = trim($this->appConfig->getValueString('shillinq', self::CONFIG_KEY, ''));
 		if ($creditAccount === '') {
 			throw new InvalidArgumentException('No customer credit account is set; add it to paymentCreditAccount and ask again.');
 		}
 
-		$revenue = trim((string)($request['revenueAccount'] ?? ''));
-		if ($revenue === '') {
-			$revenue = (string)($this->revenueAccounts->resolve(requestType: (string)($request['requestType'] ?? '')) ?? '');
-		}
+		return $creditAccount;
+	}//end requiredCreditAccount()
 
+	/**
+	 * The request's revenue account, refused when none is mapped.
+	 *
+	 * @param array<string, mixed> $request The settled request.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When no revenue account is mapped for the request type.
+	 */
+	private function requiredRevenueAccount(array $request): string {
+		$revenue = $this->revenueAccountFor(request: $request);
 		if ($revenue === '') {
 			throw new InvalidArgumentException(
 				sprintf(
@@ -138,28 +178,62 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 			);
 		}
 
-		$requestId = (string)($request['id'] ?? '');
-		$administrationId = (string)($request['administrationId'] ?? '');
+		return $revenue;
+	}//end requiredRevenueAccount()
+
+	/**
+	 * The request's own revenue account, else the one mapped for its request type.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 *
+	 * @return string The account, or '' when none is known.
+	 */
+	private function revenueAccountFor(array $request): string {
+		$revenue = trim((string)($request['revenueAccount'] ?? ''));
+		if ($revenue === '') {
+			$revenue = (string)($this->revenueAccounts->resolve(requestType: (string)($request['requestType'] ?? '')) ?? '');
+		}
+
+		return $revenue;
+	}//end revenueAccountFor()
+
+	/**
+	 * Book the request's income onto the customer credit account.
+	 *
+	 * @param array<string, mixed>                  $request  The settled request.
+	 * @param array{credit: string, revenue: string} $accounts The customer credit and revenue accounts.
+	 * @param float                                 $amount   The amount kept as credit.
+	 *
+	 * @return string The posted JournalEntry id.
+	 */
+	private function bookCreditKept(array $request, array $accounts, float $amount): string {
+		$requestId   = (string)($request['id'] ?? '');
 		$description = sprintf('Credit kept from payment request %s', (string)($request['paymentReference'] ?? $requestId));
 
-		$journalId = $this->save(
-			schema: 'JournalEntry',
-			object: [
-				'journalNumber' => 'CR-' . substr(hash('sha256', $requestId), 0, 12),
-				'entryDate' => gmdate('Y-m-d'),
-				'description' => $description,
-				'journalType' => 'manual',
-				'approvalState' => 'not-required',
-				'administrationId' => $administrationId,
-				'state' => 'draft',
-				'lines' => [
-					['accountNumber' => $revenue, 'side' => 'debit', 'amount' => $amount, 'description' => $description],
-					['accountNumber' => $creditAccount, 'side' => 'credit', 'amount' => $amount, 'description' => $description],
-				],
-			]
+		return $this->postJournal(
+			entry: $this->journalEntry(
+				journalNumber: 'CR-' . substr(hash('sha256', $requestId), 0, 12),
+				description: $description,
+				administrationId: (string)($request['administrationId'] ?? ''),
+				lines: [
+					['accountNumber' => $accounts['revenue'], 'side' => 'debit', 'amount' => $amount, 'description' => $description],
+					['accountNumber' => $accounts['credit'], 'side' => 'credit', 'amount' => $amount, 'description' => $description],
+				]
+			)
 		);
-		$this->transitions->run(objectId: $journalId, action: 'postDirect');
+	}//end bookCreditKept()
 
+	/**
+	 * Record the open DebtorCredit row for the debtor.
+	 *
+	 * @param array<string, mixed> $request   The settled request.
+	 * @param string               $key       The debtor key.
+	 * @param float                $amount    The amount kept as credit.
+	 * @param string               $journalId The posted JournalEntry id.
+	 *
+	 * @return void
+	 */
+	private function recordCredit(array $request, string $key, float $amount, string $journalId): void {
 		$this->save(
 			schema: 'DebtorCredit',
 			object: [
@@ -167,16 +241,50 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 				'amount' => $amount,
 				'remaining' => $amount,
 				'currency' => (string)($request['currency'] ?? 'EUR'),
-				'sourcePaymentRequestId' => $requestId,
-				'administrationId' => $administrationId,
+				'sourcePaymentRequestId' => (string)($request['id'] ?? ''),
+				'administrationId' => (string)($request['administrationId'] ?? ''),
 				'journalEntryId' => $journalId,
 				'state' => 'open',
 			]
 		);
+	}//end recordCredit()
 
-		$request['state'] = 'credited';
-		return $request;
-	}//end credit()
+	/**
+	 * A draft manual JournalEntry that needs no approval.
+	 *
+	 * @param string                           $journalNumber    The journal number.
+	 * @param string                           $description      The entry and line description.
+	 * @param string                           $administrationId The administration.
+	 * @param list<array<string, mixed>>       $lines            The debit and credit lines.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function journalEntry(string $journalNumber, string $description, string $administrationId, array $lines): array {
+		return [
+			'journalNumber' => $journalNumber,
+			'entryDate' => gmdate('Y-m-d'),
+			'description' => $description,
+			'journalType' => 'manual',
+			'approvalState' => 'not-required',
+			'administrationId' => $administrationId,
+			'state' => 'draft',
+			'lines' => $lines,
+		];
+	}//end journalEntry()
+
+	/**
+	 * Save a JournalEntry and post it directly.
+	 *
+	 * @param array<string, mixed> $entry The JournalEntry.
+	 *
+	 * @return string The JournalEntry id.
+	 */
+	private function postJournal(array $entry): string {
+		$journalId = $this->save(schema: 'JournalEntry', object: $entry);
+		$this->transitions->run(objectId: $journalId, action: 'postDirect');
+
+		return $journalId;
+	}//end postJournal()
 
 	/**
 	 * Pay a new request from the debtor's open credit first, oldest credit first (REQ-ORC-004).
@@ -202,83 +310,140 @@ class DebtorCreditService implements DebtorCreditServiceInterface {
 	public function applyOpenCredit(array $request, string $actor): array {
 		$key = self::debtorKey(request: $request);
 		$due = round((float)($request['amount'] ?? 0), 2);
-		$administrationId = (string)($request['administrationId'] ?? '');
 		if ($key === '' || $due <= 0.0) {
 			return $request;
 		}
 
-		$creditAccount = trim($this->appConfig->getValueString('shillinq', self::CONFIG_KEY, ''));
-		$revenue = trim((string)($request['revenueAccount'] ?? ''));
-		if ($revenue === '') {
-			$revenue = (string)($this->revenueAccounts->resolve(requestType: (string)($request['requestType'] ?? '')) ?? '');
-		}
+		return $this->applyCreditFor(request: $request, key: $key, due: $due, actor: $actor);
+	}//end applyOpenCredit()
 
-		if ($creditAccount === '' || $revenue === '') {
+	/**
+	 * Use the debtor's open credit when both accounts are known, and settle the request by what was used.
+	 *
+	 * @param array<string, mixed> $request The request about to be saved.
+	 * @param string               $key     The debtor key.
+	 * @param float                $due     The request's amount.
+	 * @param string               $actor   Who raised it: a user id or `app:<appId>`.
+	 *
+	 * @return array<string, mixed> The request, with the credit settlement when credit was used.
+	 */
+	private function applyCreditFor(array $request, string $key, float $due, string $actor): array {
+		$accounts = [
+			'credit' => trim($this->appConfig->getValueString('shillinq', self::CONFIG_KEY, '')),
+			'revenue' => $this->revenueAccountFor(request: $request),
+		];
+		if ($accounts['credit'] === '' || $accounts['revenue'] === '') {
 			return $request;
 		}
 
-		$used = 0.0;
+		$use = $this->useOpenCredits(request: $request, key: $key, due: $due, accounts: $accounts);
+		if ($use['used'] <= 0.0) {
+			return $request;
+		}
+
+		return $this->settleFromCredit(request: $request, used: $use['used'], sources: $use['sources'], actor: $actor);
+	}//end applyCreditFor()
+
+	/**
+	 * Use open credit, oldest first, until the request is covered.
+	 *
+	 * @param array<string, mixed>                   $request  The request about to be saved.
+	 * @param string                                 $key      The debtor key.
+	 * @param float                                  $due      The request's amount.
+	 * @param array{credit: string, revenue: string} $accounts The customer credit and revenue accounts.
+	 *
+	 * @return array{used: float, sources: list<string>} The amount used and the credits it came from.
+	 */
+	private function useOpenCredits(array $request, string $key, float $due, array $accounts): array {
+		$used    = 0.0;
 		$sources = [];
-		foreach ($this->openCredits(debtorKey: $key, administrationId: $administrationId) as $credit) {
+		foreach ($this->openCredits(debtorKey: $key, administrationId: (string)($request['administrationId'] ?? '')) as $credit) {
 			$take = round(min((float)($credit['remaining'] ?? 0), ($due - $used)), 2);
 			if ($take <= 0.0) {
 				continue;
 			}
 
-			$description = sprintf('Open credit %s used for a new %s request', (string)$credit['id'], (string)($request['requestType'] ?? ''));
-			$numberSeed = (string)$credit['id'] . '|' . (string)($credit['remaining'] ?? '') . '|' . json_encode($request['subject'] ?? []);
-			$journalId = $this->save(
-				schema: 'JournalEntry',
-				object: [
-					'journalNumber' => 'CU-' . substr(hash('sha256', $numberSeed), 0, 12),
-					'entryDate' => gmdate('Y-m-d'),
-					'description' => $description,
-					'journalType' => 'manual',
-					'approvalState' => 'not-required',
-					'administrationId' => $administrationId,
-					'state' => 'draft',
-					'lines' => [
-						['accountNumber' => $creditAccount, 'side' => 'debit', 'amount' => $take, 'description' => $description],
-						['accountNumber' => $revenue, 'side' => 'credit', 'amount' => $take, 'description' => $description],
-					],
-				]
-			);
-			$this->transitions->run(objectId: $journalId, action: 'postDirect');
-
-			$credit['remaining'] = round(((float)$credit['remaining'] - $take), 2);
-			if ($credit['remaining'] <= 0.0) {
-				$credit['remaining'] = 0.0;
-				$credit['state'] = 'used';
-			}
-
-			$this->save(schema: 'DebtorCredit', object: $credit);
-			$used = round(($used + $take), 2);
+			$this->useCredit(request: $request, credit: $credit, take: $take, accounts: $accounts);
+			$used      = round(($used + $take), 2);
 			$sources[] = (string)$credit['id'];
 			if ($used >= $due) {
 				break;
 			}
-		}//end foreach
-
-		if ($used <= 0.0) {
-			return $request;
 		}
 
-		$now = gmdate('Y-m-d\TH:i:s\Z');
-		$settlements = new PaymentSettlementService();
-		$request = $settlements->append(
-			request: $request,
-			settlement: [
-				'method' => 'credit',
-				'amount' => $used,
-				'reference' => implode(', ', $sources),
-				'actor' => $actor,
-				'settledAt' => $now,
-				'reason' => 'Paid from the debtor\'s open credit',
+		return ['used' => $used, 'sources' => $sources];
+	}//end useOpenCredits()
+
+	/**
+	 * Book one credit's share against the request's revenue and lower its remaining amount.
+	 *
+	 * @param array<string, mixed>                   $request  The request about to be saved.
+	 * @param array<string, mixed>                   $credit   The DebtorCredit row.
+	 * @param float                                  $take     The amount taken from this credit.
+	 * @param array{credit: string, revenue: string} $accounts The customer credit and revenue accounts.
+	 *
+	 * @return void
+	 */
+	private function useCredit(array $request, array $credit, float $take, array $accounts): void {
+		$description = sprintf('Open credit %s used for a new %s request', (string)$credit['id'], (string)($request['requestType'] ?? ''));
+		$numberSeed  = (string)$credit['id'] . '|' . (string)($credit['remaining'] ?? '') . '|' . json_encode($request['subject'] ?? []);
+		$entry       = $this->journalEntry(
+			journalNumber: 'CU-' . substr(hash('sha256', $numberSeed), 0, 12),
+			description: $description,
+			administrationId: (string)($request['administrationId'] ?? ''),
+			lines: [
+				['accountNumber' => $accounts['credit'], 'side' => 'debit', 'amount' => $take, 'description' => $description],
+				['accountNumber' => $accounts['revenue'], 'side' => 'credit', 'amount' => $take, 'description' => $description],
 			]
 		);
+		$this->postJournal(entry: $entry);
+
+		$this->save(schema: 'DebtorCredit', object: $this->lowerRemaining(credit: $credit, take: $take));
+	}//end useCredit()
+
+	/**
+	 * Lower a credit's remaining amount; at zero it reads `used`.
+	 *
+	 * @param array<string, mixed> $credit The DebtorCredit row.
+	 * @param float                $take   The amount taken from it.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function lowerRemaining(array $credit, float $take): array {
+		$credit['remaining'] = round(((float)$credit['remaining'] - $take), 2);
+		if ($credit['remaining'] <= 0.0) {
+			$credit['remaining'] = 0.0;
+			$credit['state']     = 'used';
+		}
+
+		return $credit;
+	}//end lowerRemaining()
+
+	/**
+	 * Append the credit settlement and stamp the request settled when the credit covers it whole.
+	 *
+	 * @param array<string, mixed> $request The request about to be saved.
+	 * @param float                $used    The credit used.
+	 * @param list<string>         $sources The credits it came from.
+	 * @param string               $actor   Who raised it: a user id or `app:<appId>`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function settleFromCredit(array $request, float $used, array $sources, string $actor): array {
+		$now         = gmdate('Y-m-d\TH:i:s\Z');
+		$settlements = new PaymentSettlementService();
+		$settlement  = [
+			'method' => 'credit',
+			'amount' => $used,
+			'reference' => implode(', ', $sources),
+			'actor' => $actor,
+			'settledAt' => $now,
+			'reason' => 'Paid from the debtor\'s open credit',
+		];
+		$request     = $settlements->append(request: $request, settlement: $settlement);
 
 		return $settlements->stampSettled(request: $request, settledAt: $now, via: 'credit');
-	}//end applyOpenCredit()
+	}//end settleFromCredit()
 
 	/**
 	 * The debtor's open credit in one administration, oldest first.

@@ -126,22 +126,67 @@ class ComplianceExportController extends Controller {
 		$adminBypass = $this->groupManager->isAdmin($uid);
 		$isAuditor = $this->groupManager->isInGroup($uid, self::AUDITOR_GROUP);
 		if ($adminBypass !== true && $isAuditor !== true) {
-			return new JSONResponse(
-				['error' => 'Compliance export requires the auditor group (REQ-RAP-005)'],
-				Http::STATUS_FORBIDDEN
-			);
+			return new JSONResponse(['error' => 'Compliance export requires the auditor group (REQ-RAP-005)'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->exportFor(uid: $uid);
+	}//end export()
+
+	/**
+	 * Generate and stream the compliance export for an authorised caller.
+	 *
+	 * @param string $uid Caller UID.
+	 *
+	 * @return Response
+	 *
+	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 */
+	private function exportFor(string $uid): Response {
 		$from = (string)$this->request->getParam('from', '');
 		$to = (string)$this->request->getParam('to', '');
 		$scope = (string)$this->request->getParam('scope', ComplianceExportServiceInterface::SCOPE_ALL);
 		$format = (string)$this->request->getParam('format', ComplianceExportServiceInterface::FORMAT_CSV);
+
+		$envelope = $this->generate(from: $from, to: $to, scope: $scope, format: $format);
+		if ($envelope instanceof Response) {
+			return $envelope;
+		}
+
+		$this->logExportRequest(envelope: $envelope, uid: $uid);
+
+		return $this->exportResponse(envelope: $envelope, format: $format);
+	}//end exportFor()
+
+	/**
+	 * The actor filter from the request, or null when none is given.
+	 *
+	 * @return string|null
+	 */
+	private function actorFilter(): string|null {
 		$actor = $this->request->getParam('actor');
 		if (is_string($actor) === true && $actor !== '') {
 			$actorFilter = $actor;
 		} else {
 			$actorFilter = null;
 		}
+
+		return $actorFilter;
+	}//end actorFilter()
+
+	/**
+	 * Generate the export envelope, or the error response when that fails.
+	 *
+	 * @param string $from   Period start.
+	 * @param string $to     Period end.
+	 * @param string $scope  Export scope.
+	 * @param string $format Export format.
+	 *
+	 * @return array<string,mixed>|JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 */
+	private function generate(string $from, string $to, string $scope, string $format): array|JSONResponse {
+		$actorFilter = $this->actorFilter();
 
 		try {
 			$envelope = $this->complianceExportService->generateExport(
@@ -152,30 +197,57 @@ class ComplianceExportController extends Controller {
 				actorFilter: $actorFilter,
 			);
 		} catch (RuntimeException $e) {
-			$this->logger->error('ComplianceExportController.export failed', ['exception' => $e]);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to generate the compliance export'),
-					'error' => 'compliance-export-invalid-request',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			return $this->invalidRequest(e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'ComplianceExportController: failed to generate export',
-				[
-					'from' => $from,
-					'to' => $to,
-					'scope' => $scope,
-					'format' => $format,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(['error' => 'Could not generate compliance export'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+			return $this->generationFailed(context: ['from' => $from, 'to' => $to, 'scope' => $scope, 'format' => $format], e: $e);
+		}
 
-		$this->logExportRequest(envelope: $envelope, uid: $uid);
+		return $envelope;
+	}//end generate()
 
+	/**
+	 * Log a rejected export request and build the 400 response.
+	 *
+	 * @param RuntimeException $e The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidRequest(RuntimeException $e): JSONResponse {
+		$this->logger->error('ComplianceExportController.export failed', ['exception' => $e]);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to generate the compliance export'),
+				'error' => 'compliance-export-invalid-request',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+	}//end invalidRequest()
+
+	/**
+	 * Log a failed export and build the 500 response, without a stack trace.
+	 *
+	 * @param array<string,string> $context The request's from, to, scope and format.
+	 * @param \Throwable           $e       The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function generationFailed(array $context, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'ComplianceExportController: failed to generate export',
+			$context + ['exception' => $e->getMessage()]
+		);
+		return new JSONResponse(['error' => 'Could not generate compliance export'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end generationFailed()
+
+	/**
+	 * Stream the envelope as CSV download or JSON.
+	 *
+	 * @param array<string,mixed> $envelope Export envelope.
+	 * @param string              $format   Export format.
+	 *
+	 * @return Response
+	 */
+	private function exportResponse(array $envelope, string $format): Response {
 		if ($format === ComplianceExportServiceInterface::FORMAT_CSV) {
 			$csv = $this->complianceExportService->renderCsv(envelope: $envelope);
 			return new DataDisplayResponse(
@@ -183,17 +255,28 @@ class ComplianceExportController extends Controller {
 				statusCode:  Http::STATUS_OK,
 				headers:     [
 					'Content-Type' => 'text/csv; charset=utf-8',
-					'Content-Disposition' => sprintf(
-						'attachment; filename="shillinq-audit-export-%s_%s.csv"',
-						preg_replace('/[^0-9-]/', '', $envelope['from']),
-						preg_replace('/[^0-9-]/', '', $envelope['to'])
-					),
+					'Content-Disposition' => $this->csvDisposition(envelope: $envelope),
 				]
 			);
 		}
 
 		return new JSONResponse($envelope, Http::STATUS_OK);
-	}//end export()
+	}//end exportResponse()
+
+	/**
+	 * The Content-Disposition header of the CSV download.
+	 *
+	 * @param array<string,mixed> $envelope Export envelope.
+	 *
+	 * @return string
+	 */
+	private function csvDisposition(array $envelope): string {
+		return sprintf(
+			'attachment; filename="shillinq-audit-export-%s_%s.csv"',
+			preg_replace('/[^0-9-]/', '', $envelope['from']),
+			preg_replace('/[^0-9-]/', '', $envelope['to'])
+		);
+	}//end csvDisposition()
 
 	/**
 	 * Record the export request itself per REQ-RAP-005 scenario 3.

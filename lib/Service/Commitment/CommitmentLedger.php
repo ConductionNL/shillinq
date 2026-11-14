@@ -435,9 +435,7 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 			return [];
 		}
 
-		$matching = array_keys(
-			array_filter($lines, static fn (array $line): bool => $costCentre !== '' && (string)($line['costCentre'] ?? '') === $costCentre)
-		);
+		$matching = self::linesOnCostCentre(lines: $lines, costCentre: $costCentre);
 		if (count($matching) === 1) {
 			return [$matching[0] => $amount];
 		}
@@ -448,9 +446,37 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 			return [0 => $amount];
 		}
 
+		return self::proportionalShares(weights: $weights, amount: $amount, last: array_key_last($lines));
+
+	}//end allocate()
+
+	/**
+	 * The keys of the lines booked on the cost centre; none when no cost centre is given.
+	 *
+	 * @param array<int|string, array<string, mixed>> $lines      The commitment lines.
+	 * @param string                                  $costCentre The cost centre.
+	 *
+	 * @return list<int|string>
+	 */
+	private static function linesOnCostCentre(array $lines, string $costCentre): array {
+		return array_keys(
+			array_filter($lines, static fn (array $line): bool => $costCentre !== '' && (string)($line['costCentre'] ?? '') === $costCentre)
+		);
+	}//end linesOnCostCentre()
+
+	/**
+	 * Split the amount over the weights, rounding down; the last line takes the remainder.
+	 *
+	 * @param array<int|string, int> $weights The lines' remaining committed amounts.
+	 * @param int                    $amount  The amount to split.
+	 * @param int|string|null        $last    The key of the last line.
+	 *
+	 * @return array<int|string, int>
+	 */
+	private static function proportionalShares(array $weights, int $amount, int|string|null $last): array {
+		$total  = array_sum($weights);
 		$shares = [];
-		$given = 0;
-		$last = array_key_last($lines);
+		$given  = 0;
 		foreach ($weights as $index => $weight) {
 			$share = (int)floor($amount * $weight / $total);
 			if ($index === $last) {
@@ -458,12 +484,11 @@ class CommitmentLedger implements CommitmentLedgerInterface {
 			}
 
 			$shares[$index] = $share;
-			$given += $share;
+			$given         += $share;
 		}
 
 		return $shares;
-
-	}//end allocate()
+	}//end proportionalShares()
 
 	/**
 	 * Sum of remaining amounts.

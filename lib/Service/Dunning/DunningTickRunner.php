@@ -212,37 +212,74 @@ class DunningTickRunner implements DunningTickRunnerInterface {
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
 	 */
 	public function previewAdministration(array $administration, DateTimeImmutable $now): array {
-		$today = $now->format('Y-m-d');
 		$rows  = [];
 		foreach ($this->administrationKeys(administration: $administration) as $key) {
 			foreach (['issued', 'overdue'] as $state) {
-				foreach ($this->page(schema: 'ARInvoice', filters: ['administrationId' => $key, 'lifecycleState' => $state]) as $invoice) {
-					$dueDate = substr((string)($invoice['dueDate'] ?? ''), 0, 10);
-					if ($state === 'issued' && ($dueDate === '' || $dueDate >= $today)) {
-						continue;
-					}
-
-					$next = $this->dunning->previewInvoice(administrationId: $key, invoice: $invoice, now: $now);
-					if ($next === null) {
-						continue;
-					}
-
-					$rows[] = [
-						'invoiceId' => (string)$next['invoiceId'],
-						'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
-						'customer' => (string)($invoice['buyerName'] ?? ''),
-						'dueDate' => $dueDate,
-						'amount' => (float)($invoice['grossAmount'] ?? 0.0),
-						'stageNr' => (int)$next['stageNr'],
-						'channel' => (string)$next['channel'],
-						'ladderId' => (string)$next['ladderId'],
-					];
-				}//end foreach
-			}//end foreach
-		}//end foreach
+				$rows = array_merge($rows, $this->previewRows(key: $key, state: $state, now: $now));
+			}
+		}
 
 		return $rows;
 	}//end previewAdministration()
+
+	/**
+	 * The preview rows of the invoices in one state under one administration key.
+	 *
+	 * @param string            $key   An administrationId value.
+	 * @param string            $state `issued` or `overdue`.
+	 * @param DateTimeImmutable $now   The moment to judge by.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 */
+	private function previewRows(string $key, string $state, DateTimeImmutable $now): array {
+		$rows = [];
+		foreach ($this->page(schema: 'ARInvoice', filters: ['administrationId' => $key, 'lifecycleState' => $state]) as $invoice) {
+			$row = $this->previewRow(key: $key, state: $state, invoice: $invoice, now: $now);
+			if ($row !== null) {
+				$rows[] = $row;
+			}
+		}
+
+		return $rows;
+	}//end previewRows()
+
+	/**
+	 * The preview row of one invoice, or null when the next run would not chase it.
+	 *
+	 * @param string              $key     An administrationId value.
+	 * @param string              $state   `issued` or `overdue`.
+	 * @param array<string,mixed> $invoice The ARInvoice.
+	 * @param DateTimeImmutable   $now     The moment to judge by.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 */
+	private function previewRow(string $key, string $state, array $invoice, DateTimeImmutable $now): array|null {
+		$today = $now->format('Y-m-d');
+		$dueDate = substr((string)($invoice['dueDate'] ?? ''), 0, 10);
+		if ($state === 'issued' && ($dueDate === '' || $dueDate >= $today)) {
+			return null;
+		}
+
+		$next = $this->dunning->previewInvoice(administrationId: $key, invoice: $invoice, now: $now);
+		if ($next === null) {
+			return null;
+		}
+
+		return [
+			'invoiceId' => (string)$next['invoiceId'],
+			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
+			'customer' => (string)($invoice['buyerName'] ?? ''),
+			'dueDate' => $dueDate,
+			'amount' => (float)($invoice['grossAmount'] ?? 0.0),
+			'stageNr' => (int)$next['stageNr'],
+			'channel' => (string)$next['channel'],
+			'ladderId' => (string)$next['ladderId'],
+		];
+	}//end previewRow()
 
 	/**
 	 * The values invoices of this administration carry as `administrationId`.

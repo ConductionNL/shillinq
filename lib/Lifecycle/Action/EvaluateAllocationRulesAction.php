@@ -106,7 +106,7 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
-		$transactionId = (string)($objectData['id'] ?? ($objectData['@self']['id'] ?? ''));
+		$transactionId = $this->transactionIdOf(transaction: $objectData);
 		if ($transactionId === '') {
 			throw new RuntimeException('Cannot apply allocation rules to a transaction without an id.');
 		}
@@ -117,6 +117,49 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 		}
 
 		$lines = $this->lines(transaction: $objectData, transactionId: $transactionId);
+		[$applied, $sourceLines, $nextLineNumber] = $this->partitionLines(lines: $lines);
+
+		foreach ($rules as $rule) {
+			if ($this->isPending(rule: $rule, applied: $applied) === false) {
+				continue;
+			}
+
+			$nextLineNumber = $this->applyRule(rule: $rule, sourceLines: $sourceLines, transaction: $objectData, nextLineNumber: $nextLineNumber);
+		}
+
+		return $objectData;
+	}//end execute()
+
+	/**
+	 * The id of a transaction, or '' when it has none.
+	 *
+	 * @param array<string,mixed> $transaction The GLTransaction.
+	 *
+	 * @return string
+	 */
+	private function transactionIdOf(array $transaction): string {
+		return (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+	}//end transactionIdOf()
+
+	/**
+	 * The id of a rule, or '' when it has none.
+	 *
+	 * @param array<string,mixed> $rule The AllocationRule.
+	 *
+	 * @return string
+	 */
+	private function ruleIdOf(array $rule): string {
+		return (string)($rule['id'] ?? ($rule['@self']['id'] ?? ''));
+	}//end ruleIdOf()
+
+	/**
+	 * Split the transaction's lines into the rules already applied and the source lines.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The transaction's GLLines.
+	 *
+	 * @return array{0:array<string,true>,1:list<array<string,mixed>>,2:int} Applied rule ids, source lines, next line number.
+	 */
+	private function partitionLines(array $lines): array {
 		$applied = [];
 		$sourceLines = [];
 		$nextLineNumber = 1;
@@ -131,27 +174,51 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 			$sourceLines[] = $line;
 		}
 
-		foreach ($rules as $rule) {
-			$ruleId = (string)($rule['id'] ?? ($rule['@self']['id'] ?? ''));
-			if ($ruleId === '' || isset($applied[$ruleId]) === true) {
+		return [$applied, $sourceLines, $nextLineNumber];
+	}//end partitionLines()
+
+	/**
+	 * Whether a rule has an id and has not yet been applied to the transaction.
+	 *
+	 * @param array<string,mixed> $rule    The AllocationRule.
+	 * @param array<string,true>  $applied Rule ids already applied.
+	 *
+	 * @return bool
+	 */
+	private function isPending(array $rule, array $applied): bool {
+		$ruleId = $this->ruleIdOf(rule: $rule);
+		return ($ruleId !== '' && isset($applied[$ruleId]) === false);
+	}//end isPending()
+
+	/**
+	 * Save the allocation rows one rule adds for every source line it matches.
+	 *
+	 * @param array<string,mixed>       $rule           The AllocationRule.
+	 * @param list<array<string,mixed>> $sourceLines    The source GLLines.
+	 * @param array<string,mixed>       $transaction    The GLTransaction.
+	 * @param int                       $nextLineNumber The next free line number.
+	 *
+	 * @return int The next free line number afterwards.
+	 *
+	 * @throws RuntimeException When the rule cannot be applied.
+	 */
+	private function applyRule(array $rule, array $sourceLines, array $transaction, int $nextLineNumber): int {
+		$ruleId = $this->ruleIdOf(rule: $rule);
+		$transactionId = $this->transactionIdOf(transaction: $transaction);
+		foreach ($sourceLines as $line) {
+			if ($this->matches(pattern: (string)($rule['sourceAccountPattern'] ?? ''), account: (string)($line['accountNumber'] ?? '')) === false) {
 				continue;
 			}
 
-			foreach ($sourceLines as $line) {
-				if ($this->matches(pattern: (string)($rule['sourceAccountPattern'] ?? ''), account: (string)($line['accountNumber'] ?? '')) === false) {
-					continue;
-				}
-
-				foreach ($this->allocationLines(rule: $rule, ruleId: $ruleId, line: $line, transaction: $objectData) as $row) {
-					$row['transactionId'] = $transactionId;
-					$row['lineNumber'] = $nextLineNumber++;
-					$this->objectService->saveObject(object: $row, register: $this->register(), schema: 'GLLine');
-				}
+			foreach ($this->allocationLines(rule: $rule, ruleId: $ruleId, line: $line, transaction: $transaction) as $row) {
+				$row['transactionId'] = $transactionId;
+				$row['lineNumber'] = $nextLineNumber++;
+				$this->objectService->saveObject(object: $row, register: $this->register(), schema: 'GLLine');
 			}
-		}//end foreach
+		}
 
-		return $objectData;
-	}//end execute()
+		return $nextLineNumber;
+	}//end applyRule()
 
 	/**
 	 * The balanced rows one rule adds for one source line.
@@ -167,10 +234,7 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 	 */
 	private function allocationLines(array $rule, string $ruleId, array $line, array $transaction): array {
 		$name = (string)($rule['name'] ?? $ruleId);
-		$dimensionField = (self::DIMENSION_FIELDS[(string)($rule['targetDimension'] ?? '')] ?? null);
-		if ($dimensionField === null) {
-			throw new RuntimeException(sprintf('Allocation rule "%s" has an unknown target dimension.', $name));
-		}
+		$dimensionField = $this->dimensionField(rule: $rule, name: $name);
 
 		$sourceCents = (int)round((float)($line['amount'] ?? 0) * 100);
 		$shares = $this->shares(rule: $rule, name: $name, sourceCents: $sourceCents);
@@ -179,12 +243,66 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 			return [];
 		}
 
+		$side = $this->sideOf(line: $line, name: $name);
+
+		$base = $this->baseRow(ruleId: $ruleId, line: $line, transaction: $transaction);
+
+		$rows = [$this->counterRow(base: $base, side: $side, allocated: $allocated, name: $name)];
+
+		$sideBase = array_merge($base, ['side' => $side]);
+
+		return array_merge($rows, $this->shareRows(sideBase: $sideBase, shares: $shares, name: $name, dimensionField: $dimensionField));
+	}//end allocationLines()
+
+	/**
+	 * The GLLine field a rule's target dimension writes to.
+	 *
+	 * @param array<string,mixed> $rule The AllocationRule.
+	 * @param string              $name The rule name, for messages.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When the target dimension is unknown.
+	 */
+	private function dimensionField(array $rule, string $name): string {
+		$dimensionField = (self::DIMENSION_FIELDS[(string)($rule['targetDimension'] ?? '')] ?? null);
+		if ($dimensionField === null) {
+			throw new RuntimeException(sprintf('Allocation rule "%s" has an unknown target dimension.', $name));
+		}
+
+		return $dimensionField;
+	}//end dimensionField()
+
+	/**
+	 * The side of a matched source line.
+	 *
+	 * @param array<string,mixed> $line The source GLLine.
+	 * @param string              $name The rule name, for messages.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When the side has no opposite.
+	 */
+	private function sideOf(array $line, string $name): string {
 		$side = (string)($line['side'] ?? '');
 		if (isset(self::OPPOSITE_SIDE[$side]) === false) {
 			throw new RuntimeException(sprintf('Allocation rule "%s" matched a line with side "%s".', $name, $side));
 		}
 
-		$base = [
+		return $side;
+	}//end sideOf()
+
+	/**
+	 * The fields every allocation row of a source line shares.
+	 *
+	 * @param string              $ruleId      The rule id.
+	 * @param array<string,mixed> $line        The source GLLine.
+	 * @param array<string,mixed> $transaction The GLTransaction.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function baseRow(string $ruleId, array $line, array $transaction): array {
+		return [
 			'accountNumber' => (string)($line['accountNumber'] ?? ''),
 			'currency' => (string)($line['currency'] ?? ($transaction['currency'] ?? 'EUR')),
 			'periodId' => (string)($line['periodId'] ?? ($transaction['periodId'] ?? '')),
@@ -194,26 +312,49 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 				'allocationSourceLineId' => (string)($line['id'] ?? ($line['@self']['id'] ?? '')),
 			],
 		];
+	}//end baseRow()
 
-		$rows = [
-			array_merge(
-				$base,
-				[
-					'side' => self::OPPOSITE_SIDE[$side],
-					'amount' => round(($allocated / 100), 2),
-					'description' => 'Allocation ' . $name,
-				]
-			),
-		];
+	/**
+	 * The row that takes the allocated amount off the source side.
+	 *
+	 * @param array<string,mixed> $base      The shared fields.
+	 * @param string              $side      The source line's side.
+	 * @param int                 $allocated The allocated cents.
+	 * @param string              $name      The rule name.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function counterRow(array $base, string $side, int $allocated, string $name): array {
+		return array_merge(
+			$base,
+			[
+				'side' => self::OPPOSITE_SIDE[$side],
+				'amount' => round(($allocated / 100), 2),
+				'description' => 'Allocation ' . $name,
+			]
+		);
+	}//end counterRow()
+
+	/**
+	 * One row per non-zero target share, on the source side.
+	 *
+	 * @param array<string,mixed>         $sideBase       The shared fields with the source side.
+	 * @param list<array{0:string,1:int}> $shares         Pairs of [target code, cents].
+	 * @param string                      $name           The rule name.
+	 * @param string                      $dimensionField The GLLine field the target code goes in.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function shareRows(array $sideBase, array $shares, string $name, string $dimensionField): array {
+		$rows = [];
 		foreach ($shares as [$code, $cents]) {
 			if ($cents === 0) {
 				continue;
 			}
 
 			$rows[] = array_merge(
-				$base,
+				$sideBase,
 				[
-					'side' => $side,
 					'amount' => round(($cents / 100), 2),
 					'description' => 'Allocation ' . $name . ' to ' . $code,
 					$dimensionField => $code,
@@ -222,7 +363,7 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 		}
 
 		return $rows;
-	}//end allocationLines()
+	}//end shareRows()
 
 	/**
 	 * Each target's share of the source amount, in cents.
@@ -237,6 +378,32 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 	 */
 	private function shares(array $rule, string $name, int $sourceCents): array {
 		$driver = (string)($rule['driver'] ?? '');
+		$targets = $this->perPostingTargets(rule: $rule, name: $name, driver: $driver);
+
+		$shares = $this->rawShares(targets: $targets, driver: $driver, sourceCents: $sourceCents);
+
+		// A 100 percent split must allocate the whole amount: put the rounding remainder on the last target.
+		$shares = $this->topUpLastShare(shares: $shares, targets: $targets, driver: $driver, sourceCents: $sourceCents);
+
+		if (array_sum(array_column($shares, 1)) > $sourceCents) {
+			throw new RuntimeException(sprintf('Allocation rule "%s" allocates more than the source line holds.', $name));
+		}
+
+		return $shares;
+	}//end shares()
+
+	/**
+	 * A rule's targets, when its driver can run per posting.
+	 *
+	 * @param array<string,mixed> $rule   The AllocationRule.
+	 * @param string              $name   The rule name, for messages.
+	 * @param string              $driver The rule's driver.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @throws RuntimeException When the rule has no targets or its driver cannot run per posting.
+	 */
+	private function perPostingTargets(array $rule, string $name, string $driver): array {
 		$targets = array_values(array_filter((array)($rule['targets'] ?? []), 'is_array'));
 		if ($targets === []) {
 			throw new RuntimeException(sprintf('Allocation rule "%s" has no targets.', $name));
@@ -252,6 +419,19 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 			);
 		}
 
+		return $targets;
+	}//end perPostingTargets()
+
+	/**
+	 * Each target's share before the rounding remainder is placed.
+	 *
+	 * @param list<array<string,mixed>> $targets     The rule's targets.
+	 * @param string                    $driver      The rule's driver.
+	 * @param int                       $sourceCents The source line amount in cents.
+	 *
+	 * @return list<array{0: string, 1: int}>
+	 */
+	private function rawShares(array $targets, string $driver, int $sourceCents): array {
 		$shares = [];
 		foreach ($targets as $target) {
 			$cents = (int)round((float)($target['amount'] ?? 0) * 100);
@@ -262,19 +442,28 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 			$shares[] = [(string)($target['code'] ?? ''), $cents];
 		}
 
-		// A 100 percent split must allocate the whole amount: put the rounding remainder on the last target.
+		return $shares;
+	}//end rawShares()
+
+	/**
+	 * Put the rounding remainder of a 100 percent split on the last target.
+	 *
+	 * @param list<array{0: string, 1: int}> $shares      The raw shares.
+	 * @param list<array<string,mixed>>      $targets     The rule's targets.
+	 * @param string                         $driver      The rule's driver.
+	 * @param int                            $sourceCents The source line amount in cents.
+	 *
+	 * @return list<array{0: string, 1: int}>
+	 */
+	private function topUpLastShare(array $shares, array $targets, string $driver, int $sourceCents): array {
 		$percentage = array_sum(array_map(static fn (array $t): float => (float)($t['percentage'] ?? 0), $targets));
 		if ($driver === 'fixed-percentage' && abs($percentage - 100.0) < 0.0001) {
 			$last = (count($shares) - 1);
 			$shares[$last][1] += ($sourceCents - array_sum(array_column($shares, 1)));
 		}
 
-		if (array_sum(array_column($shares, 1)) > $sourceCents) {
-			throw new RuntimeException(sprintf('Allocation rule "%s" allocates more than the source line holds.', $name));
-		}
-
 		return $shares;
-	}//end shares()
+	}//end topUpLastShare()
 
 	/**
 	 * Whether an account number matches a rule's `sourceAccountPattern`.
@@ -298,29 +487,45 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 				continue;
 			}
 
-			if (str_ends_with($part, '*') === true) {
-				if (str_starts_with($account, substr($part, 0, -1)) === true) {
-					return true;
-				}
-
-				continue;
-			}
-
-			if (preg_match('/^(\d+)\s*-\s*(\d+)$/', $part, $range) === 1) {
-				if (ctype_digit($account) === true && (int)$account >= (int)$range[1] && (int)$account <= (int)$range[2]) {
-					return true;
-				}
-
-				continue;
-			}
-
-			if ($part === $account) {
+			if ($this->partMatches(part: $part, account: $account) === true) {
 				return true;
 			}
-		}//end foreach
+		}
 
 		return false;
 	}//end matches()
+
+	/**
+	 * Whether an account number matches one part of a pattern: a prefix, a range or an exact number.
+	 *
+	 * @param string $part    One trimmed, non-empty part of the pattern.
+	 * @param string $account The line's account number.
+	 *
+	 * @return bool
+	 */
+	private function partMatches(string $part, string $account): bool {
+		if (str_ends_with($part, '*') === true) {
+			return str_starts_with($account, substr($part, 0, -1));
+		}
+
+		if (preg_match('/^(\d+)\s*-\s*(\d+)$/', $part, $range) === 1) {
+			return $this->inRange(account: $account, range: $range);
+		}
+
+		return $part === $account;
+	}//end partMatches()
+
+	/**
+	 * Whether a numeric account number lies within a range.
+	 *
+	 * @param string            $account The line's account number.
+	 * @param array<int,string> $range   The range match: [1] low, [2] high.
+	 *
+	 * @return bool
+	 */
+	private function inRange(string $account, array $range): bool {
+		return (ctype_digit($account) === true && (int)$account >= (int)$range[1] && (int)$account <= (int)$range[2]);
+	}//end inRange()
 
 	/**
 	 * The active per-posting rules for the transaction's administration.

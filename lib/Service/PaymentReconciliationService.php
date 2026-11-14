@@ -242,12 +242,9 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		$paymentIntentId = (string)($event['paymentIntentId'] ?? '');
 		$outcome = (string)($event['outcome'] ?? '');
 
-		if (isset(self::TARGET_STATE[$outcome]) === false) {
-			return ['result' => self::RESULT_NOOP, 'schema' => null];
-		}
-
-		if ($paymentIntentId === '') {
-			return ['result' => self::RESULT_NOT_FOUND, 'schema' => null];
+		$earlyResult = $this->eventEarlyResult(outcome: $outcome, paymentIntentId: $paymentIntentId);
+		if ($earlyResult !== null) {
+			return ['result' => $earlyResult, 'schema' => null];
 		}
 
 		$registerSlug = $this->getRegisterSlug();
@@ -271,10 +268,12 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 
 		$record = $this->applyOutcome(record: $record, gateway: $gateway, outcome: $outcome, event: $event);
 
-		$result = self::RESULT_APPLIED;
-		if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
-			[$record, $result] = $this->settleCapturedRequest(registerSlug: $registerSlug, record: $record);
-		}
+		[$record, $result] = $this->settleWhenCapturedRequest(
+			registerSlug: $registerSlug,
+			record: $record,
+			outcome: $outcome,
+			schema: $schema
+		);
 
 		$this->objectService->saveObject(
 			object: $record,
@@ -285,6 +284,50 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 
 		return ['result' => $result, 'schema' => $schema];
 	}//end reconcile()
+
+	/**
+	 * The result for an event that needs no record lookup, or null when it does.
+	 *
+	 * @param string $outcome The event outcome.
+	 * @param string $paymentIntentId The event paymentIntentId.
+	 *
+	 * @return string|null RESULT_NOOP for an unknown outcome, RESULT_NOT_FOUND without an intent id, else null.
+	 *
+	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
+	 */
+	private function eventEarlyResult(string $outcome, string $paymentIntentId): string|null {
+		if (isset(self::TARGET_STATE[$outcome]) === false) {
+			return self::RESULT_NOOP;
+		}
+
+		if ($paymentIntentId === '') {
+			return self::RESULT_NOT_FOUND;
+		}
+
+		return null;
+	}//end eventEarlyResult()
+
+	/**
+	 * Settle the linked invoice when a PaymentRequest is captured; any other
+	 * record is simply applied.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param array<string, mixed> $record The record with the outcome applied.
+	 * @param string $outcome The event outcome.
+	 * @param string $schema The matched schema.
+	 *
+	 * @return array{0: array<string, mixed>, 1: string} The record and the result constant.
+	 *
+	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
+	 */
+	private function settleWhenCapturedRequest(string $registerSlug, array $record, string $outcome, string $schema): array {
+		$result = self::RESULT_APPLIED;
+		if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
+			[$record, $result] = $this->settleCapturedRequest(registerSlug: $registerSlug, record: $record);
+		}
+
+		return [$record, $result];
+	}//end settleWhenCapturedRequest()
 
 	/**
 	 * Find the payment record carrying this paymentIntentId, PaymentRequest
@@ -436,67 +479,14 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			// matches NOTHING — `filters` addresses JSON properties and the
 			// entity's `id` is not one — so every reference fell through to
 			// the slug arm and an invoice referenced by uuid never reconciled.
-			$byId = ObjectIdentifier::findOne(
-				scoped: $objectService
-					->setRegister($registerSlug)
-					->setSchema('ARInvoice'),
-				id: $invoiceRef,
-				scope: ['_rbac' => false]
-			);
-			$invoices = [];
-			if ($byId !== null) {
-				$invoices = [$byId];
-			}
+			$invoices = $this->findLinkedInvoices(objectService: $objectService, registerSlug: $registerSlug, invoiceRef: $invoiceRef);
 
-			if (empty($invoices) === true) {
-				$invoices = $objectService
-					->setRegister($registerSlug)
-					->setSchema('ARInvoice')
-					->findAll(
-						config: [
-							'filters' => ['slug' => $invoiceRef],
-							'limit' => 1,
-						],
-						_rbac: false,
-					);
-			}
-
-			if (empty($invoices) === true) {
-				$this->logger->warning(
-					'Shillinq: captured PaymentRequest references an unknown ARInvoice; routing to captured_unapplied',
-					['invoiceReference' => $invoiceRef]
-				);
+			$invoice = $this->settleableInvoice(invoices: $invoices, invoiceRef: $invoiceRef);
+			if ($invoice === null) {
 				return null;
 			}
 
-			$invoice = $invoices[0];
-
-			// ARInvoice's lifecycle field is `lifecycleState`. This read used to
-			// take `state`, a property ARInvoice does not declare, so a real
-			// issued invoice read as '' and every capture against it landed in
-			// captured_unapplied (REQ-SCON-006).
-			$invoiceState = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
-
-			// The AR matchPaid transition only fires from issued / partially-paid
-			// / overdue. Any other state (already paid, written-off, voided,
-			// disputed) means we cannot settle — surface as an exception.
-			if (in_array($invoiceState, ['issued', 'partially-paid', 'overdue'], true) === false) {
-				$this->logger->info(
-					'Shillinq: ARInvoice is not in a settleable state for the captured payment; routing to captured_unapplied',
-					['invoiceReference' => $invoiceRef, 'invoiceState' => $invoiceState]
-				);
-				return null;
-			}
-
-			// Trigger the existing AR lifecycle transition to paid, with the
-			// PaymentRequest as payment evidence. AR core owns the GL posting.
-			$invoice['lifecycleState'] = 'paid';
-			if (array_key_exists('state', $invoice) === true) {
-				$invoice['state'] = 'paid';
-			}
-
-			$invoice['paymentEvidenceRef'] = (string)($request['paymentIntentId'] ?? '');
-			$invoice['settlementReference'] = (string)($request['settlementReference'] ?? '');
+			$invoice = $this->markInvoicePaid(invoice: $invoice, request: $request);
 
 			$objectService->saveObject(
 				object: $invoice,
@@ -522,6 +512,115 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			return null;
 		}//end try
 	}//end settleLinkedInvoice()
+
+	/**
+	 * Look an ARInvoice up by id, falling back to its slug.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param string $invoiceRef The PaymentRequest's invoiceReference.
+	 *
+	 * @return mixed The matching invoices (empty when none).
+	 *
+	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
+	 */
+	private function findLinkedInvoices(object $objectService, string $registerSlug, string $invoiceRef): mixed {
+		// The by-id arm was findAll(['filters' => ['id' => …]]), which
+		// matches NOTHING — `filters` addresses JSON properties and the
+		// entity's `id` is not one — so every reference fell through to
+		// the slug arm and an invoice referenced by uuid never reconciled.
+		$byId = ObjectIdentifier::findOne(
+			scoped: $objectService
+				->setRegister($registerSlug)
+				->setSchema('ARInvoice'),
+			id: $invoiceRef,
+			scope: ['_rbac' => false]
+		);
+		$invoices = [];
+		if ($byId !== null) {
+			$invoices = [$byId];
+		}
+
+		if (empty($invoices) === true) {
+			$invoices = $objectService
+				->setRegister($registerSlug)
+				->setSchema('ARInvoice')
+				->findAll(
+					config: [
+						'filters' => ['slug' => $invoiceRef],
+						'limit' => 1,
+					],
+					_rbac: false,
+				);
+		}
+
+		return $invoices;
+	}//end findLinkedInvoices()
+
+	/**
+	 * Return the first invoice when it can still be settled; log and return
+	 * null when there is none or it is in a non-settleable state.
+	 *
+	 * @param mixed $invoices The invoices found for the reference.
+	 * @param string $invoiceRef The PaymentRequest's invoiceReference.
+	 *
+	 * @return array<string, mixed>|null The settleable invoice, or null.
+	 *
+	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
+	 */
+	private function settleableInvoice(mixed $invoices, string $invoiceRef): array|null {
+		if (empty($invoices) === true) {
+			$this->logger->warning(
+				'Shillinq: captured PaymentRequest references an unknown ARInvoice; routing to captured_unapplied',
+				['invoiceReference' => $invoiceRef]
+			);
+			return null;
+		}
+
+		$invoice = $invoices[0];
+
+		// ARInvoice's lifecycle field is `lifecycleState`. This read used to
+		// take `state`, a property ARInvoice does not declare, so a real
+		// issued invoice read as '' and every capture against it landed in
+		// captured_unapplied (REQ-SCON-006).
+		$invoiceState = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+
+		// The AR matchPaid transition only fires from issued / partially-paid
+		// / overdue. Any other state (already paid, written-off, voided,
+		// disputed) means we cannot settle — surface as an exception.
+		if (in_array($invoiceState, ['issued', 'partially-paid', 'overdue'], true) === false) {
+			$this->logger->info(
+				'Shillinq: ARInvoice is not in a settleable state for the captured payment; routing to captured_unapplied',
+				['invoiceReference' => $invoiceRef, 'invoiceState' => $invoiceState]
+			);
+			return null;
+		}
+
+		return $invoice;
+	}//end settleableInvoice()
+
+	/**
+	 * Trigger the existing AR lifecycle transition to paid, with the
+	 * PaymentRequest as payment evidence. AR core owns the GL posting.
+	 *
+	 * @param array<string, mixed> $invoice The settleable ARInvoice.
+	 * @param array<string, mixed> $request The captured PaymentRequest record.
+	 *
+	 * @return array<string, mixed> The invoice marked paid.
+	 *
+	 * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
+	 */
+	private function markInvoicePaid(array $invoice, array $request): array {
+		$invoice['lifecycleState'] = 'paid';
+		if (array_key_exists('state', $invoice) === true) {
+			$invoice['state'] = 'paid';
+		}
+
+		$invoice['paymentEvidenceRef'] = (string)($request['paymentIntentId'] ?? '');
+		$invoice['settlementReference'] = (string)($request['settlementReference'] ?? '');
+
+		return $invoice;
+	}//end markInvoicePaid()
 
 	/**
 	 * Compose the subject-safe settlement confirmation (portal-payment-initiation,
@@ -596,6 +695,24 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 
 		$request['revenueAccount'] = $account;
 
+		$journal = $this->buildReceiptJournal(request: $request, account: $account, amount: $amount, requestType: $requestType);
+
+		return $this->postReceiptJournal(registerSlug: $registerSlug, journal: $journal, requestType: $requestType);
+	}//end bookObjectReceipt()
+
+	/**
+	 * Build the two-line receipt JournalEntry for a captured object request.
+	 *
+	 * @param array<string, mixed> $request The captured PaymentRequest.
+	 * @param string $account The revenue account mapped to the request type.
+	 * @param float $amount The amount received.
+	 * @param string $requestType The request type.
+	 *
+	 * @return array<string, mixed> The draft JournalEntry.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	private function buildReceiptJournal(array $request, string $account, float $amount, string $requestType): array {
 		$subject = [];
 		if (is_array($request['subject'] ?? null) === true) {
 			$subject = (array)$request['subject'];
@@ -630,6 +747,21 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			],
 		];
 
+		return $journal;
+	}//end buildReceiptJournal()
+
+	/**
+	 * Save the receipt JournalEntry and post it through `postDirect`.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param array<string, mixed> $journal The draft JournalEntry.
+	 * @param string $requestType The request type (for the error log).
+	 *
+	 * @return string|null Null on success, or the refusal reason.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	private function postReceiptJournal(string $registerSlug, array $journal, string $requestType): string|null {
 		try {
 			$saved = $this->objectService->saveObject(
 				object: $journal,
@@ -652,7 +784,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 		}
 
 		return null;
-	}//end bookObjectReceipt()
+	}//end postReceiptJournal()
 
 	/**
 	 * A one-line, subject-safe receipt for a captured object request.
@@ -842,15 +974,7 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 			return false;
 		}
 
-		try {
-			$outcome = $statusProvider($intentId);
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'Shillinq: payment polling status lookup failed',
-				['exception' => $e->getMessage()]
-			);
-			return false;
-		}
+		$outcome = $this->lookupPollOutcome(intentId: $intentId, statusProvider: $statusProvider);
 
 		if ($outcome === null || $outcome === '') {
 			return false;
@@ -866,6 +990,26 @@ class PaymentReconciliationService implements PaymentReconciliationServiceInterf
 
 		return ($result['result'] === self::RESULT_APPLIED || $result['result'] === self::RESULT_UNAPPLIED);
 	}//end pollRecord()
+
+	/**
+	 * Ask the status provider for an intent's outcome; a failing lookup is logged and yields null.
+	 *
+	 * @param string   $intentId       The paymentIntentId.
+	 * @param callable $statusProvider Maps a paymentIntentId to an OUTCOME_* or null.
+	 *
+	 * @return mixed The provider's outcome, or null when the lookup failed.
+	 */
+	private function lookupPollOutcome(string $intentId, callable $statusProvider): mixed {
+		try {
+			return $statusProvider($intentId);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: payment polling status lookup failed',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end lookupPollOutcome()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config.

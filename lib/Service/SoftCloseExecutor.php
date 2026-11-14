@@ -349,44 +349,81 @@ class SoftCloseExecutor implements SoftCloseExecutorInterface {
 		$method = (string)($rule['calculationMethod'] ?? '');
 		$parameters = (array)($rule['calculationParameters'] ?? []);
 
-		switch ($method) {
-			case 'fixed-amount':
-				$amount = (int)($parameters['amountCents'] ?? 0);
-				return max(0, $amount);
-			case 'percentage-of-revenue':
-				$rate = (float)($parameters['rate'] ?? 0.0);
-				$revenue = (int)($context['revenueMtdCents'] ?? 0);
-				if ($rate <= 0.0 || $revenue <= 0) {
-					return 0;
-				}
-				return (int)round($revenue * $rate);
-			case 'straight-line-from-contract':
-				// PrincipalCents × annualRate × dayCount / dayCountConvention.
-				$principal = (int)($parameters['principalCents'] ?? 0);
-				$rate = (float)($parameters['annualRate'] ?? 0.0);
-				$dayCount = (int)($parameters['dayCount'] ?? 365);
-				$days = (int)($context['daysElapsed'] ?? 0);
-				if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
-					return 0;
-				}
-				return (int)round(($principal * $rate * $days) / $dayCount);
-			case 'days-elapsed-of-period':
-				$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
-				$daysElapsed = (int)($context['daysElapsed'] ?? 0);
-				$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
-				if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
-					return 0;
-				}
-				return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
-			case 'external-lookup':
-				// Lookup amount is provided by the orchestration context.
-				$lookup = (int)($context['lookupAmountCents'] ?? 0);
-				return max(0, $lookup);
-			default:
-				return 0;
-		}//end switch
+		return match ($method) {
+			'fixed-amount' => max(0, (int)($parameters['amountCents'] ?? 0)),
+			'percentage-of-revenue' => $this->revenueAccrualCents(parameters: $parameters, context: $context),
+			'straight-line-from-contract' => $this->contractAccrualCents(parameters: $parameters, context: $context),
+			'days-elapsed-of-period' => $this->periodAccrualCents(parameters: $parameters, context: $context),
+			// Lookup amount is provided by the orchestration context.
+			'external-lookup' => max(0, (int)($context['lookupAmountCents'] ?? 0)),
+			default => 0,
+		};
 
 	}//end computeAccrualCents()
+
+	/**
+	 * Accrual as a rate of the month-to-date revenue.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function revenueAccrualCents(array $parameters, array $context): int {
+		$rate = (float)($parameters['rate'] ?? 0.0);
+		$revenue = (int)($context['revenueMtdCents'] ?? 0);
+		if ($rate <= 0.0 || $revenue <= 0) {
+			return 0;
+		}
+
+		return (int)round($revenue * $rate);
+	}//end revenueAccrualCents()
+
+	/**
+	 * Straight-line contract accrual: principalCents × annualRate × days / dayCount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function contractAccrualCents(array $parameters, array $context): int {
+		// PrincipalCents × annualRate × dayCount / dayCountConvention.
+		$principal = (int)($parameters['principalCents'] ?? 0);
+		$rate = (float)($parameters['annualRate'] ?? 0.0);
+		$dayCount = (int)($parameters['dayCount'] ?? 365);
+		$days = (int)($context['daysElapsed'] ?? 0);
+		if ($principal <= 0 || $rate <= 0.0 || $dayCount <= 0 || $days <= 0) {
+			return 0;
+		}
+
+		return (int)round(($principal * $rate * $days) / $dayCount);
+	}//end contractAccrualCents()
+
+	/**
+	 * The elapsed share of a monthly amount.
+	 *
+	 * @param array<string,mixed> $parameters The rule's calculationParameters.
+	 * @param array<string,mixed> $context    Run context.
+	 *
+	 * @return int Cents (>= 0).
+	 *
+	 * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+	 */
+	private function periodAccrualCents(array $parameters, array $context): int {
+		$monthly = (int)($parameters['monthlyAmountCents'] ?? 0);
+		$daysElapsed = (int)($context['daysElapsed'] ?? 0);
+		$daysInPeriod = (int)($context['daysInPeriod'] ?? 30);
+		if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
+			return 0;
+		}
+
+		return (int)round(($monthly * $daysElapsed) / $daysInPeriod);
+	}//end periodAccrualCents()
 
 	/**
 	 * Execute every active AutoAccrualRule for the administratie + period (REQ-CLS-002, REQ-CLS-003).

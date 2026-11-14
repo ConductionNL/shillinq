@@ -1426,23 +1426,7 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 	 * @return array<int,string>
 	 */
 	private function resolvePoIds(string $administrationId, array $invoice): array {
-		$ids = [];
-		$matched = $invoice['matchedPoIds'] ?? null;
-		if (is_array($matched) === true) {
-			foreach ($matched as $id) {
-				$trimmed = trim((string)$id);
-				if ($trimmed !== '') {
-					$ids[] = $trimmed;
-				}
-			}
-		}
-
-		if ($ids === []) {
-			$scalar = trim((string)($invoice['poId'] ?? $invoice['purchaseOrderId'] ?? ''));
-			if ($scalar !== '') {
-				$ids[] = $scalar;
-			}
-		}
+		$ids = $this->candidatePoIds(invoice: $invoice);
 
 		// Filter by tenant scope.
 		$validated = [];
@@ -1458,6 +1442,48 @@ class ThreeWayMatchingEngine implements ThreeWayMatchingEngineInterface {
 
 		return $validated;
 	}//end resolvePoIds()
+
+	/**
+	 * The PO ids an invoice names: its matchedPoIds, else its single poId / purchaseOrderId.
+	 *
+	 * @param array<string,mixed> $invoice Loaded SupplierInvoice.
+	 *
+	 * @return array<int,string>
+	 */
+	private function candidatePoIds(array $invoice): array {
+		$ids = $this->matchedPoIds(invoice: $invoice);
+
+		if ($ids === []) {
+			$scalar = trim((string)($invoice['poId'] ?? $invoice['purchaseOrderId'] ?? ''));
+			if ($scalar !== '') {
+				$ids[] = $scalar;
+			}
+		}
+
+		return $ids;
+	}//end candidatePoIds()
+
+	/**
+	 * The non-empty ids of an invoice's matchedPoIds list.
+	 *
+	 * @param array<string,mixed> $invoice Loaded SupplierInvoice.
+	 *
+	 * @return array<int,string>
+	 */
+	private function matchedPoIds(array $invoice): array {
+		$ids = [];
+		$matched = $invoice['matchedPoIds'] ?? null;
+		if (is_array($matched) === true) {
+			foreach ($matched as $id) {
+				$trimmed = trim((string)$id);
+				if ($trimmed !== '') {
+					$ids[] = $trimmed;
+				}
+			}
+		}
+
+		return $ids;
+	}//end matchedPoIds()
 
 	/**
 	 * Convert a quantity float to integer thousandths.

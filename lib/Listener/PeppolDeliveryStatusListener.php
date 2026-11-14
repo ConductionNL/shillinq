@@ -167,8 +167,8 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 
 		try {
 			$entity = $event->getObject();
-			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			$cloudEvent = self::deliveryStatusEvent(entity: $entity);
+			if ($cloudEvent === null) {
 				return;
 			}
 
@@ -190,6 +190,22 @@ class PeppolDeliveryStatusListener implements IEventListener, PeppolDeliveryStat
 		}
 
 	}//end handle()
+
+	/**
+	 * The entity's CloudEvent when it is an integriq delivery-status event.
+	 *
+	 * @param mixed $entity The created object entity, or null.
+	 *
+	 * @return array<string,mixed>|null The CloudEvent, or null for any other object.
+	 */
+	private static function deliveryStatusEvent(mixed $entity): array|null {
+		$cloudEvent = $entity?->getObject();
+		if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+			return null;
+		}
+
+		return $cloudEvent;
+	}//end deliveryStatusEvent()
 
 	/**
 	 * Apply one delivery-status payload to the matching ARInvoice.

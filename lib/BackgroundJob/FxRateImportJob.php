@@ -143,16 +143,72 @@ class FxRateImportJob extends TimedJob {
 		$asOf = $this->previousBusinessDay();
 
 		if ($this->adapter->isDormant() === true) {
-			$this->logger->info(
-				'Shillinq FxRateImportJob: TreasuryRateAdapter is dormant — skipping ECB ingest. '
-				. 'Bind openconnector source slug `treasury-rates` (ECB SDMX) and override '
-				. 'TreasuryRateAdapterInterface in Application::register() to enable. '
-				. 'Manual FxRate entries via the admin UI are unaffected.',
-				['asOf' => $asOf]
-			);
+			$this->logDormant(asOf: $asOf);
 			return;
 		}
 
+		$objectService = $this->objectService();
+		if ($objectService === null) {
+			return;
+		}
+
+		$register = $this->getRegisterSlug();
+		$counts = $this->importAll(objectService: $objectService, register: $register, asOf: $asOf);
+
+		$this->logger->info(
+			sprintf(
+				'Shillinq FxRateImportJob: imported %d rate(s), skipped %d, %d error(s) for asOf=%s',
+				$counts['imported'],
+				$counts['skipped'],
+				$counts['errors'],
+				$asOf
+			)
+		);
+	}//end runAsJob()
+
+	/**
+	 * Import the rate of every configured pair.
+	 *
+	 * @param object $objectService OR ObjectService.
+	 * @param string $register      Register slug.
+	 * @param string $asOf          ISO date.
+	 *
+	 * @return array{imported:int,skipped:int,errors:int} The tallies.
+	 */
+	private function importAll(object $objectService, string $register, string $asOf): array {
+		$pairs = $this->configuredPairs();
+
+		$counts = ['imported' => 0, 'skipped' => 0, 'errors' => 0];
+		foreach ($pairs as $pair) {
+			$counts[$this->importPair(objectService: $objectService, register: $register, pair: $pair, asOf: $asOf)]++;
+		}
+
+		return $counts;
+	}//end importAll()
+
+	/**
+	 * Log that the ingest is skipped because the adapter is dormant.
+	 *
+	 * @param string $asOf ISO date.
+	 *
+	 * @return void
+	 */
+	private function logDormant(string $asOf): void {
+		$this->logger->info(
+			'Shillinq FxRateImportJob: TreasuryRateAdapter is dormant — skipping ECB ingest. '
+			. 'Bind openconnector source slug `treasury-rates` (ECB SDMX) and override '
+			. 'TreasuryRateAdapterInterface in Application::register() to enable. '
+			. 'Manual FxRate entries via the admin UI are unaffected.',
+			['asOf' => $asOf]
+		);
+	}//end logDormant()
+
+	/**
+	 * The OpenRegister ObjectService, or null (logged) when it is not available.
+	 *
+	 * @return object|null
+	 */
+	private function objectService(): object|null {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (\Throwable $e) {
@@ -160,61 +216,72 @@ class FxRateImportJob extends TimedJob {
 				'Shillinq FxRateImportJob: OpenRegister not available, skipping.',
 				['exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
 
-		$register = $this->getRegisterSlug();
-		$pairs = $this->configuredPairs();
+		return $objectService;
+	}//end objectService()
 
-		$imported = 0;
-		$skipped = 0;
-		$errors = 0;
+	/**
+	 * Fetch and upsert the rate of one configured pair.
+	 *
+	 * @param object               $objectService OR ObjectService.
+	 * @param string               $register      Register slug.
+	 * @param array<string,string> $pair          The pair: 'transaction' and 'base' currency.
+	 * @param string               $asOf          ISO date.
+	 *
+	 * @return string The tally it counts under: 'imported', 'skipped' or 'errors'.
+	 */
+	private function importPair(object $objectService, string $register, array $pair, string $asOf): string {
+		$tx = $pair['transaction'];
+		$base = $pair['base'];
 
-		foreach ($pairs as $pair) {
-			$tx = $pair['transaction'];
-			$base = $pair['base'];
+		$result = $this->fetchSpot(tx: $tx, base: $base, asOf: $asOf);
+		if ($result === null) {
+			return 'errors';
+		}
 
-			try {
-				$result = $this->adapter->fetchFxSpot(baseCurrency: $base, quoteCurrency: $tx, asOf: $asOf);
-			} catch (\Throwable $e) {
-				$errors++;
-				$this->logger->warning(
-					'Shillinq FxRateImportJob: fetchFxSpot threw',
-					['pair' => $tx . '/' . $base, 'asOf' => $asOf, 'exception' => $e->getMessage()]
-				);
-				continue;
-			}
+		if ($this->isDeferredResult(result: $result) === true) {
+			return 'skipped';
+		}
 
-			if ($this->isDeferredResult(result: $result) === true) {
-				$skipped++;
-				continue;
-			}
+		if ($this->upsertRate(
+			objectService: $objectService,
+			register: $register,
+			transactionCurrency: $tx,
+			baseCurrency: $base,
+			asOf: $asOf,
+			result: $result,
+		) === true
+		) {
+			return 'imported';
+		}
 
-			if ($this->upsertRate(
-				objectService: $objectService,
-				register: $register,
-				transactionCurrency: $tx,
-				baseCurrency: $base,
-				asOf: $asOf,
-				result: $result,
-			) === true
-			) {
-				$imported++;
-			} else {
-				$skipped++;
-			}
-		}//end foreach
+		return 'skipped';
+	}//end importPair()
 
-		$this->logger->info(
-			sprintf(
-				'Shillinq FxRateImportJob: imported %d rate(s), skipped %d, %d error(s) for asOf=%s',
-				$imported,
-				$skipped,
-				$errors,
-				$asOf
-			)
-		);
-	}//end runAsJob()
+	/**
+	 * Fetch one spot rate, or null (logged) when the adapter throws.
+	 *
+	 * @param string $tx   Quote currency code.
+	 * @param string $base Base currency code.
+	 * @param string $asOf ISO date.
+	 *
+	 * @return TreasuryRateResult|null
+	 */
+	private function fetchSpot(string $tx, string $base, string $asOf): TreasuryRateResult|null {
+		try {
+			$result = $this->adapter->fetchFxSpot(baseCurrency: $base, quoteCurrency: $tx, asOf: $asOf);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq FxRateImportJob: fetchFxSpot threw',
+				['pair' => $tx . '/' . $base, 'asOf' => $asOf, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		return $result;
+	}//end fetchSpot()
 
 	/**
 	 * Return the ISO date (YYYY-MM-DD) of the previous business day in
@@ -353,6 +420,17 @@ class FxRateImportJob extends TimedJob {
 			return null;
 		}//end try
 
+		return $this->firstRecord(matches: $matches);
+	}//end findExisting()
+
+	/**
+	 * The first match of a lookup as an array, or null when there is none.
+	 *
+	 * @param mixed $matches findAll() result.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstRecord(mixed $matches): array|null {
 		if (empty($matches) === true) {
 			return null;
 		}
@@ -367,7 +445,7 @@ class FxRateImportJob extends TimedJob {
 		}
 
 		return null;
-	}//end findExisting()
+	}//end firstRecord()
 
 	/**
 	 * Build a FxRate record matching the register schema.

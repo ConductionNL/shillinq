@@ -361,29 +361,44 @@ final class ContractLeafProvider implements IntegrationProvider, ContractLeafPro
 				continue;
 			}
 
-			foreach ($row['linkedObjects'] as $link) {
-				if (is_array($link) === false) {
-					continue;
-				}
-
-				$candidate = implode(
-					'|',
-					[
-						(string)($link['register'] ?? ''),
-						(string)($link['schema'] ?? ''),
-						(string)($link['id'] ?? ''),
-					]
-				);
-
-				if ($candidate === $key) {
-					$mine[] = $row;
-					break;
-				}
+			if (self::linksTo(row: $row, key: $key) === true) {
+				$mine[] = $row;
 			}
 		}
 
 		return $mine;
 	}//end contractsLinkedTo()
+
+	/**
+	 * Whether one of the contract's linked objects is the object with this key.
+	 *
+	 * @param array<string, mixed> $row The contract, with a linkedObjects list.
+	 * @param string               $key The host object's `register|schema|id`.
+	 *
+	 * @return bool True when the contract names the object.
+	 */
+	private static function linksTo(array $row, string $key): bool {
+		foreach ($row['linkedObjects'] as $link) {
+			if (is_array($link) === false) {
+				continue;
+			}
+
+			$candidate = implode(
+				'|',
+				[
+					(string)($link['register'] ?? ''),
+					(string)($link['schema'] ?? ''),
+					(string)($link['id'] ?? ''),
+				]
+			);
+
+			if ($candidate === $key) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end linksTo()
 
 	/**
 	 * The register slug holding shillinq's own objects.

@@ -192,16 +192,7 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 	 * @return array<string, mixed>|null Aanbesteding payload, or null when not applicable.
 	 */
 	private function extractPayload(Event $event): ?array {
-		if ($event instanceof ObjectCreatedEvent === false
-			&& $event instanceof ObjectTransitionedEvent === false
-		) {
-			return null;
-		}
-
-		// ObjectTransitionedEvent additionally filters on the target state.
-		if ($event instanceof ObjectTransitionedEvent === true
-			&& $event->getTo() !== 'gegund'
-		) {
+		if ($this->isAwardEvent(event: $event) === false) {
 			return null;
 		}
 
@@ -210,6 +201,41 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 			return null;
 		}
 
+		return $this->tenderPayload(entity: $entity);
+	}//end extractPayload()
+
+	/**
+	 * Whether the event is an object creation, or a transition to `gegund`.
+	 *
+	 * @param Event $event OR event.
+	 *
+	 * @return bool
+	 */
+	private function isAwardEvent(Event $event): bool {
+		if ($event instanceof ObjectCreatedEvent === false
+			&& $event instanceof ObjectTransitionedEvent === false
+		) {
+			return false;
+		}
+
+		// ObjectTransitionedEvent additionally filters on the target state.
+		if ($event instanceof ObjectTransitionedEvent === true
+			&& $event->getTo() !== 'gegund'
+		) {
+			return false;
+		}
+
+		return true;
+	}//end isAwardEvent()
+
+	/**
+	 * The object array of a tender-schema entity, or null for another schema or no array.
+	 *
+	 * @param object $entity The event's object entity.
+	 *
+	 * @return array<string, mixed>|null Aanbesteding payload, or null when not applicable.
+	 */
+	private function tenderPayload(object $entity): array|null {
 		$schema = $this->schemaResolver->schemaSlug(entity: $entity);
 		if ($this->isTenderSchema(schema: $schema) === false) {
 			return null;
@@ -221,7 +247,7 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 		}
 
 		return $payload;
-	}//end extractPayload()
+	}//end tenderPayload()
 
 	/**
 	 * Decide whether the dossier is the tenant's awarded tender.
@@ -659,8 +685,22 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 	 * @return array<string, mixed>|null
 	 */
 	private function findExistingBySourceReference(object $objectService, string $sourceReference): ?array {
+		$rows = $this->findCommitmentRows(objectService: $objectService, sourceReference: $sourceReference);
+
+		return $this->firstArrayRow(rows: $rows);
+	}//end findExistingByBronReferentie()
+
+	/**
+	 * Read the Commitment rows promoted from a TenderNed reference; a failed read yields null.
+	 *
+	 * @param object $objectService OR ObjectService.
+	 * @param string $sourceReference TenderNed aanbestedingId.
+	 *
+	 * @return mixed The rows, or null when the read failed.
+	 */
+	private function findCommitmentRows(object $objectService, string $sourceReference): mixed {
 		try {
-			$rows = $objectService
+			return $objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'Commitment')
 				->findAll(
@@ -681,7 +721,16 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 		} catch (Throwable $e) {
 			return null;
 		}
+	}//end findCommitmentRows()
 
+	/**
+	 * The first row that is an array, or null.
+	 *
+	 * @param mixed $rows The rows.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function firstArrayRow(mixed $rows): array|null {
 		if (is_array($rows) === false) {
 			return null;
 		}
@@ -693,7 +742,7 @@ class TenderNedAwardDetectedListener implements IEventListener, TenderNedAwardDe
 		}
 
 		return null;
-	}//end findExistingByBronReferentie()
+	}//end firstArrayRow()
 
 	/**
 	 * Resolve the OR ObjectService from the container (lazy).

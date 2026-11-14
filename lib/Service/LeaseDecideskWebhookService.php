@@ -255,10 +255,7 @@ class LeaseDecideskWebhookService {
 		$token = $this->getWebhookToken();
 		$payload = $this->buildPayload(event: $event);
 
-		$headers = ['Content-Type' => 'application/json'];
-		if ($token !== '') {
-			$headers['Authorization'] = 'Bearer ' . $token;
-		}
+		$headers = $this->webhookHeaders(token: $token);
 
 		try {
 			$client = $this->clientService->newClient();
@@ -297,4 +294,22 @@ class LeaseDecideskWebhookService {
 		}//end try
 
 	}//end deliver()
+
+	/**
+	 * The webhook request headers; the bearer token only when one is configured.
+	 *
+	 * @param string $token The configured bearer token, or ''.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
+	 */
+	private function webhookHeaders(string $token): array {
+		$headers = ['Content-Type' => 'application/json'];
+		if ($token !== '') {
+			$headers['Authorization'] = 'Bearer ' . $token;
+		}
+
+		return $headers;
+	}//end webhookHeaders()
 }//end class

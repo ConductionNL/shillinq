@@ -31,6 +31,7 @@ use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
+use OCA\Shillinq\Listener\ActuarialValuationApprovedListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
@@ -47,6 +48,7 @@ use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
@@ -292,6 +294,13 @@ final class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: CommitmentTransitionListener::class
+		);
+
+		// Reporting-ifrs-calculations REQ-PEN-011: approving an
+		// ActuarialValuation posts its IAS 19 journal entry.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: ActuarialValuationApprovedListener::class
 		);
 
 		// Task 5.3 — OrderFulfilmentTransitionListener emits
@@ -624,6 +633,21 @@ final class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: CommitmentTransitionListener::class,
 			schemas: ['Commitment']
+		);
+
+		// Sales-webshop-orders REQ-SWO-001: a saved WebshopOrder that waits
+		// for its invoice is invoiced, marked duplicate or refused.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectCreatedEvent::class,
+			listener: WebshopOrderListener::class,
+			schemas: ['WebshopOrder']
+		);
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: WebshopOrderListener::class,
+			schemas: ['WebshopOrder']
 		);
 	}//end subscribe()
 }//end class

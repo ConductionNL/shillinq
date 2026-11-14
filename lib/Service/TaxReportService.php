@@ -207,13 +207,7 @@ class TaxReportService implements TaxReportServiceInterface {
 				['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]
 			);
 
-		$transactionIds = [];
-		foreach ($transactions as $transaction) {
-			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
-			if ($id !== null) {
-				$transactionIds[(string)$id] = true;
-			}
-		}
+		$transactionIds = self::transactionIdSet(transactions: $transactions);
 
 		$accounts = $this->fetchAccounts(administrationId: $administrationId);
 
@@ -224,33 +218,75 @@ class TaxReportService implements TaxReportServiceInterface {
 
 		$rows = [];
 		foreach ($lines as $line) {
-			if (($line['eliminationFlag'] ?? false) === true) {
-				continue;
+			if (self::isTaxRowLine(line: $line, transactionIds: $transactionIds) === true) {
+				$rows[] = self::taxRow(line: $line, accounts: $accounts);
 			}
-
-			$transactionId = (string)($line['transactionId'] ?? '');
-			if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
-				continue;
-			}
-
-			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$account = ($accounts[$accountNumber] ?? []);
-			$rows[] = [
-				'accountNumber' => $accountNumber,
-				'accountName' => ($account['name'] ?? null),
-				'accountType' => (string)($account['accountType'] ?? ''),
-				'taxTreatment' => (string)($line['taxTreatment'] ?? ''),
-				'amount' => ($line['amount'] ?? 0),
-				'side' => (string)($line['side'] ?? ''),
-			];
-		}//end foreach
+		}
 
 		return $rows;
 	}//end fetchTaxRows()
+
+	/**
+	 * The ids of the period's transactions, as a set.
+	 *
+	 * @param iterable<mixed> $transactions The GLTransaction rows.
+	 *
+	 * @return array<string, true>
+	 */
+	private static function transactionIdSet(iterable $transactions): array {
+		$transactionIds = [];
+		foreach ($transactions as $transaction) {
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$transactionIds[(string)$id] = true;
+			}
+		}
+
+		return $transactionIds;
+	}//end transactionIdSet()
+
+	/**
+	 * Whether a GL line counts: not an elimination, in the period's transactions (when any), and on an account.
+	 *
+	 * @param mixed               $line           The GLLine row.
+	 * @param array<string, true> $transactionIds The period's transaction ids.
+	 *
+	 * @return bool
+	 */
+	private static function isTaxRowLine(mixed $line, array $transactionIds): bool {
+		if (($line['eliminationFlag'] ?? false) === true) {
+			return false;
+		}
+
+		$transactionId = (string)($line['transactionId'] ?? '');
+		if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
+			return false;
+		}
+
+		return (string)($line['accountNumber'] ?? '') !== '';
+	}//end isTaxRowLine()
+
+	/**
+	 * The tax row for one GL line, with its account's name and type.
+	 *
+	 * @param mixed                $line     The GLLine row.
+	 * @param array<string, mixed> $accounts The accounts by number.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function taxRow(mixed $line, array $accounts): array {
+		$accountNumber = (string)($line['accountNumber'] ?? '');
+		$account       = ($accounts[$accountNumber] ?? []);
+
+		return [
+			'accountNumber' => $accountNumber,
+			'accountName' => ($account['name'] ?? null),
+			'accountType' => (string)($account['accountType'] ?? ''),
+			'taxTreatment' => (string)($line['taxTreatment'] ?? ''),
+			'amount' => ($line['amount'] ?? 0),
+			'side' => (string)($line['side'] ?? ''),
+		];
+	}//end taxRow()
 
 	/**
 	 * Fetch the administration's chart-of-accounts keyed by accountNumber.

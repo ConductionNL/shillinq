@@ -602,7 +602,10 @@ class VatSuppletieDetectionService {
 				);
 			}
 
-			$delta['glAccountNumber'] = $account;
+			// '' rather than null: the stored correction's categoryDeltas
+			// declare glAccountNumber a string, and deltaAccount() books an
+			// empty one on the clearing account either way.
+			$delta['glAccountNumber'] = (string)$account;
 			$result[] = $delta;
 		}//end foreach
 

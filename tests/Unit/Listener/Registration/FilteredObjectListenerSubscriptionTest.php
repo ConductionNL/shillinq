@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener\Registration;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
@@ -82,7 +83,7 @@ final class FilteredObjectListenerSubscriptionTest extends TestCase {
 		(new ListenerRegistrar())->subscribe($dispatcher);
 
 		$calls = \OCA\OpenRegister\Event\ObjectEventSubscription::$calls;
-		self::assertCount(17, $calls);
+		self::assertCount(19, $calls);
 		foreach ($calls as $call) {
 			self::assertSame($dispatcher, $call[0]);
 			self::assertNull($call[3], 'No listener narrows on register slugs.');
@@ -100,6 +101,8 @@ final class FilteredObjectListenerSubscriptionTest extends TestCase {
 		);
 		self::assertSame([ObjectCreatedEvent::class, CommitmentTransitionListener::class, ['Commitment']], $pick($calls[16]));
 		self::assertSame([ObjectUpdatedEvent::class, ChartTemplateVersionListener::class, ['AdministrationTemplate']], $pick($calls[5]));
+		self::assertSame([ObjectCreatedEvent::class, WebshopOrderListener::class, ['WebshopOrder']], $pick($calls[17]));
+		self::assertSame([ObjectUpdatedEvent::class, WebshopOrderListener::class, ['WebshopOrder']], $pick($calls[18]));
 
 	}//end testListenersAreSubscribedThroughOpenRegisterWithTheirSchemas()
 }//end class

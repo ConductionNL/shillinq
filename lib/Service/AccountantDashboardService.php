@@ -229,6 +229,26 @@ class AccountantDashboardService implements AccountantDashboardServiceInterface 
 		$statusCode = (string)($latest['statusCode'] ?? 'draft');
 		$endDate = (string)($latest['endDate'] ?? '');
 
+		[$dueDate, $overdue] = $this->filingDeadline(statusCode: $statusCode, endDate: $endDate);
+
+		return [
+			'statusCode' => $statusCode,
+			'periodEndDate' => $endDate,
+			'dueDate' => $dueDate,
+			'overdue' => $overdue,
+		];
+
+	}//end latestVatFilingStatus()
+
+	/**
+	 * The statutory filing deadline of an unfiled return, and whether it has passed.
+	 *
+	 * @param string $statusCode The return's status code.
+	 * @param string $endDate    The return's period end date.
+	 *
+	 * @return array{0: string|null, 1: bool} [dueDate, overdue]; no deadline for a filed return or one without an end date.
+	 */
+	private function filingDeadline(string $statusCode, string $endDate): array {
 		$dueDate = null;
 		$overdue = false;
 		if ($statusCode !== 'filed' && $endDate !== '') {
@@ -241,14 +261,8 @@ class AccountantDashboardService implements AccountantDashboardServiceInterface 
 			}
 		}
 
-		return [
-			'statusCode' => $statusCode,
-			'periodEndDate' => $endDate,
-			'dueDate' => $dueDate,
-			'overdue' => $overdue,
-		];
-
-	}//end latestVatFilingStatus()
+		return [$dueDate, $overdue];
+	}//end filingDeadline()
 
 	/**
 	 * Best-effort count of SupplierInvoice rows with no recorded source document

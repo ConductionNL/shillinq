@@ -410,19 +410,7 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 		$before = $this->stripPii(value: ($event['before'] ?? ($event['beforeValue'] ?? [])));
 		$after = $this->stripPii(value: ($event['after'] ?? ($event['afterValue'] ?? [])));
 
-		$fieldsChanged = [];
-		if (is_array($before) === true && is_array($after) === true) {
-			$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
-			foreach ($keys as $key) {
-				if (in_array($key, self::PII_FIELDS, true) === true) {
-					continue;
-				}
-
-				if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
-					$fieldsChanged[] = (string)$key;
-				}
-			}
-		}
+		$fieldsChanged = $this->changedFields(before: $before, after: $after);
 
 		return [
 			'timestamp' => (string)($event['created'] ?? ($event['timestamp'] ?? '')),
@@ -436,6 +424,46 @@ class ComplianceExportService implements ComplianceExportServiceInterface {
 		];
 
 	}//end renderRow()
+
+	/**
+	 * The non-PII fields whose value differs between before and after.
+	 *
+	 * @param mixed $before The PII-stripped before value.
+	 * @param mixed $after  The PII-stripped after value.
+	 *
+	 * @return list<string>
+	 */
+	private function changedFields(mixed $before, mixed $after): array {
+		if (is_array($before) === false || is_array($after) === false) {
+			return [];
+		}
+
+		return $this->differingKeys(before: $before, after: $after);
+	}//end changedFields()
+
+	/**
+	 * The non-PII keys whose value differs between two arrays.
+	 *
+	 * @param array<string,mixed> $before The before value.
+	 * @param array<string,mixed> $after  The after value.
+	 *
+	 * @return list<string>
+	 */
+	private function differingKeys(array $before, array $after): array {
+		$fieldsChanged = [];
+		$keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+		foreach ($keys as $key) {
+			if (in_array($key, self::PII_FIELDS, true) === true) {
+				continue;
+			}
+
+			if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
+				$fieldsChanged[] = (string)$key;
+			}
+		}
+
+		return $fieldsChanged;
+	}//end differingKeys()
 
 	/**
 	 * Validate the [from, to] window — both dates required, ISO format,

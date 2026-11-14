@@ -45,6 +45,8 @@ use Psr\Log\LoggerInterface;
  * register/schema the app ships, so its size scales with the app's
  * feature surface; splitting is out of scope for a mechanical phpcs/phpmd
  * cleanup. Deferred to a follow-up.
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class InitializeSettings implements IRepairStep {
 	use \OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
@@ -142,43 +144,7 @@ class InitializeSettings implements IRepairStep {
 		}
 
 		try {
-			// NOT forced. The C8 workaround used to force this import because OpenRegister's
-			// app-level gate compared only the APP version, so a shillinq_register.json change
-			// silently no-op'd whenever the app version was unchanged. Forcing dodged that, but
-			// `force: true` also bypasses OR's app-level fast-skip entirely — so this step
-			// re-parsed the 1 MB descriptor + 146 register.d fragments and walked every
-			// register/schema on EVERY upgrade, to conclude "nothing changed": 711s, ~70% of the
-			// instance's whole `occ maintenance:repair`.
-			//
-			// OpenRegister#426 removed the reason to force: its gate is now content-aware
-			// (app version NOT newer AND a sha256 of the definitional payload identical to the
-			// last import). A descriptor change therefore re-imports even when the app version
-			// is unchanged — exactly what C8 wanted — while a genuinely unchanged config
-			// fast-skips in milliseconds. Requires an OpenRegister that ships #426; on an older
-			// one this degrades to the app-version-only gate (fast, but a content change with an
-			// unchanged app version would no-op again — bump the app version to force it).
-			$result = $this->settingsService->loadConfiguration();
-
-			if ($result['success'] === true) {
-				$skipped = (($result['skipped'] ?? false) === true);
-				$version = ($result['version'] ?? 'unknown');
-				if ($skipped === true) {
-					$output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-				}
-
-				if ($skipped !== true) {
-					$output->info(
-						'Shillinq configuration imported successfully (version: ' . $version . ')'
-					);
-				}
-			}
-
-			if ($result['success'] !== true) {
-				$message = ($result['message'] ?? 'unknown error');
-				$output->warning('Shillinq configuration import issue: ' . $message);
-				// H2: skip account seed when schema import failed to avoid writing
-				// accounts into an uninitialized register.
-				$output->warning('Shillinq: schema import failed, skipping account seed');
+			if ($this->importConfiguration(output: $output) === false) {
 				return;
 			}
 
@@ -212,15 +178,7 @@ class InitializeSettings implements IRepairStep {
 			// outer catch below — where previously each seeder handled its own
 			// failure and the rest still ran. Adding an identity must not cost
 			// the degradation behaviour that was already there.
-			$objectService = null;
-			try {
-				$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'Shillinq: ObjectService unavailable; seeding without a system identity',
-					['exception' => $e->getMessage()]
-				);
-			}
+			$objectService = $this->resolveSeedObjectService();
 
 			$this->withSystemIdentity(
 				objectService: $objectService,
@@ -237,6 +195,88 @@ class InitializeSettings implements IRepairStep {
 		}//end try
 
 	}//end run()
+
+	/**
+	 * Import the register configuration and report the outcome.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return bool True when the import succeeded (or was a version-unchanged skip); false when the seeders must not run.
+	 */
+	private function importConfiguration(IOutput $output): bool {
+		// NOT forced. The C8 workaround used to force this import because OpenRegister's
+		// app-level gate compared only the APP version, so a shillinq_register.json change
+		// silently no-op'd whenever the app version was unchanged. Forcing dodged that, but
+		// `force: true` also bypasses OR's app-level fast-skip entirely — so this step
+		// re-parsed the 1 MB descriptor + 146 register.d fragments and walked every
+		// register/schema on EVERY upgrade, to conclude "nothing changed": 711s, ~70% of the
+		// instance's whole `occ maintenance:repair`.
+		//
+		// OpenRegister#426 removed the reason to force: its gate is now content-aware
+		// (app version NOT newer AND a sha256 of the definitional payload identical to the
+		// last import). A descriptor change therefore re-imports even when the app version
+		// is unchanged — exactly what C8 wanted — while a genuinely unchanged config
+		// fast-skips in milliseconds. Requires an OpenRegister that ships #426; on an older
+		// one this degrades to the app-version-only gate (fast, but a content change with an
+		// unchanged app version would no-op again — bump the app version to force it).
+		$result = $this->settingsService->loadConfiguration();
+
+		if ($result['success'] === true) {
+			$this->reportConfigurationImported(output: $output, result: $result);
+		}
+
+		if ($result['success'] !== true) {
+			$message = ($result['message'] ?? 'unknown error');
+			$output->warning('Shillinq configuration import issue: ' . $message);
+			// H2: skip account seed when schema import failed to avoid writing
+			// accounts into an uninitialized register.
+			$output->warning('Shillinq: schema import failed, skipping account seed');
+			return false;
+		}
+
+		return true;
+	}//end importConfiguration()
+
+	/**
+	 * Report a successful configuration import, or its version-unchanged skip.
+	 *
+	 * @param IOutput             $output The output interface for progress reporting.
+	 * @param array<string,mixed> $result The loadConfiguration() result.
+	 *
+	 * @return void
+	 */
+	private function reportConfigurationImported(IOutput $output, array $result): void {
+		$skipped = (($result['skipped'] ?? false) === true);
+		$version = ($result['version'] ?? 'unknown');
+		if ($skipped === true) {
+			$output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+		}
+
+		if ($skipped !== true) {
+			$output->info(
+				'Shillinq configuration imported successfully (version: ' . $version . ')'
+			);
+		}
+	}//end reportConfigurationImported()
+
+	/**
+	 * Resolve the ObjectService for the system identity, or null (logged) when it is unavailable.
+	 *
+	 * @return mixed The ObjectService, or null.
+	 */
+	private function resolveSeedObjectService(): mixed {
+		$objectService = null;
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: ObjectService unavailable; seeding without a system identity',
+				['exception' => $e->getMessage()]
+			);
+		}
+
+		return $objectService;
+	}//end resolveSeedObjectService()
 
 	/**
 	 * Run every seeder, under whatever identity the caller established.
@@ -452,15 +492,7 @@ class InitializeSettings implements IRepairStep {
 	private function seedProjectData(IOutput $output): void {
 		$output->info('Seeding RJ-270 stages...');
 		$rj270Result = $this->settingsService->seedRj270Stages();
-		if (($rj270Result['success'] ?? false) === true) {
-			$output->info(
-				'RJ-270 stages seeded: ' . ($rj270Result['seeded'] ?? 0) . ' created, ' . ($rj270Result['skipped'] ?? 0) . ' skipped.'
-			);
-		}
-
-		if (($rj270Result['success'] ?? false) !== true) {
-			$output->warning('RJ-270 stages seeding issue: ' . ($rj270Result['message'] ?? 'unknown error'));
-		}
+		$this->reportProjectSeedResult(output: $output, result: $rj270Result, label: 'RJ-270 stages');
 
 		$settings = $this->settingsService->getSettings();
 		$administrationId = ($settings['administration_id'] ?? '');
@@ -485,6 +517,29 @@ class InitializeSettings implements IRepairStep {
 		}
 
 	}//end seedProjectData()
+
+	/**
+	 * Report a project-data seed result whose success flag may be absent: the counts on success, the message otherwise.
+	 *
+	 * @param IOutput             $output The output interface for progress reporting.
+	 * @param array<string,mixed> $result The seed result.
+	 * @param string              $label  What was seeded.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+	 */
+	private function reportProjectSeedResult(IOutput $output, array $result, string $label): void {
+		if (($result['success'] ?? false) === true) {
+			$output->info(
+				$label . ' seeded: ' . ($result['seeded'] ?? 0) . ' created, ' . ($result['skipped'] ?? 0) . ' skipped.'
+			);
+		}
+
+		if (($result['success'] ?? false) !== true) {
+			$output->warning($label . ' seeding issue: ' . ($result['message'] ?? 'unknown error'));
+		}
+	}//end reportProjectSeedResult()
 
 	/**
 	 * Seed the consultancy-project-accounting templates (CostProject + CostCenter)
@@ -563,89 +618,81 @@ class InitializeSettings implements IRepairStep {
 		string $registerSlug,
 		string $administrationId,
 	): void {
-		$seedPath = __DIR__ . '/../Settings/seeds/project-templates.json';
-		if (file_exists($seedPath) === false) {
-			$output->warning('Shillinq: project template seed file not found, skipping');
+		$projects = $this->readSeedRows(output: $output, fileName: 'project-templates.json', label: 'project template', key: 'projects');
+		if ($projects === null) {
 			return;
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			$output->warning('Shillinq: failed to read project template seed file, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			$output->warning('Shillinq: failed to parse project template seed file: ' . json_last_error_msg());
-			return;
-		}
-
-		$projects = ($data['projects'] ?? []);
 		if (empty($projects) === true) {
 			$output->info('Shillinq: project template seed file contains no projects, skipping');
 			return;
 		}
 
-		$seeded = 0;
-		$skipped = 0;
+		$counts = ['seeded' => 0, 'skipped' => 0, 'ignored' => 0];
 
 		foreach ($projects as $project) {
-			$projectNumber = ($project['projectNumber'] ?? null);
-			if ($projectNumber === null) {
-				continue;
-			}
-
-			try {
-				// Deduplication: check by projectNumber + administrationId on AnalyticalDimension
-				// (dimensionType=project) — formerly checked CostProject (retired per REQ-RCP-003).
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('AnalyticalDimension')
-					->findAll(
-						[
-							'filters' => [
-								'projectNumber' => $projectNumber,
-								'administrationId' => $administrationId,
-								'dimensionType' => 'project',
-							],
-							'limit' => 1,
-						]
-					);
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: project template lookup failed for ' . $projectNumber . ': ' . $e->getMessage());
-				continue;
-			}
-
-			if (empty($existing) === false) {
-				$skipped++;
-				continue;
-			}
-
 			$project['administrationId'] = $administrationId;
-			// Strip the @self envelope before persistence — @self is a seed-file convention
-			// not an AnalyticalDimension schema field.
-			unset($project['@self'], $project['_meta']);
-
-			try {
-				$objectService->saveObject(
-					object: $project,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
-					// System seed inside a no-session repair step — bypass RBAC.
-					_rbac: false,
-				);
-				$seeded++;
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: project template save failed for ' . $projectNumber . ': ' . $e->getMessage());
-			}
-		}//end foreach
+			$outcome = $this->seedProjectTemplate(output: $output, objectService: $objectService, registerSlug: $registerSlug, project: $project);
+			$counts[$outcome]++;
+		}
 
 		$output->info(
-			'Project templates seeded (AnalyticalDimension, dimensionType=project): ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
+			'Project templates seeded (AnalyticalDimension, dimensionType=project): ' . $counts['seeded'] . ' created, '
+			. $counts['skipped'] . ' skipped (already exist).'
 		);
 
 	}//end seedConsultancyProjectTemplates()
+
+	/**
+	 * Seed one project-flavoured AnalyticalDimension unless its projectNumber already exists.
+	 *
+	 * @param IOutput             $output        The output interface for progress reporting.
+	 * @param object              $objectService The OR ObjectService instance.
+	 * @param string              $registerSlug  The shillinq register slug.
+	 * @param array<string,mixed> $project       The seed row, stamped with the configured administrationId.
+	 *
+	 * @return string One of `seeded`, `skipped` or `ignored` (no projectNumber, or a reported failure).
+	 *
+	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110)
+	 */
+	private function seedProjectTemplate(IOutput $output, object $objectService, string $registerSlug, array $project): string {
+		$projectNumber = ($project['projectNumber'] ?? null);
+		if ($projectNumber === null) {
+			return 'ignored';
+		}
+
+		try {
+			// Deduplication: check by projectNumber + administrationId on AnalyticalDimension
+			// (dimensionType=project) — formerly checked CostProject (retired per REQ-RCP-003).
+			$filters = ['projectNumber' => $projectNumber, 'administrationId' => $project['administrationId'], 'dimensionType' => 'project'];
+			$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'AnalyticalDimension', filters: $filters);
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: project template lookup failed for ' . $projectNumber . ': ' . $e->getMessage());
+			return 'ignored';
+		}
+
+		if (empty($existing) === false) {
+			return 'skipped';
+		}
+
+		// Strip the @self envelope before persistence — @self is a seed-file convention
+		// not an AnalyticalDimension schema field.
+		unset($project['@self'], $project['_meta']);
+
+		try {
+			$objectService->saveObject(
+				object: $project,
+				register: $registerSlug,
+				schema: 'AnalyticalDimension',
+				// System seed inside a no-session repair step — bypass RBAC.
+				_rbac: false,
+			);
+			return 'seeded';
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: project template save failed for ' . $projectNumber . ': ' . $e->getMessage());
+			return 'ignored';
+		}
+	}//end seedProjectTemplate()
 
 	/**
 	 * Import CostCenter seed records from cost-center-templates.json idempotently.
@@ -665,86 +712,130 @@ class InitializeSettings implements IRepairStep {
 		string $registerSlug,
 		string $administrationId,
 	): void {
-		$seedPath = __DIR__ . '/../Settings/seeds/cost-center-templates.json';
-		if (file_exists($seedPath) === false) {
-			$output->warning('Shillinq: CostCenter seed file not found, skipping');
+		$costCenters = $this->readSeedRows(output: $output, fileName: 'cost-center-templates.json', label: 'CostCenter', key: 'costCenters');
+		if ($costCenters === null) {
 			return;
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			$output->warning('Shillinq: failed to read CostCenter seed file, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			$output->warning('Shillinq: failed to parse CostCenter seed file: ' . json_last_error_msg());
-			return;
-		}
-
-		$costCenters = ($data['costCenters'] ?? []);
 		if (empty($costCenters) === true) {
 			$output->info('Shillinq: CostCenter seed file contains no records, skipping');
 			return;
 		}
 
-		$seeded = 0;
-		$skipped = 0;
+		$counts = ['seeded' => 0, 'skipped' => 0, 'ignored' => 0];
 
 		foreach ($costCenters as $costCenter) {
-			$code = ($costCenter['code'] ?? null);
-			if ($code === null) {
-				continue;
-			}
-
-			try {
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('AnalyticalDimension')
-					->findAll(
-						[
-							'filters' => [
-								'code' => $code,
-								'administrationId' => $administrationId,
-								'dimensionType' => 'cost-center',
-							],
-							'limit' => 1,
-						]
-					);
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: CostCenter lookup failed for ' . $code . ': ' . $e->getMessage());
-				continue;
-			}
-
-			if (empty($existing) === false) {
-				$skipped++;
-				continue;
-			}
-
 			$costCenter['administrationId'] = $administrationId;
-			$costCenter['dimensionType'] = 'cost-center';
-			unset($costCenter['@self']);
-
-			try {
-				$objectService->saveObject(
-					object: $costCenter,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
-					// System seed inside a no-session repair step — bypass RBAC.
-					_rbac: false,
-				);
-				$seeded++;
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: CostCenter save failed for ' . $code . ': ' . $e->getMessage());
-			}
-		}//end foreach
+			$outcome = $this->seedCostCenterTemplate(output: $output, objectService: $objectService, registerSlug: $registerSlug, costCenter: $costCenter);
+			$counts[$outcome]++;
+		}
 
 		$output->info(
-			'CostCenter templates seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
+			'CostCenter templates seeded: ' . $counts['seeded'] . ' created, ' . $counts['skipped'] . ' skipped (already exist).'
 		);
 
 	}//end seedConsultancyCostCenterTemplates()
+
+	/**
+	 * Seed one cost-center AnalyticalDimension unless its code already exists.
+	 *
+	 * @param IOutput             $output        The output interface for progress reporting.
+	 * @param object              $objectService The OR ObjectService instance.
+	 * @param string              $registerSlug  The shillinq register slug.
+	 * @param array<string,mixed> $costCenter    The seed row, stamped with the configured administrationId.
+	 *
+	 * @return string One of `seeded`, `skipped` or `ignored` (no code, or a reported failure).
+	 *
+	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
+	 */
+	private function seedCostCenterTemplate(IOutput $output, object $objectService, string $registerSlug, array $costCenter): string {
+		$code = ($costCenter['code'] ?? null);
+		if ($code === null) {
+			return 'ignored';
+		}
+
+		try {
+			$filters = ['code' => $code, 'administrationId' => $costCenter['administrationId'], 'dimensionType' => 'cost-center'];
+			$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: 'AnalyticalDimension', filters: $filters);
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: CostCenter lookup failed for ' . $code . ': ' . $e->getMessage());
+			return 'ignored';
+		}
+
+		if (empty($existing) === false) {
+			return 'skipped';
+		}
+
+		$costCenter['dimensionType'] = 'cost-center';
+		unset($costCenter['@self']);
+
+		try {
+			$objectService->saveObject(
+				object: $costCenter,
+				register: $registerSlug,
+				schema: 'AnalyticalDimension',
+				// System seed inside a no-session repair step — bypass RBAC.
+				_rbac: false,
+			);
+			return 'seeded';
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: CostCenter save failed for ' . $code . ': ' . $e->getMessage());
+			return 'ignored';
+		}
+	}//end seedCostCenterTemplate()
+
+	/**
+	 * Read a seed file under Settings/seeds/ and return the rows under one key, or null (reported) when unusable.
+	 *
+	 * @param IOutput $output   The output interface for progress reporting.
+	 * @param string  $fileName The seed file name.
+	 * @param string  $label    The seed's name in the warnings.
+	 * @param string  $key      The key that holds the rows.
+	 *
+	 * @return mixed The rows (`[]` when the key is absent), or null when the file is missing, unreadable or invalid JSON.
+	 *
+	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
+	 */
+	private function readSeedRows(IOutput $output, string $fileName, string $label, string $key): mixed {
+		$seedPath = __DIR__ . '/../Settings/seeds/' . $fileName;
+		if (file_exists($seedPath) === false) {
+			$output->warning('Shillinq: ' . $label . ' seed file not found, skipping');
+			return null;
+		}
+
+		$content = file_get_contents($seedPath);
+		if ($content === false) {
+			$output->warning('Shillinq: failed to read ' . $label . ' seed file, skipping');
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$output->warning('Shillinq: failed to parse ' . $label . ' seed file: ' . json_last_error_msg());
+			return null;
+		}
+
+		return ($data[$key] ?? []);
+	}//end readSeedRows()
+
+	/**
+	 * Find the one record of a schema that matches the given filters.
+	 *
+	 * @param mixed               $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register to search.
+	 * @param string              $schema        The schema to search.
+	 * @param array<string,mixed> $filters       The deduplication filters.
+	 *
+	 * @return mixed The findAll result, at most one row.
+	 *
+	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
+	 */
+	private function findOneRecord(mixed $objectService, string $registerSlug, string $schema, array $filters): mixed {
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema($schema)
+			->findAll(['filters' => $filters, 'limit' => 1]);
+	}//end findOneRecord()
 
 	/**
 	 * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.
@@ -903,6 +994,43 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
+		$found = $this->findBbvAdministrations(output: $output, objectService: $objectService);
+		if ($found === null) {
+			return;
+		}
+
+		$administrations = $found['rows'];
+		if (empty($administrations) === true) {
+			$output->info('Shillinq: no administrations found, skipping BBV mapping seed');
+			return;
+		}
+
+		$totalSeeded = 0;
+		$totalSkipped = 0;
+
+		foreach ($administrations as $administration) {
+			$counts = $this->seedBbvForAdministration(output: $output, administration: $administration);
+			$totalSeeded += $counts['seeded'];
+			$totalSkipped += $counts['skipped'];
+		}
+
+		$output->info(
+			'BBV mapping seed complete: ' . $totalSeeded . ' total created, ' . $totalSkipped . ' total skipped across municipal administrations.'
+		);
+
+	}//end seedBbvMappingsForMunicipalAdministrations()
+
+	/**
+	 * Load the Administration objects, or null (reported) when the register is not present yet.
+	 *
+	 * @param IOutput $output        The output interface for progress reporting.
+	 * @param mixed   $objectService OpenRegister's ObjectService.
+	 *
+	 * @return array{rows: mixed}|null The findAll result under `rows`.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function findBbvAdministrations(IOutput $output, mixed $objectService): array|null {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$administrations = $objectService
@@ -913,63 +1041,78 @@ class InitializeSettings implements IRepairStep {
 			$output->info(
 				'Shillinq: Administration register not yet present, skipping BBV mapping seed'
 			);
-			return;
+			return null;
 		}
 
-		if (empty($administrations) === true) {
-			$output->info('Shillinq: no administrations found, skipping BBV mapping seed');
-			return;
-		}
+		return ['rows' => $administrations];
+	}//end findBbvAdministrations()
 
+	/**
+	 * Seed the BBV account mappings for one administration when it is municipal.
+	 *
+	 * @param IOutput $output         The output interface for progress reporting.
+	 * @param mixed   $administration The Administration row (ObjectEntity or array).
+	 *
+	 * @return array{seeded: int, skipped: int} The counts to add to the totals (zero when skipped or failed).
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function seedBbvForAdministration(IOutput $output, mixed $administration): array {
 		$municipalTypes = ['municipality', 'province', 'waterAuthority'];
-		$totalSeeded = 0;
-		$totalSkipped = 0;
 
-		foreach ($administrations as $administration) {
-			// OpenRegister's findAll() returns ObjectEntity instances, not plain
-			// arrays; array-indexing one directly throws "Cannot use object of
-			// type ...ObjectEntity as array" (issue #508). Normalise first.
-			$administrationRow = $this->asArray(row: $administration);
-			$administrationType = (string)($administrationRow['administrationType'] ?? '');
-			if (in_array($administrationType, $municipalTypes, true) === false) {
-				continue;
-			}
+		// OpenRegister's findAll() returns ObjectEntity instances, not plain
+		// arrays; array-indexing one directly throws "Cannot use object of
+		// type ...ObjectEntity as array" (issue #508). Normalise first.
+		$administrationRow = $this->asArray(row: $administration);
+		$administrationType = (string)($administrationRow['administrationType'] ?? '');
+		if (in_array($administrationType, $municipalTypes, true) === false) {
+			return ['seeded' => 0, 'skipped' => 0];
+		}
 
-			$administrationId = (string)($administrationRow['administrationCode'] ?? $administrationRow['id'] ?? $administrationRow['uuid'] ?? '');
-			if ($administrationId === '') {
-				continue;
-			}
-
-			$output->info(
-				'Seeding BBV account mappings for administration ' . $administrationId . ' (' . $administrationType . ')...'
-			);
-			$result = $this->settingsService->seedBbvAccountMappings(
-				administrationId: $administrationId,
-				administrationType: $administrationType
-			);
-
-			if (($result['success'] ?? false) === true) {
-				$output->info(
-					'BBV mappings seeded for ' . $administrationId . ': '
-					. ($result['seeded'] ?? 0) . ' created, '
-					. ($result['skipped'] ?? 0) . ' skipped.'
-				);
-				$totalSeeded += (int)($result['seeded'] ?? 0);
-				$totalSkipped += (int)($result['skipped'] ?? 0);
-				continue;
-			}
-
-			$output->warning(
-				'BBV mapping seed failed for ' . $administrationId . ': '
-				. ($result['message'] ?? 'unknown error')
-			);
-		}//end foreach
+		$administrationId = (string)($administrationRow['administrationCode'] ?? $administrationRow['id'] ?? $administrationRow['uuid'] ?? '');
+		if ($administrationId === '') {
+			return ['seeded' => 0, 'skipped' => 0];
+		}
 
 		$output->info(
-			'BBV mapping seed complete: ' . $totalSeeded . ' total created, ' . $totalSkipped . ' total skipped across municipal administrations.'
+			'Seeding BBV account mappings for administration ' . $administrationId . ' (' . $administrationType . ')...'
+		);
+		$result = $this->settingsService->seedBbvAccountMappings(
+			administrationId: $administrationId,
+			administrationType: $administrationType
 		);
 
-	}//end seedBbvMappingsForMunicipalAdministrations()
+		return $this->reportBbvSeedResult(output: $output, administrationId: $administrationId, result: $result);
+	}//end seedBbvForAdministration()
+
+	/**
+	 * Report one administration's BBV mapping seed result and return its counts.
+	 *
+	 * @param IOutput             $output           The output interface for progress reporting.
+	 * @param string              $administrationId The administration that was seeded.
+	 * @param array<string,mixed> $result           The seedBbvAccountMappings() result.
+	 *
+	 * @return array{seeded: int, skipped: int} The counts on success, zero on failure.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function reportBbvSeedResult(IOutput $output, string $administrationId, array $result): array {
+		if (($result['success'] ?? false) === true) {
+			$output->info(
+				'BBV mappings seeded for ' . $administrationId . ': '
+				. ($result['seeded'] ?? 0) . ' created, '
+				. ($result['skipped'] ?? 0) . ' skipped.'
+			);
+			return ['seeded' => (int)($result['seeded'] ?? 0), 'skipped' => (int)($result['skipped'] ?? 0)];
+		}
+
+		$output->warning(
+			'BBV mapping seed failed for ' . $administrationId . ': '
+			. ($result['message'] ?? 'unknown error')
+		);
+
+		return ['seeded' => 0, 'skipped' => 0];
+	}//end reportBbvSeedResult()
 
 	/**
 	 * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
@@ -1025,73 +1168,18 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
 	 */
 	private function seedKorThresholds(IOutput $output): void {
-		$seedPath = __DIR__ . '/../Settings/seeds/kor-thresholds-2026.json';
-		if (file_exists($seedPath) === false) {
-			$output->warning('Shillinq: KOR threshold seed file not found, skipping');
+		$thresholds = $this->readSeedRows(output: $output, fileName: 'kor-thresholds-2026.json', label: 'KOR threshold', key: 'thresholds');
+		if ($thresholds === null) {
 			return;
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			$output->warning('Shillinq: failed to read KOR threshold seed file, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			$output->warning('Shillinq: failed to parse KOR threshold seed file: ' . json_last_error_msg());
-			return;
-		}
-
-		$thresholds = ($data['thresholds'] ?? []);
 		if (empty($thresholds) === true) {
 			$output->info('Shillinq: KOR threshold seed file contains no thresholds, skipping');
 			return;
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($thresholds as $threshold) {
-				$fiscalYear = ($threshold['fiscalYear'] ?? null);
-				if ($fiscalYear === null) {
-					continue;
-				}
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('KorThreshold')
-					->findAll(
-						[
-							'filters' => ['fiscalYear' => $fiscalYear],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $threshold,
-					register: $registerSlug,
-					schema: 'KorThreshold',
-					// System seeding runs inside a repair step with no user
-					// session, so the acting identity is Anonymous. Bypass RBAC
-					// (as OpenRegister's own config import does) — otherwise the
-					// KorThreshold schema's create permission denies the seed.
-					_rbac: false,
-				);
-				$seeded++;
-			}//end foreach
-
-			$output->info(
-				'Shillinq: KOR thresholds seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
-			);
+			$this->writeKorThresholds(output: $output, thresholds: $thresholds);
 		} catch (\Throwable $e) {
 			$output->warning('Shillinq: KOR threshold seeding failed: ' . $e->getMessage());
 			$this->logger->warning(
@@ -1101,6 +1189,60 @@ class InitializeSettings implements IRepairStep {
 		}//end try
 
 	}//end seedKorThresholds()
+
+	/**
+	 * Save every KorThreshold whose fiscalYear is not seeded yet, then report the counts.
+	 *
+	 * @param IOutput      $output     The output interface for progress reporting.
+	 * @param array<mixed> $thresholds The seed rows.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+	 */
+	private function writeKorThresholds(IOutput $output, array $thresholds): void {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->settingsService->getRegisterSlug();
+		$seeded = 0;
+		$skipped = 0;
+
+		foreach ($thresholds as $threshold) {
+			$fiscalYear = ($threshold['fiscalYear'] ?? null);
+			if ($fiscalYear === null) {
+				continue;
+			}
+
+			$existing = $this->findOneRecord(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				schema: 'KorThreshold',
+				filters: ['fiscalYear' => $fiscalYear]
+			);
+
+			if (empty($existing) === false) {
+				$skipped++;
+				continue;
+			}
+
+			$objectService->saveObject(
+				object: $threshold,
+				register: $registerSlug,
+				schema: 'KorThreshold',
+				// System seeding runs inside a repair step with no user
+				// session, so the acting identity is Anonymous. Bypass RBAC
+				// (as OpenRegister's own config import does) — otherwise the
+				// KorThreshold schema's create permission denies the seed.
+				_rbac: false,
+			);
+			$seeded++;
+		}//end foreach
+
+		$output->info(
+			'Shillinq: KOR thresholds seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
+		);
+	}//end writeKorThresholds()
 
 	/**
 	 * Seed the demo Barcode records, idempotently.
@@ -1346,11 +1488,7 @@ class InitializeSettings implements IRepairStep {
 	 */
 	private function seedChartOfAccounts(IOutput $output): void {
 		$settings = $this->settingsService->getSettings();
-		$templateRaw = ($settings['rgs_template'] ?? '');
-		$template = 'mkb';
-		if ($templateRaw !== '') {
-			$template = $templateRaw;
-		}
+		$template = $this->rgsTemplate(settings: $settings);
 
 		$administrationId = ($settings['administration_id'] ?? '');
 
@@ -1376,35 +1514,55 @@ class InitializeSettings implements IRepairStep {
 			administrationId: $administrationId
 		);
 
-		if ($seedResult['success'] === true) {
-			$seeded = ($seedResult['seeded'] ?? 0);
-			$skipped = ($seedResult['skipped'] ?? 0);
-			$output->info(
-				'Chart of accounts seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
-			);
-		}
-
-		if ($seedResult['success'] !== true) {
-			$message = ($seedResult['message'] ?? 'unknown error');
-			$output->warning('Chart of accounts seeding issue: ' . $message);
-		}
+		$this->reportSeedResult(output: $output, result: $seedResult, seededLabel: 'Chart of accounts', issueLabel: 'Chart of accounts');
 
 		$allocationResult = $this->settingsService->seedAllocationRules(administrationId: $administrationId);
 
-		if ($allocationResult['success'] === true) {
-			$seeded = ($allocationResult['seeded'] ?? 0);
-			$skipped = ($allocationResult['skipped'] ?? 0);
+		$this->reportSeedResult(output: $output, result: $allocationResult, seededLabel: 'AllocationRule examples', issueLabel: 'AllocationRule');
+
+	}//end seedChartOfAccounts()
+
+	/**
+	 * The configured RGS template variant, `mkb` when none is configured.
+	 *
+	 * @param array<string,mixed> $settings The app settings.
+	 *
+	 * @return string The template variant.
+	 */
+	private function rgsTemplate(array $settings): string {
+		$templateRaw = ($settings['rgs_template'] ?? '');
+		$template = 'mkb';
+		if ($templateRaw !== '') {
+			$template = $templateRaw;
+		}
+
+		return $template;
+	}//end rgsTemplate()
+
+	/**
+	 * Report a seed result: the counts on success, the message otherwise.
+	 *
+	 * @param IOutput             $output      The output interface for progress reporting.
+	 * @param array<string,mixed> $result      The seed result with success flag and counts.
+	 * @param string              $seededLabel What was seeded, in the success line.
+	 * @param string              $issueLabel  What was seeded, in the issue line.
+	 *
+	 * @return void
+	 */
+	private function reportSeedResult(IOutput $output, array $result, string $seededLabel, string $issueLabel): void {
+		if ($result['success'] === true) {
+			$seeded = ($result['seeded'] ?? 0);
+			$skipped = ($result['skipped'] ?? 0);
 			$output->info(
-				'AllocationRule examples seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
+				$seededLabel . ' seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
 			);
 		}
 
-		if ($allocationResult['success'] !== true) {
-			$message = ($allocationResult['message'] ?? 'unknown error');
-			$output->warning('AllocationRule seeding issue: ' . $message);
+		if ($result['success'] !== true) {
+			$message = ($result['message'] ?? 'unknown error');
+			$output->warning($issueLabel . ' seeding issue: ' . $message);
 		}
-
-	}//end seedChartOfAccounts()
+	}//end reportSeedResult()
 
 	/**
 	 * Seed the ReimbursementPolicy master-data records from
@@ -1422,88 +1580,22 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-18
 	 */
 	private function seedReimbursementPolicies(IOutput $output): void {
-		$seedPath = __DIR__ . '/../Settings/seeds/reimbursement-policies-2026.json';
-		if (file_exists($seedPath) === false) {
-			$output->warning('Shillinq: ReimbursementPolicy seed file not found, skipping');
+		$policies = $this->readSeedRows(
+			output: $output,
+			fileName: 'reimbursement-policies-2026.json',
+			label: 'ReimbursementPolicy',
+			key: 'policies'
+		);
+		if ($policies === null) {
 			return;
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			$output->warning('Shillinq: failed to read ReimbursementPolicy seed file, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			$output->warning('Shillinq: failed to parse ReimbursementPolicy seed file: ' . json_last_error_msg());
-			return;
-		}
-
-		$policies = ($data['policies'] ?? []);
 		if (empty($policies) === true) {
 			$output->info('Shillinq: ReimbursementPolicy seed file contains no policies, skipping');
 			return;
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
-			$settings = $this->settingsService->getSettings();
-			$administrationId = ($settings['administration_id'] ?? '');
-			$seeded = 0;
-			$skipped = 0;
-
-			if ($administrationId === '') {
-				$output->info('Shillinq: ReimbursementPolicy seed skipped (no default administration configured)');
-				return;
-			}
-
-			foreach ($policies as $policy) {
-				$policyId = ($policy['policyId'] ?? null);
-				if ($policyId === null) {
-					continue;
-				}
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('ReimbursementPolicy')
-					->findAll(
-						[
-							'filters' => [
-								'policyId' => $policyId,
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$policy['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $policy,
-					register: $registerSlug,
-					schema: 'ReimbursementPolicy',
-					// System seed inside a no-session repair step — bypass RBAC.
-					_rbac: false,
-				);
-				$seeded++;
-			}//end foreach
-
-			$output->info(
-				'Shillinq: ReimbursementPolicy seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
-			);
-		} catch (\Throwable $e) {
-			$output->warning('Shillinq: ReimbursementPolicy seeding failed: ' . $e->getMessage());
-			$this->logger->warning(
-				'Shillinq: ReimbursementPolicy seeding failed',
-				['exception' => $e->getMessage()]
-			);
-		}//end try
+		$this->seedAdministrationRecords(output: $output, schema: 'ReimbursementPolicy', keyField: 'policyId', rows: $policies);
 
 	}//end seedReimbursementPolicies()
 
@@ -1524,90 +1616,105 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-19
 	 */
 	private function seedPassThroughMarkupRules(IOutput $output): void {
-		$seedPath = __DIR__ . '/../Settings/seeds/passthrough-markup-rules-2026.json';
-		if (file_exists($seedPath) === false) {
-			$output->warning('Shillinq: PassThroughMarkupRule seed file not found, skipping');
+		$rules = $this->readSeedRows(
+			output: $output,
+			fileName: 'passthrough-markup-rules-2026.json',
+			label: 'PassThroughMarkupRule',
+			key: 'rules'
+		);
+		if ($rules === null) {
 			return;
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			$output->warning('Shillinq: failed to read PassThroughMarkupRule seed file, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			$output->warning('Shillinq: failed to parse PassThroughMarkupRule seed file: ' . json_last_error_msg());
-			return;
-		}
-
-		$rules = ($data['rules'] ?? []);
 		if (empty($rules) === true) {
 			$output->info('Shillinq: PassThroughMarkupRule seed file contains no rules, skipping');
 			return;
 		}
 
+		$this->seedAdministrationRecords(output: $output, schema: 'PassThroughMarkupRule', keyField: 'ruleId', rows: $rules);
+
+	}//end seedPassThroughMarkupRules()
+
+	/**
+	 * Seed master-data rows of one schema under the configured administration; failures are reported, never thrown.
+	 *
+	 * @param IOutput      $output   The output interface for progress reporting.
+	 * @param string       $schema   The schema to seed, also its name in messages.
+	 * @param string       $keyField The row field that, with administrationId, is the deduplication key.
+	 * @param array<mixed> $rows     The seed rows.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-18
+	 */
+	private function seedAdministrationRecords(IOutput $output, string $schema, string $keyField, array $rows): void {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settingsService->getRegisterSlug();
-			$settings = $this->settingsService->getSettings();
-			$administrationId = ($settings['administration_id'] ?? '');
-			$seeded = 0;
-			$skipped = 0;
-
-			if ($administrationId === '') {
-				$output->info('Shillinq: PassThroughMarkupRule seed skipped (no default administration configured)');
-				return;
-			}
-
-			foreach ($rules as $rule) {
-				$ruleId = ($rule['ruleId'] ?? null);
-				if ($ruleId === null) {
-					continue;
-				}
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('PassThroughMarkupRule')
-					->findAll(
-						[
-							'filters' => [
-								'ruleId' => $ruleId,
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$rule['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $rule,
-					register: $registerSlug,
-					schema: 'PassThroughMarkupRule',
-					// System seed inside a no-session repair step — bypass RBAC.
-					_rbac: false,
-				);
-				$seeded++;
-			}//end foreach
-
-			$output->info(
-				'Shillinq: PassThroughMarkupRule seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
-			);
+			$this->writeAdministrationRecords(output: $output, schema: $schema, keyField: $keyField, rows: $rows);
 		} catch (\Throwable $e) {
-			$output->warning('Shillinq: PassThroughMarkupRule seeding failed: ' . $e->getMessage());
+			$output->warning('Shillinq: ' . $schema . ' seeding failed: ' . $e->getMessage());
 			$this->logger->warning(
-				'Shillinq: PassThroughMarkupRule seeding failed',
+				'Shillinq: ' . $schema . ' seeding failed',
 				['exception' => $e->getMessage()]
 			);
 		}//end try
+	}//end seedAdministrationRecords()
 
-	}//end seedPassThroughMarkupRules()
+	/**
+	 * Save every row not yet seeded under the configured administration, then report the counts.
+	 *
+	 * @param IOutput      $output   The output interface for progress reporting.
+	 * @param string       $schema   The schema to seed, also its name in messages.
+	 * @param string       $keyField The row field that, with administrationId, is the deduplication key.
+	 * @param array<mixed> $rows     The seed rows.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When OpenRegister lookups or saves fail.
+	 *
+	 * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-18
+	 */
+	private function writeAdministrationRecords(IOutput $output, string $schema, string $keyField, array $rows): void {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$registerSlug = $this->settingsService->getRegisterSlug();
+		$settings = $this->settingsService->getSettings();
+		$administrationId = ($settings['administration_id'] ?? '');
+		$seeded = 0;
+		$skipped = 0;
+
+		if ($administrationId === '') {
+			$output->info('Shillinq: ' . $schema . ' seed skipped (no default administration configured)');
+			return;
+		}
+
+		foreach ($rows as $row) {
+			$keyValue = ($row[$keyField] ?? null);
+			if ($keyValue === null) {
+				continue;
+			}
+
+			$filters = [$keyField => $keyValue, 'administrationId' => $administrationId];
+			$existing = $this->findOneRecord(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, filters: $filters);
+
+			if (empty($existing) === false) {
+				$skipped++;
+				continue;
+			}
+
+			$row['administrationId'] = $administrationId;
+			$objectService->saveObject(
+				object: $row,
+				register: $registerSlug,
+				schema: $schema,
+				// System seed inside a no-session repair step — bypass RBAC.
+				_rbac: false,
+			);
+			$seeded++;
+		}//end foreach
+
+		$output->info(
+			'Shillinq: ' . $schema . ' seeded: ' . $seeded . ' created, ' . $skipped . ' skipped (already exist).'
+		);
+	}//end writeAdministrationRecords()
 
 	/**
 	 * Import the RJ 270 statement-presentation manifests idempotently.
@@ -1813,15 +1920,8 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
 	 */
 	private function seedSbrMappings(IOutput $output): void {
-		$seedDir = __DIR__ . '/../Settings/seeds/sbr-mappings';
-		if (is_dir($seedDir) === false) {
-			$output->info('Shillinq: SBR/XBRL mapping seed dir not present, skipping');
-			return;
-		}
-
-		$files = glob($seedDir . '/*.json');
-		if ($files === false || empty($files) === true) {
-			$output->info('Shillinq: SBR/XBRL mapping seed dir empty, skipping');
+		$files = $this->sbrMappingSeedFiles(output: $output);
+		if ($files === null) {
 			return;
 		}
 
@@ -1837,82 +1937,137 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
-		$seeded = 0;
-		$skipped = 0;
-		$failed = 0;
+		$counts = ['seeded' => 0, 'skipped' => 0, 'failed' => 0];
 
 		foreach ($files as $file) {
-			$content = file_get_contents($file);
-			if ($content === false) {
-				$output->warning('Shillinq: failed to read SBR mapping seed ' . basename($file));
-				$failed++;
+			$mapping = $this->readSbrMappingSeed(output: $output, file: $file);
+			if ($mapping === null) {
+				$counts['failed']++;
 				continue;
 			}
 
-			$data = json_decode($content, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				$output->warning(
-					'Shillinq: failed to parse SBR mapping seed ' . basename($file) . ': ' . json_last_error_msg()
-				);
-				$failed++;
-				continue;
-			}
-
-			$mapping = ($data['mapping'] ?? null);
-			if (is_array($mapping) === false) {
-				$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no `mapping` block, skipping');
-				$failed++;
-				continue;
-			}
-
-			$slug = ($mapping['slug'] ?? null);
-			if ($slug === null || $slug === '') {
-				$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no slug, skipping');
-				$failed++;
-				continue;
-			}
-
-			try {
-				// Dedupe on the slug/reference — operator-edited mappings persist.
-				$existing = $mappingMapper->findByRef($slug);
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$mappingMapper->createFromArray(
-					[
-						'reference' => $slug,
-						'name' => ($mapping['name'] ?? $slug),
-						'description' => 'SBR/XBRL line→concept mapping seeded by '
-							. 'add-shillinq-sbr-xbrl-reporting for entry point '
-							. ($mapping['entryPoint'] ?? 'unknown') . ' taxonomy '
-							. ($mapping['taxonomyVersion'] ?? 'unknown') . '.',
-						'mapping' => ($mapping['records'] ?? []),
-					]
-				);
-				$seeded++;
-			} catch (\Throwable $e) {
-				$output->warning(
-					'Shillinq: SBR mapping seed ' . basename($file) . ' import failed: ' . $e->getMessage()
-				);
-				$this->logger->warning(
-					'Shillinq: SBR mapping seed import failed',
-					[
-						'file' => basename($file),
-						'exception' => $e->getMessage(),
-					]
-				);
-				$failed++;
-			}//end try
-		}//end foreach
+			$outcome = $this->importSbrMapping(output: $output, mappingMapper: $mappingMapper, file: $file, mapping: $mapping);
+			$counts[$outcome]++;
+		}
 
 		$output->info(
-			'Shillinq: SBR/XBRL mappings seeded: ' . $seeded . ' created, ' . $skipped
-			. ' skipped (already exist), ' . $failed . ' failed.'
+			'Shillinq: SBR/XBRL mappings seeded: ' . $counts['seeded'] . ' created, ' . $counts['skipped']
+			. ' skipped (already exist), ' . $counts['failed'] . ' failed.'
 		);
 
 	}//end seedSbrMappings()
+
+	/**
+	 * The SBR/XBRL mapping seed files, or null (reported) when the seed dir is absent or empty.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return array<int,string>|null The seed file paths.
+	 *
+	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+	 */
+	private function sbrMappingSeedFiles(IOutput $output): array|null {
+		$seedDir = __DIR__ . '/../Settings/seeds/sbr-mappings';
+		if (is_dir($seedDir) === false) {
+			$output->info('Shillinq: SBR/XBRL mapping seed dir not present, skipping');
+			return null;
+		}
+
+		$files = glob($seedDir . '/*.json');
+		if ($files === false || empty($files) === true) {
+			$output->info('Shillinq: SBR/XBRL mapping seed dir empty, skipping');
+			return null;
+		}
+
+		return $files;
+	}//end sbrMappingSeedFiles()
+
+	/**
+	 * Read one SBR mapping seed file and return its `mapping` block, or null (reported) when unusable.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 * @param string  $file   The seed file path.
+	 *
+	 * @return array<string,mixed>|null The mapping block.
+	 *
+	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+	 */
+	private function readSbrMappingSeed(IOutput $output, string $file): array|null {
+		$content = file_get_contents($file);
+		if ($content === false) {
+			$output->warning('Shillinq: failed to read SBR mapping seed ' . basename($file));
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			$output->warning(
+				'Shillinq: failed to parse SBR mapping seed ' . basename($file) . ': ' . json_last_error_msg()
+			);
+			return null;
+		}
+
+		$mapping = ($data['mapping'] ?? null);
+		if (is_array($mapping) === false) {
+			$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no `mapping` block, skipping');
+			return null;
+		}
+
+		return $mapping;
+	}//end readSbrMappingSeed()
+
+	/**
+	 * Create one SBR mapping through the MappingMapper unless its slug already exists.
+	 *
+	 * @param IOutput             $output        The output interface for progress reporting.
+	 * @param mixed               $mappingMapper OpenRegister's MappingMapper.
+	 * @param string              $file          The seed file path, for messages.
+	 * @param array<string,mixed> $mapping       The seed file's `mapping` block.
+	 *
+	 * @return string One of `seeded`, `skipped` or `failed`.
+	 *
+	 * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+	 */
+	private function importSbrMapping(IOutput $output, mixed $mappingMapper, string $file, array $mapping): string {
+		$slug = ($mapping['slug'] ?? null);
+		if ($slug === null || $slug === '') {
+			$output->warning('Shillinq: SBR mapping seed ' . basename($file) . ' has no slug, skipping');
+			return 'failed';
+		}
+
+		try {
+			// Dedupe on the slug/reference — operator-edited mappings persist.
+			$existing = $mappingMapper->findByRef($slug);
+			if (empty($existing) === false) {
+				return 'skipped';
+			}
+
+			$mappingMapper->createFromArray(
+				[
+					'reference' => $slug,
+					'name' => ($mapping['name'] ?? $slug),
+					'description' => 'SBR/XBRL line→concept mapping seeded by '
+						. 'add-shillinq-sbr-xbrl-reporting for entry point '
+						. ($mapping['entryPoint'] ?? 'unknown') . ' taxonomy '
+						. ($mapping['taxonomyVersion'] ?? 'unknown') . '.',
+					'mapping' => ($mapping['records'] ?? []),
+				]
+			);
+			return 'seeded';
+		} catch (\Throwable $e) {
+			$output->warning(
+				'Shillinq: SBR mapping seed ' . basename($file) . ' import failed: ' . $e->getMessage()
+			);
+			$this->logger->warning(
+				'Shillinq: SBR mapping seed import failed',
+				[
+					'file' => basename($file),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return 'failed';
+		}//end try
+	}//end importSbrMapping()
 
 	/**
 	 * Seed FixedAsset + DepreciationSchedule demo records idempotently

@@ -30,7 +30,9 @@ use OCA\Shillinq\Service\Import\ImportPosting;
 use OCA\Shillinq\Service\Import\ImportPostingPayloads;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -44,6 +46,8 @@ use RuntimeException;
  * @uses   \OCA\Shillinq\Service\Import\ImportPostingPayloads
  * @uses   \OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner
  * @uses   \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub
+ * @uses   \OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub
  */
 final class ImportPostingTest extends TestCase {
 
@@ -380,4 +384,35 @@ final class ImportPostingTest extends TestCase {
 		$this->assertSame([], $this->ran);
 
 	}//end testAReversalWithoutItsOpeningEntryNamesIt()
+
+	/**
+	 * An opening entry the register saves without an id refuses the post,
+	 * naming the entry, and runs no transition.
+	 *
+	 * @return void
+	 */
+	public function testAnEntrySavedWithoutAnIdRefusesThePost(): void {
+		$store = new class(['JournalEntry' => [], 'CustomerMaster' => []]) extends InMemoryObjectServiceStub {
+			/**
+			 * Saves nothing and answers an object without an id.
+			 *
+			 * @param array $object The object.
+			 * @param mixed ...$rest The other arguments.
+			 *
+			 * @return ObjectEntityInterface
+			 */
+			public function saveObject(array $object, ?array $extend = [], string|int|null $register = null, string|int|null $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true, bool $silent = false, bool $_validation = true, ?array $uploadedFiles = null, ?IUser $currentUser = null, bool $failIfExists = false): ObjectEntityInterface {
+				return new ObjectEntityStub(payload: ['journalNumber' => (string)($object['journalNumber'] ?? '')]);
+			}
+		};
+		[$batch, $report] = $this->batch();
+
+		$result = $this->posting(store: $store)->post($batch, $report);
+
+		$this->assertTrue($result['failed']);
+		$this->assertSame(['posting-refused'], self::codes($result['findings']));
+		$this->assertMatchesRegularExpression('/^The import was not posted: the JournalEntry \S+ was not saved\.$/', $result['findings'][0]['message']);
+		$this->assertSame([], $this->ran);
+
+	}//end testAnEntrySavedWithoutAnIdRefusesThePost()
 }//end class

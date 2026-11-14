@@ -11,8 +11,7 @@
 
 ## 2. State guards
 - [x] 2.1 An approved payment run's lines and amounts are immutable (`PaymentRunLineLockListener`)
-- [ ] 2.2 Releasing a payment block needs a role and a reason, and keeps the block reason: done by the payment-block endpoint (#2070), not here
-  Still open (decision 399, checked 12 Nov 2026): no route or controller releases a payment block, and no commit on development names #2070; `lib/PaymentRun/PaymentBlockChecker.php` only reads the block.
+- [x] 2.2 Releasing a payment block needs a role and a reason, and keeps the block reason: `PaymentBlockReleaseListener` refuses, on the save path of an APTransaction or Payee, a release (`paymentBlocked` true to false) by a caller who is neither an administrator nor in `shillinq_controller` or `shillinq_treasurer`, a release without a new `paymentBlockReleaseReason`, and a release that changes `paymentBlockReason`. The release dialog asks the reason and leaves the block reason alone. `PaymentBlockReleaseListenerTest` (7 tests)
 - [x] 2.3 The payment-run `reconcile` transition only follows a CAMT.053 match (`PaymentRunReconcileGuard`)
 - [x] 2.4 Purchase order `approve` only follows a complete approval chain signed through the approval service (`PurchaseOrderApprovalGuard`, `PurchaseOrderApprovalChainListener`)
 - [x] 2.5 Supplier invoice `approveException` only follows an accepted three-way-match exception, and `pay` only a paid AP transaction (`SupplierInvoiceExceptionApprovalGuard`, `SupplierInvoicePayGuard`)

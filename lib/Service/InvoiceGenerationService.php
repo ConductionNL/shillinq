@@ -45,6 +45,8 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	/**
@@ -213,6 +215,28 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
 	public function validateInvoice(array $invoice): array {
+		$errors = array_merge(
+			$this->conflictErrors(invoice: $invoice),
+			$this->billingModelErrors(invoice: $invoice)
+		);
+
+		return [
+			'valid' => (count($errors) === 0),
+			'errors' => $errors,
+		];
+
+	}//end validateInvoice()
+
+	/**
+	 * The conflicts of the invoice's time entries and expenses with other invoices.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return array<int,string> One message per conflicting invoice.
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 */
+	private function conflictErrors(array $invoice): array {
 		$errors = [];
 		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
 		$admin = (string)($invoice['administrationId'] ?? '');
@@ -243,6 +267,20 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			}
 		}
 
+		return $errors;
+	}//end conflictErrors()
+
+	/**
+	 * The fields the invoice's billing model requires but the invoice lacks.
+	 *
+	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
+	 *
+	 * @return array<int,string> One message per missing field.
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 */
+	private function billingModelErrors(array $invoice): array {
+		$errors = [];
 		$model = (string)($invoice['billingModel'] ?? '');
 		if ($model === 't_and_m' && empty($invoice['rateCardId']) === true) {
 			$errors[] = 'rateCardId is required for t_and_m model.';
@@ -252,12 +290,8 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 			$errors[] = sprintf('retainerScheduleId is required for %s model.', $model);
 		}
 
-		return [
-			'valid' => (count($errors) === 0),
-			'errors' => $errors,
-		];
-
-	}//end validateInvoice()
+		return $errors;
+	}//end billingModelErrors()
 
 	/**
 	 * Post a draft invoice — transitions to posted, creates a stub Obligation,
@@ -576,25 +610,9 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 				continue;
 			}
 
-			$resourceType = (string)($loaded['resourceType'] ?? ($loaded['role'] ?? 'consultant'));
+			$resourceType = $this->resourceTypeOf(loaded: $loaded);
 			$hours = (float)($loaded['hours'] ?? ($loaded['duration'] ?? 0));
-			$date = (string)($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
-
-			if ($rateCardId !== null) {
-				$rate = $this->rateCards->resolveRate(
-					rateCardId: $rateCardId,
-					resourceType: $resourceType,
-					date: $date,
-					administrationId: $administrationId
-				);
-			} else {
-				$rate = [
-					'rateCents' => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
-					'currency' => $currency,
-					'rateCardVersion' => 'override',
-					'effectiveDate' => $date,
-				];
-			}
+			$rate = $this->timeEntryRate(loaded: $loaded, rateCardId: $rateCardId, administrationId: $administrationId, currency: $currency);
 
 			$entries[] = [
 				'timeEntryId' => $id,
@@ -607,6 +625,69 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 
 		return $entries;
 	}//end loadTimeEntries()
+
+	/**
+	 * The rate of one time entry: from the rate card when one is given, else the entry's own override.
+	 *
+	 * @param array<string,mixed> $loaded           The UrenRegistratie record.
+	 * @param string|null         $rateCardId       Rate card to resolve against.
+	 * @param string              $administrationId Caller's server-resolved administration scope.
+	 * @param string              $currency         The invoice currency, for an override rate.
+	 *
+	 * @return array<string,mixed> The applied rate.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function timeEntryRate(array $loaded, string|null $rateCardId, string $administrationId, string $currency): array {
+		$resourceType = $this->resourceTypeOf(loaded: $loaded);
+		$date = (string)($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
+
+		if ($rateCardId !== null) {
+			$rate = $this->rateCards->resolveRate(
+				rateCardId: $rateCardId,
+				resourceType: $resourceType,
+				date: $date,
+				administrationId: $administrationId
+			);
+		} else {
+			$rate = $this->overrideRate(loaded: $loaded, currency: $currency, date: $date);
+		}
+
+		return $rate;
+	}//end timeEntryRate()
+
+	/**
+	 * The resource type a time entry is billed as.
+	 *
+	 * @param array<string,mixed> $loaded The UrenRegistratie record.
+	 *
+	 * @return string The resource type, `consultant` when the entry names none.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function resourceTypeOf(array $loaded): string {
+		return (string)($loaded['resourceType'] ?? ($loaded['role'] ?? 'consultant'));
+	}//end resourceTypeOf()
+
+	/**
+	 * The rate of a time entry billed without a rate card: its own hourly override.
+	 *
+	 * @param array<string,mixed> $loaded   The UrenRegistratie record.
+	 * @param string              $currency The invoice currency.
+	 * @param string              $date     The work date.
+	 *
+	 * @return array<string,mixed> The applied rate.
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-3.1
+	 */
+	private function overrideRate(array $loaded, string $currency, string $date): array {
+		return [
+			'rateCents' => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
+			'currency' => $currency,
+			'rateCardVersion' => 'override',
+			'effectiveDate' => $date,
+		];
+	}//end overrideRate()
 
 	/**
 	 * Load expense records into engine input shape.
@@ -676,57 +757,94 @@ class InvoiceGenerationService implements InvoiceGenerationServiceInterface {
 
 		$rated = [];
 		foreach ($ids as $id) {
-			$reading = $this->findScoped(schema: 'MeterReading', id: $id, administrationId: $administrationId);
-			if ($reading === null) {
+			$line = $this->rateMeterReading(id: $id, defaultRatePlanId: $defaultRatePlanId, administrationId: $administrationId);
+			if ($line === null) {
 				continue;
 			}
 
-			$this->billedReadings->assertBillable(reading: $reading, id: $id);
-
-			$planId = (string)($reading['ratePlanId'] ?? ($defaultRatePlanId ?? ''));
-			if ($planId === '') {
-				$this->logger->warning(sprintf('MeterReading %s has no ratePlanId; skipping.', $id));
-				continue;
-			}
-
-			$plan = $this->findScoped(schema: 'UsageRatePlan', id: $planId, administrationId: $administrationId);
-			if ($plan === null) {
-				$this->logger->warning(sprintf('UsageRatePlan %s not found for MeterReading %s; skipping.', $planId, $id));
-				continue;
-			}
-
-			$quantity = (float)($reading['quantity'] ?? 0.0);
-			$priced = $this->usageRating->rate(quantity: $quantity, plan: $plan);
-
-			$description = (string)($reading['description'] ?? '');
-			if ($description === '') {
-				$description = sprintf(
-					'%s — %s %s',
-					(string)($plan['name'] ?? 'Metered usage'),
-					rtrim(rtrim(number_format($quantity, 4, '.', ''), '0'), '.'),
-					(string)($plan['unit'] ?? ($reading['unit'] ?? 'units'))
-				);
-			}
-
-			$rated[] = [
-				'readingId' => $id,
-				'meterId' => (string)($reading['meterId'] ?? ''),
-				'resourceType' => (string)($reading['resourceType'] ?? ($plan['resourceType'] ?? '')),
-				'unit' => (string)($plan['unit'] ?? ($reading['unit'] ?? '')),
-				'description' => $description,
-				'billableUnits' => $priced['billableUnits'],
-				'unitPriceCents' => $priced['unitPriceCents'],
-				'costAmountCents' => $priced['costAmountCents'],
-				'vatRate' => $priced['vatRate'],
-				'ratingMethod' => $priced['ratingMethod'],
-				'ratePlanId' => $planId,
-				'periodStart' => (string)($reading['periodStart'] ?? ''),
-				'periodEnd' => (string)($reading['periodEnd'] ?? ''),
-			];
-		}//end foreach
+			$rated[] = $line;
+		}
 
 		return $rated;
 	}//end loadMeterReadings()
+
+	/**
+	 * Load one meter reading and rate it against its UsageRatePlan.
+	 *
+	 * @param string              $id                The MeterReading id.
+	 * @param string|null         $defaultRatePlanId Fallback UsageRatePlan id.
+	 * @param string              $administrationId  Caller's server-resolved administration scope.
+	 *
+	 * @return array<string,mixed>|null The rated line, or null when the reading is not found or (logged) has no usable plan.
+	 *
+	 * @spec openspec/specs/usage-metered-billing/spec.md
+	 */
+	private function rateMeterReading(string $id, string|null $defaultRatePlanId, string $administrationId): array|null {
+		$reading = $this->findScoped(schema: 'MeterReading', id: $id, administrationId: $administrationId);
+		if ($reading === null) {
+			return null;
+		}
+
+		$this->billedReadings->assertBillable(reading: $reading, id: $id);
+
+		$planId = (string)($reading['ratePlanId'] ?? ($defaultRatePlanId ?? ''));
+		if ($planId === '') {
+			$this->logger->warning(sprintf('MeterReading %s has no ratePlanId; skipping.', $id));
+			return null;
+		}
+
+		$plan = $this->findScoped(schema: 'UsageRatePlan', id: $planId, administrationId: $administrationId);
+		if ($plan === null) {
+			$this->logger->warning(sprintf('UsageRatePlan %s not found for MeterReading %s; skipping.', $planId, $id));
+			return null;
+		}
+
+		$quantity = (float)($reading['quantity'] ?? 0.0);
+		$priced = $this->usageRating->rate(quantity: $quantity, plan: $plan);
+
+		$description = $this->meterDescription(reading: $reading, plan: $plan, quantity: $quantity);
+
+		return [
+			'readingId' => $id,
+			'meterId' => (string)($reading['meterId'] ?? ''),
+			'resourceType' => (string)($reading['resourceType'] ?? ($plan['resourceType'] ?? '')),
+			'unit' => (string)($plan['unit'] ?? ($reading['unit'] ?? '')),
+			'description' => $description,
+			'billableUnits' => $priced['billableUnits'],
+			'unitPriceCents' => $priced['unitPriceCents'],
+			'costAmountCents' => $priced['costAmountCents'],
+			'vatRate' => $priced['vatRate'],
+			'ratingMethod' => $priced['ratingMethod'],
+			'ratePlanId' => $planId,
+			'periodStart' => (string)($reading['periodStart'] ?? ''),
+			'periodEnd' => (string)($reading['periodEnd'] ?? ''),
+		];
+	}//end rateMeterReading()
+
+	/**
+	 * The reading's own description, or one built from the plan name, quantity and unit.
+	 *
+	 * @param array<string,mixed> $reading  The MeterReading record.
+	 * @param array<string,mixed> $plan     The UsageRatePlan.
+	 * @param float               $quantity The read quantity.
+	 *
+	 * @return string The description.
+	 *
+	 * @spec openspec/specs/usage-metered-billing/spec.md
+	 */
+	private function meterDescription(array $reading, array $plan, float $quantity): string {
+		$description = (string)($reading['description'] ?? '');
+		if ($description === '') {
+			$description = sprintf(
+				'%s — %s %s',
+				(string)($plan['name'] ?? 'Metered usage'),
+				rtrim(rtrim(number_format($quantity, 4, '.', ''), '0'), '.'),
+				(string)($plan['unit'] ?? ($reading['unit'] ?? 'units'))
+			);
+		}
+
+		return $description;
+	}//end meterDescription()
 
 	/**
 	 * Load milestone metadata or return a stub on lookup failure.

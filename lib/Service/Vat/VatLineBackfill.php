@@ -144,6 +144,22 @@ class VatLineBackfill implements VatLineBackfillInterface {
 		$administrationId = (string)($transaction['administrationId'] ?? '');
 		$purchaseSource   = $this->purchaseSource(sourceReference: (string)($transaction['sourceReference'] ?? ''));
 
+		$plans = $this->linePlans(transactionId: $transactionId, register: $register, administrationId: $administrationId, purchaseSource: $purchaseSource);
+
+		return $this->stampPlans(plans: $plans, transactionId: $transactionId, stamper: $stamper, register: $register);
+	}//end stampTransaction()
+
+	/**
+	 * The stamp plan of every VAT relevant line of a transaction.
+	 *
+	 * @param string    $transactionId    The transaction id.
+	 * @param string    $register         The register slug.
+	 * @param string    $administrationId Its administration.
+	 * @param bool|null $purchaseSource   Whether the transaction is a purchase, null when its source does not say.
+	 *
+	 * @return list<array<string,mixed>> Plans with the line id and line.
+	 */
+	private function linePlans(string $transactionId, string $register, string $administrationId, bool|null $purchaseSource): array {
 		$plans = [];
 		$lines = $this->readAllRows(
 			objectService: $this->objectService,
@@ -159,20 +175,26 @@ class VatLineBackfill implements VatLineBackfillInterface {
 			}
 		}
 
-		$baseCodes = [];
-		foreach ($plans as $plan) {
-			if ($plan['kind'] === 'base' && $plan['code'] !== '' && $plan['code'] !== self::FROM_BASE_LINES) {
-				$baseCodes[$plan['code']] = true;
-			}
-		}
+		return $plans;
+	}//end linePlans()
+
+	/**
+	 * Stamp every planned line, counting the stamped and the unresolved ones.
+	 *
+	 * @param list<array<string,mixed>> $plans         The line plans.
+	 * @param string                    $transactionId The transaction id.
+	 * @param VatLineStamper            $stamper       Tariff lookups.
+	 * @param string                    $register      The register slug.
+	 *
+	 * @return array{stamped:int,unresolved:int}
+	 */
+	private function stampPlans(array $plans, string $transactionId, VatLineStamper $stamper, string $register): array {
+		$counts = ['stamped' => 0, 'unresolved' => 0];
+		$baseCodes = $this->baseCodes(plans: $plans);
 
 		foreach ($plans as $plan) {
-			$code = $plan['code'];
-			if ($code === self::FROM_BASE_LINES && count($baseCodes) === 1) {
-				$code = (string)array_key_first($baseCodes);
-			}
-
-			if ($code === '' || $code === self::FROM_BASE_LINES) {
+			$code = $this->resolvedCode(plan: $plan, baseCodes: $baseCodes);
+			if ($this->isUnresolved(code: $code) === true) {
 				$counts['unresolved']++;
 				$this->logger->warning(
 					'VatLineBackfill: cannot resolve the VAT tariff of a posted ledger line; it stays out of the VAT return until it is corrected',
@@ -188,7 +210,53 @@ class VatLineBackfill implements VatLineBackfillInterface {
 		}//end foreach
 
 		return $counts;
-	}//end stampTransaction()
+	}//end stampPlans()
+
+	/**
+	 * The distinct tariff codes of the transaction's base lines.
+	 *
+	 * @param list<array<string,mixed>> $plans The line plans.
+	 *
+	 * @return array<string,true>
+	 */
+	private function baseCodes(array $plans): array {
+		$baseCodes = [];
+		foreach ($plans as $plan) {
+			if ($plan['kind'] === 'base' && $plan['code'] !== '' && $plan['code'] !== self::FROM_BASE_LINES) {
+				$baseCodes[$plan['code']] = true;
+			}
+		}
+
+		return $baseCodes;
+	}//end baseCodes()
+
+	/**
+	 * A plan's tariff code; a VAT line takes the base lines' code when they share one.
+	 *
+	 * @param array<string,mixed> $plan      The line plan.
+	 * @param array<string,true>  $baseCodes The base lines' codes.
+	 *
+	 * @return string
+	 */
+	private function resolvedCode(array $plan, array $baseCodes): string {
+		$code = $plan['code'];
+		if ($code === self::FROM_BASE_LINES && count($baseCodes) === 1) {
+			$code = (string)array_key_first($baseCodes);
+		}
+
+		return $code;
+	}//end resolvedCode()
+
+	/**
+	 * Whether a code names no tariff.
+	 *
+	 * @param string $code The resolved code.
+	 *
+	 * @return bool
+	 */
+	private function isUnresolved(string $code): bool {
+		return ($code === '' || $code === self::FROM_BASE_LINES);
+	}//end isUnresolved()
 
 	/**
 	 * What a line should be stamped from, or null when it is not VAT relevant.
@@ -205,21 +273,47 @@ class VatLineBackfill implements VatLineBackfillInterface {
 		$code          = (string)($line['vatTariffCode'] ?? '');
 
 		if ($code !== '') {
-			$kind = (string)($line['vatAmountKind'] ?? '');
-			if ($kind === '') {
-				$kind = 'base';
-				if ($vatAccount !== null) {
-					$kind = 'vat';
-				}
-			}
-
-			return ['code' => $code, 'kind' => $kind, 'purchase' => ($purchaseSource ?? ($vatAccount === 'input'))];
+			return $this->taggedPlan(line: $line, code: $code, vatAccount: $vatAccount, purchaseSource: $purchaseSource);
 		}
 
 		if ($vatAccount !== null) {
 			return ['code' => self::FROM_BASE_LINES, 'kind' => 'vat', 'purchase' => ($vatAccount === 'input')];
 		}
 
+		return $this->accountPlan(administrationId: $administrationId, accountNumber: $accountNumber);
+	}//end plan()
+
+	/**
+	 * The plan of a line that already carries a tariff code.
+	 *
+	 * @param array<string,mixed> $line           The GLLine.
+	 * @param string              $code           Its tariff code.
+	 * @param string|null         $vatAccount     The VAT account kind of its account, null when not a VAT account.
+	 * @param bool|null           $purchaseSource Whether the transaction is a purchase, null when its source does not say.
+	 *
+	 * @return array{code:string,kind:string,purchase:bool}
+	 */
+	private function taggedPlan(array $line, string $code, string|null $vatAccount, bool|null $purchaseSource): array {
+		$kind = (string)($line['vatAmountKind'] ?? '');
+		if ($kind === '') {
+			$kind = 'base';
+			if ($vatAccount !== null) {
+				$kind = 'vat';
+			}
+		}
+
+		return ['code' => $code, 'kind' => $kind, 'purchase' => ($purchaseSource ?? ($vatAccount === 'input'))];
+	}//end taggedPlan()
+
+	/**
+	 * The plan of an untagged line, from its ledger account's VAT settings.
+	 *
+	 * @param string $administrationId Its administration.
+	 * @param string $accountNumber    Its account number.
+	 *
+	 * @return array{code:string,kind:string,purchase:bool}|null Null when the account is not VAT applicable.
+	 */
+	private function accountPlan(string $administrationId, string $accountNumber): array|null {
 		$account = $this->account(administrationId: $administrationId, accountNumber: $accountNumber);
 		if ($account === null || ($account['vatApplicable'] ?? false) !== true) {
 			return null;
@@ -235,7 +329,7 @@ class VatLineBackfill implements VatLineBackfillInterface {
 			'kind' => 'base',
 			'purchase' => ($accountType === 'expenses'),
 		];
-	}//end plan()
+	}//end accountPlan()
 
 	/**
 	 * The tariff of an account's VAT rate: 21 high, 9 low, and 0 zero for a purchase.

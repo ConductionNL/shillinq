@@ -101,19 +101,7 @@ class AnnualReportGuard {
 				return false;
 			}
 
-			$balanceSheet = $this->resolveBalanceSheet(reportId: $reportId);
-			if ($balanceSheet === null) {
-				return false;
-			}
-
-			$totals = $this->balanceTotalsInCents(balanceSheet: $balanceSheet);
-			if ($totals === null) {
-				return false;
-			}
-
-			[$activaCents, $passivaCents] = $totals;
-
-			return $activaCents > 0 && $activaCents === $passivaCents;
+			return $this->isBalanced(reportId: $reportId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AnnualReportGuard: opmaak balans check failed — denying opmaken transition (fail-closed)',
@@ -122,6 +110,31 @@ class AnnualReportGuard {
 			return false;
 		}//end try
 	}//end canOpmaken()
+
+	/**
+	 * Whether the report's BalanceSheet has activa above zero equal to passiva, in integer cents.
+	 *
+	 * @param string $reportId The AnnualReport id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
+	 */
+	private function isBalanced(string $reportId): bool {
+		$balanceSheet = $this->resolveBalanceSheet(reportId: $reportId);
+		if ($balanceSheet === null) {
+			return false;
+		}
+
+		$totals = $this->balanceTotalsInCents(balanceSheet: $balanceSheet);
+		if ($totals === null) {
+			return false;
+		}
+
+		[$activaCents, $passivaCents] = $totals;
+
+		return $activaCents > 0 && $activaCents === $passivaCents;
+	}//end isBalanced()
 
 	/**
 	 * Returns true iff an accountantsverklaring is attached when it is verplicht.
@@ -143,24 +156,12 @@ class AnnualReportGuard {
 	 */
 	public function canVaststellen(string $annualReportId, ?array $object = null): bool {
 		try {
-			$report = $object;
-			if ($report === null || isset($report['auditorsStatementRequired']) === false) {
-				$report = $this->resolveAnnualReport(annualReportId: $annualReportId);
-			}
-
+			$report = $this->reportForVaststelling(annualReportId: $annualReportId, object: $object);
 			if ($report === null) {
 				return false;
 			}
 
-			$required = ($report['auditorsStatementRequired'] ?? false) === true;
-			if ($required === false) {
-				return true;
-			}
-
-			$status = (string)($report['auditorsStatementStatus'] ?? 'niet-vereist');
-			$valid = ['goedkeurend', 'met-beperking', 'samenstelling', 'beoordeling'];
-
-			return in_array($status, $valid, true);
+			return $this->hasRequiredAuditorsStatement(report: $report);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AnnualReportGuard: vaststelling verklaring check failed — denying vaststellen transition (fail-closed)',
@@ -169,6 +170,46 @@ class AnnualReportGuard {
 			return false;
 		}//end try
 	}//end canVaststellen()
+
+	/**
+	 * Whether the report needs no auditor's statement, or carries a valid one.
+	 *
+	 * @param array<string,mixed> $report The AnnualReport.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
+	 */
+	private function hasRequiredAuditorsStatement(array $report): bool {
+		$required = ($report['auditorsStatementRequired'] ?? false) === true;
+		if ($required === false) {
+			return true;
+		}
+
+		$status = (string)($report['auditorsStatementStatus'] ?? 'niet-vereist');
+		$valid = ['goedkeurend', 'met-beperking', 'samenstelling', 'beoordeling'];
+
+		return in_array($status, $valid, true);
+	}//end hasRequiredAuditorsStatement()
+
+	/**
+	 * The in-flight report when it carries the auditor's-statement flag, else the stored one.
+	 *
+	 * @param string $annualReportId The AnnualReport.id being transitioned.
+	 * @param array<string,mixed>|null $object The AnnualReport object being transitioned.
+	 *
+	 * @return array<string,mixed>|null The report, or null when it cannot be resolved.
+	 *
+	 * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
+	 */
+	private function reportForVaststelling(string $annualReportId, array|null $object): array|null {
+		$report = $object;
+		if ($report === null || isset($report['auditorsStatementRequired']) === false) {
+			$report = $this->resolveAnnualReport(annualReportId: $annualReportId);
+		}
+
+		return $report;
+	}//end reportForVaststelling()
 
 	/**
 	 * Compute the balans activa/passiva totals in integer cents.

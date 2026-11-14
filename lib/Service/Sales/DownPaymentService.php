@@ -47,6 +47,7 @@ use OCA\Shillinq\Kernel\Exception\DownPaymentRefusedException;
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Raise, deduct, check and stamp share one set of amount rules.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class DownPaymentService implements DownPaymentServiceInterface {
 	/**
@@ -118,33 +119,17 @@ class DownPaymentService implements DownPaymentServiceInterface {
 		$administrationId = trim((string)($request['administrationId'] ?? ''));
 		$customerId = trim((string)($request['customerId'] ?? ''));
 		$orderReference = trim((string)($request['orderReference'] ?? ''));
-		if ($administrationId === '' || $customerId === '' || $orderReference === '') {
-			throw new DownPaymentRefusedException(template: 'Choose the customer and the order.');
-		}
+		self::requireOrderParties(administrationId: $administrationId, customerId: $customerId, orderReference: $orderReference);
 
 		$order = $this->readOrder(orderReference: $orderReference, administrationId: $administrationId);
-		$breakdown = $order['breakdown'];
-		if ($breakdown === []) {
-			$breakdown = self::breakdownOf(given: $request['orderVatBreakdown'] ?? []);
-		}
-
-		if ($breakdown === []) {
-			throw new DownPaymentRefusedException(template: 'Enter the order\'s net total per VAT rate: shillinq cannot read this order.');
-		}
+		$breakdown = self::orderBreakdown(order: $order, request: $request);
 
 		$orderCents = array_sum(array_column($breakdown, 'cents'));
 		$percentage = self::numberOrNull(value: $request['percentage'] ?? null);
 		$amount = self::numberOrNull(value: $request['amount'] ?? null);
 		$targetCents = self::targetCents(orderCents: $orderCents, percentage: $percentage, amount: $amount);
 
-		$orderLabel = trim((string)($request['orderLabel'] ?? ''));
-		if ($orderLabel === '') {
-			$orderLabel = $order['label'];
-		}
-
-		if ($orderLabel === '') {
-			$orderLabel = $orderReference;
-		}
+		$orderLabel = self::orderLabelFor(request: $request, order: $order, orderReference: $orderReference);
 
 		$lines = $this->downPaymentLines(breakdown: $breakdown, orderCents: $orderCents, targetCents: $targetCents, orderLabel: $orderLabel);
 		$invoiceDate = self::dateOr(value: $request['invoiceDate'] ?? null, fallback: gmdate('Y-m-d'));
@@ -197,6 +182,74 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	}//end raise()
 
 	/**
+	 * Refuse a down payment without an administration, a customer or an order.
+	 *
+	 * @param string $administrationId The trimmed administrationId.
+	 * @param string $customerId       The trimmed customerId.
+	 * @param string $orderReference   The trimmed orderReference.
+	 *
+	 * @return void
+	 *
+	 * @throws DownPaymentRefusedException When one of them is empty.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private static function requireOrderParties(string $administrationId, string $customerId, string $orderReference): void {
+		if ($administrationId === '' || $customerId === '' || $orderReference === '') {
+			throw new DownPaymentRefusedException(template: 'Choose the customer and the order.');
+		}
+	}//end requireOrderParties()
+
+	/**
+	 * The order's net totals per VAT rate: read from the order, else as given in the request.
+	 *
+	 * @param array<string,mixed> $order   The order as readOrder() returns it.
+	 * @param array<string,mixed> $request The raise request.
+	 *
+	 * @return array<mixed> The breakdown.
+	 *
+	 * @throws DownPaymentRefusedException When neither source has a breakdown.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private static function orderBreakdown(array $order, array $request): array {
+		$breakdown = $order['breakdown'];
+		if ($breakdown === []) {
+			$breakdown = self::breakdownOf(given: $request['orderVatBreakdown'] ?? []);
+		}
+
+		if ($breakdown === []) {
+			throw new DownPaymentRefusedException(template: 'Enter the order\'s net total per VAT rate: shillinq cannot read this order.');
+		}
+
+		return $breakdown;
+	}//end orderBreakdown()
+
+	/**
+	 * The order label: as given, else the order's own label, else its reference.
+	 *
+	 * @param array<string,mixed> $request        The raise request.
+	 * @param array<string,mixed> $order          The order as readOrder() returns it.
+	 * @param string              $orderReference The order reference.
+	 *
+	 * @return string The label.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private static function orderLabelFor(array $request, array $order, string $orderReference): string {
+		$orderLabel = trim((string)($request['orderLabel'] ?? ''));
+		if ($orderLabel === '') {
+			$orderLabel = $order['label'];
+		}
+
+		if ($orderLabel === '') {
+			$orderLabel = $orderReference;
+		}
+
+		return $orderLabel;
+	}//end orderLabelFor()
+
+	/**
 	 * The issued down payments of the invoice's customer that no invoice has
 	 * deducted, optionally for one order (REQ-SDP-003).
 	 *
@@ -246,24 +299,9 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function deductOnto(array $invoice, string $orderReference): array {
-		if ((string)($invoice['lifecycleState'] ?? '') !== 'draft') {
-			throw new DownPaymentRefusedException(template: 'Down payments can only be deducted on a draft invoice.');
-		}
+		self::requireDeductingDraft(invoice: $invoice);
 
-		if ((string)($invoice['invoiceTypeCode'] ?? '') === self::TYPE_CODE) {
-			throw new DownPaymentRefusedException(template: 'A down-payment invoice cannot deduct other down payments.');
-		}
-
-		$already = array_column((array)(($invoice['downPayment'] ?? [])['deductions'] ?? []), 'invoiceId');
-		$open = array_values(
-			array_filter(
-				$this->openDownPayments(invoice: $invoice, orderReference: $orderReference),
-				static fn (array $downPayment): bool => in_array((string)$downPayment['id'], $already, true) === false
-			)
-		);
-		if ($open === []) {
-			throw new DownPaymentRefusedException(template: 'This customer has no issued down payment on this order left to deduct.');
-		}
+		$open = $this->undeductedDownPayments(invoice: $invoice, orderReference: $orderReference);
 
 		$lines = (array)($invoice['invoiceLines'] ?? []);
 		$deductions = (array)(($invoice['downPayment'] ?? [])['deductions'] ?? []);
@@ -272,13 +310,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 		foreach ($open as $downPayment) {
 			$orderLabel = (string)(($downPayment['downPayment'] ?? [])['orderLabel'] ?? $orderReference);
 			foreach ($this->chargedPerRate(downPayment: $downPayment) as $rate) {
-				$deductions[] = [
-					'invoiceId' => (string)$downPayment['id'],
-					'invoiceNumber' => (string)($downPayment['invoiceNumber'] ?? ''),
-					'rate' => $rate['rate'],
-					'net' => self::euros(cents: $rate['net']),
-					'vat' => self::euros(cents: $rate['vat']),
-				];
+				$deductions[] = self::deductionOf(downPayment: $downPayment, rate: $rate);
 				$lines[] = $this->deductionLine(downPayment: $downPayment, rate: $rate, position: (count($lines) + 1));
 			}
 
@@ -300,6 +332,74 @@ class DownPaymentService implements DownPaymentServiceInterface {
 		return array_merge($invoice, $patch);
 
 	}//end deductOnto()
+
+	/**
+	 * Refuse deducting onto an invoice that is not a draft, or that is itself a down payment.
+	 *
+	 * @param array<string,mixed> $invoice The invoice to deduct onto.
+	 *
+	 * @return void
+	 *
+	 * @throws DownPaymentRefusedException When the invoice cannot take deductions.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private static function requireDeductingDraft(array $invoice): void {
+		if ((string)($invoice['lifecycleState'] ?? '') !== 'draft') {
+			throw new DownPaymentRefusedException(template: 'Down payments can only be deducted on a draft invoice.');
+		}
+
+		if ((string)($invoice['invoiceTypeCode'] ?? '') === self::TYPE_CODE) {
+			throw new DownPaymentRefusedException(template: 'A down-payment invoice cannot deduct other down payments.');
+		}
+	}//end requireDeductingDraft()
+
+	/**
+	 * The open down payments of the order that this invoice has not deducted yet.
+	 *
+	 * @param array<string,mixed> $invoice        The draft invoice.
+	 * @param string              $orderReference The order.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @throws DownPaymentRefusedException When none is left to deduct.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function undeductedDownPayments(array $invoice, string $orderReference): array {
+		$already = array_column((array)(($invoice['downPayment'] ?? [])['deductions'] ?? []), 'invoiceId');
+		$open = array_values(
+			array_filter(
+				$this->openDownPayments(invoice: $invoice, orderReference: $orderReference),
+				static fn (array $downPayment): bool => in_array((string)$downPayment['id'], $already, true) === false
+			)
+		);
+		if ($open === []) {
+			throw new DownPaymentRefusedException(template: 'This customer has no issued down payment on this order left to deduct.');
+		}
+
+		return $open;
+	}//end undeductedDownPayments()
+
+	/**
+	 * One deduction entry: a down payment's charged net and VAT at one rate.
+	 *
+	 * @param array<string,mixed> $downPayment The down-payment invoice.
+	 * @param array<string,mixed> $rate        One chargedPerRate() entry (rate, net and vat cents).
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private static function deductionOf(array $downPayment, array $rate): array {
+		return [
+			'invoiceId' => (string)$downPayment['id'],
+			'invoiceNumber' => (string)($downPayment['invoiceNumber'] ?? ''),
+			'rate' => $rate['rate'],
+			'net' => self::euros(cents: $rate['net']),
+			'vat' => self::euros(cents: $rate['vat']),
+		];
+	}//end deductionOf()
 
 	/**
 	 * Refuse to issue a final invoice whose down payment was already deducted
@@ -325,25 +425,42 @@ class DownPaymentService implements DownPaymentServiceInterface {
 
 		$ownId = (string)($invoice['id'] ?? '');
 		foreach (array_unique(array_column($deductions, 'invoiceId')) as $downPaymentId) {
-			$downPayment = $this->findDownPayment(downPaymentId: (string)$downPaymentId);
-			$group = (array)($downPayment['downPayment'] ?? []);
-			$deductedOn = (string)($group['deductedOnInvoiceId'] ?? '');
-			if ($deductedOn !== '' && $deductedOn !== $ownId) {
-				throw new DownPaymentRefusedException(
-					template: 'Down payment %1$s was already deducted on invoice %2$s.',
-					parameters: [(string)($downPayment['invoiceNumber'] ?? $downPaymentId), (string)($group['deductedOnInvoiceNumber'] ?? $deductedOn)]
-				);
-			}
-
-			if ((string)($downPayment['customerId'] ?? '') !== (string)($invoice['customerId'] ?? '')) {
-				throw new DownPaymentRefusedException(
-					template: 'Down payment %1$s belongs to another customer.',
-					parameters: [(string)($downPayment['invoiceNumber'] ?? $downPaymentId)]
-				);
-			}
+			$this->requireDeductibleBy(downPaymentId: $downPaymentId, invoice: $invoice, ownId: $ownId);
 		}
 
 	}//end requireOpenDeductions()
+
+	/**
+	 * Refuse a deducted down payment that another invoice already deducted or that belongs to another customer.
+	 *
+	 * @param mixed               $downPaymentId The deducted down payment's id.
+	 * @param array<string,mixed> $invoice       The invoice being issued.
+	 * @param string              $ownId         The invoice's own id.
+	 *
+	 * @return void
+	 *
+	 * @throws DownPaymentRefusedException When the down payment may not be deducted here.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function requireDeductibleBy(mixed $downPaymentId, array $invoice, string $ownId): void {
+		$downPayment = $this->findDownPayment(downPaymentId: (string)$downPaymentId);
+		$group = (array)($downPayment['downPayment'] ?? []);
+		$deductedOn = (string)($group['deductedOnInvoiceId'] ?? '');
+		if ($deductedOn !== '' && $deductedOn !== $ownId) {
+			throw new DownPaymentRefusedException(
+				template: 'Down payment %1$s was already deducted on invoice %2$s.',
+				parameters: [(string)($downPayment['invoiceNumber'] ?? $downPaymentId), (string)($group['deductedOnInvoiceNumber'] ?? $deductedOn)]
+			);
+		}
+
+		if ((string)($downPayment['customerId'] ?? '') !== (string)($invoice['customerId'] ?? '')) {
+			throw new DownPaymentRefusedException(
+				template: 'Down payment %1$s belongs to another customer.',
+				parameters: [(string)($downPayment['invoiceNumber'] ?? $downPaymentId)]
+			);
+		}
+	}//end requireDeductibleBy()
 
 	/**
 	 * Record on each down payment the final invoice that deducted it (REQ-SDP-004).
@@ -697,17 +814,7 @@ class DownPaymentService implements DownPaymentServiceInterface {
 	 * @return array<string,mixed>
 	 */
 	private static function reduceTotals(array $invoice, array $deductions): array {
-		$netCents = 0;
-		$vatCents = 0;
-		$perRate = [];
-		foreach ($deductions as $deduction) {
-			$net = self::cents(amount: $deduction['net']);
-			$vat = self::cents(amount: $deduction['vat']);
-			$netCents += $net;
-			$vatCents += $vat;
-			$key = (string)$deduction['rate'];
-			$perRate[$key] = [($perRate[$key][0] ?? 0) + $net, ($perRate[$key][1] ?? 0) + $vat];
-		}
+		[$netCents, $vatCents, $perRate] = self::sumDeductions(deductions: $deductions);
 
 		$gross = (self::cents(amount: $invoice['grossAmount'] ?? 0) - $netCents - $vatCents);
 		$paid = self::cents(amount: $invoice['paidAmount'] ?? 0);
@@ -721,6 +828,48 @@ class DownPaymentService implements DownPaymentServiceInterface {
 			$patch['lineNetTotal'] = self::euros(cents: (self::cents(amount: $invoice['lineNetTotal']) - $netCents));
 		}
 
+		$breakdown = self::reduceBreakdown(invoice: $invoice, perRate: $perRate);
+
+		if ($breakdown !== []) {
+			$patch['vatBreakdown'] = $breakdown;
+		}
+
+		return $patch;
+
+	}//end reduceTotals()
+
+	/**
+	 * Sum the deductions' net and VAT cents, in total and per rate.
+	 *
+	 * @param list<array<string,mixed>> $deductions The deductions added now.
+	 *
+	 * @return array{0:int,1:int,2:array<string,array{0:int,1:int}>} [netCents, vatCents, perRate].
+	 */
+	private static function sumDeductions(array $deductions): array {
+		$netCents = 0;
+		$vatCents = 0;
+		$perRate = [];
+		foreach ($deductions as $deduction) {
+			$net = self::cents(amount: $deduction['net']);
+			$vat = self::cents(amount: $deduction['vat']);
+			$netCents += $net;
+			$vatCents += $vat;
+			$key = (string)$deduction['rate'];
+			$perRate[$key] = [($perRate[$key][0] ?? 0) + $net, ($perRate[$key][1] ?? 0) + $vat];
+		}
+
+		return [$netCents, $vatCents, $perRate];
+	}//end sumDeductions()
+
+	/**
+	 * The invoice's VAT breakdown with the deducted net and VAT taken off each rate.
+	 *
+	 * @param array<string,mixed>                $invoice The invoice.
+	 * @param array<string,array{0:int,1:int}>   $perRate Deducted [net, vat] cents per rate.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private static function reduceBreakdown(array $invoice, array $perRate): array {
 		$breakdown = [];
 		foreach ((array)($invoice['vatBreakdown'] ?? []) as $group) {
 			$key = (string)self::rateOf(value: $group['rate'] ?? 0);
@@ -732,13 +881,8 @@ class DownPaymentService implements DownPaymentServiceInterface {
 			$breakdown[] = $group;
 		}
 
-		if ($breakdown !== []) {
-			$patch['vatBreakdown'] = $breakdown;
-		}
-
-		return $patch;
-
-	}//end reduceTotals()
+		return $breakdown;
+	}//end reduceBreakdown()
 
 	/**
 	 * The deductions a final invoice carries.

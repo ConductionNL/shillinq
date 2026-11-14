@@ -127,52 +127,7 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 */
 	private function runInner(IOutput $output): void {
 		try {
-			$registerSlug = $this->registerLocation->getRegisterSlug();
-
-			$lines = $this->readPayloads(
-				registerSlug: $registerSlug,
-				schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_LINE
-			);
-			$transactions = $this->readPayloads(
-				registerSlug: $registerSlug,
-				schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_TRANSACTION
-			);
-
-			try {
-				$report = $this->migrator->backfillBatch(
-					glLines: $lines,
-					glTransactions: $transactions
-				);
-			} catch (\Throwable $e) {
-				$output->warning('Shillinq: GLLine fiscal-year backfill aborted: ' . $e->getMessage());
-				$this->logger->warning(
-					'Shillinq: GLLine fiscal-year backfill aborted',
-					['exception' => $e->getMessage()]
-				);
-				return;
-			}
-
-			$written = $this->writeBackfilledRows(
-				registerSlug: $registerSlug,
-				rows: $report['lines'],
-				output: $output
-			);
-
-			$output->info(
-				'Shillinq: GLLine fiscal-year backfill — ' . $report['seen'] . ' seen, '
-				. $report['stamped'] . ' resolved (' . $written . ' written), '
-				. $report['alreadyStamped'] . ' already stamped, '
-				. $report['unresolvable'] . ' unresolvable.'
-			);
-
-			foreach ($report['disagreements'] as $disagreement) {
-				$output->warning(
-					'Shillinq: GLLine fiscal-year disagrees with its parent — ' . $disagreement
-					. '. Left as-is; re-pointing a posted line is not a backfill decision.'
-				);
-			}
-
-			$this->reportRemaining(registerSlug: $registerSlug, output: $output);
+			$this->backfill(output: $output);
 		} catch (\Throwable $e) {
 			$output->warning('Shillinq: GLLine fiscal-year backfill failed: ' . $e->getMessage());
 			$this->logger->warning(
@@ -181,6 +136,76 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 			);
 		}//end try
 	}//end runInner()
+
+	/**
+	 * Backfill the fiscal year on GL lines, write the stamped rows and report the outcome.
+	 *
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return void
+	 */
+	private function backfill(IOutput $output): void {
+		$registerSlug = $this->registerLocation->getRegisterSlug();
+
+		$report = $this->backfillReport(registerSlug: $registerSlug, output: $output);
+		if ($report === null) {
+			return;
+		}
+
+		$written = $this->writeBackfilledRows(registerSlug: $registerSlug, rows: $report['lines'], output: $output);
+		self::reportBackfill(output: $output, report: $report, written: $written);
+
+		$this->reportRemaining(registerSlug: $registerSlug, output: $output);
+	}//end backfill()
+
+	/**
+	 * The migrator's report over every GL line and transaction, or null when it aborts the batch.
+	 *
+	 * @param string  $registerSlug The register slug.
+	 * @param IOutput $output       The repair output.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function backfillReport(string $registerSlug, IOutput $output): array|null {
+		$lines        = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_LINE);
+		$transactions = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineFiscalYearBackfillMigratorInterface::SCHEMA_GL_TRANSACTION);
+
+		try {
+			return $this->migrator->backfillBatch(glLines: $lines, glTransactions: $transactions);
+		} catch (\Throwable $e) {
+			$output->warning('Shillinq: GLLine fiscal-year backfill aborted: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: GLLine fiscal-year backfill aborted',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end backfillReport()
+
+	/**
+	 * Report the counts, and every line whose fiscal year disagrees with its parent.
+	 *
+	 * @param IOutput              $output  The repair output.
+	 * @param array<string, mixed> $report  The migrator's report.
+	 * @param int                  $written The rows written.
+	 *
+	 * @return void
+	 */
+	private static function reportBackfill(IOutput $output, array $report, int $written): void {
+		$output->info(
+			'Shillinq: GLLine fiscal-year backfill — ' . $report['seen'] . ' seen, '
+			. $report['stamped'] . ' resolved (' . $written . ' written), '
+			. $report['alreadyStamped'] . ' already stamped, '
+			. $report['unresolvable'] . ' unresolvable.'
+		);
+
+		foreach ($report['disagreements'] as $disagreement) {
+			$output->warning(
+				'Shillinq: GLLine fiscal-year disagrees with its parent — ' . $disagreement
+				. '. Left as-is; re-pointing a posted line is not a backfill decision.'
+			);
+		}
+	}//end reportBackfill()
 
 	/**
 	 * Re-read the store and say how many lines still carry no fiscal year.

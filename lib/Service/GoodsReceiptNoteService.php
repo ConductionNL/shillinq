@@ -256,39 +256,9 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 		$this->assertAccess(administrationId: $administrationId);
 		$inspector = $this->requireSessionUser();
 
-		$grn = $this->records()->findOne(
-			schema: self::SCHEMA_GRN,
-			filters: [
-				'id' => $grnId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($grn === null) {
-			throw new RuntimeException('Goods receipt note not found');
-		}
+		$grn = $this->requireGrn(administrationId: $administrationId, grnId: $grnId);
 
-		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
-		if ($poLineId === '') {
-			throw new RuntimeException('poLineId is required');
-		}
-
-		$poLine = $this->records()->findOne(
-			schema: self::SCHEMA_PO_LINE,
-			filters: [
-				'id' => $poLineId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($poLine === null) {
-			throw new RuntimeException('Purchase order line not found');
-		}
-
-		// Cross-validate: the PO line MUST belong to one of the GRN's po_ids.
-		$parentPoId = (string)($poLine['poId'] ?? '');
-		$grnPoIds = $this->stringArray(input: ($grn['poIds'] ?? []));
-		if ($parentPoId === '' || in_array($parentPoId, $grnPoIds, true) === false) {
-			throw new RuntimeException('Purchase order line does not belong to this GRN');
-		}
+		$poLineId = $this->requireGrnPoLineId(administrationId: $administrationId, grn: $grn, payload: $payload);
 
 		$quantityReceived = $this->normaliseQuantity(value: ($payload['quantityReceived'] ?? $payload['quantity_received'] ?? 0));
 		$quantityAccepted = $this->normaliseQuantity(value: ($payload['quantityAccepted'] ?? $payload['quantity_accepted'] ?? $quantityReceived));
@@ -296,22 +266,12 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 		$rejectionReason = trim((string)($payload['rejectionReason'] ?? $payload['rejection_reason'] ?? ''));
 		$batchReference = trim((string)($payload['batchReference'] ?? $payload['batch_ref'] ?? ''));
 
-		if ($quantityReceived <= 0.0) {
-			throw new RuntimeException('quantityReceived must be positive');
-		}
-
-		// Accepted + rejected may NOT exceed received (integer-thousandths
-		// arithmetic so rounding noise never creeps in).
-		$receivedThousandths = $this->thousandths(value: $quantityReceived);
-		$acceptedThousandths = $this->thousandths(value: $quantityAccepted);
-		$rejectedThousandths = $this->thousandths(value: $quantityRejected);
-		if (($acceptedThousandths + $rejectedThousandths) > $receivedThousandths) {
-			throw new RuntimeException('quantityAccepted + quantityRejected may not exceed quantityReceived');
-		}
-
-		if ($rejectedThousandths > 0 && $rejectionReason === '') {
-			throw new RuntimeException('rejectionReason is required when quantityRejected > 0');
-		}
+		$rejectedThousandths = $this->validateGrnLineQuantities(
+			quantityReceived: $quantityReceived,
+			quantityAccepted: $quantityAccepted,
+			quantityRejected: $quantityRejected,
+			rejectionReason: $rejectionReason
+		);
 
 		$grnRecordId = (string)($grn['id'] ?? ($grn['@self']['id'] ?? $grnId));
 
@@ -341,6 +301,113 @@ class GoodsReceiptNoteService implements GoodsReceiptNoteServiceInterface {
 
 		return $this->records()->saveObject(schema: self::SCHEMA_GRN_LINE, object: $line);
 	}//end addGRNLine()
+
+	/**
+	 * Load a GRN within the administration.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $grnId Parent GRN id.
+	 *
+	 * @return array<string,mixed> The GRN record.
+	 *
+	 * @throws \RuntimeException When the GRN is missing.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
+	 */
+	private function requireGrn(string $administrationId, string $grnId): array {
+		$grn = $this->records()->findOne(
+			schema: self::SCHEMA_GRN,
+			filters: [
+				'id' => $grnId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($grn === null) {
+			throw new RuntimeException('Goods receipt note not found');
+		}
+
+		return $grn;
+	}//end requireGrn()
+
+	/**
+	 * Resolve the payload's PO line id and require that line to belong to one of the GRN's po_ids.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $grn The parent GRN record.
+	 * @param array<string,mixed> $payload The GRN line payload.
+	 *
+	 * @return string The PO line id.
+	 *
+	 * @throws \RuntimeException When the id is missing, the line is missing, or it belongs elsewhere.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
+	 */
+	private function requireGrnPoLineId(string $administrationId, array $grn, array $payload): string {
+		$poLineId = trim((string)($payload['poLineId'] ?? $payload['po_line_id'] ?? ''));
+		if ($poLineId === '') {
+			throw new RuntimeException('poLineId is required');
+		}
+
+		$poLine = $this->records()->findOne(
+			schema: self::SCHEMA_PO_LINE,
+			filters: [
+				'id' => $poLineId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($poLine === null) {
+			throw new RuntimeException('Purchase order line not found');
+		}
+
+		// Cross-validate: the PO line MUST belong to one of the GRN's po_ids.
+		$parentPoId = (string)($poLine['poId'] ?? '');
+		$grnPoIds = $this->stringArray(input: ($grn['poIds'] ?? []));
+		if ($parentPoId === '' || in_array($parentPoId, $grnPoIds, true) === false) {
+			throw new RuntimeException('Purchase order line does not belong to this GRN');
+		}
+
+		return $poLineId;
+	}//end requireGrnPoLineId()
+
+	/**
+	 * Validate the received/accepted/rejected quantities of a GRN line.
+	 *
+	 * @param float $quantityReceived Quantity received.
+	 * @param float $quantityAccepted Quantity accepted.
+	 * @param float $quantityRejected Quantity rejected.
+	 * @param string $rejectionReason Rejection reason.
+	 *
+	 * @return int The rejected quantity in thousandths.
+	 *
+	 * @throws \RuntimeException When validation fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
+	 */
+	private function validateGrnLineQuantities(
+		float $quantityReceived,
+		float $quantityAccepted,
+		float $quantityRejected,
+		string $rejectionReason
+	): int {
+		if ($quantityReceived <= 0.0) {
+			throw new RuntimeException('quantityReceived must be positive');
+		}
+
+		// Accepted + rejected may NOT exceed received (integer-thousandths
+		// arithmetic so rounding noise never creeps in).
+		$receivedThousandths = $this->thousandths(value: $quantityReceived);
+		$acceptedThousandths = $this->thousandths(value: $quantityAccepted);
+		$rejectedThousandths = $this->thousandths(value: $quantityRejected);
+		if (($acceptedThousandths + $rejectedThousandths) > $receivedThousandths) {
+			throw new RuntimeException('quantityAccepted + quantityRejected may not exceed quantityReceived');
+		}
+
+		if ($rejectedThousandths > 0 && $rejectionReason === '') {
+			throw new RuntimeException('rejectionReason is required when quantityRejected > 0');
+		}
+
+		return $rejectedThousandths;
+	}//end validateGrnLineQuantities()
 
 	/**
 	 * Transition the GRN to "quality_checked" (REQ-GRN-002).

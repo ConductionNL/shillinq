@@ -108,6 +108,34 @@ class BbvAdministrationSeedService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
+		$refusal = $this->mappingSeedRefusal(administrationId: $administrationId, administrationType: $administrationType);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$file = $this->importer->read(fileName: 'rgs-to-bbv-mapping.json');
+		if (isset($file['error']) === true) {
+			return $file['error'];
+		}
+
+		if (empty($file['data']['records'] ?? []) === true) {
+			return $this->importer->failed(message: 'Seed file contains no records.');
+		}
+
+		return $this->seedMappings(data: $file['data'], administrationId: $administrationId, administrationType: $administrationType);
+	}//end seedBbvAccountMappings()
+
+	/**
+	 * Skip a non-municipal administration, or refuse without OpenRegister or an administration.
+	 *
+	 * @param string $administrationId   The municipal administration's id.
+	 * @param string $administrationType The administration type.
+	 *
+	 * @return array<string,mixed>|null The result, or null to go on seeding.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function mappingSeedRefusal(string $administrationId, string $administrationType): array|null {
 		if (in_array($administrationType, self::MUNICIPAL_TYPES, true) === false) {
 			return [
 				'success' => true,
@@ -125,17 +153,23 @@ class BbvAdministrationSeedService {
 			return $this->importer->failed(message: 'administrationId must not be empty.');
 		}
 
-		$file = $this->importer->read(fileName: 'rgs-to-bbv-mapping.json');
-		if (isset($file['error']) === true) {
-			return $file['error'];
-		}
+		return null;
+	}//end mappingSeedRefusal()
 
-		if (empty($file['data']['records'] ?? []) === true) {
-			return $this->importer->failed(message: 'Seed file contains no records.');
-		}
-
+	/**
+	 * Save the new mappings and record the gate install date; failures come back as a result.
+	 *
+	 * @param array<string, mixed> $data               The decoded seed file.
+	 * @param string               $administrationId   The administration the records belong to.
+	 * @param string               $administrationType The administration type.
+	 *
+	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function seedMappings(array $data, string $administrationId, string $administrationType): array {
 		try {
-			$counts = $this->saveNewMappings(data: $file['data'], administrationId: $administrationId);
+			$counts = $this->saveNewMappings(data: $data, administrationId: $administrationId);
 			$this->recordGateInstallDate();
 
 			$this->logger->info(
@@ -158,7 +192,7 @@ class BbvAdministrationSeedService {
 
 			return $this->importer->failed(message: 'BBV mapping seed failed: ' . $e->getMessage());
 		}//end try
-	}//end seedBbvAccountMappings()
+	}//end seedMappings()
 
 	/**
 	 * Save the mapping records that do not exist for the administration yet.
@@ -246,12 +280,9 @@ class BbvAdministrationSeedService {
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 */
 	public function seedBbvProgrammes(string $administrationId): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return $this->importer->failed(message: self::NO_OPENREGISTER);
-		}
-
-		if ($administrationId === '') {
-			return $this->importer->failed(message: 'administrationId is required for BBVProgramme seed.');
+		$refusal = $this->demoSeedRefusal(administrationId: $administrationId, missingMessage: 'administrationId is required for BBVProgramme seed.');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$file = $this->importer->read(fileName: self::WATERSCHAP_DEMO);
@@ -264,8 +295,51 @@ class BbvAdministrationSeedService {
 			return $this->importer->nothingSeeded(message: 'Seed file contains no programmes, nothing to import.');
 		}
 
-		// Dedup key (administrationId, programmeCode, fiscalYear) per REQ-BBVW-001.
-		$match = static function ($programme) use ($administrationId): ?array {
+		$match = $this->programmeMatch(administrationId: $administrationId);
+
+		return $this->importer->import(
+			import: new SeedImport(schema: 'BBVProgramme', rows: $programmes, match: $match, administrationId: $administrationId),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: BBVProgramme demo records seeded',
+				seededMessage: 'BBVProgramme demo records seeded successfully.',
+				failedLog: 'Shillinq: BBVProgramme demo seeding failed',
+			)
+		);
+	}//end seedBbvProgrammes()
+
+	/**
+	 * Refuse a demo seed without OpenRegister or an administration.
+	 *
+	 * @param string $administrationId Administration scope for the seed.
+	 * @param string $missingMessage   The message when the administration is missing.
+	 *
+	 * @return array<string,mixed>|null The refusal, or null to go on seeding.
+	 *
+	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
+	 */
+	private function demoSeedRefusal(string $administrationId, string $missingMessage): array|null {
+		if ($this->settings->isOpenRegisterAvailable() === false) {
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
+		}
+
+		if ($administrationId === '') {
+			return $this->importer->failed(message: $missingMessage);
+		}
+
+		return null;
+	}//end demoSeedRefusal()
+
+	/**
+	 * The BBVProgramme dedup key (administrationId, programmeCode, fiscalYear) per REQ-BBVW-001.
+	 *
+	 * @param string $administrationId Administration scope for the seed.
+	 *
+	 * @return \Closure(mixed): (array<string,mixed>|null)
+	 *
+	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
+	 */
+	private function programmeMatch(string $administrationId): \Closure {
+		return static function ($programme) use ($administrationId): ?array {
 			$programmeCode = (string) ($programme['programmeCode'] ?? '');
 			$fiscalYear = ($programme['fiscalYear'] ?? null);
 			if ($programmeCode === '' || $fiscalYear === null) {
@@ -278,16 +352,7 @@ class BbvAdministrationSeedService {
 				'fiscalYear' => $fiscalYear,
 			];
 		};
-
-		return $this->importer->import(
-			import: new SeedImport(schema: 'BBVProgramme', rows: $programmes, match: $match, administrationId: $administrationId),
-			messages: new SeedMessages(
-				seededLog: 'Shillinq: BBVProgramme demo records seeded',
-				seededMessage: 'BBVProgramme demo records seeded successfully.',
-				failedLog: 'Shillinq: BBVProgramme demo seeding failed',
-			)
-		);
-	}//end seedBbvProgrammes()
+	}//end programmeMatch()
 
 	/**
 	 * Seed the demo BudgetBBVMapping records from
@@ -308,12 +373,9 @@ class BbvAdministrationSeedService {
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 */
 	public function seedBudgetBbvMappings(string $administrationId): array {
-		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return $this->importer->failed(message: self::NO_OPENREGISTER);
-		}
-
-		if ($administrationId === '') {
-			return $this->importer->failed(message: 'administrationId is required for BudgetBBVMapping seed.');
+		$refusal = $this->demoSeedRefusal(administrationId: $administrationId, missingMessage: 'administrationId is required for BudgetBBVMapping seed.');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$file = $this->importer->read(fileName: self::WATERSCHAP_DEMO);
@@ -326,8 +388,29 @@ class BbvAdministrationSeedService {
 			return $this->importer->nothingSeeded(message: 'Seed file contains no mappings, nothing to import.');
 		}
 
-		// Dedup key (administrationId, glAccountNumber, programmeCode, effectiveFrom) per REQ-BBVW-002.
-		$match = static function ($mapping) use ($administrationId): ?array {
+		$match = $this->budgetMappingMatch(administrationId: $administrationId);
+
+		return $this->importer->import(
+			import: new SeedImport(schema: 'BudgetBBVMapping', rows: $mappings, match: $match, administrationId: $administrationId),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: BudgetBBVMapping demo records seeded',
+				seededMessage: 'BudgetBBVMapping demo records seeded successfully.',
+				failedLog: 'Shillinq: BudgetBBVMapping demo seeding failed',
+			)
+		);
+	}//end seedBudgetBbvMappings()
+
+	/**
+	 * The BudgetBBVMapping dedup key (administrationId, glAccountNumber, programmeCode, effectiveFrom) per REQ-BBVW-002.
+	 *
+	 * @param string $administrationId Administration scope for the seed.
+	 *
+	 * @return \Closure(mixed): (array<string,mixed>|null)
+	 *
+	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
+	 */
+	private function budgetMappingMatch(string $administrationId): \Closure {
+		return static function ($mapping) use ($administrationId): ?array {
 			$glAccountNumber = (string) ($mapping['glAccountNumber'] ?? '');
 			$programmeCode = (string) ($mapping['programmeCode'] ?? '');
 			$effectiveFrom = (string) ($mapping['effectiveFrom'] ?? '');
@@ -342,14 +425,5 @@ class BbvAdministrationSeedService {
 				'effectiveFrom' => $effectiveFrom,
 			];
 		};
-
-		return $this->importer->import(
-			import: new SeedImport(schema: 'BudgetBBVMapping', rows: $mappings, match: $match, administrationId: $administrationId),
-			messages: new SeedMessages(
-				seededLog: 'Shillinq: BudgetBBVMapping demo records seeded',
-				seededMessage: 'BudgetBBVMapping demo records seeded successfully.',
-				failedLog: 'Shillinq: BudgetBBVMapping demo seeding failed',
-			)
-		);
-	}//end seedBudgetBbvMappings()
+	}//end budgetMappingMatch()
 }//end class

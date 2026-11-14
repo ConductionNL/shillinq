@@ -374,7 +374,7 @@ class RecurringInvoiceGenerator {
 		return [
 			'invoiceNumber' => self::provisionalNumber(period: $period),
 			'periodId' => $period->billingPeriod,
-			'customerId' => (string)($profile['customerReference'] ?? ''),
+			'customerId' => self::customerIdOf(profile: $profile),
 			'administrationId' => ($profile['administrationId'] ?? null),
 			'invoiceDate' => $period->issueDate,
 			'dueDate' => $period->dueDate,
@@ -388,6 +388,26 @@ class RecurringInvoiceGenerator {
 			'invoiceLines' => $lines['lines'],
 		];
 	}//end arInvoicePayload()
+
+	/**
+	 * The customer a generated invoice bills: the profile's CustomerMaster
+	 * once it has one (sales-cancellation, REQ-SCX-003), else its contact
+	 * reference as before.
+	 *
+	 * @param array<string, mixed> $profile The recurring profile.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md
+	 */
+	private static function customerIdOf(array $profile): string {
+		$customerMasterId = trim((string)($profile['customerMasterId'] ?? ''));
+		if ($customerMasterId !== '') {
+			return $customerMasterId;
+		}
+
+		return (string)($profile['customerReference'] ?? '');
+	}//end customerIdOf()
 
 	/**
 	 * ARInvoice requires an invoice number and a period. The number is
@@ -627,35 +647,11 @@ class RecurringInvoiceGenerator {
 		$invoiceDay = max(1, min(31, $invoiceDay));
 
 		if ($lastBillingPeriod === '') {
-			// No period generated yet — next run is the start period's
-			// clamped invoice day. Weekly cadences advance from the literal
-			// start date and ignore invoiceDay (a day-of-month concept).
-			$start = self::immutable(value: $startDate);
-			if ($start === null) {
-				return '';
-			}
-
-			if ($frequency === 'weekly') {
-				return $start->format('Y-m-d');
-			}
-
-			return self::clampDay(date: $start, day: $invoiceDay)->format('Y-m-d');
+			return self::firstRunDate(frequency: $frequency, invoiceDay: $invoiceDay, startDate: $startDate);
 		}
 
 		if ($frequency === 'weekly') {
-			// Weekly advances 7 * interval days from the last period's start;
-			// the lastBillingPeriod for weekly is the start date itself, so
-			// resolve it from startDate when the key is month-shaped.
-			$weekBase = self::immutable(value: $startDate);
-			if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastBillingPeriod) === 1) {
-				$weekBase = self::immutable(value: $lastBillingPeriod);
-			}
-
-			if ($weekBase === null) {
-				return '';
-			}
-
-			return self::addPeriod(date: $weekBase, frequency: 'weekly', interval: $interval)->format('Y-m-d');
+			return self::nextWeeklyRunDate(interval: $interval, startDate: $startDate, lastBillingPeriod: $lastBillingPeriod);
 		}
 
 		$lastStart = self::immutable(value: $lastBillingPeriod . '-01');
@@ -666,6 +662,54 @@ class RecurringInvoiceGenerator {
 		$nextPeriod = self::addPeriod(date: $lastStart, frequency: $frequency, interval: $interval);
 		return self::clampDay(date: $nextPeriod, day: $invoiceDay)->format('Y-m-d');
 	}//end nextRunDate()
+
+	/**
+	 * No period generated yet — next run is the start period's
+	 * clamped invoice day. Weekly cadences advance from the literal
+	 * start date and ignore invoiceDay (a day-of-month concept).
+	 *
+	 * @param string $frequency  The cadence.
+	 * @param int    $invoiceDay The clamped day of month to invoice on.
+	 * @param string $startDate  The schedule's start date.
+	 *
+	 * @return string The ISO date, or '' when the start date does not parse.
+	 */
+	private static function firstRunDate(string $frequency, int $invoiceDay, string $startDate): string {
+		$start = self::immutable(value: $startDate);
+		if ($start === null) {
+			return '';
+		}
+
+		if ($frequency === 'weekly') {
+			return $start->format('Y-m-d');
+		}
+
+		return self::clampDay(date: $start, day: $invoiceDay)->format('Y-m-d');
+	}//end firstRunDate()
+
+	/**
+	 * Weekly advances 7 * interval days from the last period's start;
+	 * the lastBillingPeriod for weekly is the start date itself, so
+	 * resolve it from startDate when the key is month-shaped.
+	 *
+	 * @param int    $interval          The clamped interval.
+	 * @param string $startDate         The schedule's start date.
+	 * @param string $lastBillingPeriod The last generated period key.
+	 *
+	 * @return string The ISO date, or '' when no base date parses.
+	 */
+	private static function nextWeeklyRunDate(int $interval, string $startDate, string $lastBillingPeriod): string {
+		$weekBase = self::immutable(value: $startDate);
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastBillingPeriod) === 1) {
+			$weekBase = self::immutable(value: $lastBillingPeriod);
+		}
+
+		if ($weekBase === null) {
+			return '';
+		}
+
+		return self::addPeriod(date: $weekBase, frequency: 'weekly', interval: $interval)->format('Y-m-d');
+	}//end nextWeeklyRunDate()
 
 	/**
 	 * Add one cadence step (frequency × interval) to a civil date, landing on

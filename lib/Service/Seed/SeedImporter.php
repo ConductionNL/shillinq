@@ -237,28 +237,44 @@ class SeedImporter {
 		];
 
 		foreach ($import->rows as $row) {
-			$filters = ($import->match)($row);
-			if ($filters === null) {
-				continue;
+			$outcome = $this->saveRow(objectService: $objectService, registerSlug: $registerSlug, import: $import, row: $row);
+			if ($outcome !== '') {
+				$counts[$outcome]++;
 			}
-
-			$existing = $objectService
-				->setRegister($registerSlug)
-				->setSchema($import->schema)
-				->findAll(['filters' => $filters, 'limit' => 1]);
-			if (empty($existing) === false) {
-				$counts['skipped']++;
-				continue;
-			}
-
-			if ($import->administrationId !== null) {
-				$row['administrationId'] = $import->administrationId;
-			}
-
-			$objectService->saveObject(object: $row, register: $registerSlug, schema: $import->schema);
-			$counts['seeded']++;
-		}//end foreach
+		}
 
 		return $counts;
 	}//end saveRows()
+
+	/**
+	 * Save one row when it has a match and no existing copy.
+	 *
+	 * @param object     $objectService OpenRegister's ObjectService.
+	 * @param string     $registerSlug  The register slug.
+	 * @param SeedImport $import        The rows, schema and match.
+	 * @param mixed      $row           The row.
+	 *
+	 * @return string 'seeded', 'skipped' (exists), or '' when the row has no match.
+	 */
+	private function saveRow(object $objectService, string $registerSlug, SeedImport $import, mixed $row): string {
+		$filters = ($import->match)($row);
+		if ($filters === null) {
+			return '';
+		}
+
+		$existing = $objectService
+			->setRegister($registerSlug)
+			->setSchema($import->schema)
+			->findAll(['filters' => $filters, 'limit' => 1]);
+		if (empty($existing) === false) {
+			return 'skipped';
+		}
+
+		if ($import->administrationId !== null) {
+			$row['administrationId'] = $import->administrationId;
+		}
+
+		$objectService->saveObject(object: $row, register: $registerSlug, schema: $import->schema);
+		return 'seeded';
+	}//end saveRow()
 }//end class

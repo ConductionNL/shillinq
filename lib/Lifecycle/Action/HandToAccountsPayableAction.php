@@ -121,25 +121,7 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
 	public function apTransaction(array $invoice, array $payee): array {
-		$default = trim((string)($payee['defaultExpenseAccountNumber'] ?? ''));
-		$lines = [];
-		foreach ((array)($invoice['lines'] ?? []) as $line) {
-			$account = trim((string)($line['accountNumber'] ?? ''));
-			if ($account === '') {
-				$account = $default;
-			}
-
-			$lines[] = [
-				'description' => (string)($line['description'] ?? ($invoice['invoiceNumber'] ?? '')),
-				'accountNumber' => $account,
-				'amount' => self::euros(cents: ($line['lineExtension'] ?? 0)),
-			];
-		}
-
-		$net = self::euros(cents: ($invoice['totalExclVat'] ?? 0));
-		if ($lines === []) {
-			$lines[] = ['description' => (string)($invoice['invoiceNumber'] ?? ''), 'accountNumber' => $default, 'amount' => $net];
-		}
+		$lines = self::apLines(invoice: $invoice, payee: $payee);
 
 		$invoiceDate = (string)($invoice['invoiceDate'] ?? '');
 		$transaction = [
@@ -155,19 +137,78 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 			'administrationId' => (string)($invoice['administrationId'] ?? ''),
 		];
 
+		return self::withSourceAndPaymentBlock(transaction: $transaction, invoice: $invoice);
+
+	}//end apTransaction()
+
+	/**
+	 * The transaction lines: one per invoice line on its account (else the payee's default), or one for the net.
+	 *
+	 * @param array<string, mixed> $invoice The supplier invoice.
+	 * @param array<string, mixed> $payee   The payee.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private static function apLines(array $invoice, array $payee): array {
+		$default = trim((string)($payee['defaultExpenseAccountNumber'] ?? ''));
+		$lines   = [];
+		foreach ((array)($invoice['lines'] ?? []) as $line) {
+			$lines[] = [
+				'description' => (string)($line['description'] ?? ($invoice['invoiceNumber'] ?? '')),
+				'accountNumber' => self::lineAccount(line: $line, default: $default),
+				'amount' => self::euros(cents: ($line['lineExtension'] ?? 0)),
+			];
+		}
+
+		$net = self::euros(cents: ($invoice['totalExclVat'] ?? 0));
+		if ($lines === []) {
+			$lines[] = ['description' => (string)($invoice['invoiceNumber'] ?? ''), 'accountNumber' => $default, 'amount' => $net];
+		}
+
+		return $lines;
+
+	}//end apLines()
+
+	/**
+	 * The line's own account, else the payee's default.
+	 *
+	 * @param mixed  $line    The invoice line.
+	 * @param string $default The payee's default expense account.
+	 *
+	 * @return string
+	 */
+	private static function lineAccount(mixed $line, string $default): string {
+		$account = trim((string)($line['accountNumber'] ?? ''));
+		if ($account === '') {
+			$account = $default;
+		}
+
+		return $account;
+
+	}//end lineAccount()
+
+	/**
+	 * Carry the UBL source document, and block payment when the IBAN does not match.
+	 *
+	 * @param array<string, mixed> $transaction The AP transaction.
+	 * @param array<string, mixed> $invoice     The supplier invoice.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function withSourceAndPaymentBlock(array $transaction, array $invoice): array {
 		$source = trim((string)($invoice['ublSourceUri'] ?? ''));
 		if ($source !== '') {
 			$transaction['sourceDocumentUri'] = $source;
 		}
 
 		if (trim((string)($invoice['ibanMismatch'] ?? '')) !== '') {
-			$transaction['paymentBlocked'] = true;
+			$transaction['paymentBlocked']     = true;
 			$transaction['paymentBlockReason'] = self::IBAN_BLOCK_REASON;
 		}
 
 		return $transaction;
 
-	}//end apTransaction()
+	}//end withSourceAndPaymentBlock()
 
 	/**
 	 * The invoice's due date, else its date plus the payee's payment term.

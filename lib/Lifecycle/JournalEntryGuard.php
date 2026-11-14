@@ -65,12 +65,14 @@ class JournalEntryGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
+	 * @param LineDimensionCheck $dimensions The lines' cost centre, cost carrier and project codes (ledger-journal-line-dimensions).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly PostingRestrictionGuard $restrictions,
+		private readonly LineDimensionCheck $dimensions,
 	) {
 	}//end __construct()
 
@@ -164,14 +166,17 @@ class JournalEntryGuard {
 	}//end lineCents()
 
 	/**
-	 * A person may not post on a control account or a blocked combination;
-	 * the refusal names which (ledger-booking-rules).
+	 * A person may not post on a control account or a blocked combination,
+	 * nor name an unknown or inactive dimension on a line; the refusal names
+	 * which (ledger-booking-rules, ledger-journal-line-dimensions).
 	 *
 	 * @param array<int,mixed>         $lines  The balanced line rows.
 	 * @param array<string,mixed>|null $object The JournalEntry being posted.
 	 *
 	 * @return true
-	 * @throws PostingRefusedException When a line breaks a booking rule.
+	 * @throws PostingRefusedException When a line breaks a booking rule or names an unknown dimension.
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
 	 */
 	private function bookable(array $lines, array|null $object): bool {
 		$this->restrictions->assertAllowed(
@@ -179,6 +184,14 @@ class JournalEntryGuard {
 			administrationId: (string)($object['administrationId'] ?? ''),
 			postingDate: (string)($object['entryDate'] ?? ''),
 			sourceApp: (string)($object['sourceApp'] ?? '')
+		);
+		// A line's cost centre, cost carrier and project must be active
+		// dimensions of the administration (ledger-journal-line-dimensions
+		// REQ-LJD-002); the refusal names the line and the code.
+		$this->dimensions->assertKnown(
+			lines: array_values($lines),
+			administrationId: (string)($object['administrationId'] ?? ''),
+			postingDate: (string)($object['entryDate'] ?? '')
 		);
 		return true;
 	}//end bookable()
@@ -218,29 +231,12 @@ class JournalEntryGuard {
 	 */
 	public function canVoid(string $journalEntryId, ?array $object = null): bool {
 		try {
-			$glTransactionId = '';
-			if ($object !== null && isset($object['glTransactionId']) === true) {
-				$glTransactionId = (string)$object['glTransactionId'];
-			}
-
+			$glTransactionId = $this->glTransactionIdOf(object: $object);
 			if ($glTransactionId === '') {
 				return false;
 			}
 
-			$register = $this->resolveRegister();
-
-			$transactions = $this->objectService
-				->setRegister($register)
-				->setSchema('GLTransaction')
-				->findAll(['filters' => ['id' => $glTransactionId]]);
-
-			foreach ($transactions as $transaction) {
-				if (is_array($transaction) === true && ($transaction['state'] ?? '') === 'reversed') {
-					return true;
-				}
-			}
-
-			return false;
+			return $this->isReversed(glTransactionId: $glTransactionId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'JournalEntryGuard: void check failed — denying void transition (fail-closed)',
@@ -249,6 +245,52 @@ class JournalEntryGuard {
 			return false;
 		}//end try
 	}//end canVoid()
+
+	/**
+	 * The journal's materialised GLTransaction id, or ''.
+	 *
+	 * @param array<string,mixed>|null $object The JournalEntry object being transitioned.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+	 */
+	private function glTransactionIdOf(array|null $object): string {
+		$glTransactionId = '';
+		if ($object !== null && isset($object['glTransactionId']) === true) {
+			$glTransactionId = (string)$object['glTransactionId'];
+		}
+
+		return $glTransactionId;
+	}//end glTransactionIdOf()
+
+	/**
+	 * Whether the GLTransaction is in lifecycle state `reversed`.
+	 *
+	 * @param string $glTransactionId The GLTransaction id.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When the lookup fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+	 */
+	private function isReversed(string $glTransactionId): bool {
+		$register = $this->resolveRegister();
+
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['id' => $glTransactionId]]);
+
+		foreach ($transactions as $transaction) {
+			if (is_array($transaction) === true && ($transaction['state'] ?? '') === 'reversed') {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isReversed()
 
 	/**
 	 * Resolve the journal entry's embedded `lines`, preferring the supplied

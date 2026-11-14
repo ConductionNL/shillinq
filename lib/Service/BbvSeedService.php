@@ -210,18 +210,9 @@ class BbvSeedService implements BbvSeedServiceInterface {
 		$registerSlug = $this->getRegisterSlug();
 
 		foreach ($rows as $row) {
-			$dedupValue = ($row[$dedupField] ?? null);
-			if ($dedupValue === null) {
+			$filters = $this->dedupFilters(row: $row, dedupField: $dedupField, secondaryDedupField: $secondaryDedupField);
+			if ($filters === null) {
 				continue;
-			}
-
-			$filters = [$dedupField => $dedupValue];
-
-			if ($secondaryDedupField !== null) {
-				$secondaryValue = ($row[$secondaryDedupField] ?? null);
-				if ($secondaryValue !== null) {
-					$filters[$secondaryDedupField] = $secondaryValue;
-				}
 			}
 
 			$existing = $objectService
@@ -240,4 +231,31 @@ class BbvSeedService implements BbvSeedServiceInterface {
 
 		return ['seeded' => $seeded, 'skipped' => $skipped];
 	}//end importRows()
+
+	/**
+	 * The dedup filters of a catalogue row, or null when it has no dedup value.
+	 *
+	 * @param array<string, mixed> $row                 Catalogue row.
+	 * @param string               $dedupField          Field used as the dedup key.
+	 * @param string|null          $secondaryDedupField Optional secondary field for the dedup key.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function dedupFilters(array $row, string $dedupField, string|null $secondaryDedupField): array|null {
+		$dedupValue = ($row[$dedupField] ?? null);
+		if ($dedupValue === null) {
+			return null;
+		}
+
+		$filters = [$dedupField => $dedupValue];
+
+		if ($secondaryDedupField !== null) {
+			$secondaryValue = ($row[$secondaryDedupField] ?? null);
+			if ($secondaryValue !== null) {
+				$filters[$secondaryDedupField] = $secondaryValue;
+			}
+		}
+
+		return $filters;
+	}//end dedupFilters()
 }//end class

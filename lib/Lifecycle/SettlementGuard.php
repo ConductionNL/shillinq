@@ -329,8 +329,35 @@ class SettlementGuard {
 			return null;
 		}
 
+		$rules = $this->findMarkupRules(
+			objectService: $objectService,
+			customerId: $customerId,
+			administrationId: $administrationId,
+			fiscalYear: $fiscalYear
+		);
+
+		if (is_array(value: $rules) === false || count($rules) === 0) {
+			return null;
+		}
+
+		return (new PassThroughMarkupResolver())->select(rules: $rules, customerId: $customerId, category: $category);
+	}//end matchMarkupRule()
+
+	/**
+	 * Read the administration's markup rules for the fiscal year; a failed lookup is logged and yields null.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $customerId The linked customer id (for the log).
+	 * @param string $administrationId The administration id.
+	 * @param int $fiscalYear The claim/receipt fiscal year.
+	 *
+	 * @return mixed The rules, or null when the lookup failed.
+	 *
+	 * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+	 */
+	private function findMarkupRules(object $objectService, string $customerId, string $administrationId, int $fiscalYear): mixed {
 		try {
-			$rules = $objectService
+			return $objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'PassThroughMarkupRule')
 				->findAll(['filters' => PassThroughMarkupResolver::filters(administrationId: $administrationId, fiscalYear: $fiscalYear)]);
@@ -341,13 +368,7 @@ class SettlementGuard {
 			);
 			return null;
 		}
-
-		if (is_array(value: $rules) === false || count($rules) === 0) {
-			return null;
-		}
-
-		return (new PassThroughMarkupResolver())->select(rules: $rules, customerId: $customerId, category: $category);
-	}//end matchMarkupRule()
+	}//end findMarkupRules()
 
 	/**
 	 * Aggregate dual-path totals over a claim's child receipts (REQ-ERP-003).
@@ -376,18 +397,10 @@ class SettlementGuard {
 			if ($mode === 'reimbursable') {
 				$totalReimbursable += $amount;
 			} elseif ($mode === 'pass-through') {
-				$markup = $this->computeMarkupAmount(receipt: $receipt);
-				if ($markup === null) {
-					$markup = (float)($receipt['markupAmountCalculated'] ?? 0.0);
-				}
+				$totalPassThrough += ($amount + $this->receiptMarkup(receipt: $receipt));
 
-				$totalPassThrough += ($amount + $markup);
-
-				$customer = (string)($receipt['linkedCustomerId'] ?? '');
-				if ($customer !== '' && in_array(needle: $customer, haystack: $customers, strict: true) === false) {
-					$customers[] = $customer;
-				}
-			}//end if
+				$customers = $this->withLinkedCustomer(customers: $customers, receipt: $receipt);
+			}
 		}//end foreach
 
 		return [
@@ -397,6 +410,43 @@ class SettlementGuard {
 		];
 
 	}//end aggregateClaimTotals()
+
+	/**
+	 * A pass-through receipt's markup: computed from its rule, else the stored calculation.
+	 *
+	 * @param array<string, mixed> $receipt The receipt.
+	 *
+	 * @return float The markup amount.
+	 *
+	 * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+	 */
+	private function receiptMarkup(array $receipt): float {
+		$markup = $this->computeMarkupAmount(receipt: $receipt);
+		if ($markup === null) {
+			$markup = (float)($receipt['markupAmountCalculated'] ?? 0.0);
+		}
+
+		return $markup;
+	}//end receiptMarkup()
+
+	/**
+	 * Add the receipt's linked customer to the unique customer list.
+	 *
+	 * @param array<int, string> $customers The customers so far.
+	 * @param array<string, mixed> $receipt The receipt.
+	 *
+	 * @return array<int, string> The customers.
+	 *
+	 * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+	 */
+	private function withLinkedCustomer(array $customers, array $receipt): array {
+		$customer = (string)($receipt['linkedCustomerId'] ?? '');
+		if ($customer !== '' && in_array(needle: $customer, haystack: $customers, strict: true) === false) {
+			$customers[] = $customer;
+		}
+
+		return $customers;
+	}//end withLinkedCustomer()
 
 	/**
 	 * Build the reimbursement notification payload on post (REQ-ERP-008).

@@ -119,33 +119,13 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	public function run(IOutput $output): void {
 		$output->info('Seeding XBRLTaxonomy / SBRDocumentType / XBRLMapping example records...');
 
-		if (file_exists($this->seedPath) === false) {
-			$output->warning('SBR/XBRL seed fragment not found at ' . $this->seedPath . ', skipping');
+		$objects = $this->seedObjects(output: $output);
+		if ($objects === null) {
 			return;
 		}
 
-		$content = file_get_contents($this->seedPath);
-		if ($content === false) {
-			$output->warning('Failed to read SBR/XBRL seed fragment, skipping');
-			return;
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-			$output->warning('Failed to parse SBR/XBRL seed fragment: ' . json_last_error_msg());
-			return;
-		}
-
-		$objects = ($data['objects'] ?? []);
-		if (is_array($objects) === false || $objects === []) {
-			$output->info('SBR/XBRL seed fragment carries no objects; nothing to seed');
-			return;
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		} catch (\Throwable $e) {
-			$output->warning('OpenRegister ObjectService unavailable; skipping SBR/XBRL seed: ' . $e->getMessage());
+		$objectService = $this->objectService(output: $output);
+		if ($objectService === null) {
 			return;
 		}
 
@@ -161,6 +141,74 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	}//end run()
 
 	/**
+	 * Read and decode the seed fragment.
+	 *
+	 * @param IOutput $output Progress output interface.
+	 *
+	 * @return array<mixed>|null The decoded fragment, or null (warned) when it cannot be read.
+	 */
+	private function readSeed(IOutput $output): array|null {
+		if (file_exists($this->seedPath) === false) {
+			$output->warning('SBR/XBRL seed fragment not found at ' . $this->seedPath . ', skipping');
+			return null;
+		}
+
+		$content = file_get_contents($this->seedPath);
+		if ($content === false) {
+			$output->warning('Failed to read SBR/XBRL seed fragment, skipping');
+			return null;
+		}
+
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
+			$output->warning('Failed to parse SBR/XBRL seed fragment: ' . json_last_error_msg());
+			return null;
+		}
+
+		return $data;
+	}//end readSeed()
+
+	/**
+	 * The seed fragment's objects, or null when there is nothing to seed.
+	 *
+	 * @param IOutput $output Progress output interface.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	private function seedObjects(IOutput $output): array|null {
+		$data = $this->readSeed(output: $output);
+		if ($data === null) {
+			return null;
+		}
+
+		$objects = ($data['objects'] ?? []);
+		if (is_array($objects) === false || $objects === []) {
+			$output->info('SBR/XBRL seed fragment carries no objects; nothing to seed');
+			return null;
+		}
+
+		return $objects;
+	}//end seedObjects()
+
+	/**
+	 * OpenRegister's ObjectService, or null (warned) when it is unavailable.
+	 *
+	 * @param IOutput $output Progress output interface.
+	 *
+	 * @return object|null
+	 */
+	private function objectService(IOutput $output): object|null {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			$output->warning('OpenRegister ObjectService unavailable; skipping SBR/XBRL seed: ' . $e->getMessage());
+			return null;
+		}
+
+		return $objectService;
+	}//end objectService()
+
+	/**
 	 * The seed itself.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
@@ -173,76 +221,151 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 	 */
 	private function runInner(object $objectService, array $objects, IOutput $output): void {
 		$registerSlug = $this->register();
-		$seeded = 0;
-		$skipped = 0;
+		$counts = ['seeded' => 0, 'skipped' => 0, 'ignored' => 0];
 
 		foreach ($objects as $object) {
-			if (is_array($object) === false) {
-				continue;
-			}
-
-			$self = (array)($object['@self'] ?? []);
-			$schema = (string)($self['schema'] ?? '');
-			$slug = (string)($self['slug'] ?? '');
-			if ($schema === '' || $slug === '') {
-				continue;
-			}
-
-			if (in_array($schema, self::SCHEMAS, true) === false) {
-				continue;
-			}
-
-			try {
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema($schema)
-					->findAll(
-						[
-							'filters' => ['slug' => $slug],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				// Drop the @self envelope before persisting — the OR backend
-				// honours register + schema named args, not the inline block.
-				$payload = $object;
-				unset($payload['@self']);
-				$payload['slug'] = $slug;
-
-				// Runs in the installer/repair context where no web user is
-				// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
-				// seed persists instead of throwing "User 'Anonymous' does not have
-				// permission to 'create'" — mirrors the OR ImportHandler fix.
-				$objectService->saveObject(
-					object: $payload,
-					register: $registerSlug,
-					schema: $schema,
-					_rbac: false,
-					_multitenancy: false,
-				);
-				$seeded++;
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'SBR/XBRL seed: failed to save record',
-					['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
+			$counts[$this->seedOne(objectService: $objectService, registerSlug: $registerSlug, object: $object)]++;
+		}
 
 		$output->info(
 			sprintf(
 				'SBR/XBRL seed: %d created, %d skipped (already exist).',
-				$seeded,
-				$skipped,
+				$counts['seeded'],
+				$counts['skipped'],
 			)
 		);
 
 	}//end runInner()
+
+	/**
+	 * Seed one object of a known schema that carries a slug.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $registerSlug  The register slug.
+	 * @param mixed  $object        The seed object.
+	 *
+	 * @return string The tally it counts under: 'seeded', 'skipped' (exists) or 'ignored'.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function seedOne(object $objectService, string $registerSlug, mixed $object): string {
+		if (is_array($object) === false) {
+			return 'ignored';
+		}
+
+		$self = (array)($object['@self'] ?? []);
+		$schema = (string)($self['schema'] ?? '');
+		$slug = (string)($self['slug'] ?? '');
+		if ($schema === '' || $slug === '') {
+			return 'ignored';
+		}
+
+		if (in_array($schema, self::SCHEMAS, true) === false) {
+			return 'ignored';
+		}
+
+		return $this->saveSeed(objectService: $objectService, registerSlug: $registerSlug, object: $object);
+	}//end seedOne()
+
+	/**
+	 * Save one seed object unless an object with its slug already exists.
+	 *
+	 * @param object              $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register slug.
+	 * @param array<string,mixed> $object        The seed object (known schema, has a slug).
+	 *
+	 * @return string The tally it counts under: 'seeded', 'skipped' (exists) or 'ignored' (failed).
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function saveSeed(object $objectService, string $registerSlug, array $object): string {
+		$self = (array)($object['@self'] ?? []);
+		$schema = (string)($self['schema'] ?? '');
+		$slug = (string)($self['slug'] ?? '');
+
+		try {
+			if ($this->slugExists(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, slug: $slug) === true) {
+				return 'skipped';
+			}
+
+			$payload = $this->seedPayload(object: $object, slug: $slug);
+			$this->persistSeed(objectService: $objectService, registerSlug: $registerSlug, schema: $schema, payload: $payload);
+			return 'seeded';
+		} catch (\Throwable $e) {
+			$this->logger->warning('SBR/XBRL seed: failed to save record', ['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]);
+			return 'ignored';
+		}
+	}//end saveSeed()
+
+	/**
+	 * Persist one seed object.
+	 *
+	 * @param object              $objectService OpenRegister's ObjectService.
+	 * @param string              $registerSlug  The register slug.
+	 * @param string              $schema        The schema slug.
+	 * @param array<string,mixed> $payload       The object to persist.
+	 *
+	 * @return void
+	 *
+	 * @throws \Throwable When the save fails.
+	 */
+	private function persistSeed(object $objectService, string $registerSlug, string $schema, array $payload): void {
+		// Runs in the installer/repair context where no web user is
+		// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+		// seed persists instead of throwing "User 'Anonymous' does not have
+		// permission to 'create'" — mirrors the OR ImportHandler fix.
+		$objectService->saveObject(
+			object: $payload,
+			register: $registerSlug,
+			schema: $schema,
+			_rbac: false,
+			_multitenancy: false,
+		);
+	}//end persistSeed()
+
+	/**
+	 * Whether an object with the slug already exists in the schema.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $registerSlug  The register slug.
+	 * @param string $schema        The schema slug.
+	 * @param string $slug          The object slug.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When the lookup fails.
+	 */
+	private function slugExists(object $objectService, string $registerSlug, string $schema, string $slug): bool {
+		$existing = $objectService
+			->setRegister($registerSlug)
+			->setSchema($schema)
+			->findAll(
+				[
+					'filters' => ['slug' => $slug],
+					'limit' => 1,
+				]
+			);
+
+		return empty($existing) === false;
+	}//end slugExists()
+
+	/**
+	 * The object to persist: the @self envelope dropped, the slug kept.
+	 *
+	 * @param array<string,mixed> $object The seed object.
+	 * @param string              $slug   The object slug.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function seedPayload(array $object, string $slug): array {
+		// Drop the @self envelope before persisting — the OR backend
+		// honours register + schema named args, not the inline block.
+		$payload = $object;
+		unset($payload['@self']);
+		$payload['slug'] = $slug;
+
+		return $payload;
+	}//end seedPayload()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

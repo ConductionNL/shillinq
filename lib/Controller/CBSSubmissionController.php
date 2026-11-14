@@ -191,6 +191,30 @@ class CBSSubmissionController extends Controller {
 		$filters = $this->buildIndexFilters();
 
 		$reqAdministrationId = (string)($filters['administrationId'] ?? '');
+		$accessError = $this->filterAccessRefusal(reqAdministrationId: $reqAdministrationId);
+		if ($accessError !== null) {
+			return $accessError;
+		}
+
+		return $this->run(
+			action: 'list CBS submissions',
+			compute: fn (): array => $this->listSubmissions(filters: $filters, reqAdministrationId: $reqAdministrationId),
+			context: $filters,
+		);
+
+	}//end index()
+
+	/**
+	 * The 403 when an explicit administrationId filter names an administration
+	 * the caller is not a member of; null without a filter or with access.
+	 *
+	 * @param string $reqAdministrationId The administrationId filter ('' for none).
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function filterAccessRefusal(string $reqAdministrationId): JSONResponse|null {
 		if ($reqAdministrationId !== '') {
 			$accessError = $this->requireAdministrationAccess(administrationId: $reqAdministrationId);
 			if ($accessError !== null) {
@@ -198,42 +222,50 @@ class CBSSubmissionController extends Controller {
 			}
 		}
 
-		return $this->run(
-			action: 'list CBS submissions',
-			compute: function () use ($filters, $reqAdministrationId): array {
-				$submissions = array_map(
-					fn (mixed $row): array => $this->toArray(row: $row),
-					$this->objectService()
-						->setRegister($this->register())
-						->setSchema('CBSSubmission')
-						->findAll(['filters' => $filters])
-				);
+		return null;
+	}//end filterAccessRefusal()
 
-				$uid = (string)($this->userSession->getUser()?->getUID() ?? '');
-				$isAdmin = ($uid !== '' && $this->groupManager->isAdmin($uid) === true);
-				if ($reqAdministrationId === '' && $isAdmin === false) {
-					// No explicit filter, non-admin caller: scope the list to
-					// the caller's own accessible administrations rather than
-					// returning every tenant's submissions. An admin caller
-					// (or an explicit, already-vetted administrationId
-					// filter) sees the unfiltered set — matching
-					// requireAdministrationAccess()'s admin bypass above.
-					$submissions = array_values(
-						array_filter(
-							$submissions,
-							fn (array $row): bool => $this->administrationContext->canAccess(
-								(string)($row['administrationId'] ?? '')
-							)
-						)
-					);
-				}
-
-				return ['submissions' => $submissions];
-			},
-			context: $filters,
+	/**
+	 * List the submissions matching the filters, scoped to the caller's own
+	 * administrations when a non-admin caller gave no administrationId filter.
+	 *
+	 * @param array<string,mixed> $filters The list filters.
+	 * @param string $reqAdministrationId The administrationId filter ('' for none).
+	 *
+	 * @return array{submissions: list<array<string,mixed>>}
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function listSubmissions(array $filters, string $reqAdministrationId): array {
+		$submissions = array_map(
+			fn (mixed $row): array => $this->toArray(row: $row),
+			$this->objectService()
+				->setRegister($this->register())
+				->setSchema('CBSSubmission')
+				->findAll(['filters' => $filters])
 		);
 
-	}//end index()
+		$uid = (string)($this->userSession->getUser()?->getUID() ?? '');
+		$isAdmin = ($uid !== '' && $this->groupManager->isAdmin($uid) === true);
+		if ($reqAdministrationId === '' && $isAdmin === false) {
+			// No explicit filter, non-admin caller: scope the list to
+			// the caller's own accessible administrations rather than
+			// returning every tenant's submissions. An admin caller
+			// (or an explicit, already-vetted administrationId
+			// filter) sees the unfiltered set — matching
+			// requireAdministrationAccess()'s admin bypass above.
+			$submissions = array_values(
+				array_filter(
+					$submissions,
+					fn (array $row): bool => $this->administrationContext->canAccess(
+						(string)($row['administrationId'] ?? '')
+					)
+				)
+			);
+		}
+
+		return ['submissions' => $submissions];
+	}//end listSubmissions()
 
 	/**
 	 * GET /api/cbs-submissions/{id} — retrieve a single submission + its lines.
@@ -342,55 +374,17 @@ class CBSSubmissionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function update(string $id): JSONResponse {
-		$auth = $this->requireUser();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		$error = $this->validateId(value: $id, label: 'id');
-		if ($error !== null) {
-			return $error;
-		}
-
-		try {
-			$existing = $this->toArray(
-				row: ObjectIdentifier::findScopedOrThrow(
-					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
-					id: $id
-				)
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(
-				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
-				Http::STATUS_NOT_FOUND
-			);
-		}
-
-		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
-		if ($accessError !== null) {
-			return $accessError;
+		$existing = $this->accessibleSubmission(id: $id);
+		if ($existing instanceof JSONResponse) {
+			return $existing;
 		}
 
 		$body = $this->jsonBody();
 		$body['id'] = $id;
 
-		if (($body['status'] ?? '') === 'validated') {
-			$validation = $this->exportService->validateSubmission(submission: $body);
-			// `validateSubmission()` returns `array{valid:bool,errors:...,warnings:...}`,
-			// so `valid` always exists. The `?? false` this replaces did not just
-			// read as defensive — it made PHPStan lose the shape inside this
-			// branch, leaving `$validation['errors']` an unresolved type and the
-			// whole response payload unverifiable.
-			if ($validation['valid'] === false) {
-				return new JSONResponse(
-					[
-						'error' => 'validation failed',
-						'message' => 'CBS submission validation failed',
-						'errors' => $validation['errors'],
-					],
-					Http::STATUS_UNPROCESSABLE_ENTITY,
-				);
-			}
+		$validationError = $this->validationRefusal(body: $body);
+		if ($validationError !== null) {
+			return $validationError;
 		}
 
 		return $this->run(
@@ -423,44 +417,14 @@ class CBSSubmissionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {
-		$auth = $this->requireUser();
-		if ($auth !== null) {
-			return $auth;
+		$existing = $this->accessibleSubmission(id: $id);
+		if ($existing instanceof JSONResponse) {
+			return $existing;
 		}
 
-		$error = $this->validateId(value: $id, label: 'id');
-		if ($error !== null) {
-			return $error;
-		}
-
-		try {
-			$existing = $this->toArray(
-				row: ObjectIdentifier::findScopedOrThrow(
-					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
-					id: $id
-				)
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(
-				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
-				Http::STATUS_NOT_FOUND
-			);
-		}
-
-		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
-		if ($accessError !== null) {
-			return $accessError;
-		}
-
-		$status = (string)($existing['status'] ?? '');
-		if ($status !== '' && $status !== 'draft') {
-			return new JSONResponse(
-				[
-					'error' => 'conflict',
-					'message' => 'Only draft submissions may be deleted (current status: ' . $status . ')',
-				],
-				Http::STATUS_CONFLICT,
-			);
+		$conflict = $this->deleteConflict(existing: $existing);
+		if ($conflict !== null) {
+			return $conflict;
 		}
 
 		return $this->run(
@@ -476,6 +440,62 @@ class CBSSubmissionController extends Controller {
 		);
 
 	}//end destroy()
+
+	/**
+	 * The 422 when a `draft → validated` transition fails validation; null otherwise.
+	 *
+	 * @param array<string,mixed> $body The update body.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function validationRefusal(array $body): JSONResponse|null {
+		if (($body['status'] ?? '') === 'validated') {
+			$validation = $this->exportService->validateSubmission(submission: $body);
+			// `validateSubmission()` returns `array{valid:bool,errors:...,warnings:...}`,
+			// so `valid` always exists. The `?? false` this replaces did not just
+			// read as defensive — it made PHPStan lose the shape inside this
+			// branch, leaving `$validation['errors']` an unresolved type and the
+			// whole response payload unverifiable.
+			if ($validation['valid'] === false) {
+				return new JSONResponse(
+					[
+						'error' => 'validation failed',
+						'message' => 'CBS submission validation failed',
+						'errors' => $validation['errors'],
+					],
+					Http::STATUS_UNPROCESSABLE_ENTITY,
+				);
+			}
+		}
+
+		return null;
+	}//end validationRefusal()
+
+	/**
+	 * The 409 for deleting a submission that is no longer a draft; null when it may be deleted.
+	 *
+	 * @param array<string,mixed> $existing The stored submission.
+	 *
+	 * @return JSONResponse|null
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function deleteConflict(array $existing): JSONResponse|null {
+		$status = (string)($existing['status'] ?? '');
+		if ($status !== '' && $status !== 'draft') {
+			return new JSONResponse(
+				[
+					'error' => 'conflict',
+					'message' => 'Only draft submissions may be deleted (current status: ' . $status . ')',
+				],
+				Http::STATUS_CONFLICT,
+			);
+		}
+
+		return null;
+	}//end deleteConflict()
 
 	/**
 	 * POST /api/cbs-submissions/{id}/generate — trigger the export pipeline.

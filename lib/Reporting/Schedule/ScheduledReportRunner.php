@@ -182,12 +182,9 @@ class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 				format: (string)($schedule['format'] ?? ''),
 				asUserId: $ownerId
 			);
-			if (isset($produced['error']) === true) {
-				return (string)($produced['message'] ?? $produced['error']);
-			}
-
-			if (($produced['fileId'] ?? null) === null) {
-				return 'The report was produced but its file could not be stored.';
+			$failure = $this->productionFailure(produced: $produced);
+			if ($failure !== null) {
+				return $failure;
 			}
 
 			$recipients = $this->allowedRecipients(
@@ -210,6 +207,25 @@ class ScheduledReportRunner implements ScheduledReportRunnerInterface {
 		return '';
 
 	}//end produceAndDeliver()
+
+	/**
+	 * Why a produced report cannot be delivered, or null when it can.
+	 *
+	 * @param array<string, mixed> $produced The generate() result.
+	 *
+	 * @return string|null The reason, or null.
+	 */
+	private function productionFailure(array $produced): string|null {
+		if (isset($produced['error']) === true) {
+			return (string)($produced['message'] ?? $produced['error']);
+		}
+
+		if (($produced['fileId'] ?? null) === null) {
+			return 'The report was produced but its file could not be stored.';
+		}
+
+		return null;
+	}//end productionFailure()
 
 	/**
 	 * The recipients the owner may share this administration's reports with.

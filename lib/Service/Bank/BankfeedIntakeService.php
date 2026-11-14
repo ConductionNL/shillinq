@@ -107,6 +107,25 @@ class BankfeedIntakeService implements BankfeedIntakeServiceInterface {
 			return ['result' => 'batch-not-found'] + $empty;
 		}
 
+		return $this->ingestBatch(data: $data, account: $account, iban: $iban, batch: $batch);
+
+	}//end ingestSynced()
+
+	/**
+	 * Ingest a found batch into the bank account's statement and book its exact matches.
+	 *
+	 * @param array<string,mixed> $data The CloudEvent `data`.
+	 * @param array<string,mixed> $account The shillinq BankAccount.
+	 * @param string $iban The normalised IBAN.
+	 * @param array<string,mixed> $batch The integriq transaction batch.
+	 *
+	 * @return array{result:string,statementId:string,lines:int,booked:int}
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+	 */
+	private function ingestBatch(array $data, array $account, string $iban, array $batch): array {
+		$batchUri = trim((string)($data['batchUri'] ?? ''));
+		$empty = ['statementId' => '', 'lines' => 0, 'booked' => 0];
 		$lines = array_map(
 			static fn (array $row): array => self::normaliseTransaction(row: $row),
 			array_values(array_filter((array)($batch['transactions'] ?? []), 'is_array'))
@@ -128,12 +147,7 @@ class BankfeedIntakeService implements BankfeedIntakeServiceInterface {
 			return ['result' => 'duplicate-batch'] + $empty;
 		}
 
-		$booked = 0;
-		foreach ($result['written'] as $line) {
-			if ($this->booker->book(line: $line) !== null) {
-				$booked++;
-			}
-		}
+		$booked = $this->bookWrittenLines(written: $result['written']);
 
 		$this->scoped(schema: 'BankAccount')->patchObject(
 			(string)$account['id'],
@@ -141,8 +155,27 @@ class BankfeedIntakeService implements BankfeedIntakeServiceInterface {
 		);
 
 		return ['result' => 'written', 'statementId' => $result['statementId'], 'lines' => count($result['written']), 'booked' => $booked];
+	}//end ingestBatch()
 
-	}//end ingestSynced()
+	/**
+	 * Book each written statement line that has an exact match.
+	 *
+	 * @param array<int,array<string,mixed>> $written The written statement lines.
+	 *
+	 * @return int The number of lines booked.
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+	 */
+	private function bookWrittenLines(array $written): int {
+		$booked = 0;
+		foreach ($written as $line) {
+			if ($this->booker->book(line: $line) !== null) {
+				$booked++;
+			}
+		}
+
+		return $booked;
+	}//end bookWrittenLines()
 
 	/**
 	 * One aggregator row as a normalised statement line.

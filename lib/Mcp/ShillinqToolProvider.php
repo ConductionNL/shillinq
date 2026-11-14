@@ -47,39 +47,17 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	public const APP_ID = 'shillinq';
 
 	/**
-	 * An id as the controllers accept one.
+	 * The catalogue file: every tool's id, name, description, scope, hints and
+	 * input schema. Data, not code, so a new tool is a new entry there.
 	 */
-	private const ID_PATTERN = '^[A-Za-z0-9_.\-]{1,64}$';
+	private const CATALOGUE = __DIR__ . '/tool-catalogue.json';
 
 	/**
-	 * The catalogue.
+	 * The catalogue once read, per request.
 	 *
-	 * @var list<array<string, mixed>>
+	 * @var list<array<string, mixed>>|null
 	 */
-	private const TOOLS = [
-		[
-			'id' => 'shillinq.purchase_order.decide',
-			'name' => 'Decide on a purchase order',
-			'description' => 'Approve, reject or delegate a purchase order that waits for your approval, as the '
-				. 'signed-in approver. Use it when the user asks to approve or reject a specific purchase order; '
-				. 'find the order first with shillinq.PurchaseOrder.search. The decision binds the administration '
-				. 'and is recorded in the approval chain; it cannot be taken back with this tool.',
-			'scope' => 'update',
-			'reach' => 'instance',
-			'readOnlyHint' => false,
-			'destructiveHint' => false,
-			'inputSchema' => [
-				'type' => 'object',
-				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the order belongs to.'],
-					'purchaseOrderId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The purchase order.'],
-					'decision' => ['type' => 'string', 'enum' => ['approved', 'rejected', 'delegated'], 'description' => 'The decision.'],
-					'comment' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'An optional comment for the approval chain.'],
-				],
-				'required' => ['administrationId', 'purchaseOrderId', 'decision'],
-			],
-		],
-	];
+	private static ?array $tools = null;
 
 	/**
 	 * Constructor.
@@ -88,12 +66,26 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpAdministrationGate $gate           Names the principal for the audit record.
 	 * @param McpInvocationAudit    $audit          Records every invocation.
 	 * @param McpPurchaseOrderTools $purchaseOrders The purchase-order handlers.
+	 * @param McpPeriodCloseTools   $periodClose    The period-close handlers.
+	 * @param McpVatReturnTools     $vatReturns     The VAT-return handlers.
+	 * @param McpDunningTools       $dunning        The dunning handlers.
+	 * @param McpRequisitionTools   $requisitions   The requisition handlers.
+	 * @param McpPaymentRunTools    $paymentRuns    The payment-run handlers.
+	 * @param McpBankTools          $bank           The bank-statement and reconciliation handlers.
+	 * @param McpInvoiceTools       $invoices       The invoicing handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
 		private readonly McpAdministrationGate $gate,
 		private readonly McpInvocationAudit $audit,
 		private readonly McpPurchaseOrderTools $purchaseOrders,
+		private readonly McpPeriodCloseTools $periodClose,
+		private readonly McpVatReturnTools $vatReturns,
+		private readonly McpDunningTools $dunning,
+		private readonly McpRequisitionTools $requisitions,
+		private readonly McpPaymentRunTools $paymentRuns,
+		private readonly McpBankTools $bank,
+		private readonly McpInvoiceTools $invoices,
 	) {
 	}//end __construct()
 
@@ -116,8 +108,24 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @spec openspec/changes/mcp-action-tool-surface/tasks.md
 	 */
 	public function getTools(): array {
-		return self::TOOLS;
+		return self::tools();
 	}//end getTools()
+
+	/**
+	 * The catalogue, read from its file once.
+	 *
+	 * @return list<array<string, mixed>>
+	 *
+	 * @spec openspec/changes/mcp-action-tool-surface/tasks.md
+	 */
+	private static function tools(): array {
+		if (self::$tools === null) {
+			$decoded = json_decode((string)file_get_contents(self::CATALOGUE), true, 64, JSON_THROW_ON_ERROR);
+			self::$tools = array_values((array)$decoded);
+		}
+
+		return self::$tools;
+	}//end tools()
 
 	/**
 	 * Run a tool: validate, dispatch, audit. Never throws to the caller.
@@ -135,7 +143,8 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			toolId: $toolId,
 			userId: $this->gate->userId(),
 			administrationId: $this->administrationOf(arguments: $arguments),
-			result: $result
+			result: $result,
+			arguments: $arguments
 		);
 
 		return $result;
@@ -154,7 +163,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		if ($descriptor === null) {
 			return McpResult::error(
 				code: 'unknown_tool',
-				message: "Unknown tool id '{$toolId}'. Available tools: " . implode(', ', array_column(self::TOOLS, 'id')) . '.'
+				message: "Unknown tool id '{$toolId}'. Available tools: " . implode(', ', array_column(self::tools(), 'id')) . '.'
 			);
 		}
 
@@ -165,6 +174,32 @@ class ShillinqToolProvider implements IMcpToolProvider {
 
 		return match ($toolId) {
 			'shillinq.purchase_order.decide' => $this->purchaseOrders->decide(args: $arguments),
+			'shillinq.period_close.status' => $this->periodClose->status(args: $arguments),
+			'shillinq.period_close.start' => $this->periodClose->start(args: $arguments),
+			'shillinq.period_close.close' => $this->periodClose->close(args: $arguments),
+			'shillinq.period_close.reopen' => $this->periodClose->reopen(args: $arguments),
+			'shillinq.vat_return.create' => $this->vatReturns->create(args: $arguments),
+			'shillinq.vat_return.rebase' => $this->vatReturns->rebase(args: $arguments),
+			'shillinq.vat_return.submit' => $this->vatReturns->submit(args: $arguments),
+			'shillinq.vat_return.destroy' => $this->vatReturns->destroy(args: $arguments),
+			'shillinq.dunning.dossier' => $this->dunning->dossier(args: $arguments),
+			'shillinq.dunning.execute_run' => $this->dunning->executeRun(args: $arguments),
+			'shillinq.dunning.pause' => $this->dunning->pause(args: $arguments),
+			'shillinq.dunning.resume' => $this->dunning->resume(args: $arguments),
+			'shillinq.dunning.write_off' => $this->dunning->writeOff(args: $arguments),
+			'shillinq.requisition.create' => $this->requisitions->create(args: $arguments),
+			'shillinq.requisition.submit' => $this->requisitions->submit(args: $arguments),
+			'shillinq.requisition.decide' => $this->requisitions->decide(args: $arguments),
+			'shillinq.requisition.convert' => $this->requisitions->convert(args: $arguments),
+			'shillinq.payment_run.export_sepa' => $this->paymentRuns->exportSepa(args: $arguments),
+			'shillinq.payment_run.reconcile' => $this->paymentRuns->reconcile(args: $arguments),
+			'shillinq.bank_statement.import' => $this->bank->importStatement(args: $arguments),
+			'shillinq.bank_reconciliation.resolve' => $this->bank->resolve(args: $arguments),
+			'shillinq.invoice.draft' => $this->invoices->draft(args: $arguments),
+			'shillinq.invoice.issue' => $this->invoices->issue(args: $arguments),
+			'shillinq.invoice.render_pdf' => $this->invoices->renderPdf(args: $arguments),
+			'shillinq.invoice.send_einvoice' => $this->invoices->sendEInvoice(args: $arguments),
+			'shillinq.recurring_invoice.generate' => $this->invoices->generateRecurring(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()
@@ -177,7 +212,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @return array<string, mixed>|null
 	 */
 	private function descriptor(string $toolId): ?array {
-		foreach (self::TOOLS as $tool) {
+		foreach (self::tools() as $tool) {
 			if ($tool['id'] === $toolId) {
 				return $tool;
 			}

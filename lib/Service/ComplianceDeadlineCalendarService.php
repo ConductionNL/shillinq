@@ -996,38 +996,7 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 			//
 			// Same defect and same normalisation as the VAT fix in this branch;
 			// house idiom is jsonSerialize() then getObject().
-			$rows = [];
-			foreach (array_values($result) as $row) {
-				if (is_array($row) === true) {
-					$rows[] = $row;
-					continue;
-				}
-
-				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$out = $row->jsonSerialize();
-					if (is_array($out) === true) {
-						$rows[] = $out;
-						continue;
-					}
-				}
-
-				if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-					$out = $row->getObject();
-					if (is_array($out) === true) {
-						$rows[] = $out;
-						continue;
-					}
-				}
-
-				// Skip loudly rather than appending something the callers will
-				// fatal on — a dropped row is recoverable, a fatal is not.
-				$this->logger->warning(
-					'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
-					['schema' => $schema, 'type' => get_debug_type($row)]
-				);
-			}//end foreach
-
-			return $rows;
+			return $this->normaliseRows(result: $result, schema: $schema);
 		} catch (Throwable $e) {
 			$this->logger->debug(
 				'ComplianceDeadlineCalendarService: schema read unavailable — treating as empty',
@@ -1037,6 +1006,89 @@ class ComplianceDeadlineCalendarService implements ComplianceDeadlineCalendarSer
 		}//end try
 
 	}//end fetchRows()
+
+	/**
+	 * The findAll() rows as arrays; a row of an unsupported type is logged and dropped.
+	 *
+	 * @param array<mixed> $result The findAll() result.
+	 * @param string       $schema The schema name.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function normaliseRows(array $result, string $schema): array {
+		$rows = [];
+		foreach (array_values($result) as $row) {
+			$arr = $this->rowArray(row: $row);
+			if ($arr !== null) {
+				$rows[] = $arr;
+				continue;
+			}
+
+			// Skip loudly rather than appending something the callers will
+			// fatal on — a dropped row is recoverable, a fatal is not.
+			$this->logger->warning(
+				'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
+				['schema' => $schema, 'type' => get_debug_type($row)]
+			);
+		}//end foreach
+
+		return $rows;
+	}//end normaliseRows()
+
+	/**
+	 * One row as an array: as is, serialised, or its getObject(); null when none applies.
+	 *
+	 * @param mixed $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function rowArray(mixed $row): array|null {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === false) {
+			return null;
+		}
+
+		return $this->serialisedRow(row: $row) ?? $this->innerRow(row: $row);
+	}//end rowArray()
+
+	/**
+	 * An object row's jsonSerialize() array, or null.
+	 *
+	 * @param object $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function serialisedRow(object $row): array|null {
+		if (method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return null;
+	}//end serialisedRow()
+
+	/**
+	 * An object row's getObject() array, or null.
+	 *
+	 * @param object $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function innerRow(object $row): array|null {
+		if (method_exists($row, 'getObject') === true) {
+			$out = $row->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return null;
+	}//end innerRow()
 
 	/**
 	 * Resolve the configured OpenRegister register slug (default 'shillinq').

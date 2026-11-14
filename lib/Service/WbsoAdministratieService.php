@@ -142,16 +142,7 @@ class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 
 		$byDecision = [];
 		foreach ($entries as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$state = (string)($entry['state'] ?? '');
-			if ($state !== 'confirmed' && $state !== 'locked') {
-				continue;
-			}
-
-			$decisionNumber = (string)($entry['decisionNumber'] ?? '');
+			$decisionNumber = self::countedDecisionNumber(entry: $entry);
 			if ($decisionNumber === '') {
 				continue;
 			}
@@ -170,6 +161,26 @@ class WbsoAdministratieService implements WbsoAdministratieServiceInterface {
 
 		return $byDecision;
 	}//end realisedHoursByBeschikking()
+
+	/**
+	 * The decision number of a confirmed or locked hours entry, or '' when the entry does not count.
+	 *
+	 * @param mixed $entry The SoUurregistratie row.
+	 *
+	 * @return string
+	 */
+	private static function countedDecisionNumber(mixed $entry): string {
+		if (is_array($entry) === false) {
+			return '';
+		}
+
+		$state = (string)($entry['state'] ?? '');
+		if ($state !== 'confirmed' && $state !== 'locked') {
+			return '';
+		}
+
+		return (string)($entry['decisionNumber'] ?? '');
+	}//end countedDecisionNumber()
 
 	/**
 	 * Fetch the administration's WbsoBeschikking records keyed by beschikkingNumber.

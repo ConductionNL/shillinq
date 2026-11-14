@@ -103,10 +103,11 @@ class BackfillLinkedObjects implements IRepairStep {
 			foreach ($rows as $row) {
 				$request = $this->rowPayload(row: $row);
 				$uuid = ObjectIdentifier::resolve(saved: $row);
-				$subject = $request['subject'] ?? null;
-				if ($uuid === '' || is_array($subject) === false || $subject === [] || empty($request['linkedObjects']) === false) {
+				if (self::skipsBackfill(uuid: $uuid, request: $request) === true) {
 					continue;
 				}
+
+				$subject = $request['subject'];
 
 				$payload = $this->withoutMetadata(row: $request);
 				$payload['linkedObjects'] = [$subject];
@@ -127,6 +128,21 @@ class BackfillLinkedObjects implements IRepairStep {
 			$this->logger->warning('Shillinq: the linked objects backfill failed', ['exception' => $e->getMessage()]);
 		}//end try
 	}//end run()
+
+	/**
+	 * Whether a payment request is left alone: no id, no subject, or already linked.
+	 *
+	 * @param string               $uuid    The request's id.
+	 * @param array<string, mixed> $request The request payload.
+	 *
+	 * @return bool True when there is nothing to backfill.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 */
+	private static function skipsBackfill(string $uuid, array $request): bool {
+		$subject = $request['subject'] ?? null;
+		return $uuid === '' || is_array($subject) === false || $subject === [] || empty($request['linkedObjects']) === false;
+	}//end skipsBackfill()
 
 	/**
 	 * A row without its id and OpenRegister metadata, ready to save back.

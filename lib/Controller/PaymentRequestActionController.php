@@ -109,6 +109,25 @@ class PaymentRequestActionController extends Controller {
 			return new JSONResponse(['error' => 'No payment request with that id.'], Http::STATUS_NOT_FOUND);
 		}
 
+		$refusal = $this->sendRefusal(request: $request) ?? $this->mailLink(request: $request);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$request['linkSentAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		$this->saveRequest(request: $request);
+
+		return new JSONResponse(['sent' => true, 'linkSentAt' => $request['linkSentAt']]);
+	}//end send()
+
+	/**
+	 * Refuse to send a link for a request without a debtor email or payment link.
+	 *
+	 * @param array<string, mixed> $request The payment request.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the link can be sent.
+	 */
+	private function sendRefusal(array $request): JSONResponse|null {
 		$email = (string)($request['debtor']['email'] ?? '');
 		if ($email === '') {
 			return new JSONResponse(['error' => 'This request has no debtor email to send the link to.'], Http::STATUS_BAD_REQUEST);
@@ -119,34 +138,63 @@ class PaymentRequestActionController extends Controller {
 			return new JSONResponse(['error' => 'This request has no payment link; only a pending request carries one.'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return null;
+	}//end sendRefusal()
+
+	/**
+	 * Mail the payment link to the debtor.
+	 *
+	 * @param array<string, mixed> $request The payment request (has a debtor email and a link).
+	 *
+	 * @return JSONResponse|null The failure, or null when the mail was sent.
+	 */
+	private function mailLink(array $request): JSONResponse|null {
+		$email = (string)($request['debtor']['email'] ?? '');
 		try {
 			$message = $this->mailer->createMessage();
 			$message->setTo([$email]);
 			$message->setSubject('Your payment request');
-			$message->setPlainBody(
-				sprintf(
-					"%s\n\nAmount: %s %s\nPay here: %s\n",
-					(string)($request['description'] ?? 'A payment has been requested.'),
-					(string)($request['currency'] ?? 'EUR'),
-					number_format((float)($request['amount'] ?? 0), 2, ',', '.'),
-					$link
-				)
-			);
+			$message->setPlainBody($this->linkMailBody(request: $request));
 			$this->mailer->send($message);
 		} catch (\Throwable $e) {
 			$this->logger->error('Shillinq: could not send a payment link', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'The payment link could not be sent.'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		$request['linkSentAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		return null;
+	}//end mailLink()
+
+	/**
+	 * The plain-text body of the payment-link mail.
+	 *
+	 * @param array<string, mixed> $request The payment request.
+	 *
+	 * @return string
+	 */
+	private function linkMailBody(array $request): string {
+		return sprintf(
+			"%s\n\nAmount: %s %s\nPay here: %s\n",
+			(string)($request['description'] ?? 'A payment has been requested.'),
+			(string)($request['currency'] ?? 'EUR'),
+			number_format((float)($request['amount'] ?? 0), 2, ',', '.'),
+			(string)($request['paymentLink'] ?? '')
+		);
+	}//end linkMailBody()
+
+	/**
+	 * Save a payment request back to shillinq's register.
+	 *
+	 * @param array<string, mixed> $request The payment request.
+	 *
+	 * @return void
+	 */
+	private function saveRequest(array $request): void {
 		$this->objectService->saveObject(
 			object: $request,
 			register: $this->registerSlug(),
 			schema: self::SCHEMA,
 		);
-
-		return new JSONResponse(['sent' => true, 'linkSentAt' => $request['linkSentAt']]);
-	}//end send()
+	}//end saveRequest()
 
 	/**
 	 * Record that the money arrived another way: at the counter in cash or by
@@ -191,35 +239,93 @@ class PaymentRequestActionController extends Controller {
 		// settle, and the old cast turned that into a counter payment of 0.00
 		// signed by a named clerk: a record saying money arrived for nothing.
 		$ownAmount = $this->settlements->amountOf(request: $request);
-		if ($amount <= 0.0 && $ownAmount === null) {
-			return new JSONResponse(
-				[
-					'error' => 'This payment request carries no amount that can be read, so a settlement '
-						.'cannot fall back to it. Record the amount that actually arrived.',
-				],
-				Http::STATUS_BAD_REQUEST
-			);
+		if ($this->cannotFallBack(amount: $amount, ownAmount: $ownAmount) === true) {
+			return $this->noReadableAmount();
 		}
 
+		$settlementAmount = $this->settlementAmount(amount: $amount, ownAmount: $ownAmount);
+		$input = ['method' => $method, 'amount' => $settlementAmount, 'reference' => $settlementReference, 'reason' => $reason];
+		$settlement = $this->buildSettlement(input: $input);
+		if ($settlement instanceof JSONResponse) {
+			return $settlement;
+		}
+
+		return $this->recordSettlement(request: $request, settlement: $settlement);
+	}//end settle()
+
+	/**
+	 * Whether the amount is omitted while the request's own amount cannot be read.
+	 *
+	 * @param float      $amount    The amount given; zero when omitted.
+	 * @param float|null $ownAmount The request's own amount.
+	 *
+	 * @return bool
+	 */
+	private function cannotFallBack(float $amount, float|null $ownAmount): bool {
+		return ($amount <= 0.0 && $ownAmount === null);
+	}//end cannotFallBack()
+
+	/**
+	 * The refusal for a settlement that cannot fall back to the request's amount.
+	 *
+	 * @return JSONResponse
+	 */
+	private function noReadableAmount(): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => 'This payment request carries no amount that can be read, so a settlement '
+					.'cannot fall back to it. Record the amount that actually arrived.',
+			],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end noReadableAmount()
+
+	/**
+	 * The amount a settlement records: the given amount, else the request's own.
+	 *
+	 * @param float      $amount    The amount given; zero when omitted.
+	 * @param float|null $ownAmount The request's own amount.
+	 *
+	 * @return float|null
+	 */
+	private function settlementAmount(float $amount, float|null $ownAmount): float|null {
 		$settlementAmount = $ownAmount;
 		if ($amount > 0.0) {
 			$settlementAmount = $amount;
 		}
 
+		return $settlementAmount;
+	}//end settlementAmount()
+
+	/**
+	 * Build the settlement record, or the refusal when its input is invalid.
+	 *
+	 * @param array<string, mixed> $input The settlement's method, amount, reference and reason.
+	 *
+	 * @return array<string, mixed>|JSONResponse
+	 */
+	private function buildSettlement(array $input): array|JSONResponse {
 		try {
 			$settlement = $this->settlements->build(
-				input: [
-					'method' => $method,
-					'amount' => $settlementAmount,
-					'reference' => $settlementReference,
-					'reason' => $reason,
-				],
+				input: $input,
 				actor: $this->authorizer->callerId(),
 			);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $settlement;
+	}//end buildSettlement()
+
+	/**
+	 * Append the settlement to the request, stamp it settled and save it.
+	 *
+	 * @param array<string, mixed> $request    The payment request.
+	 * @param array<string, mixed> $settlement The settlement record.
+	 *
+	 * @return JSONResponse The derived report.
+	 */
+	private function recordSettlement(array $request, array $settlement): JSONResponse {
 		$request = $this->settlements->append(request: $request, settlement: $settlement);
 
 		// The settled edge the owning app of a contribution listens for, in the
@@ -230,16 +336,12 @@ class PaymentRequestActionController extends Controller {
 			via: (string)$settlement['method'],
 		);
 
-		$this->objectService->saveObject(
-			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
-		);
+		$this->saveRequest(request: $request);
 
 		return new JSONResponse(
 			['settled' => true, 'settlement' => $settlement, 'report' => $this->settlements->report($request)]
 		);
-	}//end settle()
+	}//end recordSettlement()
 
 	/**
 	 * Load one payment request by id.
@@ -306,7 +408,7 @@ class PaymentRequestActionController extends Controller {
 		string $objectId = '',
 		string $intakeChannel = 'desk',
 	): JSONResponse {
-		if ($register === '' || $schema === '' || $objectId === '') {
+		if ($this->missingTarget(register: $register, schema: $schema, objectId: $objectId) === true) {
 			return new JSONResponse(['error' => 'Name the register, the schema and the object to raise the fee on.'], Http::STATUS_BAD_REQUEST);
 		}
 
@@ -315,6 +417,38 @@ class PaymentRequestActionController extends Controller {
 			return new JSONResponse(['error' => 'No such object.'], Http::STATUS_NOT_FOUND);
 		}
 
+		$fee = $this->legesFee(register: $register, schema: $schema, object: $object, intakeChannel: $intakeChannel);
+		if ($fee instanceof JSONResponse) {
+			return $fee;
+		}
+
+		return $this->createLeges(register: $register, schema: $schema, objectId: $objectId, fee: $fee);
+	}//end raiseLeges()
+
+	/**
+	 * Whether the register, the schema or the object id is missing.
+	 *
+	 * @param string $register The object's register slug.
+	 * @param string $schema   The object's schema slug.
+	 * @param string $objectId The object's id.
+	 *
+	 * @return bool
+	 */
+	private function missingTarget(string $register, string $schema, string $objectId): bool {
+		return ($register === '' || $schema === '' || $objectId === '');
+	}//end missingTarget()
+
+	/**
+	 * The fee the object's type has published, or the refusal when there is none with an amount.
+	 *
+	 * @param string               $register      The object's register slug.
+	 * @param string               $schema        The object's schema slug.
+	 * @param array<string, mixed> $object        The object.
+	 * @param string               $intakeChannel Where the application came in.
+	 *
+	 * @return array<string, mixed>|JSONResponse
+	 */
+	private function legesFee(string $register, string $schema, array $object, string $intakeChannel): array|JSONResponse {
 		$fee = $this->feeSchedules->resolveForObject(
 			register: $register,
 			schema: $schema,
@@ -334,6 +468,21 @@ class PaymentRequestActionController extends Controller {
 			);
 		}
 
+		return $fee;
+	}//end legesFee()
+
+	/**
+	 * Create the leges request for the published fee.
+	 *
+	 * @param string               $register The object's register slug.
+	 * @param string               $schema   The object's schema slug.
+	 * @param string               $objectId The object's id.
+	 * @param array<string, mixed> $fee      The published fee (has a positive amount).
+	 *
+	 * @return JSONResponse The created request, or the refusal.
+	 */
+	private function createLeges(string $register, string $schema, string $objectId, array $fee): JSONResponse {
+		$amount = ($fee['amount'] ?? null);
 		try {
 			$created = $this->leaf->create(
 				$register,
@@ -348,17 +497,27 @@ class PaymentRequestActionController extends Controller {
 				]
 			);
 		} catch (\Throwable $e) {
-			$status = Http::STATUS_CONFLICT;
-			if (str_contains($e->getMessage(), '403') === true) {
-				$status = Http::STATUS_FORBIDDEN;
-			}
-
-
-			return new JSONResponse(['error' => $e->getMessage()], $status);
+			return new JSONResponse(['error' => $e->getMessage()], $this->createFailureStatus(e: $e));
 		}
 
 		return new JSONResponse(['request' => $created, 'fee' => $fee]);
-	}//end raiseLeges()
+	}//end createLeges()
+
+	/**
+	 * The status for a failed create: 403 when the leaf refused it, else 409.
+	 *
+	 * @param \Throwable $e The failure.
+	 *
+	 * @return int
+	 */
+	private function createFailureStatus(\Throwable $e): int {
+		$status = Http::STATUS_CONFLICT;
+		if (str_contains($e->getMessage(), '403') === true) {
+			$status = Http::STATUS_FORBIDDEN;
+		}
+
+		return $status;
+	}//end createFailureStatus()
 
 	/**
 	 * Read one object of any register and schema.
