@@ -196,7 +196,7 @@ class FinancialWidgetsTest extends TestCase {
 	 * @return void
 	 */
 	public function testFiveWidgetsAreRegistered(): void {
-		$source = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/DashboardWidgetRegistration.php');
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Dashboard/DashboardWidgetRegistration.php');
 		$ids = [];
 		foreach ([RevenueThisMonthWidget::class, OpenReceivablesWidget::class, CashPositionWidget::class, ResultByMonthWidget::class, TopCustomersWidget::class] as $class) {
 			$ids[] = $this->widget($class, 'adm-1')->getId();

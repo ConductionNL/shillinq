@@ -27,9 +27,10 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -41,7 +42,6 @@ use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST endpoints for notification trigger configuration and admin monitoring.
@@ -57,22 +57,22 @@ class BookingNotificationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
-	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param IGroupManager $groupManager The group manager.
 	 * @param IUserSession $userSession The user session.
 	 * @param LoggerInterface $logger The logger.
-	 * @param AdministrationContextService $administrationContext The administration membership seam.
+	 * @param AdministrationContextServiceInterface $administrationContext The administration membership seam.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private RegisterLocation $settingsService,
+		private RegisterLocationInterface $settingsService,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
-		private AdministrationContextService $administrationContext,
+		private AdministrationContextServiceInterface $administrationContext,
 		private readonly ObjectServiceInterface $objectService,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -45,7 +45,7 @@ use RuntimeException;
  * Tests for FoldExpensesAndHoursIntoProject.
  *
  * @covers \OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject
- * @uses   \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @uses   \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  */
 class FoldExpensesAndHoursIntoProjectTest extends TestCase {
 

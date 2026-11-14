@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\PeriodCloseController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PeriodCloseAssistantService;
-use OCA\Shillinq\Service\PeriodCloseException;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
