@@ -208,6 +208,7 @@ final class FluxServiceRunTest extends TestCase {
 
 		self::assertSame(
 			[
+				'fluxRunId' => 'flux-adm1-2026-03-102030',
 				'administrationId' => 'adm1',
 				'periodId' => '2026-03',
 				'scope' => 'entity',

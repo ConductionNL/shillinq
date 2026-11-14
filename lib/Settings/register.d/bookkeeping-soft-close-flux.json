@@ -794,7 +794,7 @@
       "FluxRun": {
         "slug": "FluxRun",
         "icon": "ChartLine",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Flux Run",
         "description": "A single variance-analysis execution. Carries scope (administratie, segment, cost centre), comparison basis (budget | forecast | prior-period | prior-year), materiality thresholds, runTimestamp, status, and resultSummary aggregating the FluxItem outcomes.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
@@ -808,6 +808,12 @@
           "status"
         ],
         "properties": {
+          "fluxRunId": {
+            "type": "string",
+            "description": "The run's own id, as every FluxItem of the run stores it in fluxRunId (ledger-group-close, REQ-CLS-011).",
+            "example": "flux-adm-smb-1-2026-03-020000",
+            "title": "Flux run ID"
+          },
           "administrationId": {
             "type": "string",
             "description": "FK to Administration.",

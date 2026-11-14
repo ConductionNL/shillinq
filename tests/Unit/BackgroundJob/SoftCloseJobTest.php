@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\BackgroundJob\SoftCloseJob;
 use OCA\Shillinq\Service\SoftCloseExecutor;
+use OCA\Shillinq\Service\SoftCloseSwingCheck;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -68,6 +69,13 @@ final class SoftCloseJobTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock swing check.
+	 *
+	 * @var SoftCloseSwingCheck&MockObject
+	 */
+	private SoftCloseSwingCheck&MockObject $swingCheck;
+
+	/**
 	 * Set up test fixtures.
 	 *
 	 * @return void
@@ -78,6 +86,7 @@ final class SoftCloseJobTest extends TestCase {
 		$this->executor = $this->createMock(SoftCloseExecutor::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->swingCheck = $this->createMock(SoftCloseSwingCheck::class);
 	}//end setUp()
 
 	/**
@@ -92,6 +101,7 @@ final class SoftCloseJobTest extends TestCase {
 			$this->container,
 			$this->appConfig,
 			$this->logger,
+			$this->swingCheck,
 		);
 	}//end makeJob()
 
@@ -235,6 +245,92 @@ final class SoftCloseJobTest extends TestCase {
 
 		self::assertSame('shillinq', $m->invoke($job));
 	}//end testRegisterFallsBackWhenConfigEmpty()
+
+	/**
+	 * The object service double that lists one active administration.
+	 *
+	 * @return object
+	 */
+	private function oneAdministration(): object {
+		return new class {
+			public function setRegister(string $r): self {
+				return $this;
+			}
+			public function setSchema(string $s): self {
+				return $this;
+			}
+			public function findAll(array $opts): array {
+				return [['id' => 'adm-1']];
+			}
+		};
+	}//end oneAdministration()
+
+	/**
+	 * A completed soft close is followed by the swing check for the same administration and period (REQ-CLS-011).
+	 *
+	 * @return void
+	 */
+	public function testACompletedSoftCloseRunsTheSwingCheck(): void {
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($this->oneAdministration());
+		$this->executor->method('execute')->willReturn(['status' => 'completed', 'postingCount' => 3]);
+
+		$period = (new \DateTimeImmutable())->format('Y-m');
+		$this->swingCheck->expects(self::once())
+			->method('run')
+			->with('adm-1', $period, self::isInstanceOf(\DateTimeImmutable::class))
+			->willReturn(['materialCount' => 2]);
+
+		$infos = [];
+		$this->logger->method('info')->willReturnCallback(
+			static function (string $message, array $context = []) use (&$infos): void {
+				$infos[] = [$message, $context];
+			}
+		);
+
+		$this->invokeRun($this->makeJob());
+
+		self::assertSame('SoftCloseJob: swing check completed', $infos[1][0]);
+		self::assertSame(['administrationId' => 'adm-1', 'periodId' => $period, 'materialCount' => 2], $infos[1][1]);
+	}//end testACompletedSoftCloseRunsTheSwingCheck()
+
+	/**
+	 * A soft close that did not complete, or that threw, runs no swing check.
+	 *
+	 * @return void
+	 */
+	public function testAFailedSoftCloseRunsNoSwingCheck(): void {
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($this->oneAdministration());
+		$this->executor->method('execute')->willReturnOnConsecutiveCalls(['status' => 'failed', 'postingCount' => 0]);
+		$this->swingCheck->expects(self::never())->method('run');
+
+		$this->invokeRun($this->makeJob());
+
+		$this->executor = $this->createMock(SoftCloseExecutor::class);
+		$this->executor->method('execute')->willThrowException(new \RuntimeException('period locked'));
+		$this->invokeRun($this->makeJob());
+	}//end testAFailedSoftCloseRunsNoSwingCheck()
+
+	/**
+	 * A failing swing check is logged and does not escape the job.
+	 *
+	 * @return void
+	 */
+	public function testAFailingSwingCheckIsLogged(): void {
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($this->oneAdministration());
+		$this->executor->method('execute')->willReturn(['status' => 'completed', 'postingCount' => 0]);
+		$this->swingCheck->method('run')->willThrowException(new \RuntimeException('trial balance down'));
+
+		$this->logger->expects(self::once())
+			->method('error')
+			->with('SoftCloseJob: swing check failed', self::callback(
+				static fn (array $ctx): bool => $ctx['administrationId'] === 'adm-1' && $ctx['exception'] === 'trial balance down'
+			));
+
+		$this->invokeRun($this->makeJob());
+	}//end testAFailingSwingCheckIsLogged()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
