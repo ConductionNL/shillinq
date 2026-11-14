@@ -135,6 +135,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\GLTransactionSealListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\InvoiceCommitmentListener'",
             "0"
         ]

@@ -4716,7 +4716,18 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Check ledger seal": "Check ledger seal",
+        "Checking the ledger seal…": "Checking the ledger seal…",
+        "Check again": "Check again",
+        "Its content changed after it was posted.": "Its content changed after it was posted.",
+        "Its link to the entry before it no longer matches.": "Its link to the entry before it no longer matches.",
+        "An entry is missing before it.": "An entry is missing before it.",
+        "The ledger seal could not be checked.": "The ledger seal could not be checked.",
+        "Prove that no posted transaction changed since posting, or see the first one that did.": "Prove that no posted transaction changed since posting, or see the first one that did.",
+        "The ledger seal chain is intact over %1$d entries.": "The ledger seal chain is intact over %1$d entries.",
+        "Transaction %1$s is the first entry that no longer matches its seal.": "Transaction %1$s is the first entry that no longer matches its seal.",
+        "Only a controller can check the ledger seal.": "Only a controller can check the ledger seal."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

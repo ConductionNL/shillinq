@@ -40,6 +40,7 @@ use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
+use OCA\Shillinq\Listener\GLTransactionSealListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
@@ -160,6 +161,13 @@ final class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: ReconciliationMatchSettlementListener::class
+		);
+
+		// Ledger-sealed-entries REQ-LSE-001: a posted GLTransaction is sealed
+		// into its administration's chain, under a lock per administration.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: GLTransactionSealListener::class
 		);
 
 		// Planning-commitment-year-end REQ-PCYE-002/003: an approved supplier
