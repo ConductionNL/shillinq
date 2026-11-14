@@ -381,7 +381,7 @@ final class ListenerRegistrarTest extends TestCase {
 	public function testEachFallbackLogsAWarningNamingListenerAndEvent(): void {
 		$logger = $this->createMock(LoggerInterface::class);
 		$messages = [];
-		$logger->expects(self::exactly(18))->method('warning')->willReturnCallback(
+		$logger->expects(self::exactly(20))->method('warning')->willReturnCallback(
 			function (string $message, array $context) use (&$messages): void {
 				self::assertSame(['app' => 'shillinq'], $context);
 				$messages[] = $message;
