@@ -163,6 +163,87 @@ class SubjectCostReport {
 	}//end typeCsvLines()
 
 	/**
+	 * The sections as the rows of the report page's table: one row per
+	 * taakveld or type with its objects, hours, cost (EUR) and incomplete
+	 * objects, then a total row. A source whose app is missing gives one row
+	 * that names the app and carries no figure.
+	 *
+	 * @param array<int, array<string, mixed>> $sections The sections of perTaskField() or perType().
+	 * @param bool                             $perType  Whether the sections are grouped per type.
+	 *
+	 * @return array<int, array<string, mixed>> Rows: label, objects, hours, cost, incomplete, types.
+	 *
+	 * @spec openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md#requirement-the-same-case-cost-source-is-grouped-per-case-type-per-period-req-iv3-012
+	 */
+	public function tableRows(array $sections, bool $perType): array {
+		$rows = [];
+		foreach ($sections as $section) {
+			if ($section['message'] !== null) {
+				$rows[] = ['label' => $section['message'], 'objects' => null, 'hours' => null, 'cost' => null, 'incomplete' => '', 'types' => ''];
+				continue;
+			}
+
+			foreach ($section['groups'] as $group) {
+				$rows[] = $this->tableRow(label: $this->groupLabel(group: $group, perType: $perType), group: $group);
+			}
+
+			$totals = $section['totals'];
+			$rows[]  = [
+				'label'      => $this->l10n->t('Total'),
+				'objects'    => $totals['objects'],
+				'hours'      => $totals['hours'],
+				'cost'       => round($totals['costCents'] / 100, 2),
+				'incomplete' => (string)$totals['incomplete'],
+				'types'      => '',
+			];
+		}//end foreach
+
+		return $rows;
+	}//end tableRows()
+
+	/**
+	 * One group as a table row.
+	 *
+	 * @param string               $label The row's label.
+	 * @param array<string, mixed> $group The group.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function tableRow(string $label, array $group): array {
+		return [
+			'label'      => $label,
+			'objects'    => $group['objects'],
+			'hours'      => $group['hours'],
+			'cost'       => round($group['costCents'] / 100, 2),
+			'incomplete' => implode(', ', $group['incomplete']),
+			'types'      => implode('; ', ($group['types'] ?? [])),
+		];
+	}//end tableRow()
+
+	/**
+	 * The label of a group: its taakveld or type title, else the named "none".
+	 *
+	 * @param array<string, mixed> $group   The group.
+	 * @param bool                 $perType Whether it is a type group.
+	 *
+	 * @return string
+	 */
+	private function groupLabel(array $group, bool $perType): string {
+		$label = (string)($group['taskField'] ?? '');
+		$none  = 'No task field';
+		if ($perType === true) {
+			$label = (string)($group['typeTitle'] ?? '');
+			$none  = 'No type';
+		}
+
+		if ($label === '') {
+			return $this->l10n->t($none);
+		}
+
+		return $label;
+	}//end groupLabel()
+
+	/**
 	 * Read the sources once and group them.
 	 *
 	 * @param string $period The period.

@@ -9460,6 +9460,69 @@
                 }
             }
         },
+        "/reporting/subject-costs": {
+            "get": {
+                "operationId": "subject-cost-report-rows",
+                "summary": "GET /api/reporting/subject-costs — the case cost rows per task field or per case type",
+                "description": "GET /api/reporting/subject-costs — the case cost rows of one administration and period (YYYY, YYYY-Qn or YYYY-MM), per task field or, with grouping=type, per case type, then a total; a source whose app is missing gives one row naming it with no figure. Without administrationId the caller's active administration is read; either way it must be one of theirs (404 otherwise). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "reporting"
+                ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": true,
+                        "description": "The period: YYYY, YYYY-Qn or YYYY-MM.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "grouping",
+                        "in": "query",
+                        "required": false,
+                        "description": "`type` for the rows per case type; per task field otherwise.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "administrationId",
+                        "in": "query",
+                        "required": false,
+                        "description": "The administration id; the active one when absent.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    }
+                }
+            }
+        },
         "/reporting/types": {
             "get": {
                 "operationId": "reporting-types",

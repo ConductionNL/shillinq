@@ -6913,7 +6913,15 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Case costs": "Zaakkosten",
+        "Period (2026, 2026-Q3 or 2026-09)": "Periode (2026, 2026-Q3 of 2026-09)",
+        "Case costs per task field": "Zaakkosten per taakveld",
+        "Case costs per case type": "Zaakkosten per zaaktype",
+        "Choose a period.": "Kies een periode.",
+        "Cases": "Zaken",
+        "Incomplete": "Onvolledig",
+        "Case types": "Zaaktypen"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -68,7 +68,11 @@ class SubjectCostSourceConfiguration {
 	 */
 	public function sources(): array {
 		$file = ($this->file ?? __DIR__ . '/../../Settings/subject-cost-sources.json');
-		$raw = @file_get_contents($file);
+		if (is_readable($file) === false) {
+			return [];
+		}
+
+		$raw = file_get_contents($file);
 		if ($raw === false) {
 			return [];
 		}

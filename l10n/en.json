@@ -4725,7 +4725,15 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Case costs": "Case costs",
+        "Period (2026, 2026-Q3 or 2026-09)": "Period (2026, 2026-Q3 or 2026-09)",
+        "Case costs per task field": "Case costs per task field",
+        "Case costs per case type": "Case costs per case type",
+        "Choose a period.": "Choose a period.",
+        "Cases": "Cases",
+        "Incomplete": "Incomplete",
+        "Case types": "Case types"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

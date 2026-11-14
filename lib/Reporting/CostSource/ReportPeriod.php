@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\CostSource;
 
+use DateTimeImmutable;
+
 /**
  * Parses a report period into an inclusive date range.
  *
@@ -89,6 +91,6 @@ final class ReportPeriod {
 	 * @return string The day.
 	 */
 	private static function lastDay(int $year, int $month): string {
-		return (new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('Y-m-t');
+		return (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('Y-m-t');
 	}//end lastDay()
 }//end class

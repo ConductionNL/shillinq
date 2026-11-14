@@ -137,10 +137,10 @@ final class SubjectCostGrouping {
 		$cost = ($row['costCents'] ?? null);
 		if (($row['complete'] ?? false) === true && is_int($cost) === true) {
 			$group['costCents'] += $cost;
-		} else {
-			$group['incomplete'][] = (string)($row['objectId'] ?? '');
+			return $group;
 		}
 
+		$group['incomplete'][] = (string)($row['objectId'] ?? '');
 		return $group;
 	}//end add()
 

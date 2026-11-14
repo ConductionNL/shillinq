@@ -74,8 +74,12 @@ class TaskFieldRollup {
 		}
 
 		$this->parents = [];
-		$raw = @file_get_contents(($this->file ?? __DIR__ . '/../../Settings/seeds/bbv-taakvelden-gemeente-2025.json'));
-		$decoded = json_decode((string)$raw, true);
+		$file = ($this->file ?? __DIR__ . '/../../Settings/seeds/bbv-taakvelden-gemeente-2025.json');
+		if (is_readable($file) === false) {
+			return $this->parents;
+		}
+
+		$decoded = json_decode((string)file_get_contents($file), true);
 		foreach ((array)($decoded['taskFields'] ?? []) as $taskField) {
 			$code = trim((string)($taskField['code'] ?? ''));
 			$parent = trim((string)($taskField['aggregatesUnder'] ?? ''));
