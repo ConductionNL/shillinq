@@ -136,21 +136,12 @@ class ReferencesAuditCommand extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$write = (bool)$input->getOption('write');
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		} catch (Throwable $e) {
-			$output->writeln('<error>OpenRegister is not available: ' . $e->getMessage() . '</error>');
+		$loaded = $this->loadAuditInputs(output: $output);
+		if ($loaded === null) {
 			return 1;
 		}
 
-		$ownerRegister = $this->humaniq->registerSlug();
-
-		try {
-			$satellites = $this->readAllRows($objectService, 'shillinq', self::SATELLITE_SCHEMA);
-		} catch (Throwable $e) {
-			$output->writeln('<error>could not read ' . self::SATELLITE_SCHEMA . ': ' . $e->getMessage() . '</error>');
-			return 1;
-		}
+		[$objectService, $ownerRegister, $satellites] = $loaded;
 
 		[$owners, $ownerIds] = $this->ownerIndex($objectService, $ownerRegister, $output);
 
@@ -165,19 +156,74 @@ class ReferencesAuditCommand extends Command {
 			$verdict = $this->classifyRow($row, $owners, $ownerIds);
 			$counts[$verdict['outcome']]++;
 
-			if ($verdict['message'] !== '') {
-				$output->writeln($verdict['message']);
-			}
-
-			if ($verdict['outcome'] !== 'backfillable' || $write === false) {
-				continue;
-			}
-
-			if ($this->backfill($objectService, $verdict['id'], $verdict['owner'], $output) === true) {
+			if ($this->actOnVerdict(verdict: $verdict, write: $write, objectService: $objectService, output: $output) === true) {
 				$counts['written']++;
 			}
-		}//end foreach
+		}
 
+		return $this->reportAudit(output: $output, ownerRegister: $ownerRegister, counts: $counts, write: $write);
+	}//end execute()
+
+	/**
+	 * Resolve the object service, humaniq's register slug and the satellite rows.
+	 *
+	 * @param OutputInterface $output Console output.
+	 *
+	 * @return array{0: mixed, 1: string, 2: array<mixed>}|null [objectService, ownerRegister, satellites], or null (reported) on failure.
+	 */
+	private function loadAuditInputs(OutputInterface $output): array|null {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (Throwable $e) {
+			$output->writeln('<error>OpenRegister is not available: ' . $e->getMessage() . '</error>');
+			return null;
+		}
+
+		$ownerRegister = $this->humaniq->registerSlug();
+
+		try {
+			$satellites = $this->readAllRows($objectService, 'shillinq', self::SATELLITE_SCHEMA);
+		} catch (Throwable $e) {
+			$output->writeln('<error>could not read ' . self::SATELLITE_SCHEMA . ': ' . $e->getMessage() . '</error>');
+			return null;
+		}
+
+		return [$objectService, $ownerRegister, $satellites];
+	}//end loadAuditInputs()
+
+	/**
+	 * Print a row's verdict and, with --write, fill in a backfillable reference.
+	 *
+	 * @param array{outcome: string, id: string, owner: string, message: string} $verdict       The row's verdict.
+	 * @param bool                                                                $write         Whether --write was given.
+	 * @param mixed                                                               $objectService The OpenRegister object service.
+	 * @param OutputInterface                                                     $output        Console output.
+	 *
+	 * @return bool True when a reference was written.
+	 */
+	private function actOnVerdict(array $verdict, bool $write, mixed $objectService, OutputInterface $output): bool {
+		if ($verdict['message'] !== '') {
+			$output->writeln($verdict['message']);
+		}
+
+		if ($verdict['outcome'] !== 'backfillable' || $write === false) {
+			return false;
+		}
+
+		return $this->backfill($objectService, $verdict['id'], $verdict['owner'], $output);
+	}//end actOnVerdict()
+
+	/**
+	 * Print the audit summary and decide the exit code.
+	 *
+	 * @param OutputInterface    $output        Console output.
+	 * @param string             $ownerRegister humaniq's register slug.
+	 * @param array<string,int>  $counts        Rows per outcome, plus `written`.
+	 * @param bool               $write         Whether --write was given.
+	 *
+	 * @return int 0 when no reference dangles, 1 when at least one does.
+	 */
+	private function reportAudit(OutputInterface $output, string $ownerRegister, array $counts, bool $write): int {
 		$output->writeln('');
 		$output->writeln(
 			sprintf(
@@ -205,7 +251,7 @@ class ReferencesAuditCommand extends Command {
 		}
 
 		return 0;
-	}//end execute()
+	}//end reportAudit()
 
 	/**
 	 * Decide what one satellite row is, against the index of owners.
@@ -230,21 +276,47 @@ class ReferencesAuditCommand extends Command {
 		$identity  = trim((string)($row[self::IDENTITY_KEY] ?? ''));
 
 		if ($reference !== '') {
-			// An empty owner index means humaniq could not be read at all. That
-			// is reported as presence, never as a dangling link, or an outage
-			// would look like data loss.
-			if ($ownerIds === [] || isset($ownerIds[$reference]) === true) {
-				return ['outcome' => 'set', 'id' => $id, 'owner' => '', 'message' => ''];
-			}
-
-			return [
-				'outcome' => 'dangling',
-				'id'      => $id,
-				'owner'   => '',
-				'message' => '  <error>dangling</error>  ' . $id . ' -> ' . $reference,
-			];
+			return $this->classifyReferenced(id: $id, reference: $reference, ownerIds: $ownerIds);
 		}
 
+		return $this->classifyByIdentity(id: $id, identity: $identity, owners: $owners);
+	}//end classifyRow()
+
+	/**
+	 * Classify a row that carries a reference: set, or dangling.
+	 *
+	 * @param string             $id        The satellite row's id.
+	 * @param string             $reference The row's owner reference.
+	 * @param array<string,bool> $ownerIds  Every known owner id.
+	 *
+	 * @return array{outcome: string, id: string, owner: string, message: string}
+	 */
+	private function classifyReferenced(string $id, string $reference, array $ownerIds): array {
+		// An empty owner index means humaniq could not be read at all. That
+		// is reported as presence, never as a dangling link, or an outage
+		// would look like data loss.
+		if ($ownerIds === [] || isset($ownerIds[$reference]) === true) {
+			return ['outcome' => 'set', 'id' => $id, 'owner' => '', 'message' => ''];
+		}
+
+		return [
+			'outcome' => 'dangling',
+			'id'      => $id,
+			'owner'   => '',
+			'message' => '  <error>dangling</error>  ' . $id . ' -> ' . $reference,
+		];
+	}//end classifyReferenced()
+
+	/**
+	 * Classify a row without a reference by its identity key: unmatched, ambiguous or backfillable.
+	 *
+	 * @param string                     $id       The satellite row's id.
+	 * @param string                     $identity The row's identity key value.
+	 * @param array<string,list<string>> $owners   Identity key to owner ids.
+	 *
+	 * @return array{outcome: string, id: string, owner: string, message: string}
+	 */
+	private function classifyByIdentity(string $id, string $identity, array $owners): array {
 		$candidates = ($owners[$identity] ?? []);
 		if ($identity === '' || $candidates === []) {
 			return ['outcome' => 'unmatched', 'id' => $id, 'owner' => '', 'message' => ''];
@@ -261,7 +333,7 @@ class ReferencesAuditCommand extends Command {
 		}
 
 		return ['outcome' => 'backfillable', 'id' => $id, 'owner' => $candidates[0], 'message' => ''];
-	}//end classifyRow()
+	}//end classifyByIdentity()
 
 	/**
 	 * Write one unambiguous owner reference onto a satellite row.
@@ -336,6 +408,17 @@ class ReferencesAuditCommand extends Command {
 			return [[], []];
 		}//end try
 
+		return [$owners, $this->ownerIdsOf(owners: $owners)];
+	}//end ownerIndex()
+
+	/**
+	 * Every owner id in the index, as a set.
+	 *
+	 * @param array<string,list<string>> $owners Identity key to owner ids.
+	 *
+	 * @return array<string,bool>
+	 */
+	private function ownerIdsOf(array $owners): array {
 		$ownerIds = [];
 		foreach ($owners as $ids) {
 			foreach ($ids as $id) {
@@ -343,7 +426,7 @@ class ReferencesAuditCommand extends Command {
 			}
 		}
 
-		return [$owners, $ownerIds];
-	}//end ownerIndex()
+		return $ownerIds;
+	}//end ownerIdsOf()
 
 }//end class

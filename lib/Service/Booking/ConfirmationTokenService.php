@@ -216,48 +216,57 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 			];
 		}
 
-		$status = (string)($token['status'] ?? '');
-		if ($status === 'redeemed') {
-			return [
-				'ok' => false,
-				'reason' => 'already_redeemed',
-				'token' => $token,
-			];
-		}
-
-		if ($status === 'revoked') {
-			return [
-				'ok' => false,
-				'reason' => 'revoked',
-				'token' => $token,
-			];
-		}
-
-		if ($status === 'expired'
-			|| TokenValidator::isExpired((string)($token['expiresAt'] ?? ''), $this->nowIso()) === true
-		) {
-			return [
-				'ok' => false,
-				'reason' => 'expired',
-				'token' => $token,
-			];
-		}
-
-		if (TokenValidator::verify($plaintext, (string)($token['tokenString'] ?? '')) === false) {
-			return [
-				'ok' => false,
-				'reason' => 'invalid',
-				'token' => $token,
-			];
-		}
+		$reason = $this->tokenVerdict(token: $token, plaintext: $plaintext);
 
 		return [
-			'ok' => true,
-			'reason' => 'ok',
+			'ok' => ($reason === 'ok'),
+			'reason' => $reason,
 			'token' => $token,
 		];
 
 	}//end validate()
+
+	/**
+	 * Why the active token does not accept the presented plaintext, or `ok` when it does.
+	 *
+	 * @param array<string,mixed> $token     The appointment's active token.
+	 * @param string              $plaintext Plaintext token from the URL / portal.
+	 *
+	 * @return string One of `already_redeemed`, `revoked`, `expired`, `invalid` or `ok`.
+	 */
+	private function tokenVerdict(array $token, string $plaintext): string {
+		$status = (string)($token['status'] ?? '');
+		if ($status === 'redeemed') {
+			return 'already_redeemed';
+		}
+
+		if ($status === 'revoked') {
+			return 'revoked';
+		}
+
+		if ($this->isExpiredToken(token: $token) === true) {
+			return 'expired';
+		}
+
+		if (TokenValidator::verify($plaintext, (string)($token['tokenString'] ?? '')) === false) {
+			return 'invalid';
+		}
+
+		return 'ok';
+	}//end tokenVerdict()
+
+	/**
+	 * Whether the token is marked expired or has passed its expiry time.
+	 *
+	 * @param array<string,mixed> $token The token record.
+	 *
+	 * @return bool True when expired.
+	 */
+	private function isExpiredToken(array $token): bool {
+		$status = (string)($token['status'] ?? '');
+		return $status === 'expired'
+			|| TokenValidator::isExpired((string)($token['expiresAt'] ?? ''), $this->nowIso()) === true;
+	}//end isExpiredToken()
 
 	/**
 	 * Mark the given token as redeemed.
@@ -459,13 +468,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 			return false;
 		}
 
-		$serviceName = (string)($appointment['serviceName'] ?? '');
-		$startTime = (string)($appointment['startTime'] ?? '');
-		if ($serviceName === '') {
-			$serviceName = 'your appointment';
-		}
-
-		$subject = 'Confirmation needed: ' . $serviceName . ' on ' . $startTime;
+		$subject = $this->requestSubject(appointment: $appointment);
 
 		try {
 			$message = $this->mailer->createMessage();
@@ -495,6 +498,25 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 
 		return true;
 	}//end dispatchEmail()
+
+	/**
+	 * The subject line of the confirmation request.
+	 *
+	 * @param array<string, mixed> $appointment Appointment record.
+	 *
+	 * @return string The subject.
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/tasks.md#task-1.1
+	 */
+	private function requestSubject(array $appointment): string {
+		$serviceName = (string)($appointment['serviceName'] ?? '');
+		$startTime = (string)($appointment['startTime'] ?? '');
+		if ($serviceName === '') {
+			$serviceName = 'your appointment';
+		}
+
+		return 'Confirmation needed: ' . $serviceName . ' on ' . $startTime;
+	}//end requestSubject()
 
 	/**
 	 * The plain-text body of the confirmation request.
