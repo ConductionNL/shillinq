@@ -121,9 +121,9 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	/**
 	 * Lock one item, reading the administration's rules for its year once.
 	 *
-	 * @param array{register:string, schema:string, id:string, source:array{ids:string, amount:string, date:string, category:string}} $item  The item to lock.
-	 * @param array<string, mixed>                                                                                                    $claim The claim.
-	 * @param array<string, array<int, array<string, mixed>>>                                                                          $rules The rules read so far, per administration and year.
+	 * @param array<string, mixed>                            $item  The item: register, schema, id and its ITEM_SOURCES entry.
+	 * @param array<string, mixed>                            $claim The claim.
+	 * @param array<string, array<int, array<string, mixed>>> $rules The rules read so far, per administration and year.
 	 *
 	 * @return void
 	 *
