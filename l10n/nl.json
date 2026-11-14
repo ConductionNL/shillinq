@@ -6945,7 +6945,21 @@
         "Per diem account": "Rekening verblijfskosten",
         "Expense payable account": "Rekening te betalen declaraties",
         "Choose an expense category": "Kies een kostensoort",
-        "Failed to load expense categories.": "Kostensoorten konden niet worden geladen."
+        "Failed to load expense categories.": "Kostensoorten konden niet worden geladen.",
+        "The suggestion is not the account this receipt posts to. It counts only after you use it and save.": "De suggestie is niet de rekening waarop deze bon boekt. Ze telt pas als u haar gebruikt en opslaat.",
+        "Posts to {code}, the confirmed account.": "Boekt op {code}, de bevestigde rekening.",
+        "Posts to {code}, the account of category {category}.": "Boekt op {code}, de rekening van categorie {category}.",
+        "No account yet: posting the claim will stop at this receipt.": "Nog geen rekening: het boeken van de declaratie stopt bij deze bon.",
+        "Loading the receipts…": "De bonnen worden geladen…",
+        "This claim has no receipts.": "Deze declaratie heeft geen bonnen.",
+        "Posts to": "Boekt op",
+        "Suggested": "Voorgesteld",
+        "(not used until confirmed)": "(niet gebruikt tot bevestigd)",
+        "{code} (confirmed)": "{code} (bevestigd)",
+        "{code} (category {category})": "{code} (categorie {category})",
+        "No account: posting stops here": "Geen rekening: boeken stopt hier",
+        "The receipts of this claim could not be loaded.": "De bonnen van deze declaratie konden niet worden geladen.",
+        "Accounts per receipt": "Rekeningen per bon"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

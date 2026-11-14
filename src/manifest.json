@@ -10997,6 +10997,9 @@
 			"id": "ExpenseClaimDetail",
 			"route": "/inkoop/expense-claims/:id",
 			"type": "detail",
+			"slots": {
+				"widget-claim-receipt-accounts": "ClaimReceiptAccounts"
+			},
 			"title": "Expense Claim",
 			"config": {
 				"register": "shillinq",
@@ -11026,6 +11029,13 @@
 						"integrationId": "files",
 						"title": "Receipt evidence",
 						"icon": "Receipt"
+					},
+					{
+						"id": "claim-receipt-accounts",
+						"type": "custom",
+						"title": "Accounts per receipt",
+						"icon": "Receipt",
+						"_note": "expenses-category-mapping REQ-ECM-003: the account each receipt posts to (the confirmed account, else its category's account) next to the docudesk suggestion, which never replaces it. Rendered through the page slot widget-claim-receipt-accounts -> ClaimReceiptAccounts."
 					}
 				],
 				"layout": [
@@ -11054,6 +11064,14 @@
 						"gridY": 11,
 						"gridWidth": 12,
 						"gridHeight": 3
+					},
+					{
+						"id": "4",
+						"widgetId": "claim-receipt-accounts",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"_note": "Expense Claim detail — an employee reimbursement claim aggregating receipts, per-diems and mileage into one approvable total. Related receipts and mileage entries list the underlying evidence; source receipt images live under Files. Audit trail evidences the approval workflow.",

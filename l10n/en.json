@@ -4757,7 +4757,21 @@
         "Per diem account": "Per diem account",
         "Expense payable account": "Expense payable account",
         "Choose an expense category": "Choose an expense category",
-        "Failed to load expense categories.": "Failed to load expense categories."
+        "Failed to load expense categories.": "Failed to load expense categories.",
+        "The suggestion is not the account this receipt posts to. It counts only after you use it and save.": "The suggestion is not the account this receipt posts to. It counts only after you use it and save.",
+        "Posts to {code}, the confirmed account.": "Posts to {code}, the confirmed account.",
+        "Posts to {code}, the account of category {category}.": "Posts to {code}, the account of category {category}.",
+        "No account yet: posting the claim will stop at this receipt.": "No account yet: posting the claim will stop at this receipt.",
+        "Loading the receipts…": "Loading the receipts…",
+        "This claim has no receipts.": "This claim has no receipts.",
+        "Posts to": "Posts to",
+        "Suggested": "Suggested",
+        "(not used until confirmed)": "(not used until confirmed)",
+        "{code} (confirmed)": "{code} (confirmed)",
+        "{code} (category {category})": "{code} (category {category})",
+        "No account: posting stops here": "No account: posting stops here",
+        "The receipts of this claim could not be loaded.": "The receipts of this claim could not be loaded.",
+        "Accounts per receipt": "Accounts per receipt"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

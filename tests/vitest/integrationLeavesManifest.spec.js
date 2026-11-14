@@ -28,7 +28,9 @@ describe('files widget on pages whose records hold a document (REQ-CPA-005)', ()
 
 	it.each(cases)('%s keeps its data and related body and adds the files leaf below it', (id, schema, title) => {
 		const { config } = page(manifest, id)
-		expect(config.widgets.map((w) => w.type)).toEqual(['data', 'related', 'integration'])
+		// The body is data, related and the files leaf, in that order; a page may
+		// place more below them (ExpenseClaimDetail: the accounts per receipt).
+		expect(config.widgets.slice(0, 3).map((w) => w.type)).toEqual(['data', 'related', 'integration'])
 		expect(config.widgets[0].content).toEqual({ register: 'shillinq', schema, columns: 3 })
 		const files = config.widgets[2]
 		expect(files).toMatchObject({ integrationId: 'files', title })

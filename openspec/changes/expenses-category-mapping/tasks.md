@@ -16,7 +16,8 @@
 
 - [x] 3.1 Add `ExpenseAccountResolver` (confirmed account, category account, settings, null with reason) (REQ-ECM-003). Verify: PHPUnit for each branch.
 - [x] 3.2 Replace the `accountLookup` and `creditMapping` strings in both `ExpenseClaimEntry.post` declarations with the resolver reference, and add the `ExpenseClaimEntry` mapper to `MaterialiseGlTransactionAction` (moved here from `ledger-posting-path` task 2.2), calling the resolver and refusing on null (REQ-ECM-003). Verify: PHPUnit for the S. de Vries claim balancing to EUR 100.08, and for an uncategorised line refusing the post.
-- [ ] 3.3 Show the docudesk suggestion next to the resolved account on the receipt and claim pages (REQ-ECM-003). Verify: Playwright with a seeded suggestion that differs from the category account.
+- [x] 3.3 Show the docudesk suggestion next to the resolved account on the receipt and claim pages (REQ-ECM-003). Verify: Playwright with a seeded suggestion that differs from the category account.
+  Built: the receipt page states the account the receipt posts to (confirmed account, else its category's account, else that posting will stop) above the suggestion and says when the suggestion names another account; the claim page gains `ClaimReceiptAccounts` (accounts per receipt with the suggestion beside each). The resolution order is `resolvedReceiptAccount()` in `src/utils/expenseCategories.js`, mirroring `ExpenseAccountResolver` (vitest `expenseAccountResolution.spec.js`). The Playwright check needs a running instance and is not run here.
 
 ## 3b. Policy
 
