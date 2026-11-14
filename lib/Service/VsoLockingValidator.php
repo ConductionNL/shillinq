@@ -86,6 +86,22 @@ class VsoLockingValidator implements VsoLockingValidatorInterface {
 			return false;
 		}
 
+		$rows = $this->lockedRows(administrationId: $administrationId, financialYear: $financialYear);
+
+		return $this->anyLocked(rows: $rows);
+	}//end isYearLocked()
+
+	/**
+	 * The VSO-locked IBProfitAttribution rows of an administration + boekjaar, or null when the fetch fails.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param int    $financialYear    Fiscal year.
+	 *
+	 * @return mixed The findAll() result, or null (logged) on failure.
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
+	 */
+	private function lockedRows(string $administrationId, int $financialYear): mixed {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
@@ -112,9 +128,22 @@ class VsoLockingValidator implements VsoLockingValidatorInterface {
 					'exception' => $e->getMessage(),
 				]
 			);
-			return false;
+			return null;
 		}//end try
 
+		return $rows;
+	}//end lockedRows()
+
+	/**
+	 * Whether any of the rows carries `vso_locked: true`.
+	 *
+	 * @param mixed $rows The findAll() result, or null.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
+	 */
+	private function anyLocked(mixed $rows): bool {
 		if (is_array($rows) === false) {
 			return false;
 		}
@@ -130,7 +159,7 @@ class VsoLockingValidator implements VsoLockingValidatorInterface {
 		}
 
 		return false;
-	}//end isYearLocked()
+	}//end anyLocked()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
