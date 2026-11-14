@@ -4720,7 +4720,17 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Provider": "Provider",
+        "User": "User",
+        "Payment device": "Payment device",
+        "The Nextcloud user whose phone this is.": "The Nextcloud user whose phone this is.",
+        "The payment provider the phone is registered with.": "The payment provider the phone is registered with.",
+        "Device ID": "Device ID",
+        "The provider's id of the phone or terminal, entered from the provider's app.": "The provider's id of the phone or terminal, entered from the provider's app.",
+        "A name the user recognises the phone by.": "A name the user recognises the phone by.",
+        "The administration the phone takes payments for; empty for every administration of the user.": "The administration the phone takes payments for; empty for every administration of the user.",
+        "Open lines": "Open lines"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

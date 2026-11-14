@@ -6907,7 +6907,15 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "Payment device": "Betaalapparaat",
+        "The Nextcloud user whose phone this is.": "De Nextcloud-gebruiker van wie deze telefoon is.",
+        "The payment provider the phone is registered with.": "De betaalprovider waarbij de telefoon is geregistreerd.",
+        "Device ID": "Apparaat-ID",
+        "The provider's id of the phone or terminal, entered from the provider's app.": "Het id van de telefoon of terminal bij de provider, overgenomen uit de app van de provider.",
+        "A name the user recognises the phone by.": "Een naam waaraan de gebruiker de telefoon herkent.",
+        "The administration the phone takes payments for; empty for every administration of the user.": "De administratie waarvoor de telefoon betalingen ontvangt; leeg voor elke administratie van de gebruiker.",
+        "Open lines": "Open regels"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

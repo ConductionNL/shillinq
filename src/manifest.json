@@ -229,6 +229,13 @@
 					"order": 26
 				},
 				{
+					"id": "ProviderPayouts",
+					"label": "Provider payouts",
+					"icon": "BankTransferIn",
+					"route": "ProviderPayouts",
+					"order": 26
+				},
+				{
 					"id": "MatchingRules",
 					"label": "Matching Rules",
 					"icon": "FilterCogOutline",
@@ -3732,6 +3739,8 @@
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bank-statements"
 			}
 		},
+		{"id": "ProviderPayouts", "route": "/bookkeeping/provider-payouts", "type": "index", "title": "Provider payouts", "config": {"register": "shillinq", "schema": "ProviderPayout", "columns": [{"key": "settledAt", "label": "Paid out on", "sortable": true}, {"key": "provider", "label": "Provider", "sortable": true}, {"key": "settlementReference", "label": "Settlement reference", "sortable": true}, {"key": "amountNet", "label": "Paid out", "sortable": true}, {"key": "amountFees", "label": "Fees", "sortable": true}, {"key": "unmatchedLineCount", "label": "Open lines", "sortable": true}, {"key": "state", "label": "Status", "sortable": true}], "defaultSort": "settledAt", "detailRoute": "ProviderPayoutDetail", "description": "Provider payouts, their lines matched to what they paid, booked and reconciled with the bank line.", "documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/provider-payouts"}},
+		{"id": "ProviderPayoutDetail", "route": "/bookkeeping/provider-payouts/:id", "type": "detail", "title": "Provider payout", "config": {"register": "shillinq", "schema": "ProviderPayout", "auditTrail": true, "fields": [{"key": "provider", "label": "Provider", "type": "string"}, {"key": "settlementReference", "label": "Settlement reference", "type": "string"}, {"key": "settledAt", "label": "Paid out on", "type": "date"}, {"key": "amountGross", "label": "Gross amount", "type": "number"}, {"key": "amountFees", "label": "Fees", "type": "number"}, {"key": "amountRefunds", "label": "Refunds", "type": "number"}, {"key": "amountChargebacks", "label": "Chargebacks", "type": "number"}, {"key": "amountNet", "label": "Paid out", "type": "number"}, {"key": "unmatchedLineCount", "label": "Open lines", "type": "integer"}, {"key": "lines", "label": "Lines", "type": "array"}, {"key": "state", "label": "Status", "type": "string"}, {"key": "glTransactionId", "label": "Journal entry", "type": "string"}, {"key": "bankStatementLineId", "label": "Bank statement line", "type": "string"}, {"key": "administrationId", "label": "Administration", "type": "string"}], "lifecycleActions": false}},
 		{
 			"id": "MatchingRules",
 			"route": "/bookkeeping/matching-rules",
