@@ -1428,6 +1428,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\LawfulnessParagraphInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\LawfulnessParagraph'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\LeaseDisclosureServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\LeaseDisclosureService'"
         ]

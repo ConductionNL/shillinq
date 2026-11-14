@@ -4,7 +4,7 @@
 
 ## 1. Lawfulness
 
-- [ ] 1.1 `LawfulnessParagraph::compute` and the `compute` action (REQ-RV-011). Verify: PHPUnit red first over real GL lines, findings and a tolerance; totals validate against the real fragment; 1 percent of EUR 200 million is EUR 2 million.
+- [x] 1.1 `LawfulnessParagraph::compute` and the `compute` action (REQ-RV-011). Verify: PHPUnit red first over real GL lines, findings and a tolerance; totals validate against the real fragment; 1 percent of EUR 200 million is EUR 2 million.
 
 ## 2. Audit protocol
 
