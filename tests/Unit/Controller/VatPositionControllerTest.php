@@ -71,6 +71,13 @@ final class VatPositionControllerTest extends TestCase {
 	private array $memberOf = ['adm-1'];
 
 	/**
+	 * The caller's active administration, or null.
+	 *
+	 * @var string|null
+	 */
+	private ?string $active = null;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface&MockObject
@@ -92,6 +99,9 @@ final class VatPositionControllerTest extends TestCase {
 		$context = $this->createMock(AdministrationContextService::class);
 		$context->method('canAccess')->willReturnCallback(
 			fn (string $administrationId): bool => in_array($administrationId, $this->memberOf, true)
+		);
+		$context->method('buildContext')->willReturnCallback(
+			fn (): array => ['userId' => 'u1', 'administrations' => [], 'activeAdministrationId' => $this->active]
 		);
 
 		return new VatPositionController(
@@ -122,7 +132,8 @@ final class VatPositionControllerTest extends TestCase {
 	 */
 	public function testAMemberReadsThePosition(): void {
 		$this->params = ['administrationId' => 'adm-1', 'period' => '2026-Q4'];
-		$answer = ['period' => '2026-Q4', 'boxes' => [['returnBox' => '1a', 'base' => 20000.0, 'vat' => 4200.0]], 'payable' => 2700.0];
+		$box = ['returnBox' => '1a', 'type' => 'sales', 'taxRate' => 21.0, 'base' => 20000.0, 'vat' => 4200.0];
+		$answer = ['period' => '2026-Q4', 'boxes' => [$box], 'payable' => 2700.0];
 		$this->position->expects(self::once())->method('positionFor')
 			->with('adm-1', '2026-Q4')
 			->willReturn($answer);
@@ -130,8 +141,37 @@ final class VatPositionControllerTest extends TestCase {
 		$response = $this->controller()->show();
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
-		self::assertSame(['data' => $answer], $response->getData());
+		self::assertSame(['data' => ['period' => '2026-Q4', 'boxes' => [['id' => '1a-sales-21'] + $box], 'payable' => 2700.0]], $response->getData());
 	}//end testAMemberReadsThePosition()
+
+	/**
+	 * Asked without an administration or period, the caller's active administration and today's quarter are read.
+	 *
+	 * @return void
+	 */
+	public function testWithoutParametersTheActiveAdministrationAndOpenQuarterAreRead(): void {
+		$this->params = [];
+		$this->active = 'adm-1';
+		$this->position->expects(self::once())->method('positionFor')
+			->with('adm-1', VatPositionController::openQuarter(today: new \DateTimeImmutable()))
+			->willReturn(['boxes' => []]);
+
+		self::assertSame(Http::STATUS_OK, $this->controller()->show()->getStatus());
+	}//end testWithoutParametersTheActiveAdministrationAndOpenQuarterAreRead()
+
+	/**
+	 * Each month falls in its own quarter.
+	 *
+	 * @return void
+	 */
+	public function testTheOpenQuarterOfADay(): void {
+		$quarters = [];
+		foreach (['01', '03', '04', '06', '07', '09', '10', '12'] as $month) {
+			$quarters[] = VatPositionController::openQuarter(today: new \DateTimeImmutable('2026-' . $month . '-15'));
+		}
+
+		self::assertSame(['2026-Q1', '2026-Q1', '2026-Q2', '2026-Q2', '2026-Q3', '2026-Q3', '2026-Q4', '2026-Q4'], $quarters);
+	}//end testTheOpenQuarterOfADay()
 
 	/**
 	 * A caller from another administration is told it does not exist, and nothing is read.

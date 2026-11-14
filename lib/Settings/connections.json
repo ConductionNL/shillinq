@@ -6,8 +6,8 @@
             "title": "Digipoort SBR",
             "description": "SBR and XBRL filings, such as the VAT return and annual accounts, sent to the Belastingdienst.",
             "order": 10,
-            "available": false,
-            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches Digipoort."
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
         },
         {
             "key": "salarisbureau",

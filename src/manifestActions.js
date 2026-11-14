@@ -46,6 +46,13 @@ import {
 	checkSupplierVatNumber,
 } from './utils/vatNumberCheck.js'
 import { openPrepareVatReturn } from './utils/vatReturnActions.js'
+import {
+	checkVatReturnForCorrections,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
+	prepareSupplementaryReturn,
+} from './utils/vatSuppletieActions.js'
 
 export const manifestActions = Object.freeze({
 	// The External Connections page's Add integration action leaves for
@@ -100,6 +107,13 @@ export const manifestActions = Object.freeze({
 	openDunningSwitchOn,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
+	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
+	// Prepare / Download / File on a correction, and the position's lines.
+	checkVatReturnForCorrections,
+	prepareSupplementaryReturn,
+	downloadSupplementaryReturn,
+	fileSupplementaryReturn,
+	openVatPositionLines,
 })
 
 /**

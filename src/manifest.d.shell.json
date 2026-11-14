@@ -5534,6 +5534,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-vat-position-and-suppletie",
+					"id": "BtwCorrectieDetail",
+					"route": "/belastingen/btw-correcties/:id",
+					"type": "detail",
+					"title": "BTW-correctie"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "Cashflow",

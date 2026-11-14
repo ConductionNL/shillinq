@@ -12228,6 +12228,110 @@
                 }
             }
         },
+        "/vat-corrections/{correctionId}/supplementary-return": {
+            "get": {
+                "operationId": "vat-suppletie-download",
+                "summary": "Download the prepared supplementary VAT return (REQ-VPS-002)",
+                "description": "The prepared correction as a JSON document: the return it corrects, the per-box differences, the net correction and the threshold decision. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The prepared VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-corrections/{correctionId}/file": {
+            "post": {
+                "operationId": "vat-suppletie-file",
+                "summary": "File the prepared supplementary VAT return through Digipoort (REQ-VPS-002)",
+                "description": "Hands the supplementary return to the Digipoort port and marks the correction submitted. While Digipoort is not connected it answers 409 with the download address. Needs a signed-in Nextcloud user who is a member of the correction's administration.",
+                "tags": [
+                    "vat-suppletie"
+                ],
+                "parameters": [
+                    {
+                        "name": "correctionId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The prepared VatCorrection id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/vat-position": {
             "get": {
                 "operationId": "vat-position-show",
@@ -12240,8 +12344,8 @@
                     {
                         "name": "administrationId",
                         "in": "query",
-                        "required": true,
-                        "description": "The administration.",
+                        "required": false,
+                        "description": "The administration; the caller's active administration when left out.",
                         "schema": {
                             "type": "string"
                         }
@@ -12249,8 +12353,8 @@
                     {
                         "name": "period",
                         "in": "query",
-                        "required": true,
-                        "description": "YYYY-Qn, YYYY-MM or YYYY.",
+                        "required": false,
+                        "description": "YYYY-Qn, YYYY-MM or YYYY; the quarter of today when left out.",
                         "schema": {
                             "type": "string"
                         }

@@ -205,6 +205,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // position, the drift check on a filed return, and preparing its suppletie.
             ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
             ['name' => 'vatSuppletie#prepare', 'url' => '/api/vat-corrections/{correctionId}/prepare', 'verb' => 'POST'],
+            ['name' => 'vatSuppletieFiling#download', 'url' => '/api/vat-corrections/{correctionId}/supplementary-return', 'verb' => 'GET'],
+            ['name' => 'vatSuppletieFiling#file', 'url' => '/api/vat-corrections/{correctionId}/file', 'verb' => 'POST'],
             ['name' => 'vatPosition#show', 'url' => '/api/vat-position', 'verb' => 'GET'],
             ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
             ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
