@@ -79,7 +79,7 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261114160000",
-            "versionsSha256": "d65a20249ae2ce066410a2e5bd6c544e7f0a22530020b5cc72b7f08dc05407d7"
+            "versionsSha256": "cdf7c84491acd618e83beb0988d707a4a5d4d4a59164180bea1eb2e86e9b63a9"
         }
     ],
     "versions": {
@@ -209,7 +209,7 @@
         "schema:ConsolidatedReport": "0.1.0",
         "schema:ConsolidationGroup": "0.1.1",
         "schema:ConsolidationMapping": "0.1.0",
-        "schema:ConsolidationPeriod": "0.1.1",
+        "schema:ConsolidationPeriod": "0.2.0",
         "schema:ContingentLiability": "0.1.0",
         "schema:ContinuousCloseAlert": "0.1.0",
         "schema:Contract": "0.1.0",
