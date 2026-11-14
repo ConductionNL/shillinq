@@ -4773,7 +4773,9 @@
         "Rates are entered by hand": "Rates are entered by hand",
         "Rates arrive from the feed": "Rates arrive from the feed",
         "%1$s to %2$s on %3$s": "%1$s to %2$s on %3$s",
-        "Newest rate: %s": "Newest rate: %s"
+        "Newest rate: %s": "Newest rate: %s",
+        "The invoice was not found in this administration.": "The invoice was not found in this administration.",
+        "The invoice was already sent.": "The invoice was already sent."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

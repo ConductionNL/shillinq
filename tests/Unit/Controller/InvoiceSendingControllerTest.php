@@ -24,10 +24,14 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use DomainException;
 use OCA\Shillinq\Controller\InvoiceSendingController;
+use InvalidArgumentException;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\InvoiceBatchSendService;
 use OCA\Shillinq\Service\InvoiceSendingService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use OutOfBoundsException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -47,15 +51,24 @@ class InvoiceSendingControllerTest extends TestCase {
 
 	private InvoiceSendingController $controller;
 
+	private InvoiceBatchSendService&MockObject $batches;
+
 	protected function setUp(): void {
 		$this->sending = $this->createMock(InvoiceSendingService::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->context->method('canAccess')->willReturnCallback(static fn (string $id): bool => $id === 'adm-1');
+		$this->batches = $this->createMock(InvoiceBatchSendService::class);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('bookkeeper');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
 		$this->controller = new InvoiceSendingController(
 			request: $this->createMock(IRequest::class),
 			sending: $this->sending,
 			context: $this->context,
-			logger: new NullLogger()
+			logger: new NullLogger(),
+			batches: $this->batches,
+			session: $session
 		);
 	}//end setUp()
 
@@ -105,4 +118,30 @@ class InvoiceSendingControllerTest extends TestCase {
 
 		$this->assertSame([Http::STATUS_INTERNAL_SERVER_ERROR, ['error' => 'The invoice could not be sent.']], [$response->getStatus(), $response->getData()]);
 	}//end testAnUnexpectedFailureIsAServerErrorWithoutItsDetail()
+
+	public function testASendBatchIsQueuedForTheSignedInUser(): void {
+		$batch = ['id' => 'batch-1', 'batchId' => 'SEND-1', 'state' => 'queued'];
+		$this->batches->expects($this->once())->method('queue')
+			->with('adm-1', ['inv-1', 'inv-2'], ['resend' => true, 'requestedBy' => 'bookkeeper'])
+			->willReturn($batch);
+
+		$response = $this->controller->sendBatch(administrationId: 'adm-1', invoiceIds: ['inv-1', 'inv-2'], resend: true);
+
+		$this->assertSame([Http::STATUS_ACCEPTED, $batch], [$response->getStatus(), $response->getData()]);
+	}//end testASendBatchIsQueuedForTheSignedInUser()
+
+	public function testASendBatchForAnotherAdministrationIsNotFoundAndNothingIsQueued(): void {
+		$this->batches->expects($this->never())->method('queue');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->sendBatch(administrationId: 'adm-2', invoiceIds: ['inv-1'])->getStatus());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $this->controller->sendBatch(administrationId: '', invoiceIds: ['inv-1'])->getStatus());
+	}//end testASendBatchForAnotherAdministrationIsNotFoundAndNothingIsQueued()
+
+	public function testARefusedSelectionIsABadRequestWithTheReason(): void {
+		$this->batches->method('queue')->willThrowException(new InvalidArgumentException('A batch sends at most 200 invoices.'));
+
+		$response = $this->controller->sendBatch(administrationId: 'adm-1', invoiceIds: ['inv-1']);
+
+		$this->assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'A batch sends at most 200 invoices.']], [$response->getStatus(), $response->getData()]);
+	}//end testARefusedSelectionIsABadRequestWithTheReason()
 }//end class

@@ -6957,7 +6957,9 @@
         "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
         "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
         "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
-        "Newest rate: %s": "Nieuwste koers: %s"
+        "Newest rate: %s": "Nieuwste koers: %s",
+        "The invoice was not found in this administration.": "De factuur is niet gevonden in deze administratie.",
+        "The invoice was already sent.": "De factuur is al verzonden."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

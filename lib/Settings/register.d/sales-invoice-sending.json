@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "sales-invoice-sending",
     "adr": "ADR-037 modular register fragment: never edit shillinq_register.json or other fragments. ADR-031: a customer's payment term and delivery method are plain data with defaults.",
-    "description": "Gives CustomerMaster the payment term, delivery method and invoice address every new invoice for that customer reads (REQ-SIS-005). The fragment moves CustomerMaster to 0.4.0; it sorts after billable-period-becomes-an-invoice, which set 0.3.0. It also gives ARInvoice the sending group the invoice send writes after the mailer or the Peppol send answered (REQ-SIS-001, REQ-SIS-002); ARInvoice's version moves in zz-financial-documents-linked-objects, which has the last word on it.",
+    "description": "Gives CustomerMaster the payment term, delivery method and invoice address every new invoice for that customer reads (REQ-SIS-005). The fragment moves CustomerMaster to 0.4.0; it sorts after billable-period-becomes-an-invoice, which set 0.3.0. It also gives ARInvoice the sending group the invoice send writes after the mailer or the Peppol send answered (REQ-SIS-001, REQ-SIS-002); ARInvoice's version moves in zz-financial-documents-linked-objects, which has the last word on it. It declares InvoiceBatch, the batch a send of selected invoices records its outcomes on (REQ-SIS-003).",
     "spec": "openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md"
   },
   "components": {
@@ -92,6 +92,178 @@
               }
             }
           }
+        }
+      },
+      "InvoiceBatch": {
+        "slug": "InvoiceBatch",
+        "icon": "EmailFastOutline",
+        "version": "0.1.0",
+        "title": "Invoice Batch",
+        "description": "A batch of sales invoices: a send batch mails the selected issued invoices in a queued job and records one outcome per invoice (sent, skipped with a reason, or failed with the error). The bookkeeper who asked is notified when it is done.",
+        "x-spec": "openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md",
+        "type": "object",
+        "required": [
+          "batchId",
+          "kind",
+          "administrationId"
+        ],
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "title": "Batch",
+            "description": "The batch's own reference.",
+            "example": "SEND-4f2a9c01b7e3"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "create",
+              "send"
+            ],
+            "title": "Kind",
+            "description": "create writes one invoice per customer; send mails the selected invoices.",
+            "example": "send"
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration the invoices belong to.",
+            "example": "adm-kade"
+          },
+          "requestedBy": {
+            "type": "string",
+            "title": "Requested by",
+            "description": "The user who started the batch; notified when it is done.",
+            "example": "bookkeeper"
+          },
+          "charge": {
+            "type": "object",
+            "nullable": true,
+            "title": "Charge",
+            "description": "The lines a create batch bills to every customer.",
+            "example": {
+              "description": "Onderhoudscontract oktober 2026",
+              "amount": 250,
+              "vatRate": 21
+            }
+          },
+          "invoiceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "Invoices",
+            "description": "The invoices the batch sends, at most 200.",
+            "example": [
+              "inv-1",
+              "inv-2"
+            ]
+          },
+          "resend": {
+            "type": "boolean",
+            "default": false,
+            "title": "Resend",
+            "description": "Whether an invoice that was already sent goes again.",
+            "example": false
+          },
+          "outcomes": {
+            "type": "array",
+            "title": "Outcomes",
+            "description": "One row per invoice: invoiceId, status (sent, skipped or failed) and the reason.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "invoiceId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "sent",
+                    "skipped",
+                    "failed"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            },
+            "example": [
+              {
+                "invoiceId": "inv-1",
+                "status": "sent",
+                "reason": ""
+              },
+              {
+                "invoiceId": "inv-2",
+                "status": "skipped",
+                "reason": "The invoice was already sent."
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "done"
+            ],
+            "default": "queued",
+            "title": "State",
+            "description": "queued until the job starts, running while it sends, done when every invoice has an outcome.",
+            "example": "done"
+          }
+        },
+        "x-openregister-notifications": {
+          "done": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "state",
+                "operator": "equals",
+                "value": "done"
+              }
+            },
+            "description": "Tell the bookkeeper who started the batch that every invoice has an outcome.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "requestedBy"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Factuurbatch {{batchId}} is klaar",
+              "en": "Invoice batch {{batchId}} is done"
+            }
+          }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ]
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SEPA Mandate is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

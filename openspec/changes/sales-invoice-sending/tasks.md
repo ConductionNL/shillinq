@@ -20,7 +20,8 @@
 
 ## 3. Batches
 
-- [ ] 3.1 Add `InvoiceBatch` with its `x-openregister-notifications` rule and `lib/BackgroundJob/SendInvoicesJob.php` (QueuedJob) (REQ-SIS-003). Verify: `npm run check:job-registration` and PHPUnit for skip-already-sent, resend and a failed mail inside a batch.
+- [x] 3.1 Add `InvoiceBatch` with its `x-openregister-notifications` rule and `lib/BackgroundJob/SendInvoicesJob.php` (QueuedJob) (REQ-SIS-003). Verify: `npm run check:job-registration` and PHPUnit for skip-already-sent, resend and a failed mail inside a batch.
+  - Done: `InvoiceBatch` in `sales-invoice-sending.json` (kind, invoiceIds, resend, outcomes, state queued/running/done, audit trail on, listed in the register declaration), notifying `requestedBy` when `state` becomes `done`. `InvoiceBatchSendService::run()` sends each invoice through `InvoiceSendingService::sendUnattended()` (a Peppol fallback mails, as for every unwatched send) and records sent, skipped with the reason (already sent, not in the administration, not issued) or failed with the error; `SendInvoicesJob` (QueuedJob) runs it. App version 0.5.7-unstable.20261114200000 and the register lock record the new schema. `npm run check:job-registration` and `check:registers` pass; PHPUnit `InvoiceBatchSendServiceTest`, `SendInvoicesJobTest`.
 - [ ] 3.2 Add `POST /api/ar-invoices/send-batch`, `selectable` and a Send selected bulk action on `AccountsReceivable` (REQ-SIS-003). Verify: Playwright selecting three invoices and reading the batch outcome.
 - [ ] 3.3 Add `InvoiceBatchService` and `POST /api/ar-invoices/batch` (at most 200 customers, idempotent on batch id and customer, optional issue and send), and a batch page reachable from `AccountsReceivable` (REQ-SIS-004). Verify: PHPUnit for a retried half-written batch; Playwright for the three-customer example.
 
