@@ -105,22 +105,6 @@ final class VATCalculationServiceTest extends TestCase {
 	}//end testZeroRate()
 
 	/**
-	 * isValidRate checks Dutch statutory set.
-	 *
-	 * @return void
-	 */
-	public function testIsValidRate(): void {
-		$svc = new VATCalculationService();
-		$this->assertTrue($svc->isValidRate(21.0));
-		$this->assertTrue($svc->isValidRate(9.0));
-		$this->assertTrue($svc->isValidRate(6.0));
-		$this->assertTrue($svc->isValidRate(0.0));
-		$this->assertFalse($svc->isValidRate(15.0));
-
-	}//end testIsValidRate()
-
-
-	/**
 	 * Golden: rates grouped in first-seen order, the 21 % default, and the empty invoice.
 	 *
 	 * @return void

@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Tax\VatTariffRefusedException;
+
 /**
  * Builds the BillableInvoice, BillableInvoiceLine and GL journal records of
  * InvoiceGenerationService, which builds it; it saves nothing itself.
@@ -29,6 +31,13 @@ namespace OCA\Shillinq\Service;
  * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
  */
 final class BillableInvoiceRecords {
+
+	/**
+	 * The seeded tariff a line without a code is taxed at, by its rate.
+	 *
+	 * @var array<string, float>
+	 */
+	private const RATE_TARIFFS = ['high' => 21.0, 'low' => 9.0, 'zero' => 0.0];
 
 	/**
 	 * Construct the builder.
@@ -41,26 +50,80 @@ final class BillableInvoiceRecords {
 	}//end __construct()
 
 	/**
-	 * Clamp any per-line VAT rate to the four statutory Dutch rates
-	 * (21 / 9 / 6 / 0) before totalling, so a stray rate from a fixture /
-	 * migration doesn't slip through (REQ-ITE-009).
+	 * The tariff each line is taxed at, resolved on the invoice date
+	 * (tax-vat-rates-and-deductibility REQ-TVRD-002): a line's own
+	 * `vatTariff` code, else the seeded tariff its rate stands for (21 high,
+	 * 9 low, 0 zero). Each line gets its `vatTariff`, the `documentDate` and
+	 * the `vatRate` of the tariff valid on that date. A rate with no tariff,
+	 * and a code that is unknown or not valid on the date, refuse the whole
+	 * invoice; no default rate is put in its place.
 	 *
-	 * @param array<int,array<string,mixed>> $lineDrafts The line drafts.
+	 * @param array<int,array<string,mixed>> $lineDrafts   The line drafts.
+	 * @param string                         $documentDate The invoice date (Y-m-d).
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+	 * @throws VatTariffRefusedException When a line has no tariff valid on the date.
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.2
 	 */
-	public function withStatutoryVatRates(array $lineDrafts): array {
+	public function withVatTariffs(array $lineDrafts, string $documentDate): array {
 		foreach ($lineDrafts as $index => $line) {
-			$rate = (float)($line['vatRate'] ?? BillingModelEngine::DEFAULT_VAT_RATE);
-			if ($this->vat->isValidRate($rate) === false) {
-				$lineDrafts[$index]['vatRate'] = BillingModelEngine::DEFAULT_VAT_RATE;
+			$code = trim((string)($line['vatTariff'] ?? ''));
+			if ($code === '') {
+				$code = self::tariffForRate(line: $line, documentDate: $documentDate);
 			}
+
+			$line['vatTariff']    = $code;
+			$line['documentDate'] = $documentDate;
+			$line['vatRate']      = $this->vat->lineRate(line: $line);
+			$lineDrafts[$index]   = $line;
 		}
 
 		return $lineDrafts;
-	}//end withStatutoryVatRates()
+	}//end withVatTariffs()
+
+	/**
+	 * The tariff code a line was taxed at, or null for a line without one.
+	 *
+	 * @param array<string,mixed> $line The line draft.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.2
+	 */
+	private static function tariffOf(array $line): ?string {
+		$code = trim((string)($line['vatTariff'] ?? ''));
+		if ($code === '') {
+			return null;
+		}
+
+		return $code;
+	}//end tariffOf()
+
+	/**
+	 * The seeded tariff code a line's numeric rate stands for.
+	 *
+	 * @param array<string,mixed> $line         The line draft.
+	 * @param string              $documentDate The invoice date, named in a refusal.
+	 *
+	 * @return string
+	 *
+	 * @throws VatTariffRefusedException When no seeded tariff has that rate.
+	 *
+	 * @spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-2.2
+	 */
+	private static function tariffForRate(array $line, string $documentDate): string {
+		$rate = (float)($line['vatRate'] ?? BillingModelEngine::DEFAULT_VAT_RATE);
+		foreach (self::RATE_TARIFFS as $code => $tariffRate) {
+			if ($rate === $tariffRate) {
+				return $code;
+			}
+		}
+
+		$shown = rtrim(rtrim(number_format($rate, 2, '.', ''), '0'), '.') . '%';
+		throw new VatTariffRefusedException(tariffCode: $shown, date: $documentDate, why: 'unknown');
+	}//end tariffForRate()
 
 
 	/**
@@ -134,6 +197,7 @@ final class BillableInvoiceRecords {
 			'markup' => (float)($line['markup'] ?? 0),
 			'costAmount' => round(((int)$line['costAmountCents']) / 100, 2),
 			'vatRate' => (float)$line['vatRate'],
+			'vatTariff' => self::tariffOf(line: $line),
 			'vatAmount' => round($vatCents / 100, 2),
 			'modelSpecificFields' => $line['modelSpecificFields'] ?? null,
 		];

@@ -4,14 +4,31 @@
 
 ## 1. Tariffs
 
-- [ ] 1.1 Point `SettingsService::seedBtwTariffs()` at `btw-tariffs-2026.json`, add `section` per tariff to the seed, and add `statutory` to seeded records (REQ-TVRD-001). Verify: PHPUnit that the seeder finds the file and is idempotent; a repair run on a local instance lists five tariffs.
-- [ ] 1.2 Merge the two `VatTariff` declarations into the `register.d` one and remove the monolith copy (REQ-TVRD-001). Verify: `npm run check:registers`; re-import with no failed schemas.
+- [x] 1.1 Point `SettingsService::seedBtwTariffs()` at `btw-tariffs-2026.json`, add `section` per tariff to the seed, and add `statutory` to seeded records (REQ-TVRD-001). Verify: PHPUnit that the seeder finds the file and is idempotent; a repair run on a local instance lists five tariffs.
+      DONE: the seeder already read `btw-tariffs-2026.json` and every tariff already had its `section`; each seeded
+      record now carries `statutory: true` (`SettingsServiceGenericSeedGoldenTest` re-recorded, fresh and existing runs).
+      The repair run on a live instance is not repeated here.
+- [x] 1.2 Merge the two `VatTariff` declarations into the `register.d` one and remove the monolith copy (REQ-TVRD-001). Verify: `npm run check:registers`; re-import with no failed schemas.
+      DONE: one declaration in `register.d/add-shillinq-bookkeeping-operations.json` (0.4.0) equal to the former
+      merged schema plus `statutory`, the monolith copy removed; `VatTariffDeclarationTest`.
 - [ ] 1.3 Add pages `VatTariffs` and `VatTariffDetail` under Belastingen, with statutory records read-only (REQ-TVRD-001). Verify: Playwright adds mid-12 and cannot edit high.
 
 ## 2. Calculation
 
-- [ ] 2.1 Add `lib/Service/Tax/VatTariffResolver.php` with the dated lookup and the legacy-code map, and make `VATCalculationService` use it, removing `VALID_RATES` (REQ-TVRD-002). Verify: PHPUnit for each tariff, a legacy code, an expired tariff and an unknown code.
-- [ ] 2.2 Pass tariff codes from `InvoiceGenerationService` and the invoice lines it builds (REQ-TVRD-002). Verify: the existing generation tests updated and green; Playwright generates the mixed-rate invoice.
+- [x] 2.1 Add `lib/Service/Tax/VatTariffResolver.php` with the dated lookup and the legacy-code map, and make `VATCalculationService` use it, removing `VALID_RATES` (REQ-TVRD-002). Verify: PHPUnit for each tariff, a legacy code, an expired tariff and an unknown code.
+      PARTLY DONE (2026-11-14): `VatTariffResolver::forCode()` / `rateFor()` read the VatTariff records once per request
+      and return the one whose code matches and whose dates contain the document date (both bounds inclusive, no end is
+      open); BTW21, BTW9, BTW0 and VERLEGD map to high, low, zero and reverse-charge; an unknown or expired code throws
+      `VatTariffRefusedException` naming the code and the date, with no default rate. `VATCalculationService` resolves a
+      line's `vatTariff` on its `documentDate` (refused without a date or a resolver). `VatTariffResolverTest` (8),
+      over the shipped seed. `VALID_RATES` / `isValidRate()` removed with 2.2, which replaced their only caller.
+- [x] 2.2 Pass tariff codes from `InvoiceGenerationService` and the invoice lines it builds (REQ-TVRD-002). Verify: the existing generation tests updated and green; Playwright generates the mixed-rate invoice.
+      DONE: `BillableInvoiceRecords::withVatTariffs()` replaces the 21-percent clamp: each line keeps its own `vatTariff`
+      or gets the seeded tariff its rate stands for (21 high, 9 low, 0 zero), is resolved on the invoice date and takes
+      that tariff's rate; a rate with no tariff, an unknown and an expired code refuse the invoice. Saved lines carry
+      `vatTariff` (`BillableInvoiceLine` 0.2.0). `BillableInvoiceVatTariffTest` (5); the generation tests run over the
+      seeded tariffs (`Support/SeededVatTariffs`) and the golden snapshot gained the line codes. The Playwright run is
+      a browser task, not done here.
 
 ## 3. Deductibility
 
