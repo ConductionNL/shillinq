@@ -352,6 +352,15 @@
                     "reasonCode",
                     "reasonText"
                 ]
+            },
+            {
+                "id": "withdraw",
+                "label": "Herroep de overeenkomst hier",
+                "type": "endpoint-forward",
+                "endpoint": "/apps/shillinq/api/portal/withdrawals",
+                "method": "POST",
+                "minTrust": "low",
+                "rowField": "appointmentId"
             }
         ],
         "notifications": [],

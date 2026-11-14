@@ -78,6 +78,7 @@ class PlatformPropertiesTest extends TestCase {
 		'PortalPaymentInitiationController::initiate' => ['file' => 'PortalPaymentInitiationController.php', 'check' => '$this->verifier->verify('],
 		'PortalContributionDeclineController::decline' => ['file' => 'PortalContributionDeclineController.php', 'check' => '$this->verifier->verify('],
 		'PortalSubscriptionCancelController::cancel' => ['file' => 'PortalSubscriptionCancelController.php', 'check' => '$this->verifier->verify('],
+		'PortalWithdrawalController::withdraw' => ['file' => 'PortalWithdrawalController.php', 'check' => '$this->verifier->verify('],
 	];
 
 	/**

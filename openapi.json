@@ -486,6 +486,10 @@
         {
             "name": "portal-subscription-cancel",
             "description": "A customer ends their own subscription from the portal."
+        },
+        {
+            "name": "portal-withdrawal",
+            "description": "The withdrawal function portaliq forwards."
         }
     ],
     "paths": {
@@ -8513,6 +8517,38 @@
                 "description": "End the customer's own running subscription. Portaliq forwards `POST /apps/shillinq/api/portal/subscriptions/cancel` with `{\"profileId\": \"<uuid>\", \"reasonCode\": \"<code>\", \"reasonText\": \"<note>\"}` (reason optional) and the signed assertion header. Response contract: 200 `{status: cancelled}` (also for a repeat); 401 missing or invalid assertion; 403 wrong audience, or the profile is not a running subscription the customer owns (one body for every reason, no existence oracle); 502 on an OpenRegister failure, never with internals. Rate limit: a human clicks this, and each call can write. Public: it needs no login.",
                 "tags": [
                     "portal-subscription-cancel"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Problem403"
+                    }
+                }
+            }
+        },
+        "/portal/withdrawals": {
+            "post": {
+                "operationId": "portal-withdrawal-withdraw",
+                "summary": "Withdraw from an appointment booked online",
+                "description": "Withdraw a consumer from an appointment booked through the widget, within the withdrawal period. Portaliq forwards `POST /apps/shillinq/api/portal/withdrawals` either with `{\"appointmentId\": \"<uuid>\"}` and the signed assertion header (a signed-in customer, their own appointment only) or with `{\"token\": \"<signed link token>\"}` and no assertion (a guest; the token opens the one appointment it names until the period ends). Response contract: 200 `{status: withdrawn}`; 401 missing or invalid assertion and no token; 403 wrong audience, an appointment that is not the customer's, or a link that opens nothing (one body for every reason, no existence oracle); 409 `{error: not_withdrawable, code, reason}` when the period no longer allows it; 502 on an OpenRegister failure, never with internals. Rate limit: a human clicks this, and each call can write. Public: it needs no login.",
+                "tags": [
+                    "portal-withdrawal"
                 ],
                 "security": [],
                 "responses": {

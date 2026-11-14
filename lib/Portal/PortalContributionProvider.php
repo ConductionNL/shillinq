@@ -507,6 +507,19 @@ class PortalContributionProvider {
 				],
 				'fields' => ['reasonCode', 'reasonText'],
 			],
+			// The withdrawal function (sales-cancellation REQ-SCX-004): portaliq
+			// forwards the appointment id for a signed-in customer, or the
+			// signed link's token for a guest on its guest page; shillinq
+			// checks ownership or the signature and the withdrawal period.
+			[
+				'id' => 'withdraw',
+				'label' => 'Herroep de overeenkomst hier',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/withdrawals',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'appointmentId',
+			],
 		],
 		'notifications' => [],
 	];

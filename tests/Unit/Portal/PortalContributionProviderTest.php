@@ -259,7 +259,7 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertIsArray($manifest);
 		$this->assertNotSame('Shillinq', $manifest['label']);
 		// pay for invoices, pay-request for requests without one (REQ-SPPI-006, REQ-SPPI-008).
-		$this->assertSame(['pay', 'pay-request', 'cancel-subscription'], array_column($manifest['actions'], 'id'));
+		$this->assertSame(['pay', 'pay-request', 'cancel-subscription', 'withdraw'], array_column($manifest['actions'], 'id'));
 		$this->assertSame([], $manifest['notifications']);
 
 		// [schema, scopeField, scopeClaim] per collection id.
@@ -360,8 +360,9 @@ class PortalContributionProviderTest extends TestCase {
 		}
 
 		// pay-request (REQ-SPPI-008) sits next to pay for requests without an invoice;
-		// cancel-subscription (REQ-SCX-003) ends a subscription.
-		$this->assertSame(['pay', 'pay-request', 'cancel-subscription'], array_column($manifest['actions'], 'id'));
+		// cancel-subscription (REQ-SCX-003) ends a subscription; withdraw (REQ-SCX-004)
+		// withdraws from an appointment booked online.
+		$this->assertSame(['pay', 'pay-request', 'cancel-subscription', 'withdraw'], array_column($manifest['actions'], 'id'));
 		$action = $manifest['actions'][0];
 		$this->assertSame('pay', $action['id']);
 		$this->assertSame('endpoint-forward', $action['type']);
@@ -932,7 +933,7 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertSame('low', $decline['minTrust']);
 
 		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
-		self::assertSame(['pay', 'pay-request', 'cancel-subscription'], array_column($customer['actions'], 'id'));
+		self::assertSame(['pay', 'pay-request', 'cancel-subscription', 'withdraw'], array_column($customer['actions'], 'id'));
 	}//end testOnlyTheParentManifestCarriesTheDeclineAction()
 
 	/**

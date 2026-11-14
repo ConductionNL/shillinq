@@ -855,6 +855,7 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             // pay receiver above. Static URL, before the SPA catch-all (ADR-016).
             ['name' => 'portalContributionDecline#decline', 'url' => '/api/portal/contributions/decline', 'verb' => 'POST'],
             ['name' => 'portalSubscriptionCancel#cancel', 'url' => '/api/portal/subscriptions/cancel', 'verb' => 'POST'],
+            ['name' => 'portalWithdrawal#withdraw', 'url' => '/api/portal/withdrawals', 'verb' => 'POST'],
 
             // Reporting & Compliance consolidation (reporting-compliance-consolidation).
             // The HTTP surface behind the unified "Reporting & Compliance" section:
