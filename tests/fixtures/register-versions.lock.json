@@ -76,6 +76,10 @@
         {
             "appVersion": "0.5.7-unstable.20261114100000",
             "versionsSha256": "55e1eeda6149ad447a0eb1f0d7beb532df5f96c45e9ad0df92673edf923a9cef"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114110000",
+            "versionsSha256": "5e9837d5e191c2b5c72fd4899a673c394f85e10f63fd71a6b7116e127b2ba887"
         }
     ],
     "versions": {
@@ -231,6 +235,7 @@
         "schema:DebtorCredit": "0.1.0",
         "schema:Deduction": "0.1.0",
         "schema:Deelneming": "0.1.0",
+        "schema:DeferralSchedule": "0.1.0",
         "schema:DeferredTaxMovement": "0.1.0",
         "schema:DefinitieveAanslag": "0.1.0",
         "schema:Delivery": "0.1.0",

@@ -10,7 +10,7 @@
 
 ## 2. Deferrals
 
-- [ ] 2.1 Add the `DeferralSchedule` schema with its lifecycle in a `register.d` fragment (REQ-LPE-004). Verify: `npm run check:registers`, `npm run check:seeds` with the seed from design.md.
+- [x] 2.1 Add the `DeferralSchedule` schema with its lifecycle in a `register.d` fragment (REQ-LPE-004). Verify: `npm run check:registers`, `npm run check:seeds` with the seed from design.md.
 - [ ] 2.2 "Spread over periods" line action on the AP and AR invoice detail pages creating the schedule and the opening entry (REQ-LPE-004). Verify: PHPUnit for the schedule maths (day count, remainder on the last release).
 - [ ] 2.3 Release step in `SoftCloseExecutor` posting ended periods and completing the schedule (REQ-LPE-005). Verify: PHPUnit for a run, a rerun and the last release.
 
