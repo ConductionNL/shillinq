@@ -4,7 +4,7 @@
 
 ## 1. Data
 
-- [ ] 1.1 Add `billingRoleId` to `ProjectAssignment` and point `rateCardId`'s description at `RateCardTemplate` in `lib/Settings/register.d/` (a new fragment `sales-billable-rate-per-hour.json`), with the Het Anker seed of design.md (REQ-BRPH-001, REQ-BRPH-004). Verify: `npm run check:registers`, `npm run check:seeds`; bump `appinfo/info.xml` `<version>` if a repair step reads it (gate 110).
+- [x] 1.1 Add `billingRoleId` to `ProjectAssignment` and point `rateCardId`'s description at `RateCardTemplate` in `lib/Settings/register.d/` (a new fragment `sales-billable-rate-per-hour.json`), with the Het Anker seed of design.md (REQ-BRPH-001, REQ-BRPH-004). Verify: `npm run check:registers`, `npm run check:seeds`; bump `appinfo/info.xml` `<version>` if a repair step reads it (gate 110).
 
 ## 2. Resolver
 

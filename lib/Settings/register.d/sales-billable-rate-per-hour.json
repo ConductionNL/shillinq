@@ -1,0 +1,157 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-billable-rate-per-hour",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json or other fragments.",
+    "description": "Gives ProjectAssignment a billing role (the role tier of REQ-RATE-005) and the administration it belongs to, and points rateCardId at the RateCardTemplate the Rate cards page edits (REQ-BRPH-001, REQ-BRPH-004). Seeds the Renovatie Kade 12 example of design.md: rate card Standaard 2026 and the assignments of Alice, Bram and Chris."
+  },
+  "info": {
+    "version": "0.1.0-sales-billable-rate-per-hour"
+  },
+  "components": {
+    "schemas": {
+      "ProjectAssignment": {
+        "version": "0.2.0",
+        "properties": {
+          "rateCardId": {
+            "type": "string",
+            "description": "The RateCardTemplate (its templateId or id) that prices this person's hours on the project. The billable rate of each hour is resolved from the version of this card effective on the hour's date.",
+            "example": "RCT-2026-STD",
+            "title": "Rate card"
+          },
+          "recognisedRate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The rate this assignment resolves to today, filled by the billable rate resolver and refreshed when the assignment or its rate card version changes. A display snapshot: an invoice line takes its rate from the hour's own resolution, never from this value.",
+            "example": 120,
+            "title": "Current rate"
+          },
+          "billingRoleId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Billing role",
+            "description": "The role this person bills at on the project: the entityId of a role-tier RateSchedule on the rate card. Empty when the person has no role rate.",
+            "example": "role-senior"
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration this assignment belongs to. Only rate cards of the same administration price its hours.",
+            "example": "adm-1"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {"register": "shillinq", "schema": "RateCardTemplate", "slug": "rct-2026-standaard"},
+      "templateId": "RCT-2026-STD",
+      "name": "Standaard 2026",
+      "description": "Standard billing rates for 2026: a blended rate, a senior role rate, a personal rate and a client rate for Woningcorporatie Het Anker.",
+      "tierStructure": ["user", "role", "project", "client", "blended"],
+      "currency": "EUR",
+      "administrationId": "adm-1",
+      "lifecycleState": "active",
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "RateCardVersion", "slug": "rcv-2026-standaard"},
+      "versionId": "RCV-2026-STD",
+      "templateId": "RCT-2026-STD",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2026-12-31",
+      "status": "active",
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "RateSchedule", "slug": "rs-2026-standaard-blended"},
+      "scheduleId": "RS-2026-STD-BLENDED",
+      "versionId": "RCV-2026-STD",
+      "tier": "blended",
+      "entityId": null,
+      "rate": 85.0,
+      "unit": "hourly",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2026-12-31",
+      "administrationId": "adm-1",
+      "status": "active"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "RateSchedule", "slug": "rs-2026-standaard-role-senior"},
+      "scheduleId": "RS-2026-STD-SENIOR",
+      "versionId": "RCV-2026-STD",
+      "tier": "role",
+      "entityId": "role-senior",
+      "rate": 120.0,
+      "unit": "hourly",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2026-12-31",
+      "administrationId": "adm-1",
+      "status": "active"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "RateSchedule", "slug": "rs-2026-standaard-user-alice"},
+      "scheduleId": "RS-2026-STD-ALICE",
+      "versionId": "RCV-2026-STD",
+      "tier": "user",
+      "entityId": "user-alice",
+      "rate": 130.0,
+      "unit": "hourly",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2026-12-31",
+      "administrationId": "adm-1",
+      "status": "active"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "RateSchedule", "slug": "rs-2026-standaard-client-het-anker"},
+      "scheduleId": "RS-2026-STD-HETANKER",
+      "versionId": "RCV-2026-STD",
+      "tier": "client",
+      "entityId": "cust-het-anker",
+      "rate": 95.0,
+      "unit": "hourly",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": "2026-12-31",
+      "administrationId": "adm-1",
+      "status": "active"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "ProjectAssignment", "slug": "pa-renovatie-kade-12-alice"},
+      "projectId": "6b1d4e2a-9c37-4f58-8a21-3e7c5d9b0f12",
+      "personId": "user-alice",
+      "rateCardId": "RCT-2026-STD",
+      "billingRoleId": "role-senior",
+      "recognisedRate": 130,
+      "startDate": "2026-09-01",
+      "state": "active",
+      "capacityHoursPerWeek": 40,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "ProjectAssignment", "slug": "pa-renovatie-kade-12-bram"},
+      "projectId": "6b1d4e2a-9c37-4f58-8a21-3e7c5d9b0f12",
+      "personId": "user-bram",
+      "rateCardId": "RCT-2026-STD",
+      "billingRoleId": "role-senior",
+      "recognisedRate": 120,
+      "startDate": "2026-09-01",
+      "state": "active",
+      "capacityHoursPerWeek": 40,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "ProjectAssignment", "slug": "pa-renovatie-kade-12-chris"},
+      "projectId": "6b1d4e2a-9c37-4f58-8a21-3e7c5d9b0f12",
+      "personId": "user-chris",
+      "rateCardId": "RCT-2026-STD",
+      "billingRoleId": null,
+      "recognisedRate": 95,
+      "startDate": "2026-09-01",
+      "state": "active",
+      "capacityHoursPerWeek": 40,
+      "administrationId": "adm-1"
+    }
+  ]
+}
