@@ -4696,7 +4696,16 @@ OC.L10N.register(
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Dispatch channel": "Dispatch channel",
+        "Dispatch status": "Dispatch status",
+        "Dispatch error": "Dispatch error",
+        "Peppol sending is not configured": "Peppol sending is not configured",
+        "Email sending is not configured": "Email sending is not configured",
+        "Peppol": "Peppol",
+        "PDF and email": "PDF and email",
+        "Waiting for delivery": "Waiting for delivery",
+        "Not delivered": "Not delivered"
     },
     "nplurals=2; plural=(n != 1);"
 )

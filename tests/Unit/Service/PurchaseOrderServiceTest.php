@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -49,6 +50,13 @@ use Psr\Log\LoggerInterface;
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class PurchaseOrderServiceTest extends TestCase {
+
+	/**
+	 * The transitions the lifecycle runner was asked for: [objectId, action].
+	 *
+	 * @var array<int, array{0: string, 1: string}>
+	 */
+	private array $transitions = [];
 
 	/**
 	 * Mock ContainerInterface.
@@ -280,11 +288,37 @@ final class PurchaseOrderServiceTest extends TestCase {
 					$object['id'] = 'obj-' . $this->idCounter;
 				}
 
-				// Also reflect into $this->data so subsequent findAll sees the row.
+				// Also reflect into $this->data so subsequent findAll sees the row;
+				// a save of an existing id replaces it, as the store does.
+				foreach (($this->data[$this->schema] ?? []) as $index => $row) {
+					if (($row['id'] ?? null) === $object['id']) {
+						$this->data[$this->schema][$index] = $object;
+						$this->saved[] = ['schema' => $this->schema, 'object' => $object];
+						return $object;
+					}
+				}
+
 				$this->data[$this->schema][] = $object;
 				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
 				return $object;
 			}//end saveObject()
+
+			/**
+			 * What a run of the declared `send` transition leaves in the store.
+			 *
+			 * @param string $schema The schema.
+			 * @param string $id     The object id.
+			 * @param string $state  The state the transition leads to.
+			 *
+			 * @return void
+			 */
+			public function moveTo(string $schema, string $id, string $state): void {
+				foreach (($this->data[$schema] ?? []) as $index => $row) {
+					if (($row['id'] ?? null) === $id) {
+						$this->data[$schema][$index]['statusCode'] = $state;
+					}
+				}
+			}//end moveTo()
 		};
 
 		$container = $this->createMock(ContainerInterface::class);
@@ -301,12 +335,22 @@ final class PurchaseOrderServiceTest extends TestCase {
 
 		$notificationManager = $this->notificationManagerCapturing($notifications);
 
+		// The declared `send` transition, as the lifecycle engine runs it.
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			function (string $objectId, string $action) use ($stub): void {
+				$this->transitions[] = [$objectId, $action];
+				$stub->moveTo(schema: 'PurchaseOrder', id: $objectId, state: 'sent');
+			}
+		);
+
 		return new PurchaseOrderService(
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			notificationManager: $notificationManager,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			transitionRunner: $runner,
 		);
 
 	}//end buildService()
@@ -756,7 +800,10 @@ final class PurchaseOrderServiceTest extends TestCase {
 
 		self::assertSame('sent', $sent['statusCode']);
 		self::assertNotSame('', (string)$sent['sentAt']);
-		self::assertSame([['PurchaseOrder', 'po-ok', 'sent']], array_map(static fn (array $row): array => [$row['schema'], $row['object']['id'], $row['object']['statusCode']], $saved));
+		// The service saves the stamp with the state untouched and asks the
+		// lifecycle for `send`; it never writes `sent` itself (REQ-PODR-003).
+		self::assertSame([['PurchaseOrder', 'po-ok', 'approved']], array_map(static fn (array $row): array => [$row['schema'], $row['object']['id'], $row['object']['statusCode']], $saved));
+		self::assertSame([['po-ok', 'send']], $this->transitions);
 
 	}//end testSendGuardRefusalsAndTheSentSave()
 }//end class

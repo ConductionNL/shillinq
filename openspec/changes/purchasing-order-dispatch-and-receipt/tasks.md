@@ -4,7 +4,8 @@
 
 ## 1. State
 
-- [ ] 1.1 Make `PurchaseOrderService` write `statusCode` through the declared transitions, switch `PurchaseOrderDetail.vue` to `statusCode`, and add a repair step for orders whose `lifecycleState` is sent (REQ-PODR-003). Verify: PHPUnit on create and send; the repair step run twice on a local instance changes the seed order once.
+- [x] 1.1 Make `PurchaseOrderService` write `statusCode` through the declared transitions, switch `PurchaseOrderDetail.vue` to `statusCode`, and add a repair step for orders whose `lifecycleState` is sent (REQ-PODR-003). Verify: PHPUnit on create and send; the repair step run twice on a local instance changes the seed order once.
+  - Done: `PurchaseOrderService` creates at `statusCode` draft and every send (`blockSendUntilApproved()`, the email path, the Peppol delivery status) now goes through the declared `send` transition; nothing writes `lifecycleState`. `PurchaseOrderDetail.vue` reads `statusCode`. Repair step `AlignPurchaseOrderStatusCode` (in `info.xml`). PHPUnit: `PurchaseOrderServiceTest`, `PurchaseOrderIntegrationTest` (send asks the lifecycle for `send`), `AlignPurchaseOrderStatusCodeTest`. Not done here: the repair step run twice on a live instance.
 
 ## 2. Peppol
 
@@ -15,7 +16,8 @@
 ## 3. Email
 
 - [x] 3.1 Add `IntegriqPurchaseOrderMailer` (PDF, payload, hand-off through the integriq email channel) and bind `PurchaseOrderMailerInterface` to it (REQ-PODR-002). Verify: PHPUnit for accepted, refused and integriq absent.
-- [ ] 3.2 Show the dispatch channel, status and error on `PurchaseOrderDetail.vue`, and disable a channel that is unavailable with its reason (REQ-PODR-001, REQ-PODR-002). Verify: Playwright on the two seed orders with integriq's log providers.
+- [x] 3.2 Show the dispatch channel, status and error on `PurchaseOrderDetail.vue`, and disable a channel that is unavailable with its reason (REQ-PODR-001, REQ-PODR-002). Verify: Playwright on the two seed orders with integriq's log providers.
+  - Done: `GET /api/purchase-orders/dispatch-channels` (`PurchaseOrderService::dispatchChannels()`: Peppol when a real adapter is bound, email when the mailer has a channel, each with its reason). `PurchaseOrderDetail.vue` shows dispatch channel, status and error, and disables an unavailable channel with its reason (button title and a hint line). Tests: `PurchaseOrderDispatchChannelsTest`, two `PurchaseOrderControllerTest` cases, `tests/vitest/purchaseOrderDetailDispatch.spec.js`; en/nl strings. Not done here: the Playwright run on the seed orders.
 
 ## 4. Service receipts
 

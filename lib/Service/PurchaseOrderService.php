@@ -524,8 +524,8 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *
 	 * Server-authoritative: the Vue layer never grants the transition. The method
 	 * inspects the persisted PurchaseOrder, asserts every approval_chain entry has
-	 * decision=approved + a non-empty decidedAt timestamp, and on success persists
-	 * statusCode="sent" with a sentAt stamp. On failure the PO is left in its
+	 * decision=approved + a non-empty decidedAt timestamp, and on success stamps
+	 * sentAt and moves the order to "sent" through the declared `send` transition. On failure the PO is left in its
 	 * current state and a RuntimeException is raised so the controller maps it to
 	 * a 409 Conflict (ADR-005, REQ-PO3W-001 send-block).
 	 *
@@ -538,15 +538,39 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	 *                           is incomplete.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-1.1
 	 */
 	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array {
 		$po = $this->loadPurchaseOrderForTransmission(administrationId: $administrationId, purchaseOrderId: $purchaseOrderId);
 
-		$po['statusCode'] = 'sent';
+		// The state moves only through the declared `send` transition
+		// (REQ-PODR-003); the service stamps when, the lifecycle says what.
 		$po['sentAt'] = $this->nowIso();
 
-		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
+		return $this->transitionToSent(purchaseOrder: $this->saveObject(schema: 'PurchaseOrder', object: $po));
 	}//end blockSendUntilApproved()
+
+	/**
+	 * Which dispatch channels can take an order, and why one cannot (REQ-PODR-001, REQ-PODR-002).
+	 *
+	 * Peppol is there when an adapter other than the logging stand-in is bound
+	 * (integriq is installed); email when the mailer says a channel takes mail.
+	 * A channel that is not there is shown disabled with its reason, so the
+	 * page never offers a send that would only be logged.
+	 *
+	 * @return array{peppol: array{available: bool, reason: string|null}, email: array{available: bool, reason: string|null}}
+	 *
+	 * @spec openspec/changes/purchasing-order-dispatch-and-receipt/tasks.md#task-3.2
+	 */
+	public function dispatchChannels(): array {
+		$peppol = ($this->peppolAdapter instanceof LogPeppolTransmissionAdapter) === false;
+		$email  = $this->purchaseOrderMailer->isAvailable();
+
+		return [
+			'peppol' => ['available' => $peppol, 'reason' => ($peppol === true ? null : 'Peppol sending is not configured')],
+			'email' => ['available' => $email, 'reason' => ($email === true ? null : 'Email sending is not configured')],
+		];
+	}//end dispatchChannels()
 
 	/**
 	 * Hand an approved PO to integriq for Peppol delivery (REQ-PODR-001).
