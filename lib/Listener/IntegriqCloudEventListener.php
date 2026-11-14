@@ -20,6 +20,11 @@
  * so a payment taken through integriq settles the request and its invoice
  * (issue #1681, receivables-payment-links design D3, REQ-RPL-003).
  *
+ * And `nl.conduction.payment.settlement`, one per payout of a payment provider
+ * (receivables-provider-payouts design D1, REQ-RPPO-001): its `data` becomes
+ * one `ProviderPayout`, kept once per settlement reference, through
+ * {@see PayoutIntakeService::record()}.
+ *
  * Fail-soft: a failure is logged and never bubbles into integriq's write.
  *
  * @category Listener
@@ -41,6 +46,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentReconciliationServiceInterface;
+use OCA\Shillinq\Service\Payout\PayoutIntakeService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -81,6 +87,21 @@ class IntegriqCloudEventListener implements IEventListener {
 	public const TYPE_PAYMENT_STATUS = 'nl.conduction.payment.status';
 
 	/**
+	 * CloudEvent type integriq emits once per payout of a payment provider
+	 * (receivables-provider-payouts design D1).
+	 *
+	 * @var string
+	 */
+	public const TYPE_PAYMENT_SETTLEMENT = 'nl.conduction.payment.settlement';
+
+	/**
+	 * The CloudEvent types this listener takes.
+	 *
+	 * @var list<string>
+	 */
+	private const HANDLED_TYPES = [self::TYPE_PAYMENT_STATUS, self::TYPE_PAYMENT_SETTLEMENT];
+
+	/**
 	 * Gateway recorded on the reconciled request (design D3). integriq's
 	 * payment CloudEvent does not name its provider.
 	 *
@@ -94,11 +115,13 @@ class IntegriqCloudEventListener implements IEventListener {
 	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 * @param PaymentReconciliationServiceInterface $reconciliation Applies a payment outcome to its request.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param PayoutIntakeService $payoutIntake Records a reported settlement as a ProviderPayout.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly PaymentReconciliationServiceInterface $reconciliation,
 		private readonly LoggerInterface $logger,
+		private readonly PayoutIntakeService $payoutIntake,
 	) {
 	}//end __construct()
 
@@ -119,7 +142,7 @@ class IntegriqCloudEventListener implements IEventListener {
 		try {
 			$entity = $event->getObject();
 			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::TYPE_PAYMENT_STATUS) {
+			if (is_array($cloudEvent) === false || in_array(($cloudEvent['type'] ?? null), self::HANDLED_TYPES, true) === false) {
 				return;
 			}
 
@@ -131,6 +154,11 @@ class IntegriqCloudEventListener implements IEventListener {
 				schemaSlug: self::SCHEMA_SLUG
 			) === false
 			) {
+				return;
+			}
+
+			if ($cloudEvent['type'] === self::TYPE_PAYMENT_SETTLEMENT) {
+				$this->recordSettlement(data: $cloudEvent['data'] ?? null);
 				return;
 			}
 
@@ -165,4 +193,26 @@ class IntegriqCloudEventListener implements IEventListener {
 			['outcome' => ($data['outcome'] ?? null), 'result' => $outcome['result'], 'schema' => $outcome['schema']]
 		);
 	}//end reconcilePaymentStatus()
+
+	/**
+	 * Keep a reported settlement as one ProviderPayout.
+	 *
+	 * @param mixed $data The CloudEvent `data` of design D1.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-provider-payouts/tasks.md#task-2.1
+	 */
+	private function recordSettlement(mixed $data): void {
+		if (is_array($data) === false) {
+			$this->logger->info('IntegriqCloudEventListener: settlement CloudEvent without data; skipped');
+			return;
+		}
+
+		$outcome = $this->payoutIntake->record(settlement: $data, defaultProvider: self::PAYMENT_GATEWAY);
+		$this->logger->info(
+			'IntegriqCloudEventListener: integriq settlement taken',
+			['settlementReference' => ($data['settlementReference'] ?? null), 'result' => $outcome['result'], 'reason' => $outcome['reason']]
+		);
+	}//end recordSettlement()
 }//end class

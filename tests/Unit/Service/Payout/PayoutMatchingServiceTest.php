@@ -171,4 +171,27 @@ final class PayoutMatchingServiceTest extends TestCase {
 		$this->assertSame('unmatched', $payout['lines'][1]['status']);
 		$this->assertSame('booked', $payout['state']);
 	}//end testEarlierMatchesAndStatesAreKept()
+	/**
+	 * A payout that names no administration takes the one of its first match; later lines must belong to it.
+	 *
+	 * @return void
+	 */
+	public function testAPayoutWithoutAdministrationTakesTheOneOfItsFirstMatch(): void {
+		$payout = $this->matcher()->match(
+			[
+				'settlementReference' => 'st_example0002',
+				'state' => 'received',
+				'lines' => [
+					['providerPaymentId' => 'tr_example0099', 'type' => 'payment', 'amount' => 18.0],
+					['providerPaymentId' => 'tr_example0002', 'type' => 'payment', 'amount' => 60.0],
+					['providerPaymentId' => 'tr_example0007', 'type' => 'payment', 'amount' => 5.0],
+				],
+			]
+		);
+
+		self::assertSame('THV', $payout['administrationId']);
+		self::assertSame(['unmatched', 'matched', 'unmatched'], array_column($payout['lines'], 'status'));
+		self::assertSame('pr-2', $payout['lines'][1]['matchedObjectId']);
+		self::assertSame(1, $payout['matchedLineCount']);
+	}//end testAPayoutWithoutAdministrationTakesTheOneOfItsFirstMatch()
 }//end class

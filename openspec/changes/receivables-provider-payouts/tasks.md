@@ -9,7 +9,7 @@
 
 ## 2. Payouts
 
-- [ ] 2.1 Add the settlement branch to the integriq CloudEvent listener, writing a `ProviderPayout` once per settlement reference (REQ-RPPO-001). Verify: PHPUnit with a real `ObjectCreatedEvent` and a repeated settlement.
+- [x] 2.1 Add the settlement branch to the integriq CloudEvent listener, writing a `ProviderPayout` once per settlement reference (REQ-RPPO-001). Verify: PHPUnit with a real `ObjectCreatedEvent` and a repeated settlement.
 - [x] 2.2 Add `PayoutMatchingService` for requests, deposits and web shop invoices, including refunds and chargebacks (REQ-RPPO-002). Verify: PHPUnit per source kind and for an unmatched line.
 - [ ] 2.3 Book the capture of an invoice-backed request in `settleLinkedInvoice()`, and add `occ shillinq:payments:book-captures` for invoices paid before this change (REQ-RPPO-003). Verify: PHPUnit asserting a balanced clearing-to-debtors transaction, and the command's listing.
 - [x] 2.4 Add `PayoutPostingRule` booking net, fees and refunds against clearing (REQ-RPPO-003). Verify: PHPUnit for the st_example0001 seed, balanced to the cent.

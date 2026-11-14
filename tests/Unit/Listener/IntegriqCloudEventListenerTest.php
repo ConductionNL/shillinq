@@ -31,10 +31,14 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
 use OCA\Shillinq\Service\PaymentReconciliationService;
+use OCA\Shillinq\Service\Payout\PayoutIntakeService;
+use OCA\Shillinq\Service\Payout\PayoutMatchingService;
+use OCA\Shillinq\Service\Payout\PayoutPostingRule;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
@@ -134,6 +138,14 @@ final class IntegriqCloudEventListenerTest extends TestCase {
 				objectService: new DuckObjectServiceAdapter($this->store),
 			),
 			logger: new NullLogger(),
+			payoutIntake: new PayoutIntakeService(
+				objectService: new DuckObjectServiceAdapter($this->store),
+				registerLocation: $settings,
+				matching: new PayoutMatchingService(objectService: new DuckObjectServiceAdapter($this->store), appConfig: $appConfig),
+				posting: new PayoutPostingRule(appConfig: $appConfig),
+				transitions: $this->createStub(ObjectTransitionRunnerInterface::class),
+				logger: new NullLogger(),
+			),
 		);
 	}//end listener()
 
@@ -314,4 +326,60 @@ final class IntegriqCloudEventListenerTest extends TestCase {
 
 		self::assertSame('pending', $this->stored(schema: 'PaymentRequest', id: 'pr-1')['state']);
 	}//end testOnlyAPaymentStatusObjectInIntegriqsEventSchemaIsTaken()
+
+	/**
+	 * The settlement data integriq emits (receivables-provider-payouts design D1).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function settlementData(): array {
+		return [
+			'settlementReference' => 'st_example0001',
+			'settledAt' => '2026-10-02',
+			'currency' => 'EUR',
+			'amountGross' => 145.2,
+			'amountFees' => 0.45,
+			'amountRefunds' => 0,
+			'amountChargebacks' => 0,
+			'amountNet' => 144.75,
+			'transactions' => [
+				['providerPaymentId' => 'tr_example0002', 'type' => 'payment', 'amount' => 145.2, 'fee' => 0.45],
+			],
+		];
+	}//end settlementData()
+
+	/**
+	 * A settlement CloudEvent becomes one ProviderPayout, its line matched to the request it paid;
+	 * the same settlement again adds nothing.
+	 *
+	 * @return void
+	 */
+	public function testASettlementFromIntegriqIsKeptOnceAsAProviderPayout(): void {
+		$listener = $this->listener();
+		$listener->handle($this->cloudEvent(type: 'nl.conduction.payment.settlement', data: $this->settlementData()));
+		$listener->handle($this->cloudEvent(type: 'nl.conduction.payment.settlement', data: $this->settlementData()));
+
+		$payouts = $this->store->dump(schema: 'ProviderPayout');
+		self::assertCount(1, $payouts);
+		self::assertSame('st_example0001', $payouts[0]['settlementReference']);
+		self::assertSame('mollie', $payouts[0]['provider']);
+		self::assertSame(144.75, $payouts[0]['amountNet']);
+		self::assertSame('matched', $payouts[0]['lines'][0]['status']);
+		self::assertSame('pr-1', $payouts[0]['lines'][0]['matchedObjectId']);
+		self::assertSame('booked', $payouts[0]['state']);
+		self::assertSame('pending', $this->stored(schema: 'PaymentRequest', id: 'pr-1')['state']);
+	}//end testASettlementFromIntegriqIsKeptOnceAsAProviderPayout()
+
+	/**
+	 * A settlement outside integriq's event schema, or without data, writes no payout.
+	 *
+	 * @return void
+	 */
+	public function testOnlyASettlementInIntegriqsEventSchemaIsKept(): void {
+		$listener = $this->listener();
+		$listener->handle($this->cloudEvent(type: 'nl.conduction.payment.settlement', data: $this->settlementData(), register: '3'));
+		$listener->handle($this->cloudEvent(type: 'nl.conduction.payment.settlement', data: []));
+
+		self::assertSame([], $this->store->dump(schema: 'ProviderPayout'));
+	}//end testOnlyASettlementInIntegriqsEventSchemaIsKept()
 }//end class

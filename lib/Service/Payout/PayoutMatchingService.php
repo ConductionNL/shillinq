@@ -72,6 +72,8 @@ class PayoutMatchingService {
 	 * state `matched` when it was `received`.
 	 *
 	 * A line keeps an earlier match: a bookkeeper's assignment is not undone.
+	 * A payout that names no administration takes the one of the first object
+	 * a line matched, and its later lines must belong to that one too.
 	 *
 	 * @param array<string, mixed> $payout The ProviderPayout.
 	 *
@@ -88,9 +90,15 @@ class PayoutMatchingService {
 				continue;
 			}
 
-			$line = $this->matchLine(line: $line, administrationId: $administrationId);
+			$result = $this->matchLine(line: $line, administrationId: $administrationId);
+			$line = $result['line'];
 			if ($line['status'] === 'matched') {
 				$matched++;
+			}
+
+			if ($administrationId === '' && $result['administrationId'] !== '') {
+				$administrationId = $result['administrationId'];
+				$payout['administrationId'] = $administrationId;
 			}
 
 			$lines[] = $line;
@@ -130,11 +138,12 @@ class PayoutMatchingService {
 	 * @param array<string, mixed> $line             The payout line.
 	 * @param string               $administrationId The payout's administration.
 	 *
-	 * @return array<string, mixed>
+	 * @return array{line: array<string, mixed>, administrationId: string} The line, and the administration of
+	 *         what it newly matched ('' when nothing or none).
 	 */
 	private function matchLine(array $line, string $administrationId): array {
 		if (($line['status'] ?? '') === 'matched' && trim((string)($line['matchedObjectId'] ?? '')) !== '') {
-			return $line;
+			return ['line' => $line, 'administrationId' => ''];
 		}
 
 		$type = (string)($line['type'] ?? 'payment');
@@ -152,13 +161,13 @@ class PayoutMatchingService {
 		if ($found === null) {
 			$line['status'] = 'unmatched';
 			unset($line['matchedObjectId'], $line['matchedObjectType']);
-			return $line;
+			return ['line' => $line, 'administrationId' => ''];
 		}
 
 		$line['status'] = 'matched';
 		$line['matchedObjectId'] = $found['id'];
 		$line['matchedObjectType'] = $found['kind'];
-		return $line;
+		return ['line' => $line, 'administrationId' => $found['administrationId']];
 	}//end matchLine()
 
 	/**
@@ -167,7 +176,7 @@ class PayoutMatchingService {
 	 * @param string $paymentId        The provider payment id.
 	 * @param string $administrationId The administration it must belong to.
 	 *
-	 * @return array{id: string, kind: string, object: array<string, mixed>}|null
+	 * @return array{id: string, kind: string, object: array<string, mixed>, administrationId: string}|null
 	 */
 	private function find(string $paymentId, string $administrationId): ?array {
 		if ($paymentId === '') {
@@ -191,7 +200,7 @@ class PayoutMatchingService {
 					continue;
 				}
 
-				return ['id' => $id, 'kind' => $kind, 'object' => $object];
+				return ['id' => $id, 'kind' => $kind, 'object' => $object, 'administrationId' => trim((string)($object['administrationId'] ?? ''))];
 			}
 		}//end foreach
 
@@ -201,9 +210,9 @@ class PayoutMatchingService {
 	/**
 	 * The invoice a found payment paid: the invoice itself, or the one its request or deposit names.
 	 *
-	 * @param array{id: string, kind: string, object: array<string, mixed>}|null $paid The found payment.
+	 * @param array{id: string, kind: string, object: array<string, mixed>, administrationId: string}|null $paid The found payment.
 	 *
-	 * @return array{id: string, kind: string, object: array<string, mixed>}|null
+	 * @return array{id: string, kind: string, object: array<string, mixed>, administrationId: string}|null
 	 */
 	private function invoiceOf(?array $paid): ?array {
 		if ($paid === null) {
@@ -219,7 +228,7 @@ class PayoutMatchingService {
 			return null;
 		}
 
-		return ['id' => $invoiceId, 'kind' => 'invoice', 'object' => []];
+		return ['id' => $invoiceId, 'kind' => 'invoice', 'object' => [], 'administrationId' => $paid['administrationId']];
 	}//end invoiceOf()
 
 	/**
