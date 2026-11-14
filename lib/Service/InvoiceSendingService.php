@@ -90,6 +90,11 @@ class InvoiceSendingService {
 	public const STATUS_FAILED = 'failed';
 
 	/**
+	 * The property a record is matched on when its id is no object id, per schema.
+	 */
+	private const FALLBACK_PROPERTIES = ['ARInvoice' => 'invoiceNumber', 'CustomerMaster' => 'customerId'];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface       $objectService         OpenRegister's object service.
@@ -146,7 +151,7 @@ class InvoiceSendingService {
 		}
 
 		$invoice = $this->sendableInvoice(administrationId: $administrationId, invoiceId: $invoiceId);
-		return $this->sendInvoice(invoice: $invoice, via: $via, mailOnFallback: $mailOnFallback);
+		return $this->sendInvoice(invoice: $invoice, options: ['via' => $via, 'mailOnFallback' => $mailOnFallback]);
 	}//end send()
 
 	/**
@@ -173,32 +178,41 @@ class InvoiceSendingService {
 		}
 
 		$invoice = $this->sendableInvoice(administrationId: $administrationId, invoiceId: $invoiceId);
-		return $this->sendInvoice(invoice: $invoice, via: $via, mailOnFallback: true);
+		return $this->sendInvoice(invoice: $invoice, options: ['via' => $via, 'mailOnFallback' => true]);
 	}//end sendUnattended()
 
 	/**
 	 * Route a sendable invoice by its customer's delivery method and record the outcome.
 	 *
-	 * @param array<string, mixed> $invoice        The ARInvoice.
-	 * @param string               $via            `''` or `email`.
-	 * @param bool                 $mailOnFallback Whether a Peppol fallback mails without asking.
+	 * The options are `via` (`''` or `email`) and `mailOnFallback`, whether a
+	 * Peppol fallback mails without asking.
+	 *
+	 * @param array<string, mixed>                    $invoice The ARInvoice.
+	 * @param array{via: string, mailOnFallback: bool} $options How to send.
 	 *
 	 * @return array{status: string, sending: array<string, mixed>, error: string}
 	 */
-	private function sendInvoice(array $invoice, string $via, bool $mailOnFallback): array {
+	private function sendInvoice(array $invoice, array $options): array {
 		$customer = $this->customerOf(invoice: $invoice);
 
 		$method = $this->methodOf(customer: $customer);
-		if ($via === 'email') {
+		if ($options['via'] === 'email') {
 			$method = 'email';
 		}
 
 		$outcome = match ($method) {
-			'peppol' => $this->viaPeppol(invoice: $invoice, customer: $customer, mailOnFallback: $mailOnFallback),
+			'peppol' => $this->viaPeppol(invoice: $invoice),
 			'post' => $this->recorded(method: 'post', note: $this->l10n->t('The letter is printed and posted by hand.')),
 			'none' => $this->recorded(method: 'none', note: ''),
-			default => $this->viaEmail(invoice: $invoice, customer: $customer, note: ''),
+			default => $this->viaEmail(invoice: $invoice, customer: $customer),
 		};
+
+		if ($outcome['status'] === self::STATUS_FALLBACK && $options['mailOnFallback'] === true) {
+			$outcome = $this->viaEmail(invoice: $invoice, customer: $customer);
+			if ($outcome['status'] === self::STATUS_SENT) {
+				$outcome['sending']['note'] = $this->l10n->t('No Peppol participant was found for this customer, so the invoice was mailed.');
+			}
+		}
 
 		if ($outcome['status'] !== self::STATUS_FALLBACK) {
 			$outcome['sending'] = $this->record(invoice: $invoice, outcome: $outcome);
@@ -257,7 +271,7 @@ class InvoiceSendingService {
 	 * @throws DomainException      When it is not issued or overdue.
 	 */
 	private function sendableInvoice(string $administrationId, string $invoiceId): array {
-		$invoice = $this->find(schema: 'ARInvoice', id: $invoiceId, fallbackProperty: 'invoiceNumber');
+		$invoice = $this->find(schema: 'ARInvoice', id: $invoiceId);
 		if ($invoice === null || (string)($invoice['administrationId'] ?? '') !== $administrationId) {
 			throw new OutOfBoundsException('ARInvoice not found');
 		}
@@ -277,7 +291,7 @@ class InvoiceSendingService {
 	 * @return array<string, mixed>|null
 	 */
 	private function customerOf(array $invoice): ?array {
-		$customer = $this->find(schema: 'CustomerMaster', id: (string)($invoice['customerId'] ?? ''), fallbackProperty: 'customerId');
+		$customer = $this->find(schema: 'CustomerMaster', id: (string)($invoice['customerId'] ?? ''));
 		if ($customer === null || (string)($customer['administrationId'] ?? '') !== (string)($invoice['administrationId'] ?? '')) {
 			return null;
 		}
@@ -290,11 +304,10 @@ class InvoiceSendingService {
 	 *
 	 * @param array<string, mixed>      $invoice  The ARInvoice.
 	 * @param array<string, mixed>|null $customer The CustomerMaster.
-	 * @param string                    $note     What the record says besides the mail, e.g. that Peppol fell back.
 	 *
-	 * @return array{status: string, sending: array<string, mixed>, error: string}
+	 * @return array{status: string, sending: array<string, mixed>, error: string} A sent outcome's note is ''.
 	 */
-	private function viaEmail(array $invoice, ?array $customer, string $note): array {
+	private function viaEmail(array $invoice, ?array $customer): array {
 		$address = $this->addressOf(customer: $customer);
 		if ($address === '') {
 			return $this->failed(method: 'email', error: $this->l10n->t('The customer has no email address to send the invoice to.'));
@@ -309,31 +322,32 @@ class InvoiceSendingService {
 			return $this->failed(method: 'email', error: $this->l10n->t('The invoice PDF is larger than 10 MB and is not mailed.'));
 		}
 
-		$error = $this->mail(invoice: $invoice, customer: $customer, address: $address, attachment: $attachment);
+		$error = $this->mail(
+			invoice: $invoice,
+			delivery: ['address' => $address, 'name' => (string)($customer['legalName'] ?? $address)] + $attachment
+		);
 		if ($error !== '') {
 			return $this->failed(method: 'email', error: $error);
 		}
 
 		return [
 			'status' => self::STATUS_SENT,
-			'sending' => ['sentVia' => 'email', 'sentTo' => $address, 'sentAt' => $this->now(), 'note' => $note],
+			'sending' => ['sentVia' => 'email', 'sentTo' => $address, 'sentAt' => $this->now(), 'note' => ''],
 			'error' => '',
 		];
 	}//end viaEmail()
 
 	/**
 	 * Hand the invoice to the Peppol send; without a participant, offer the
-	 * mail, or mail at once when nobody can be asked.
+	 * mail (sendInvoice() mails at once when nobody can be asked).
 	 *
-	 * @param array<string, mixed>      $invoice        The ARInvoice.
-	 * @param array<string, mixed>|null $customer       The CustomerMaster.
-	 * @param bool                      $mailOnFallback Whether to mail without asking.
+	 * @param array<string, mixed> $invoice The ARInvoice.
 	 *
 	 * @return array{status: string, sending: array<string, mixed>, error: string}
 	 *
 	 * @spec openspec/changes/sales-invoice-sending/tasks.md#task-2.2
 	 */
-	private function viaPeppol(array $invoice, ?array $customer, bool $mailOnFallback): array {
+	private function viaPeppol(array $invoice): array {
 		try {
 			$answer = $this->einvoice->sendEInvoice(
 				administrationId: (string)($invoice['administrationId'] ?? ''),
@@ -351,11 +365,6 @@ class InvoiceSendingService {
 			];
 		}
 
-		$note = $this->l10n->t('No Peppol participant was found for this customer, so the invoice was mailed.');
-		if ($mailOnFallback === true) {
-			return $this->viaEmail(invoice: $invoice, customer: $customer, note: $note);
-		}
-
 		return [
 			'status' => self::STATUS_FALLBACK,
 			'sending' => [],
@@ -369,18 +378,17 @@ class InvoiceSendingService {
 	 * The transport stays in this one method so a later move to another
 	 * channel is one edit (design D1).
 	 *
-	 * @param array<string, mixed>               $invoice    The ARInvoice.
-	 * @param array<string, mixed>|null          $customer   The CustomerMaster.
-	 * @param string                             $address    The address.
-	 * @param array{filename: string, pdf: string} $attachment The PDF.
+	 * @param array<string, mixed>                                            $invoice  The ARInvoice.
+	 * @param array{address: string, name: string, filename: string, pdf: string} $delivery The address, the recipient's name and the PDF.
 	 *
 	 * @return string The error, or '' when the mailer accepted the message.
 	 */
-	private function mail(array $invoice, ?array $customer, string $address, array $attachment): string {
+	private function mail(array $invoice, array $delivery): string {
 		$number = (string)($invoice['invoiceNumber'] ?? '');
+		$address = $delivery['address'];
 		try {
 			$message = $this->mailer->createMessage();
-			$message->setTo([$address => (string)($customer['legalName'] ?? $address)]);
+			$message->setTo([$address => $delivery['name']]);
 			$message->setSubject($this->l10n->t('Invoice %s', [$number]));
 			$message->setPlainBody(
 				$this->l10n->t(
@@ -393,7 +401,7 @@ class InvoiceSendingService {
 					]
 				)
 			);
-			$message->attach($this->mailer->createAttachment($attachment['pdf'], $attachment['filename'], 'application/pdf'));
+			$message->attach($this->mailer->createAttachment($delivery['pdf'], $delivery['filename'], 'application/pdf'));
 			$refused = $this->mailer->send($message);
 		} catch (Throwable $e) {
 			$this->logger->warning('Shillinq: invoice mail not sent', ['invoiceNumber' => $number, 'exception' => $e->getMessage()]);
@@ -499,22 +507,22 @@ class InvoiceSendingService {
 	}//end failed()
 
 	/**
-	 * One record by id, or by a property when the id is no object id.
+	 * One record by id, or by the schema's own number (FALLBACK_PROPERTIES)
+	 * when the id is no object id.
 	 *
-	 * @param string      $schema           The schema.
-	 * @param string      $id               The id.
-	 * @param string|null $fallbackProperty The property to match when the id is not an object id.
+	 * @param string $schema The schema.
+	 * @param string $id     The id.
 	 *
 	 * @return array<string, mixed>|null
 	 */
-	private function find(string $schema, string $id, ?string $fallbackProperty = null): ?array {
+	private function find(string $schema, string $id): ?array {
 		if ($id === '') {
 			return null;
 		}
 
 		try {
 			$scoped = $this->objectService->setRegister($this->register())->setSchema($schema);
-			return ObjectIdentifier::findOne(scoped: $scoped, id: $id, fallbackProperty: $fallbackProperty);
+			return ObjectIdentifier::findOne(scoped: $scoped, id: $id, fallbackProperty: (self::FALLBACK_PROPERTIES[$schema] ?? null));
 		} catch (Throwable $e) {
 			return null;
 		}
