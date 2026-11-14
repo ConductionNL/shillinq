@@ -95,7 +95,7 @@ class WebshopOrderInvoicer {
 
 		$channel = $this->record(schema: 'WebshopChannel', id: (string)($order['channelId'] ?? ''));
 		if ($channel === null) {
-			return $this->refuse(order: $order, orderId: $orderId, reason: 'The order names a web shop channel shillinq does not know.');
+			return $this->refuse(order: ['refusalReason' => 'The order names a web shop channel shillinq does not know.'] + $order, orderId: $orderId);
 		}
 
 		if ($this->alreadyInvoiced(order: $order, orderId: $orderId) === true) {
@@ -105,27 +105,27 @@ class WebshopOrderInvoicer {
 
 		$refusal = self::refusalOf(order: $order, channel: $channel);
 		if ($refusal !== null) {
-			return $this->refuse(order: $order, orderId: $orderId, reason: $refusal);
+			return $this->refuse(order: ['refusalReason' => $refusal] + $order, orderId: $orderId);
 		}
 
 		$built = self::invoiceLines(order: $order, channel: $channel);
 		$computed = $built['grossCents'];
 		$stated = (int)round(((float)($order['totals']['gross'] ?? ($computed / 100))) * 100);
 		if (abs($computed - $stated) > self::TOTAL_TOLERANCE_CENTS) {
-			return $this->refuse(
-				order: $order,
-				orderId: $orderId,
-				reason: sprintf('The order lines add up to %.2f but the order total is %.2f.', ($computed / 100), ($stated / 100))
-			);
+			$reason = sprintf('The order lines add up to %.2f but the order total is %.2f.', ($computed / 100), ($stated / 100));
+			return $this->refuse(order: ['refusalReason' => $reason] + $order, orderId: $orderId);
 		}
 
 		$debtorId = $this->debtorId(order: $order, channel: $channel);
 		if ($debtorId === '') {
-			return $this->refuse(order: $order, orderId: $orderId, reason: 'The web shop channel has no collective debtor for consumer orders.');
+			return $this->refuse(order: ['refusalReason' => 'The web shop channel has no collective debtor for consumer orders.'] + $order, orderId: $orderId);
 		}
 
 		$invoiceId = $this->writeInvoice(
-			invoice: self::invoice(order: $order, orderId: $orderId, channel: $channel, debtorId: $debtorId, built: $built, today: $today)
+			invoice: self::invoice(
+				order: $order,
+				context: ['orderId' => $orderId, 'channel' => $channel, 'debtorId' => $debtorId, 'built' => $built, 'today' => $today]
+			)
 		);
 
 		$this->saveOrder(order: ['arInvoiceId' => $invoiceId] + $order, orderId: $orderId);
@@ -207,13 +207,15 @@ class WebshopOrderInvoicer {
 			}
 
 			$lines[] = self::line(
-				number: (count($lines) + 1),
-				name: $name,
-				quantity: $quantity,
-				unitPrice: (float)($line['unitPrice'] ?? 0),
-				rate: $rate,
-				includesVat: $includesVat,
-				account: (string)($channel['revenueAccount'] ?? ''),
+				spec: [
+					'number' => (count($lines) + 1),
+					'name' => $name,
+					'quantity' => $quantity,
+					'unitPrice' => (float)($line['unitPrice'] ?? 0),
+					'rate' => $rate,
+					'includesVat' => $includesVat,
+					'account' => (string)($channel['revenueAccount'] ?? ''),
+				],
 				totals: $totals
 			);
 		}
@@ -226,13 +228,15 @@ class WebshopOrderInvoicer {
 			}
 
 			$lines[] = self::line(
-				number: (count($lines) + 1),
-				name: 'Shipping',
-				quantity: 1.0,
-				unitPrice: $shipping,
-				rate: $highestRate,
-				includesVat: $includesVat,
-				account: $account,
+				spec: [
+					'number' => (count($lines) + 1),
+					'name' => 'Shipping',
+					'quantity' => 1.0,
+					'unitPrice' => $shipping,
+					'rate' => $highestRate,
+					'includesVat' => $includesVat,
+					'account' => $account,
+				],
 				totals: $totals
 			);
 		}
@@ -243,31 +247,23 @@ class WebshopOrderInvoicer {
 	/**
 	 * One invoice line, adding its net and VAT cents to the running totals.
 	 *
-	 * @param int                          $number      The line number.
-	 * @param string                       $name        The line text.
-	 * @param float                        $quantity    The quantity.
-	 * @param float                        $unitPrice   The unit price as the shop sent it.
-	 * @param float                        $rate        The VAT rate in percent.
-	 * @param bool                         $includesVat Whether the unit price includes VAT.
-	 * @param string                       $account     The revenue account.
-	 * @param array{net: int, vat: int}    $totals      The running totals.
+	 * The spec holds the line number, the line text (name), the quantity, the
+	 * unit price as the shop sent it, the VAT rate in percent, whether the unit
+	 * price includes VAT (includesVat) and the revenue account.
+	 *
+	 * @param array<string,mixed>       $spec   The line: number, name, quantity, unitPrice, rate, includesVat, account.
+	 * @param array{net: int, vat: int} $totals The running totals.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private static function line(
-		int $number,
-		string $name,
-		float $quantity,
-		float $unitPrice,
-		float $rate,
-		bool $includesVat,
-		string $account,
-		array &$totals
-	): array {
-		$amountCents = (int)round($quantity * $unitPrice * 100);
+	private static function line(array $spec, array &$totals): array {
+		$quantity = (float)$spec['quantity'];
+		$rate = (float)$spec['rate'];
+		$account = (string)$spec['account'];
+		$amountCents = (int)round($quantity * (float)$spec['unitPrice'] * 100);
 		$netCents = $amountCents;
 		$vatCents = (int)round($amountCents * $rate / 100);
-		if ($includesVat === true) {
+		if ($spec['includesVat'] === true) {
 			$netCents = (int)round($amountCents / (1 + ($rate / 100)));
 			$vatCents = ($amountCents - $netCents);
 		}
@@ -281,10 +277,10 @@ class WebshopOrderInvoicer {
 		}
 
 		$line = [
-			'lineId' => (string)$number,
+			'lineId' => (string)$spec['number'],
 			'quantity' => $quantity,
 			'unitCode' => 'C62',
-			'itemName' => $name,
+			'itemName' => (string)$spec['name'],
 			'netPrice' => $netPrice,
 			'netAmount' => ($netCents / 100.0),
 			'vatCategory' => 'Z',
@@ -304,18 +300,22 @@ class WebshopOrderInvoicer {
 	/**
 	 * The ARInvoice payload of an order.
 	 *
-	 * @param array<string,mixed>                                                                    $order    The order.
-	 * @param string                                                                                 $orderId  Its id.
-	 * @param array<string,mixed>                                                                    $channel  Its channel.
-	 * @param string                                                                                 $debtorId The CustomerMaster to book on.
-	 * @param array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int, grossCents: int} $built    The lines and totals.
-	 * @param string                                                                                 $today    The invoice date (Y-m-d).
+	 * The context holds the order's id (orderId), its channel, the
+	 * CustomerMaster to book on (debtorId), the lines and totals from
+	 * invoiceLines() (built) and the invoice date as Y-m-d (today).
+	 *
+	 * @param array<string,mixed> $order   The order.
+	 * @param array<string,mixed> $context The invoice context: orderId, channel, debtorId, built, today.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.1
 	 */
-	public static function invoice(array $order, string $orderId, array $channel, string $debtorId, array $built, string $today): array {
+	public static function invoice(array $order, array $context): array {
+		$orderId = (string)$context['orderId'];
+		$channel = (array)$context['channel'];
+		$built = (array)$context['built'];
+		$today = (string)$context['today'];
 		$channelId = (string)($order['channelId'] ?? '');
 		$shopOrderId = (string)($order['shopOrderId'] ?? '');
 		$state = 'draft';
@@ -328,7 +328,7 @@ class WebshopOrderInvoicer {
 			'invoiceNumber' => sprintf('WEB-%s-%s', strtoupper(substr(hash('sha256', $channelId), 0, 6)), $shopOrderId),
 			'administrationId' => (string)($channel['administrationId'] ?? ''),
 			'periodId' => substr($today, 0, 7),
-			'customerId' => $debtorId,
+			'customerId' => (string)$context['debtorId'],
 			'invoiceDate' => $today,
 			'dueDate' => gmdate('Y-m-d', ((int)strtotime($today . ' 00:00:00 UTC') + (self::TERM_DAYS * 86400))),
 			'currency' => (string)($order['currency'] ?? 'EUR'),
@@ -426,7 +426,7 @@ class WebshopOrderInvoicer {
 		}
 
 		$customer = [
-			'customerId' => self::customerNumber(administrationId: $administrationId, legalName: $legalName, email: (string)($buyer['email'] ?? '')),
+			'customerId' => self::customerNumber(administrationId: $administrationId, buyer: ['legalName' => $legalName] + $buyer),
 			'legalName' => $legalName,
 			'email' => (string)($buyer['email'] ?? ''),
 			'administrationId' => $administrationId,
@@ -451,14 +451,13 @@ class WebshopOrderInvoicer {
 	/**
 	 * A stable customer number for a buyer created from a web shop order.
 	 *
-	 * @param string $administrationId The administration.
-	 * @param string $legalName        The buyer's legal name.
-	 * @param string $email            The buyer's email.
+	 * @param string              $administrationId The administration.
+	 * @param array<string,mixed> $buyer            The buyer with its resolved legalName and its email.
 	 *
 	 * @return string
 	 */
-	private static function customerNumber(string $administrationId, string $legalName, string $email): string {
-		$seed = $administrationId . '|' . strtolower($legalName) . '|' . strtolower($email);
+	private static function customerNumber(string $administrationId, array $buyer): string {
+		$seed = $administrationId . '|' . strtolower((string)($buyer['legalName'] ?? '')) . '|' . strtolower((string)($buyer['email'] ?? ''));
 
 		return 'WEB-' . strtoupper(substr(hash('sha256', $seed), 0, 10));
 	}//end customerNumber()
@@ -494,14 +493,14 @@ class WebshopOrderInvoicer {
 	/**
 	 * Record the refusal on the order and move it to refused.
 	 *
-	 * @param array<string,mixed> $order   The order.
+	 * @param array<string,mixed> $order   The order, its refusalReason set to why it is refused.
 	 * @param string              $orderId Its id.
-	 * @param string              $reason  Why it is refused.
 	 *
 	 * @return string refused
 	 */
-	private function refuse(array $order, string $orderId, string $reason): string {
-		$this->saveOrder(order: ['refusalReason' => $reason] + $order, orderId: $orderId);
+	private function refuse(array $order, string $orderId): string {
+		$reason = (string)($order['refusalReason'] ?? '');
+		$this->saveOrder(order: $order, orderId: $orderId);
 		$this->transitions->run(objectId: $orderId, action: 'refuse');
 		$this->logger->info('WebshopOrderInvoicer: order refused', ['orderId' => $orderId, 'reason' => $reason]);
 
