@@ -117,18 +117,7 @@ class ReserveBalances implements ReserveBalancesInterface {
 			$sums = self::sums(mutations: $mutations, year: $year, realisedOnly: false);
 			$closing = ($balance + $sums['additions'] - $sums['withdrawals']);
 			if ($year >= $fromYear) {
-				$rows[] = [
-					'reserveId'    => (string)($reserve['id'] ?? ''),
-					'reserveName'  => (string)($reserve['name'] ?? ''),
-					'year'         => $year,
-					'opening'      => ($balance / 100),
-					'additions'    => ($sums['additions'] / 100),
-					'withdrawals'  => ($sums['withdrawals'] / 100),
-					'closing'      => ($closing / 100),
-					'planned'      => $sums['planned'],
-					'belowFloor'   => (isset($reserve['floorCents']) === true && $closing < (int)$reserve['floorCents']),
-					'aboveCeiling' => (isset($reserve['plafondCents']) === true && $closing > (int)$reserve['plafondCents']),
-				];
+				$rows[] = $this->yearRow(reserve: $reserve, year: $year, balance: $balance, sums: $sums);
 			}
 
 			$balance = $closing;
@@ -137,6 +126,35 @@ class ReserveBalances implements ReserveBalancesInterface {
 		return $rows;
 
 	}//end chain()
+
+	/**
+	 * One reserve year, opening to closing, with its floor and ceiling signals.
+	 *
+	 * @param array<string,mixed> $reserve The reserve.
+	 * @param int                 $year    The year.
+	 * @param int                 $balance The opening balance in cents.
+	 * @param array<string,mixed> $sums    The year's additions, withdrawals (cents) and planned flag.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
+	 */
+	private function yearRow(array $reserve, int $year, int $balance, array $sums): array {
+		$closing = ($balance + $sums['additions'] - $sums['withdrawals']);
+
+		return [
+			'reserveId'    => (string)($reserve['id'] ?? ''),
+			'reserveName'  => (string)($reserve['name'] ?? ''),
+			'year'         => $year,
+			'opening'      => ($balance / 100),
+			'additions'    => ($sums['additions'] / 100),
+			'withdrawals'  => ($sums['withdrawals'] / 100),
+			'closing'      => ($closing / 100),
+			'planned'      => $sums['planned'],
+			'belowFloor'   => (isset($reserve['floorCents']) === true && $closing < (int)$reserve['floorCents']),
+			'aboveCeiling' => (isset($reserve['plafondCents']) === true && $closing > (int)$reserve['plafondCents']),
+		];
+	}//end yearRow()
 
 	/**
 	 * A reserve's realised balance on 1 January of a year.
