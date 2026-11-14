@@ -71,7 +71,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the order belongs to.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the order belongs to.',
+					],
 					'purchaseOrderId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The purchase order.'],
 					'decision' => ['type' => 'string', 'enum' => ['approved', 'rejected', 'delegated'], 'description' => 'The decision.'],
 					'comment' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'An optional comment for the approval chain.'],
@@ -90,7 +94,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the period belongs to.',
+					],
 					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
 				],
 				'required' => ['administrationId', 'periodId'],
@@ -109,7 +117,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the period belongs to.',
+					],
 					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
 				],
 				'required' => ['administrationId', 'periodId'],
@@ -128,7 +140,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the period belongs to.',
+					],
 					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
 				],
 				'required' => ['administrationId', 'periodId'],
@@ -147,7 +163,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the period belongs to.',
+					],
 					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
 					'closeReason' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'Why the period is reopened.'],
 				],
@@ -167,10 +187,19 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return is for.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the return is for.',
+					],
 					'period' => ['type' => 'string', 'enum' => ['quarter', 'month', 'year'], 'description' => 'The kind of period.'],
 					'periodYear' => ['type' => 'integer', 'minimum' => 2020, 'maximum' => 2099, 'description' => 'The fiscal year.'],
-					'periodNumber' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 12, 'description' => 'The quarter (1-4), month (1-12) or 1 for a year.'],
+					'periodNumber' => [
+						'type' => 'integer',
+						'minimum' => 1,
+						'maximum' => 12,
+						'description' => 'The quarter (1-4), month (1-12) or 1 for a year.',
+					],
 					'regime' => ['type' => 'string', 'enum' => ['standard', 'kor', 'reverse-charge'], 'description' => 'The VAT regime.'],
 				],
 				'required' => ['administrationId', 'period', 'periodYear', 'periodNumber', 'regime'],
@@ -189,8 +218,16 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return belongs to.'],
-					'returnId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The VAT return; find it with shillinq.VatReturn.search.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the return belongs to.',
+					],
+					'returnId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The VAT return; find it with shillinq.VatReturn.search.',
+					],
 				],
 				'required' => ['administrationId', 'returnId'],
 			],
@@ -208,8 +245,16 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return belongs to.'],
-					'returnId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The VAT return; find it with shillinq.VatReturn.search.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the return belongs to.',
+					],
+					'returnId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The VAT return; find it with shillinq.VatReturn.search.',
+					],
 				],
 				'required' => ['administrationId', 'returnId'],
 			],
@@ -227,10 +272,192 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'inputSchema' => [
 				'type' => 'object',
 				'properties' => [
-					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the return belongs to.'],
-					'returnId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The VAT return; find it with shillinq.VatReturn.search.'],
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the return belongs to.',
+					],
+					'returnId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The VAT return; find it with shillinq.VatReturn.search.',
+					],
 				],
 				'required' => ['administrationId', 'returnId'],
+			],
+		],
+		[
+			'id' => 'shillinq.dunning.dossier',
+			'name' => 'Compose the collection dossier of an invoice',
+			'description' => 'Compose the collection dossier of an overdue sales invoice: the invoice, the reminders sent, the '
+				. 'collection costs and the customer details a collection agency needs. Use it when the user asks what '
+				. 'would be handed over for collection, or before a transfer. Changes nothing and sends nothing.',
+			'scope' => 'read',
+			'readOnlyHint' => true,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The sales invoice; find it with shillinq.ARInvoice.search.',
+					],
+					'customerId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The customer of the invoice.'],
+				],
+				'required' => ['administrationId', 'invoiceId', 'customerId'],
+			],
+		],
+		[
+			'id' => 'shillinq.dunning.execute_run',
+			'name' => 'Send the next dunning reminder',
+			'description' => 'Run the next stage of the dunning ladder for an overdue sales invoice: compose the reminder and send '
+				. 'it to the customer through its channel. Use it only when the user explicitly asks to send a reminder '
+				. 'for that invoice; the letter leaves the instance. A paused invoice is refused.',
+			'scope' => 'update',
+			'reach' => 'external',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The sales invoice; find it with shillinq.ARInvoice.search.',
+					],
+					'ladderId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The dunning ladder to follow; empty for the configured one.',
+					],
+					'stageNr' => [
+						'type' => 'integer',
+						'minimum' => 1,
+						'maximum' => 10,
+						'description' => 'The stage of the ladder to run; defaults to the first.',
+					],
+				],
+				'required' => ['administrationId', 'invoiceId'],
+			],
+		],
+		[
+			'id' => 'shillinq.dunning.pause',
+			'name' => 'Pause dunning on an invoice',
+			'description' => 'Pause the dunning of a sales invoice, as the signed-in user, because it is disputed, under a payment '
+				. 'plan or for another reason. Use it when the user says a customer disputes an invoice or agreed a '
+				. 'payment plan; no reminder is sent while the pause stands. Lift it with shillinq.dunning.resume.',
+			'scope' => 'update',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The sales invoice; find it with shillinq.ARInvoice.search.',
+					],
+					'reason' => ['type' => 'string', 'enum' => ['DISPUTED', 'PAYMENT_PLAN', 'OTHER'], 'description' => 'Why dunning is paused.'],
+					'details' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'What the customer said or agreed.'],
+				],
+				'required' => ['administrationId', 'invoiceId', 'reason'],
+			],
+		],
+		[
+			'id' => 'shillinq.dunning.resume',
+			'name' => 'Lift a dunning pause',
+			'description' => 'Lift a dunning pause of an administration: resolve it (the dispute is settled, optionally with a '
+				. 'partial settlement) or let it expire, so dunning continues. Use it when the user says the dispute or '
+				. 'payment plan is over. Find the pause with the invoice it was set on.',
+			'scope' => 'update',
+			'reach' => 'user',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the pause belongs to.',
+					],
+					'pauseId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The dunning pause.'],
+					'resolution' => [
+						'type' => 'string',
+						'enum' => ['resolve', 'expire'],
+						'description' => 'Resolve the pause, or let it expire; defaults to resolve.',
+					],
+					'partialSettlement' => [
+						'type' => ['number', 'null'],
+						'minimum' => 0,
+						'description' => 'The amount settled, when the dispute ended in a partial settlement.',
+					],
+				],
+				'required' => ['administrationId', 'pauseId'],
+			],
+		],
+		[
+			'id' => 'shillinq.dunning.write_off',
+			'name' => 'Write off an uncollectable invoice',
+			'description' => 'Write off the principal of an uncollectable sales invoice and record the art. 29 OB VAT reclaim, '
+				. 'as the signed-in user. Use it only when the user explicitly asks to write that invoice off; it books '
+				. 'into the ledger and the VAT return and binds the administration.',
+			'scope' => 'update',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The administration the invoice belongs to.',
+					],
+					'invoiceId' => [
+						'type' => 'string',
+						'pattern' => self::ID_PATTERN,
+						'description' => 'The sales invoice; find it with shillinq.ARInvoice.search.',
+					],
+					'principalDepreciated' => ['type' => 'number', 'minimum' => 0, 'description' => 'The principal written off, more than zero.'],
+					'art29OBDeclaration' => [
+						'type' => 'string',
+						'maxLength' => 2000,
+						'description' => 'The art. 29 OB statement on why the claim is uncollectable.',
+					],
+					'vatAmount' => [
+						'type' => ['number', 'null'],
+						'minimum' => 0,
+						'description' => 'The VAT reclaimed; derived from the invoice when empty.',
+					],
+					'vatTaxReturnPeriod' => [
+						'type' => ['string', 'null'],
+						'pattern' => '^[0-9]{4}-(Q[1-4]|[0-9]{2})$',
+						'description' => 'The VAT period the reclaim lands in, e.g. 2026-Q3; the next one when empty.',
+					],
+					'evidenceRef' => [
+						'type' => ['string', 'null'],
+						'maxLength' => 500,
+						'description' => 'A reference to the evidence, such as a bankruptcy notice.',
+					],
+				],
+				'required' => ['administrationId', 'invoiceId', 'principalDepreciated', 'art29OBDeclaration'],
 			],
 		],
 	];
@@ -244,6 +471,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpPurchaseOrderTools $purchaseOrders The purchase-order handlers.
 	 * @param McpPeriodCloseTools   $periodClose    The period-close handlers.
 	 * @param McpVatReturnTools     $vatReturns     The VAT-return handlers.
+	 * @param McpDunningTools       $dunning        The dunning handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
@@ -252,6 +480,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpPurchaseOrderTools $purchaseOrders,
 		private readonly McpPeriodCloseTools $periodClose,
 		private readonly McpVatReturnTools $vatReturns,
+		private readonly McpDunningTools $dunning,
 	) {
 	}//end __construct()
 
@@ -331,6 +560,11 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'shillinq.vat_return.rebase' => $this->vatReturns->rebase(args: $arguments),
 			'shillinq.vat_return.submit' => $this->vatReturns->submit(args: $arguments),
 			'shillinq.vat_return.destroy' => $this->vatReturns->destroy(args: $arguments),
+			'shillinq.dunning.dossier' => $this->dunning->dossier(args: $arguments),
+			'shillinq.dunning.execute_run' => $this->dunning->executeRun(args: $arguments),
+			'shillinq.dunning.pause' => $this->dunning->pause(args: $arguments),
+			'shillinq.dunning.resume' => $this->dunning->resume(args: $arguments),
+			'shillinq.dunning.write_off' => $this->dunning->writeOff(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()

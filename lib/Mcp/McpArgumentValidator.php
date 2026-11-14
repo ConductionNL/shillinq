@@ -28,8 +28,8 @@ namespace OCA\Shillinq\Mcp;
 /**
  * Validates arguments against the subset of JSON Schema the catalogue uses:
  * an object with `required` keys, string properties carrying `pattern`,
- * `enum` and `maxLength`, and integer properties carrying `minimum` and
- * `maximum`. Unknown keys are refused, so a model cannot slip a
+ * `enum` and `maxLength`, and integer or number properties carrying
+ * `minimum` and `maximum`. Unknown keys are refused, so a model cannot slip a
  * field past the tool (the controller ignores body fields it does not read;
  * a tool names every field it reads).
  *
@@ -87,8 +87,9 @@ class McpArgumentValidator {
 			return null;
 		}
 
-		if (in_array('integer', (array)($property['type'] ?? []), true) === true) {
-			return $this->integerProblem(name: $name, property: $property, value: $value);
+		$types = (array)($property['type'] ?? []);
+		if (in_array('integer', $types, true) === true || in_array('number', $types, true) === true) {
+			return $this->numberProblem(name: $name, property: $property, value: $value);
 		}
 
 		if (is_string($value) === false) {
@@ -111,7 +112,8 @@ class McpArgumentValidator {
 	}//end propertyProblem()
 
 	/**
-	 * The problem with an integer argument, or null.
+	 * The problem with an integer or number argument, or null. A number
+	 * accepts an int or a float; an integer only an int; neither a numeric string.
 	 *
 	 * @param string               $name     The argument name.
 	 * @param array<string, mixed> $property Its schema.
@@ -119,9 +121,14 @@ class McpArgumentValidator {
 	 *
 	 * @return string|null
 	 */
-	private function integerProblem(string $name, array $property, mixed $value): ?string {
-		if (is_int($value) === false) {
+	private function numberProblem(string $name, array $property, mixed $value): ?string {
+		$integer = in_array('integer', (array)$property['type'], true);
+		if ($integer === true && is_int($value) === false) {
 			return $name . ' must be an integer';
+		}
+
+		if (is_int($value) === false && is_float($value) === false) {
+			return $name . ' must be a number';
 		}
 
 		if (isset($property['minimum']) === true && $value < (int)$property['minimum']) {
@@ -133,5 +140,5 @@ class McpArgumentValidator {
 		}
 
 		return null;
-	}//end integerProblem()
+	}//end numberProblem()
 }//end class

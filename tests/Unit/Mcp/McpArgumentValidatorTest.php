@@ -94,4 +94,24 @@ class McpArgumentValidatorTest extends TestCase {
 		$this->assertSame(['year must be an integer'], $validator->problems($schema, ['year' => '2024']));
 		$this->assertSame(['year must be an integer'], $validator->problems($schema, ['year' => 2024.0]));
 	}//end testIntegerArgumentsAreBounded()
+
+	/**
+	 * A number argument takes an int or a float within its bounds, and may be nullable.
+	 *
+	 * @return void
+	 */
+	public function testNumberArgumentsTakeIntsAndFloats(): void {
+		$schema = [
+			'type' => 'object',
+			'properties' => ['amount' => ['type' => ['number', 'null'], 'minimum' => 0]],
+			'required' => [],
+		];
+		$validator = new McpArgumentValidator();
+
+		$this->assertSame([], $validator->problems($schema, ['amount' => 12]));
+		$this->assertSame([], $validator->problems($schema, ['amount' => 12.5]));
+		$this->assertSame([], $validator->problems($schema, ['amount' => null]));
+		$this->assertSame(['amount must be at least 0'], $validator->problems($schema, ['amount' => -0.5]));
+		$this->assertSame(['amount must be a number'], $validator->problems($schema, ['amount' => '12.5']));
+	}//end testNumberArgumentsTakeIntsAndFloats()
 }//end class

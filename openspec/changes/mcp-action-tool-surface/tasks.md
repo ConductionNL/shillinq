@@ -13,7 +13,7 @@
 
 ## 3. Tool handlers (one per catalogue row, REQ-MCP-004)
 - [ ] Invoicing: `invoice.draft` / `invoice.issue` / `invoice.render_pdf` / `invoice.send_einvoice` / `recurring_invoice.generate` — delegate to the exact service paths behind `InvoiceApiController` (`generate`/`post`/`pdf`), `ARInvoiceEInvoiceController`, `RecurringInvoiceGenerator`.
-- [ ] Dunning: `dunning.dossier` / `dunning.execute_run` / `dunning.pause` / `dunning.resume` / `dunning.write_off` (paths behind `DunningController`).
+- [x] Dunning: `dunning.dossier` / `dunning.execute_run` / `dunning.pause` / `dunning.resume` / `dunning.write_off` (paths behind `DunningController`). — `McpDunningTools`, parity with `DunningController` in `McpDunningToolsTest`; a pause is resumed only within the administration the call names
 - [ ] Payments + bank: `payment_run.export_sepa` / `payment_run.reconcile` (`PaymentRunController::export`/`reconcile`), `bank_statement.import` (`BankStatementImportController::import`), `bank_reconciliation.resolve` (`ReconciliationResolutionController::resolve`/`bulkResolve`).
 - [x] VAT: `vat_return.create` / `vat_return.rebase` / `vat_return.submit` / `vat_return.destroy` (paths behind `VATReturnController`; destroy keeps the non-submitted-only constraint). — `McpVatReturnTools`; a call names the administration as well as the return, and a return of another administration is the masked not_found
 - [ ] Expenses + time: `receipt.book` (receipt-extraction consume flow + `claimId` link), `expense_claim.approve` (`approvalState` transition), `hours.book` (`TimeIntakeService`).

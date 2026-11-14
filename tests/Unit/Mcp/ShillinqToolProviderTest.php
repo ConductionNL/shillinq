@@ -27,15 +27,20 @@ use OCA\Shillinq\Mcp\McpArgumentValidator;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\DunningRunServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\IncassoDossierComposerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Mcp\McpInvocationAudit;
 use OCA\Shillinq\Mcp\McpPeriodCloseTools;
 use OCA\Shillinq\Mcp\McpVatReturnTools;
+use OCA\Shillinq\Mcp\McpDunningTools;
 use OCA\Shillinq\Mcp\McpPurchaseOrderTools;
 use OCA\Shillinq\Mcp\McpResult;
 use OCA\Shillinq\Mcp\ShillinqToolProvider;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
 use OCP\Log\Audit\CriticalActionPerformedEvent;
@@ -57,6 +62,7 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(McpPurchaseOrderTools::class)]
 #[UsesClass(McpPeriodCloseTools::class)]
 #[UsesClass(McpVatReturnTools::class)]
+#[UsesClass(McpDunningTools::class)]
 #[UsesClass(McpResult::class)]
 class ShillinqToolProviderTest extends TestCase {
 
@@ -118,6 +124,14 @@ class ShillinqToolProviderTest extends TestCase {
 				$gate,
 				$this->createMock(VATReturnServiceInterface::class),
 				$this->createMock(ContainerInterface::class),
+				$this->createMock(LoggerInterface::class)
+			),
+			new McpDunningTools(
+				$gate,
+				$this->createMock(DunningRunServiceInterface::class),
+				$this->createMock(IncassoDossierComposerInterface::class),
+				$this->createMock(ObjectServiceInterface::class),
+				$this->createMock(IAppConfig::class),
 				$this->createMock(LoggerInterface::class)
 			)
 		);
@@ -198,6 +212,12 @@ class ShillinqToolProviderTest extends TestCase {
 			'periodYear' => 2024,
 			'periodNumber' => 1,
 			'regime' => 'standard',
+			'invoiceId' => 'inv-1',
+			'customerId' => 'cus-1',
+			'reason' => 'DISPUTED',
+			'pauseId' => 'pause-1',
+			'principalDepreciated' => 10.0,
+			'art29OBDeclaration' => 'Bankrupt',
 		];
 		foreach ($this->provider->getTools() as $tool) {
 			$args = array_intersect_key($values, array_flip($tool['inputSchema']['required']));
