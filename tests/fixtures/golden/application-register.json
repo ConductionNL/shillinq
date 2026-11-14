@@ -2242,7 +2242,7 @@
         "registerServiceAlias",
         [
             "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Mollie\\\\MolliePaymentAdapterInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Mollie\\\\LogMolliePaymentAdapter'"
+            "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Integriq\\\\IntegriqPaymentAdapter'"
         ]
     ],
     [

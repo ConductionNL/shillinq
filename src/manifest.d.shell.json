@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -5051,6 +5065,26 @@
 					"route": "/overheid/meerjarenbudgetten/:id",
 					"type": "detail",
 					"title": "Multi-year budget line"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Integrations",
+					"label": "Integrations",
+					"icon": "StoreOutline",
+					"route": "IntegrationCatalogue",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-integration-catalogue",
+					"id": "IntegrationCatalogue",
+					"route": "/integrations",
+					"type": "index",
+					"title": "Integrations"
 				}
 			]
 		},
