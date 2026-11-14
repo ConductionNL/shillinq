@@ -75,7 +75,7 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261114130000",
-            "versionsSha256": "d030b31b47fc2f3c0ef8a33dbc67a6e621dd131aee18bce71c3b8879bf9ab142"
+            "versionsSha256": "3b243331ace927c5e1dd25b54ee3964153ba6f27e24ce1d16ad30ac6fbfcff5c"
         }
     ],
     "versions": {
@@ -420,6 +420,7 @@
         "schema:PassThroughMarkupRule": "0.1.0",
         "schema:Payee": "0.2.0",
         "schema:Payment": "0.1.0",
+        "schema:PaymentDevice": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
         "schema:PaymentRequest": "0.10.0",
@@ -473,7 +474,7 @@
         "schema:Rechtmatigheidsparagraaf": "0.1.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
-        "schema:ReconciliationMatch": "0.2.0",
+        "schema:ReconciliationMatch": "0.2.1",
         "schema:ReconciliationReport": "0.1.0",
         "schema:RecurringInvoiceProfile": "0.1.0",
         "schema:ReimbursementPolicy": "0.1.0",

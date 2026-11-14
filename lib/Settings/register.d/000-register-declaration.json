@@ -337,6 +337,7 @@
                     "PassThroughMarkupRule",
                     "Payee",
                     "Payment",
+                    "PaymentDevice",
                     "PaymentRequest",
                     "PaymentRun",
                     "Payroll",

@@ -2,9 +2,9 @@
   "_meta": {
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
-    "change": "receivables-payouts-tab",
+    "change": "receivables-payouts-tab, receivables-provider-payouts",
     "adr": "ADR-037 modular register fragment; ADR-022 apps consume OpenRegister, no own CRUD",
-    "description": "ProviderPayout as designed in openspec/changes/receivables-provider-payouts/design.md (D1, Seed Data): one settlement of a payment provider (Mollie, Stripe) with its amounts and transaction lines. This fragment carries the record and its seeds for board ShDebiteurenbeheer's Uitbetalingen provider tab; the lifecycle, the unmatched notification, PaymentDevice and the posting settings follow with the rest of that change.",
+    "description": "ProviderPayout as designed in openspec/changes/receivables-provider-payouts/design.md (D1, Seed Data): one settlement of a payment provider (Mollie, Stripe) with its amounts and transaction lines, its lifecycle and the notification of unmatched lines; PaymentDevice, the phone a user registered with the provider for payments on the spot (D5); and the provider-payout target of a ReconciliationMatch (D4). The fee, bank and debtors posting accounts are the app setting payoutPostingAccounts read by PayoutPostingRule.",
     "spec": "openspec/specs/bookkeeping-bank-reconciliation/spec.md"
   },
   "components": {
@@ -269,6 +269,183 @@
             "shillinq_admin",
             "shillinq_controller"
           ]
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "received",
+          "states": {
+            "received": {
+              "label": "Received",
+              "description": "Reported by the payment provider through integriq; its lines are not matched yet."
+            },
+            "matched": {
+              "label": "Matched",
+              "description": "Every line is matched to what it paid or listed as unmatched."
+            },
+            "booked": {
+              "label": "Booked",
+              "description": "Net to the bank, fees to the fee account and refunds against debtors, all against the clearing account."
+            },
+            "reconciled": {
+              "label": "Reconciled",
+              "description": "The bank statement line the payout arrived as is matched to it."
+            }
+          },
+          "transitions": {
+            "match": {
+              "from": "received",
+              "to": "matched",
+              "label": "Match lines",
+              "description": "Match each line by provider payment id to the payment request, deposit or invoice it paid."
+            },
+            "book": {
+              "from": "matched",
+              "to": "booked",
+              "label": "Book",
+              "description": "Post the payout's balanced journal entry through the clearing account."
+            },
+            "reconcile": {
+              "from": "booked",
+              "to": "reconciled",
+              "label": "Reconcile",
+              "description": "Match the bank statement line of the payout to it; this books nothing further."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onUnmatchedLines": {
+            "trigger": {
+              "type": "created",
+              "condition": {
+                "field": "unmatchedLineCount",
+                "operator": "gte",
+                "value": 1
+              }
+            },
+            "description": "Tell the bookkeeper a payout holds payments that match nothing in shillinq, so they can be assigned.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "shillinq_bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Uitbetaling {{settlementReference}}: {{unmatchedLineCount}} regel(s) niet gekoppeld",
+              "en": "Payout {{settlementReference}}: {{unmatchedLineCount}} line(s) not matched"
+            }
+          }
+        }
+      },
+      "PaymentDevice": {
+        "slug": "PaymentDevice",
+        "icon": "CellphoneNfc",
+        "version": "0.1.0",
+        "title": "Payment device",
+        "description": "A phone a user registered with the payment provider, to take card payments on the spot through the provider's point-of-sale method.",
+        "x-schema-org": "schema:Product",
+        "x-spec": "openspec/changes/receivables-provider-payouts/specs/ar-invoice-payment-links/spec.md",
+        "type": "object",
+        "required": [
+          "userId",
+          "provider",
+          "deviceId"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "title": "User",
+            "description": "The Nextcloud user whose phone this is.",
+            "example": "anna"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "mollie",
+              "stripe"
+            ],
+            "x-enum-labels": {
+              "mollie": "Mollie",
+              "stripe": "Stripe"
+            },
+            "title": "Provider",
+            "description": "The payment provider the phone is registered with.",
+            "example": "mollie"
+          },
+          "deviceId": {
+            "type": "string",
+            "title": "Device ID",
+            "description": "The provider's id of the phone or terminal, entered from the provider's app.",
+            "example": "term_example0001"
+          },
+          "label": {
+            "type": "string",
+            "title": "Name",
+            "description": "A name the user recognises the phone by.",
+            "example": "Telefoon winkel"
+          },
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Administration ID",
+            "description": "The administration the phone takes payments for; empty for every administration of the user.",
+            "example": "adm-gov-1"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who registered, renamed or removed a payment device, and when."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_counter"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_counter",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_counter"
+          ],
+          "delete": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_counter"
+          ]
+        }
+      },
+      "ReconciliationMatch": {
+        "version": "0.2.1",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "provider-payout"
+            ]
+          },
+          "matchType": {
+            "enum": [
+              "provider-payout"
+            ]
+          }
         }
       }
     }
@@ -549,6 +726,18 @@
       "matchedLineCount": 4,
       "unmatchedLineCount": 0,
       "state": "reconciled"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "PaymentDevice",
+        "slug": "payment-device-anna-winkel"
+      },
+      "userId": "anna",
+      "provider": "mollie",
+      "deviceId": "term_example0001",
+      "label": "Telefoon winkel",
+      "administrationId": "adm-gov-1"
     }
   ]
 }
