@@ -144,43 +144,7 @@ class InitializeSettings implements IRepairStep {
 		}
 
 		try {
-			// NOT forced. The C8 workaround used to force this import because OpenRegister's
-			// app-level gate compared only the APP version, so a shillinq_register.json change
-			// silently no-op'd whenever the app version was unchanged. Forcing dodged that, but
-			// `force: true` also bypasses OR's app-level fast-skip entirely — so this step
-			// re-parsed the 1 MB descriptor + 146 register.d fragments and walked every
-			// register/schema on EVERY upgrade, to conclude "nothing changed": 711s, ~70% of the
-			// instance's whole `occ maintenance:repair`.
-			//
-			// OpenRegister#426 removed the reason to force: its gate is now content-aware
-			// (app version NOT newer AND a sha256 of the definitional payload identical to the
-			// last import). A descriptor change therefore re-imports even when the app version
-			// is unchanged — exactly what C8 wanted — while a genuinely unchanged config
-			// fast-skips in milliseconds. Requires an OpenRegister that ships #426; on an older
-			// one this degrades to the app-version-only gate (fast, but a content change with an
-			// unchanged app version would no-op again — bump the app version to force it).
-			$result = $this->settingsService->loadConfiguration();
-
-			if ($result['success'] === true) {
-				$skipped = (($result['skipped'] ?? false) === true);
-				$version = ($result['version'] ?? 'unknown');
-				if ($skipped === true) {
-					$output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-				}
-
-				if ($skipped !== true) {
-					$output->info(
-						'Shillinq configuration imported successfully (version: ' . $version . ')'
-					);
-				}
-			}
-
-			if ($result['success'] !== true) {
-				$message = ($result['message'] ?? 'unknown error');
-				$output->warning('Shillinq configuration import issue: ' . $message);
-				// H2: skip account seed when schema import failed to avoid writing
-				// accounts into an uninitialized register.
-				$output->warning('Shillinq: schema import failed, skipping account seed');
+			if ($this->importConfiguration(output: $output) === false) {
 				return;
 			}
 
@@ -214,15 +178,7 @@ class InitializeSettings implements IRepairStep {
 			// outer catch below — where previously each seeder handled its own
 			// failure and the rest still ran. Adding an identity must not cost
 			// the degradation behaviour that was already there.
-			$objectService = null;
-			try {
-				$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'Shillinq: ObjectService unavailable; seeding without a system identity',
-					['exception' => $e->getMessage()]
-				);
-			}
+			$objectService = $this->resolveSeedObjectService();
 
 			$this->withSystemIdentity(
 				objectService: $objectService,
@@ -239,6 +195,88 @@ class InitializeSettings implements IRepairStep {
 		}//end try
 
 	}//end run()
+
+	/**
+	 * Import the register configuration and report the outcome.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return bool True when the import succeeded (or was a version-unchanged skip); false when the seeders must not run.
+	 */
+	private function importConfiguration(IOutput $output): bool {
+		// NOT forced. The C8 workaround used to force this import because OpenRegister's
+		// app-level gate compared only the APP version, so a shillinq_register.json change
+		// silently no-op'd whenever the app version was unchanged. Forcing dodged that, but
+		// `force: true` also bypasses OR's app-level fast-skip entirely — so this step
+		// re-parsed the 1 MB descriptor + 146 register.d fragments and walked every
+		// register/schema on EVERY upgrade, to conclude "nothing changed": 711s, ~70% of the
+		// instance's whole `occ maintenance:repair`.
+		//
+		// OpenRegister#426 removed the reason to force: its gate is now content-aware
+		// (app version NOT newer AND a sha256 of the definitional payload identical to the
+		// last import). A descriptor change therefore re-imports even when the app version
+		// is unchanged — exactly what C8 wanted — while a genuinely unchanged config
+		// fast-skips in milliseconds. Requires an OpenRegister that ships #426; on an older
+		// one this degrades to the app-version-only gate (fast, but a content change with an
+		// unchanged app version would no-op again — bump the app version to force it).
+		$result = $this->settingsService->loadConfiguration();
+
+		if ($result['success'] === true) {
+			$this->reportConfigurationImported(output: $output, result: $result);
+		}
+
+		if ($result['success'] !== true) {
+			$message = ($result['message'] ?? 'unknown error');
+			$output->warning('Shillinq configuration import issue: ' . $message);
+			// H2: skip account seed when schema import failed to avoid writing
+			// accounts into an uninitialized register.
+			$output->warning('Shillinq: schema import failed, skipping account seed');
+			return false;
+		}
+
+		return true;
+	}//end importConfiguration()
+
+	/**
+	 * Report a successful configuration import, or its version-unchanged skip.
+	 *
+	 * @param IOutput             $output The output interface for progress reporting.
+	 * @param array<string,mixed> $result The loadConfiguration() result.
+	 *
+	 * @return void
+	 */
+	private function reportConfigurationImported(IOutput $output, array $result): void {
+		$skipped = (($result['skipped'] ?? false) === true);
+		$version = ($result['version'] ?? 'unknown');
+		if ($skipped === true) {
+			$output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+		}
+
+		if ($skipped !== true) {
+			$output->info(
+				'Shillinq configuration imported successfully (version: ' . $version . ')'
+			);
+		}
+	}//end reportConfigurationImported()
+
+	/**
+	 * Resolve the ObjectService for the system identity, or null (logged) when it is unavailable.
+	 *
+	 * @return mixed The ObjectService, or null.
+	 */
+	private function resolveSeedObjectService(): mixed {
+		$objectService = null;
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: ObjectService unavailable; seeding without a system identity',
+				['exception' => $e->getMessage()]
+			);
+		}
+
+		return $objectService;
+	}//end resolveSeedObjectService()
 
 	/**
 	 * Run every seeder, under whatever identity the caller established.
@@ -941,6 +979,43 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
+		$found = $this->findBbvAdministrations(output: $output, objectService: $objectService);
+		if ($found === null) {
+			return;
+		}
+
+		$administrations = $found['rows'];
+		if (empty($administrations) === true) {
+			$output->info('Shillinq: no administrations found, skipping BBV mapping seed');
+			return;
+		}
+
+		$totalSeeded = 0;
+		$totalSkipped = 0;
+
+		foreach ($administrations as $administration) {
+			$counts = $this->seedBbvForAdministration(output: $output, administration: $administration);
+			$totalSeeded += $counts['seeded'];
+			$totalSkipped += $counts['skipped'];
+		}
+
+		$output->info(
+			'BBV mapping seed complete: ' . $totalSeeded . ' total created, ' . $totalSkipped . ' total skipped across municipal administrations.'
+		);
+
+	}//end seedBbvMappingsForMunicipalAdministrations()
+
+	/**
+	 * Load the Administration objects, or null (reported) when the register is not present yet.
+	 *
+	 * @param IOutput $output        The output interface for progress reporting.
+	 * @param mixed   $objectService OpenRegister's ObjectService.
+	 *
+	 * @return array{rows: mixed}|null The findAll result under `rows`.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function findBbvAdministrations(IOutput $output, mixed $objectService): array|null {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 			$administrations = $objectService
@@ -951,63 +1026,78 @@ class InitializeSettings implements IRepairStep {
 			$output->info(
 				'Shillinq: Administration register not yet present, skipping BBV mapping seed'
 			);
-			return;
+			return null;
 		}
 
-		if (empty($administrations) === true) {
-			$output->info('Shillinq: no administrations found, skipping BBV mapping seed');
-			return;
-		}
+		return ['rows' => $administrations];
+	}//end findBbvAdministrations()
 
+	/**
+	 * Seed the BBV account mappings for one administration when it is municipal.
+	 *
+	 * @param IOutput $output         The output interface for progress reporting.
+	 * @param mixed   $administration The Administration row (ObjectEntity or array).
+	 *
+	 * @return array{seeded: int, skipped: int} The counts to add to the totals (zero when skipped or failed).
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function seedBbvForAdministration(IOutput $output, mixed $administration): array {
 		$municipalTypes = ['municipality', 'province', 'waterAuthority'];
-		$totalSeeded = 0;
-		$totalSkipped = 0;
 
-		foreach ($administrations as $administration) {
-			// OpenRegister's findAll() returns ObjectEntity instances, not plain
-			// arrays; array-indexing one directly throws "Cannot use object of
-			// type ...ObjectEntity as array" (issue #508). Normalise first.
-			$administrationRow = $this->asArray(row: $administration);
-			$administrationType = (string)($administrationRow['administrationType'] ?? '');
-			if (in_array($administrationType, $municipalTypes, true) === false) {
-				continue;
-			}
+		// OpenRegister's findAll() returns ObjectEntity instances, not plain
+		// arrays; array-indexing one directly throws "Cannot use object of
+		// type ...ObjectEntity as array" (issue #508). Normalise first.
+		$administrationRow = $this->asArray(row: $administration);
+		$administrationType = (string)($administrationRow['administrationType'] ?? '');
+		if (in_array($administrationType, $municipalTypes, true) === false) {
+			return ['seeded' => 0, 'skipped' => 0];
+		}
 
-			$administrationId = (string)($administrationRow['administrationCode'] ?? $administrationRow['id'] ?? $administrationRow['uuid'] ?? '');
-			if ($administrationId === '') {
-				continue;
-			}
-
-			$output->info(
-				'Seeding BBV account mappings for administration ' . $administrationId . ' (' . $administrationType . ')...'
-			);
-			$result = $this->settingsService->seedBbvAccountMappings(
-				administrationId: $administrationId,
-				administrationType: $administrationType
-			);
-
-			if (($result['success'] ?? false) === true) {
-				$output->info(
-					'BBV mappings seeded for ' . $administrationId . ': '
-					. ($result['seeded'] ?? 0) . ' created, '
-					. ($result['skipped'] ?? 0) . ' skipped.'
-				);
-				$totalSeeded += (int)($result['seeded'] ?? 0);
-				$totalSkipped += (int)($result['skipped'] ?? 0);
-				continue;
-			}
-
-			$output->warning(
-				'BBV mapping seed failed for ' . $administrationId . ': '
-				. ($result['message'] ?? 'unknown error')
-			);
-		}//end foreach
+		$administrationId = (string)($administrationRow['administrationCode'] ?? $administrationRow['id'] ?? $administrationRow['uuid'] ?? '');
+		if ($administrationId === '') {
+			return ['seeded' => 0, 'skipped' => 0];
+		}
 
 		$output->info(
-			'BBV mapping seed complete: ' . $totalSeeded . ' total created, ' . $totalSkipped . ' total skipped across municipal administrations.'
+			'Seeding BBV account mappings for administration ' . $administrationId . ' (' . $administrationType . ')...'
+		);
+		$result = $this->settingsService->seedBbvAccountMappings(
+			administrationId: $administrationId,
+			administrationType: $administrationType
 		);
 
-	}//end seedBbvMappingsForMunicipalAdministrations()
+		return $this->reportBbvSeedResult(output: $output, administrationId: $administrationId, result: $result);
+	}//end seedBbvForAdministration()
+
+	/**
+	 * Report one administration's BBV mapping seed result and return its counts.
+	 *
+	 * @param IOutput             $output           The output interface for progress reporting.
+	 * @param string              $administrationId The administration that was seeded.
+	 * @param array<string,mixed> $result           The seedBbvAccountMappings() result.
+	 *
+	 * @return array{seeded: int, skipped: int} The counts on success, zero on failure.
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function reportBbvSeedResult(IOutput $output, string $administrationId, array $result): array {
+		if (($result['success'] ?? false) === true) {
+			$output->info(
+				'BBV mappings seeded for ' . $administrationId . ': '
+				. ($result['seeded'] ?? 0) . ' created, '
+				. ($result['skipped'] ?? 0) . ' skipped.'
+			);
+			return ['seeded' => (int)($result['seeded'] ?? 0), 'skipped' => (int)($result['skipped'] ?? 0)];
+		}
+
+		$output->warning(
+			'BBV mapping seed failed for ' . $administrationId . ': '
+			. ($result['message'] ?? 'unknown error')
+		);
+
+		return ['seeded' => 0, 'skipped' => 0];
+	}//end reportBbvSeedResult()
 
 	/**
 	 * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
