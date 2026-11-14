@@ -84,6 +84,19 @@
         "title": "Effective date"
        }
       }
+     },
+     "cancellationQuarter": {
+      "type": "string",
+      "nullable": true,
+      "pattern": "^\\d{4}-Q[1-4]$",
+      "title": "Cancellation quarter",
+      "description": "The quarter the cancellation takes effect, as YYYY-Qn. Written with the cancellation, for the cancellation reasons report."
+     },
+     "cancellationMonthlyAmount": {
+      "type": "number",
+      "nullable": true,
+      "title": "Lost monthly amount",
+      "description": "What the profile billed per month before VAT when it ended. Written with the cancellation, for the cancellation reasons report."
      }
     },
     "x-openregister-lifecycle": {
@@ -129,8 +142,124 @@
        ]
       }
      }
+    },
+    "x-openregister-aggregations": {
+     "cancellationReasons": {
+      "description": "Ended subscriptions per quarter of the effective date and per reason code: how many, and the monthly recurring amount lost (REQ-SCX-002).",
+      "filter": {
+       "status": "ended"
+      },
+      "groupBy": [
+       "cancellationQuarter",
+       "cancellationReasonCode"
+      ],
+      "metrics": [
+       {
+        "metric": "count",
+        "field": "id",
+        "as": "endedCount"
+       },
+       {
+        "metric": "sum",
+        "field": "cancellationMonthlyAmount",
+        "as": "lostMonthlyAmount"
+       }
+      ]
+     }
     }
    }
-  }
+  },
+  "objects": [
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "Administration",
+     "slug": "adm-sportschool-de-kracht"
+    },
+    "administrationCode": "KRACHT-001",
+    "name": "Sportschool De Kracht",
+    "legalForm": "eenmanszaak",
+    "presentationCurrency": "EUR",
+    "functionalCurrency": "EUR",
+    "vatRegime": "standard",
+    "status": "actief"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "RecurringInvoiceProfile",
+     "slug": "rip-kracht-basis-fysio-linde"
+    },
+    "name": "Maandabonnement Kracht Basis",
+    "customerReference": "contact-fysio-linde",
+    "lines": [
+     {
+      "description": "Maandabonnement Kracht Basis {month} {year}",
+      "quantity": 1,
+      "unitPrice": 49.0,
+      "vatCode": 21
+     }
+    ],
+    "frequency": "monthly",
+    "interval": 1,
+    "startDate": "2025-10-01",
+    "invoiceDay": 1,
+    "issueMode": "draft-for-review",
+    "paymentTermsDays": 14,
+    "currency": "EUR",
+    "administrationId": "adm-sportschool-de-kracht",
+    "status": "ended",
+    "cancellationReasonCode": "switched-provider",
+    "cancellationReasonText": "We trainen voortaan bij een partner van onze huisarts",
+    "cancellation": {
+     "reasonCode": "switched-provider",
+     "reasonText": "We trainen voortaan bij een partner van onze huisarts",
+     "cancelledBy": "customer",
+     "requestedAt": "2026-09-12T09:30:00+02:00",
+     "effectiveDate": "2026-09-30"
+    },
+    "cancellationQuarter": "2026-Q3",
+    "cancellationMonthlyAmount": 49.0,
+    "deliveryChannel": "email"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "RecurringInvoiceProfile",
+     "slug": "rip-kracht-personal-training"
+    },
+    "name": "Personal training 10 lessen",
+    "customerReference": "contact-kracht-member-pt",
+    "lines": [
+     {
+      "description": "Personal training {month} {year}",
+      "quantity": 1,
+      "unitPrice": 350.0,
+      "vatCode": 21
+     }
+    ],
+    "frequency": "quarterly",
+    "interval": 1,
+    "startDate": "2026-01-01",
+    "invoiceDay": 1,
+    "issueMode": "draft-for-review",
+    "paymentTermsDays": 14,
+    "currency": "EUR",
+    "administrationId": "adm-sportschool-de-kracht",
+    "status": "ended",
+    "cancellationReasonCode": "too-expensive",
+    "cancellationReasonText": null,
+    "cancellation": {
+     "reasonCode": "too-expensive",
+     "reasonText": null,
+     "cancelledBy": "staff",
+     "requestedAt": "2026-08-20T14:00:00+02:00",
+     "effectiveDate": "2026-09-30"
+    },
+    "cancellationQuarter": "2026-Q3",
+    "cancellationMonthlyAmount": 116.67,
+    "deliveryChannel": "email"
+   }
+  ]
  }
 }

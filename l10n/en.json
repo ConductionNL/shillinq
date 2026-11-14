@@ -4734,7 +4734,17 @@
         "Cancelled by": "Cancelled by",
         "Optional free text with the cancellation reason.": "Optional free text with the cancellation reason.",
         "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.": "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.",
-        "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out.": "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out."
+        "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out.": "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out.",
+        "Cancellation quarter": "Cancellation quarter",
+        "The quarter the cancellation takes effect, as YYYY-Qn. Written with the cancellation, for the cancellation reasons report.": "The quarter the cancellation takes effect, as YYYY-Qn. Written with the cancellation, for the cancellation reasons report.",
+        "Lost monthly amount": "Lost monthly amount",
+        "What the profile billed per month before VAT when it ended. Written with the cancellation, for the cancellation reasons report.": "What the profile billed per month before VAT when it ended. Written with the cancellation, for the cancellation reasons report.",
+        "Cancellation reasons": "Cancellation reasons",
+        "Why subscriptions ended, per quarter.": "Why subscriptions ended, per quarter.",
+        "Ended subscriptions per quarter": "Ended subscriptions per quarter",
+        "Lost monthly amount per reason": "Lost monthly amount per reason",
+        "Ended subscriptions": "Ended subscriptions",
+        "Lost per month": "Lost per month"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

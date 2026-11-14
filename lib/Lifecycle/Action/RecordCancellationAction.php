@@ -106,8 +106,63 @@ class RecordCancellationAction implements LifecycleActionInterface {
 			),
 		];
 
+		// Flat copies for the cancellation reasons report (REQ-SCX-002): an
+		// aggregation groups on top-level fields, and may not combine a group
+		// with a date bucket, so the quarter is stored as a value.
+		$objectData['cancellationReasonCode'] = $code;
+		$objectData['cancellationQuarter'] = self::quarterOf(date: $objectData['cancellation']['effectiveDate']);
+		$objectData['cancellationMonthlyAmount'] = self::monthlyAmount(profile: $objectData);
+
 		return $objectData;
 	}//end execute()
+
+	/**
+	 * The quarter a date falls in, as `YYYY-Qn`.
+	 *
+	 * @param string $date The date, YYYY-MM-DD.
+	 *
+	 * @return string The quarter.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.3
+	 */
+	public static function quarterOf(string $date): string {
+		$month = (int)substr($date, 5, 2);
+
+		return substr($date, 0, 4).'-Q'.(int)ceil(max(1, $month) / 3);
+	}//end quarterOf()
+
+	/**
+	 * The recurring amount the profile billed, per month, before VAT.
+	 *
+	 * The lines' net total for one billing period, spread over the period's
+	 * months: a quarterly profile of 300 is 100 a month, a weekly one of 10
+	 * is 10 x 52 / 12.
+	 *
+	 * @param array<string, mixed> $profile The profile.
+	 *
+	 * @return float The monthly amount.
+	 *
+	 * @spec openspec/changes/sales-cancellation/tasks.md#task-1.3
+	 */
+	public static function monthlyAmount(array $profile): float {
+		$net = 0.0;
+		foreach ((array)($profile['lines'] ?? []) as $line) {
+			if (is_array($line) === true) {
+				$net += ((float)($line['quantity'] ?? 1) * (float)($line['unitPrice'] ?? 0));
+			}
+		}
+
+		$months = match ((string)($profile['frequency'] ?? 'monthly')) {
+			'weekly' => (12 / 52),
+			'quarterly' => 3.0,
+			'semi-annually' => 6.0,
+			'annually' => 12.0,
+			default => 1.0,
+		};
+		$interval = max(1, (int)($profile['interval'] ?? 1));
+
+		return round($net / ($months * $interval), 2);
+	}//end monthlyAmount()
 
 	/**
 	 * A value the portal set on a customer end, else the fallback.

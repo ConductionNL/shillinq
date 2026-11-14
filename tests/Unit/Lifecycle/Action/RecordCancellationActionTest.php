@@ -133,4 +133,57 @@ class RecordCancellationActionTest extends TestCase {
 		$this->assertSame('2026-09-15', RecordCancellationAction::effectiveDate(nextRunDate: 'soon', today: $today));
 		$this->assertSame('2026-10-31', RecordCancellationAction::effectiveDate(nextRunDate: '2026-11-01', today: $today));
 	}//end testTheEffectiveDateIsTodayWithoutALaterRun()
+	/**
+	 * The report fields: the normalised code, the quarter and the lost monthly amount.
+	 *
+	 * @return void
+	 */
+	public function testTheReportFieldsAreWrittenWithTheCancellation(): void {
+		$saved = $this->action()->execute(
+			[
+				'cancellationReasonCode' => 'switched-provider',
+				'nextRunDate' => '2026-10-01',
+				'frequency' => 'quarterly',
+				'interval' => 1,
+				'lines' => [['quantity' => 2, 'unitPrice' => 150.0], ['quantity' => 1, 'unitPrice' => 50.0]],
+			],
+			[],
+			[],
+			'endFromActive'
+		);
+
+		$this->assertSame('switched-provider', $saved['cancellationReasonCode']);
+		$this->assertSame('2026-Q3', $saved['cancellationQuarter']);
+		$this->assertSame(116.67, $saved['cancellationMonthlyAmount']);
+	}//end testTheReportFieldsAreWrittenWithTheCancellation()
+
+	/**
+	 * A customer end without a reason is reported as not-given.
+	 *
+	 * @return void
+	 */
+	public function testAMissingReasonIsReportedAsNotGiven(): void {
+		$saved = $this->action()->execute(['cancellation' => ['cancelledBy' => 'customer']], [], [], 'endFromActive');
+
+		$this->assertSame('not-given', $saved['cancellationReasonCode']);
+		$this->assertSame(0.0, $saved['cancellationMonthlyAmount']);
+	}//end testAMissingReasonIsReportedAsNotGiven()
+
+	/**
+	 * Quarters and monthly amounts for each cadence.
+	 *
+	 * @return void
+	 */
+	public function testQuartersAndCadences(): void {
+		$this->assertSame('2026-Q1', RecordCancellationAction::quarterOf(date: '2026-03-31'));
+		$this->assertSame('2026-Q2', RecordCancellationAction::quarterOf(date: '2026-04-01'));
+		$this->assertSame('2026-Q4', RecordCancellationAction::quarterOf(date: '2026-12-01'));
+
+		$line = ['lines' => [['quantity' => 1, 'unitPrice' => 120.0]]];
+		$this->assertSame(120.0, RecordCancellationAction::monthlyAmount(profile: $line));
+		$this->assertSame(60.0, RecordCancellationAction::monthlyAmount(profile: $line + ['frequency' => 'monthly', 'interval' => 2]));
+		$this->assertSame(20.0, RecordCancellationAction::monthlyAmount(profile: $line + ['frequency' => 'semi-annually']));
+		$this->assertSame(10.0, RecordCancellationAction::monthlyAmount(profile: $line + ['frequency' => 'annually']));
+		$this->assertSame(520.0, RecordCancellationAction::monthlyAmount(profile: $line + ['frequency' => 'weekly']));
+	}//end testQuartersAndCadences()
 }//end class

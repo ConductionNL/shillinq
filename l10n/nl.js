@@ -6911,7 +6911,17 @@ OC.L10N.register(
         "Cancelled by": "Opgezegd door",
         "Optional free text with the cancellation reason.": "Optionele toelichting bij de reden van opzegging.",
         "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.": "Wie het abonnement beëindigde, waarom, wanneer dat werd gevraagd en wanneer het ingaat. Vastgelegd bij het beëindigen van het profiel.",
-        "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out.": "Waarom het abonnement eindigt, gevraagd bij Beëindigen. Medewerkers kiezen een andere reden dan not-given; een klant mag de reden weglaten."
+        "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out.": "Waarom het abonnement eindigt, gevraagd bij Beëindigen. Medewerkers kiezen een andere reden dan not-given; een klant mag de reden weglaten.",
+        "Cancellation quarter": "Kwartaal van opzegging",
+        "The quarter the cancellation takes effect, as YYYY-Qn. Written with the cancellation, for the cancellation reasons report.": "Het kwartaal waarin de opzegging ingaat, als JJJJ-Kn. Vastgelegd met de opzegging, voor het rapport redenen van opzegging.",
+        "Lost monthly amount": "Verloren maandbedrag",
+        "What the profile billed per month before VAT when it ended. Written with the cancellation, for the cancellation reasons report.": "Wat het profiel per maand factureerde, exclusief btw, toen het eindigde. Vastgelegd met de opzegging, voor het rapport redenen van opzegging.",
+        "Cancellation reasons": "Redenen van opzegging",
+        "Why subscriptions ended, per quarter.": "Waarom abonnementen eindigden, per kwartaal.",
+        "Ended subscriptions per quarter": "Beëindigde abonnementen per kwartaal",
+        "Lost monthly amount per reason": "Verloren maandbedrag per reden",
+        "Ended subscriptions": "Beëindigde abonnementen",
+        "Lost per month": "Verloren per maand"
     },
     "nplurals=2; plural=(n != 1);"
 )
