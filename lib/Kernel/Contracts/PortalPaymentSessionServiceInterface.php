@@ -65,4 +65,16 @@ interface PortalPaymentSessionServiceInterface {
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
 	public function initiateForRequest(array $claims, string $target): PortalPaymentSessionResult;
+
+	/**
+	 * Open the checkout for the invoice a signed pay link names, forwarded by
+	 * portaliq's guest page; the verified token is the credential.
+	 *
+	 * @param string $token The pay token from the invoice's pay link.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/receivables-payment-links/specs/portal-payment-initiation/spec.md#requirement-a-signed-pay-link-is-accepted-from-the-portals-guest-page-req-rpl-006
+	 */
+	public function initiateForPayToken(string $token): PortalPaymentSessionResult;
 }//end interface

@@ -343,6 +343,29 @@
             "description": "COMPUTED: the customer-facing payment URL embedding the payment-request id, the invoice id, and a short-lived signed token, resolving to the OpenConnector hosted payment UI. Resolved by the shared payment adapter (the pattern). The app MUST NOT construct a direct Mollie/Stripe URL anywhere. Null unless state=pending AND the invoice is unsettled (visibleWhen); following a link for a non-pending request shows a friendly already-paid/expired page from the hosted UI, never a second charge.",
             "title": "Payment Link"
           },
+          "providerPaymentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payment id the provider gave the checkout through integriq, the key integriq's payment status event carries. Stored when the link is created (receivables-payment-links D2).",
+            "example": "tr_example0002",
+            "title": "Provider payment ID"
+          },
+          "checkoutExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Until when the stored checkout link can still be used. A pay link followed after this opens a new checkout (receivables-payment-links D4).",
+            "example": "2026-10-01T09:27:00Z",
+            "title": "Checkout expires at"
+          },
+          "linkSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment link was last mailed to the debtor. Set by the Send payment link action.",
+            "example": "2026-10-01T09:12:00Z",
+            "title": "Link sent at"
+          },
           "confirmationSummary": {
             "type": "string",
             "nullable": true,

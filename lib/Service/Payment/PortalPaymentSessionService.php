@@ -132,6 +132,22 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	private const CONFIG_REDIRECT_URL = 'portal_payment_redirect_url';
 
 	/**
+	 * How long a provider checkout stays usable after it is created, in
+	 * seconds. Integriq's answer carries no expiry, and an iDEAL checkout
+	 * expires after fifteen minutes; a pay link followed later opens a new one
+	 * (receivables-payment-links D4).
+	 */
+	private const CHECKOUT_LIFETIME = 900;
+
+	/**
+	 * ARInvoice states that mean the invoice needs no more payment: the pay
+	 * link answers paid and opens no checkout (REQ-RPL-004).
+	 *
+	 * @var array<int, string>
+	 */
+	private const SETTLED_STATES = ['paid', 'written-off', 'credited', 'cancelled'];
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param ContainerInterface $container DI container — OpenRegister's ObjectService is
@@ -141,6 +157,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	 * @param IAppConfig $appConfig App config for the redirect-URL override.
 	 * @param LoggerInterface $logger Logger (never receives PSP/PII detail).
 	 * @param PortalSubjectResolver $subjects The ownership chain shared with the decline receiver.
+	 * @param PayLinkService|null $payLinks Verifies the signed pay link of an invoice; without it no pay token is accepted.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -149,6 +166,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly PortalSubjectResolver $subjects = new PortalSubjectResolver(),
+		private readonly ?PayLinkService $payLinks = null,
 	) {
 	}//end __construct()
 
@@ -182,6 +200,111 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	public function initiateForRequest(array $claims, string $target): PortalPaymentSessionResult {
 		return $this->openSession(claims: $claims, target: new PortalPaymentTarget(id: $target, kind: PortalPaymentTarget::REQUEST));
 	}//end initiateForRequest()
+
+	/**
+	 * Open the checkout for the invoice a signed pay link names, forwarded by
+	 * portaliq's guest page (REQ-RPL-006). The token is the credential: a
+	 * token that does not verify, a rotated one, an invoice that is missing
+	 * or of another administration, and an invoice that cannot be paid all
+	 * get the same forbidden. A paid invoice answers paid and opens nothing;
+	 * an unexpired checkout of the pending request is reused, else a new one
+	 * is created for the invoice (REQ-RPL-004).
+	 *
+	 * @param string $token The pay token from the invoice's pay link.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 * @spec openspec/changes/receivables-payment-links/specs/portal-payment-initiation/spec.md#requirement-a-signed-pay-link-is-accepted-from-the-portals-guest-page-req-rpl-006
+	 */
+	public function initiateForPayToken(string $token): PortalPaymentSessionResult {
+		$signed = null;
+		if ($this->payLinks !== null) {
+			$signed = $this->payLinks->verify(token: $token);
+		}
+
+		if ($signed === null) {
+			return PortalPaymentSessionResult::forbidden();
+		}
+
+		$objectService = $this->objectServiceOrNull();
+		if ($objectService === null) {
+			return PortalPaymentSessionResult::downstreamError();
+		}
+
+		try {
+			return $this->payTokenChain(objectService: $objectService, signed: $signed);
+		} catch (Throwable $e) {
+			$this->logDownstreamFailure(step: 'pay-link-chain-failed', exception: $e);
+			return PortalPaymentSessionResult::downstreamError();
+		}
+	}//end initiateForPayToken()
+
+	/**
+	 * The signed invoice's answer: paid, forbidden, a reused checkout or a new one.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array{administrationId: string, invoiceId: string} $signed What the token was signed for.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	private function payTokenChain(object $objectService, array $signed): PortalPaymentSessionResult {
+		$lookup  = new PaymentTargetLookup(objectService: $objectService, targetId: $signed['invoiceId'], kind: PortalPaymentTarget::INVOICE);
+		$invoice = $this->invoiceById(lookup: $lookup);
+		if ($invoice === null || (string)($invoice['administrationId'] ?? '') !== $signed['administrationId']) {
+			return PortalPaymentSessionResult::forbidden();
+		}
+
+		$invoice = $this->withTargetId(record: $invoice, targetId: $signed['invoiceId']);
+		$state   = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+		if (in_array($state, self::SETTLED_STATES, true) === true) {
+			return PortalPaymentSessionResult::paid();
+		}
+
+		if (in_array($state, self::PAYABLE_STATES, true) === false) {
+			return PortalPaymentSessionResult::forbidden();
+		}
+
+		$paymentRequest = $this->mintOrReusePaymentRequest(objectService: $objectService, invoice: $invoice);
+		$liveCheckout   = self::unexpiredCheckout(paymentRequest: $paymentRequest);
+		if ($liveCheckout !== null) {
+			return PortalPaymentSessionResult::success(checkoutUrl: $liveCheckout);
+		}
+
+		$session = $this->provider->createSession($this->buildSessionRequest(invoice: $invoice, paymentRequest: $paymentRequest));
+		$this->persistPaymentIntentId(
+			objectService: $objectService,
+			paymentRequest: $paymentRequest,
+			paymentIntentId: $session->paymentIntentId,
+			session: $session,
+		);
+		if ($session->dormant === true) {
+			return PortalPaymentSessionResult::deferred();
+		}
+
+		return PortalPaymentSessionResult::success(checkoutUrl: $session->checkoutUrl);
+	}//end payTokenChain()
+
+	/**
+	 * The request's stored checkout link while it can still be used, else null.
+	 *
+	 * @param array<string, mixed> $paymentRequest The pending PaymentRequest.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-3.1
+	 */
+	private static function unexpiredCheckout(array $paymentRequest): ?string {
+		$link      = (string)($paymentRequest['paymentLink'] ?? '');
+		$expiresAt = strtotime((string)($paymentRequest['checkoutExpiresAt'] ?? ''));
+		if ($link === '' || preg_match('#^https://#i', $link) !== 1 || $expiresAt === false || $expiresAt <= time()) {
+			return null;
+		}
+
+		return $link;
+	}//end unexpiredCheckout()
 
 	/**
 	 * The chain both targets share: the target shape, the audience, the
@@ -274,6 +397,7 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 			objectService: $lookup->objectService,
 			paymentRequest: $prepared['request'],
 			paymentIntentId: $session->paymentIntentId,
+			session: $session,
 		);
 		return $session;
 	}//end openProviderSession()
@@ -822,17 +946,27 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 	/**
 	 * Persist the provider-assigned paymentIntentId onto the PaymentRequest,
 	 * stripping OR metadata keys before the roundtrip (mirrors the
-	 * fleet-reference receiver's normalise-then-save pattern).
+	 * fleet-reference receiver's normalise-then-save pattern). A live session
+	 * also stores its checkout link, the provider payment id and until when
+	 * the checkout can be used (receivables-payment-links D2); a dormant one
+	 * stores no link.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
 	 * @param array<string, mixed> $paymentRequest The minted/reused PaymentRequest row.
 	 * @param string $paymentIntentId The provider-assigned intent id.
+	 * @param PaymentSessionResult|null $session The provider session, when its link is to be stored.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 * @spec openspec/changes/receivables-payment-links/tasks.md#task-1.3
 	 */
-	private function persistPaymentIntentId(object $objectService, array $paymentRequest, string $paymentIntentId): void {
+	private function persistPaymentIntentId(
+		object $objectService,
+		array $paymentRequest,
+		string $paymentIntentId,
+		?PaymentSessionResult $session=null
+	): void {
 		$uuid = (string)($paymentRequest['id'] ?? '');
 
 		$data = [];
@@ -845,6 +979,11 @@ class PortalPaymentSessionService implements PortalPaymentSessionServiceInterfac
 		}
 
 		$data['paymentIntentId'] = $paymentIntentId;
+		if ($session !== null && $session->dormant === false && $session->checkoutUrl !== '') {
+			$data['providerPaymentId'] = $paymentIntentId;
+			$data['paymentLink']       = $session->checkoutUrl;
+			$data['checkoutExpiresAt'] = gmdate('Y-m-d\TH:i:s\Z', (time() + self::CHECKOUT_LIFETIME));
+		}
 
 		$saveUuid = null;
 		if ($uuid !== '') {
