@@ -99,7 +99,7 @@ final class ServiceRegistrarTest extends TestCase {
 	 */
 	public function testContractBindingsAreIncluded(): void {
 		self::assertSame(AansluitingService::class, $this->aliases[AansluitingServiceInterface::class]);
-		self::assertCount(207 + 24, $this->aliases);
+		self::assertCount(207 + 25, $this->aliases);
 
 	}//end testContractBindingsAreIncluded()
 
