@@ -81,6 +81,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.LongVariable)
  * Pre-existing debt (issue #506): broad domain surface area; variable
  * renames deferred pending a dedicated pass.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class PurchaseOrderService implements PurchaseOrderServiceInterface {
 	/**
@@ -768,32 +769,16 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		$tasksAssigned = false;
 
 		foreach ($chain as $entry) {
-			$role = $entry['role'];
-			$order = $entry['order'];
-			if ($role === '' || $order === 0) {
-				continue;
-			}
-
-			$task = [
-				'purchaseOrderId' => $purchaseOrderId,
-				'administrationId' => $administrationId,
-				'role' => $role,
-				'order' => $order,
-				'status' => 'pending',
-				'createdAt' => $this->nowIso(),
-			];
-
-			$this->saveObject(schema: 'ApprovalTask', object: $task);
-
-			$this->notifyApprovers(
+			if ($this->assignApprovalTask(
 				administrationId: $administrationId,
 				purchaseOrderId: $purchaseOrderId,
 				poNumber: $poNumber,
-				role: $role
-			);
-
-			$tasksAssigned = true;
-		}//end foreach
+				entry: $entry
+			) === true
+			) {
+				$tasksAssigned = true;
+			}
+		}
 
 		// REQ-RAP-006 row 1 (`approval_requested`): the ApprovalTask records
 		// that put this PO in front of an approver have just been created, so
@@ -814,6 +799,47 @@ class PurchaseOrderService implements PurchaseOrderServiceInterface {
 		}
 
 	}//end assignApprovalTasks()
+
+	/**
+	 * Persist and notify one approval task of the chain; an entry without a
+	 * role or order is skipped.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $purchaseOrderId PO id.
+	 * @param string $poNumber PO number for the notification subject params.
+	 * @param array{role:string,order:int} $entry The chain entry.
+	 *
+	 * @return bool True when a task was assigned.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 */
+	private function assignApprovalTask(string $administrationId, string $purchaseOrderId, string $poNumber, array $entry): bool {
+		$role = $entry['role'];
+		$order = $entry['order'];
+		if ($role === '' || $order === 0) {
+			return false;
+		}
+
+		$task = [
+			'purchaseOrderId' => $purchaseOrderId,
+			'administrationId' => $administrationId,
+			'role' => $role,
+			'order' => $order,
+			'status' => 'pending',
+			'createdAt' => $this->nowIso(),
+		];
+
+		$this->saveObject(schema: 'ApprovalTask', object: $task);
+
+		$this->notifyApprovers(
+			administrationId: $administrationId,
+			purchaseOrderId: $purchaseOrderId,
+			poNumber: $poNumber,
+			role: $role
+		);
+
+		return true;
+	}//end assignApprovalTask()
 
 	/**
 	 * Dispatch a notification to every user in the administration who carries the
