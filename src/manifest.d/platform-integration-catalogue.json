@@ -1,5 +1,5 @@
 {
-	"$comment": "Shillinq Integrations (platform-integration-catalogue, REQ-PIC-001, REQ-PIC-002, REQ-PIC-003). The cards are integriq's `catalog_item` objects, the catalogue integriq's own Store page reads; shillinq opens on the bookkeeping categories and leaves switching an item on to integriq (ADR-023). The menu entry is not gated on integriq: on an instance without it the page shows the missing-dependency screen naming Integriq, which is what REQ-PIC-003 asks for.",
+	"$comment": "Shillinq Integrations (platform-integration-catalogue): integriq's catalog_item cards on the bookkeeping categories; see that change's design.md D1-D2.",
 	"menu": [
 		{
 			"id": "Integrations",
@@ -15,10 +15,7 @@
 			"route": "/integrations",
 			"type": "index",
 			"title": "Integrations",
-			"requiresApp": {
-				"id": "integriq",
-				"name": "Integriq"
-			},
+			"requiresApp": {"id": "integriq", "name": "Integriq"},
 			"config": {
 				"register": "integriq",
 				"schema": "catalog_item",
@@ -27,45 +24,15 @@
 				"showViewAction": false,
 				"selectable": false,
 				"description": "Ready-made integrations for bookkeeping from integriq's catalogue. Switch one on in integriq.",
-				"_filterNote": "The bookkeeping categories (design D1). Removable like any default filter, so the whole catalogue is one click away; when integriq renames a category, this list is the one edit.",
-				"defaultFilters": {
-					"category": [
-						"Bank",
-						"Payments",
-						"E-invoicing",
-						"Tax filing",
-						"Commerce",
-						"Payroll"
-					]
-				},
-				"defaultSort": {
-					"field": "name",
-					"direction": "asc"
-				},
+				"defaultFilters": {"category": ["Bank", "Payments", "E-invoicing", "Tax filing", "Commerce", "Payroll"]},
+				"defaultSort": {"field": "name", "direction": "asc"},
 				"columns": [
-					{
-						"key": "name",
-						"label": "Name"
-					},
-					{
-						"key": "description",
-						"label": "Description",
-						"sortable": false
-					},
-					{
-						"key": "category",
-						"label": "Category"
-					},
-					{
-						"key": "status",
-						"label": "Status"
-					}
+					{"key": "name", "label": "Name"},
+					{"key": "description", "label": "Description", "sortable": false},
+					{"key": "category", "label": "Category"},
+					{"key": "status", "label": "Status"}
 				],
-				"cardFields": [
-					"description",
-					"category",
-					"status"
-				],
+				"cardFields": ["description", "category", "status"],
 				"actions": [
 					{
 						"id": "open-in-integriq",
@@ -75,7 +42,6 @@
 						"description": "Open integriq's catalogue, where this integration is switched on."
 					}
 				],
-				"_afterListNote": "Not available yet (design D2, REQ-PIC-002): shillinq's own connection families, as integriq's `app_connection` rows synced from lib/Settings/connections.json, each with the reason integriq reports. No family has a bookkeeping catalogue item yet, so every family is listed; once integriq ships one and accepts a catalogue item link in the connection declaration, that family moves into the cards and this list narrows to the rest.",
 				"afterList": [
 					{
 						"id": "not-available-yet",
@@ -85,30 +51,15 @@
 							"source": {
 								"register": "integriq",
 								"schema": "app_connection",
-								"filter": {
-									"app": "shillinq"
-								},
-								"order": {
-									"order": "asc"
-								},
+								"filter": {"app": "shillinq"},
+								"order": {"order": "asc"},
 								"limit": 50
 							},
 							"emptyText": "Every connection family has an integration in the catalogue.",
 							"columns": [
-								{
-									"key": "title",
-									"label": "Connection"
-								},
-								{
-									"key": "description",
-									"label": "Description",
-									"sortable": false
-								},
-								{
-									"key": "statusMessage",
-									"label": "Reason",
-									"sortable": false
-								}
+								{"key": "title", "label": "Connection"},
+								{"key": "description", "label": "Description", "sortable": false},
+								{"key": "statusMessage", "label": "Reason", "sortable": false}
 							]
 						}
 					}
