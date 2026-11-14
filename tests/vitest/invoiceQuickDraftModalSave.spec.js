@@ -185,10 +185,11 @@ describe('InvoiceQuickDraftModal form', () => {
 		const vm = modal()
 		vm.form.invoiceDate = '2026-05-01'
 
-		vm.recomputeDueDate({ customerId: 'C-1', paymentTerms: 'net14' })
+		// The customer's term is paymentTermDays (sales-invoice-sending REQ-SIS-005).
+		vm.recomputeDueDate({ customerId: 'C-1', paymentTermDays: 14 })
 		expect(vm.form.dueDate).toBe('2026-05-15')
 
-		vm.selectedCustomer = { customer: { paymentTerms: 'net7' } }
+		vm.selectedCustomer = { customer: { paymentTermDays: 7 } }
 		vm.recomputeDueDate('change-event')
 		expect(vm.form.dueDate).toBe('2026-05-08')
 
