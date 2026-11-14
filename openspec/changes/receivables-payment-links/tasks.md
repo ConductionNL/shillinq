@@ -4,8 +4,8 @@
 
 ## 1. Provider
 
-- [ ] 1.1 Open the integriq issue for a typed payment command event (ADR-041) calling `PaymentIntentService::createPayment()` with a result slot for `paymentIntentId`, `providerPaymentId` and `checkoutUrl`; link it in the PR body (REQ-RPL-001). Verify: the issue link in the PR body.
-- [ ] 1.2 Add `lib/Service/External/Integriq/IntegriqPaymentAdapter.php` implementing `MolliePaymentAdapterInterface`, fail closed to dormant with a reason, bind it at `Application.php:497` and remove the misleading comment (REQ-RPL-001, REQ-RPL-002). Verify: PHPUnit with a handled event, an unhandled event, integriq absent and a log-provider source.
+- [x] 1.1 (no issue needed: integriq development ships `OCA\Integriq\Event\PaymentRequestedEvent` and its listener, built by integriq `messaging-payment-command-settlements-and-point-of-sale`; named in the PR body) Open the integriq issue for a typed payment command event (ADR-041) calling `PaymentIntentService::createPayment()` with a result slot for `paymentIntentId`, `providerPaymentId` and `checkoutUrl`; link it in the PR body (REQ-RPL-001). Verify: the issue link in the PR body.
+- [x] 1.2 (bound in `lib/Service/ServiceRegistrar.php`, where the alias now lives; `tests/Unit/Service/External/Integriq/IntegriqPaymentAdapterTest.php`; a verbatim test stub of the event under `tests/stubs/Integriq/Event/`) Add `lib/Service/External/Integriq/IntegriqPaymentAdapter.php` implementing `MolliePaymentAdapterInterface`, fail closed to dormant with a reason, bind it at `Application.php:497` and remove the misleading comment (REQ-RPL-001, REQ-RPL-002). Verify: PHPUnit with a handled event, an unhandled event, integriq absent and a log-provider source.
 - [ ] 1.3 Add `providerPaymentId`, `checkoutExpiresAt` and `linkSentAt` to `PaymentRequest`, store them from every raise path (leges, case leaf, contribution raise, portal pay) (REQ-RPL-001). Verify: `npm run check:registers`; PHPUnit per raise path asserting the stored link.
 
 ## 2. Status
