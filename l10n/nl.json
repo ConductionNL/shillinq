@@ -6907,7 +6907,18 @@
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
         "Payout updated.": "Uitbetaling bijgewerkt.",
         "Payment block release reason": "Reden voor opheffen betalingsblokkade",
-        "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.": "Waarom de betalingsblokkade is opgeheven; gevraagd wanneer een controller of treasurer de blokkade opheft. De reden van de blokkade blijft bewaard."
+        "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.": "Waarom de betalingsblokkade is opgeheven; gevraagd wanneer een controller of treasurer de blokkade opheft. De reden van de blokkade blijft bewaard.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} van {total} koersen · {feedStatus}",
+        "Booked lines": "Geboekte regels",
+        "Posted lines": "Geboekte grootboekregels",
+        "Exchange rate": "Wisselkoers",
+        "Rate source": "Koersbron",
+        "Rate date": "Koersdatum",
+        "Base amount": "Bedrag in basisvaluta",
+        "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
+        "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
+        "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

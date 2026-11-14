@@ -79,6 +79,81 @@ class ShillinqToolProvider implements IMcpToolProvider {
 				'required' => ['administrationId', 'purchaseOrderId', 'decision'],
 			],
 		],
+		[
+			'id' => 'shillinq.period_close.status',
+			'name' => 'Read the close status of a period',
+			'description' => 'Read an accounting period of an administration with its close status and the readiness flags the '
+				. 'close assistant raises (open items, unposted entries). Use it before starting or finishing a close, '
+				. 'or when the user asks whether a month or quarter can be closed. Changes nothing.',
+			'scope' => 'read',
+			'readOnlyHint' => true,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
+				],
+				'required' => ['administrationId', 'periodId'],
+			],
+		],
+		[
+			'id' => 'shillinq.period_close.start',
+			'name' => 'Start closing a period',
+			'description' => 'Move an open accounting period into closing, as the signed-in user, so the close checklist can be '
+				. 'worked through. Use it when the user asks to begin the month-end or quarter-end close; read the '
+				. 'period first with shillinq.period_close.status. Bookings into the period are then restricted.',
+			'scope' => 'update',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
+				],
+				'required' => ['administrationId', 'periodId'],
+			],
+		],
+		[
+			'id' => 'shillinq.period_close.close',
+			'name' => 'Close a period',
+			'description' => 'Close an accounting period of an administration, as the signed-in user, so no further bookings land '
+				. 'in it. Use it only when the user explicitly asks to close the period and the close status shows it '
+				. 'is ready. Undoing it needs shillinq.period_close.reopen with a reason.',
+			'scope' => 'update',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
+				],
+				'required' => ['administrationId', 'periodId'],
+			],
+		],
+		[
+			'id' => 'shillinq.period_close.reopen',
+			'name' => 'Reopen a closed period',
+			'description' => 'Reopen a closed accounting period of an administration, as the signed-in user, recording why. Use it '
+				. 'only when the user explicitly asks to reopen a closed period to correct it; the reason is kept with '
+				. 'the period. The service refuses a period that is locked for audit.',
+			'scope' => 'update',
+			'reach' => 'instance',
+			'readOnlyHint' => false,
+			'destructiveHint' => false,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'administrationId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The administration the period belongs to.'],
+					'periodId' => ['type' => 'string', 'pattern' => self::ID_PATTERN, 'description' => 'The accounting period.'],
+					'closeReason' => ['type' => ['string', 'null'], 'maxLength' => 2000, 'description' => 'Why the period is reopened.'],
+				],
+				'required' => ['administrationId', 'periodId'],
+			],
+		],
 	];
 
 	/**
@@ -88,12 +163,14 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpAdministrationGate $gate           Names the principal for the audit record.
 	 * @param McpInvocationAudit    $audit          Records every invocation.
 	 * @param McpPurchaseOrderTools $purchaseOrders The purchase-order handlers.
+	 * @param McpPeriodCloseTools   $periodClose    The period-close handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
 		private readonly McpAdministrationGate $gate,
 		private readonly McpInvocationAudit $audit,
 		private readonly McpPurchaseOrderTools $purchaseOrders,
+		private readonly McpPeriodCloseTools $periodClose,
 	) {
 	}//end __construct()
 
@@ -165,6 +242,10 @@ class ShillinqToolProvider implements IMcpToolProvider {
 
 		return match ($toolId) {
 			'shillinq.purchase_order.decide' => $this->purchaseOrders->decide(args: $arguments),
+			'shillinq.period_close.status' => $this->periodClose->status(args: $arguments),
+			'shillinq.period_close.start' => $this->periodClose->start(args: $arguments),
+			'shillinq.period_close.close' => $this->periodClose->close(args: $arguments),
+			'shillinq.period_close.reopen' => $this->periodClose->reopen(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()

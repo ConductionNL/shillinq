@@ -4708,7 +4708,21 @@ OC.L10N.register(
         "The payout step could not be carried out.": "The payout step could not be carried out.",
         "Payout updated.": "Payout updated.",
         "Payment block release reason": "Payment block release reason",
-        "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept."
+        "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+        "{shown} of {total} rates · {feedStatus}": "{shown} of {total} rates · {feedStatus}",
+        "Booked lines": "Booked lines",
+        "Posted lines": "Posted lines",
+        "Exchange rate": "Exchange rate",
+        "Rate source": "Rate source",
+        "Rate date": "Rate date",
+        "Base amount": "Base amount",
+        "Transaction amount": "Transaction amount",
+        "Transaction currency": "Transaction currency",
+        "Base currency": "Base currency",
+        "Rates are entered by hand": "Rates are entered by hand",
+        "Rates arrive from the feed": "Rates arrive from the feed",
+        "%1$s to %2$s on %3$s": "%1$s to %2$s on %3$s",
+        "Newest rate: %s": "Newest rate: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
