@@ -43,6 +43,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\BulkSaveOptions;
 use OCP\IUser;
 
 /**
@@ -446,29 +447,17 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	 * Not modelled.
 	 *
 	 * @param array $objects The objects to store.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param BulkSaveOptions $options The register and schema defaults, and the validation, events and audit flags.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $validation Validate against the schema.
-	 * @param bool $events Emit events for each object.
-	 * @param bool $deduplicateIds Drop duplicate ids.
-	 * @param bool $enrich Enrich each object.
-	 * @param bool $_audit Write an audit-trail entry.
 	 *
 	 * @return array
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): array {
 		$this->unsupported(method: 'saveObjects');
 

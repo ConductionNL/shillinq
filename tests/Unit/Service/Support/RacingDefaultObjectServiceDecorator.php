@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\BulkSaveOptions;
 use OCP\IUser;
 
 /**
@@ -442,31 +443,19 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 
 	/**
 	 * @param array $objects The objects to store.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param BulkSaveOptions $options The register and schema defaults, and the validation, events and audit flags.
 	 * @param bool $rbac Apply register RBAC.
 	 * @param bool $multitenancy Apply organisation scoping.
-	 * @param bool $validation Validate against the schema.
-	 * @param bool $events Emit events for each object.
-	 * @param bool $deduplicateIds Drop duplicate ids.
-	 * @param bool $enrich Enrich each object.
-	 * @param bool $audit Write an audit-trail entry.
 	 *
 	 * @return array
 	 */
 	public function saveObjects(
 		array $objects,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		BulkSaveOptions $options = new BulkSaveOptions(),
 		bool $rbac = true,
-		bool $multitenancy = true,
-		bool $validation = false,
-		bool $events = false,
-		bool $deduplicateIds = true,
-		bool $enrich = true,
-		bool $audit = true
+		bool $multitenancy = true
 	): array {
-		return $this->inner->saveObjects($objects, $register, $schema, $rbac, $multitenancy, $validation, $events, $deduplicateIds, $enrich, $audit);
+		return $this->inner->saveObjects(objects: $objects, options: $options, _rbac: $rbac, _multitenancy: $multitenancy);
 
 	}//end saveObjects()
 
