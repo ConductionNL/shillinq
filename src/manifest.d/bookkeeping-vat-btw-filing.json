@@ -125,7 +125,8 @@
 					{"id": "submit", "label": "Submit", "type": "lifecycle", "transition": "submit", "enabledWhen": "statusCode === 'draft'"},
 					{"id": "rebase", "label": "Reopen", "type": "lifecycle", "transition": "rebase", "enabledWhen": "statusCode === 'submitted'"},
 					{"id": "verify", "label": "Record confirmation", "type": "lifecycle", "transition": "verify", "enabledWhen": "statusCode === 'submitted'"},
-					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"}
+					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"},
+					{"id": "check-corrections", "label": "Check for corrections", "type": "handler", "handler": "checkVatReturnForCorrections", "icon": "FileSearchOutline", "visibleWhen": {"field": "statusCode", "op": "in", "value": ["submitted", "verified", "filed"]}, "description": "Compare this filed return with the books. When they differ, a correction is written to the corrections page."}
 				],
 				"auditTrail": true,
 				"sidebarProps": {
@@ -148,7 +149,44 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BtwAangifte",
+				"pageFilters": [
+					{"key": "vatPeriod", "label": "Period", "type": "quarter"}
+				],
 				"widgets": [
+					{
+						"id": "position-payable",
+						"type": "stat",
+						"title": "BTW position",
+						"_note": "tax-vat-position-and-suppletie REQ-VPS-001: the amount payable (negative: refundable) of the chosen quarter from the lines posted so far, the open quarter by default.",
+						"content": {
+							"label": "Payable so far (negative: refund)",
+							"icon": "PercentOutline",
+							"format": {"style": "currency", "currency": "EUR", "decimals": 2},
+							"endpointSource": {"url": "/apps/shillinq/api/vat-position", "params": {"period": "@workspace.vatPeriod?"}},
+							"valueField": "data.payable"
+						}
+					},
+					{
+						"id": "position-boxes",
+						"type": "object-table",
+						"title": "BTW position per box",
+						"_note": "tax-vat-position-and-suppletie REQ-VPS-001: per return box the base and BTW of the lines posted so far; Show lines lists the lines behind a box. Read from the same stamped lines a prepared return reads.",
+						"content": {
+							"endpointSource": {"url": "/apps/shillinq/api/vat-position", "params": {"period": "@workspace.vatPeriod?"}, "responsePath": "data.boxes"},
+							"emptyText": "Nothing is posted in this period yet.",
+							"columns": [
+								{"key": "returnBox", "label": "Box"},
+								{"key": "type", "label": "Type"},
+								{"key": "taxRate", "label": "Rate %"},
+								{"key": "base", "label": "Base", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+								{"key": "vat", "label": "BTW", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+								{"key": "lineCount", "label": "Lines"}
+							],
+							"actions": [
+								{"id": "show-position-lines", "label": "Show lines", "type": "handler", "handler": "openVatPositionLines", "icon": "FormatListBulleted"}
+							]
+						}
+					},
 					{
 						"id": "summary",
 						"type": "summary",

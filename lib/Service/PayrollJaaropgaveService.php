@@ -85,79 +85,148 @@ class PayrollJaaropgaveService {
 	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
 	 */
 	public function bouwJaaropgave(string $administrationId, string $employeeId, int $year): array {
-		$stroken = $this->findPayStrokenForYear(
-			administrationId: $administrationId,
-			employeeId: $employeeId,
-			year: $year
-		);
+		$stroken = $this->findPayStrokenForYear(administrationId: $administrationId, employeeId: $employeeId, year: $year);
 
 		if ($stroken === []) {
-			// An employee with no payslips for the year still yields a jaaropgave —
-			// an all-zero one, which is indistinguishable from a correctly-zero year.
-			// Record it so the difference is auditable. Identifiers only: never the
-			// BSN or any special-category field.
-			$this->logger->warning(
-				'Jaaropgave built from zero payslips — the annual statement will be all-zero.',
-				[
-					'administrationId' => $administrationId,
-					'employeeId' => $employeeId,
-					'year' => $year,
-				]
-			);
+			$this->logZeroPayslips(administrationId: $administrationId, employeeId: $employeeId, year: $year);
 		}
 
-		$fiscalC = 0;
-		$payrollTaxC = 0;
-		$svWgC = 0;
-		$zvwWgC = 0;
-		$pensWnC = 0;
-		$pensWgC = 0;
-		$vakUitbC = 0;
-		$netC = 0;
-		$ytdFiscal = 0.0;
-		$ytdVak = 0.0;
-		foreach ($stroken as $s) {
-			$fiscalC += $this->calculator->toCents(amount: ($s['fiscalPay'] ?? 0));
-			$payrollTaxC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
-			$svWgC += $this->calculator->toCents(amount: ($s['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
-			$zvwWgC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
-			$pensWnC += $this->calculator->toCents(amount: ($s['pension']['premie_wn_aandeel'] ?? 0));
-			$pensWgC += $this->calculator->toCents(amount: ($s['pension']['premie_wg_aandeel'] ?? 0));
-			$vakUitbC += $this->calculator->toCents(amount: ($s['grossComponents']['vakantietoeslag_uitbetaling'] ?? 0));
-			$netC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
-
-			$cu = ($s['cumulatieven'] ?? []);
-			if (is_array($cu) === true) {
-				$ytdFiscal = (float)($cu['fiscaalloon_ytd'] ?? $ytdFiscal);
-				$ytdVak = (float)($cu['vakantiegeld_reservering_ytd'] ?? $ytdVak);
-			}
-		}//end foreach
-
-		$fiscalPay = $this->calculator->fromCents(cents: $fiscalC);
-		$cumulatievenMatch = ($this->calculator->toCents(amount: $ytdFiscal) === $fiscalC);
+		$totals = $this->yearTotals(stroken: $stroken);
 
 		return [
 			'employeeId' => $employeeId,
 			'year' => $year,
 			'aantalPerioden' => count($stroken),
-			'fiscaalLoonJTD' => $fiscalPay,
-			'loonheffingJTD' => $this->calculator->fromCents(cents: $payrollTaxC),
-			'premiesSVWgJTD' => $this->calculator->fromCents(cents: $svWgC),
-			'zvwWgJTD' => $this->calculator->fromCents(cents: $zvwWgC),
-			'pensioenWnJTD' => $this->calculator->fromCents(cents: $pensWnC),
-			'pensioenWgJTD' => $this->calculator->fromCents(cents: $pensWgC),
-			'vakantieUitbJTD' => $this->calculator->fromCents(cents: $vakUitbC),
-			'nettoUitbetaaldJTD' => $this->calculator->fromCents(cents: $netC),
+		] + $this->jtdAmounts(totals: $totals) + $this->snapshotAndStatus(totals: $totals, administrationId: $administrationId);
+
+	}//end bouwJaaropgave()
+
+	/**
+	 * The jaaropgave's year-to-date snapshot, its consistency with the payslips, and its concept status.
+	 *
+	 * @param array<string, int|float> $totals           The year's totals.
+	 * @param string                   $administrationId The administration.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function snapshotAndStatus(array $totals, string $administrationId): array {
+		return [
 			'ytdSnapshot' => [
-				'fiscaalloon_ytd' => $ytdFiscal,
-				'vakantiegeld_reservering_ytd' => $ytdVak,
+				'fiscaalloon_ytd' => $totals['ytdFiscal'],
+				'vakantiegeld_reservering_ytd' => $totals['ytdVak'],
 			],
-			'cumulatievenConsistent' => $cumulatievenMatch,
+			'cumulatievenConsistent' => ($this->calculator->toCents(amount: $totals['ytdFiscal']) === $totals['fiscal']),
 			'administrationId' => $administrationId,
 			'status' => 'CONCEPT',
 		];
 
-	}//end bouwJaaropgave()
+	}//end snapshotAndStatus()
+
+	/**
+	 * An employee with no payslips for the year still yields a jaaropgave —
+	 * an all-zero one, which is indistinguishable from a correctly-zero year.
+	 * Record it so the difference is auditable. Identifiers only: never the
+	 * BSN or any special-category field.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $employeeId       The employee.
+	 * @param int    $year             The calendar year.
+	 *
+	 * @return void
+	 */
+	private function logZeroPayslips(string $administrationId, string $employeeId, int $year): void {
+		$this->logger->warning(
+			'Jaaropgave built from zero payslips — the annual statement will be all-zero.',
+			[
+				'administrationId' => $administrationId,
+				'employeeId' => $employeeId,
+				'year' => $year,
+			]
+		);
+
+	}//end logZeroPayslips()
+
+	/**
+	 * The year's totals in cents, with the last cumulative year-to-date snapshot.
+	 *
+	 * @param array<int, array<string, mixed>> $stroken The year's payslips.
+	 *
+	 * @return array<string, int|float>
+	 */
+	private function yearTotals(array $stroken): array {
+		$totals = [
+			'fiscal' => 0, 'payrollTax' => 0, 'svWg' => 0, 'zvwWg' => 0, 'pensWn' => 0, 'pensWg' => 0, 'vakUitb' => 0, 'net' => 0,
+			'ytdFiscal' => 0.0, 'ytdVak' => 0.0,
+		];
+		foreach ($stroken as $s) {
+			$totals = $this->withStrook(totals: $totals, strook: $s);
+		}
+
+		return $totals;
+
+	}//end yearTotals()
+
+	/**
+	 * Add one payslip's amounts to the totals and take its cumulative snapshot.
+	 *
+	 * @param array<string, int|float> $totals The totals so far.
+	 * @param array<string, mixed>     $strook One payslip.
+	 *
+	 * @return array<string, int|float>
+	 */
+	private function withStrook(array $totals, array $strook): array {
+		$totals['fiscal']     += $this->calculator->toCents(amount: ($strook['fiscalPay'] ?? 0));
+		$totals['payrollTax'] += $this->calculator->toCents(amount: ($strook['payrollTax'] ?? 0));
+		$totals['svWg']       += $this->calculator->toCents(amount: ($strook['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
+		$totals['zvwWg']      += $this->calculator->toCents(amount: ($strook['zvw']['afgedragen_wg'] ?? 0));
+		$totals['pensWn']     += $this->calculator->toCents(amount: ($strook['pension']['premie_wn_aandeel'] ?? 0));
+		$totals['pensWg']     += $this->calculator->toCents(amount: ($strook['pension']['premie_wg_aandeel'] ?? 0));
+		$totals['vakUitb']    += $this->calculator->toCents(amount: ($strook['grossComponents']['vakantietoeslag_uitbetaling'] ?? 0));
+		$totals['net']        += $this->calculator->toCents(amount: ($strook['netPaid'] ?? 0));
+
+		return self::withSnapshot(totals: $totals, strook: $strook);
+
+	}//end withStrook()
+
+	/**
+	 * Take the payslip's cumulative year-to-date snapshot when it carries one.
+	 *
+	 * @param array<string, int|float> $totals The totals so far.
+	 * @param array<string, mixed>     $strook One payslip.
+	 *
+	 * @return array<string, int|float>
+	 */
+	private static function withSnapshot(array $totals, array $strook): array {
+		$cu = ($strook['cumulatieven'] ?? []);
+		if (is_array($cu) === true) {
+			$totals['ytdFiscal'] = (float)($cu['fiscaalloon_ytd'] ?? $totals['ytdFiscal']);
+			$totals['ytdVak']    = (float)($cu['vakantiegeld_reservering_ytd'] ?? $totals['ytdVak']);
+		}
+
+		return $totals;
+
+	}//end withSnapshot()
+
+	/**
+	 * The year-to-date amounts of the jaaropgave, in euros.
+	 *
+	 * @param array<string, int|float> $totals The year's totals in cents.
+	 *
+	 * @return array<string, float>
+	 */
+	private function jtdAmounts(array $totals): array {
+		return [
+			'fiscaalLoonJTD' => $this->calculator->fromCents(cents: $totals['fiscal']),
+			'loonheffingJTD' => $this->calculator->fromCents(cents: $totals['payrollTax']),
+			'premiesSVWgJTD' => $this->calculator->fromCents(cents: $totals['svWg']),
+			'zvwWgJTD' => $this->calculator->fromCents(cents: $totals['zvwWg']),
+			'pensioenWnJTD' => $this->calculator->fromCents(cents: $totals['pensWn']),
+			'pensioenWgJTD' => $this->calculator->fromCents(cents: $totals['pensWg']),
+			'vakantieUitbJTD' => $this->calculator->fromCents(cents: $totals['vakUitb']),
+			'nettoUitbetaaldJTD' => $this->calculator->fromCents(cents: $totals['net']),
+		];
+
+	}//end jtdAmounts()
 
 	/*
 	 * NO JAAROPGAVE PERSISTENCE HERE.

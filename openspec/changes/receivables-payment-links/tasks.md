@@ -4,18 +4,19 @@
 
 ## 1. Provider
 
-- [ ] 1.1 Open the integriq issue for a typed payment command event (ADR-041) calling `PaymentIntentService::createPayment()` with a result slot for `paymentIntentId`, `providerPaymentId` and `checkoutUrl`; link it in the PR body (REQ-RPL-001). Verify: the issue link in the PR body.
-- [ ] 1.2 Add `lib/Service/External/Integriq/IntegriqPaymentAdapter.php` implementing `MolliePaymentAdapterInterface`, fail closed to dormant with a reason, bind it at `Application.php:497` and remove the misleading comment (REQ-RPL-001, REQ-RPL-002). Verify: PHPUnit with a handled event, an unhandled event, integriq absent and a log-provider source.
+- [x] 1.1 (no issue needed: integriq development ships `OCA\Integriq\Event\PaymentRequestedEvent` and its listener, built by integriq `messaging-payment-command-settlements-and-point-of-sale`; named in the PR body) Open the integriq issue for a typed payment command event (ADR-041) calling `PaymentIntentService::createPayment()` with a result slot for `paymentIntentId`, `providerPaymentId` and `checkoutUrl`; link it in the PR body (REQ-RPL-001). Verify: the issue link in the PR body.
+- [x] 1.2 (bound in `lib/Service/ServiceRegistrar.php`, where the alias now lives; `tests/Unit/Service/External/Integriq/IntegriqPaymentAdapterTest.php`; a verbatim test stub of the event under `tests/stubs/Integriq/Event/`) Add `lib/Service/External/Integriq/IntegriqPaymentAdapter.php` implementing `MolliePaymentAdapterInterface`, fail closed to dormant with a reason, bind it at `Application.php:497` and remove the misleading comment (REQ-RPL-001, REQ-RPL-002). Verify: PHPUnit with a handled event, an unhandled event, integriq absent and a log-provider source.
 - [ ] 1.3 Add `providerPaymentId`, `checkoutExpiresAt` and `linkSentAt` to `PaymentRequest`, store them from every raise path (leges, case leaf, contribution raise, portal pay) (REQ-RPL-001). Verify: `npm run check:registers`; PHPUnit per raise path asserting the stored link.
 
 ## 2. Status
 
 - [x] 2.1 Take `nl.conduction.payment.status` CloudEvents from integriq's event register (slug-resolved) into `PaymentReconciliationService::reconcile()` (REQ-RPL-003). Verify: PHPUnit with a real `ObjectCreatedEvent` carrying an id-stamped entity for captured, failed and a repeat.
-- [ ] 2.2 Update `connections.json` so the Mollie row reports integriq's payment source instead of `reportedOnly` (REQ-RPL-002). Verify: the External connections page shows the source state on a seeded instance.
+- [x] 2.2 (the row links integriq's `mollie-payments` source template and is no longer reported by shillinq: `mollie` left `ConnectionReportService::FAMILIES`; the seeded-instance page check is not done here) Update `connections.json` so the Mollie row reports integriq's payment source instead of `reportedOnly` (REQ-RPL-002). Verify: the External connections page shows the source state on a seeded instance.
 
 ## 3. Pay link
 
 - [ ] 3.1 Add `PayLinkService` (sign, verify, rotate per administration) and accept a forwarded signed token in `portalPaymentInitiation#initiate`, reusing an unexpired checkout or creating one (REQ-RPL-004, REQ-RPL-006). Verify: PHPUnit for a valid, a tampered, a foreign-administration and a paid-invoice token.
+      > Built: `lib/Service/Payment/PayLinkService.php` (HMAC over invoice and administration with a key derived from the instance secret and a per-administration generation that `rotate()` advances; `forInvoice()` gives the pay URL only for an https pay page in app config `pay_link_page_url`), `PayLinkServiceTest` (valid, tampered, foreign administration, rotated, no secret). Open: accepting the token in `portalPaymentInitiation#initiate` with the paid-invoice answer and the checkout reuse.
 - [ ] 3.2 Print the pay link in `InvoicePdfGenerator::renderHtml()` and put it in the invoice mail of `sales-invoice-sending` (REQ-RPL-004). Verify: PHPUnit asserting the link in the rendered HTML and mail body, and no link with a dormant adapter.
 - [ ] 3.3 Disable Send payment link with the reason on the Payment requests page and the case panel when the adapter is dormant (REQ-RPL-002). Verify: Vitest for `ShillinqPaymentRequestsPanel.vue`; Playwright on `PaymentRequests`.
 

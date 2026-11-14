@@ -108,19 +108,7 @@ class SubsidieVerantwoordingGuard {
 				return false;
 			}
 
-			$awardedAmount = (float)($object['awardedAmount'] ?? 0.0);
-			if ($awardedAmount < $this->resolveThreshold()) {
-				// Below threshold: no auditor statement required, approval permitted.
-				return true;
-			}
-
-			$grantId = (string)($object['grantId'] ?? '');
-			if ($grantId === '') {
-				// Large grant with no grant reference cannot be reconciled — fail closed.
-				return false;
-			}
-
-			return $this->hasApprovedAuditorStatement(grantId: $grantId);
+			return $this->isApprovable(object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'SubsidieVerantwoordingGuard: approve check failed — denying approve transition (fail-closed)',
@@ -129,6 +117,31 @@ class SubsidieVerantwoordingGuard {
 			return false;
 		}//end try
 	}//end canApprove()
+
+	/**
+	 * Whether the report is below the threshold, or its grant has an approved auditor statement.
+	 *
+	 * @param array<string,mixed> $object The SubsidieVerantwoording.
+	 *
+	 * @return bool True when the accountability report may be approved.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	private function isApprovable(array $object): bool {
+		$awardedAmount = (float)($object['awardedAmount'] ?? 0.0);
+		if ($awardedAmount < $this->resolveThreshold()) {
+			// Below threshold: no auditor statement required, approval permitted.
+			return true;
+		}
+
+		$grantId = (string)($object['grantId'] ?? '');
+		if ($grantId === '') {
+			// Large grant with no grant reference cannot be reconciled — fail closed.
+			return false;
+		}
+
+		return $this->hasApprovedAuditorStatement(grantId: $grantId);
+	}//end isApprovable()
 
 	/**
 	 * Returns true iff the grant has at least one AuditorStatement in approved or conditional state.

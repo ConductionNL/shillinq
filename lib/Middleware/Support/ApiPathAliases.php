@@ -159,17 +159,51 @@ final class ApiPathAliases {
 	 * @spec openspec/specs/api-contract/spec.md
 	 */
 	public static function withVersionedAliases(array $routes): array {
+		[$declared, $insertAt] = self::declaredRoutes(routes: array_values($routes['routes'] ?? []));
+
+		$aliases = self::aliasesOf(routes: ($routes['routes'] ?? []), declared: $declared);
+
+		$original         = array_values($routes['routes'] ?? []);
+		$routes['routes'] = array_merge(array_slice($original, 0, $insertAt), $aliases, array_slice($original, $insertAt));
+
+		return $routes;
+	}//end withVersionedAliases()
+
+	/**
+	 * The keys of the declared routes, and the position right after the last `/api/v1/` route.
+	 *
+	 * @param list<array<array-key,mixed>> $routes The declared routes, in order.
+	 *
+	 * @return array{0: array<string,bool>, 1: int} The declared keys and the insert position.
+	 *
+	 * @spec openspec/specs/api-contract/spec.md
+	 */
+	private static function declaredRoutes(array $routes): array {
 		$declared = [];
 		$insertAt = 0;
-		foreach (array_values($routes['routes'] ?? []) as $index => $route) {
+		foreach ($routes as $index => $route) {
 			$declared[self::key(route: $route)] = true;
 			if (str_starts_with('/'.ltrim((string) ($route['url'] ?? ''), '/'), self::VERSION_PREFIX.'/') === true) {
 				$insertAt = ($index + 1);
 			}
 		}
 
+		return [$declared, $insertAt];
+	}//end declaredRoutes()
+
+	/**
+	 * A `/api/v1/` alias of every deprecated unversioned route that is not declared already.
+	 *
+	 * @param array<array-key,mixed> $routes The declared routes.
+	 * @param array<string,bool> $declared The keys of the declared routes.
+	 *
+	 * @return list<array<array-key,mixed>> The aliases, in route order.
+	 *
+	 * @spec openspec/specs/api-contract/spec.md
+	 */
+	private static function aliasesOf(array $routes, array $declared): array {
 		$aliases = [];
-		foreach (($routes['routes'] ?? []) as $route) {
+		foreach ($routes as $route) {
 			$url = '/'.ltrim((string) ($route['url'] ?? ''), '/');
 			if (self::isDeprecated(path: $url) === false || self::isApiFallback(route: $route) === true) {
 				continue;
@@ -187,11 +221,8 @@ final class ApiPathAliases {
 			}
 		}
 
-		$original         = array_values($routes['routes'] ?? []);
-		$routes['routes'] = array_merge(array_slice($original, 0, $insertAt), $aliases, array_slice($original, $insertAt));
-
-		return $routes;
-	}//end withVersionedAliases()
+		return $aliases;
+	}//end aliasesOf()
 
 	/**
 	 * Whether a route is the API fallback, a single placeholder after `/api/` that spans segments.
