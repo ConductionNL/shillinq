@@ -7019,7 +7019,24 @@ OC.L10N.register(
         "Checks": "Controles",
         "Check": "Controle",
         "Message": "Melding",
-        "The checks could not run for this return.": "De controles konden voor deze aangifte niet worden uitgevoerd."
+        "The checks could not run for this return.": "De controles konden voor deze aangifte niet worden uitgevoerd.",
+        "VAT fiscal unities": "Fiscale eenheden btw",
+        "VAT fiscal unity": "Fiscale eenheid btw",
+        "Representative administration": "Vertegenwoordigende administratie",
+        "Member administrations": "Administraties van de leden",
+        "Subtotals per administration": "Subtotalen per administratie",
+        "This administration is a member of the VAT fiscal unity %s in this period; the representative files the return for the unity.": "Deze administratie is in deze periode lid van de fiscale eenheid btw %s; de vertegenwoordiger doet de aangifte voor de eenheid.",
+        "For a VAT fiscal unity's return, the totals per administration, the representative first.": "Voor de aangifte van een fiscale eenheid btw: de totalen per administratie, de vertegenwoordiger eerst.",
+        "Free notes, such as the Belastingdienst decision.": "Vrije notities, zoals de beschikking van de Belastingdienst.",
+        "The VAT fiscal unity this return is filed for, when the administration is its representative in the period.": "De fiscale eenheid btw waarvoor deze aangifte wordt gedaan, als de administratie in de periode de vertegenwoordiger is.",
+        "The VAT number the Belastingdienst gave the unity.": "Het btw-nummer dat de Belastingdienst aan de eenheid gaf.",
+        "The VAT number the return is filed under: the unity's number for a fiscal unity's return.": "Het btw-nummer waaronder de aangifte wordt gedaan: het nummer van de eenheid voor de aangifte van een fiscale eenheid.",
+        "The administration whose ledger line this VAT line was taken from. For a VAT fiscal unity's return this is the representative or a member; otherwise the return's own administration.": "De administratie van de grootboekregel waaruit deze btw-regel komt. Bij de aangifte van een fiscale eenheid btw is dat de vertegenwoordiger of een lid; anders de administratie van de aangifte zelf.",
+        "The first day the unity files as one.": "De eerste dag waarop de eenheid als een aangifte doet.",
+        "The last day of the unity, empty while it runs.": "De laatste dag van de eenheid, leeg zolang zij bestaat.",
+        "The member administrations whose posted lines the unity's return includes.": "De administraties van de leden waarvan de geboekte regels in de aangifte van de eenheid komen.",
+        "The name of the unity as the returns and refusals show it.": "De naam van de eenheid zoals aangiftes en weigeringen die tonen.",
+        "The representative administration, which files the return for the unity.": "De vertegenwoordigende administratie, die de aangifte voor de eenheid doet."
     },
     "nplurals=2; plural=(n != 1);"
 )

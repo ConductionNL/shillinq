@@ -460,6 +460,10 @@
             "description": "Check a filed VAT return for corrections and prepare its supplementary return (REQ-VPS-002)."
         },
         {
+            "name": "vat-return-checks",
+            "description": "The checks of a VAT return before it is filed (REQ-TVRB-001)."
+        },
+        {
             "name": "wbso-account-api",
             "description": "Account REST API (REQ-WBSO-001 / REQ-WBSO-005 / REQ-WBSO-006)."
         },
@@ -11440,6 +11444,9 @@
                     "401": {
                         "$ref": "#/components/responses/Problem401"
                     },
+                    "409": {
+                        "$ref": "#/components/responses/Problem409"
+                    },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
                     }
@@ -12291,6 +12298,54 @@
                     },
                     "409": {
                         "$ref": "#/components/responses/Problem409"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/vat-returns/{returnId}/checks": {
+            "get": {
+                "operationId": "vat-return-checks-index",
+                "summary": "Run the checks of a VAT return (REQ-TVRB-001)",
+                "description": "Runs the checks on a VAT return's period and answers per check its name, whether it blocks filing, passed or failed and the message naming what failed, and whether a blocking check fails. Needs a signed-in Nextcloud user who is a member of the return's administration.",
+                "tags": [
+                    "vat-return-checks"
+                ],
+                "parameters": [
+                    {
+                        "name": "returnId",
+                        "in": "path",
+                        "required": true,
+                        "description": "The VATReturn id.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"

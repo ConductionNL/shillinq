@@ -5650,6 +5650,33 @@
 		{
 			"menu": [
 				{
+					"id": "VatFiscalUnities",
+					"label": "VAT fiscal unities",
+					"icon": "OfficeBuildingOutline",
+					"route": "VatFiscalUnities",
+					"order": 72
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "tax-vat-return-from-books",
+					"id": "VatFiscalUnities",
+					"route": "/belastingen/btw-fiscale-eenheden",
+					"type": "index",
+					"title": "VAT fiscal unities"
+				},
+				{
+					"_fragment": "tax-vat-return-from-books",
+					"id": "VatFiscalUnityDetail",
+					"route": "/belastingen/btw-fiscale-eenheden/:id",
+					"type": "detail",
+					"title": "VAT fiscal unity"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Cashflow",
 					"label": "Cashflow",
 					"icon": "ChartTimelineVariant",

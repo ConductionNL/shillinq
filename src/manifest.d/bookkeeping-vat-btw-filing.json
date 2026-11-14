@@ -85,7 +85,9 @@
 					{"key": "totalVATPaid", "label": "Input tax", "type": "number"},
 					{"key": "vatBalance", "label": "Balance", "type": "number"},
 					{"key": "totalTaxableAmount", "label": "Taxable turnover", "type": "number"},
-					{"key": "notes", "label": "Notes", "type": "string"}
+					{"key": "notes", "label": "Notes", "type": "string"},
+					{"key": "fiscalUnityId", "label": "VAT fiscal unity", "type": "string"},
+					{"key": "vatNumber", "label": "VAT number", "type": "string"}
 				],
 				"sections": [
 					{
@@ -114,6 +116,7 @@
 							{"key": "lineNumber", "label": "#", "sortable": true},
 							{"key": "glAccountNumber", "label": "Ledger", "sortable": true},
 							{"key": "glAccountName", "label": "Name", "sortable": true},
+							{"key": "sourceAdministrationId", "label": "Administration", "sortable": true},
 							{"key": "type", "label": "Type", "sortable": true},
 							{"key": "taxRate", "label": "Rate %", "sortable": true},
 							{"key": "taxableAmount", "label": "Taxable", "sortable": true, "type": "money"},
@@ -129,6 +132,25 @@
 					{"id": "check-corrections", "label": "Check for corrections", "type": "handler", "handler": "checkVatReturnForCorrections", "icon": "FileSearchOutline", "visibleWhen": {"field": "statusCode", "op": "in", "value": ["submitted", "verified", "filed"]}, "description": "Compare this filed return with the books. When they differ, a correction is written to the corrections page."}
 				],
 				"bodyWidgets": [
+					{
+						"id": "unity-subtotals",
+						"type": "object-table",
+						"title": "Subtotals per administration",
+						"placement": "after-data",
+						"visibleWhen": {"field": "fiscalUnityId", "op": "notEmpty"},
+						"_note": "tax-vat-return-from-books REQ-TVRB-003: a VAT fiscal unity's return shows the totals of the representative and of each member; together they make the return's totals.",
+						"content": {
+							"endpointSource": {"url": "/apps/shillinq/api/vat-returns/@objectId", "responsePath": "data.memberSubtotals"},
+							"emptyText": "Nothing is posted in this period yet.",
+							"columns": [
+								{"key": "administrationId", "label": "Administration"},
+								{"key": "totalVATCollected", "label": "BTW collected", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+								{"key": "totalVATPaid", "label": "Input tax", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+								{"key": "vatBalance", "label": "Balance", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+								{"key": "totalTaxableAmount", "label": "Taxable turnover", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}
+							]
+						}
+					},
 					{
 						"id": "checks",
 						"type": "object-table",

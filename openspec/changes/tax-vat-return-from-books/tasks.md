@@ -59,7 +59,18 @@
 
 ## 5. Fiscal unity
 
-- [ ] 5.1 Add the `VatFiscalUnity` schema with index and detail pages, and member scanning and the member refusal in `VATReturnService::createReturn()` (REQ-TVRB-003). Verify: PHPUnit for a representative, a member and a period outside the unity; Playwright shows three subtotals.
+- [x] 5.1 Add the `VatFiscalUnity` schema with index and detail pages, and member scanning and the member refusal in `VATReturnService::createReturn()` (REQ-TVRB-003). Verify: PHPUnit for a representative, a member and a period outside the unity; Playwright shows three subtotals.
+      DONE 2026-11-14 (code and PHPUnit; the Playwright run is not done here): `VatFiscalUnity` (representative
+      `administrationId`, `memberAdministrationIds`, `vatNumber`, dates) in `register.d/tax-vat-return-from-books.json`,
+      with `VATLine.sourceAdministrationId` (0.3.0) and `BtwAangifte.fiscalUnityId`, `vatNumber` and `memberSubtotals`
+      (0.1.2). `VatFiscalUnityResolver` finds the unity whose dates overlap the period; `VATReturnService` reads the lines
+      of the representative and every member and writes a subtotal per administration, and `createReturn()` throws
+      `VatFiscalUnityMemberException` for a member, which `POST /api/vat-returns` answers 409 naming the unity (shown by
+      the Prepare return dialog). The return file carries the unity's VAT number (`btwNummer`). Pages `VatFiscalUnities`
+      and `VatFiscalUnityDetail` (Taxes menu); `VATReturnDetail` shows the unity, the source administration per line and
+      a "Subtotals per administration" section. Tests: `VATReturnServiceTest` (representative, member, outside the
+      unity), `VatFiscalUnityResolverTest` (6), `VATReturnControllerGapsTest::testCreateForAFiscalUnityMemberIsA409NamingTheUnity`,
+      `VatReturnReportGeneratorTest::testAFiscalUnitysFileCarriesTheUnitysVatNumber`, `vatReturnPrepare.spec.js`.
 
 ## 6. Docs
 
