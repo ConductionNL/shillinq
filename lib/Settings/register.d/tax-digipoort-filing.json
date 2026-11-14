@@ -8,7 +8,7 @@
     "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
   },
   "info": {
-    "version": "0.1.0-tax-digipoort-filing"
+    "version": "0.2.0-tax-digipoort-filing"
   },
   "components": {
     "schemas": {
@@ -37,6 +37,13 @@
             "example": "btw-2026-q3",
             "title": "Source return"
           }
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "validate": {
+              "requires": "OCA\\Shillinq\\Guard\\XbrlInstanceValidationGuard::requireValidInstance"
+            }
+          }
         }
       },
       "BtwAangifte": {
@@ -63,6 +70,57 @@
               "kvk-jaarrekening"
             ],
             "title": "Entry points"
+          },
+          "requiredConcepts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nullable": true,
+            "description": "Per entry point, the concepts an instance must report before it may be validated, as prefix:name or bare name (any prefix), such as {\"kvk-jaarrekening\": [\"jenv-bw2-i:Equity\"]}. Read by the validation guard of XbrlInstance.",
+            "example": {
+              "kvk-jaarrekening": [
+                "jenv-bw2-i:Equity",
+                "jenv-bw2-i:Assets"
+              ]
+            },
+            "title": "Required concepts"
+          },
+          "summations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryPoint": {
+                  "type": "string"
+                },
+                "total": {
+                  "type": "string"
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "description": "Totals that must equal the sum of their parts in an instance of the named entry point, such as total assets as the sum of fixed and current assets. Read by the validation guard of XbrlInstance.",
+            "example": [
+              {
+                "entryPoint": "kvk-jaarrekening",
+                "total": "jenv-bw2-i:Assets",
+                "parts": [
+                  "jenv-bw2-i:AssetsNoncurrent",
+                  "jenv-bw2-i:AssetsCurrent"
+                ]
+              }
+            ],
+            "title": "Summations"
           }
         }
       }

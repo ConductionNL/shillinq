@@ -227,5 +227,17 @@ final class GuardRegistrar {
 				);
 			}
 		);
+
+		$context->registerService(
+			'OCA\Shillinq\Guard\XbrlInstanceValidationGuard::requireValidInstance',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(XbrlInstanceValidationGuard::class),
+					method: 'requireValidInstance',
+					denyMessage: 'The XBRL instance could not be checked against its entry point; it cannot be validated now.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
 	}//end register()
 }//end class

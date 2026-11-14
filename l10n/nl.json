@@ -6904,7 +6904,14 @@
         "The paid date must read YYYY-MM-DD.": "De betaaldatum moet de vorm JJJJ-MM-DD hebben.",
         "Give a reason for the rejection.": "Geef een reden voor de afwijzing.",
         "The payout step could not be carried out.": "De stap op de uitbetaling kon niet worden uitgevoerd.",
-        "Payout updated.": "Uitbetaling bijgewerkt."
+        "Payout updated.": "Uitbetaling bijgewerkt.",
+        "The reporting period is missing.": "De rapportageperiode ontbreekt.",
+        "No taxonomy is effective for this period that carries the entry point %s.": "Voor deze periode geldt geen taxonomie met het entrypoint %s.",
+        "The instance has no valid XBRL document.": "De instantie heeft geen geldig XBRL-document.",
+        "The entity identifier is missing.": "De identificatie van de entiteit ontbreekt.",
+        "The instance names no period in its context.": "De context van de instantie noemt geen periode.",
+        "The required concept %s is missing.": "Het verplichte concept %s ontbreekt.",
+        "The total %1$s (%2$s) is not the sum of %3$s (%4$s).": "Het totaal %1$s (%2$s) is niet de som van %3$s (%4$s)."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

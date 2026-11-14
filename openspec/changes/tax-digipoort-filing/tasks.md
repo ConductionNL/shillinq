@@ -10,7 +10,7 @@
 
 ## 2. Validation
 
-- [ ] 2.1 Add `XbrlInstanceValidationGuard` as the `requires` of `validate` (REQ-TDF-003). Verify: PHPUnit for each failing item and a clean instance.
+- [x] 2.1 Add `XbrlInstanceValidationGuard` as the `requires` of `validate` (REQ-TDF-003). Verify: PHPUnit for each failing item and a clean instance. — built: the guard (registered beside the other `requires` guards, declared on `validate` in the change's fragment) refuses with every failing item in one sentence each: a missing required concept, the reporting period, the entity identifier, the context period, a total that is not the sum of its parts, and no taxonomy effective for the period that carries the entry point. What is required and what adds up is data on the taxonomy record (`requiredConcepts`, `summations`, new on `XBRLTaxonomy`), picked by `XbrlTaxonomyLookup`; `XbrlInstanceCheck` reads the instance XML. PHPUnit `XbrlInstanceCheckTest` (7), `XbrlTaxonomyLookupTest` (4), `XbrlInstanceValidationGuardTest` (4), `TaxDigipoortFilingFragmentTest` (+2)
 
 ## 3. Hand-off
 

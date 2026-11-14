@@ -2491,6 +2491,14 @@
     [
         "registerService",
         [
+            "'OCA\\\\Shillinq\\\\Guard\\\\XbrlInstanceValidationGuard::requireValidInstance'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\FiscalYearGuard::requireAllPeriodsClosedForYear'",
             "Closure",
             "true"
