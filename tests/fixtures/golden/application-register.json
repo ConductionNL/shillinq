@@ -2221,6 +2221,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\BillableHoursSource'",
+            "'OCA\\\\Shillinq\\\\Service\\\\Billing\\\\UnavailableBillableHours'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Salarisbureau\\\\SalarisbureauAdapterInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Salarisbureau\\\\LogSalarisbureauAdapter'"
         ]
