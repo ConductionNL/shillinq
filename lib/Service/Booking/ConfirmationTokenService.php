@@ -461,7 +461,20 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 
 		$appointment['confirmationRequestStatus'] = $status;
 		$appointment['confirmationRequestAt'] = $this->nowIso();
+		$this->saveRequestStatus(appointment: $appointment);
 
+	}//end recordRequest()
+
+	/**
+	 * Save the appointment with its request status, logging a failed write.
+	 *
+	 * @param array<string, mixed> $appointment The appointment with its request status.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 */
+	private function saveRequestStatus(array $appointment): void {
 		try {
 			$this->container->get('OCA\\OpenRegister\\Service\\ObjectService')->saveObject(
 				object: $appointment,
@@ -475,7 +488,7 @@ class ConfirmationTokenService implements ConfirmationTokenServiceInterface {
 				['appointmentId' => (string)($appointment['appointmentId'] ?? ''), 'exception' => $e->getMessage()]
 			);
 		}
-	}//end recordRequest()
+	}//end saveRequestStatus()
 
 	/**
 	 * Send the confirmation request through Nextcloud's mailer: the confirm

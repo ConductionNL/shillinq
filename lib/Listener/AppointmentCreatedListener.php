@@ -112,14 +112,28 @@ class AppointmentCreatedListener implements IEventListener {
 			return null;
 		}
 
-		// The stored id, so the send can be recorded on this appointment (REQ-BCF-013).
-		if (isset($appointment['id']) === false && is_string($entity->getUuid()) === true && $entity->getUuid() !== '') {
-			$appointment['id'] = $entity->getUuid();
+		return self::withStoredId(appointment: $appointment, uuid: $entity->getUuid());
+
+	}//end pendingAppointment()
+
+	/**
+	 * The appointment with its stored id, so the send can be recorded on it (REQ-BCF-013).
+	 *
+	 * @param array<string,mixed> $appointment The appointment.
+	 * @param mixed               $uuid        The stored object's uuid.
+	 *
+	 * @return array<string,mixed> The appointment, with `id` set when it had none.
+	 *
+	 * @spec openspec/changes/bookings-messages-and-embedding/specs/bookings-confirm-flow/spec.md#requirement-the-confirmation-request-reaches-the-customer-by-email-req-bcf-013
+	 */
+	private static function withStoredId(array $appointment, mixed $uuid): array {
+		if (isset($appointment['id']) === false && is_string($uuid) === true && $uuid !== '') {
+			$appointment['id'] = $uuid;
 		}
 
 		return $appointment;
 
-	}//end pendingAppointment()
+	}//end withStoredId()
 
 	/**
 	 * Whether the appointment has an id and is pending customer confirmation.
