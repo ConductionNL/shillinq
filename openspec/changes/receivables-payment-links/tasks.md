@@ -4,14 +4,14 @@
 
 ## 1. Provider
 
-- [ ] 1.1 Open the integriq issue for a typed payment command event (ADR-041) calling `PaymentIntentService::createPayment()` with a result slot for `paymentIntentId`, `providerPaymentId` and `checkoutUrl`; link it in the PR body (REQ-RPL-001). Verify: the issue link in the PR body.
-- [ ] 1.2 Add `lib/Service/External/Integriq/IntegriqPaymentAdapter.php` implementing `MolliePaymentAdapterInterface`, fail closed to dormant with a reason, bind it at `Application.php:497` and remove the misleading comment (REQ-RPL-001, REQ-RPL-002). Verify: PHPUnit with a handled event, an unhandled event, integriq absent and a log-provider source.
+- [x] 1.1 (no issue needed: integriq development ships `OCA\Integriq\Event\PaymentRequestedEvent` and its listener, built by integriq `messaging-payment-command-settlements-and-point-of-sale`; named in the PR body) Open the integriq issue for a typed payment command event (ADR-041) calling `PaymentIntentService::createPayment()` with a result slot for `paymentIntentId`, `providerPaymentId` and `checkoutUrl`; link it in the PR body (REQ-RPL-001). Verify: the issue link in the PR body.
+- [x] 1.2 (bound in `lib/Service/ServiceRegistrar.php`, where the alias now lives; `tests/Unit/Service/External/Integriq/IntegriqPaymentAdapterTest.php`; a verbatim test stub of the event under `tests/stubs/Integriq/Event/`) Add `lib/Service/External/Integriq/IntegriqPaymentAdapter.php` implementing `MolliePaymentAdapterInterface`, fail closed to dormant with a reason, bind it at `Application.php:497` and remove the misleading comment (REQ-RPL-001, REQ-RPL-002). Verify: PHPUnit with a handled event, an unhandled event, integriq absent and a log-provider source.
 - [ ] 1.3 Add `providerPaymentId`, `checkoutExpiresAt` and `linkSentAt` to `PaymentRequest`, store them from every raise path (leges, case leaf, contribution raise, portal pay) (REQ-RPL-001). Verify: `npm run check:registers`; PHPUnit per raise path asserting the stored link.
 
 ## 2. Status
 
 - [x] 2.1 Take `nl.conduction.payment.status` CloudEvents from integriq's event register (slug-resolved) into `PaymentReconciliationService::reconcile()` (REQ-RPL-003). Verify: PHPUnit with a real `ObjectCreatedEvent` carrying an id-stamped entity for captured, failed and a repeat.
-- [ ] 2.2 Update `connections.json` so the Mollie row reports integriq's payment source instead of `reportedOnly` (REQ-RPL-002). Verify: the External connections page shows the source state on a seeded instance.
+- [x] 2.2 (the row links integriq's `mollie-payments` source template and is no longer reported by shillinq: `mollie` left `ConnectionReportService::FAMILIES`; the seeded-instance page check is not done here) Update `connections.json` so the Mollie row reports integriq's payment source instead of `reportedOnly` (REQ-RPL-002). Verify: the External connections page shows the source state on a seeded instance.
 
 ## 3. Pay link
 
