@@ -8,7 +8,7 @@
 
 ## 2. Resolver
 
-- [ ] 2.1 Add `lib/Service/BillableRateService.php`: assignment lookup, effective `RateCardVersion`, tier match over `RateSchedule` per design D3, the `no-rate` answer with its four reasons, and a `RateRecord` write per resolution (REQ-BRPH-001, REQ-BRPH-002). Verify: PHPUnit for each tier, the mid-month change, each no-rate reason, a cross-administration card that never resolves, and the RateRecord fields.
+- [x] 2.1 Add `lib/Service/BillableRateService.php`: assignment lookup, effective `RateCardVersion`, tier match over `RateSchedule` per design D3, the `no-rate` answer with its four reasons, and a `RateRecord` write per resolution (REQ-BRPH-001, REQ-BRPH-002). Verify: PHPUnit for each tier, the mid-month change, each no-rate reason, a cross-administration card that never resolves, and the RateRecord fields.
 - [ ] 2.2 Remove `RateCardResolver::fallbackRate()`; keep the `RateCard` read only for an existing `BillableInvoice` that names a `RateCard` id (REQ-BRPH-002). Verify: PHPUnit that an unknown card returns no rate, not 10000 cents.
 - [ ] 2.3 Fill `ProjectAssignment.recognisedRate` from `BillableRateService` on assignment create and update and on `RateCardVersion` activation (REQ-BRPH-004). Verify: PHPUnit with a real `ObjectUpdatedEvent` (never a faked event) for the role change of the scenario.
 
