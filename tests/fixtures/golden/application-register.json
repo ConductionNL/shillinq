@@ -1022,6 +1022,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CrossSubsidyScanInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\CrossSubsidyScan'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\CustomerBridgeMetricsServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\Pipelinq\\\\CustomerBridgeMetricsService'"
         ]
