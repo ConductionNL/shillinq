@@ -35,13 +35,13 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ConflictDetectionServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Contracts\TransactionalGuardInterface;
 use OCA\Shillinq\Service\Booking\CalendarRows;
-use OCA\Shillinq\Service\Booking\TransactionalGuard;
-use OCA\Shillinq\Service\ConflictDetectionService;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -69,26 +69,26 @@ class CalendarController extends Controller {
 	 *
 	 * @param IRequest $request The request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
-	 * @param ConflictDetectionService $conflicts Conflict detection service (REQ-004).
-	 * @param AdministrationContextService $context Per-administration IDOR guard (ADR-005).
-	 * @param TransactionalGuard $guard Transaction + row-lock facade (production-wired with IDBConnection).
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
+	 * @param ConflictDetectionServiceInterface $conflicts Conflict detection service (REQ-004).
+	 * @param AdministrationContextServiceInterface $context Per-administration IDOR guard (ADR-005).
+	 * @param TransactionalGuardInterface $guard Transaction + row-lock facade (production-wired with IDBConnection).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
 	 * @param IGroupManager $groupManager Nextcloud admin bypass for the booking guard.
-	 * @param ObjectTransitionRunner $transitions Runs the declared booking transitions.
+	 * @param ObjectTransitionRunnerInterface $transitions Runs the declared booking transitions.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly RegisterLocation $settings,
-		private readonly ConflictDetectionService $conflicts,
-		private readonly AdministrationContextService $context,
-		private readonly TransactionalGuard $guard,
+		private readonly RegisterLocationInterface $settings,
+		private readonly ConflictDetectionServiceInterface $conflicts,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly TransactionalGuardInterface $guard,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 		private readonly IGroupManager $groupManager,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly ObjectTransitionRunnerInterface $transitions,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -568,7 +568,7 @@ class CalendarController extends Controller {
 	 * Parse and validate the `createBooking()` request body: required
 	 * fields present, `startTime`/`endTime`
 	 * parseable ISO 8601 timestamps, and the resulting duration at least
-	 * `ConflictDetectionService::MIN_DURATION_MINUTES`. Extracted out of
+	 * `ConflictDetectionServiceInterface::MIN_DURATION_MINUTES`. Extracted out of
 	 * `createBooking()` (rather than inlined there) to keep that method's
 	 * NPath complexity under this app's threshold (issue #506) — the
 	 * validation moves, none of the checks change.
@@ -599,9 +599,9 @@ class CalendarController extends Controller {
 		}
 
 		$durationSeconds = ($end->getTimestamp() - $start->getTimestamp());
-		if ($durationSeconds < (ConflictDetectionService::MIN_DURATION_MINUTES * 60)) {
+		if ($durationSeconds < (ConflictDetectionServiceInterface::MIN_DURATION_MINUTES * 60)) {
 			return new JSONResponse(
-				['error' => 'Booking duration must be at least ' . ConflictDetectionService::MIN_DURATION_MINUTES . ' minutes'],
+				['error' => 'Booking duration must be at least ' . ConflictDetectionServiceInterface::MIN_DURATION_MINUTES . ' minutes'],
 				Http::STATUS_BAD_REQUEST,
 			);
 		}

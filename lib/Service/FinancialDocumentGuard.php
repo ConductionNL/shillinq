@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Service;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 
 /**
  * Refuses an act before it writes.

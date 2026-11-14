@@ -36,13 +36,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
 
 /**
  * Validates the conditional shape and the uniqueness of a PaymentRequest.
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
  */
-final class ObjectPaymentRequestValidator {
+final class ObjectPaymentRequestValidator implements ObjectPaymentRequestValidatorInterface {
 	/**
 	 * The subject kinds the schema accepts.
 	 *

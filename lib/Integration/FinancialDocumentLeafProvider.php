@@ -33,12 +33,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
-use OCA\Shillinq\Service\FinancialDocumentActions;
-use OCA\Shillinq\Service\FinancialDocumentAuthoring;
-use OCA\Shillinq\Service\FinancialDocumentFinder;
-use OCA\Shillinq\Service\FinancialDocumentRows;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentFinderInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentLeafProviderInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentRowsInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use RuntimeException;
 
 /**
@@ -46,31 +47,25 @@ use RuntimeException;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
-final class FinancialDocumentLeafProvider implements IntegrationProvider {
-	/**
-	 * The leaf id, equal on both halves so gate-24 can pair them.
-	 *
-	 * @var string
-	 */
-	public const LEAF_ID = 'shillinq-financial-documents';
+final class FinancialDocumentLeafProvider implements IntegrationProvider, FinancialDocumentLeafProviderInterface {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param FinancialDocumentFinder $finder Reads the documents linked to an object.
-	 * @param FinancialDocumentRows $rows Turns a document into a row.
-	 * @param PaymentActionAuthorizer $authorizer Which acts the caller holds, so the panel offers only those.
-	 * @param FinancialDocumentActions $actions Issue an invoice and request payment of one.
-	 * @param FinancialDocumentAuthoring $authoring Start a quote, credit an invoice and raise a payout.
+	 * @param FinancialDocumentFinderInterface $finder Reads the documents linked to an object.
+	 * @param FinancialDocumentRowsInterface $rows Turns a document into a row.
+	 * @param PaymentActionAuthorizerInterface $authorizer Which acts the caller holds, so the panel offers only those.
+	 * @param FinancialDocumentActionsInterface $actions Issue an invoice and request payment of one.
+	 * @param FinancialDocumentAuthoringInterface $authoring Start a quote, credit an invoice and raise a payout.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly FinancialDocumentFinder $finder,
-		private readonly FinancialDocumentRows $rows,
-		private readonly PaymentActionAuthorizer $authorizer,
-		private readonly FinancialDocumentActions $actions,
-		private readonly FinancialDocumentAuthoring $authoring,
+		private readonly FinancialDocumentFinderInterface $finder,
+		private readonly FinancialDocumentRowsInterface $rows,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
+		private readonly FinancialDocumentActionsInterface $actions,
+		private readonly FinancialDocumentAuthoringInterface $authoring,
 	) {
 	}//end __construct()
 
@@ -217,12 +212,12 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 			'total' => count($items),
 			'nextCursor' => null,
 			'acts' => [
-				'issueInvoice' => $this->authorizer->may(FinancialDocumentActions::ACTION_ISSUE_INVOICE),
-				'requestPayment' => $this->authorizer->may(PaymentActionAuthorizer::ACTION_REQUEST),
-				'administerPayments' => $this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER),
-				'createQuote' => $this->authorizer->may(FinancialDocumentAuthoring::ACTION_CREATE_QUOTE),
-				'creditInvoice' => $this->authorizer->may(FinancialDocumentAuthoring::ACTION_CREDIT_INVOICE),
-				'raisePayout' => $this->authorizer->may(FinancialDocumentAuthoring::ACTION_RAISE_PAYOUT),
+				'issueInvoice' => $this->authorizer->may(FinancialDocumentActionsInterface::ACTION_ISSUE_INVOICE),
+				'requestPayment' => $this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_REQUEST),
+				'administerPayments' => $this->authorizer->may(PaymentActionAuthorizerInterface::ACTION_ADMINISTER),
+				'createQuote' => $this->authorizer->may(FinancialDocumentAuthoringInterface::ACTION_CREATE_QUOTE),
+				'creditInvoice' => $this->authorizer->may(FinancialDocumentAuthoringInterface::ACTION_CREDIT_INVOICE),
+				'raisePayout' => $this->authorizer->may(FinancialDocumentAuthoringInterface::ACTION_RAISE_PAYOUT),
 			],
 		];
 	}//end list()

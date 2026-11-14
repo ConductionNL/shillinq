@@ -32,7 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AppointmentConfirmationServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\IAppConfig;
@@ -43,7 +44,7 @@ use Throwable;
 /**
  * Service implementing the appointment confirmation workflow.
  */
-class AppointmentConfirmationService {
+class AppointmentConfirmationService implements AppointmentConfirmationServiceInterface {
 	/**
 	 * Status of a freshly created, self-booked appointment.
 	 *

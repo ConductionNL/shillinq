@@ -74,26 +74,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\BbvProgrammeBudgetServiceInterface;
+
 /**
  * Assembles the provincies-BBV dashboard envelopes (REQ-BBC-001..003, REQ-BBL-001).
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
-class BbvProgrammeBudgetService {
-	/**
-	 * The seven BBV programme codes REQ-BBC-002 enumerates.
-	 *
-	 * @var array<int,string>
-	 */
-	public const PROGRAMMES = [
-		'ruimte',
-		'mobiliteit',
-		'water',
-		'milieu',
-		'cultuur',
-		'economie',
-		'bestuur',
-	];
+class BbvProgrammeBudgetService implements BbvProgrammeBudgetServiceInterface {
 
 	/**
 	 * The scope of an envelope with nothing to report.

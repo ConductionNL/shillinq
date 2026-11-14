@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ContributionDebtorResolver;
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCA\Shillinq\Service\FinancialDocumentGuard;
 use OCA\Shillinq\Service\PaymentActionAppGrant;

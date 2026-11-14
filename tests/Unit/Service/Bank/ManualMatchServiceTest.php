@@ -36,7 +36,7 @@ use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
 use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;

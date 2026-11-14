@@ -27,7 +27,7 @@ use OCA\Shillinq\Integration\ContractLeafProvider;
 use OCA\Shillinq\Integration\FinancialDocumentLeafProvider;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentActions;
 use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCA\Shillinq\Service\FinancialDocumentFinder;

@@ -53,6 +53,7 @@ namespace OCA\Shillinq\Service\Pipelinq;
 
 use OCA\OpenRegister\AppHost\IMetricsProvider;
 use OCA\OpenRegister\AppHost\Observability\MetricSample;
+use OCA\Shillinq\Kernel\Contracts\CustomerBridgeMetricsServiceInterface;
 use OCP\ICache;
 use OCP\ICacheFactory;
 
@@ -71,7 +72,7 @@ use OCP\ICacheFactory;
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
  * @spec openspec/specs/apphost-adoption/spec.md
  */
-final class CustomerBridgeMetricsService implements IMetricsProvider {
+final class CustomerBridgeMetricsService implements IMetricsProvider, CustomerBridgeMetricsServiceInterface {
 	/**
 	 * Cache namespace shared by every counter so a flush wipes the lot.
 	 *
@@ -391,7 +392,6 @@ final class CustomerBridgeMetricsService implements IMetricsProvider {
 	 */
 	public function metrics(): array {
 		$snapshot = $this->snapshot();
-
 
 		$samples = [];
 		foreach (self::METRIC_NAMES as $key => [$metric, $type]) {
