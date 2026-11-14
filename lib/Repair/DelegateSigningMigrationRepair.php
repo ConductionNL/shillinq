@@ -50,8 +50,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\RegisterLocation;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -71,12 +71,12 @@ class DelegateSigningMigrationRepair implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 */
 	public function __construct(
-		private RegisterLocation $registerLocation,
+		private RegisterLocationInterface $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 	) {

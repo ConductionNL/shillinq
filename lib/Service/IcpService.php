@@ -35,9 +35,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\IcpServiceInterface;
+use OCP\IAppConfig;
 use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
@@ -51,7 +52,7 @@ use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class IcpService {
+class IcpService implements IcpServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *

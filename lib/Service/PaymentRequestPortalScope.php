@@ -35,12 +35,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
+
 /**
  * Gives a payment request without an invoice its portal scope.
  *
  * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
  */
-final class PaymentRequestPortalScope {
+final class PaymentRequestPortalScope implements PaymentRequestPortalScopeInterface {
 	/**
 	 * The request with `customerId` set when it has no invoice and a customer
 	 * debtor; otherwise unchanged.

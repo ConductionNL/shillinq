@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;

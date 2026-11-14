@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Commitment;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -47,7 +48,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentLedger {
+class CommitmentLedger implements CommitmentLedgerInterface {
 	/**
 	 * Constructor.
 	 *

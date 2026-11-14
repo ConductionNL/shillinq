@@ -47,14 +47,15 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Service\Vat\VatReturnBox;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Service\Jurisdiction\AdministrationJurisdiction;
 use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
 
@@ -72,7 +73,7 @@ use OCA\Shillinq\Service\Jurisdiction\JurisdictionRefusedException;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class VATReturnService {
+class VATReturnService implements VATReturnServiceInterface {
 	/**
 	 * The totals a KOR return carries: KOR exempts both collected and paid VAT (REQ-VAT-004).
 	 *
