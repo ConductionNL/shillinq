@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ContractCostRollupServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -47,13 +48,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
  */
-final class ContractCostRollupService {
-	/**
-	 * The schema holding contracts.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA = 'Contract';
+final class ContractCostRollupService implements ContractCostRollupServiceInterface {
 
 	/**
 	 * Constructor.

@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\SlotServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -51,7 +52,7 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag)    Pre-existing debt (issue
  *     #506): changing this signature would ripple to callers; deferred.
  */
-class SlotService {
+class SlotService implements SlotServiceInterface {
 
 	/**
 	 * Default slot computation step in minutes. Matches the AppointmentGuard
@@ -59,11 +60,6 @@ class SlotService {
 	 * grid can override via app config in a follow-up change.
 	 */
 	public const SLOT_STEP_MINUTES = 15;
-
-	/**
-	 * Cache TTL in seconds per REQ-WSW-002.
-	 */
-	public const SLOT_CACHE_TTL_SECONDS = 300;
 
 	/**
 	 * Default operating hours when the Resource record has none configured.

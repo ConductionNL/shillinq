@@ -34,8 +34,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\Project\AssignmentHours;
+use OCA\Shillinq\Kernel\Contracts\AssignmentHoursInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -52,13 +52,13 @@ class AssignmentHoursListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param AssignmentHours        $hours          Sums and writes the hours budget.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves an entity's schema slug.
+	 * @param AssignmentHoursInterface        $hours          Sums and writes the hours budget.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves an entity's schema slug.
 	 * @param LoggerInterface        $logger         Logger.
 	 */
 	public function __construct(
-		private readonly AssignmentHours $hours,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly AssignmentHoursInterface $hours,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -104,7 +104,7 @@ class AssignmentHoursListener implements IEventListener {
 	 * @return void
 	 */
 	private function onHour(?ObjectEntity $entity, ?string $ignoreHourId): void {
-		if ($entity === null || $this->schemaResolver->schemaSlug(entity: $entity) !== AssignmentHours::HOUR_SCHEMA) {
+		if ($entity === null || $this->schemaResolver->schemaSlug(entity: $entity) !== AssignmentHoursInterface::HOUR_SCHEMA) {
 			return;
 		}
 
@@ -129,7 +129,7 @@ class AssignmentHoursListener implements IEventListener {
 		$oldEntity = $event->getOldObject();
 		$old = ($oldEntity?->getObject() ?? []);
 
-		if ($slug === AssignmentHours::ASSIGNMENT_SCHEMA) {
+		if ($slug === AssignmentHoursInterface::ASSIGNMENT_SCHEMA) {
 			// Without the old version there is no telling whether the estimate
 			// changed; the listener's own writes always carry it.
 			if ($oldEntity !== null
@@ -141,7 +141,7 @@ class AssignmentHoursListener implements IEventListener {
 			return;
 		}
 
-		if ($slug !== AssignmentHours::HOUR_SCHEMA) {
+		if ($slug !== AssignmentHoursInterface::HOUR_SCHEMA) {
 			return;
 		}
 

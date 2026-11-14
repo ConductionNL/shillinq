@@ -34,13 +34,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 
 /**
  * Appends settlements and derives the state a human reads.
  *
  * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
  */
-final class PaymentSettlementService {
+final class PaymentSettlementService implements PaymentSettlementServiceInterface {
 	/**
 	 * The ways money can arrive other than through the gateway.
 	 *

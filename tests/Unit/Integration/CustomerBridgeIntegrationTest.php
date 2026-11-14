@@ -59,11 +59,11 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
-use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
-use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
+use OCA\Shillinq\Kernel\Model\KlantbeeldResult;
+use OCA\Shillinq\Kernel\Model\PipelinqContact;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\RetryPolicy;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Tests\Integration\Pipelinq\PipelinqMockServer;
 use OCP\Http\Client\IClientService;
@@ -723,7 +723,7 @@ final class CustomerBridgeIntegrationTest extends TestCase {
 
 		self::assertNotNull($contactException, 'Contact read must propagate transport error when no cache');
 		self::assertSame(
-			'OCA\\Shillinq\\Service\\Pipelinq\\PipelinqTransportException',
+			'OCA\\Shillinq\\Kernel\\Exception\\PipelinqTransportException',
 			$contactException::class
 		);
 

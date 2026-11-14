@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Lifecycle;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\Kernel\Contracts\MandateEnforcerInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
  */
-class MandateEnforcer {
+class MandateEnforcer implements MandateEnforcerInterface {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
