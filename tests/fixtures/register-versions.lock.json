@@ -80,6 +80,14 @@
         {
             "appVersion": "0.5.7-unstable.20261114110000",
             "versionsSha256": "5e9837d5e191c2b5c72fd4899a673c394f85e10f63fd71a6b7116e127b2ba887"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114130000",
+            "versionsSha256": "f728fb4065a5615f8629d79c69e3d11cbf1db0b4ba3b8305afd429c23c581636"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114151000",
+            "versionsSha256": "19d9273095b19548074822d33f842183beb45b0e9cd9f8f52e7f114d66a26f8e"
         }
     ],
     "versions": {
@@ -600,6 +608,8 @@
         "schema:WaterschapHeffingPosting": "0.1.0",
         "schema:WbsoBeschikking": "0.1.0",
         "schema:WbsoMededeling": "0.1.0",
+        "schema:WebshopChannel": "0.1.0",
+        "schema:WebshopOrder": "0.1.0",
         "schema:Werkgever": "0.1.0",
         "schema:Werknemer": "0.1.0",
         "schema:WidgetAccessKey": "0.1.0",
