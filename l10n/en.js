@@ -4686,6 +4686,7 @@ OC.L10N.register(
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
         "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.": "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.",
         "Payouts to pay": "Payouts to pay",
         "To approve": "To approve",
         "To pay": "To pay",
