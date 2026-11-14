@@ -4733,7 +4733,16 @@ OC.L10N.register(
         "Ended subscriptions per quarter": "Ended subscriptions per quarter",
         "Lost monthly amount per reason": "Lost monthly amount per reason",
         "Ended subscriptions": "Ended subscriptions",
-        "Lost per month": "Lost per month"
+        "Lost per month": "Lost per month",
+        "Exempt from withdrawal": "Exempt from withdrawal",
+        "A consumer who books this service online cannot withdraw, for example a leisure service on a specific date. Counts only with a named exemption reason.": "A consumer who books this service online cannot withdraw, for example a leisure service on a specific date. Counts only with a named exemption reason.",
+        "Exemption reason": "Exemption reason",
+        "Why this service is exempt from the right of withdrawal, shown to the consumer, for example: leisure service on a specific date.": "Why this service is exempt from the right of withdrawal, shown to the consumer, for example: leisure service on a specific date.",
+        "This booking was not made online, so there is no right of withdrawal.": "This booking was not made online, so there is no right of withdrawal.",
+        "This booking is no longer open, so it cannot be withdrawn.": "This booking is no longer open, so it cannot be withdrawn.",
+        "This booking cannot be withdrawn: %s. You can still cancel it under the cancellation policy.": "This booking cannot be withdrawn: %s. You can still cancel it under the cancellation policy.",
+        "The withdrawal period ended on %s. You can still cancel under the cancellation policy.": "The withdrawal period ended on %s. You can still cancel under the cancellation policy.",
+        "This appointment has started, so it can no longer be withdrawn.": "This appointment has started, so it can no longer be withdrawn."
     },
     "nplurals=2; plural=(n != 1);"
 )

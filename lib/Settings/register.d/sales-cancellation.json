@@ -169,9 +169,42 @@
       ]
      }
     }
+   },
+   "Service": {
+    "slug": "Service",
+    "version": "0.3.0",
+    "properties": {
+     "withdrawalExempt": {
+      "type": "boolean",
+      "default": false,
+      "title": "Exempt from withdrawal",
+      "description": "A consumer who books this service online cannot withdraw, for example a leisure service on a specific date. Counts only with a named exemption reason."
+     },
+     "withdrawalExemptionReason": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 200,
+      "title": "Exemption reason",
+      "description": "Why this service is exempt from the right of withdrawal, shown to the consumer, for example: leisure service on a specific date."
+     }
+    }
    }
   },
   "objects": [
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "Administration",
+     "slug": "adm-kapsalon-knip"
+    },
+    "administrationCode": "KNIP-001",
+    "name": "Kapsalon Knip",
+    "legalForm": "eenmanszaak",
+    "presentationCurrency": "EUR",
+    "functionalCurrency": "EUR",
+    "vatRegime": "standard",
+    "status": "actief"
+   },
    {
     "@self": {
      "register": "shillinq",
@@ -261,6 +294,29 @@
     "cancellationQuarter": "2026-Q3",
     "cancellationMonthlyAmount": 116.67,
     "deliveryChannel": "email"
+   },
+   {
+    "@self": {
+     "register": "shillinq",
+     "schema": "Service",
+     "slug": "svc-workshop-bloemschikken-12-oktober"
+    },
+    "serviceId": "svc-workshop-bloemschikken-12-oktober",
+    "name": "Workshop bloemschikken 12 oktober",
+    "description": "Workshop van drie uur op 12 oktober 2026.",
+    "duration": 180,
+    "currency": "EUR",
+    "status": "active",
+    "withdrawalExempt": true,
+    "withdrawalExemptionReason": "leisure service on a specific date",
+    "basePrice": 45.0,
+    "administrationId": "adm-kapsalon-knip",
+    "code": "workshop-bloemschikken-12-oktober",
+    "prepareTime": 0,
+    "bufferBefore": 0,
+    "bufferAfter": 15,
+    "dynamicPricing": false,
+    "serviceCategory": "Workshops"
    }
   ]
  }

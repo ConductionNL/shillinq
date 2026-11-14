@@ -6921,7 +6921,16 @@ OC.L10N.register(
         "Ended subscriptions per quarter": "Beëindigde abonnementen per kwartaal",
         "Lost monthly amount per reason": "Verloren maandbedrag per reden",
         "Ended subscriptions": "Beëindigde abonnementen",
-        "Lost per month": "Verloren per maand"
+        "Lost per month": "Verloren per maand",
+        "Exempt from withdrawal": "Uitgezonderd van herroeping",
+        "A consumer who books this service online cannot withdraw, for example a leisure service on a specific date. Counts only with a named exemption reason.": "Een consument die deze dienst online boekt, kan niet herroepen, bijvoorbeeld bij vrijetijdsbesteding op een vaste datum. Geldt alleen met een genoemde reden.",
+        "Exemption reason": "Reden van uitzondering",
+        "Why this service is exempt from the right of withdrawal, shown to the consumer, for example: leisure service on a specific date.": "Waarom deze dienst is uitgezonderd van het herroepingsrecht, getoond aan de consument, bijvoorbeeld: vrijetijdsbesteding op een vaste datum.",
+        "This booking was not made online, so there is no right of withdrawal.": "Deze boeking is niet online gedaan, dus er is geen herroepingsrecht.",
+        "This booking is no longer open, so it cannot be withdrawn.": "Deze boeking staat niet meer open en kan dus niet worden herroepen.",
+        "This booking cannot be withdrawn: %s. You can still cancel it under the cancellation policy.": "Deze boeking kan niet worden herroepen: %s. U kunt haar nog annuleren volgens de annuleringsvoorwaarden.",
+        "The withdrawal period ended on %s. You can still cancel under the cancellation policy.": "De herroepingstermijn is op %s verlopen. U kunt nog annuleren volgens de annuleringsvoorwaarden.",
+        "This appointment has started, so it can no longer be withdrawn.": "Deze afspraak is begonnen en kan dus niet meer worden herroepen."
     },
     "nplurals=2; plural=(n != 1);"
 )
