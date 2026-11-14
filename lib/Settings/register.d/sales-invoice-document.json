@@ -1,0 +1,151 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "sales-invoice-document",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json",
+    "description": "The invoice document a customer receives: an InvoiceLayout per administration (logo, primary and accent colour, layout variant, footer text, whether QR codes show), the customer's document language and currency on CustomerMaster, and the language an invoice was written in on ARInvoice for the invoice email.",
+    "spec": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core/spec.md"
+  },
+  "info": {
+    "version": "0.1.0-sales-invoice-document"
+  },
+  "components": {
+    "schemas": {
+      "InvoiceLayout": {
+        "slug": "InvoiceLayout",
+        "icon": "PaletteOutline",
+        "version": "0.1.0",
+        "title": "Invoice Layout",
+        "description": "The house style of the invoices one administration sends: logo, colours, layout variant and footer. One record per administration; without one the classic layout without a logo is used (REQ-SID-001).",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every change to an administration's invoice layout is recorded: it decides what every invoice that administration sends looks like."
+        },
+        "x-schema-org": "schema:CreativeWork",
+        "x-spec": "openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "variant"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration this layout belongs to. One layout per administration.",
+            "example": "adm-consultancy-nl"
+          },
+          "logoFileId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Logo",
+            "description": "Nextcloud file id of the logo. The logo is embedded in the document as data, never linked.",
+            "example": "48213"
+          },
+          "primaryColor": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#1A2A6C",
+            "title": "Primary colour",
+            "description": "Hex colour of headings and the totals bar. Refused below a 4.5:1 contrast ratio against white.",
+            "example": "#1B4F72"
+          },
+          "accentColor": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#6B7280",
+            "title": "Accent colour",
+            "description": "Hex colour of rules and highlights.",
+            "example": "#F39C12"
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "classic",
+              "modern",
+              "compact"
+            ],
+            "default": "classic",
+            "title": "Layout variant",
+            "description": "Which of the three variants of the sales-invoice template renders the invoice.",
+            "example": "modern"
+          },
+          "footerText": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "title": "Footer text",
+            "description": "Free text printed at the foot of every page, such as the chamber of commerce number.",
+            "example": "KvK 12345678"
+          },
+          "showQr": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show QR codes",
+            "description": "Whether the scan-to-pay codes are printed (REQ-SID-005).",
+            "example": true
+          }
+        }
+      },
+      "CustomerMaster": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "nl",
+              "en",
+              "de",
+              "fr"
+            ],
+            "nullable": true,
+            "title": "Document language",
+            "description": "The language the customer's invoices and their emails are written in. Empty uses the administration's default language (REQ-SID-003).",
+            "example": "en"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "nullable": true,
+            "title": "Invoice currency",
+            "description": "ISO 4217 currency the customer is invoiced in. Empty uses the administration's functional currency (REQ-SID-004).",
+            "example": "GBP"
+          }
+        }
+      },
+      "ARInvoice": {
+        "properties": {
+          "documentLanguage": {
+            "type": "string",
+            "enum": [
+              "nl",
+              "en",
+              "de",
+              "fr"
+            ],
+            "nullable": true,
+            "title": "Document language",
+            "description": "The language the invoice document was written in, recorded for the invoice email (REQ-SID-003).",
+            "example": "nl"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "InvoiceLayout",
+        "slug": "invoice-layout-adm-consultancy-nl"
+      },
+      "administrationId": "adm-consultancy-nl",
+      "logoFileId": null,
+      "primaryColor": "#1B4F72",
+      "accentColor": "#F39C12",
+      "variant": "modern",
+      "footerText": "KvK 12345678, IBAN NL00 BANK 0123 4567 89 (placeholder)",
+      "showQr": true
+    }
+  ]
+}

@@ -4,8 +4,8 @@
 
 ## 1. Foundations
 
-- [ ] 1.1 Read docudesk's template rendering (development) for a QR function and record the finding in the PR; add `bacon/bacon-qr-code` only if there is none (REQ-SID-005). Verify: the finding with file and line in the PR body; `composer audit` if a package is added.
-- [ ] 1.2 Add `InvoiceLayout`, `CustomerMaster.language` and `ARInvoice.documentLanguage` in a `register.d` fragment with a default layout per administration (REQ-SID-001, REQ-SID-003). Verify: `npm run check:registers`, `npm run check:seeds`.
+- [x] 1.1 Read docudesk's template rendering (development) for a QR function and record the finding in the PR; add `bacon/bacon-qr-code` only if there is none (REQ-SID-005). Verify: the finding with file and line in the PR body; `composer audit` if a package is added.
+- [x] 1.2 Add `InvoiceLayout`, `CustomerMaster.language` and `ARInvoice.documentLanguage` in a `register.d` fragment with a default layout per administration (REQ-SID-001, REQ-SID-003). Verify: `npm run check:registers`, `npm run check:seeds`.
 
 ## 2. Template and renderer
 
