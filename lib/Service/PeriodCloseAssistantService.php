@@ -45,16 +45,17 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
-use OCP\IAppConfig;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseAssistantServiceInterface;
+use OCP\IAppConfig;
 
 /**
  * Detects incomplete pre-close tasks and formats them as close-assistant flags.
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
  */
-class PeriodCloseAssistantService {
+class PeriodCloseAssistantService implements PeriodCloseAssistantServiceInterface {
 
 	/**
 	 * Flag categories in emission order, with their severity. Unreconciled bank

@@ -42,7 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Support\DateWindow;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;

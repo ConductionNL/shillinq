@@ -29,13 +29,14 @@ namespace OCA\Shillinq\PaymentPlan;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use OCA\Shillinq\Kernel\Contracts\PaymentPlanScheduleInterface;
 
 /**
  * Pure schedule arithmetic, in cents.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
-class PaymentPlanSchedule {
+class PaymentPlanSchedule implements PaymentPlanScheduleInterface {
 	/**
 	 * The most instalments a plan may have.
 	 *

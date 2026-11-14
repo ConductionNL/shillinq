@@ -44,6 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
+use OCA\Shillinq\Kernel\Contracts\GlAccountSuggestionClientInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
@@ -54,7 +55,7 @@ use Throwable;
  *
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
-class GlAccountSuggestionClient {
+class GlAccountSuggestionClient implements GlAccountSuggestionClientInterface {
 	/**
 	 * Docudesk route name for the suggestion endpoint (NC
 	 * `{appId}.{controller}.{method}` convention for
