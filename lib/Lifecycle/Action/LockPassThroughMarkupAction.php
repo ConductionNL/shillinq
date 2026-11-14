@@ -67,6 +67,20 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	];
 
 	/**
+	 * The register slug of the claim being submitted, read once per execute().
+	 *
+	 * @var string
+	 */
+	private string $registerSlug = 'shillinq';
+
+	/**
+	 * The markup rules read so far in this execute(), per administration and year.
+	 *
+	 * @var array<string, array<int, array<string, mixed>>>
+	 */
+	private array $rules = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
@@ -99,8 +113,8 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
-		$register = $this->register();
-		$rules = [];
+		$this->registerSlug = $this->register();
+		$this->rules        = [];
 		foreach (self::ITEM_SOURCES as $schema => $source) {
 			foreach ((array)($objectData[$source['ids']] ?? []) as $itemId) {
 				if ((string)$itemId === '') {
@@ -108,9 +122,8 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 				}
 
 				$this->lockItem(
-					item: ['register' => $register, 'schema' => $schema, 'id' => (string)$itemId, 'source' => $source],
-					claim: $objectData,
-					rules: $rules
+					item: ['schema' => $schema, 'id' => (string)$itemId, 'source' => $source],
+					claim: $objectData
 				);
 			}
 		}
@@ -121,18 +134,17 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	/**
 	 * Lock one item, reading the administration's rules for its year once.
 	 *
-	 * @param array<string, mixed>                            $item  The item: register, schema, id and its ITEM_SOURCES entry.
-	 * @param array<string, mixed>                            $claim The claim.
-	 * @param array<string, array<int, array<string, mixed>>> $rules The rules read so far, per administration and year.
+	 * @param array<string, mixed> $item  The item: schema, id and its ITEM_SOURCES entry.
+	 * @param array<string, mixed> $claim The claim.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-1.2
 	 */
-	private function lockItem(array $item, array $claim, array &$rules): void {
+	private function lockItem(array $item, array $claim): void {
 		try {
 			$found = ObjectIdentifier::findScoped(
-				scoped: $this->objectService->setRegister($item['register'])->setSchema($item['schema']),
+				scoped: $this->objectService->setRegister($this->registerSlug)->setSchema($item['schema']),
 				id: $item['id']
 			);
 			if ($found === null) {
@@ -147,7 +159,7 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 			$administrationId = (string)($data['administrationId'] ?? ($claim['administrationId'] ?? ''));
 			$year = self::yearOf(date: (string)($data[$item['source']['date']] ?? ''));
 			$key = $administrationId.'|'.$year;
-			$rules[$key] ??= $this->rulesFor(register: $item['register'], administrationId: $administrationId, fiscalYear: $year);
+			$this->rules[$key] ??= $this->rulesFor(administrationId: $administrationId, fiscalYear: $year);
 
 			$category = (string)($data['category'] ?? '');
 			if ($category === '') {
@@ -155,13 +167,13 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 			}
 
 			$locked = (new PassThroughMarkupResolver())->resolve(
-				rules: $rules[$key],
+				rules: $this->rules[$key],
 				customerId: (string)($data['linkedCustomerId'] ?? ''),
 				category: $category,
 				cost: (float)($data[$item['source']['amount']] ?? 0.0)
 			);
 
-			$this->objectService->saveObject(object: array_merge($data, $locked), register: $item['register'], schema: $item['schema']);
+			$this->objectService->saveObject(object: array_merge($data, $locked), register: $this->registerSlug, schema: $item['schema']);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'[LockPassThroughMarkup] Could not lock the markup of a claim item: '.$e->getMessage(),
@@ -173,14 +185,13 @@ class LockPassThroughMarkupAction implements LifecycleActionInterface {
 	/**
 	 * The administration's markup rules for a fiscal year, as plain arrays.
 	 *
-	 * @param string $register         The register slug.
 	 * @param string $administrationId The administration.
 	 * @param int    $fiscalYear       The year, 0 when the item has no date.
 	 *
 	 * @return array<int, array<string, mixed>> The rules.
 	 */
-	private function rulesFor(string $register, string $administrationId, int $fiscalYear): array {
-		$rows = $this->objectService->setRegister($register)->setSchema('PassThroughMarkupRule')->findAll(
+	private function rulesFor(string $administrationId, int $fiscalYear): array {
+		$rows = $this->objectService->setRegister($this->registerSlug)->setSchema('PassThroughMarkupRule')->findAll(
 			['filters' => PassThroughMarkupResolver::filters(administrationId: $administrationId, fiscalYear: $fiscalYear)]
 		);
 
