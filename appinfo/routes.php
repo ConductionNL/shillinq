@@ -227,6 +227,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
             ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
 
+        // Sales-billable-rate-per-hour: a project's rated hours of one month (REQ-BRPH-003).
+            ['name' => 'projectBillableHours#index', 'url' => '/api/v1/projects/{id}/billable-hours', 'verb' => 'GET'],
+
         // Billing intake (time-expense-invoice-intake): authenticated ingress for
         // pipelinq's time-billing-handoff-emit change to POST a batch of approved
         // time entries and receive back a draft T&M BillableInvoice reference.

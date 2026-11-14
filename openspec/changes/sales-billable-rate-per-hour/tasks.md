@@ -19,7 +19,7 @@
 
 ## 4. Project page
 
-- [ ] 4.1 Add `GET /api/v1/projects/{id}/billable-hours?month=YYYY-MM` (`#[NoAdminRequired]` with the administration check on the project first) returning rows and totals per design D5 (REQ-BRPH-003). Verify: controller PHPUnit calling the method, including a project of another administration refused and the hours-source-unavailable answer.
+- [x] 4.1 Add `GET /api/v1/projects/{id}/billable-hours?month=YYYY-MM` (`#[NoAdminRequired]` with the administration check on the project first) returning rows and totals per design D5 (REQ-BRPH-003). Verify: controller PHPUnit calling the method, including a project of another administration refused and the hours-source-unavailable answer.
 - [ ] 4.2 Add the `project-billable-hours` custom widget to `ProjectDetail` in `src/manifest.json` (layout cell after `project-hours`) and its Vue component under `src/components/project/`, with month picker, billed state, totals and the not-connected empty state (REQ-BRPH-003). Verify: Vitest for totals; `npm run check:manifest`.
 - [ ] 4.3 Add `billingRoleId` to the Hours per assignment list and its edit form (REQ-BRPH-004). Verify: Vitest or manifest check that the column renders.
 

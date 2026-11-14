@@ -51,4 +51,21 @@ interface BillableHoursSource {
 	 * @spec openspec/changes/sales-time-and-expense-billing/tasks.md#task-2.1
 	 */
 	public function unbilled(string $projectId, string $from, string $to): array;
+
+	/**
+	 * Every hour on a project between two dates, billed or not.
+	 *
+	 * For the project page's Billable hours card (sales-billable-rate-per-hour
+	 * D5): the same answer as {@see unbilled()}, including hours that are
+	 * already on an invoice. Shillinq itself decides which are billed.
+	 *
+	 * @param string $projectId The project.
+	 * @param string $from      The first day, `Y-m-d`, inclusive.
+	 * @param string $to        The last day, `Y-m-d`, inclusive.
+	 *
+	 * @return array{available: bool, reason: string, hours: list<array{id: string, person: string, date: string, hours: float, description: string}>}
+	 *
+	 * @spec openspec/changes/sales-billable-rate-per-hour/tasks.md#task-4.1
+	 */
+	public function forProject(string $projectId, string $from, string $to): array;
 }//end interface

@@ -316,6 +316,10 @@
             "description": "GET endpoints for sluitend-status and programmabegroting exports."
         },
         {
+            "name": "project-billable-hours",
+            "description": "A project's rated hours of one month (sales-billable-rate-per-hour)."
+        },
+        {
             "name": "purchase-order",
             "description": "Purchase-order REST endpoints (create / preview / send-transition)."
         },
@@ -12249,6 +12253,53 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
+        "/projects/{id}/billable-hours": {
+            "get": {
+                "operationId": "project-billable-hours-index",
+                "summary": "One month of a project's rated hours (GET /api/v1/projects/{id}/billable-hours)",
+                "description": "One month of a project's hours with their rate, tier, value and billed state, and the unbilled totals (sales-billable-rate-per-hour REQ-BRPH-003). Query: month (YYYY-MM, defaults to the current month). The project must belong to the caller's active administration, resolved on the server; another administration's project answers 404. Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "project-billable-hours"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request succeeded.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
                     }
                 }
             }
