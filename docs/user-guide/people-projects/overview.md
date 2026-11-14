@@ -27,6 +27,31 @@ Go to **People & Projects → Pension** to manage plans and update valuations.
 
 Go to **People & Projects → Rate cards** to configure billing rates.
 
+### How an hour gets its rate
+
+Every hour on a project is priced by the rate card on the person's assignment to that project. Shillinq takes the version of the card that is in effect on the hour's date and uses the first rate that matches, in this order:
+
+| Order | Rate | Matches when |
+|---|---|---|
+| 1 | Personal rate | the rate names the person who logged the hour |
+| 2 | Role rate | the rate names the billing role set on the person's assignment |
+| 3 | Project rate | the rate names the project |
+| 4 | Client rate | the rate names the project's customer |
+| 5 | Standard rate | the rate names nobody: the card's blended rate |
+
+Only active rates whose dates cover the hour count. A day rate is billed per hour at the day rate divided by the working day (8 hours, or the assignment's weekly capacity divided by 5). Monthly and fixed-price rates are not hour rates and are skipped. A rate change in the middle of a month prices each hour by its own date.
+
+### No rate
+
+An hour that no rate prices shows **No rate**, with the reason:
+
+- the person is not assigned to the project;
+- the assignment names no rate card;
+- the rate card has no version in effect on the hour's date;
+- no rate of that version matches the hour.
+
+Shillinq never bills such an hour at a default amount. Drafting an invoice that holds one is refused, naming the person and the date, and no invoice is written. Give the person an assignment, a rate card or a matching rate, then draft again. The rate on a drafted invoice line is kept: changing a rate later does not change a draft.
+
 ## Utilisation
 
 The **Utilisatie** (utilisation) dashboard shows what percentage of available capacity is being billed to clients. Track utilisation by:
@@ -39,6 +64,10 @@ Low utilisation triggers a cost alert (overhead without corresponding revenue).
 ## Projecten
 
 The **Projecten** page is a project management view showing all active projects, their budgets vs. actuals, and billing status.
+
+On a project's page, the **Billable hours** card lists the hours of the month you pick, each with its person, date, hours, rate, the rate it came from, its value and whether it is billed (**Billed on** the invoice number, or **Not billed**). Below the list are the unbilled hours, their unbilled value and the hours without a rate, so you can fix a missing rate before anyone drafts an invoice. When no hours app is connected, the card says the hours are not available instead of showing zero.
+
+**Hours per assignment** shows each person's billing role and the rate the assignment bills at today. Set the billing role on the assignment to have the role rate apply; the shown rate is refreshed when the role, the rate card or an active rate card version changes.
 
 ## WBSO (R&D tax credit)
 

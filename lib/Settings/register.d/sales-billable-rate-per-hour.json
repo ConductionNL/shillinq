@@ -16,14 +16,14 @@
         "properties": {
           "rateCardId": {
             "type": "string",
-            "description": "The RateCardTemplate (its templateId or id) that prices this person's hours on the project. The billable rate of each hour is resolved from the version of this card effective on the hour's date.",
+            "description": "The rate card that prices this person's hours on the project. Each hour gets the rate of the card's version in effect on its date.",
             "example": "RCT-2026-STD",
             "title": "Rate card"
           },
           "recognisedRate": {
             "type": "number",
             "minimum": 0,
-            "description": "The rate this assignment resolves to today, filled by the billable rate resolver and refreshed when the assignment or its rate card version changes. A display snapshot: an invoice line takes its rate from the hour's own resolution, never from this value.",
+            "description": "The rate this assignment bills at today, refreshed when the assignment or its rate card changes. An invoice uses the rate of each hour itself, not this value.",
             "example": 120,
             "title": "Current rate"
           },
@@ -31,7 +31,7 @@
             "type": "string",
             "nullable": true,
             "title": "Billing role",
-            "description": "The role this person bills at on the project: the entityId of a role-tier RateSchedule on the rate card. Empty when the person has no role rate.",
+            "description": "The role this person bills at on the project, as named in the role rates of the rate card. Leave empty when the person has no role rate.",
             "example": "role-senior"
           },
           "administrationId": {
