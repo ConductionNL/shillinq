@@ -106,6 +106,7 @@ final class ReportCatalogue {
 
 			// --- Public sector ---
 			['id' => 'iv3', 'label' => 'IV3-rapportage', 'category' => 'public-sector', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Informatie voor derden (CBS).'],
+			['id' => 'subject-costs-per-type', 'label' => 'Zaakkosten per zaaktype', 'category' => 'public-sector', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Kosten van de uren op zaken per zaaktype, per maand, kwartaal of jaar.'],
 			['id' => 'bbv-jaarstukken', 'label' => 'BBV-jaarstukken', 'category' => 'public-sector', 'kind' => 'document', 'formats' => ['odt', 'pdf'], 'templateId' => 'shillinq-bbv-jaarstukken', 'description' => 'BBV programmaverantwoording & jaarstukken.'],
 
 			// --- Compliance / audit trail ---

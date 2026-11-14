@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -4708,6 +4722,34 @@
 					"route": "/invoice/:invoiceId",
 					"type": "custom",
 					"title": "Invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Overheid",
+					"label": "Government",
+					"icon": "Domain",
+					"order": 30,
+					"children": [
+						{
+							"id": "SubjectCosts",
+							"label": "Case costs",
+							"icon": "ChartBoxOutline",
+							"route": "SubjectCosts",
+							"order": 12
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "iv3-report-takes-case-costs-by-case-type",
+					"id": "SubjectCosts",
+					"route": "/overheid/zaakkosten",
+					"type": "dashboard",
+					"title": "Case costs"
 				}
 			]
 		},

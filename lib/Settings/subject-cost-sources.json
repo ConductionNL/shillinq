@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "iv3-report-takes-case-costs-by-case-type",
+    "description": "Cost sources for the Iv3 report and the per-type cost report: objects in another app whose booked hours are costed and classified by the object's type. A source is configuration only; the code reads no app by name. typeProperty is the object's property that holds the type's id, taskFieldProperty the type's property that holds the BBV taakveld code. The two messages are English l10n keys shown when the app is not installed.",
+    "spec": "openspec/changes/iv3-report-takes-case-costs-by-case-type/specs/bookkeeping-iv3-reporting/spec.md"
+  },
+  "sources": [
+    {
+      "id": "dossiq-case",
+      "app": "dossiq",
+      "appName": "Dossiq",
+      "register": "dossiq",
+      "schema": "case",
+      "typeSchema": "caseType",
+      "typeProperty": "caseType",
+      "taskFieldProperty": "iv3TaskField",
+      "typeTitleProperty": "title",
+      "missingPerTaskField": "Case costs per task field come from Dossiq. Dossiq is not installed.",
+      "missingPerType": "Case costs per case type come from Dossiq. Dossiq is not installed."
+    }
+  ]
+}
