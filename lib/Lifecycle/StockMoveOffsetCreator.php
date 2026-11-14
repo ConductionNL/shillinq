@@ -90,49 +90,7 @@ class StockMoveOffsetCreator {
 	 */
 	public function emitOffset(array $original): bool {
 		try {
-			$originalId = (string)($original['id'] ?? ($original['@self']['id'] ?? ''));
-			$administrationId = (string)($original['administrationId'] ?? '');
-			if ($originalId === '' || $administrationId === '') {
-				$this->logger->info(
-					'StockMoveOffsetCreator: emit denied — missing id/administrationId',
-					['movementNumber' => ($original['movementNumber'] ?? null)]
-				);
-				return false;
-			}
-
-			if ($this->offsetAlreadyExists(originalId: $originalId, administrationId: $administrationId) === true) {
-				// Idempotent: double-call returns success without duplicating.
-				return true;
-			}
-
-			$movementNumber = (string)($original['movementNumber'] ?? '');
-			$offsetNumber = ($movementNumber . '-CANCEL');
-
-			$offset = [
-				'movementNumber' => $offsetNumber,
-				'itemId' => (string)($original['itemId'] ?? ''),
-				'quantity' => ((float)($original['quantity'] ?? 0)),
-				'unitCost' => ((float)($original['unitCost'] ?? 0)),
-				'movementType' => (string)($original['movementType'] ?? 'transfer'),
-				'sourceLocationId' => ($original['destinationLocationId'] ?? null),
-				'destinationLocationId' => ($original['sourceLocationId'] ?? null),
-				'referenceDocumentUri' => null,
-				'movementReason' => 'cancellation',
-				'notes' => ('Offset for ' . $movementNumber),
-				'draftedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-				'postedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-				'cancelledAt' => null,
-				'administrationId' => $administrationId,
-				'locked' => true,
-				'glTransactionId' => null,
-				'offsetOfMoveId' => $originalId,
-				'lifecycleState' => 'posted',
-			];
-
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->saveObject(object: $offset, register: $this->register(), schema: 'StockMove');
-
-			return true;
+			return $this->emitOffsetFor(original: $original);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'StockMoveOffsetCreator: emitOffset failed — denying (fail-closed)',
@@ -145,6 +103,87 @@ class StockMoveOffsetCreator {
 		}//end try
 
 	}//end emitOffset()
+
+	/**
+	 * Save the offsetting move unless the original lacks its ids or was already offset.
+	 *
+	 * @param array<string, mixed> $original The original StockMove.
+	 *
+	 * @return bool Whether the original is offset.
+	 */
+	private function emitOffsetFor(array $original): bool {
+		$originalId       = (string)($original['id'] ?? ($original['@self']['id'] ?? ''));
+		$administrationId = (string)($original['administrationId'] ?? '');
+		if ($originalId === '' || $administrationId === '') {
+			$this->logger->info(
+				'StockMoveOffsetCreator: emit denied — missing id/administrationId',
+				['movementNumber' => ($original['movementNumber'] ?? null)]
+			);
+			return false;
+		}
+
+		if ($this->offsetAlreadyExists(originalId: $originalId, administrationId: $administrationId) === true) {
+			// Idempotent: double-call returns success without duplicating.
+			return true;
+		}
+
+		$offset        = self::offsetMove(original: $original, originalId: $originalId, administrationId: $administrationId);
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$objectService->saveObject(object: $offset, register: $this->register(), schema: 'StockMove');
+
+		return true;
+
+	}//end emitOffsetFor()
+
+	/**
+	 * The posted, locked move that reverses the original between the same locations.
+	 *
+	 * @param array<string, mixed> $original         The original StockMove.
+	 * @param string               $originalId       Its id.
+	 * @param string               $administrationId Its administration.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function offsetMove(array $original, string $originalId, string $administrationId): array {
+		$movementNumber = (string)($original['movementNumber'] ?? '');
+		$offsetNumber   = ($movementNumber . '-CANCEL');
+
+		return [
+			'movementNumber' => $offsetNumber,
+			'itemId' => (string)($original['itemId'] ?? ''),
+			'quantity' => ((float)($original['quantity'] ?? 0)),
+			'unitCost' => ((float)($original['unitCost'] ?? 0)),
+			'movementType' => (string)($original['movementType'] ?? 'transfer'),
+			'sourceLocationId' => ($original['destinationLocationId'] ?? null),
+			'destinationLocationId' => ($original['sourceLocationId'] ?? null),
+			'referenceDocumentUri' => null,
+			'movementReason' => 'cancellation',
+			'notes' => ('Offset for ' . $movementNumber),
+		] + self::postedOffsetState(originalId: $originalId, administrationId: $administrationId);
+
+	}//end offsetMove()
+
+	/**
+	 * The offset's posted, locked state, linked to the original.
+	 *
+	 * @param string $originalId       The original's id.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function postedOffsetState(string $originalId, string $administrationId): array {
+		return [
+			'draftedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+			'postedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+			'cancelledAt' => null,
+			'administrationId' => $administrationId,
+			'locked' => true,
+			'glTransactionId' => null,
+			'offsetOfMoveId' => $originalId,
+			'lifecycleState' => 'posted',
+		];
+
+	}//end postedOffsetState()
 
 	/**
 	 * Query whether an offset for the supplied original already exists.

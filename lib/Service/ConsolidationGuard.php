@@ -157,16 +157,7 @@ class ConsolidationGuard {
 		}
 
 		try {
-			// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
-			$consolidationGroup = ObjectIdentifier::findScopedOrThrow(
-				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('ConsolidationGroup'),
-				id: (string)$consolidationGroupId
-			);
-
-			$administrationIds = [];
-			if ($consolidationGroup !== null) {
-				$administrationIds = (array)($consolidationGroup->jsonSerialize()['administrationIds'] ?? []);
-			}
+			$administrationIds = $this->groupAdministrationIds(consolidationGroupId: $consolidationGroupId);
 
 			if (count($administrationIds) === 0) {
 				$this->logger->warning(
@@ -176,31 +167,7 @@ class ConsolidationGuard {
 				return false;
 			}
 
-			foreach ($administrationIds as $administrationId) {
-				$balanceSheets = $this->objectService
-					->setRegister($this->getRegisterSlug())
-					->setSchema('BalanceSheet')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'fiscalYearId' => $fiscalYearId,
-								'status' => 'final',
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (count($balanceSheets) === 0) {
-					$this->logger->warning(
-						'ConsolidationGuard: member administration has no final BalanceSheet — denying consolidation',
-						['administrationId' => $administrationId, 'fiscalYearId' => $fiscalYearId]
-					);
-					return false;
-				}
-			}//end foreach
-
-			return true;
+			return $this->allMembersHaveFinalBalanceSheet(administrationIds: $administrationIds, fiscalYearId: $fiscalYearId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ConsolidationGuard: member finalisation check failed — denying finalise (fail-closed)',
@@ -210,6 +177,68 @@ class ConsolidationGuard {
 		}//end try
 
 	}//end requireAllMembersFinalised()
+
+	/**
+	 * Return the member administration ids of a ConsolidationGroup.
+	 *
+	 * @param mixed $consolidationGroupId The ConsolidationGroup id.
+	 *
+	 * @return array<mixed> The member administration ids (empty when the group is unknown).
+	 *
+	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-12
+	 */
+	private function groupAdministrationIds(mixed $consolidationGroupId): array {
+		// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
+		$consolidationGroup = ObjectIdentifier::findScopedOrThrow(
+			scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('ConsolidationGroup'),
+			id: (string)$consolidationGroupId
+		);
+
+		$administrationIds = [];
+		if ($consolidationGroup !== null) {
+			$administrationIds = (array)($consolidationGroup->jsonSerialize()['administrationIds'] ?? []);
+		}
+
+		return $administrationIds;
+	}//end groupAdministrationIds()
+
+	/**
+	 * Whether every member administration has a final BalanceSheet for the fiscal year.
+	 *
+	 * @param array<mixed> $administrationIds The member administration ids.
+	 * @param mixed $fiscalYearId The fiscal year id.
+	 *
+	 * @return bool True when all member statements are final.
+	 *
+	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-12
+	 */
+	private function allMembersHaveFinalBalanceSheet(array $administrationIds, mixed $fiscalYearId): bool {
+		foreach ($administrationIds as $administrationId) {
+			$balanceSheets = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('BalanceSheet')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'fiscalYearId' => $fiscalYearId,
+							'status' => 'final',
+						],
+						'limit' => 1,
+					]
+				);
+
+			if (count($balanceSheets) === 0) {
+				$this->logger->warning(
+					'ConsolidationGuard: member administration has no final BalanceSheet — denying consolidation',
+					['administrationId' => $administrationId, 'fiscalYearId' => $fiscalYearId]
+				);
+				return false;
+			}
+		}//end foreach
+
+		return true;
+	}//end allMembersHaveFinalBalanceSheet()
 
 	/**
 	 * Guard for final→published transition on BalanceSheet, TrialBalance, ConsolidatedReport.

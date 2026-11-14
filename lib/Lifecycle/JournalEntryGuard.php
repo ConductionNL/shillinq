@@ -231,29 +231,12 @@ class JournalEntryGuard {
 	 */
 	public function canVoid(string $journalEntryId, ?array $object = null): bool {
 		try {
-			$glTransactionId = '';
-			if ($object !== null && isset($object['glTransactionId']) === true) {
-				$glTransactionId = (string)$object['glTransactionId'];
-			}
-
+			$glTransactionId = $this->glTransactionIdOf(object: $object);
 			if ($glTransactionId === '') {
 				return false;
 			}
 
-			$register = $this->resolveRegister();
-
-			$transactions = $this->objectService
-				->setRegister($register)
-				->setSchema('GLTransaction')
-				->findAll(['filters' => ['id' => $glTransactionId]]);
-
-			foreach ($transactions as $transaction) {
-				if (is_array($transaction) === true && ($transaction['state'] ?? '') === 'reversed') {
-					return true;
-				}
-			}
-
-			return false;
+			return $this->isReversed(glTransactionId: $glTransactionId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'JournalEntryGuard: void check failed — denying void transition (fail-closed)',
@@ -262,6 +245,52 @@ class JournalEntryGuard {
 			return false;
 		}//end try
 	}//end canVoid()
+
+	/**
+	 * The journal's materialised GLTransaction id, or ''.
+	 *
+	 * @param array<string,mixed>|null $object The JournalEntry object being transitioned.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+	 */
+	private function glTransactionIdOf(array|null $object): string {
+		$glTransactionId = '';
+		if ($object !== null && isset($object['glTransactionId']) === true) {
+			$glTransactionId = (string)$object['glTransactionId'];
+		}
+
+		return $glTransactionId;
+	}//end glTransactionIdOf()
+
+	/**
+	 * Whether the GLTransaction is in lifecycle state `reversed`.
+	 *
+	 * @param string $glTransactionId The GLTransaction id.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When the lookup fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+	 */
+	private function isReversed(string $glTransactionId): bool {
+		$register = $this->resolveRegister();
+
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['id' => $glTransactionId]]);
+
+		foreach ($transactions as $transaction) {
+			if (is_array($transaction) === true && ($transaction['state'] ?? '') === 'reversed') {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isReversed()
 
 	/**
 	 * Resolve the journal entry's embedded `lines`, preferring the supplied

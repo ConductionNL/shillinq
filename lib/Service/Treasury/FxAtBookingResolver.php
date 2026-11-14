@@ -144,9 +144,36 @@ class FxAtBookingResolver {
 	 */
 	public function resolve(string $transactionCurrency, string $baseCurrency, string $date, string $administrationId): array {
 		$pair = $transactionCurrency . ' to ' . $baseCurrency;
+		$best = $this->bestRate(transactionCurrency: $transactionCurrency, baseCurrency: $baseCurrency, date: $date, administrationId: $administrationId);
+
+		if ($best === null) {
+			throw new RuntimeException(
+				sprintf('No %s exchange rate exists on or before %s. Enter one under %s, or type the rate on the line.', $pair, $date, self::RATES_PAGE)
+			);
+		}
+
+		$this->assertFresh(pair: $pair, best: $best, date: $date);
+
+		return ['rate' => $best['rate'], 'source' => $best['source'], 'date' => $best['date']];
+
+	}//end resolve()
+
+	/**
+	 * The best usable rate of the pair on or before the date for the administration, or null.
+	 *
+	 * @param string $transactionCurrency ISO 4217 code of the line.
+	 * @param string $baseCurrency        ISO 4217 code of the administration.
+	 * @param string $date                The booking date, Y-m-d.
+	 * @param string $administrationId    The administration.
+	 *
+	 * @return array{rate:float,source:string,date:string,administrationId:string}|null
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-1.1
+	 */
+	private function bestRate(string $transactionCurrency, string $baseCurrency, string $date, string $administrationId): array|null {
 		$best = null;
 		foreach ($this->candidates(transactionCurrency: $transactionCurrency, baseCurrency: $baseCurrency) as $rate) {
-			if ($rate['date'] > $date || ($rate['administrationId'] !== '' && $rate['administrationId'] !== $administrationId)) {
+			if ($this->appliesTo(rate: $rate, date: $date, administrationId: $administrationId) === false) {
 				continue;
 			}
 
@@ -155,12 +182,36 @@ class FxAtBookingResolver {
 			}
 		}
 
-		if ($best === null) {
-			throw new RuntimeException(
-				sprintf('No %s exchange rate exists on or before %s. Enter one under %s, or type the rate on the line.', $pair, $date, self::RATES_PAGE)
-			);
-		}
+		return $best;
+	}//end bestRate()
 
+	/**
+	 * Whether a rate is dated on or before the date and shared or scoped to the administration.
+	 *
+	 * @param array{rate:float,source:string,date:string,administrationId:string} $rate             The candidate.
+	 * @param string $date             The booking date, Y-m-d.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return bool
+	 */
+	private function appliesTo(array $rate, string $date, string $administrationId): bool {
+		return !($rate['date'] > $date || ($rate['administrationId'] !== '' && $rate['administrationId'] !== $administrationId));
+	}//end appliesTo()
+
+	/**
+	 * Refuse a best rate older than the allowed age.
+	 *
+	 * @param string                                                                $pair The pair, for messages.
+	 * @param array{rate:float,source:string,date:string,administrationId:string} $best The best rate.
+	 * @param string                                                                $date The booking date, Y-m-d.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the newest rate is too old.
+	 *
+	 * @spec openspec/changes/banking-fx-at-booking/tasks.md#task-1.1
+	 */
+	private function assertFresh(string $pair, array $best, string $date): void {
 		$age = $this->daysBetween(from: $best['date'], until: $date);
 		$max = $this->maxAgeDays();
 		if ($age > $max) {
@@ -177,10 +228,7 @@ class FxAtBookingResolver {
 				)
 			);
 		}
-
-		return ['rate' => $best['rate'], 'source' => $best['source'], 'date' => $best['date']];
-
-	}//end resolve()
+	}//end assertFresh()
 
 	/**
 	 * Transaction cents in base cents at a rate, rounded half up to whole cents.
@@ -241,31 +289,59 @@ class FxAtBookingResolver {
 
 		$rates = [];
 		foreach ($rows as $row) {
-			$record = ObjectIdentifier::recordWithId(candidate: $row);
-			if ($record === null
-				|| (string)($record['transactionCurrency'] ?? '') !== $transactionCurrency
-				|| (string)($record['baseCurrency'] ?? '') !== $baseCurrency
-			) {
-				continue;
+			$rate = $this->candidateRate(row: $row, transactionCurrency: $transactionCurrency, baseCurrency: $baseCurrency);
+			if ($rate !== null) {
+				$rates[] = $rate;
 			}
-
-			$rate = (float)($record['rate'] ?? 0);
-			$date = substr((string)($record['date'] ?? ''), 0, 10);
-			if ($rate <= 0.0 || preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
-				continue;
-			}
-
-			$rates[] = [
-				'rate' => $rate,
-				'source' => (string)($record['source'] ?? 'manual'),
-				'date' => $date,
-				'administrationId' => (string)($record['administrationId'] ?? ''),
-			];
-		}//end foreach
+		}
 
 		return $rates;
 
 	}//end candidates()
+
+	/**
+	 * One FxRate row as a candidate, or null when it is not of the pair or has no positive rate and date.
+	 *
+	 * @param mixed  $row                 The FxRate row.
+	 * @param string $transactionCurrency ISO 4217 code of the line.
+	 * @param string $baseCurrency        ISO 4217 code of the administration.
+	 *
+	 * @return array{rate:float,source:string,date:string,administrationId:string}|null
+	 */
+	private function candidateRate(mixed $row, string $transactionCurrency, string $baseCurrency): array|null {
+		$record = ObjectIdentifier::recordWithId(candidate: $row);
+		if ($this->isOfPair(record: $record, transactionCurrency: $transactionCurrency, baseCurrency: $baseCurrency) === false) {
+			return null;
+		}
+
+		$rate = (float)($record['rate'] ?? 0);
+		$date = substr((string)($record['date'] ?? ''), 0, 10);
+		if ($rate <= 0.0 || preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
+			return null;
+		}
+
+		return [
+			'rate' => $rate,
+			'source' => (string)($record['source'] ?? 'manual'),
+			'date' => $date,
+			'administrationId' => (string)($record['administrationId'] ?? ''),
+		];
+	}//end candidateRate()
+
+	/**
+	 * Whether a record is an FxRate of the pair.
+	 *
+	 * @param array<string,mixed>|null $record              The record, or null.
+	 * @param string                   $transactionCurrency ISO 4217 code of the line.
+	 * @param string                   $baseCurrency        ISO 4217 code of the administration.
+	 *
+	 * @return bool
+	 */
+	private function isOfPair(array|null $record, string $transactionCurrency, string $baseCurrency): bool {
+		return !($record === null
+			|| (string)($record['transactionCurrency'] ?? '') !== $transactionCurrency
+			|| (string)($record['baseCurrency'] ?? '') !== $baseCurrency);
+	}//end isOfPair()
 
 	/**
 	 * Calendar days from one date to a later one.

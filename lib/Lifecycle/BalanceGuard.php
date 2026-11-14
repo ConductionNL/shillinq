@@ -131,18 +131,9 @@ class BalanceGuard {
 	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-1.1
 	 */
 	public function isInvoiceBalanced(array $object): bool {
-		$lines = ($object['lines'] ?? []);
-		if (is_array($lines) === false || $lines === []) {
+		$lineCents = self::lineCents(lines: ($object['lines'] ?? []));
+		if ($lineCents === null) {
 			return false;
-		}
-
-		$lineCents = 0;
-		foreach ($lines as $line) {
-			if (is_array($line) === false || is_numeric($line['amount'] ?? null) === false) {
-				return false;
-			}
-
-			$lineCents += (int)round((float)$line['amount'] * 100);
 		}
 
 		$taxCents = (int)round((float)($object['taxAmount'] ?? 0) * 100);
@@ -162,4 +153,39 @@ class BalanceGuard {
 		);
 		return false;
 	}//end isInvoiceBalanced()
+
+	/**
+	 * The summed line amounts in cents, or null when there are no lines or a line carries no numeric amount.
+	 *
+	 * @param mixed $lines The invoice's lines.
+	 *
+	 * @return int|null
+	 */
+	private static function lineCents(mixed $lines): int|null {
+		if (is_array($lines) === false || $lines === []) {
+			return null;
+		}
+
+		$lineCents = 0;
+		foreach ($lines as $line) {
+			if (self::hasNumericAmount(line: $line) === false) {
+				return null;
+			}
+
+			$lineCents += (int)round((float)$line['amount'] * 100);
+		}
+
+		return $lineCents;
+	}//end lineCents()
+
+	/**
+	 * Whether a line is an object with a numeric amount.
+	 *
+	 * @param mixed $line One invoice line.
+	 *
+	 * @return bool
+	 */
+	private static function hasNumericAmount(mixed $line): bool {
+		return (is_array($line) === true && is_numeric($line['amount'] ?? null) === true);
+	}//end hasNumericAmount()
 }//end class
