@@ -243,7 +243,17 @@
             "type": "string",
             "nullable": true,
             "description": "Dutch KvK registration number.",
-            "title": "KvK Number"
+            "title": "KvK Number",
+            "x-openregister-property-source": {
+              "provider": "kvk",
+              "mode": "default",
+              "config": {
+                "fill": {
+                  "legalName": "naam",
+                  "tradeName": "handelsnamen[0].naam"
+                }
+              }
+            }
           },
           "email": {
             "type": "string",

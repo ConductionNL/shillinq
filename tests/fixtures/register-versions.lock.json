@@ -71,11 +71,11 @@
         },
         {
             "appVersion": "0.5.7-unstable.20261113190000",
-            "versionsSha256": "dbc320d2b1dc2becd57ada6e947443ceb42bbd928f5133cc9b01d1e18c5cc042"
+            "versionsSha256": "865f2036696b5f14153b4ce390d9811db454bb0d0cd38e189a7db0329bf98663"
         },
         {
-            "appVersion": "0.5.7-unstable.20261113191000",
-            "versionsSha256": "e9d4da3ea6b5776f3f765e18abd913bad8a7461efce9aef67629b62fd5966222"
+            "appVersion": "0.5.7-unstable.20261114150000",
+            "versionsSha256": "9c0e0b1698f5136870b193265f455c4369e75e41d98ecab0f291ad3b458c7780"
         }
     ],
     "versions": {
@@ -114,7 +114,7 @@
         "schema:AuditorStatement": "0.1.0",
         "schema:AutoAccrualPosting": "0.1.0",
         "schema:AutoAccrualRule": "0.1.0",
-        "schema:AvailabilityRule": "0.1.0",
+        "schema:AvailabilityRule": "0.2.0",
         "schema:BBVProgramma": "0.1.0",
         "schema:BBVProgramme": "0.3.0",
         "schema:BalanceSheet": "0.1.0",
@@ -144,7 +144,7 @@
         "schema:BookingCancellation": "0.1.0",
         "schema:BookingCancellationTemplate": "0.1.0",
         "schema:BookingConfirmationTemplate": "0.1.0",
-        "schema:BookingConstraint": "0.1.0",
+        "schema:BookingConstraint": "0.2.0",
         "schema:BookingNotificationTrigger": "0.1.0",
         "schema:BookingOrder": "0.4.0",
         "schema:BookingReminderTemplate": "0.1.0",
@@ -475,7 +475,7 @@
         "schema:ReconciliationBridge": "0.1.0",
         "schema:ReconciliationMatch": "0.2.0",
         "schema:ReconciliationReport": "0.1.0",
-        "schema:RecurringInvoiceProfile": "0.2.0",
+        "schema:RecurringInvoiceProfile": "0.3.0",
         "schema:ReimbursementPolicy": "0.1.0",
         "schema:ReinvestmentReserve": "0.1.0",
         "schema:RenteRisicoNorm": "0.1.0",

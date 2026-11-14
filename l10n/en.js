@@ -1876,6 +1876,14 @@ OC.L10N.register(
         "Open audit log": "Open audit log",
         "Open creditors": "Open creditors",
         "Open debtors": "Open debtors",
+        "Days Of Week": "Days Of Week",
+        "Weekdays the rule opens the resource on. daily = every day. When several active rules apply to a date, the one naming the fewest weekdays wins, so a Wednesday-only rule replaces a Monday-to-Friday one on Wednesdays.": "Weekdays the rule opens the resource on. daily = every day. When several active rules apply to a date, the one naming the fewest weekdays wins, so a Wednesday-only rule replaces a Monday-to-Friday one on Wednesdays.",
+        "Start Time": "Start Time",
+        "Opening time on those days (HH:MM, 24-hour). Slots are offered from here.": "Opening time on those days (HH:MM, 24-hour). Slots are offered from here.",
+        "End Time": "End Time",
+        "Closing time on those days (HH:MM, 24-hour). The last slot ends at or before it; MUST be greater than startTime.": "Closing time on those days (HH:MM, 24-hour). The last slot ends at or before it; MUST be greater than startTime.",
+        "Min Advance Notice Hours": "Min Advance Notice Hours",
+        "Minimum hours between now and the start of a bookable slot. 0 = no hour limit; applies together with minAdvanceNoticeDays.": "Minimum hours between now and the start of a bookable slot. 0 = no hour limit; applies together with minAdvanceNoticeDays.",
         "Open invoice {number}": "Open invoice {number}",
         "Open items": "Open items",
         "Open items do not reconcile to the control account opening amount": "Open items do not reconcile to the control account opening amount",
@@ -4689,6 +4697,7 @@ OC.L10N.register(
         "Project Code": "Project Code",
         "Customer record": "Customer record",
         "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice.": "The financial customer this profile bills, resolved from its contact. Copied into each generated invoice.",
+        "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.": "Not set up yet. Link the KvK source in Integriq to look companies up while adding a customer or supplier.",
         "Payouts to pay": "Payouts to pay",
         "To approve": "To approve",
         "To pay": "To pay",
@@ -4707,7 +4716,14 @@ OC.L10N.register(
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Cancellation": "Cancellation",
+        "Cancellation note": "Cancellation note",
+        "Cancellation reason": "Cancellation reason",
+        "Cancelled by": "Cancelled by",
+        "Optional free text with the cancellation reason.": "Optional free text with the cancellation reason.",
+        "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.": "Who ended the subscription, why, when it was requested and when it takes effect. Written when the profile ends.",
+        "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out.": "Why the subscription ends, asked on End. Staff choose a reason other than not-given; a customer may leave it out."
     },
     "nplurals=2; plural=(n != 1);"
 )
