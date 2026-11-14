@@ -191,9 +191,9 @@ class VatReturnXbrlBuilder {
 			entity: ['scheme' => self::VAT_SCHEME, 'identifier' => $vatNumber],
 			start: $start,
 			end: $end,
-			namespaces: self::namespaces(taxonomy: $taxonomy),
+			namespaces: XbrlInstanceWriter::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
 			facts: $facts,
-			schemaRef: self::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT)
+			schemaRef: XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT)
 		);
 
 		return [
@@ -279,44 +279,4 @@ class VatReturnXbrlBuilder {
 
 		return $concepts;
 	}//end concepts()
-
-	/**
-	 * The concept namespaces: the taxonomy's, else the default.
-	 *
-	 * @param array<string,mixed>|null $taxonomy The taxonomy record.
-	 * @param array<string,string>     $defaults The namespaces when the taxonomy names none.
-	 *
-	 * @return array<string,string> Prefix to namespace URI.
-	 *
-	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
-	 */
-	public static function namespaces(?array $taxonomy, array $defaults=self::DEFAULT_NAMESPACES): array {
-		$namespaces = $defaults;
-		foreach ((array) ($taxonomy['namespaces'] ?? []) as $prefix => $uri) {
-			if (is_string($prefix) === true && is_string($uri) === true && trim($uri) !== '') {
-				$namespaces[$prefix] = trim($uri);
-			}
-		}
-
-		return $namespaces;
-	}//end namespaces()
-
-	/**
-	 * The entry point schema the taxonomy names, or null.
-	 *
-	 * @param array<string,mixed>|null $taxonomy   The taxonomy record.
-	 * @param string                   $entryPoint The entry point.
-	 *
-	 * @return string|null The schema URL.
-	 *
-	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
-	 */
-	public static function schemaRef(?array $taxonomy, string $entryPoint): ?string {
-		$ref = (($taxonomy['schemaRefs'] ?? [])[$entryPoint] ?? null);
-		if (is_string($ref) === false || trim($ref) === '') {
-			return null;
-		}
-
-		return trim($ref);
-	}//end schemaRef()
 }//end class

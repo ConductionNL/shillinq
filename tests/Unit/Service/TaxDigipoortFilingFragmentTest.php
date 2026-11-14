@@ -109,20 +109,18 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 		self::assertSame(array_diff_key($before, ['enum' => 1]), array_diff_key($after, ['enum' => 1]));
 	}//end testTheEntryPointListGainsTheObEntryPointOnceAndKeepsTheRest()
 
-	public function testTheFragmentAddsPropertiesAndOnlyTheValidateGuard(): void {
+	public function testTheFragmentAddsPropertiesTheGuardsAndTheHandOff(): void {
 		$fragment = $this->decode('register.d/tax-digipoort-filing.json');
 		$schemas  = $fragment['components']['schemas'];
 
 		self::assertSame([], $fragment['objects']);
 		self::assertSame(['XbrlInstance', 'BtwAangifte', 'XBRLTaxonomy'], array_keys($schemas));
 		self::assertSame(['properties', 'x-openregister-lifecycle'], array_keys($schemas['XbrlInstance']));
-		self::assertSame(
-			['transitions' => ['validate' => ['requires' => 'OCA\\Shillinq\\Guard\\XbrlInstanceValidationGuard::requireValidInstance']]],
-			$schemas['XbrlInstance']['x-openregister-lifecycle']
-		);
+		self::assertSame(['transitions', 'states'], array_keys($schemas['XbrlInstance']['x-openregister-lifecycle']));
+		self::assertSame(['validate', 'submit', 'deliver', 'retract'], array_keys($schemas['XbrlInstance']['x-openregister-lifecycle']['transitions']));
 		self::assertSame(['properties'], array_keys($schemas['BtwAangifte']));
 		self::assertSame(['properties'], array_keys($schemas['XBRLTaxonomy']));
-	}//end testTheFragmentAddsPropertiesAndOnlyTheValidateGuard()
+		}//end testTheFragmentAddsPropertiesTheGuardsAndTheHandOff()
 
 	public function testTheMergedValidateTransitionKeepsItsStatesAndGainsTheGuard(): void {
 		$before = $this->before()['components']['schemas']['XbrlInstance']['x-openregister-lifecycle']['transitions']['validate'];
@@ -140,4 +138,23 @@ final class TaxDigipoortFilingFragmentTest extends TestCase {
 		self::assertTrue($properties['requiredConcepts']['nullable']);
 		self::assertTrue($properties['summations']['nullable']);
 	}//end testTheTaxonomyCarriesWhatTheGuardReads()
+
+	public function testSubmitHandsOffAndOnlyTheDeliveryReportMakesItSubmitted(): void {
+		$before = $this->before()['components']['schemas']['XbrlInstance'];
+		$after  = $this->merge($this->before(), $this->decode('register.d/tax-digipoort-filing.json'))['components']['schemas']['XbrlInstance'];
+		$t      = $after['x-openregister-lifecycle']['transitions'];
+
+		self::assertSame(array_merge($before['properties']['state']['enum'], ['handed-off']), $after['properties']['state']['enum']);
+		self::assertArrayHasKey('handed-off', $after['x-openregister-lifecycle']['states']);
+		self::assertSame(['validated', 'handed-off', 'operator'], [$t['submit']['from'], $t['submit']['to'], $t['submit']['trigger']]);
+		self::assertSame(['OCA\\Shillinq\\Lifecycle\\Action\\HandToDigipoortAction'], array_column($t['submit']['actions'], 'action'));
+		self::assertSame(['handed-off', 'submitted', 'inbound'], [$t['deliver']['from'], $t['deliver']['to'], $t['deliver']['trigger']]);
+		self::assertSame('OCA\\Shillinq\\Guard\\XbrlDeliveryGuard::requireDeliveryReference', $t['deliver']['requires']);
+		self::assertSame(['handed-off', 'validated', 'inbound'], [$t['retract']['from'], $t['retract']['to'], $t['retract']['trigger']]);
+		self::assertSame($before['x-openregister-lifecycle']['transitions']['accept'], $t['accept']);
+		self::assertSame($before['x-openregister-lifecycle']['transitions']['reject'], $t['reject']);
+		foreach ([$t['submit']['actions'][0]['action'], 'OCA\\Shillinq\\Guard\\XbrlDeliveryGuard'] as $class) {
+			self::assertTrue(class_exists($class), $class . ' exists');
+		}
+	}//end testSubmitHandsOffAndOnlyTheDeliveryReportMakesItSubmitted()
 }//end class

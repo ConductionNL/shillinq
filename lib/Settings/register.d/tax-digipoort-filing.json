@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "tax-digipoort-filing",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating. The taxonomy record also names, per release, the entry point schemas (`schemaRefs`), the concept namespaces (`namespaces`) and any concept it renames (`conceptMap`), which the XBRL builders write.",
+    "description": "Additive overlay for filing through Digipoort (tax-digipoort-filing task 1.1). An XbrlInstance says what it files (`filingType`) and which VAT return it was built from (`sourceReturnId`); the entry point list gains the Belastingdienst OB (omzetbelasting) entry point, appended to the existing enum by the loader's list merge; a BtwAangifte points at the instance that files it (`xbrlInstanceId`); an XBRLTaxonomy record lists the entry points it carries (`entryPoints`), so the builders and the validation guard pick the taxonomy effective for a period and entry point. All new properties are optional, so existing rows keep validating. The taxonomy record also names, per release, the entry point schemas (`schemaRefs`), the concept namespaces (`namespaces`) and any concept it renames (`conceptMap`), which the XBRL builders write. Filing follows integriq: `submit` now stores the file and hands it to integriq (state handed-off, action hand-to-digipoort), `deliver` moves it to submitted only on integriq's delivery report carrying the Digipoort reference, and `retract` returns an undeliverable filing to validated; accept and reject stay inbound from submitted.",
     "spec": "openspec/changes/tax-digipoort-filing/specs/bookkeeping-vat-btw-filing/spec.md"
   },
   "info": {
@@ -36,12 +36,64 @@
             "description": "The BtwAangifte this VAT return instance was built from. Empty for an annual accounts instance, which names its statement in sourceStatementId.",
             "example": "btw-2026-q3",
             "title": "Source return"
+          },
+          "state": {
+            "enum": [
+              "handed-off"
+            ]
+          },
+          "payloadFileUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "The stored XBRL file handed to integriq's Digipoort connector, under /Shillinq/Sbr/<administrationId>/ in the files of whoever filed it.",
+            "example": "nextcloud://files/4711",
+            "title": "Filed file"
+          },
+          "handOffReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "The correlation id the filing was handed to integriq with; integriq's status reports refer to the filing by it.",
+            "example": "openregister://shillinq/XbrlInstance/2c1d…",
+            "title": "Hand-off reference"
           }
         },
         "x-openregister-lifecycle": {
           "transitions": {
             "validate": {
               "requires": "OCA\\Shillinq\\Guard\\XbrlInstanceValidationGuard::requireValidInstance"
+            },
+            "submit": {
+              "to": "handed-off",
+              "label": "Indienen",
+              "description": "Store the XBRL file and hand it to integriq's Digipoort connector (hand-to-digipoort). Refused when no filing connection is configured, so nothing is marked submitted that never left shillinq.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\HandToDigipoortAction",
+                  "description": "Store the XML under /Shillinq/Sbr/<administrationId>/ and emit nl.conduction.sbr.filing.requested for integriq; set payloadFileUri and handOffReference."
+                }
+              ]
+            },
+            "deliver": {
+              "from": "handed-off",
+              "to": "submitted",
+              "trigger": "inbound",
+              "label": "Afgeleverd bij Digipoort",
+              "description": "integriq reported the delivery; digipoortReceiptId and submittedAt are set. Refused without the Digipoort reference.",
+              "requires": "OCA\\Shillinq\\Guard\\XbrlDeliveryGuard::requireDeliveryReference"
+            },
+            "retract": {
+              "from": "handed-off",
+              "to": "validated",
+              "trigger": "inbound",
+              "label": "Niet afgeleverd",
+              "description": "integriq could not deliver the filing; rejectionReason says why and the filing can be submitted again."
+            }
+          },
+          "states": {
+            "handed-off": {
+              "label": "Aangeboden",
+              "description": "Handed to integriq's Digipoort connector (source digipoort-sbr). Not yet submitted: it becomes submitted only when integriq reports the delivery with a Digipoort reference."
             }
           }
         }

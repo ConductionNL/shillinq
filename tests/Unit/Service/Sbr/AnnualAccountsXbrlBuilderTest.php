@@ -26,7 +26,6 @@ use DOMDocument;
 use DOMXPath;
 use OCA\Shillinq\Service\Sbr\AnnualAccountsXbrlBuilder;
 use OCA\Shillinq\Service\Sbr\SbrRecords;
-use OCA\Shillinq\Service\Sbr\VatReturnXbrlBuilder;
 use OCA\Shillinq\Service\Sbr\XbrlInstanceCheck;
 use OCA\Shillinq\Service\Sbr\XbrlInstanceWriter;
 use OCA\Shillinq\Service\Sbr\XbrlTaxonomyLookup;
@@ -37,7 +36,6 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 #[CoversClass(AnnualAccountsXbrlBuilder::class)]
-#[UsesClass(VatReturnXbrlBuilder::class)]
 #[UsesClass(XbrlInstanceWriter::class)]
 #[UsesClass(XbrlInstanceCheck::class)]
 final class AnnualAccountsXbrlBuilderTest extends TestCase {

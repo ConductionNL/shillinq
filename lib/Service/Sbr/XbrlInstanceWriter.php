@@ -133,6 +133,46 @@ final class XbrlInstanceWriter {
 	}//end write()
 
 	/**
+	 * The concept namespaces: the taxonomy's, else the default.
+	 *
+	 * @param array<string,mixed>|null $taxonomy The taxonomy record.
+	 * @param array<string,string>     $defaults The namespaces when the taxonomy names none.
+	 *
+	 * @return array<string,string> Prefix to namespace URI.
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
+	 */
+	public static function namespaces(?array $taxonomy, array $defaults): array {
+		$namespaces = $defaults;
+		foreach ((array) ($taxonomy['namespaces'] ?? []) as $prefix => $uri) {
+			if (is_string($prefix) === true && is_string($uri) === true && trim($uri) !== '') {
+				$namespaces[$prefix] = trim($uri);
+			}
+		}
+
+		return $namespaces;
+	}//end namespaces()
+
+	/**
+	 * The entry point schema the taxonomy names, or null.
+	 *
+	 * @param array<string,mixed>|null $taxonomy   The taxonomy record.
+	 * @param string                   $entryPoint The entry point.
+	 *
+	 * @return string|null The schema URL.
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-1.2
+	 */
+	public static function schemaRef(?array $taxonomy, string $entryPoint): ?string {
+		$ref = (($taxonomy['schemaRefs'] ?? [])[$entryPoint] ?? null);
+		if (is_string($ref) === false || trim($ref) === '') {
+			return null;
+		}
+
+		return trim($ref);
+	}//end schemaRef()
+
+	/**
 	 * A whole-euro amount as XBRL writes it.
 	 *
 	 * @param int|float $value The amount in euros.
@@ -167,7 +207,9 @@ final class XbrlInstanceWriter {
 		$writer->startElementNs('xbrli', 'period', null);
 		if ($start === null) {
 			$writer->writeElementNs('xbrli', 'instant', null, $end);
-		} else {
+		}
+
+		if ($start !== null) {
 			$writer->writeElementNs('xbrli', 'startDate', null, $start);
 			$writer->writeElementNs('xbrli', 'endDate', null, $end);
 		}

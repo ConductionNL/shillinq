@@ -188,14 +188,14 @@ class AnnualAccountsXbrlBuilder {
 		}
 
 		$sizeClass = strtolower(trim((string) ($statement['sizeClass'] ?? '')));
-		$schemaRef = VatReturnXbrlBuilder::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT . ':' . $sizeClass);
+		$schemaRef = XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT . ':' . $sizeClass);
 		$xml       = XbrlInstanceWriter::write(
 			entity: ['scheme' => self::KVK_SCHEME, 'identifier' => (string) preg_replace('/\D+/', '', (string) ($administration['kvkNumber'] ?? ''))],
 			start: $start,
 			end: $end,
-			namespaces: VatReturnXbrlBuilder::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
+			namespaces: XbrlInstanceWriter::namespaces(taxonomy: $taxonomy, defaults: self::DEFAULT_NAMESPACES),
 			facts: $facts,
-			schemaRef: ($schemaRef ?? VatReturnXbrlBuilder::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT))
+			schemaRef: ($schemaRef ?? XbrlInstanceWriter::schemaRef(taxonomy: $taxonomy, entryPoint: self::ENTRY_POINT))
 		);
 
 		$number = 'KVK-' . substr($end, 0, 4);

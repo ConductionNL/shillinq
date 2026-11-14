@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
@@ -69,6 +70,10 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
+		'digipoort-sbr' => [
+			'interface' => DigipoortSbrAdapterInterface::class,
+			'consequence' => 'No VAT return or annual accounts reach Digipoort; Submit is refused.',
+		],
 		'mollie' => [
 			'interface' => MolliePaymentAdapterInterface::class,
 			'consequence' => 'No payment reaches Mollie.',

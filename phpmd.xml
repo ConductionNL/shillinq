@@ -67,6 +67,9 @@
         LedgerGroupEntryKey) are pure functions of their arguments on the same
         testable claim as (f): final, NO constructor, NO properties, NO
         collaborators. Remove an entry if that stops being true.
+        (j) XbrlInstanceWriter writes an XBRL document from its arguments and
+        reads the taxonomy fields it needs from the record it is given: final,
+        NO constructor, NO properties, NO collaborators, as (i).
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -74,6 +77,7 @@
                 DateTimeImmutable,
                 OCP\Server,
                 OCA\Shillinq\Support\FleetAppId,
+                OCA\Shillinq\Service\Sbr\XbrlInstanceWriter,
                 OCA\Shillinq\Support\DateWindow,
                 OCA\OpenRegister\Lifecycle\GuardResult,
                 OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery,

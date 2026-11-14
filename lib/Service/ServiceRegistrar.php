@@ -46,7 +46,7 @@ use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\Billing\BillableHoursSource;
 use OCA\Shillinq\Service\Billing\UnavailableBillableHours;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
-use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrBinding;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
 use OCA\Shillinq\Service\External\Ib47\LogIb47Adapter;
 use OCA\Shillinq\Service\External\Kvk\KvkHandelsregisterAdapterInterface;
@@ -210,7 +210,14 @@ final class ServiceRegistrar {
 
 		$context->registerServiceAlias(BzkSisaUploadAdapterInterface::class, LogBzkSisaUploadAdapter::class);
 
-		$context->registerServiceAlias(DigipoortSbrAdapterInterface::class, LogDigipoortSbrAdapter::class);
+		// Change tax-digipoort-filing task 3.1: integriq's hand-off when integriq is
+		// enabled, else the log-only adapter, which HandToDigipoortAction refuses.
+		$context->registerService(
+			DigipoortSbrAdapterInterface::class,
+			static function (ContainerInterface $c): DigipoortSbrAdapterInterface {
+				return (new DigipoortSbrBinding())->adapter(container: $c);
+			}
+		);
 		// Until humaniq's hours read is bound (sales-time-and-expense-billing
 		// task 2.3), the invoice generator is told hours are unavailable (task 2.1).
 		$context->registerServiceAlias(BillableHoursSource::class, UnavailableBillableHours::class);

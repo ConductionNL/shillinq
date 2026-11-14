@@ -167,7 +167,9 @@ class XbrlInstanceCheck {
 			}
 
 			$total = trim((string) ($summation['total'] ?? ''));
-			$parts = array_values(array_filter((array) ($summation['parts'] ?? []), static fn (mixed $p): bool => is_string($p) === true && trim($p) !== ''));
+			$parts = array_values(
+				array_filter((array) ($summation['parts'] ?? []), static fn (mixed $part): bool => is_string($part) === true && trim($part) !== '')
+			);
 			if ($total !== '' && $parts !== []) {
 				$out[] = ['total' => $total, 'parts' => $parts];
 			}

@@ -167,6 +167,14 @@
         "registerEventListener",
         [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatedEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\SbrFilingStatusListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\IntegriqCloudEventListener'",
             "0"
         ]
@@ -2197,10 +2205,11 @@
         ]
     ],
     [
-        "registerServiceAlias",
+        "registerService",
         [
             "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Digipoort\\\\DigipoortSbrAdapterInterface'",
-            "'OCA\\\\Shillinq\\\\Service\\\\External\\\\Digipoort\\\\LogDigipoortSbrAdapter'"
+            "Closure",
+            "true"
         ]
     ],
     [
@@ -2492,6 +2501,14 @@
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Guard\\\\XbrlInstanceValidationGuard::requireValidInstance'",
+            "Closure",
+            "true"
+        ]
+    ],
+    [
+        "registerService",
+        [
+            "'OCA\\\\Shillinq\\\\Guard\\\\XbrlDeliveryGuard::requireDeliveryReference'",
             "Closure",
             "true"
         ]
