@@ -33,8 +33,6 @@ use OCA\Integriq\Event\ConnectionStatusReportedEvent;
 use OCA\Shillinq\Service\ConnectionReportService;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
-use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
-use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
@@ -51,7 +49,6 @@ use RuntimeException;
  *
  * @covers \OCA\Shillinq\Service\ConnectionReportService
  * @uses   \OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter
- * @uses   \OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter
  * @uses   \OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter
  */
 class ConnectionReportServiceTest extends TestCase {
@@ -124,7 +121,6 @@ class ConnectionReportServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		return [
-			MolliePaymentAdapterInterface::class => new LogMolliePaymentAdapter(logger: $logger),
 			TreasuryRateAdapterInterface::class => new LogTreasuryRateAdapter(logger: $logger),
 			DepositPaymentAdapterInterface::class => new LogDepositPaymentAdapter(logger: $logger),
 		];
@@ -169,16 +165,19 @@ class ConnectionReportServiceTest extends TestCase {
 		$result = $this->service(bindings: $this->shippedBindings())->reportAdapterBindings();
 
 		$this->assertSame(
-			expected: ['mollie' => 'simulated', 'treasury-rates' => 'simulated', 'deposit-payment' => 'simulated'],
+			expected: ['treasury-rates' => 'simulated', 'deposit-payment' => 'simulated'],
 			actual: $result
 		);
-		$this->assertCount(expectedCount: 3, haystack: $this->sent);
+		$this->assertCount(expectedCount: 2, haystack: $this->sent);
 
-		$mollie = $this->sentByKey()['mollie'];
-		$this->assertSame(expected: 'shillinq', actual: $mollie->app);
-		$this->assertSame(expected: 'mollie', actual: $mollie->key);
-		$this->assertSame(expected: 'simulated', actual: $mollie->status);
-		$this->assertSame(expected: 'A log-only adapter answers here. No payment reaches Mollie.', actual: $mollie->message);
+		$deposit = $this->sentByKey()['deposit-payment'];
+		$this->assertSame(expected: 'shillinq', actual: $deposit->app);
+		$this->assertSame(expected: 'deposit-payment', actual: $deposit->key);
+		$this->assertSame(expected: 'simulated', actual: $deposit->status);
+		$this->assertSame(
+			expected: 'A log-only adapter answers here. Deposits stay pending and no payment provider is called.',
+			actual: $deposit->message
+		);
 	}//end testShippedLogOnlyAdaptersAreReportedSimulated()
 
 	/**
@@ -213,7 +212,7 @@ class ConnectionReportServiceTest extends TestCase {
 		$result = $this->service(bindings: $bindings)->reportAdapterBindings();
 
 		$this->assertSame(expected: 'error', actual: $result['deposit-payment']);
-		$this->assertSame(expected: 'simulated', actual: $result['mollie']);
+		$this->assertSame(expected: 'simulated', actual: $result['treasury-rates']);
 		$this->assertStringContainsString(
 			needle: 'Shillinq could not load the adapter: No binding for ' . DepositPaymentAdapterInterface::class,
 			haystack: $this->sentByKey()['deposit-payment']->message
@@ -292,7 +291,7 @@ class ConnectionReportServiceTest extends TestCase {
 	public function testAThrowingListenerNeverEscapes(): void {
 		$dispatcher = $this->createMock(originalClassName: IEventDispatcher::class);
 		$dispatcher->method('dispatchTyped')->willThrowException(new RuntimeException('registry down'));
-		$this->logger->expects($this->exactly(count: 3))->method('warning')
+		$this->logger->expects($this->exactly(count: 2))->method('warning')
 			->with($this->stringContains(string: 'could not send'), $this->arrayHasKey(key: 'key'));
 
 		$service = new ConnectionReportService(

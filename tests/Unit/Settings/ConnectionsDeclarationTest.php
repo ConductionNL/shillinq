@@ -73,7 +73,7 @@ final class ConnectionsDeclarationTest extends TestCase {
 	 *
 	 * @var array<int, string>
 	 */
-	private const INTEGRIQ_SOURCE_TEMPLATES = ['kvk'];
+	private const INTEGRIQ_SOURCE_TEMPLATES = ['kvk', 'mollie-payments'];
 
 	/**
 	 * The repository root.

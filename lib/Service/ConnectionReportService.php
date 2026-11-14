@@ -35,7 +35,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\ConnectionReportServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
-use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -69,10 +68,6 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 	 * @var array<string, array{interface: class-string, consequence: string}>
 	 */
 	public const FAMILIES = [
-		'mollie' => [
-			'interface' => MolliePaymentAdapterInterface::class,
-			'consequence' => 'No payment reaches Mollie.',
-		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,
 			'consequence' => 'No rates are fetched from the ECB or a market data provider.',
