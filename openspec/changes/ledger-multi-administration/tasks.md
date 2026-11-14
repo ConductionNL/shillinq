@@ -8,7 +8,7 @@
 
 ## 2. Scoping
 
-- [ ] 2.1 Generate the list of index pages whose schema declares `administrationId`, and add the scoped wrapper `AdministrationScopedIndex.vue` for them (REQ-LMA-002). Verify: vitest for the wrapper; the generated list in the PR body.
+- [x] 2.1 Generate the list of index pages whose schema declares `administrationId`, and add the scoped wrapper `AdministrationScopedIndex.vue` for them (REQ-LMA-002). Verify: vitest for the wrapper; the generated list in the PR body.
 - [ ] 2.2 Raise the `@context.<key>` sentinel request on nextcloud-vue with this change as the consumer, and switch the pages to it when it ships (REQ-LMA-002). Verify: issue link in the PR body.
 
 ## 3. Templates
