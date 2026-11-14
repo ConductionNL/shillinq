@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Repair\Support;
 
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -132,7 +132,7 @@ final class PagedObjectService {
 }//end class
 
 /**
- * @covers \OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches
+ * @covers \OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches
  */
 final class ReadsSourceRowsInBatchesTest extends TestCase {
 

@@ -1,0 +1,125 @@
+{
+ "_meta": {
+  "spdx-license": "EUPL-1.2",
+  "spdx-copyright": "2026 Conduction B.V.",
+  "change": "inbound-payable-from-another-app",
+  "description": "Payouts to pay: the payouts other apps raised (InboundPayable), with Approve, Mark paid and Reject as row actions through InboundPayableController (InboundPayableStepDialog). Relocated under Banking & Cashflow in src/menu-layout.json."
+ },
+ "menu": [
+  {
+   "id": "InboundPayables",
+   "label": "Payouts to pay",
+   "icon": "CashFast",
+   "route": "InboundPayables",
+   "order": 26
+  }
+ ],
+ "pages": [
+  {
+   "id": "InboundPayables",
+   "route": "/banking/payouts-to-pay",
+   "type": "index",
+   "title": "Payouts to pay",
+   "config": {
+    "register": "shillinq",
+    "schema": "InboundPayable",
+    "columns": [
+     {
+      "key": "reference",
+      "label": "Reference",
+      "sortable": true
+     },
+     {
+      "key": "sourceApp",
+      "label": "Raised by",
+      "sortable": true
+     },
+     {
+      "key": "category",
+      "label": "Category",
+      "sortable": true
+     },
+     {
+      "key": "amount",
+      "label": "Amount",
+      "sortable": true
+     },
+     {
+      "key": "dueOn",
+      "label": "Pay by",
+      "sortable": true
+     },
+     {
+      "key": "state",
+      "label": "State",
+      "sortable": true
+     }
+    ],
+    "defaultSort": "dueOn",
+    "quickFilters": [
+     {
+      "label": "To approve",
+      "filter": {
+       "state": "requested"
+      },
+      "default": true,
+      "showCount": true
+     },
+     {
+      "label": "To pay",
+      "filter": {
+       "state": "approved"
+      },
+      "showCount": true
+     },
+     {
+      "label": "All",
+      "filter": {}
+     }
+    ],
+    "actions": [
+     {
+      "id": "approve-payout",
+      "label": "Approve",
+      "icon": "CheckCircleOutline",
+      "handler": "approvePayable",
+      "visibleWhen": {
+       "field": "state",
+       "in": [
+        "requested"
+       ]
+      },
+      "description": "Approve the payout and book the expense against the payable."
+     },
+     {
+      "id": "mark-payout-paid",
+      "label": "Mark paid",
+      "icon": "BankTransferOut",
+      "handler": "markPayablePaid",
+      "visibleWhen": {
+       "field": "state",
+       "in": [
+        "approved"
+       ]
+      },
+      "description": "Record the bank payment that paid the payout and clear the payable against the bank."
+     },
+     {
+      "id": "reject-payout",
+      "label": "Reject",
+      "icon": "CloseCircleOutline",
+      "handler": "rejectPayable",
+      "visibleWhen": {
+       "field": "state",
+       "in": [
+        "requested",
+        "approved"
+       ]
+      },
+      "description": "Refuse the payout with a reason the raising app is told."
+     }
+    ]
+   }
+  }
+ ]
+}

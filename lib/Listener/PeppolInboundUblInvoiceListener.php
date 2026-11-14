@@ -50,8 +50,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -85,13 +85,13 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 	/**
 	 * Construct the listener with the ingestion service + a logger.
 	 *
-	 * @param SupplierInvoiceService $supplierInvoices Slice-05 ingestion service.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param SupplierInvoiceServiceInterface $supplierInvoices Slice-05 ingestion service.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly SupplierInvoiceService $supplierInvoices,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly SupplierInvoiceServiceInterface $supplierInvoices,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
 

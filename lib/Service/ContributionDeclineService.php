@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
+use OCA\Shillinq\Kernel\Contracts\ContributionDeclineServiceInterface;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -52,13 +53,7 @@ use Throwable;
  *
  * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
  */
-class ContributionDeclineService {
-	/**
-	 * The contribution is declined (or already was, by this guardian).
-	 *
-	 * @var string
-	 */
-	public const DECLINED = 'declined';
+class ContributionDeclineService implements ContributionDeclineServiceInterface {
 
 	/**
 	 * Anything that is not an open voluntary contribution the guardian owns.
@@ -66,13 +61,6 @@ class ContributionDeclineService {
 	 * @var string
 	 */
 	public const FORBIDDEN = 'forbidden';
-
-	/**
-	 * OpenRegister failed.
-	 *
-	 * @var string
-	 */
-	public const DOWNSTREAM_ERROR = 'downstream_error';
 
 	/**
 	 * OpenRegister's object service, fetched lazily.
