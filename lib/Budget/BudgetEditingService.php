@@ -50,6 +50,9 @@ use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
  * Budget entry over AnnualBudget, BudgetLine and LedgerGroup.
  *
  * @spec openspec/specs/budget-grid-view/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The total is the sum of small private steps; each method stays under the method thresholds.
+ * @SuppressWarnings(PHPMD.TooManyMethods) The total is the sum of small private steps; each method stays under the method thresholds.
  */
 class BudgetEditingService implements BudgetEditingServiceInterface {
 	/**
@@ -97,37 +100,67 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 
 		$rows = [];
 		foreach ($this->groups(administrationId: $administrationId) as $group) {
-			$lines = ($linesByGroup[$group['id']] ?? []);
-			$manual = $this->manualLine(lines: $lines);
-			$derived = array_values(array_filter($lines, static fn (array $line): bool => ($line['source'] ?? '') !== self::SOURCE_MANUAL));
-
-			$source = self::SOURCE_MANUAL;
-			$months = $this->emptyMonths();
-			if ($manual !== null) {
-				$months = $this->months(line: $manual);
-			}
-
-			if ($manual === null && $derived !== []) {
-				$source = (string)$derived[0]['source'];
-				$months = $this->sumMonths(lines: $derived);
-			}
-
-			$rows[] = [
-				'ledgerGroupId' => $group['id'],
-				'code'          => $group['code'],
-				'name'          => $group['name'],
-				'depth'         => $group['depth'],
-				'lineId'        => ($manual['id'] ?? null),
-				'source'        => $source,
-				'editable'      => ($source === self::SOURCE_MANUAL && ($budget['state'] ?? 'draft') !== 'closed'),
-				'months'        => $months,
-				'total'         => array_sum($months),
-			];
-		}//end foreach
+			$rows[] = $this->groupRow(group: $group, lines: ($linesByGroup[$group['id']] ?? []), budget: $budget);
+		}
 
 		return ['budget' => $budget, 'rows' => $rows];
 
 	}//end lines()
+
+	/**
+	 * One ledger group's grid row: its manual line, or else the sum of its derived lines.
+	 *
+	 * @param array{id:string,code:string,name:string,depth:int} $group  The ledger group.
+	 * @param list<array<string,mixed>>                          $lines  The group's lines in the budget.
+	 * @param array<string,mixed>                                $budget The annual budget.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
+	 */
+	private function groupRow(array $group, array $lines, array $budget): array {
+		$manual = $this->manualLine(lines: $lines);
+		$derived = array_values(array_filter($lines, static fn (array $line): bool => ($line['source'] ?? '') !== self::SOURCE_MANUAL));
+
+		[$source, $months] = $this->sourceAndMonths(manual: $manual, derived: $derived);
+
+		return [
+			'ledgerGroupId' => $group['id'],
+			'code'          => $group['code'],
+			'name'          => $group['name'],
+			'depth'         => $group['depth'],
+			'lineId'        => ($manual['id'] ?? null),
+			'source'        => $source,
+			'editable'      => ($source === self::SOURCE_MANUAL && ($budget['state'] ?? 'draft') !== 'closed'),
+			'months'        => $months,
+			'total'         => array_sum($months),
+		];
+	}//end groupRow()
+
+	/**
+	 * The source and month amounts of a group's row.
+	 *
+	 * @param array<string,mixed>|null  $manual  The group's manual line, if any.
+	 * @param list<array<string,mixed>> $derived The group's derived lines.
+	 *
+	 * @return array{0:string,1:array<int,int>}
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
+	 */
+	private function sourceAndMonths(array|null $manual, array $derived): array {
+		$source = self::SOURCE_MANUAL;
+		$months = $this->emptyMonths();
+		if ($manual !== null) {
+			$months = $this->months(line: $manual);
+		}
+
+		if ($manual === null && $derived !== []) {
+			$source = (string)$derived[0]['source'];
+			$months = $this->sumMonths(lines: $derived);
+		}
+
+		return [$source, $months];
+	}//end sourceAndMonths()
 
 	/**
 	 * Save one month of a ledger group's manual line.
@@ -223,17 +256,61 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
 	public function multiYear(string $administrationId, int $fromYear): array {
-		$years = [];
-		$all = [];
-		foreach ($this->budgets(administrationId: $administrationId) as $budget) {
-			$year = (int)($budget['fiscalYear'] ?? 0);
-			$all[] = [
-				'annualBudgetId' => (string)$budget['id'],
-				'fiscalYear'     => $year,
-				'name'           => (string)($budget['name'] ?? ''),
-				'state'          => (string)($budget['state'] ?? 'draft'),
+		$budgets = $this->budgets(administrationId: $administrationId);
+		$all = array_map(fn (array $budget): array => $this->budgetChoice(budget: $budget), $budgets);
+		$years = $this->yearsShown(budgets: $budgets, fromYear: $fromYear);
+
+		$totals = $this->yearTotals(years: $years);
+
+		$rows = [];
+		foreach ($this->groups(administrationId: $administrationId) as $group) {
+			$rows[] = [
+				'ledgerGroupId' => $group['id'],
+				'code'          => $group['code'],
+				'name'          => $group['name'],
+				'depth'         => $group['depth'],
+				'amounts'       => $this->yearAmounts(groupId: $group['id'], years: $years, totals: $totals),
 			];
-			if ($year < $fromYear || $year > ($fromYear + self::YEARS_AHEAD)) {
+		}
+
+		usort($all, static fn (array $a, array $b): int => [$b['fiscalYear'], $a['name']] <=> [$a['fiscalYear'], $b['name']]);
+		return ['years' => $years, 'rows' => $rows, 'budgets' => $all];
+
+	}//end multiYear()
+
+	/**
+	 * A budget as one of the choices of the multi-year view.
+	 *
+	 * @param array<string,mixed> $budget The annual budget.
+	 *
+	 * @return array{annualBudgetId:string,fiscalYear:int,name:string,state:string}
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
+	 */
+	private function budgetChoice(array $budget): array {
+		return [
+			'annualBudgetId' => (string)$budget['id'],
+			'fiscalYear'     => (int)($budget['fiscalYear'] ?? 0),
+			'name'           => (string)($budget['name'] ?? ''),
+			'state'          => (string)($budget['state'] ?? 'draft'),
+		];
+	}//end budgetChoice()
+
+	/**
+	 * The fiscal years shown from a year on, one budget each, in year order.
+	 *
+	 * @param list<array<string,mixed>> $budgets  The administration's budgets.
+	 * @param int                       $fromYear The first year shown.
+	 *
+	 * @return list<array{fiscalYear:int,annualBudgetId:string,name:string,state:string}>
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
+	 */
+	private function yearsShown(array $budgets, int $fromYear): array {
+		$years = [];
+		foreach ($budgets as $budget) {
+			$year = (int)($budget['fiscalYear'] ?? 0);
+			if ($this->inYearWindow(year: $year, fromYear: $fromYear) === false) {
 				continue;
 			}
 
@@ -251,8 +328,29 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 		}//end foreach
 
 		ksort($years);
-		$years = array_values($years);
+		return array_values($years);
+	}//end yearsShown()
 
+	/**
+	 * Whether a fiscal year falls in the multi-year window.
+	 *
+	 * @param int $year     The fiscal year.
+	 * @param int $fromYear The first year shown.
+	 *
+	 * @return bool
+	 */
+	private function inYearWindow(int $year, int $fromYear): bool {
+		return ($year >= $fromYear && $year <= ($fromYear + self::YEARS_AHEAD));
+	}//end inYearWindow()
+
+	/**
+	 * Each ledger group's yearly total per shown fiscal year.
+	 *
+	 * @param list<array{fiscalYear:int,annualBudgetId:string,name:string,state:string}> $years The shown years.
+	 *
+	 * @return array<string,array<int,int>> Totals by group id and fiscal year.
+	 */
+	private function yearTotals(array $years): array {
 		$totals = [];
 		foreach ($years as $year) {
 			foreach ($this->linesByGroup(annualBudgetId: $year['annualBudgetId']) as $groupId => $lines) {
@@ -260,26 +358,26 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 			}
 		}
 
-		$rows = [];
-		foreach ($this->groups(administrationId: $administrationId) as $group) {
-			$amounts = [];
-			foreach ($years as $year) {
-				$amounts[(string)$year['fiscalYear']] = ($totals[$group['id']][$year['fiscalYear']] ?? 0);
-			}
+		return $totals;
+	}//end yearTotals()
 
-			$rows[] = [
-				'ledgerGroupId' => $group['id'],
-				'code'          => $group['code'],
-				'name'          => $group['name'],
-				'depth'         => $group['depth'],
-				'amounts'       => $amounts,
-			];
+	/**
+	 * One group's amount per shown fiscal year, zero when it has none.
+	 *
+	 * @param string                                                                     $groupId The ledger group.
+	 * @param list<array{fiscalYear:int,annualBudgetId:string,name:string,state:string}> $years   The shown years.
+	 * @param array<string,array<int,int>>                                               $totals  Totals by group id and fiscal year.
+	 *
+	 * @return array<string,int>
+	 */
+	private function yearAmounts(string $groupId, array $years, array $totals): array {
+		$amounts = [];
+		foreach ($years as $year) {
+			$amounts[(string)$year['fiscalYear']] = ($totals[$groupId][$year['fiscalYear']] ?? 0);
 		}
 
-		usort($all, static fn (array $a, array $b): int => [$b['fiscalYear'], $a['name']] <=> [$a['fiscalYear'], $b['name']]);
-		return ['years' => $years, 'rows' => $rows, 'budgets' => $all];
-
-	}//end multiYear()
+		return $amounts;
+	}//end yearAmounts()
 
 	/**
 	 * Start next year's budget from a chosen one, its manual lines raised by a percentage.
@@ -301,16 +399,49 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 
 		$source = $this->budget(administrationId: $administrationId, annualBudgetId: $annualBudgetId);
 		$nextYear = ((int)$source['fiscalYear'] + 1);
+		$this->assertNoBudgetFor(administrationId: $administrationId, fiscalYear: $nextYear);
+
+		$saved = $this->createNextBudget(administrationId: $administrationId, nextYear: $nextYear);
+		$created = ObjectIdentifier::recordWithId(candidate: $saved);
+		$newId = ObjectIdentifier::resolve(saved: $saved);
+
+		$this->copyManualLines(administrationId: $administrationId, source: $source, newId: $newId, percentage: $percentage);
+
+		return ($created ?? ['id' => $newId, 'fiscalYear' => $nextYear]);
+
+	}//end startNextYear()
+
+	/**
+	 * Refuse when a fiscal year already has a budget.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param int    $fiscalYear       The fiscal year.
+	 *
+	 * @return void
+	 *
+	 * @throws BudgetEditRefusedException When it has one.
+	 */
+	private function assertNoBudgetFor(string $administrationId, int $fiscalYear): void {
 		foreach ($this->budgets(administrationId: $administrationId) as $budget) {
-			if ((int)($budget['fiscalYear'] ?? 0) === $nextYear) {
+			if ((int)($budget['fiscalYear'] ?? 0) === $fiscalYear) {
 				throw new BudgetEditRefusedException(
 					template: '%1$s already has a budget: %2$s.',
-					parameters: [(string)$nextYear, (string)($budget['name'] ?? '')]
+					parameters: [(string)$fiscalYear, (string)($budget['name'] ?? '')]
 				);
 			}
 		}
+	}//end assertNoBudgetFor()
 
-		$saved = $this->scoped(schema: 'AnnualBudget')->saveObject(
+	/**
+	 * Save next year's default draft budget.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param int    $nextYear         The fiscal year.
+	 *
+	 * @return mixed The saveObject() result.
+	 */
+	private function createNextBudget(string $administrationId, int $nextYear): mixed {
+		return $this->scoped(schema: 'AnnualBudget')->saveObject(
 			[
 				'administrationId' => $administrationId,
 				'fiscalYear'       => $nextYear,
@@ -319,11 +450,22 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 				'state'            => 'draft',
 			]
 		);
-		$created = ObjectIdentifier::recordWithId(candidate: $saved);
-		$newId = ObjectIdentifier::resolve(saved: $saved);
+	}//end createNextBudget()
+
+	/**
+	 * Copy the source budget's manual lines onto the new budget, raised by a percentage.
+	 *
+	 * @param string              $administrationId The administration.
+	 * @param array<string,mixed> $source           The budget started from.
+	 * @param string              $newId            The new budget's id.
+	 * @param float               $percentage       The change in percent.
+	 *
+	 * @return void
+	 */
+	private function copyManualLines(string $administrationId, array $source, string $newId, float $percentage): void {
 		$factor = (1 + ($percentage / 100));
 
-		foreach ($this->linesByGroup(annualBudgetId: $annualBudgetId) as $groupId => $lines) {
+		foreach ($this->linesByGroup(annualBudgetId: (string)$source['id']) as $groupId => $lines) {
 			$manual = $this->manualLine(lines: $lines);
 			if ($manual === null) {
 				continue;
@@ -342,10 +484,7 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 
 			$this->scoped(schema: 'BudgetLine')->saveObject($copy);
 		}
-
-		return ($created ?? ['id' => $newId, 'fiscalYear' => $nextYear]);
-
-	}//end startNextYear()
+	}//end copyManualLines()
 
 	/**
 	 * The annual budget, when it is this administration's.
@@ -385,14 +524,7 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 			throw new BudgetEditRefusedException(template: 'This budget is closed. Its amounts can no longer change.');
 		}
 
-		$known = false;
-		foreach ($this->groups(administrationId: $administrationId) as $group) {
-			$known = ($known || $group['id'] === $ledgerGroupId);
-		}
-
-		if ($known === false) {
-			throw new BudgetEditRefusedException(template: 'This ledger group does not exist.');
-		}
+		$this->assertKnownGroup(administrationId: $administrationId, ledgerGroupId: $ledgerGroupId);
 
 		$lines = ($this->linesByGroup(annualBudgetId: $annualBudgetId)[$ledgerGroupId] ?? []);
 		$manual = $this->manualLine(lines: $lines);
@@ -407,6 +539,41 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 			);
 		}
 
+		return $this->newManualLine(administrationId: $administrationId, annualBudgetId: $annualBudgetId, ledgerGroupId: $ledgerGroupId);
+
+	}//end writableLine()
+
+	/**
+	 * Refuse a ledger group the administration does not have.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $ledgerGroupId    The ledger group.
+	 *
+	 * @return void
+	 *
+	 * @throws BudgetEditRefusedException When it does not exist.
+	 */
+	private function assertKnownGroup(string $administrationId, string $ledgerGroupId): void {
+		$known = false;
+		foreach ($this->groups(administrationId: $administrationId) as $group) {
+			$known = ($known || $group['id'] === $ledgerGroupId);
+		}
+
+		if ($known === false) {
+			throw new BudgetEditRefusedException(template: 'This ledger group does not exist.');
+		}
+	}//end assertKnownGroup()
+
+	/**
+	 * A new, empty manual line of a group in a budget.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $annualBudgetId   The annual budget.
+	 * @param string $ledgerGroupId    The ledger group.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function newManualLine(string $administrationId, string $annualBudgetId, string $ledgerGroupId): array {
 		$line = [
 			'administrationId' => $administrationId,
 			'annualBudgetId'   => $annualBudgetId,
@@ -418,8 +585,7 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 		}
 
 		return $line;
-
-	}//end writableLine()
+	}//end newManualLine()
 
 	/**
 	 * Save a line and answer it as a grid row: a new line is created, a stored one patched.
@@ -465,6 +631,26 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 	 * @return list<array{id:string,code:string,name:string,depth:int}>
 	 */
 	private function groups(string $administrationId): array {
+		[$groups, $byKey] = $this->groupRecords(administrationId: $administrationId);
+
+		usort($groups, static fn (array $a, array $b): int => [$a['order'], $a['code']] <=> [$b['order'], $b['code']]);
+
+		[$roots, $children] = $this->groupTree(groups: $groups, byKey: $byKey);
+
+		$flat = [];
+		$this->flatten(groups: $roots, children: $children, depth: 0, flat: $flat);
+		return $flat;
+
+	}//end groups()
+
+	/**
+	 * The administration's ledger groups, and their ids by id and by code.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array{0:list<array{id:string,code:string,name:string,order:int,parent:string}>,1:array<string,string>}
+	 */
+	private function groupRecords(string $administrationId): array {
 		$groups = [];
 		$byKey = [];
 		foreach ($this->records(schema: 'LedgerGroup', filters: ['administrationId' => $administrationId]) as $row) {
@@ -482,8 +668,18 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 			}
 		}
 
-		usort($groups, static fn (array $a, array $b): int => [$a['order'], $a['code']] <=> [$b['order'], $b['code']]);
+		return [$groups, $byKey];
+	}//end groupRecords()
 
+	/**
+	 * The root groups, and the child groups by parent id.
+	 *
+	 * @param list<array{id:string,code:string,name:string,order:int,parent:string}> $groups The groups, sorted.
+	 * @param array<string,string>                                                   $byKey  Group ids by id and by code.
+	 *
+	 * @return array{0:list<array{id:string,code:string,name:string,order:int,parent:string}>,1:array<string,list<array{id:string,code:string,name:string,order:int,parent:string}>>}
+	 */
+	private function groupTree(array $groups, array $byKey): array {
 		$children = [];
 		$roots = [];
 		foreach ($groups as $group) {
@@ -496,11 +692,8 @@ class BudgetEditingService implements BudgetEditingServiceInterface {
 			$children[$parent][] = $group;
 		}
 
-		$flat = [];
-		$this->flatten(groups: $roots, children: $children, depth: 0, flat: $flat);
-		return $flat;
-
-	}//end groups()
+		return [$roots, $children];
+	}//end groupTree()
 
 	/**
 	 * Depth-first flattening of the group tree.
