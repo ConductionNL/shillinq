@@ -1,6 +1,6 @@
 {
 	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 row 7): InventoryValuations was a near-identical duplicate INDEX of the base manifest's InventoryValuation (same schema, no distinguishing filter) — deleted along with its menu leaf; InventoryValuation is canonical. InventoryValuationDetail is KEPT here unchanged: it already shadows/wins over a dead duplicate declaration of the same id in the base manifest (removed separately) — the effective detail route stays /inventory/valuations/:id exactly as served today, per REQ-NAVC-010 (no route renames).",
-	"menu": [],
+	"menu": [{"id": "Inventory", "label": "Inventory", "icon": "Warehouse", "order": 40, "children": [{"id": "InventoryValuationReport", "label": "Stock valuation", "icon": "ScaleBalance", "route": "InventoryValuationReport", "order": 91}]}],
 	"pages": [
 		{
 			"id": "InventoryValuationDetail",
@@ -47,6 +47,7 @@
 					]
 				}
 			}
-		}
+		},
+		{"id": "InventoryValuationReport", "route": "/inventory/valuation-report", "type": "dashboard", "title": "Stock valuation", "config": {"widgets": [{"id": "valuation-date", "title": "Valuation date", "type": "workspace-filter", "content": {"label": "Valuation date", "style": "input", "writes": "@workspace.valuationDate", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "submitLabel": "Show valuation"}}, {"id": "valuation-total", "title": "Stock value", "type": "stat", "content": {"label": "Stock value", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/inventory/valuation-report", "params": {"as_of": "@workspace.valuationDate"}}, "valueField": "valuation.totalValue", "emptyText": "Choose a date"}}, {"id": "valuation-lines", "title": "Value per product and location", "type": "object-table", "content": {"endpointSource": {"url": "/apps/shillinq/api/inventory/valuation-report", "params": {"as_of": "@workspace.valuationDate"}, "responsePath": "valuation.lines"}, "emptyText": "No stock on this date.", "columns": [{"key": "sku", "label": "Product"}, {"key": "warehouse", "label": "Location"}, {"key": "method", "label": "Valuation Method"}, {"key": "quantity", "label": "Quantity"}, {"key": "unitCost", "label": "Unit Cost", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 4}}, {"key": "totalValue", "label": "Total Value", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}]}}], "layout": [{"id": "vr-date", "widgetId": "valuation-date", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 2}, {"id": "vr-total", "widgetId": "valuation-total", "gridX": 0, "gridY": 2, "gridWidth": 12, "gridHeight": 2}, {"id": "vr-lines", "widgetId": "valuation-lines", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 8}]}}
 	]
 }

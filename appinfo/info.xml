@@ -288,6 +288,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  the recurring profile or the quick draft's create audit entry
                  gives them. After InitializeSettings; never overwrites; idempotent. -->
             <step>OCA\Shillinq\Repair\BackfillArInvoiceProvenance</step>
+            <!-- inventory-receipt-cost-layers D2 (REQ-IRCL-003). Replays the posted
+                 receipts and issues into the valuation snapshots, once, posting
+                 nothing, and logs each issue costed without its receipts'
+                 layers. After InitializeSettings; marked done in app config. -->
+            <step>OCA\Shillinq\Repair\BackfillReceiptCostLayers</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>

@@ -1732,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1778,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -4651,7 +4665,23 @@
 			]
 		},
 		{
-			"menu": [],
+			"menu": [
+				{
+					"id": "Inventory",
+					"label": "Inventory",
+					"icon": "Warehouse",
+					"order": 40,
+					"children": [
+						{
+							"id": "InventoryValuationReport",
+							"label": "Stock valuation",
+							"icon": "ScaleBalance",
+							"route": "InventoryValuationReport",
+							"order": 91
+						}
+					]
+				}
+			],
 			"pages": [
 				{
 					"_fragment": "inventory-valuation-fifo-avg",
@@ -4659,6 +4689,13 @@
 					"route": "/inventory/valuations/:id",
 					"type": "detail",
 					"title": "Inventory Valuation"
+				},
+				{
+					"_fragment": "inventory-valuation-fifo-avg",
+					"id": "InventoryValuationReport",
+					"route": "/inventory/valuation-report",
+					"type": "dashboard",
+					"title": "Stock valuation"
 				}
 			]
 		},

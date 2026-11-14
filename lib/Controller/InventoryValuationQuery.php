@@ -76,10 +76,18 @@ final class InventoryValuationQuery {
 	/**
 	 * Read the query from the request.
 	 *
-	 * @param IRequest $request The request.
+	 * @param IRequest $request                The request.
+	 * @param string   $activeAdministrationId The caller's active administration, used when the request names none.
+	 *
+	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
 	 */
-	public function __construct(IRequest $request) {
-		$this->administrationId = trim((string)$request->getParam('administration_id', ''));
+	public function __construct(IRequest $request, string $activeAdministrationId = '') {
+		$administrationId = trim((string)$request->getParam('administration_id', ''));
+		if ($administrationId === '') {
+			$administrationId = trim($activeAdministrationId);
+		}
+
+		$this->administrationId = $administrationId;
 		$this->asOf = trim((string)$request->getParam('as_of', ''));
 		$this->sku = trim((string)$request->getParam('sku', ''));
 		$this->warehouse = trim((string)$request->getParam('warehouse', ''));

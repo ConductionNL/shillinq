@@ -4716,7 +4716,16 @@
         "The paid date must read YYYY-MM-DD.": "The paid date must read YYYY-MM-DD.",
         "Give a reason for the rejection.": "Give a reason for the rejection.",
         "The payout step could not be carried out.": "The payout step could not be carried out.",
-        "Payout updated.": "Payout updated."
+        "Payout updated.": "Payout updated.",
+        "Stock valuation": "Stock valuation",
+        "Valuation date": "Valuation date",
+        "Show valuation": "Show valuation",
+        "Stock value": "Stock value",
+        "Choose a date": "Choose a date",
+        "Value per product and location": "Value per product and location",
+        "No stock on this date.": "No stock on this date.",
+        "Valuation Method": "Valuation Method",
+        "Total Value": "Total Value"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
