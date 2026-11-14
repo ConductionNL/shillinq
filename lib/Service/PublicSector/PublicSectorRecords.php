@@ -122,6 +122,23 @@ class PublicSectorRecords {
 	}//end create()
 
 	/**
+	 * Replace an existing object and answer its id.
+	 *
+	 * @param string              $schema The schema slug.
+	 * @param string              $id     The object's id.
+	 * @param array<string,mixed> $object The object.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/public-sector-task-field-allocation/specs/bookkeeping-market-government-separation/spec.md
+	 */
+	public function update(string $schema, string $id, array $object): string {
+		$object['id'] = $id;
+		return ObjectIdentifier::resolve(saved: $this->scoped(schema: $schema)->saveObject(object: $object, uuid: $id));
+
+	}//end update()
+
+	/**
 	 * Save a draft journal entry, post it through its declared transition and
 	 * answer its id.
 	 *

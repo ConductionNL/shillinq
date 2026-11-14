@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "public-sector-task-field-allocation",
     "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycle, imperative allocation (a split over posted lines and participant shares)",
-    "description": "The joint arrangement allocation run (GRAllocationRun: propose, confirm, invoice), the customer a participant is invoiced as, and the run a contribution invoice came from. The split and the invoices live in lib/Service/PublicSector/JointArrangementAllocation.php."
+    "description": "The joint arrangement allocation run (GRAllocationRun: propose, confirm, invoice), the customer a participant is invoiced as, and the run a contribution invoice came from. The split and the invoices live in lib/Service/PublicSector/JointArrangementAllocation.php. A calculate transition on CommercialActivity stores the year's IntegralCostPrice through lib/Service/PublicSector/ActivityCostPriceCalculation.php."
   },
   "components": {
     "schemas": {
@@ -249,6 +249,114 @@
             "nullable": true,
             "title": "Allocation run",
             "description": "The joint arrangement allocation run this contribution invoice was written for."
+          }
+        }
+      },
+      "CommercialActivity": {
+        "properties": {
+          "costPriceYear": {
+            "type": "integer",
+            "minimum": 1900,
+            "maximum": 9999,
+            "nullable": true,
+            "title": "Cost price year",
+            "description": "The year the integral cost price is calculated for.",
+            "example": 2026
+          },
+          "overheadKey": {
+            "type": "array",
+            "nullable": true,
+            "title": "Overhead key",
+            "description": "The share of the overhead on task field 0.4 this activity carries, per bucket.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bucket": {
+                  "type": "string",
+                  "title": "Bucket",
+                  "description": "The overhead bucket, such as huisvesting, ict, directieEnStaf or facilitair."
+                },
+                "ratio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "title": "Ratio",
+                  "description": "The fraction of the overhead pool charged to the activity in this bucket."
+                }
+              }
+            }
+          },
+          "investedBookValue": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Invested book value",
+            "description": "The book value invested in the activity, in euros, the cost of capital is charged over."
+          },
+          "waccRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true,
+            "title": "Cost of capital rate",
+            "description": "The yearly cost of capital rate as a fraction; 0.045 when empty."
+          },
+          "profitMarkupRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true,
+            "title": "Profit markup rate",
+            "description": "The profit markup as a fraction; 0.03 when empty, none for the monitor method."
+          },
+          "soldUnits": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Units sold",
+            "description": "The units delivered in the year, for the cost price per unit."
+          },
+          "unitLabel": {
+            "type": "string",
+            "nullable": true,
+            "title": "Unit",
+            "description": "The unit the activity is priced in."
+          },
+          "appliedRate": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Applied rate",
+            "description": "The rate charged per unit, compared with the cost price per unit."
+          },
+          "integralCostPriceId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Integral cost price",
+            "description": "The integral cost price last calculated for the activity."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "calculate": {
+              "from": "active",
+              "to": "active",
+              "label": "Calculate cost price",
+              "description": "Calculate the integral cost price for the year from the posted direct costs, the share of overhead, the cost of capital and the profit markup.",
+              "inputs": [
+                {
+                  "field": "costPriceYear",
+                  "required": true
+                }
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\CalculateIntegralCostPriceAction",
+                  "description": "Store the year's IntegralCostPrice and link it (CalculateIntegralCostPriceAction)."
+                }
+              ]
+            }
           }
         }
       }

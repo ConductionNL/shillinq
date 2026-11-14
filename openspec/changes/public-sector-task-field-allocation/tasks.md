@@ -15,7 +15,7 @@
 
 ## 3. Market separation
 
-- [ ] 3.1 `calculate` action on `CommercialActivity` (REQ-WMO-013). Verify: PHPUnit red first with the real calculator; the `IntegralCostPrice` payload validates against the real fragment.
+- [x] 3.1 `calculate` action on `CommercialActivity` (REQ-WMO-013). Verify: PHPUnit red first with the real calculator; the `IntegralCostPrice` payload validates against the real fragment. — the `calculate` transition (input `costPriceYear`) on CommercialActivity runs `lib/Lifecycle/Action/CalculateIntegralCostPriceAction.php` over `lib/Service/PublicSector/ActivityCostPriceCalculation.php`: direct costs from the year's posted lines on the cost centre and cost object, sorted by RGS code; the overhead pool from task field 0.4 spread by the activity's `overheadKey`; `IntegralCostPriceCalculator::compose` writes one provisional `IntegralCostPrice` per year, named by the activity code. `tests/Unit/PublicSector/ActivityCostPriceCalculationTest.php`.
 - [ ] 3.2 `CrossSubsidyScanJob` (REQ-WMO-014). Verify: PHPUnit; a second run does not duplicate an open alert; job registered in info.xml.
 
 ## 4. Strings and live check

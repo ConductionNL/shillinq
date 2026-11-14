@@ -686,6 +686,13 @@
     [
         "registerServiceAlias",
         [
+            "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\ActivityCostPriceCalculationInterface'",
+            "'OCA\\\\Shillinq\\\\Service\\\\PublicSector\\\\ActivityCostPriceCalculation'"
+        ]
+    ],
+    [
+        "registerServiceAlias",
+        [
             "'OCA\\\\Shillinq\\\\Kernel\\\\Contracts\\\\AdministrationArchivalServiceInterface'",
             "'OCA\\\\Shillinq\\\\Service\\\\AdministrationArchivalService'"
         ]
