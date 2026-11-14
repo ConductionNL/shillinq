@@ -6959,7 +6959,12 @@
         "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
         "Newest rate: %s": "Nieuwste koers: %s",
         "The invoice was not found in this administration.": "De factuur is niet gevonden in deze administratie.",
-        "The invoice was already sent.": "De factuur is al verzonden."
+        "The invoice was already sent.": "De factuur is al verzonden.",
+        "Select at most 200 invoices to send at once.": "Selecteer maximaal 200 facturen om in één keer te verzenden.",
+        "{count} invoices are being sent. You get a notification when the batch is done.": "{count} facturen worden verzonden. Je krijgt een melding als de batch klaar is.",
+        "The invoices could not be queued for sending.": "De facturen konden niet worden klaargezet voor verzending.",
+        "Send selected": "Selectie verzenden",
+        "Send the selected invoices by each customer's delivery method. An invoice already sent is skipped; you get a notification when the batch is done.": "Verzend de geselecteerde facturen volgens de verzendwijze van elke klant. Een factuur die al is verzonden wordt overgeslagen; je krijgt een melding als de batch klaar is."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

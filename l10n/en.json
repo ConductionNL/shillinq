@@ -4775,7 +4775,12 @@
         "%1$s to %2$s on %3$s": "%1$s to %2$s on %3$s",
         "Newest rate: %s": "Newest rate: %s",
         "The invoice was not found in this administration.": "The invoice was not found in this administration.",
-        "The invoice was already sent.": "The invoice was already sent."
+        "The invoice was already sent.": "The invoice was already sent.",
+        "Select at most 200 invoices to send at once.": "Select at most 200 invoices to send at once.",
+        "{count} invoices are being sent. You get a notification when the batch is done.": "{count} invoices are being sent. You get a notification when the batch is done.",
+        "The invoices could not be queued for sending.": "The invoices could not be queued for sending.",
+        "Send selected": "Send selected",
+        "Send the selected invoices by each customer's delivery method. An invoice already sent is skipped; you get a notification when the batch is done.": "Send the selected invoices by each customer's delivery method. An invoice already sent is skipped; you get a notification when the batch is done."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

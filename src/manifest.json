@@ -8147,6 +8147,15 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ARInvoice",
+					"bulkActions": [
+						{
+							"id": "send-selected-invoices",
+							"label": "Send selected",
+							"icon": "EmailFastOutline",
+							"handler": "sendSelectedInvoices",
+							"description": "Send the selected invoices by each customer's delivery method. An invoice already sent is skipped; you get a notification when the batch is done."
+						}
+					],
 				"columns": [
 					{
 						"key": "invoiceNumber",
