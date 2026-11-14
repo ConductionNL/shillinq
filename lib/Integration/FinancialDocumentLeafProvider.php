@@ -267,7 +267,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function create(string $register, string $schema, string $objectId, array $payload): array {
-		return $this->act(register: $register, schema: $schema, objectId: $objectId, payload: $payload, appId: '');
+		return $this->act(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: '');
 	}//end create()
 
 	/**
@@ -300,15 +300,13 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 			throw new RuntimeException('403 An app acts under its own id.');
 		}
 
-		return $this->act(register: $register, schema: $schema, objectId: $objectId, payload: $payload, appId: $appId);
+		return $this->act(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
 	}//end createAsApp()
 
 	/**
 	 * Dispatch one act, as the caller or as an app.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param array{register: string, schema: string, objectId: string} $host The host object.
 	 * @param array<string, mixed> $payload `act` plus the act's fields.
 	 * @param string $appId The acting app, or '' for the signed-in caller.
 	 *
@@ -318,7 +316,8 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
-	private function act(string $register, string $schema, string $objectId, array $payload, string $appId): array {
+	private function act(array $host, array $payload, string $appId): array {
+		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
 		$act = (string)($payload['act'] ?? '');
 		unset($payload['act']);
 
@@ -328,11 +327,11 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 				'createQuote' => $this->authoring->createQuote(register: $register, schema: $schema, objectId: $objectId, payload: $payload, appId: $appId),
 				'raisePayout' => $this->authoring->raisePayout(register: $register, schema: $schema, objectId: $objectId, payload: $payload, appId: $appId),
 				'requestPayment' => $this->actions->requestPayment(
-					invoiceId: $this->invoiceOnObject(register: $register, schema: $schema, objectId: $objectId, payload: $payload, appId: $appId),
+					invoiceId: $this->invoiceOnObject(host: $host, payload: $payload, appId: $appId),
 					appId: $appId,
 				),
 				'creditInvoice' => $this->authoring->creditInvoice(
-					invoiceId: $this->invoiceOnObject(register: $register, schema: $schema, objectId: $objectId, payload: $payload, appId: $appId),
+					invoiceId: $this->invoiceOnObject(host: $host, payload: $payload, appId: $appId),
 					appId: $appId,
 				),
 				default => throw new FinancialDocumentActionRefusedException(
@@ -352,9 +351,7 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 * through this host. A signed-in caller must also be able to read it; an
 	 * app reads as the system, and its own grant is checked by the act.
 	 *
-	 * @param string $register The host object's register.
-	 * @param string $schema The host object's schema.
-	 * @param string $objectId The host object's id.
+	 * @param array{register: string, schema: string, objectId: string} $host The host object.
 	 * @param array<string, mixed> $payload The act's fields, with `invoiceId`.
 	 * @param string $appId The acting app, or '' for the signed-in caller.
 	 *
@@ -364,10 +361,10 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider, Financ
 	 *
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003, REQ-FDO-005)
 	 */
-	private function invoiceOnObject(string $register, string $schema, string $objectId, array $payload, string $appId): string {
+	private function invoiceOnObject(array $host, array $payload, string $appId): string {
 		$invoiceId = trim((string)($payload['invoiceId'] ?? ''));
 		if ($invoiceId !== '') {
-			foreach ($this->finder->onObject(register: $register, schema: $schema, objectId: $objectId) as $found) {
+			foreach ($this->finder->onObject(register: $host['register'], schema: $host['schema'], objectId: $host['objectId']) as $found) {
 				if ((string)($found['document']['id'] ?? '') === $invoiceId
 					&& $this->rows->kindOf(schema: $found['schema'], document: $found['document']) === 'invoice'
 					&& ($appId !== '' || $found['readable'] === true)

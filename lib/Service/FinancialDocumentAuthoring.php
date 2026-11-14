@@ -97,6 +97,24 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function createQuote(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
+		return $this->createQuoteOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
+	}//end createQuote()
+
+	/**
+	 * The body of createQuote(), on the host object.
+	 *
+	 * @param array{register: string, schema: string, objectId: string} $host The host object.
+	 * @param array<string, mixed> $payload The act's fields.
+	 * @param string $appId The app acting with nobody signed in, or '' for the signed-in caller.
+	 *
+	 * @return array{id: string} The quote.
+	 *
+	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	private function createQuoteOn(array $host, array $payload, string $appId): array {
+		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
 		$this->guard->assertActorMay(action: self::ACTION_CREATE_QUOTE, appId: $appId);
 		$administrationId = $this->guard->administrationFor(given: (string)($payload['administrationId'] ?? ''), appId: $appId);
 		$amount = $this->amountOf(payload: $payload);
@@ -125,7 +143,7 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 		]);
 
 		return ['id' => $id];
-	}//end createQuote()
+	}//end createQuoteOn()
 
 	/**
 	 * Issue a credit note for the whole of an invoice, on the same objects.
@@ -192,6 +210,24 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function raisePayout(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
+		return $this->raisePayoutOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
+	}//end raisePayout()
+
+	/**
+	 * The body of raisePayout(), on the host object.
+	 *
+	 * @param array{register: string, schema: string, objectId: string} $host The host object.
+	 * @param array<string, mixed> $payload The act's fields.
+	 * @param string $appId The app acting with nobody signed in, or '' for the signed-in caller.
+	 *
+	 * @return array{payableId: string, state: string} The payout.
+	 *
+	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	private function raisePayoutOn(array $host, array $payload, string $appId): array {
+		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
 		$this->guard->assertActorMay(action: self::ACTION_RAISE_PAYOUT, appId: $appId);
 		$administrationId = $this->guard->administrationFor(given: (string)($payload['administrationId'] ?? ''), appId: $appId);
 
@@ -221,7 +257,7 @@ class FinancialDocumentAuthoring implements FinancialDocumentAuthoringInterface 
 		$result = (array)$event->getResult();
 
 		return ['payableId' => (string)($result['payableId'] ?? ''), 'state' => (string)($result['state'] ?? '')];
-	}//end raisePayout()
+	}//end raisePayoutOn()
 
 	/**
 	 * The amount a payload names, refused when it is not above zero.

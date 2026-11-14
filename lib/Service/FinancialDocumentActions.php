@@ -93,6 +93,24 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
 	 */
 	public function issueInvoice(string $register, string $schema, string $objectId, array $payload, string $appId = ''): array {
+		return $this->issueOn(host: ['register' => $register, 'schema' => $schema, 'objectId' => $objectId], payload: $payload, appId: $appId);
+	}//end issueInvoice()
+
+	/**
+	 * The body of issueInvoice(), on the host object.
+	 *
+	 * @param array{register: string, schema: string, objectId: string} $host The host object.
+	 * @param array<string, mixed> $payload The act's fields.
+	 * @param string $appId The app acting with nobody signed in, or '' for the signed-in caller.
+	 *
+	 * @return array{id: string} The issued invoice.
+	 *
+	 * @throws FinancialDocumentActionRefusedException When the caller, the administration or the payload is refused.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	private function issueOn(array $host, array $payload, string $appId): array {
+		['register' => $register, 'schema' => $schema, 'objectId' => $objectId] = $host;
 		$this->guard->assertActorMay(action: self::ACTION_ISSUE_INVOICE, appId: $appId);
 		$administrationId = $this->guard->administrationFor(given: (string)($payload['administrationId'] ?? ''), appId: $appId);
 
@@ -125,7 +143,7 @@ class FinancialDocumentActions implements FinancialDocumentActionsInterface {
 		);
 
 		return ['id' => $id];
-	}//end issueInvoice()
+	}//end issueOn()
 
 	/**
 	 * Ask for payment of an outstanding invoice through shillinq.
