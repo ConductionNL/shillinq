@@ -231,6 +231,40 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 	}//end signed()
 
 	/**
+	 * A Stripe call to sign when the test runs, with its timestamp this many seconds from then.
+	 *
+	 * PHPUnit builds every data set before the first test runs, so a timestamp taken in the
+	 * provider is minutes old by the time a long suite reaches it. The offset is kept instead,
+	 * and {@see self::signedNow()} signs the call at the moment it is made.
+	 *
+	 * @param array|string $payload The event payload.
+	 * @param int          $offset  Seconds from the moment of the call; positive is ahead.
+	 *
+	 * @return array{body:string,header:string,secret:string,signAt:int}
+	 */
+	private static function stripeSignedAt(array|string $payload, int $offset): array {
+		$body = is_string($payload) === true ? $payload : (string)json_encode($payload);
+		return ['body' => $body, 'header' => '', 'secret' => self::SECRET, 'signAt' => $offset];
+
+	}//end stripeSignedAt()
+
+	/**
+	 * Sign a call built by {@see self::stripeSignedAt()} now; any other call is returned as is.
+	 *
+	 * @param array $call The call.
+	 *
+	 * @return array{body:string,header:string,secret:string}
+	 */
+	private static function signedNow(array $call): array {
+		if (array_key_exists('signAt', $call) === false) {
+			return $call;
+		}
+
+		return self::signed($call['body'], 'stripe', time() + $call['signAt']);
+
+	}//end signedNow()
+
+	/**
 	 * Call the deposit webhook with a reconciliation that must not run.
 	 *
 	 * @param string $gateway The route gateway.
@@ -280,12 +314,12 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 			'json scalar' => ['mollie', self::signed('"text"'), 'malformed-payload', 400],
 			'mollie open status' => ['mollie', self::signed(['id' => 'tr_1', 'status' => 'open']), 'unparseable-event', 400],
 			'mollie no id' => ['mollie', self::signed(['status' => 'paid']), 'unparseable-event', 400],
-			'stripe unknown type' => ['stripe', self::signed(['type' => 'customer.created', 'data' => ['object' => ['id' => 'pi_1']]], 'stripe'), 'unparseable-event', 400],
-			'stripe no id' => ['stripe', self::signed(['type' => 'payment_intent.succeeded'], 'stripe'), 'unparseable-event', 400],
+			'stripe unknown type' => ['stripe', self::stripeSignedAt(['type' => 'customer.created', 'data' => ['object' => ['id' => 'pi_1']]], 0), 'unparseable-event', 400],
+			'stripe no id' => ['stripe', self::stripeSignedAt(['type' => 'payment_intent.succeeded'], 0), 'unparseable-event', 400],
 			'stripe signature over the body alone' => ['stripe', ['body' => $body, 'header' => 't=' . time() . ',v1=' . $sig, 'secret' => self::SECRET], 'invalid-signature', 400],
 			'stripe signature without a timestamp' => ['stripe', ['body' => $body, 'header' => 'v1=' . $sig, 'secret' => self::SECRET], 'invalid-signature', 400],
-			'stripe timestamp older than five minutes' => ['stripe', self::signed($paid, 'stripe', time() - 301), 'invalid-signature', 400],
-			'stripe timestamp more than five minutes ahead' => ['stripe', self::signed($paid, 'stripe', time() + 301), 'invalid-signature', 400],
+			'stripe timestamp older than five minutes' => ['stripe', self::stripeSignedAt($paid, -301), 'invalid-signature', 400],
+			'stripe timestamp more than five minutes ahead' => ['stripe', self::stripeSignedAt($paid, 301), 'invalid-signature', 400],
 		];
 
 	}//end refusedCalls()
@@ -303,6 +337,7 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 	 * @dataProvider refusedCalls
 	 */
 	public function testRefusedCallsAreRefusedByBothWebhooks(string $gateway, array $call, string $status, int $code): void {
+		$call = self::signedNow(call: $call);
 		$deposit = $this->depositWithoutDispatch($gateway, $call);
 		self::assertSame([$code, ['status' => $status]], [$deposit->getStatus(), $deposit->getData()]);
 
