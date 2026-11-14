@@ -30,6 +30,7 @@
 		"RetainerTrueUps": "Sales",
 		"Customers": "Sales",
 		"AccountsReceivable": "Sales",
+		"SelfBilledInvoiceRefusals": "Sales",
 		"Communicatie": "Sales",
 		"Orders": "Sales",
 		"RecurringInvoicing": "Sales",

@@ -6897,7 +6897,9 @@ OC.L10N.register(
         "Sender's invoice number": "Factuurnummer van de afzender",
         "Why no sales invoice was written.": "Waarom er geen verkoopfactuur is aangemaakt.",
         "The administration the document was addressed to, when one matched.": "De administratie waaraan het document gericht was, als er een paste.",
-        "Rejected e-invoices": "Afgewezen e-facturen"
+        "Rejected e-invoices": "Afgewezen e-facturen",
+        "Refused self-billed invoices": "Geweigerde facturen uitgereikt door afnemer",
+        "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Facturen die een afnemer namens u opmaakte en via Peppol stuurde, maar die geen verkoopfactuur werden, met de reden."
     },
     "nplurals=2; plural=(n != 1);"
 )

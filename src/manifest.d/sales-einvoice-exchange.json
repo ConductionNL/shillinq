@@ -1,0 +1,52 @@
+{
+	"$comment": "Refused self-billed invoices (sales-einvoice-exchange REQ-SEIX-006). A self-billed invoice received over Peppol that did not become a draft sales invoice (no matching administration or customer, no current self-billing agreement, or an unreadable document) is recorded as a SelfBilledInvoiceRefusal by SelfBilledInvoiceIntake; this page lists them for the bookkeeper with the reason. Read-only: the records are written by the intake, never by hand.",
+	"menu": [
+		{
+			"id": "SelfBilledInvoiceRefusals",
+			"label": "Refused self-billed invoices",
+			"icon": "CloseCircleOutline",
+			"route": "SelfBilledInvoiceRefusals",
+			"order": 47
+		}
+	],
+	"pages": [
+		{
+			"id": "SelfBilledInvoiceRefusals",
+			"route": "/sales/self-billed-refusals",
+			"type": "index",
+			"title": "Refused self-billed invoices",
+			"config": {
+				"register": "shillinq",
+				"schema": "SelfBilledInvoiceRefusal",
+				"showAdd": false,
+				"showViewAction": false,
+				"selectable": false,
+				"description": "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.",
+				"defaultSort": {
+					"field": "receivedAt",
+					"direction": "desc"
+				},
+				"columns": [
+					{
+						"key": "receivedAt",
+						"label": "Received at",
+						"formatter": "datetime"
+					},
+					{
+						"key": "senderPeppolId",
+						"label": "Sender Peppol ID"
+					},
+					{
+						"key": "buyerInvoiceNumber",
+						"label": "Sender's invoice number"
+					},
+					{
+						"key": "reason",
+						"label": "Reason",
+						"sortable": false
+					}
+				]
+			}
+		}
+	]
+}

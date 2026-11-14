@@ -20,6 +20,14 @@
  * so a payment taken through integriq settles the request and its invoice
  * (issue #1681, receivables-payment-links design D3, REQ-RPL-003).
  *
+ * And `nl.conduction.peppol.inbound.received`, which integriq emits for every
+ * document its Peppol access point received (integriq
+ * `PeppolTransmissionService`), with `data` {senderPeppolId, documentType,
+ * payloadReference}. It goes to {@see SelfBilledInvoiceIntake::receive()}: a
+ * self-billed invoice becomes a draft sales invoice or a refusal, any other
+ * invoice goes to the supplier invoice intake (sales-einvoice-exchange
+ * design D3, REQ-SEIX-006).
+ *
  * Fail-soft: a failure is logged and never bubbles into integriq's write.
  *
  * @category Listener
@@ -32,6 +40,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-payment-links/tasks.md#task-2.1
+ * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
  */
 
 declare(strict_types=1);
@@ -39,6 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\Shillinq\Service\EInvoice\SelfBilledInvoiceIntake;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\PaymentReconciliationService;
 use OCP\EventDispatcher\Event;
@@ -81,6 +91,14 @@ class IntegriqCloudEventListener implements IEventListener {
 	public const TYPE_PAYMENT_STATUS = 'nl.conduction.payment.status';
 
 	/**
+	 * CloudEvent type integriq emits for a document its Peppol access point
+	 * received (integriq `PeppolTransmissionService::EVENT_TYPE_INBOUND_RECEIVED`).
+	 *
+	 * @var string
+	 */
+	public const TYPE_PEPPOL_INBOUND = 'nl.conduction.peppol.inbound.received';
+
+	/**
 	 * Gateway recorded on the reconciled request (design D3). integriq's
 	 * payment CloudEvent does not name its provider.
 	 *
@@ -94,11 +112,13 @@ class IntegriqCloudEventListener implements IEventListener {
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 * @param PaymentReconciliationService $reconciliation Applies a payment outcome to its request.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param SelfBilledInvoiceIntake $inboundInvoices Takes a received Peppol invoice.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly PaymentReconciliationService $reconciliation,
 		private readonly LoggerInterface $logger,
+		private readonly SelfBilledInvoiceIntake $inboundInvoices,
 	) {
 	}//end __construct()
 
@@ -119,7 +139,12 @@ class IntegriqCloudEventListener implements IEventListener {
 		try {
 			$entity = $event->getObject();
 			$cloudEvent = $entity?->getObject();
-			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::TYPE_PAYMENT_STATUS) {
+			if (is_array($cloudEvent) === false) {
+				return;
+			}
+
+			$type = ($cloudEvent['type'] ?? null);
+			if ($type !== self::TYPE_PAYMENT_STATUS && $type !== self::TYPE_PEPPOL_INBOUND) {
 				return;
 			}
 
@@ -131,6 +156,11 @@ class IntegriqCloudEventListener implements IEventListener {
 				schemaSlug: self::SCHEMA_SLUG
 			) === false
 			) {
+				return;
+			}
+
+			if ($type === self::TYPE_PEPPOL_INBOUND) {
+				$this->receiveInbound(data: $cloudEvent['data'] ?? null);
 				return;
 			}
 
@@ -165,4 +195,26 @@ class IntegriqCloudEventListener implements IEventListener {
 			['outcome' => ($data['outcome'] ?? null), 'result' => $outcome['result'], 'schema' => $outcome['schema']]
 		);
 	}//end reconcilePaymentStatus()
+
+	/**
+	 * Hand a received Peppol document to the inbound invoice intake.
+	 *
+	 * @param mixed $data The CloudEvent `data`: {senderPeppolId, documentType, payloadReference}.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-3.3
+	 */
+	private function receiveInbound(mixed $data): void {
+		if (is_array($data) === false) {
+			$this->logger->info('IntegriqCloudEventListener: inbound Peppol CloudEvent without data; skipped');
+			return;
+		}
+
+		$outcome = $this->inboundInvoices->receive(data: $data);
+		$this->logger->info(
+			'IntegriqCloudEventListener: inbound Peppol document taken in',
+			['result' => $outcome['result'], 'reason' => ($outcome['reason'] ?? null)]
+		);
+	}//end receiveInbound()
 }//end class

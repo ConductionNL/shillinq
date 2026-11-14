@@ -4708,7 +4708,9 @@ OC.L10N.register(
         "Sender's invoice number": "Sender's invoice number",
         "Why no sales invoice was written.": "Why no sales invoice was written.",
         "The administration the document was addressed to, when one matched.": "The administration the document was addressed to, when one matched.",
-        "Rejected e-invoices": "Rejected e-invoices"
+        "Rejected e-invoices": "Rejected e-invoices",
+        "Refused self-billed invoices": "Refused self-billed invoices",
+        "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason.": "Self-billed invoices a customer sent over Peppol that did not become a sales invoice, with the reason."
     },
     "nplurals=2; plural=(n != 1);"
 )

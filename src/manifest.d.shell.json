@@ -5409,6 +5409,26 @@
 		{
 			"menu": [
 				{
+					"id": "SelfBilledInvoiceRefusals",
+					"label": "Refused self-billed invoices",
+					"icon": "CloseCircleOutline",
+					"route": "SelfBilledInvoiceRefusals",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-einvoice-exchange",
+					"id": "SelfBilledInvoiceRefusals",
+					"route": "/sales/self-billed-refusals",
+					"type": "index",
+					"title": "Refused self-billed invoices"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "MeterReadings",
 					"label": "Meter readings",
 					"icon": "Counter",
