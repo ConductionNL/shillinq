@@ -5,7 +5,7 @@
 ## 1. Contract
 
 - [x] 1.1 Add `WebshopOrder` (with its intake lifecycle and the refused notification), `WebshopChannel` and the `ARInvoice.webshop` group in `lib/Settings/register.d/sales-webshop-orders.json` (REQ-SWO-001, REQ-SWO-006). Verify: `npm run check:registers` and a PHPUnit case on the merged schemas.
-- [ ] 1.2 Write the contract page `docs/integrations/webshop-order-intake.md` that integriq's mapping follows: field list, idempotency key, payment status values. Verify: the page is linked from the integriq issue for the connector, recorded in the PR body.
+- [x] 1.2 Write the contract page `docs/integrations/webshop-order-intake.md` that integriq's mapping follows: field list, idempotency key, payment status values. Verify: the page is linked from the integriq issue for the connector, recorded in the PR body. (Done: `docs/integrations/webshop-order-intake.md`, drawn from the schemas in `lib/Settings/register.d/sales-webshop-orders.json`. Linking it from the integriq connector issue is left to the maintainers: workers open no issues.)
 
 ## 2. Invoicer
 
