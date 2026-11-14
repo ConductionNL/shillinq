@@ -561,6 +561,15 @@
             }
           }
         }
+      },
+      "CbcrJurisdictionSummary": {
+        "properties": {
+          "ultimateParentEntity": {
+            "type": "string",
+            "title": "Ultimate parent entity",
+            "description": "The GroupEntityRegistry record of the group whose figures this summary sums."
+          }
+        }
       }
     }
   }

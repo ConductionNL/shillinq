@@ -4851,7 +4851,8 @@
         "A country-by-country report is due.": "A country-by-country report is due.",
         "No country-by-country report is due.": "No country-by-country report is due.",
         "The minimum tax applies.": "The minimum tax applies.",
-        "The minimum tax does not apply.": "The minimum tax does not apply."
+        "The minimum tax does not apply.": "The minimum tax does not apply.",
+        "The GroupEntityRegistry record of the group whose figures this summary sums.": "The GroupEntityRegistry record of the group whose figures this summary sums."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

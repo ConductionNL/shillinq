@@ -7039,7 +7039,8 @@
         "A country-by-country report is due.": "Er moet een landenrapport worden ingediend.",
         "No country-by-country report is due.": "Er hoeft geen landenrapport te worden ingediend.",
         "The minimum tax applies.": "De minimumbelasting is van toepassing.",
-        "The minimum tax does not apply.": "De minimumbelasting is niet van toepassing."
+        "The minimum tax does not apply.": "De minimumbelasting is niet van toepassing.",
+        "The GroupEntityRegistry record of the group whose figures this summary sums.": "Het GroupEntityRegistry-record van de groep waarvan deze samenvatting de cijfers optelt."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
