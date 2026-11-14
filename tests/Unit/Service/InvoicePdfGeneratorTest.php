@@ -30,37 +30,149 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Reporting\DocudeskUnavailableException;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceAmountFormatter;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentData;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentRenderer;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentSources;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceLabels;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
+use OCP\IL10N;
+use OCP\L10N\IFactory;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Covers the pre-existing plain-PDF path (regression) and the hybrid embed
- * path (REQ-EINV-002 / REQ-EINV-008).
+ * Covers the docudesk PDF path (REQ-SID-002) and the hybrid embed path
+ * (REQ-EINV-002 / REQ-EINV-008).
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class InvoicePdfGeneratorTest extends TestCase {
 	/**
-	 * REQ-EINV-002 scenario 2: the existing generatePdf() call is unaffected
-	 * by the hybrid addition — same {filename, html, mimeType} shape.
+	 * Without docudesk generatePdf() refuses before reading any record
+	 * (REQ-SID-002), and the hybrid path below still works without it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function testWithoutDocudeskThePdfIsRefusedBeforeAnyRecordIsRead(): void {
+		$renderer = $this->createMock(InvoiceDocumentRenderer::class);
+		$renderer->method('assertAvailable')->willThrowException(new DocudeskUnavailableException('absent'));
+		$renderer->expects($this->never())->method('renderPdf');
+		$sources = $this->createMock(InvoiceDocumentSources::class);
+		$sources->expects($this->never())->method('administration');
+
+		$this->expectException(DocudeskUnavailableException::class);
+		(new InvoicePdfGenerator($renderer, $this->documentData(), $sources))->generatePdf(
+			invoice: ['invoiceNumber' => '2026-0042', 'administrationId' => 'adm-1'],
+			lines: []
+		);
+
+	}//end testWithoutDocudeskThePdfIsRefusedBeforeAnyRecordIsRead()
+
+	/**
+	 * Built without its collaborators, the generator reports docudesk's absence.
 	 *
 	 * @return void
 	 */
-	public function testPlainPdfPathIsUnaffected(): void {
-		$generator = new InvoicePdfGenerator();
-		$result = $generator->generatePdf(
-			invoice: ['invoiceNumber' => '2026-0042', 'grossAmount' => 1210.0],
-			lines: [],
-			creditor: ['legalName' => 'Shillinq Consultancy B.V.'],
-			recipient: ['legalName' => 'Gemeente Zuidoost']
+	public function testWithoutCollaboratorsDocudeskIsReportedAbsent(): void {
+		$this->expectException(DocudeskUnavailableException::class);
+		(new InvoicePdfGenerator())->generatePdf(invoice: ['invoiceNumber' => '2026-0042'], lines: []);
+
+	}//end testWithoutCollaboratorsDocudeskIsReportedAbsent()
+
+	/**
+	 * With docudesk the served file is the PDF it renders, in the customer's
+	 * language and currency, in the administration's layout, with the
+	 * creditor read from the administration (REQ-SID-002 to REQ-SID-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
+	 */
+	public function testWithDocudeskTheServedFileIsItsPdf(): void {
+		$sources = $this->createMock(InvoiceDocumentSources::class);
+		$sources->method('administration')->with('adm-1')->willReturn(
+			['name' => 'Adviesbureau Van Dijk', 'primaryIban' => 'NL91ABNA0417164300', 'defaultLanguage' => 'nl']
+		);
+		$sources->method('customer')->with('c-7', 'adm-1')->willReturn(['legalName' => 'Gemeente Voorbeeld', 'language' => '']);
+		$sources->method('layout')->with('adm-1')->willReturn(['variant' => 'modern', 'logoFileId' => '48213']);
+		$sources->method('payLink')->with('2026-0042', 'adm-1')->willReturn(null);
+		$sources->method('logoDataUri')->with('48213')->willReturn('data:image/png;base64,AA==');
+
+		$seen     = null;
+		$renderer = $this->createMock(InvoiceDocumentRenderer::class);
+		$renderer->expects($this->once())->method('assertAvailable');
+		$renderer->method('renderPdf')->willReturnCallback(
+			static function (array $data, string $userId) use (&$seen): string {
+				$seen = [$data, $userId];
+				return '%PDF-1.7 rendered';
+			}
 		);
 
-		self::assertSame(['filename', 'html', 'mimeType'], array_keys($result));
+		$result = (new InvoicePdfGenerator($renderer, $this->documentData(), $sources))->generatePdf(
+			invoice: ['invoiceNumber' => '2026-0042', 'administrationId' => 'adm-1', 'customerId' => 'c-7', 'currency' => 'EUR', 'grossAmount' => 24200],
+			lines: [],
+			userId: 'alice'
+		);
+
+		self::assertSame(['filename', 'pdf', 'mimeType', 'language'], array_keys($result));
+		self::assertStringStartsWith('%PDF', $result['pdf']);
 		self::assertSame('invoice-2026-0042.pdf', $result['filename']);
 		self::assertSame('application/pdf', $result['mimeType']);
-		self::assertStringContainsString('Gemeente Zuidoost', $result['html']);
+		self::assertSame('nl', $result['language']);
+		self::assertSame('alice', $seen[1]);
+		self::assertSame('Adviesbureau Van Dijk', $seen[0]['creditor']['name']);
+		self::assertSame('Gemeente Voorbeeld', $seen[0]['recipient']['name']);
+		self::assertSame('modern', $seen[0]['layout']['variant']);
+		self::assertSame('data:image/png;base64,AA==', $seen[0]['layout']['logo']);
+		self::assertStringContainsString("\nEUR24200.00\n", (string)$seen[0]['qr']['epc']);
 
-	}//end testPlainPdfPathIsUnaffected()
+	}//end testWithDocudeskTheServedFileIsItsPdf()
+
+	/**
+	 * An English GBP customer passed in by the caller gets an English pound document.
+	 *
+	 * @return void
+	 */
+	public function testTheCallersRecipientSetsTheLanguage(): void {
+		$seen     = null;
+		$renderer = $this->createMock(InvoiceDocumentRenderer::class);
+		$renderer->method('renderPdf')->willReturnCallback(
+			static function (array $data) use (&$seen): string {
+				$seen = $data;
+				return '%PDF';
+			}
+		);
+
+		$result = (new InvoicePdfGenerator($renderer, $this->documentData()))->generatePdf(
+			invoice: ['invoiceNumber' => 'F-1', 'currency' => 'GBP', 'grossAmount' => 4800],
+			lines: [],
+			creditor: ['legalName' => 'Van Dijk', 'iban' => 'NL91ABNA0417164300'],
+			recipient: ['legalName' => 'Brightside Consulting Ltd', 'language' => 'en']
+		);
+
+		self::assertSame('en', $result['language']);
+		self::assertSame('£4,800.00', $seen['invoice']['gross']);
+		self::assertNull($seen['qr']['epc']);
+
+	}//end testTheCallersRecipientSetsTheLanguage()
+
+	/**
+	 * The real data assembler, with labels echoing their source.
+	 *
+	 * @return InvoiceDocumentData
+	 */
+	private function documentData(): InvoiceDocumentData {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+		$factory = $this->createMock(IFactory::class);
+		$factory->method('get')->willReturn($l10n);
+
+		return new InvoiceDocumentData(new InvoiceLabels($factory), new InvoiceAmountFormatter());
+
+	}//end documentData()
 
 	/**
 	 * REQ-EINV-002 scenario 1: the hybrid export embeds the XML as
@@ -162,32 +274,4 @@ final class InvoicePdfGeneratorTest extends TestCase {
 		self::assertStringContainsString('(2  Travel  1 x 42,50 = 42,50 EUR  btw 0%)', $result['pdf']);
 		self::assertStringContainsString('Factuur 2026-0042 - EUR 242,00', $result['pdf']);
 	}//end testTheHybridPdfPrintsTheArInvoiceLines()
-
-	/**
-	 * The HTML row reads an `invoiceLines` entry as well as a
-	 * BillableInvoiceLine, and the BillableInvoiceLine row is unchanged
-	 * (REQ-EINV-009).
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
-	 */
-	public function testTheHtmlRowReadsEitherLineShape(): void {
-		$html = (new InvoicePdfGenerator())->generatePdf(
-			invoice: ['invoiceNumber' => '2026-0042'],
-			lines: [
-				['lineId' => '1', 'itemName' => 'Consulting', 'quantity' => 2, 'netPrice' => 100.0, 'netAmount' => 200.0, 'vatRate' => 21],
-				['lineNumber' => 3, 'description' => 'Advies', 'billableUnits' => 1.5, 'rateApplied' => ['rateCents' => 12000], 'costAmount' => 180.0, 'vatRate' => 9],
-			]
-		)['html'];
-
-		self::assertStringContainsString(
-			'<tr><td>1</td><td>Consulting</td><td class="num">2</td><td class="num">€ 100,00</td><td class="num">€ 200,00</td><td class="num">21%</td></tr>',
-			$html
-		);
-		self::assertStringContainsString(
-			'<tr><td>3</td><td>Advies</td><td class="num">1,5</td><td class="num">€ 120,00</td><td class="num">€ 180,00</td><td class="num">9%</td></tr>',
-			$html
-		);
-	}//end testTheHtmlRowReadsEitherLineShape()
 }//end class

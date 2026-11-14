@@ -1575,7 +1575,15 @@
         "Everything Reporting & Compliance has already produced.": "Tout ce que Reporting & conformité a déjà produit.",
         "What retention destroyed, and when.": "Ce que la conservation a détruit, et quand.",
         "Store": "Boutique",
-        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installez des registres, schémas et flux publiés par d'autres organisations."
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installez des registres, schémas et flux publiés par d'autres organisations.",
+        "Invoice number": "Numéro de facture",
+        "VAT number": "Numéro de TVA",
+        "Quantity": "Quantité",
+        "VAT rate": "Taux de TVA",
+        "Total net": "Total HT",
+        "Payment terms": "Conditions de paiement",
+        "Scan to pay": "Scanner pour payer",
+        "Pay online": "Payer en ligne"
     },
     "plurals": null
 }

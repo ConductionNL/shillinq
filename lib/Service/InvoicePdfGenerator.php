@@ -31,7 +31,10 @@
  * under ISO 19005-3). Asserting `pdfaid:conformance` without meeting them
  * would be a false machine-readable claim (facturx-cii-conformance fixed an
  * earlier version of this file that did exactly that — see git history).
- * The existing plain-HTML {@see generatePdf()} path is untouched.
+ * sales-invoice-document moved {@see generatePdf()} to docudesk: it hands
+ * the assembled data to the `sales-invoice` template and returns the PDF
+ * docudesk renders. renderHtml() and the byte writer remain only for this
+ * hybrid path, until docudesk can embed the XML in a PDF/A-3.
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -44,12 +47,18 @@
  *
  * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ * @spec openspec/changes/sales-invoice-document/specs/bookkeeping-accounts-receivable-core/spec.md#requirement-the-invoice-is-rendered-through-docudesk-req-sid-002
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Reporting\DocudeskUnavailableException;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentData;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentRenderer;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceDocumentSources;
+use OCA\Shillinq\Service\InvoiceDocument\InvoiceLabels;
 
 /**
  * Dutch-formatted invoice HTML / PDF builder.
@@ -82,34 +91,110 @@ class InvoicePdfGenerator {
 	private const HYBRID_PAGE_LINES = 45;
 
 	/**
-	 * Generate the renderable invoice payload.
+	 * Constructor. Every collaborator is optional so the hybrid path, which
+	 * needs none of them, keeps working wherever the class is built by hand.
 	 *
-	 * @param array<string,mixed> $invoice BillableInvoice record.
-	 * @param array<int,array<string,mixed>> $lines BillableInvoiceLine records.
-	 * @param array<string,mixed> $creditor Creditor (issuing party) details.
-	 * @param array<string,mixed> $recipient Recipient details.
+	 * @param InvoiceDocumentRenderer|null $renderer The document app channel.
+	 * @param InvoiceDocumentData|null     $data     The template data assembler.
+	 * @param InvoiceDocumentSources|null  $sources  The records a document is made from.
+	 */
+	public function __construct(
+		private readonly ?InvoiceDocumentRenderer $renderer = null,
+		private readonly ?InvoiceDocumentData $data = null,
+		private readonly ?InvoiceDocumentSources $sources = null,
+	) {
+	}//end __construct()
+
+	/**
+	 * Render the invoice PDF through docudesk from the `sales-invoice`
+	 * template, in the administration's layout, the customer's language and
+	 * the invoice currency, with the scan-to-pay codes (REQ-SID-002).
 	 *
-	 * @return array{filename:string,html:string,mimeType:string}
+	 * Availability is checked before any record is read. A creditor or
+	 * recipient the caller leaves empty is read from the invoice's
+	 * administration and customer.
+	 *
+	 * @param array<string,mixed>            $invoice   Invoice record (administrationId, customerId, currency, amounts).
+	 * @param array<int,array<string,mixed>> $lines     Invoice lines.
+	 * @param array<string,mixed>            $creditor  Creditor (issuing party) details, or [] for the administration's.
+	 * @param array<string,mixed>            $recipient Recipient details, or [] for the invoice's customer.
+	 * @param string                         $userId    The acting user.
+	 *
+	 * @return array{filename:string,pdf:string,mimeType:string,language:string}
+	 *
+	 * @throws DocudeskUnavailableException When docudesk is not installed or cannot be resolved.
+	 * @throws \RuntimeException When no template is chosen or rendering fails.
 	 *
 	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md
+	 * @spec openspec/changes/sales-invoice-document/tasks.md#task-2.2
 	 */
 	public function generatePdf(
 		array $invoice,
 		array $lines,
 		array $creditor = [],
 		array $recipient = [],
+		string $userId = '',
 	): array {
-		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? 'INVOICE');
-		$html = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
-		$filename = sprintf('invoice-%s.pdf', $invoiceNumber);
+		if ($this->renderer === null || $this->data === null) {
+			throw new DocudeskUnavailableException(message: 'Docudesk is needed to produce invoice documents.');
+		}
+
+		$this->renderer->assertAvailable();
+
+		$administrationId = (string)($invoice['administrationId'] ?? '');
+		$administration   = $this->sources?->administration(administrationId: $administrationId) ?? [];
+		if ($recipient === []) {
+			$recipient = $this->sources?->customer(customerId: (string)($invoice['customerId'] ?? ''), administrationId: $administrationId) ?? [];
+		}
+
+		if ($creditor === []) {
+			$creditor = $this->creditorOf(administration: $administration);
+		}
+
+		$layout    = $this->sources?->layout(administrationId: $administrationId) ?? [];
+		$language  = InvoiceLabels::documentLanguage(
+			customerLanguage: (string)($recipient['language'] ?? ''),
+			administrationLanguage: (string)($administration['defaultLanguage'] ?? '')
+		);
+		$reference = (string)($invoice['invoiceNumber'] ?? ($invoice['id'] ?? ''));
+
+		$data = $this->data->assemble(
+			invoice: $invoice,
+			lines: $lines,
+			creditor: $creditor,
+			recipient: $recipient,
+			layout: $layout,
+			language: $language,
+			payLink: $this->sources?->payLink(invoiceReference: $reference, administrationId: $administrationId),
+			logoDataUri: $this->sources?->logoDataUri(fileId: (string)($layout['logoFileId'] ?? ''))
+		);
 
 		return [
-			'filename' => $filename,
-			'html' => $html,
+			'filename' => sprintf('invoice-%s.pdf', (string)($invoice['invoiceNumber'] ?? 'INVOICE')),
+			'pdf' => $this->renderer->renderPdf(data: $data, userId: $userId),
 			'mimeType' => 'application/pdf',
+			'language' => $language,
 		];
 
 	}//end generatePdf()
+
+	/**
+	 * The issuing party as the administration records it.
+	 *
+	 * @param array<string,mixed> $administration The administration.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function creditorOf(array $administration): array {
+		return [
+			'legalName' => (string)($administration['legalName'] ?? ($administration['name'] ?? '')),
+			'address' => (string)($administration['address'] ?? ''),
+			'vatID' => (string)($administration['vatNumber'] ?? ($administration['vatId'] ?? '')),
+			'iban' => (string)($administration['primaryIban'] ?? ''),
+			'bic' => (string)($administration['bic'] ?? ''),
+		];
+
+	}//end creditorOf()
 
 	/**
 	 * Generate the hybrid PDF export: the same human-readable HTML/summary

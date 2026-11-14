@@ -1575,7 +1575,15 @@
         "Everything Reporting & Compliance has already produced.": "Alles, was Berichtswesen & Compliance bereits erzeugt hat.",
         "What retention destroyed, and when.": "Was die Aufbewahrung vernichtet hat und wann.",
         "Store": "Store",
-        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installieren Sie Register, Schemata und Flows, die andere Organisationen veröffentlicht haben."
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installieren Sie Register, Schemata und Flows, die andere Organisationen veröffentlicht haben.",
+        "Invoice number": "Rechnungsnummer",
+        "VAT number": "USt-IdNr.",
+        "Quantity": "Menge",
+        "VAT rate": "Steuersatz",
+        "Total net": "Summe netto",
+        "Payment terms": "Zahlungsbedingungen",
+        "Scan to pay": "Zum Bezahlen scannen",
+        "Pay online": "Online bezahlen"
     },
     "plurals": null
 }

@@ -864,6 +864,33 @@
         "table": "Programmaplan programme list (code/naam), Taakvelden overview (code/naam/baten/lasten + totaalrij) -- generic {styleKey, rows: [{cells: [{widthCm, cellStyle, text, textStyle, textOptions}]}]} blocks, not amountTable/detailsTable",
         "note": "empty-state notes for programmes/taakvelden/vaste activa when absent"
       }
+    },
+    {
+      "templateId": "sales-invoice",
+      "title": "Sales invoice",
+      "description": "The invoice a customer receives (openspec/changes/sales-invoice-document). InvoicePdfGenerator::generatePdf() hands the assembled data to DocumentService::generateDocument() as options.adHocData; the renderer selects the template by namespace \"shillinq\" and category \"sales-invoice\", or by the documents_template_sales-invoice app setting. Labels arrive translated into the customer's language and every amount arrives formatted in the invoice currency, so the template holds no language and no currency. The scan-to-pay codes are drawn by the PDF engine's own <barcode type=\"QR\"> tag from the payload strings.",
+      "register": "shillinq",
+      "schema": "ARInvoice",
+      "category": "sales-invoice",
+      "format": "pdf",
+      "variants": {
+        "classic": "Thin accent rule, 18pt heading: today's invoice, in the administration's colours.",
+        "modern": "Wide accent band and a 24pt heading in the primary colour.",
+        "compact": "9pt body and tight rows, for invoices with many lines."
+      },
+      "dataContract": {
+        "language": "nl | en | de | fr",
+        "currency": "ISO 4217 code",
+        "labels": "invoice, invoiceNumber, invoiceDate, dueDate, customer, vatNumber, iban, description, quantity, rate, amount, vat, vatRate, net, gross, totalNet, total, paymentTerms, scanToPay, payOnline",
+        "layout": "{variant, primaryColor, accentColor, logo (data URI or null), logoFileId, footerText, showQr}",
+        "invoice": "{number, date, dueDate, paymentTerms, notes, net, vat, gross, open} (amounts formatted)",
+        "lines": "[{number, description, quantity, rate, amount, vatRate}] (formatted)",
+        "vatBreakdown": "[{rate, net, vat, gross}] (formatted)",
+        "creditor": "{name, address, vatNumber, iban}",
+        "recipient": "{name, address, vatNumber}",
+        "qr": "{epc: EPC069-12 payload or null, payLink: https URL or null}"
+      },
+      "content": "<!doctype html>\n<html lang=\"{{ language }}\"><head><meta charset=\"utf-8\"><title>{{ labels.invoice }} {{ invoice.number }}</title>\n<style>\nbody{font-family:sans-serif;color:#1f2933;font-size:{% if layout.variant == 'compact' %}9pt{% else %}10.5pt{% endif %};}\nh1{color:{{ layout.primaryColor }};font-size:{% if layout.variant == 'modern' %}24pt{% else %}18pt{% endif %};margin:0 0 8px;}\n.band{border-top:{% if layout.variant == 'modern' %}8px{% else %}2px{% endif %} solid {{ layout.accentColor }};padding-top:8px;}\ntable{border-collapse:collapse;width:100%;margin:10px 0;}\nth{color:{{ layout.primaryColor }};border-bottom:2px solid {{ layout.accentColor }};text-align:left;padding:4px 6px;}\ntd{border-bottom:1px solid #d9dee3;padding:{% if layout.variant == 'compact' %}2px 4px{% else %}5px 6px{% endif %};vertical-align:top;}\n.num{text-align:right;}\n.party{width:48%;display:inline-block;vertical-align:top;}\n.total td{font-weight:bold;color:{{ layout.primaryColor }};}\n.footer{margin-top:24px;font-size:8pt;color:#52606d;}\n</style></head><body>\n<div class=\"band\">\n{% if layout.logo %}<img src=\"{{ layout.logo }}\" alt=\"{{ creditor.name }}\" style=\"max-height:60px;max-width:220px;\">{% endif %}\n<h1>{{ labels.invoice }} {{ invoice.number }}</h1>\n<div class=\"party\"><strong>{{ creditor.name }}</strong><br>{{ creditor.address }}<br>{{ labels.vatNumber }}: {{ creditor.vatNumber }}<br>{{ labels.iban }}: {{ creditor.iban }}</div>\n<div class=\"party\"><strong>{{ labels.customer }}:</strong> {{ recipient.name }}<br>{{ recipient.address }}<br>{{ labels.vatNumber }}: {{ recipient.vatNumber }}</div>\n<p>{{ labels.invoiceDate }}: {{ invoice.date }} &nbsp; {{ labels.dueDate }}: {{ invoice.dueDate }}</p>\n</div>\n<table><thead><tr><th>#</th><th>{{ labels.description }}</th><th class=\"num\">{{ labels.quantity }}</th><th class=\"num\">{{ labels.rate }}</th><th class=\"num\">{{ labels.amount }}</th><th class=\"num\">{{ labels.vat }}</th></tr></thead><tbody>\n{% for line in lines %}<tr><td>{{ line.number }}</td><td>{{ line.description }}</td><td class=\"num\">{{ line.quantity }}</td><td class=\"num\">{{ line.rate }}</td><td class=\"num\">{{ line.amount }}</td><td class=\"num\">{{ line.vatRate }}</td></tr>{% endfor %}\n</tbody></table>\n{% if vatBreakdown %}<table><thead><tr><th>{{ labels.vatRate }}</th><th class=\"num\">{{ labels.net }}</th><th class=\"num\">{{ labels.vat }}</th><th class=\"num\">{{ labels.gross }}</th></tr></thead><tbody>\n{% for row in vatBreakdown %}<tr><td>{{ row.rate }}</td><td class=\"num\">{{ row.net }}</td><td class=\"num\">{{ row.vat }}</td><td class=\"num\">{{ row.gross }}</td></tr>{% endfor %}\n</tbody></table>{% endif %}\n<table><tbody><tr><td>{{ labels.totalNet }}</td><td class=\"num\">{{ invoice.net }}</td></tr><tr><td>{{ labels.vat }}</td><td class=\"num\">{{ invoice.vat }}</td></tr><tr class=\"total\"><td>{{ labels.total }}</td><td class=\"num\">{{ invoice.gross }}</td></tr></tbody></table>\n{% if invoice.paymentTerms %}<p>{{ labels.paymentTerms }}: {{ invoice.paymentTerms }}</p>{% endif %}\n{% if invoice.notes %}<p>{{ invoice.notes }}</p>{% endif %}\n{% if qr.epc or qr.payLink %}<table><tbody><tr>\n{% if qr.epc %}<td><barcode code=\"{{ qr.epc|e('html_attr') }}\" type=\"QR\" size=\"1.2\" error=\"M\" disableborder=\"1\" /><br>{{ labels.scanToPay }}</td>{% endif %}\n{% if qr.payLink %}<td><barcode code=\"{{ qr.payLink|e('html_attr') }}\" type=\"QR\" size=\"1.2\" error=\"M\" disableborder=\"1\" /><br>{{ labels.payOnline }}</td>{% endif %}\n</tr></tbody></table>{% endif %}\n{% if layout.footerText %}<div class=\"footer\">{{ layout.footerText }}</div>{% endif %}\n</body></html>\n"
     }
   ]
 }

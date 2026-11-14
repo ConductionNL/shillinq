@@ -37,6 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BillableLinesService;
@@ -470,14 +471,26 @@ class InvoiceApiController extends Controller {
 			return $invoice;
 		}
 
-		$pdf = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: $this->invoiceLines(invoiceId: $invoiceId));
+		try {
+			$pdf = $this->pdfGenerator->generatePdf(
+				invoice: $invoice,
+				lines: $this->invoiceLines(invoiceId: $invoiceId),
+				userId: (string)($this->session->getUser()?->getUID() ?? '')
+			);
+		} catch (DocudeskUnavailableException $e) {
+			// REQ-SID-002: without docudesk the page says so instead of serving a file.
+			return new JSONResponse(
+				['error' => 'Docudesk is needed to produce invoice documents.', 'code' => 'docudesk-unavailable'],
+				Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
 
 		return new DataDisplayResponse(
-			$pdf['html'],
+			$pdf['pdf'],
 			Http::STATUS_OK,
 			[
-				'Content-Type' => 'text/html; charset=utf-8',
-				'Content-Disposition' => sprintf('inline; filename="%s.html"', preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf['filename'])),
+				'Content-Type' => 'application/pdf',
+				'Content-Disposition' => sprintf('inline; filename="%s"', preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf['filename'])),
 			]
 		);
 

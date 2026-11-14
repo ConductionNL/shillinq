@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Controller\InvoiceApiController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BillableLinesService;
@@ -275,8 +276,9 @@ final class InvoiceApiControllerTest extends TestCase {
 				$seenLines = $linesArg;
 				return [
 					'filename' => 'invoice-F-2026-0007.pdf',
-					'html' => '<html><body>F-2026-0007</body></html>',
-					'mimeType' => 'text/html',
+					'pdf' => "%PDF-1.7 F-2026-0007",
+					'mimeType' => 'application/pdf',
+					'language' => 'nl',
 				];
 			}
 		);
@@ -290,7 +292,8 @@ final class InvoiceApiControllerTest extends TestCase {
 		self::assertSame($lines, $seenLines);
 
 		$headers = $response->getHeaders();
-		self::assertSame('text/html; charset=utf-8', $headers['Content-Type']);
+		self::assertSame('application/pdf', $headers['Content-Type']);
+		self::assertStringStartsWith('%PDF', (string)$response->render());
 		// NOTE: DataDisplayResponse::__construct() re-adds its own
 		// `Content-Disposition: inline; filename=""` AFTER the constructor
 		// headers are applied, so the controller's filename never survives to
@@ -315,8 +318,9 @@ final class InvoiceApiControllerTest extends TestCase {
 		$this->pdfGenerator->method('generatePdf')->willReturn(
 			[
 				'filename' => "../../etc/pass\"wd\r\nX-Injected: 1",
-				'html' => '<html></html>',
-				'mimeType' => 'text/html',
+				'pdf' => '%PDF-1.7',
+				'mimeType' => 'application/pdf',
+				'language' => 'nl',
 			]
 		);
 
@@ -332,6 +336,32 @@ final class InvoiceApiControllerTest extends TestCase {
 		self::assertStringNotContainsString('/', $response->getHeaders()['Content-Disposition']);
 
 	}//end testPdfHostileFilenameCannotInjectAHeader()
+
+	/**
+	 * Without docudesk the PDF endpoint says what is needed instead of
+	 * serving a file (REQ-SID-002).
+	 *
+	 * @return void
+	 */
+	public function testPdfWithoutDocudeskSaysDocudeskIsNeeded(): void {
+		$this->objectService->method('find')->willReturn(
+			$this->entity(['invoiceNumber' => 'F-1', 'administrationId' => 'adm-1'])
+		);
+		$this->objectService->method('findAll')->willReturn([]);
+		$this->pdfGenerator->method('generatePdf')->willThrowException(
+			new DocudeskUnavailableException('absent')
+		);
+
+		$response = $this->controller->pdf('inv-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		self::assertSame(
+			['error' => 'Docudesk is needed to produce invoice documents.', 'code' => 'docudesk-unavailable'],
+			$response->getData()
+		);
+
+	}//end testPdfWithoutDocudeskSaysDocudeskIsNeeded()
 
 	/**
 	 * A renderer failure yields HTTP 500 and leaks no stack trace (ADR-005).

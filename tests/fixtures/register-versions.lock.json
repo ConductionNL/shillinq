@@ -68,6 +68,10 @@
         {
             "appVersion": "0.5.7-unstable.20261111150000",
             "versionsSha256": "1956c1eda1aaec1710eaaef67014f2a618a4c0ae2396f81225bec0f7d31ad745"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261114133000",
+            "versionsSha256": "f174f046a9682a28604cc5e22e08bca0831d8aec7382485a927770cf7d715f59"
         }
     ],
     "versions": {
@@ -347,6 +351,7 @@
         "schema:InvesteringsaftrekClaim": "0.1.0",
         "schema:InvestmentAsset": "0.1.0",
         "schema:Invoice": "0.1.0",
+        "schema:InvoiceLayout": "0.1.0",
         "schema:InvoiceLine": "0.1.0",
         "schema:IossImport": "0.1.0",
         "schema:IroRecord": "0.1.0",
