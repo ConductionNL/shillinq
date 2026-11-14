@@ -295,6 +295,11 @@ OC.L10N.register(
         "Legal hold": "Legal hold",
         "Legal hold allowed": "Legal hold allowed",
         "Retention ends": "Retention ends",
+        "Due for destruction": "Due for destruction",
+        "Records due for destruction": "Records due for destruction",
+        "Record": "Record",
+        "Retention rule": "Retention rule",
+        "Disposition": "Disposition",
         "Retention period (years)": "Retention period (years)",
         "Retention policy": "Retention policy",
         "Retention schedule": "Retention schedule",
@@ -4735,12 +4740,7 @@ OC.L10N.register(
         "Rates are entered by hand": "Rates are entered by hand",
         "Rates arrive from the feed": "Rates arrive from the feed",
         "%1$s to %2$s on %3$s": "%1$s to %2$s on %3$s",
-        "Newest rate: %s": "Newest rate: %s",
-        "Due for destruction": "Due for destruction",
-        "Records due for destruction": "Records due for destruction",
-        "Record": "Record",
-        "Retention rule": "Retention rule",
-        "Disposition": "Disposition"
+        "Newest rate: %s": "Newest rate: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

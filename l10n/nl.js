@@ -292,6 +292,10 @@ OC.L10N.register(
         "Legal hold": "Juridische bewaarplicht",
         "Legal hold allowed": "Juridische bewaarplicht toegestaan",
         "Retention ends": "Bewaartermijn eindigt",
+        "Due for destruction": "Te vernietigen",
+        "Records due for destruction": "Te vernietigen records",
+        "Retention rule": "Bewaarregel",
+        "Disposition": "Archiefnominatie",
         "Retention policy": "Bewaarbeleid",
         "Retention schedule": "Bewaarschema",
         "Retention starts": "Bewaartermijn begint",
@@ -6919,11 +6923,7 @@ OC.L10N.register(
         "Rates are entered by hand": "Koersen worden handmatig ingevoerd",
         "Rates arrive from the feed": "Koersen komen binnen via de koersfeed",
         "%1$s to %2$s on %3$s": "%1$s naar %2$s op %3$s",
-        "Newest rate: %s": "Nieuwste koers: %s",
-        "Due for destruction": "Te vernietigen",
-        "Records due for destruction": "Te vernietigen records",
-        "Retention rule": "Bewaarregel",
-        "Disposition": "Archiefnominatie"
+        "Newest rate: %s": "Nieuwste koers: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
