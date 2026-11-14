@@ -301,4 +301,69 @@ final class InventoryValuationReportControllerTest extends TestCase {
 	}//end testReportServiceFailureReturns500WithoutStackTrace()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * Without administration_id the report reads the caller's active
+	 * administration, and still asks canAccess() for it (REQ-IRCL-004).
+	 *
+	 * @return void
+	 */
+	public function testReportWithoutAdministrationReadsTheActiveOne(): void {
+		$this->withParams(['as_of' => '2026-09-30']);
+		$this->context->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-active']);
+		$this->context->expects($this->once())->method('canAccess')->with('adm-active');
+		$this->report->expects($this->once())
+			->method('valuationAsOf')
+			->with('adm-active', '2026-09-30', null, null)
+			->willReturn(['asOfDate' => '2026-09-30', 'totalValue' => 577.5, 'totalQuantity' => 30.0, 'lines' => []]);
+
+		$response = $this->controller->report();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(577.5, $response->getData()['valuation']['totalValue']);
+
+	}//end testReportWithoutAdministrationReadsTheActiveOne()
+
+	/**
+	 * A named administration wins over the active one, which is not read.
+	 *
+	 * @return void
+	 */
+	public function testReportNamedAdministrationIsNotReplaced(): void {
+		$this->withParams(['administration_id' => 'adm-1', 'as_of' => '2026-09-30']);
+		$this->context->expects($this->never())->method('buildContext');
+		$this->report->expects($this->once())->method('valuationAsOf')->with('adm-1')->willReturn(['lines' => []]);
+
+		self::assertSame(Http::STATUS_OK, $this->controller->report()->getStatus());
+
+	}//end testReportNamedAdministrationIsNotReplaced()
+
+	/**
+	 * Without administration_id and without an active administration the
+	 * request is still refused with HTTP 400.
+	 *
+	 * @return void
+	 */
+	public function testReportWithoutAnyAdministrationReturns400(): void {
+		$this->withParams(['as_of' => '2026-09-30']);
+		$this->context->method('buildContext')->willThrowException(new \RuntimeException('no context'));
+		$this->report->expects($this->never())->method('valuationAsOf');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller->report()->getStatus());
+
+	}//end testReportWithoutAnyAdministrationReturns400()
+
+	/**
+	 * A foreign active administration is masked like a named one.
+	 *
+	 * @return void
+	 */
+	public function testReportInaccessibleActiveAdministrationReturns404(): void {
+		$this->canAccess = false;
+		$this->withParams(['as_of' => '2026-09-30']);
+		$this->context->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-active']);
+		$this->report->expects($this->never())->method('valuationAsOf');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->report()->getStatus());
+
+	}//end testReportInaccessibleActiveAdministrationReturns404()
 }//end class

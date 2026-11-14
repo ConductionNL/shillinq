@@ -97,7 +97,7 @@ class InventoryValuationReportController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$query = new InventoryValuationQuery(request: $this->request);
+		$query = new InventoryValuationQuery(request: $this->request, activeAdministrationId: $this->activeAdministrationId());
 		$refusal = $this->queryRefusal(query: $query);
 		if ($refusal !== null) {
 			return $refusal;
@@ -163,6 +163,30 @@ class InventoryValuationReportController extends Controller {
 		return new JSONResponse($payload, Http::STATUS_OK);
 
 	}//end valuationReport()
+
+	/**
+	 * The caller's active administration, for a request that names none.
+	 *
+	 * `buildContext()` derives it from the session user's own memberships, so
+	 * no client value reaches it; the report still asks canAccess() for it
+	 * like for a named one. '' when there is none.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/inventory-receipt-cost-layers/specs/inventory-valuation-fifo-avg/spec.md#requirement-the-valuation-report-has-a-page-req-ircl-004
+	 */
+	private function activeAdministrationId(): string {
+		if (trim((string)$this->request->getParam('administration_id', '')) !== '') {
+			return '';
+		}
+
+		try {
+			return (string)($this->context->buildContext()['activeAdministrationId'] ?? '');
+		} catch (\Throwable $e) {
+			return '';
+		}
+
+	}//end activeAdministrationId()
 
 	/**
 	 * Log a failed report and answer a 500 without the failure's details.
