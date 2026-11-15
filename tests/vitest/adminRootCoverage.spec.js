@@ -117,7 +117,8 @@ describe('AdminRoot render', () => {
 		const [shell] = named('CnAdminSettingsShell').slice(-1)
 		expect(shell.slots.default.map((node) => node.type.name)).toEqual(['Settings', 'CnSettingsFieldsSection'])
 		const [pipelinq] = named('CnSettingsFieldsSection').slice(-1)
-		expect(pipelinq.attrs).toMatchObject({ appId: 'shillinq', url: '/index.php/apps/shillinq/api/pipelinq/settings', saveMethod: 'POST' })
+		// saveAll: the settings POST replaces the endpoint, so a token-only save must still carry it.
+		expect(pipelinq.attrs).toMatchObject({ appId: 'shillinq', url: '/index.php/apps/shillinq/api/pipelinq/settings', saveMethod: 'POST', saveAll: true })
 		expect(pipelinq.attrs.fields.map((field) => [field.key, field.type])).toEqual([['endpoint', 'text'], ['token', 'secret'], ['test', 'action']])
 	})
 

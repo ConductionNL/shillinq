@@ -23,6 +23,7 @@
 			:description="t('shillinq', 'The connection to Pipelinq, which adds customer details to bookings.')"
 			:url="pipelinqSettingsUrl"
 			saveMethod="POST"
+			:saveAll="true"
 			:fields="pipelinqFields"
 			data-testid="admin-section-pipelinq" />
 
