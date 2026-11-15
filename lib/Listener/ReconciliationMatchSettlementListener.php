@@ -31,8 +31,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\InvoiceSettlementServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -49,13 +49,13 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param InvoiceSettlementService $settlement The settlement service.
-	 * @param ListenerSchemaResolver   $schemas    Matches the event's schema id against the slug.
+	 * @param InvoiceSettlementServiceInterface $settlement The settlement service.
+	 * @param ListenerSchemaResolverInterface   $schemas    Matches the event's schema id against the slug.
 	 * @param LoggerInterface          $logger     Logger for fail-soft diagnostics.
 	 */
 	public function __construct(
-		private readonly InvoiceSettlementService $settlement,
-		private readonly ListenerSchemaResolver $schemas,
+		private readonly InvoiceSettlementServiceInterface $settlement,
+		private readonly ListenerSchemaResolverInterface $schemas,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -75,6 +75,18 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 			return;
 		}
 
+		$this->settleConfirmedMatch(event: $event);
+
+	}//end handle()
+
+	/**
+	 * Settle a ReconciliationMatch moved by the confirm action; a failure is logged, never thrown.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return void
+	 */
+	private function settleConfirmedMatch(ObjectTransitionedEvent $event): void {
 		if ($event->getAction() !== 'confirm') {
 			return;
 		}
@@ -85,6 +97,18 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 			return;
 		}
 
+		$this->settle(event: $event);
+
+	}//end settleConfirmedMatch()
+
+	/**
+	 * Settle the event's match object; a failure is logged, never thrown.
+	 *
+	 * @param ObjectTransitionedEvent $event The confirm transition of a ReconciliationMatch.
+	 *
+	 * @return void
+	 */
+	private function settle(ObjectTransitionedEvent $event): void {
 		try {
 			$match = $event->getObject()->getObject();
 			if (is_array($match) === false) {
@@ -103,5 +127,5 @@ class ReconciliationMatchSettlementListener implements IEventListener {
 			);
 		}
 
-	}//end handle()
+	}//end settle()
 }//end class

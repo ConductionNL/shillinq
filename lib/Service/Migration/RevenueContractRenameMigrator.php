@@ -3,6 +3,9 @@
 /**
  * RevenueContract rename migrator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The unit-tested migration core for contracts-single-home. The schema-level
  * rename (IFRS-15's `Contract` → `RevenueContract`; CLM's `Contract` stays
  * canonical and unambiguous) is done non-destructively in the register JSON
@@ -52,22 +55,20 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Migration;
 
+use OCA\Shillinq\Kernel\Contracts\RevenueContractRenameMigratorInterface;
 use RuntimeException;
 
 /**
  * Pure, unit-testable migration core for the IFRS-15 `Contract` →
  * `RevenueContract` rename.
  */
-final class RevenueContractRenameMigrator {
+final class RevenueContractRenameMigrator implements RevenueContractRenameMigratorInterface {
 
 	/**
 	 * The renamed IFRS-15 revenue-contract schema slug (source).

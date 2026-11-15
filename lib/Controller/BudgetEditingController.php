@@ -28,10 +28,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Budget\BudgetEditingService;
-use OCA\Shillinq\Budget\BudgetEditRefusedException;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\Exception\BudgetEditRefusedException;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\BudgetEditingServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,21 +52,21 @@ class BudgetEditingController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request The request.
-	 * @param BudgetEditingService         $budgets Budget entry.
-	 * @param AdministrationContextService $context Administration access check.
+	 * @param BudgetEditingServiceInterface         $budgets Budget entry.
+	 * @param AdministrationContextServiceInterface $context Administration access check.
 	 * @param IUserSession                 $session The signed-in user.
 	 * @param IL10N                        $l10n    Translations for refusals.
 	 * @param LoggerInterface              $logger  Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly BudgetEditingService $budgets,
-		private readonly AdministrationContextService $context,
+		private readonly BudgetEditingServiceInterface $budgets,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly IUserSession $session,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -107,18 +107,24 @@ class BudgetEditingController extends Controller {
 			return $refused;
 		}
 
-		return $this->run(
-			operation: fn (): array => $this->budgets->saveCell(
-				administrationId: $this->param(name: 'administrationId'),
-				annualBudgetId: $this->param(name: 'annualBudgetId'),
-				ledgerGroupId: $this->param(name: 'ledgerGroupId'),
-				month: (int)$this->request->getParam('month', 0),
-				amount: (int)$this->request->getParam('amount', 0),
-				expected: (int)$this->request->getParam('expected', 0)
-			)
-		);
-
+		return $this->run(operation: fn (): array => $this->savedCell());
 	}//end saveCell()
+
+	/**
+	 * Save one cell, reading its parameters as the call is made.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function savedCell(): array {
+		return $this->budgets->saveCell(
+			administrationId: $this->param(name: 'administrationId'),
+			annualBudgetId: $this->param(name: 'annualBudgetId'),
+			ledgerGroupId: $this->param(name: 'ledgerGroupId'),
+			month: (int)$this->request->getParam('month', 0),
+			amount: (int)$this->request->getParam('amount', 0),
+			expected: (int)$this->request->getParam('expected', 0)
+		);
+	}//end savedCell()
 
 	/**
 	 * Spread a yearly amount over the twelve months of a row.
@@ -139,17 +145,25 @@ class BudgetEditingController extends Controller {
 			return $this->message(text: 'Send the twelve amounts the row showed.', status: Http::STATUS_BAD_REQUEST);
 		}
 
-		return $this->run(
-			operation: fn (): array => $this->budgets->spread(
-				administrationId: $this->param(name: 'administrationId'),
-				annualBudgetId: $this->param(name: 'annualBudgetId'),
-				ledgerGroupId: $this->param(name: 'ledgerGroupId'),
-				yearly: (int)$this->request->getParam('yearly', 0),
-				expected: array_map('intval', array_values($expected))
-			)
-		);
-
+		return $this->run(operation: fn (): array => $this->spreadRow(expected: $expected));
 	}//end spread()
+
+	/**
+	 * Spread a yearly amount over the row, reading its parameters as the call is made.
+	 *
+	 * @param array<mixed> $expected The twelve amounts the row showed.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function spreadRow(array $expected): array {
+		return $this->budgets->spread(
+			administrationId: $this->param(name: 'administrationId'),
+			annualBudgetId: $this->param(name: 'annualBudgetId'),
+			ledgerGroupId: $this->param(name: 'ledgerGroupId'),
+			yearly: (int)$this->request->getParam('yearly', 0),
+			expected: array_map('intval', array_values($expected))
+		);
+	}//end spreadRow()
 
 	/**
 	 * Ledger groups against the fiscal years that have a budget.
@@ -194,16 +208,23 @@ class BudgetEditingController extends Controller {
 			return $this->message(text: 'Enter a percentage, for example 3.', status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
-		return $this->run(
-			operation: fn (): array => $this->budgets->startNextYear(
-				administrationId: $this->param(name: 'administrationId'),
-				annualBudgetId: $this->param(name: 'annualBudgetId'),
-				percentage: (float)$percentage
-			),
-			status: Http::STATUS_CREATED
-		);
-
+		return $this->run(operation: fn (): array => $this->nextYear(percentage: (float)$percentage), status: Http::STATUS_CREATED);
 	}//end startNextYear()
+
+	/**
+	 * Start next year's budget from this one, reading its ids as the call is made.
+	 *
+	 * @param float $percentage The change to apply.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function nextYear(float $percentage): array {
+		return $this->budgets->startNextYear(
+			administrationId: $this->param(name: 'administrationId'),
+			annualBudgetId: $this->param(name: 'annualBudgetId'),
+			percentage: $percentage
+		);
+	}//end nextYear()
 
 	/**
 	 * A refusal for an anonymous caller or an administration the user may not act in.

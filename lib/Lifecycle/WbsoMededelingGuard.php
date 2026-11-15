@@ -3,6 +3,9 @@
 /**
  * WBSO Mededeling Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the WbsoMededeling register
  * (bookkeeping-wbso-sno-administratie, T1). The submit / resubmit transition
  * precondition is referenced from the WbsoMededeling schema's
@@ -33,16 +36,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -112,23 +112,7 @@ class WbsoMededelingGuard {
 				return false;
 			}
 
-			$decision = $this->resolveDecision(
-				administrationId: $administrationId,
-				decisionNumber: $decisionNumber
-			);
-			if ($decision === null) {
-				return false;
-			}
-
-			// The beschikking must still be granted; an expired or withdrawn
-			// beschikking may not receive a new realisatie filing.
-			if (($decision['state'] ?? '') !== 'granted') {
-				return false;
-			}
-
-			$grantedCenti = (int)round((float)($decision['grantedSoHours'] ?? 0) * 100);
-
-			return $realisedCenti <= $grantedCenti;
+			return $this->withinGrantedHours(mededeling: $object, realisedCenti: $realisedCenti);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'WbsoMededelingGuard: submit check failed — denying submit transition (fail-closed)',
@@ -137,6 +121,30 @@ class WbsoMededelingGuard {
 			return false;
 		}//end try
 	}//end canSubmit()
+
+	/**
+	 * Whether the mededeling's beschikking is still granted and covers the realised hours.
+	 *
+	 * An expired or withdrawn beschikking may not receive a new realisatie filing.
+	 * Hours are compared in integer centi-hours (realised == granted passes).
+	 *
+	 * @param array<string,mixed> $mededeling The WbsoMededeling.
+	 * @param int $realisedCenti The realised S&O hours in centi-hours.
+	 *
+	 * @return bool True when the filing stays within the granted hours.
+	 */
+	private function withinGrantedHours(array $mededeling, int $realisedCenti): bool {
+		$decision = $this->resolveDecision(
+			administrationId: (string)($mededeling['administrationId'] ?? ''),
+			decisionNumber: (string)($mededeling['decisionNumber'] ?? '')
+		);
+		if ($decision === null || ($decision['state'] ?? '') !== 'granted') {
+			return false;
+		}
+
+		return $realisedCenti <= (int)round((float)($decision['grantedSoHours'] ?? 0) * 100);
+
+	}//end withinGrantedHours()
 
 	/**
 	 * Resolve the covering WbsoBeschikking by its unique beschikkingNumber,
@@ -181,7 +189,7 @@ class WbsoMededelingGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -1149,9 +1149,9 @@
       "ThreeWayMatch": {
         "slug": "ThreeWayMatch",
         "icon": "VectorIntersection",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "3-way Match",
-        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s). matchStatus enumerates auto-approval, within-tolerance success, the four exception types and a fraud alert. divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
+        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s). matchStatus enumerates auto-approval, within-tolerance success, the five exception types and a fraud alert. divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
         "x-schema-org": "schema:AssessAction",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -1205,6 +1205,7 @@
               "within_tolerance",
               "exception_price",
               "exception_quantity",
+              "exception_date",
               "exception_missing_grn",
               "exception_missing_po",
               "fraud_alert"
@@ -1347,6 +1348,10 @@
             "exception_quantity": {
               "label": "Hoeveelheidsuitzondering",
               "description": "Quantity diverged beyond tolerance."
+            },
+            "exception_date": {
+              "label": "Leveringsdatumuitzondering",
+              "description": "Delivery date outside the date tolerance, early or late."
             },
             "exception_missing_grn": {
               "label": "GRN ontbreekt",

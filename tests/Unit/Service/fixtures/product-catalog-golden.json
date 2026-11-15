@@ -1,0 +1,782 @@
+{
+    "master": {
+        "listProducts": {
+            "result": {
+                "source": "pipelinq",
+                "authoritative": true,
+                "masterAvailable": true,
+                "masterApp": "pipelinq",
+                "total": 2,
+                "products": [
+                    {
+                        "productId": "p2",
+                        "sku": "SKU-2",
+                        "name": "Beta",
+                        "category": "Tools",
+                        "unitPrice": 12.5,
+                        "currency": "EUR",
+                        "taxRate": 21.0,
+                        "unitCode": "C62",
+                        "primaryBarcode": "8712",
+                        "status": "active",
+                        "stockLocations": 0,
+                        "quantityOnHand": null,
+                        "unitCost": null,
+                        "source": "pipelinq"
+                    },
+                    {
+                        "productId": "p1",
+                        "sku": null,
+                        "name": null,
+                        "category": "cat-x",
+                        "unitPrice": null,
+                        "currency": "EUR",
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": null,
+                        "status": null,
+                        "stockLocations": 0,
+                        "quantityOnHand": null,
+                        "unitCost": null,
+                        "source": "pipelinq"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ],
+                [
+                    "find",
+                    "pipelinq\/productCategory",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        },
+        "listAttributes": {
+            "result": {
+                "source": "pipelinq",
+                "authoritative": true,
+                "masterAvailable": true,
+                "masterApp": "pipelinq",
+                "total": 5,
+                "attributes": [
+                    {
+                        "name": 7,
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 10,
+                        "validationRule": null,
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "Engraving",
+                        "dataType": "enum",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 20,
+                        "validationRule": null,
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "Wrap",
+                        "dataType": "enum",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 30,
+                        "validationRule": null,
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "colour",
+                        "dataType": "enum",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 40,
+                        "validationRule": null,
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "size",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 50,
+                        "validationRule": null,
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        }
+    },
+    "local": {
+        "listProducts": {
+            "result": {
+                "source": "local-cache",
+                "authoritative": false,
+                "masterAvailable": false,
+                "masterApp": "pipelinq",
+                "total": 3,
+                "products": [
+                    {
+                        "productId": "p-a",
+                        "sku": null,
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": null,
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": null,
+                        "status": null,
+                        "stockLocations": 1,
+                        "quantityOnHand": 1.0,
+                        "unitCost": 4.0,
+                        "source": "local-cache"
+                    },
+                    {
+                        "productId": "p-b",
+                        "sku": "B",
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": null,
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": "222",
+                        "status": "active",
+                        "stockLocations": 2,
+                        "quantityOnHand": 5.5,
+                        "unitCost": 1.5,
+                        "source": "local-cache"
+                    },
+                    {
+                        "productId": "p-c",
+                        "sku": "C",
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": null,
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": null,
+                        "status": null,
+                        "stockLocations": 0,
+                        "quantityOnHand": 0.0,
+                        "unitCost": null,
+                        "source": "local-cache"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ],
+                [
+                    "find",
+                    "shillinq\/InventoryStock",
+                    {
+                        "filters": {
+                            "administrationId": "adm-1"
+                        }
+                    }
+                ],
+                [
+                    "find",
+                    "shillinq\/InventoryStock",
+                    {
+                        "filters": {
+                            "administrationId": "adm-2"
+                        }
+                    }
+                ],
+                [
+                    "find",
+                    "shillinq\/Barcode",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        },
+        "listAttributes": {
+            "result": {
+                "source": "contract",
+                "authoritative": false,
+                "masterAvailable": false,
+                "masterApp": "pipelinq",
+                "total": 10,
+                "attributes": [
+                    {
+                        "name": "sku",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": true,
+                        "displayOrder": 10,
+                        "validationRule": "Stock keeping unit resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "name",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": true,
+                        "displayOrder": 20,
+                        "validationRule": "Human-readable product name resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "category",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 30,
+                        "validationRule": "Product category resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "unitPrice",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 40,
+                        "validationRule": "Selling price per unit resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "taxRate",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 50,
+                        "validationRule": "VAT percentage resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "unitCode",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 60,
+                        "validationRule": "UN\/CEFACT unit of measure resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "primaryBarcode",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 70,
+                        "validationRule": "Default scanned barcode. Held locally on Barcode, mirrored from the master.",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "unitCost",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 80,
+                        "validationRule": "Valuation unit cost. Authored and owned by shillinq (REQ-SPVP-001).",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "quantityOnHand",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 90,
+                        "validationRule": "Physical on-hand quantity. Authored and owned by shillinq.",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "status",
+                        "dataType": "enum",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 100,
+                        "validationRule": "active | discontinued. Mirrored from the master onto local stock rows.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        }
+    },
+    "masterThrows": {
+        "listProducts": {
+            "result": {
+                "source": "local-cache",
+                "authoritative": false,
+                "masterAvailable": false,
+                "masterApp": "pipelinq",
+                "total": 3,
+                "products": [
+                    {
+                        "productId": "p-a",
+                        "sku": null,
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": null,
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": null,
+                        "status": null,
+                        "stockLocations": 1,
+                        "quantityOnHand": 1.0,
+                        "unitCost": 4.0,
+                        "source": "local-cache"
+                    },
+                    {
+                        "productId": "p-b",
+                        "sku": null,
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": null,
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": "222",
+                        "status": null,
+                        "stockLocations": 0,
+                        "quantityOnHand": 0.0,
+                        "unitCost": null,
+                        "source": "local-cache"
+                    },
+                    {
+                        "productId": "p-c",
+                        "sku": "C",
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": null,
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": null,
+                        "status": null,
+                        "stockLocations": 0,
+                        "quantityOnHand": 0.0,
+                        "unitCost": null,
+                        "source": "local-cache"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ],
+                [
+                    "debug",
+                    "ProductCatalogService: register\/schema not readable",
+                    {
+                        "register": "pipelinq",
+                        "schema": "product",
+                        "exception": "no pipelinq"
+                    }
+                ],
+                [
+                    "find",
+                    "shillinq\/InventoryStock",
+                    {
+                        "filters": {
+                            "administrationId": "adm-2"
+                        }
+                    }
+                ],
+                [
+                    "find",
+                    "shillinq\/Barcode",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        },
+        "listAttributes": {
+            "result": {
+                "source": "contract",
+                "authoritative": false,
+                "masterAvailable": false,
+                "masterApp": "pipelinq",
+                "total": 10,
+                "attributes": [
+                    {
+                        "name": "sku",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": true,
+                        "displayOrder": 10,
+                        "validationRule": "Stock keeping unit resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "name",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": true,
+                        "displayOrder": 20,
+                        "validationRule": "Human-readable product name resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "category",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 30,
+                        "validationRule": "Product category resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "unitPrice",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 40,
+                        "validationRule": "Selling price per unit resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "taxRate",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 50,
+                        "validationRule": "VAT percentage resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "unitCode",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 60,
+                        "validationRule": "UN\/CEFACT unit of measure resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    },
+                    {
+                        "name": "primaryBarcode",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 70,
+                        "validationRule": "Default scanned barcode. Held locally on Barcode, mirrored from the master.",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "unitCost",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 80,
+                        "validationRule": "Valuation unit cost. Authored and owned by shillinq (REQ-SPVP-001).",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "quantityOnHand",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 90,
+                        "validationRule": "Physical on-hand quantity. Authored and owned by shillinq.",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "status",
+                        "dataType": "enum",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 100,
+                        "validationRule": "active | discontinued. Mirrored from the master onto local stock rows.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "contract"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ],
+                [
+                    "debug",
+                    "ProductCatalogService: register\/schema not readable",
+                    {
+                        "register": "pipelinq",
+                        "schema": "product",
+                        "exception": "no pipelinq"
+                    }
+                ]
+            ]
+        }
+    },
+    "masterWithoutAttributes": {
+        "listProducts": {
+            "result": {
+                "source": "pipelinq",
+                "authoritative": true,
+                "masterAvailable": true,
+                "masterApp": "pipelinq",
+                "total": 1,
+                "products": [
+                    {
+                        "productId": "p9",
+                        "sku": null,
+                        "name": null,
+                        "category": null,
+                        "unitPrice": null,
+                        "currency": "EUR",
+                        "taxRate": null,
+                        "unitCode": null,
+                        "primaryBarcode": null,
+                        "status": null,
+                        "stockLocations": 0,
+                        "quantityOnHand": null,
+                        "unitCost": null,
+                        "source": "pipelinq"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ],
+                [
+                    "find",
+                    "pipelinq\/productCategory",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        },
+        "listAttributes": {
+            "result": {
+                "source": "contract",
+                "authoritative": false,
+                "masterAvailable": true,
+                "masterApp": "pipelinq",
+                "total": 10,
+                "attributes": [
+                    {
+                        "name": "sku",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": true,
+                        "displayOrder": 10,
+                        "validationRule": "Stock keeping unit resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "name",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": true,
+                        "displayOrder": 20,
+                        "validationRule": "Human-readable product name resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "category",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 30,
+                        "validationRule": "Product category resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "unitPrice",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 40,
+                        "validationRule": "Selling price per unit resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "taxRate",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 50,
+                        "validationRule": "VAT percentage resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "unitCode",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 60,
+                        "validationRule": "UN\/CEFACT unit of measure resolved from the product master.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    },
+                    {
+                        "name": "primaryBarcode",
+                        "dataType": "text",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 70,
+                        "validationRule": "Default scanned barcode. Held locally on Barcode, mirrored from the master.",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "unitCost",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 80,
+                        "validationRule": "Valuation unit cost. Authored and owned by shillinq (REQ-SPVP-001).",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "quantityOnHand",
+                        "dataType": "number",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 90,
+                        "validationRule": "Physical on-hand quantity. Authored and owned by shillinq.",
+                        "status": "active",
+                        "ownedBy": "shillinq",
+                        "source": "local-cache"
+                    },
+                    {
+                        "name": "status",
+                        "dataType": "enum",
+                        "applicableToCategories": "all",
+                        "isRequired": false,
+                        "displayOrder": 100,
+                        "validationRule": "active | discontinued. Mirrored from the master onto local stock rows.",
+                        "status": "active",
+                        "ownedBy": "pipelinq",
+                        "source": "pipelinq"
+                    }
+                ]
+            },
+            "events": [
+                [
+                    "find",
+                    "pipelinq\/product",
+                    {
+                        "filters": []
+                    }
+                ]
+            ]
+        }
+    },
+    "refused": {
+        "listProducts": {
+            "result": null,
+            "events": []
+        },
+        "listAttributes": {
+            "result": null,
+            "events": []
+        }
+    }
+}

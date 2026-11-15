@@ -1,0 +1,83 @@
+{
+    "entries": [
+        {
+            "id": "g-root",
+            "slug": "",
+            "parentRef": null,
+            "memberAccountNumbers": [
+                "4000",
+                "4050"
+            ]
+        },
+        {
+            "id": "g-a",
+            "slug": "a",
+            "parentRef": "ROOT",
+            "memberAccountNumbers": [
+                "8000"
+            ]
+        },
+        {
+            "id": "g-b",
+            "slug": "b",
+            "parentRef": "a",
+            "memberAccountNumbers": []
+        },
+        {
+            "id": "g-c",
+            "slug": "",
+            "parentRef": "g-b",
+            "memberAccountNumbers": []
+        },
+        {
+            "id": "",
+            "slug": "slug-only",
+            "parentRef": "nowhere",
+            "memberAccountNumbers": []
+        },
+        {
+            "id": "same",
+            "slug": "same",
+            "parentRef": "",
+            "memberAccountNumbers": []
+        },
+        {
+            "id": "",
+            "slug": "",
+            "parentRef": "same",
+            "memberAccountNumbers": []
+        }
+    ],
+    "keyToIndex": {
+        "g-root": 0,
+        "ROOT": 0,
+        "g-a": 1,
+        "a": 1,
+        "A": 1,
+        "g-b": 2,
+        "b": 2,
+        "g-c": 3,
+        "slug-only": 4,
+        "same": 5,
+        "CODE-ONLY": 6
+    },
+    "childrenByIndex": {
+        "0": [
+            1
+        ],
+        "1": [
+            2
+        ],
+        "2": [
+            3
+        ],
+        "5": [
+            6
+        ]
+    },
+    "withoutGroups": [
+        [],
+        [],
+        []
+    ]
+}

@@ -316,15 +316,19 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 	}//end claims()
 
 	/**
+	 * @param string $redirectUrl The configured payer return URL, empty for none.
+	 *
 	 * @return PortalPaymentSessionService
 	 */
-	private function makeService(): PortalPaymentSessionService {
+	private function makeService(string $redirectUrl = ''): PortalPaymentSessionService {
 		$urlGenerator = $this->createMock(IURLGenerator::class);
 		$urlGenerator->method('linkToRouteAbsolute')->willReturn('https://instance.example/webhook');
 		$urlGenerator->method('getAbsoluteURL')->willReturn('https://instance.example/');
 
 		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('');
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($key === 'portal_payment_redirect_url' ? $redirectUrl : $default)
+		);
 
 		return new PortalPaymentSessionService(
 			container: $this->container,
@@ -372,6 +376,27 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 		$last = end($paymentRequestSaves);
 		self::assertSame('tr_1', $last['object']['paymentIntentId']);
 	}//end testHappyPathReturnsCheckoutUrl()
+
+	/**
+	 * A configured payer return URL is sent to the PSP instead of the instance root.
+	 *
+	 * @return void
+	 */
+	public function testAConfiguredReturnUrlIsSentToThePsp(): void {
+		$captured = null;
+		$this->provider->method('createSession')
+			->willReturnCallback(
+				function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+					$captured = $request;
+					return new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/x', paymentIntentId: 'tr_9');
+				}
+			);
+
+		$this->makeService(redirectUrl: 'https://portal.example/betaald')->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		self::assertNotNull($captured);
+		self::assertSame('https://portal.example/betaald', $captured->redirectUrl);
+	}//end testAConfiguredReturnUrlIsSentToThePsp()
 
 	/**
 	 * A client-supplied amount is ignored entirely — the charged amount is
@@ -851,4 +876,41 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 		self::assertSame('downstream_error', $service->initiateForRequest(claims: $this->claims(), target: 'pr-zero')->status);
 		self::assertSame([], $this->objectService->saved);
 	}//end testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable()
+
+	/**
+	 * Pins every field of the session a request without an invoice opens:
+	 * the default description when it has none, the currency default, the
+	 * URLs and the metadata; a string amount is charged as a number.
+	 *
+	 * @return void
+	 */
+	public function testARequestSessionCarriesEveryFieldAndItsDefaults(): void {
+		$this->seedRequestsWithoutAnInvoice();
+		$this->objectService->data['shillinq']['PaymentRequest'][] = [
+			'id' => 'pr-plain',
+			'amount' => '42.50',
+			'state' => 'pending',
+			'description' => '   ',
+			'customerId' => self::CUSTOMER_MASTER_ID,
+		];
+		$captured = null;
+		$this->provider->expects($this->once())->method('createSession')->willReturnCallback(
+			function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+				$captured = $request;
+				return new PaymentSessionResult(dormant: true, checkoutUrl: '', paymentIntentId: 'tr_d');
+			}
+		);
+
+		$result = $this->makeService()->initiateForRequest(claims: $this->claims(), target: ' pr-plain ');
+
+		self::assertSame('deferred', $result->status);
+		self::assertSame(
+			[42.5, 'EUR', 'Payment request', 'https://instance.example/', 'https://instance.example/webhook', 'ideal'],
+			[$captured->amount, $captured->currency, $captured->description, $captured->redirectUrl, $captured->webhookUrl, $captured->method]
+		);
+		self::assertSame(['paymentRequestId' => 'pr-plain', 'administrationId' => '', 'correlationId' => 'pr-plain'], $captured->metadata);
+		self::assertSame('pr-plain', $this->objectService->saved[0]['uuid']);
+		self::assertSame('tr_d', $this->objectService->saved[0]['object']['paymentIntentId']);
+
+	}//end testARequestSessionCarriesEveryFieldAndItsDefaults()
 }//end class

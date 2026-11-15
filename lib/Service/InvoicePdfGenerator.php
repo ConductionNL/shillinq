@@ -3,6 +3,9 @@
 /**
  * Invoice PDF Generator
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Renders a Dutch-compliant invoice document (Task 20, issue #111). Produces
  * HTML by default; downstream renderers (mPDF / wkhtmltopdf / browser print)
  * convert it to PDF. Keeping the renderer HTML-first avoids a hard mPDF
@@ -42,14 +45,13 @@
  * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\Kernel\Contracts\InvoicePdfGeneratorInterface;
 
 /**
  * Dutch-formatted invoice HTML / PDF builder.
@@ -61,7 +63,7 @@ namespace OCA\Shillinq\Service;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class InvoicePdfGenerator {
+class InvoicePdfGenerator implements InvoicePdfGeneratorInterface {
 	/**
 	 * Embedded-filename for the NLCIUS UBL hybrid attachment. Deliberately
 	 * NOT the Factur-X/ZUGFeRD well-known name (`factur-x.xml`) — the

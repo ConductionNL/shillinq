@@ -31,10 +31,10 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DomainException;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Relation\RelationBothSidesService;
-use OCA\Shillinq\Service\Relation\RelationLinkService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RelationBothSidesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RelationLinkServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -69,17 +69,17 @@ class RelationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest                     $request   The request.
-	 * @param AdministrationContextService $context   The caller's administrations.
-	 * @param RelationLinkService          $links     Suggestions and links.
-	 * @param RelationBothSidesService     $bothSides Both sides of a relation.
+	 * @param AdministrationContextServiceInterface $context   The caller's administrations.
+	 * @param RelationLinkServiceInterface          $links     Suggestions and links.
+	 * @param RelationBothSidesServiceInterface     $bothSides Both sides of a relation.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly AdministrationContextService $context,
-		private readonly RelationLinkService $links,
-		private readonly RelationBothSidesService $bothSides,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly RelationLinkServiceInterface $links,
+		private readonly RelationBothSidesServiceInterface $bothSides,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -297,24 +297,64 @@ class RelationController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$context          = $this->context->buildContext();
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '') {
-			$administrationId = trim((string)($context['activeAdministrationId'] ?? ''));
-		}
-
+		$context = $this->context->buildContext();
+		$administrationId = $this->requestedAdministration(context: $context);
 		if ($administrationId === '' || $this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$year = (new DateTimeImmutable())->format('Y');
-		// A dashboard's date range sends ISO moments; the day is what counts.
-		$from = substr((string)$this->request->getParam('from', $year . '-01-01'), 0, 10);
-		$to   = substr((string)$this->request->getParam('to', $year . '-12-31'), 0, 10);
-		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) !== 1 || preg_match('/^\d{4}-\d{2}-\d{2}$/', $to) !== 1 || $to < $from) {
+		$period = $this->requestedPeriod();
+		if ($period === null) {
 			return new JSONResponse(['error' => 'Dates must read YYYY-MM-DD, the first before the last'], Http::STATUS_BAD_REQUEST);
 		}
 
+		$role = self::roleIn(context: $context, administrationId: $administrationId);
+
+		return ['userId' => $userId, 'administrationId' => $administrationId] + $period + self::permissions(role: $role);
+	}//end authorizeScope()
+
+	/**
+	 * The asked-for administration, else the caller's active one; trimmed.
+	 *
+	 * @param array<string, mixed> $context The caller's administration context.
+	 *
+	 * @return string The administration, or ''.
+	 */
+	private function requestedAdministration(array $context): string {
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId === '') {
+			return trim((string)($context['activeAdministrationId'] ?? ''));
+		}
+
+		return $administrationId;
+	}//end requestedAdministration()
+
+	/**
+	 * The asked-for days, defaulting to the current year. A dashboard's date
+	 * range sends ISO moments; the day is what counts.
+	 *
+	 * @return array{from: string, to: string}|null Null unless both read YYYY-MM-DD and the first is not after the last.
+	 */
+	private function requestedPeriod(): ?array {
+		$year = (new DateTimeImmutable())->format('Y');
+		$from = substr((string)$this->request->getParam('from', $year . '-01-01'), 0, 10);
+		$to = substr((string)$this->request->getParam('to', $year . '-12-31'), 0, 10);
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) !== 1 || preg_match('/^\d{4}-\d{2}-\d{2}$/', $to) !== 1 || $to < $from) {
+			return null;
+		}
+
+		return ['from' => $from, 'to' => $to];
+	}//end requestedPeriod()
+
+	/**
+	 * The caller's role in the administration; the last matching membership wins.
+	 *
+	 * @param array<string, mixed> $context          The caller's administration context.
+	 * @param string               $administrationId The authorised administration.
+	 *
+	 * @return string The role, or ''.
+	 */
+	private static function roleIn(array $context, string $administrationId): string {
 		$role = '';
 		foreach (($context['administrations'] ?? []) as $administration) {
 			if ((string)($administration['administrationId'] ?? '') === $administrationId) {
@@ -322,19 +362,25 @@ class RelationController extends Controller {
 			}
 		}
 
+		return $role;
+	}//end roleIn()
+
+	/**
+	 * Which invoice sides the role may see, and whether it may link relations.
+	 *
+	 * @param string $role The caller's role.
+	 *
+	 * @return array{sides: array{sent: bool, received: bool}, mayLink: bool}
+	 */
+	private static function permissions(string $role): array {
 		return [
-			'userId'           => $userId,
-			'administrationId' => $administrationId,
-			'from'             => $from,
-			'to'               => $to,
-			'sides'            => [
-				'sent'     => in_array($role, self::SENT_ROLES, true),
+			'sides' => [
+				'sent' => in_array($role, self::SENT_ROLES, true),
 				'received' => in_array($role, self::RECEIVED_ROLES, true),
 			],
-			'mayLink'          => in_array($role, self::LINK_ROLES, true),
+			'mayLink' => in_array($role, self::LINK_ROLES, true),
 		];
-
-	}//end authorizeScope()
+	}//end permissions()
 
 	/**
 	 * A refused link as a response: 404 for a record not found, 409 otherwise.

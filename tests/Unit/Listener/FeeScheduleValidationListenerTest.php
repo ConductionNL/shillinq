@@ -71,6 +71,21 @@ final class FeeScheduleValidationListenerTest extends TestCase {
 	}//end testAnOverlappingScheduleIsRefusedOnUpdate()
 
 	/**
+	 * The refusal carries exactly the rule's message and requirement.
+	 *
+	 * @return void
+	 */
+	public function testTheRefusalPayloadIsExact(): void {
+		$event = $this->creatingEvent($this->schedule(['legalBasis' => []]));
+
+		$this->listener(matches: true, stored: [])->handle($event);
+
+		self::assertSame(['message', 'requirement'], array_keys($event->getErrors()));
+		self::assertSame('REQ-SOPR-006', $event->getErrors()['requirement']);
+		self::assertNotSame('', $event->getErrors()['message']);
+	}//end testTheRefusalPayloadIsExact()
+
+	/**
 	 * A schedule naming no council decision is refused too: the listener runs
 	 * the whole rule, not only the overlap half.
 	 *
