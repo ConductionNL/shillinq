@@ -210,37 +210,6 @@
             },
             "description": "Declarative email dispatch consumed from OR's notification engine (ADR-022). When booking.confirmed fires, the engine selects a published template matching the recipient locale, renders subject + html + plain-text with booking variables, and dispatches through the configured email provider: no direct SMTP from app code. Render failure falls back to plain-text (T21) and is logged for operator review."
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "template-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "booking-administrator": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "permissionMap": {
-            "booking:template:list": "read",
-            "booking:template:create": "create",
-            "booking:template:edit": "update",
-            "booking:template:publish": "update",
-            "booking:template:delete": "delete"
-          },
-          "description": "Template administration is restricted to the template-administrator role (full CRUD), booking-administrator (read/update), and auditor (read-only) per T22. Permission slugs map onto OR CRUD permissions; publish is modelled as an update of the status field gated by the lifecycle state machine."
         }
       },
       "BookingReminderTemplate": {
@@ -449,37 +418,6 @@
             },
             "description": "Reminder dispatch consumed from OR's notification engine. The engine derives the dispatch time as bookingStart − scheduleOffsetHours; missed windows (e.g. activation after the scheduled time) dispatch immediately. Render failure falls back to plain-text and is logged for operator review (T21)."
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "template-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "booking-administrator": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "permissionMap": {
-            "booking:template:list": "read",
-            "booking:template:create": "create",
-            "booking:template:edit": "update",
-            "booking:template:publish": "update",
-            "booking:template:delete": "delete"
-          },
-          "description": "Same RBAC as BookingConfirmationTemplate (T22)."
         }
       },
       "BookingCancellationTemplate": {
@@ -684,37 +622,6 @@
             },
             "description": "Cancellation dispatch consumed from OR's notification engine. When cancellationReasonRequired is true the engine injects the booking's cancellation reason into the variable map; otherwise {{cancellationReason}} resolves to empty string per the standard undefined-variable rule (T14)."
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "template-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "booking-administrator": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "permissionMap": {
-            "booking:template:list": "read",
-            "booking:template:create": "create",
-            "booking:template:edit": "update",
-            "booking:template:publish": "update",
-            "booking:template:delete": "delete"
-          },
-          "description": "Same RBAC as BookingConfirmationTemplate (T22)."
         }
       }
     }

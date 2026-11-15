@@ -4,9 +4,21 @@
 
 ## 1. Lines carry their box
 
-- [ ] 1.1 Add `vatTariffCode`, `vatReturnBox` and `vatAmountKind` to `GLLine`, and `returnBox` to `VATDeclaration` and `VATLine` (REQ-VBTW-004). Verify: `npm run check:registers`; re-import with no failed schemas.
+- [x] 1.1 Add `vatTariffCode`, `vatReturnBox` and `vatAmountKind` to `GLLine`, and `returnBox` to `VATDeclaration` and `VATLine` (REQ-VBTW-004). Verify: `npm run check:registers`; re-import with no failed schemas.
+      DONE (b6fdad347): `lib/Settings/register.d/tax-vat-return-from-books.json` (GLLine, VATDeclaration and
+      VATLine at 0.2.0); `check:registers` passes. The live re-import is not re-run here.
 - [x] 1.2 Stamp the three fields in the posting mappers from the line's tariff, including reverse charge to the owed box and 5b (REQ-VBTW-004). Verify: PHPUnit for a sale, a purchase, a split purchase and a reverse-charged purchase.
-- [ ] 1.3 Add a backfill repair step for posted lines from the tariff code, else the account's VAT settings, logging lines it cannot resolve (REQ-VBTW-004). Verify: repair run twice on a local instance stamps the seed lines once.
+      DONE: `VatLineStamper` plus `MaterialiseGlTransactionAction`, tested by
+      `testASaleAtTwoRatesBooksVatPerTariffWithItsBox`, `testAPurchaseInvoiceBooksExpenseVatAndPayables`,
+      `testASplitPurchaseBooksInputVatPerTariffInBox5b` and `testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff`.
+      The self-assessed VAT of a reverse-charged purchase is booked at the high tariff's rate
+      (`VatLineStamper::reverseChargeRate()`), deducted in 5b and owed in the tariff's own box
+      (`testAReverseChargedPurchaseBooksItsVatOwedAndDeducted`); without that tariff nothing is guessed
+      (`testWithoutAHighTariffNoReverseChargePairIsGuessed`) and the return's reverse-charge check names the purchase.
+- [x] 1.3 Add a backfill repair step for posted lines from the tariff code, else the account's VAT settings, logging lines it cannot resolve (REQ-VBTW-004). Verify: repair run twice on a local instance stamps the seed lines once.
+      DONE (185ccd289): `lib/Repair/StampVatReturnBoxes.php` over `VatLineBackfill`, registered in info.xml;
+      `VatLineBackfillTest::testLinesWithATariffGetTheirBoxOnceAndASecondRunWritesNothing` covers the second run.
+      The run on a live instance is not repeated here.
 
 ## 2. One derivation
 

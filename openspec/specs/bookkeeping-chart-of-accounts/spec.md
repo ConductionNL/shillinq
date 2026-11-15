@@ -15,7 +15,7 @@ This specification defines the requirements for bookkeeping chart of accounts in
 
 ## Requirements
 
-### REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
+### Requirement: REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
 
 The chart of accounts MUST be declared as a register in
 `lib/Settings/shillinq_register.json` per ADR-024, with the `Account`
@@ -45,7 +45,7 @@ shillinq adds no per-app endpoint.
   table declarations naming `accounts` / `chart_of_accounts`
 - **THEN** no such classes or declarations SHALL exist.
 
-### REQ-CoA-002: The `Account` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-CoA-002: The `Account` schema SHALL declare a fixed minimum field set
 
 The `Account` schema MUST declare the following fields with the typing
 below. Additional fields MAY be added later (additive only).
@@ -82,7 +82,7 @@ per `adr-000-data-model.md`'s top-of-file note.
 - **WHEN** an object with `accountType: "magic"` is validated
 - **THEN** validation MUST fail with an enum-violation error.
 
-### REQ-CoA-003: The `Account` schema SHALL declare a self-relation for hierarchy via `x-openregister-relations`
+### Requirement: REQ-CoA-003: The `Account` schema SHALL declare a self-relation for hierarchy via `x-openregister-relations`
 
 Account hierarchy MUST be declared as an `x-openregister-relations`
 self-relation: `parentAccountNumber` points at another
@@ -109,7 +109,7 @@ OpenRegister's relation engine; no app-local join code.
 - **THEN** OR's relation validator SHOULD reject the save with a
   resolvable error message naming the missing parent.
 
-### REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
+### Requirement: REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
 
 The system SHALL ensure the `Account` schema declares a canonical Schema.org annotation.
 
@@ -131,7 +131,7 @@ reconciled to `schema:DefinedTerm` in the data-model ADR update task.
   `schema:DefinedTerm` (or, if the reconciliation lands later, the
   ADR-000-aligned value once agreed).
 
-### REQ-CoA-005: Accounts SHALL have a declarative active/blocked/archived lifecycle
+### Requirement: REQ-CoA-005: Accounts SHALL have a declarative active/blocked/archived lifecycle
 
 The `Account` schema MUST declare an `x-openregister-lifecycle` block
 with the following states and transitions (per ADR-031):
@@ -178,7 +178,7 @@ legitimate seam".
 - **THEN** the transition MUST be rejected with a "non-zero balance"
   error and the account state MUST remain `active`/`blocked`.
 
-### REQ-CoA-006: The system SHALL ship RGS template seed data for SMB, ZZP, and government variants
+### Requirement: REQ-CoA-006: The system SHALL ship RGS template seed data for SMB, ZZP, and government variants
 
 Three seed files under `lib/Settings/seeds/` MUST be shipped:
 `rgs-3.5-mkb.json`, `rgs-3.5-zzp.json`, `rgs-bbv.json`. Each is a
@@ -209,7 +209,7 @@ Templates MAY evolve over time; filename version pinning
   expense top-level groupings) SHALL match the RGS 3.5 SMB reference
   chart documented at `https://www.referentiegrootboekschema.nl`.
 
-### REQ-CoA-007: The repair step SHALL seed the selected RGS template on first install, idempotently
+### Requirement: REQ-CoA-007: The repair step SHALL seed the selected RGS template on first install, idempotently
 
 The shillinq repair step (or migration class) MUST extend
 `ConfigurationService::importFromApp()` to load the selected RGS
@@ -237,7 +237,7 @@ seeded records (per the per-administration override allowance).
 - **THEN** account `4100`'s name MUST remain `Omzet binnenland`;
   the seed step MUST NOT revert operator edits.
 
-### REQ-CoA-008: Chart of accounts SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-CoA-008: Chart of accounts SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Chart of Accounts` or top-level — exact placement settled in the
@@ -269,7 +269,7 @@ purpose" convention).
   fields from REQ-CoA-002 and the lifecycle-state actions allowed
   by REQ-CoA-005.
 
-### REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
+### Requirement: REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
 
 The system SHALL ensure each administration designates exactly one account as the closing account.
 

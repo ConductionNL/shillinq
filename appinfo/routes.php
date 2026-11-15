@@ -3,6 +3,9 @@
 /**
  * Shillinq route table.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * AppHost adoption (adopt-apphost): the canonical fleet-skeleton routes
  * (`dashboard#page`, `dashboard#catchAll`, `settings#index|create|load`,
  * `preferences#getPreference|setPreference`, `metrics#index`, `health#index`)
@@ -29,15 +32,15 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
-return \OCA\OpenRegister\AppHost\Routes::standard(
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OCA\OpenRegister\AppHost\Routes::standard(
         [
+        // The OpenAPI document of shillinq's own API, public, served under /api/v1/ too.
+            ['name' => 'openApi#show', 'url' => '/api/openapi.json', 'verb' => 'GET'],
         // Pipelinq integration connection settings — bookings-pipelinq-customer-bridge
         // member 01. GET returns endpoint + hasToken flag (never the token itself);
         // POST persists endpoint + optional token (absent token preserves current
@@ -66,6 +69,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // page "Import status" header strip. Gated by
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
+
+        // banking-fx-at-booking task 3.1: the FX rates page's status line —
+        // feed or typed, and the newest rate date per pair. Any signed-in
+        // user; the rates are read with the caller's own register access.
+            ['name' => 'fxRateFeedStatus#status', 'url' => '/api/fx-rates/feed-status', 'verb' => 'GET'],
 
         // No external-adapters roster route: adopt-connection-registry moved
         // the External Connections page onto integriq's app_connection rows,
@@ -106,6 +114,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'relation#payeeBothSides', 'url' => '/api/relations/payee/{payeeId}/both-sides', 'verb' => 'GET'],
             ['name' => 'relation#bothSides', 'url' => '/api/relations/{customerId}/both-sides', 'verb' => 'GET'],
             // platform-required-fields REQ-PRF-001: a requirement's record type fields.
+            ['name' => 'fieldRequirement#index', 'url' => '/api/field-requirements', 'verb' => 'GET'],
             ['name' => 'fieldRequirement#fields', 'url' => '/api/field-requirements/{id}/fields', 'verb' => 'GET'],
             // reporting-custom-analysis REQ-RCA-002: the financial pivot.
             ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
@@ -144,6 +153,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Automatic dunning (task 4.1): the Next run preview and a ladder's stage texts.
             ['name' => 'dunningPreview#nextRun', 'url' => '/api/dunning/next-run', 'verb' => 'GET'],
             ['name' => 'dunningPreview#ladderStages', 'url' => '/api/dunning/ladders/{id}/stages', 'verb' => 'GET'],
+            // Records whose retention period has ended (ledger-retention-due-records, REQ-RET-015).
+            // #[NoAdminRequired] with a per-administration canAccess() guard in the controller (ADR-005).
+            ['name' => 'retentionDue#index', 'url' => '/api/retention/due', 'verb' => 'GET'],
 
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
             ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
@@ -154,8 +166,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
             ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
             ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+            ['name' => 'investmentDeduction#calculate', 'url' => '/api/investment-deductions/{year}/calculate', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#index', 'url' => '/api/administration-templates', 'verb' => 'GET'],
+            ['name' => 'administrationTemplate#saveAs', 'url' => '/api/administrations/{id}/template', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#seed', 'url' => '/api/administrations/{id}/seed-template', 'verb' => 'POST'],
             ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
             ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
+            ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
+            ['name' => 'standardsPolicy#update', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'PUT'],
+            ['name' => 'administrationMember#create', 'url' => '/api/administrations/{administrationId}/members', 'verb' => 'POST'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
             ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
@@ -182,6 +201,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // appointments (skipping availability/conflict violations).
             ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
             ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
+        // The XBRL file of an SBR filing, in any state (tax-digipoort-filing task 4.2).
+            ['name' => 'sbrFiling#download', 'url' => '/api/sbr-filings/{id}/xbrl', 'verb' => 'GET'],
+
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
@@ -189,6 +211,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
             ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
             ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+            // tax-vat-position-and-suppletie (REQ-VPS-001, REQ-VPS-002): the running
+            // position, the drift check on a filed return, and preparing its suppletie.
+            ['name' => 'vatSuppletie#detectDrift', 'url' => '/api/vat-returns/{returnId}/detect-drift', 'verb' => 'POST'],
+            ['name' => 'vatSuppletie#prepare', 'url' => '/api/vat-corrections/{correctionId}/prepare', 'verb' => 'POST'],
+            ['name' => 'vatSuppletieFiling#download', 'url' => '/api/vat-corrections/{correctionId}/supplementary-return', 'verb' => 'GET'],
+            ['name' => 'vatSuppletieFiling#file', 'url' => '/api/vat-corrections/{correctionId}/file', 'verb' => 'POST'],
+            ['name' => 'vatPosition#show', 'url' => '/api/vat-position', 'verb' => 'GET'],
             ['name' => 'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'],
             ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
             ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
@@ -210,6 +239,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // issue #111). Static {invoiceId}/{action} routes precede the bare {invoiceId}
         // routes so Symfony matches them first.
             ['name' => 'invoiceApi#generate', 'url' => '/api/v1/invoices/generate', 'verb' => 'POST'],
+            ['name' => 'invoiceApi#billable', 'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'],
             ['name' => 'invoiceApi#index', 'url' => '/api/v1/invoices', 'verb' => 'GET'],
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
@@ -310,6 +340,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.
             ['name' => 'downPayment#create', 'url' => '/api/ar-invoices/down-payments', 'verb' => 'POST'],
+            ['name' => 'quickDraftInvoice#create', 'url' => '/api/ar-invoices/quick-drafts', 'verb' => 'POST'],
             ['name' => 'downPayment#show', 'url' => '/api/ar-invoices/{id}/down-payments', 'verb' => 'GET'],
             ['name' => 'downPayment#deduct', 'url' => '/api/ar-invoices/{id}/down-payment-deductions', 'verb' => 'POST'],
 
@@ -778,6 +809,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // the same right as settling its money.
             ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
             ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
+            // Financial documents on any object (financial-documents-on-any-object,
+            // REQ-FDO-003/004/009): issue an invoice on a host object, ask for
+            // payment of an invoice, start a quote, credit an invoice, raise a
+            // payout. #[NoAdminRequired], gated INSIDE on each act's action and
+            // on the caller's administration.
+            ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
+            ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
+            ['name' => 'financialDocumentAction#createQuote', 'url' => '/api/financial-documents/quotes', 'verb' => 'POST'],
+            ['name' => 'financialDocumentAction#creditInvoice', 'url' => '/api/financial-documents/invoices/{id}/credit', 'verb' => 'POST'],
+            ['name' => 'financialDocumentAction#raisePayout', 'url' => '/api/financial-documents/payouts', 'verb' => 'POST'],
 
             // Finance's half of a refund another app asked for
             // (receivables-object-request-refund-and-credit, REQ-ORC-002):
@@ -786,6 +827,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // controller on the payment.administer action.
             ['name' => 'objectRequestRefund#approve', 'url' => '/api/payment-requests/{id}/refund/approve', 'verb' => 'POST'],
             ['name' => 'objectRequestRefund#markPaid', 'url' => '/api/payment-requests/{id}/refund/paid', 'verb' => 'POST'],
+            // Finance's half of a payout another app raised
+            // (inbound-payable-from-another-app, REQ-IPY-002, REQ-IPY-003).
+            ['name' => 'inboundPayable#approve', 'url' => '/api/inbound-payables/{id}/approve', 'verb' => 'POST'],
+            ['name' => 'inboundPayable#markPaid', 'url' => '/api/inbound-payables/{id}/paid', 'verb' => 'POST'],
+            ['name' => 'inboundPayable#reject', 'url' => '/api/inbound-payables/{id}/reject', 'verb' => 'POST'],
 
             // Raise the published leges for an object's type in one action
             // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee
@@ -816,6 +862,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // X-Portal-Subject assertion IS the authentication, exactly like the
             // pay receiver above. Static URL, before the SPA catch-all (ADR-016).
             ['name' => 'portalContributionDecline#decline', 'url' => '/api/portal/contributions/decline', 'verb' => 'POST'],
+            ['name' => 'portalSubscriptionCancel#cancel', 'url' => '/api/portal/subscriptions/cancel', 'verb' => 'POST'],
 
             // Reporting & Compliance consolidation (reporting-compliance-consolidation).
             // The HTTP surface behind the unified "Reporting & Compliance" section:
@@ -875,6 +922,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // receivables-sepa-direct-debit (REQ-SDD-011, REQ-SDD-012): propose the
+            // draft batches for a collection date, and download a generated batch's
+            // pain.008 file. Both #[NoAdminRequired], administration checked in the
+            // controller (another administration's batch is masked as 404). The
+            // static /propose URL precedes the {id} route.
+            ['name' => 'directDebitBatch#propose', 'url' => '/api/v1/direct-debit-batches/propose', 'verb' => 'POST'],
+            ['name' => 'directDebitBatch#file', 'url' => '/api/v1/direct-debit-batches/{id}/file', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
 
@@ -924,4 +978,4 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // entry makes that class of mistake fail visibly.
             ['name' => 'apiFallback#notFound', 'url' => '/api/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ]
-        );
+        ));

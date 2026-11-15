@@ -34,6 +34,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Standards\Checks\VatReturnChecks;
 use OCA\Shillinq\Standards\RuleEngine;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -279,10 +280,10 @@ class VatReturnCheckService {
 	 * @return array<string,mixed>|null
 	 */
 	private function row(string $schema, string $id): ?array {
-		$found = $this->objectService
-			->setRegister($this->register())
-			->setSchema($schema)
-			->find($id);
+		$found = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+			id: $id
+		);
 		if ($found === null) {
 			return null;
 		}

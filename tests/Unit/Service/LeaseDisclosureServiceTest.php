@@ -438,4 +438,57 @@ final class LeaseDisclosureServiceTest extends TestCase {
 		self::assertSame(1500.0, $payload['facts']['ifrs-full:InterestExpenseOnLeaseLiabilities']);
 
 	}//end testExportToXbrlSkeletonShape()
+
+	/**
+	 * Every export of a full, a sparse and an empty disclosure.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function exportGrid(): array {
+		$service = $this->buildService([]);
+		$full = [
+			'fiscalPeriod' => '2026 Q1 <draft>',
+			'administrationId' => 'adm-1',
+			'materializedAtPeriodClose' => 1,
+			'closingRouByClass' => ['vehicles' => 1234.5, 'real-estate' => '10', 'it, "equip"' => null],
+			'maturityAnalysis' => ['lt1y' => 100, 'gt5y' => 0],
+			'weightedAverageIbrByClass' => ['vehicles' => 4.25],
+			'totalRouAsset' => '99.9',
+			'totalRouAdditionsInPeriod' => 5,
+			'totalRouDisposalsInPeriod' => null,
+			'totalLeaseLiabilityCurrent' => 12.345,
+			'totalLeaseLiabilityNoncurrent' => '7',
+			'totalInterestExpense' => 1,
+			'totalShortTermLeaseExpense' => 2,
+			'totalVariableLeaseExpense' => 3,
+			'qualitativeNarrative' => "Line one & two\nLine \"three\"",
+		];
+		$sparse = ['fiscalPeriod' => '', 'materializedAtPeriodClose' => '0', 'qualitativeNarrative' => '', 'totalLowValueLeaseExpense' => 4];
+		$out = [];
+		foreach (['full' => $full, 'sparse' => $sparse, 'empty' => []] as $label => $disclosure) {
+			$out[$label] = [
+				'csv' => $service->exportToCSV($disclosure),
+				'html.en' => $service->exportDisclosureNoteToHtml($disclosure),
+				'html.nl' => $service->exportDisclosureNoteToHtml($disclosure, 'nl'),
+				'html.fr' => $service->exportDisclosureNoteToHtml($disclosure, 'fr'),
+				'pdf.nl' => $service->exportDisclosureNoteToPDF($disclosure, 'nl'),
+				'pdf.de' => $service->exportDisclosureNoteToPDF($disclosure, 'de'),
+				'xbrl' => $service->exportToXBRL($disclosure),
+			];
+		}
+
+		return $out;
+
+	}//end exportGrid()
+
+	/**
+	 * Pin every export against the golden fixture.
+	 *
+	 * @return void
+	 */
+	public function testExportsMatchTheGolden(): void {
+		$golden = (string)file_get_contents(__DIR__ . '/fixtures/lease-disclosure-exports-golden.json');
+		self::assertSame($golden, json_encode($this->exportGrid(), (JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION)) . "\n");
+
+	}//end testExportsMatchTheGolden()
 }//end class

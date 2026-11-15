@@ -168,13 +168,6 @@
 					"route": "/inkoop/tenderned/:id",
 					"type": "detail",
 					"title": "TenderNed file"
-				},
-				{
-					"_fragment": "20-tenderned-integratie",
-					"id": "CommitmentDetail",
-					"route": "/inkoop/commitments/:id",
-					"type": "detail",
-					"title": "Commitment"
 				}
 			]
 		},
@@ -969,6 +962,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "bank-and-payments-board",
+					"id": "BankAndPayments",
+					"route": "/bank",
+					"type": "dashboard",
+					"title": "Bank and payments"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "BankImportPage",
@@ -1727,6 +1732,13 @@
 							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
+						},
+						{
+							"id": "Eliminations",
+							"label": "Eliminations",
+							"icon": "SwapHorizontal",
+							"route": "Eliminations",
+							"order": 40
 						}
 					]
 				}
@@ -1773,6 +1785,13 @@
 					"route": "/consolidation/reports/:id",
 					"type": "detail",
 					"title": "Consolidated Balance"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "Eliminations",
+					"route": "/consolidation/eliminations",
+					"type": "index",
+					"title": "Eliminations"
 				}
 			]
 		},
@@ -2244,7 +2263,7 @@
 				},
 				{
 					"_fragment": "bookkeeping-ifrs15-revenue",
-					"id": "ContractDetail",
+					"id": "RevenueContractDetail",
 					"route": "/ifrs-15/contracts/:id",
 					"type": "detail",
 					"title": "Contract"
@@ -4379,6 +4398,58 @@
 		{
 			"menu": [
 				{
+					"id": "Overheid",
+					"children": [
+						{
+							"id": "FeeSchedules",
+							"label": "Fee schedules",
+							"icon": "CashMultiple",
+							"route": "FeeSchedules",
+							"order": 70
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "fee-schedules",
+					"id": "FeeSchedules",
+					"route": "/overheid/fee-schedules",
+					"type": "index",
+					"title": "Fee schedules"
+				},
+				{
+					"_fragment": "fee-schedules",
+					"id": "FeeScheduleDetail",
+					"route": "/overheid/fee-schedules/:id",
+					"type": "detail",
+					"title": "Fee schedule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InboundPayables",
+					"label": "Payouts to pay",
+					"icon": "CashFast",
+					"route": "InboundPayables",
+					"order": 26
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inbound-payable-from-another-app",
+					"id": "InboundPayables",
+					"route": "/banking/payouts-to-pay",
+					"type": "index",
+					"title": "Payouts to pay"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Inventory",
 					"label": "Inventory",
 					"icon": "Warehouse",
@@ -4698,6 +4769,174 @@
 		{
 			"menu": [
 				{
+					"id": "ReportingCompliance",
+					"label": "Reporting & Compliance",
+					"icon": "ChartBoxOutline",
+					"order": 70,
+					"children": [
+						{
+							"id": "RetentionDueRecords",
+							"label": "Due for destruction",
+							"icon": "CalendarRemoveOutline",
+							"route": "RetentionDueRecords",
+							"order": 25
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-retention-due-records",
+					"id": "RetentionDueRecords",
+					"route": "/reporting/retention-due",
+					"type": "logs",
+					"title": "Due for destruction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "NavSalesCaption",
+					"label": "Sales",
+					"type": "caption",
+					"order": 11
+				},
+				{
+					"id": "NavSalesInvoices",
+					"label": "Sales invoices",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsReceivable",
+					"order": 11
+				},
+				{
+					"id": "NavCustomers",
+					"label": "Customers",
+					"icon": "AccountStarOutline",
+					"route": "Customers",
+					"order": 11
+				},
+				{
+					"id": "NavOrders",
+					"label": "Orders",
+					"icon": "ClipboardListOutline",
+					"route": "Orders",
+					"order": 11
+				},
+				{
+					"id": "NavReceivables",
+					"label": "Receivables management",
+					"icon": "CalendarClockOutline",
+					"route": "ARAging",
+					"order": 11
+				},
+				{
+					"id": "NavPurchasingCaption",
+					"label": "Purchasing",
+					"type": "caption",
+					"order": 12
+				},
+				{
+					"id": "NavPurchaseInvoices",
+					"label": "Purchase invoices",
+					"icon": "ReceiptTextOutline",
+					"route": "SupplierInvoices",
+					"order": 12
+				},
+				{
+					"id": "NavPurchaseOrders",
+					"label": "Purchase Orders",
+					"icon": "ClipboardListOutline",
+					"route": "PurchaseOrders",
+					"order": 12
+				},
+				{
+					"id": "NavSuppliers",
+					"label": "Payees",
+					"icon": "TruckOutline",
+					"route": "Payees",
+					"order": 12
+				},
+				{
+					"id": "NavExpenseClaims",
+					"label": "Claims",
+					"icon": "ReceiptOutline",
+					"route": "ExpenseClaims",
+					"order": 12
+				},
+				{
+					"id": "NavBankCaption",
+					"label": "Bank",
+					"type": "caption",
+					"order": 13
+				},
+				{
+					"id": "NavBankAndPayments",
+					"label": "Bank and payments",
+					"icon": "BankOutline",
+					"route": "BankAndPayments",
+					"order": 13
+				},
+				{
+					"id": "NavLiquidity",
+					"label": "Liquidity",
+					"icon": "ChartLine",
+					"route": "CashflowDashboard",
+					"order": 13
+				},
+				{
+					"id": "NavAccountingCaption",
+					"label": "Accounting",
+					"type": "caption",
+					"order": 14
+				},
+				{
+					"id": "NavLedger",
+					"label": "General Ledger",
+					"icon": "BookOutline",
+					"route": "ChartOfAccounts",
+					"order": 14
+				},
+				{
+					"id": "NavPeriodClose",
+					"label": "Closing the books",
+					"icon": "CalendarLock",
+					"route": "PeriodClose",
+					"order": 14
+				},
+				{
+					"id": "NavTaxes",
+					"label": "Taxes",
+					"icon": "PercentOutline",
+					"route": "TaxesOverview",
+					"order": 14
+				},
+				{
+					"id": "NavReports",
+					"label": "Reports",
+					"icon": "ChartBoxOutline",
+					"route": "Reports",
+					"order": 14
+				},
+				{
+					"id": "NavBudget",
+					"label": "Budgeting",
+					"icon": "CalendarRange",
+					"route": "AnnualBudgets",
+					"order": 14
+				},
+				{
+					"id": "NavAllModulesCaption",
+					"label": "All modules",
+					"type": "caption",
+					"order": 15
+				}
+			],
+			"pages": []
+		},
+		{
+			"menu": [
+				{
 					"id": "Bookkeeping",
 					"route": "BookkeepingOverview"
 				},
@@ -4854,6 +5093,26 @@
 					"route": "/overheid/meerjarenbudgetten/:id",
 					"type": "detail",
 					"title": "Multi-year budget line"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Integrations",
+					"label": "Integrations",
+					"icon": "StoreOutline",
+					"route": "IntegrationCatalogue",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-integration-catalogue",
+					"id": "IntegrationCatalogue",
+					"route": "/integrations",
+					"type": "index",
+					"title": "Integrations"
 				}
 			]
 		},
@@ -5029,6 +5288,80 @@
 					"route": "/bookkeeping/payment-plans/:id",
 					"type": "detail",
 					"title": "Payment plan"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "SepaMandates",
+							"label": "Direct debit mandates",
+							"icon": "FileDocumentEditOutline",
+							"route": "SepaMandates",
+							"order": 42
+						},
+						{
+							"id": "DirectDebitBatches",
+							"label": "Direct debit batches",
+							"icon": "BankTransferIn",
+							"route": "DirectDebitBatches",
+							"order": 42
+						},
+						{
+							"id": "DirectDebitCollections",
+							"label": "Direct debit collections",
+							"icon": "FormatListBulleted",
+							"route": "DirectDebitCollections",
+							"order": 42
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "SepaMandates",
+					"route": "/bookkeeping/sepa-mandates",
+					"type": "index",
+					"title": "Direct debit mandates"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "SepaMandateDetail",
+					"route": "/bookkeeping/sepa-mandates/:id",
+					"type": "detail",
+					"title": "Direct debit mandate"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitBatches",
+					"route": "/bookkeeping/direct-debit-batches",
+					"type": "index",
+					"title": "Direct debit batches"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitBatchDetail",
+					"route": "/bookkeeping/direct-debit-batches/:id",
+					"type": "detail",
+					"title": "Direct debit batch"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitCollections",
+					"route": "/bookkeeping/direct-debit-collections",
+					"type": "index",
+					"title": "Direct debit collections"
+				},
+				{
+					"_fragment": "receivables-sepa-direct-debit",
+					"id": "DirectDebitCollectionDetail",
+					"route": "/bookkeeping/direct-debit-collections/:id",
+					"type": "detail",
+					"title": "Direct debit collection"
 				}
 			]
 		},
@@ -5230,6 +5563,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "sales-cancellation",
+					"id": "CancellationReasons",
+					"route": "/reports/cancellation-reasons",
+					"type": "dashboard",
+					"title": "Cancellation reasons"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "MeterReadings",
@@ -5299,6 +5644,73 @@
 					"route": "/reporting-compliance/spend-analytics",
 					"type": "dashboard",
 					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "InvestmentDeductions",
+					"label": "Investment deductions",
+					"icon": "CashRefund",
+					"route": "InvestmentDeductions",
+					"order": 75
+				},
+				{
+					"id": "InvestmentAssets",
+					"label": "Investment assets",
+					"icon": "SolarPower",
+					"route": "InvestmentAssets",
+					"order": 76
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentDeductions",
+					"route": "/tax/investment-deductions",
+					"type": "index",
+					"title": "Investment deductions"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentDeductionDetail",
+					"route": "/tax/investment-deductions/:id",
+					"type": "detail",
+					"title": "Investment deduction"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentAssets",
+					"route": "/tax/investment-assets",
+					"type": "index",
+					"title": "Investment assets"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "InvestmentAssetDetail",
+					"route": "/tax/investment-assets/:id",
+					"type": "detail",
+					"title": "Investment asset"
+				},
+				{
+					"_fragment": "tax-investment-deduction-claims",
+					"id": "FixedAssetDetail",
+					"route": "/fixed-assets/:id",
+					"type": "detail",
+					"title": "Fixed Asset"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-vat-position-and-suppletie",
+					"id": "BtwCorrectieDetail",
+					"route": "/belastingen/btw-correcties/:id",
+					"type": "detail",
+					"title": "BTW-correctie"
 				}
 			]
 		},

@@ -107,4 +107,33 @@ final class SmsPhoneNumberNormalizerTest extends TestCase {
 
 	}//end testStripSeparators()
 
+	/**
+	 * A number too short to keep both ends shows only its last digit.
+	 *
+	 * @return void
+	 */
+	public function testAShortNumberShowsOnlyItsLastDigit(): void {
+		self::assertSame('*2', $this->normalizer->mask('12'));
+		self::assertSame('****8', $this->normalizer->mask('+3178'));
+		self::assertSame('7', $this->normalizer->mask('7'));
+
+	}//end testAShortNumberShowsOnlyItsLastDigit()
+
+	/**
+	 * A domestic number is only converted for the Dutch default country, and a
+	 * number too short to keep both ends shows only its last digit.
+	 *
+	 * @return void
+	 */
+	public function testDomesticNumbersOutsideNlAndShortNumbers(): void {
+		self::assertNull($this->normalizer->toE164('0612345678', 'BE'));
+		self::assertSame('+32470123456', $this->normalizer->toE164('+32470123456', 'BE'));
+
+		self::assertSame('*2', $this->normalizer->mask('12'));
+		self::assertSame('*23', $this->normalizer->mask('123'));
+		self::assertSame('****5', $this->normalizer->mask('+3105'));
+		self::assertSame('+31******78', $this->normalizer->mask('+3112345678'));
+
+	}//end testDomesticNumbersOutsideNlAndShortNumbers()
+
 }//end class

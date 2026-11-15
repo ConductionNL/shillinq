@@ -41,19 +41,43 @@ export function guidanceRows(lines, accounts) {
 	}
 	return (lines ?? []).map((line, index) => {
 		const number = String(line?.accountNumber ?? '')
-		const account = byNumber.get(number) ?? {}
 		return {
 			key: String(line?.id ?? index),
 			accountNumber: number,
-			accountName: String(account.name ?? ''),
-			guidance: String(account.description ?? '').trim(),
-			controlAccountFor: String(account.controlAccountFor ?? ''),
-			side: String(line?.side ?? ''),
-			amount: Number(line?.amount ?? 0),
-			costCenterCode: String(line?.costCenterCode ?? ''),
-			projectCode: String(line?.projectCode ?? ''),
+			...accountFields(byNumber.get(number)),
+			...lineFields(line),
 		}
 	})
+}
+
+/**
+ * The name, guidance and control role of a line's account.
+ *
+ * @param {object|null|undefined} account The account, when known.
+ * @return {object} accountName, guidance and controlAccountFor.
+ */
+function accountFields(account) {
+	const known = account ?? {}
+	return {
+		accountName: String(known.name ?? ''),
+		guidance: String(known.description ?? '').trim(),
+		controlAccountFor: String(known.controlAccountFor ?? ''),
+	}
+}
+
+/**
+ * The side, amount and dimensions of a line.
+ *
+ * @param {object|null|undefined} line The line.
+ * @return {object} side, amount, costCenterCode and projectCode.
+ */
+function lineFields(line) {
+	return {
+		side: String(line?.side ?? ''),
+		amount: Number(line?.amount ?? 0),
+		costCenterCode: String(line?.costCenterCode ?? ''),
+		projectCode: String(line?.projectCode ?? ''),
+	}
 }
 
 /**
@@ -67,7 +91,7 @@ export function guidanceRows(lines, accounts) {
 export function objectsUrl(schema, filters = {}) {
 	const query = new URLSearchParams()
 	for (const [key, value] of Object.entries(filters)) {
-		if (value !== undefined && value !== null && value !== '') {
+		if (isFilterValue(value)) {
 			query.set(key, String(value))
 		}
 	}
@@ -77,6 +101,16 @@ export function objectsUrl(schema, filters = {}) {
 		+ '?'
 		+ query.toString()
 	)
+}
+
+/**
+ * Whether a filter value narrows the list: anything but undefined, null and ''.
+ *
+ * @param {unknown} value The filter value.
+ * @return {boolean}
+ */
+function isFilterValue(value) {
+	return value !== undefined && value !== null && value !== ''
 }
 
 /**
@@ -93,28 +127,53 @@ export async function loadGuidanceRows(schema, objectId) {
 	const { data: object } = await axios.get(
 		generateUrl(`/apps/openregister/api/objects/${REGISTER}/${schema}/${id}`),
 	)
-	let lines = Array.isArray(object?.lines) ? object.lines : []
-	if (schema === 'GLTransaction') {
-		const { data } = await axios.get(
-			objectsUrl('GLLine', { transactionId: String(objectId) }),
-		)
-		lines = resultsOf(data).sort(
-			(a, b) => Number(a?.lineNumber ?? 0) - Number(b?.lineNumber ?? 0),
-		)
-	}
+	const lines = schema === 'GLTransaction'
+		? await transactionLines(objectId)
+		: ownLines(object)
+	const accounts = await lineAccounts(lines, object?.administrationId)
+	return guidanceRows(lines, accounts)
+}
+
+/**
+ * The lines a journal entry carries itself.
+ *
+ * @param {object|null} object The journal entry.
+ * @return {Array<object>} The lines.
+ */
+function ownLines(object) {
+	return Array.isArray(object?.lines) ? object.lines : []
+}
+
+/**
+ * A ledger transaction's GL lines in line order.
+ *
+ * @param {string} objectId The transaction's id.
+ * @return {Promise<Array<object>>} The lines.
+ */
+async function transactionLines(objectId) {
+	const { data } = await axios.get(
+		objectsUrl('GLLine', { transactionId: String(objectId) }),
+	)
+	return resultsOf(data).sort(
+		(a, b) => Number(a?.lineNumber ?? 0) - Number(b?.lineNumber ?? 0),
+	)
+}
+
+/**
+ * The first account of the administration for each distinct account number on the lines.
+ *
+ * @param {Array<object>} lines The lines.
+ * @param {string} administrationId The administration.
+ * @return {Promise<Array<object>>} The accounts.
+ */
+async function lineAccounts(lines, administrationId) {
 	const numbers = [
 		...new Set(lines.map((line) => String(line?.accountNumber ?? ''))),
 	].filter((number) => number !== '')
 	const responses = await Promise.all(
 		numbers.map((accountNumber) =>
-			axios.get(
-				objectsUrl('Account', {
-					administrationId: object?.administrationId,
-					accountNumber,
-				}),
-			),
+			axios.get(objectsUrl('Account', { administrationId, accountNumber })),
 		),
 	)
-	const accounts = responses.flatMap(({ data }) => resultsOf(data).slice(0, 1))
-	return guidanceRows(lines, accounts)
+	return responses.flatMap(({ data }) => resultsOf(data).slice(0, 1))
 }

@@ -104,6 +104,25 @@
             "example": "Main operational EUR account; used for SEPA payment runs.",
             "title": "Notes"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CurrencyBalance": {
@@ -193,6 +212,25 @@
             "example": "Bank statement 2026-05-21 / sync from Wise USD account.",
             "title": "Notes"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },
@@ -201,7 +239,8 @@
         "@self": {
           "register": "shillinq",
           "schema": "BankAccount",
-          "slug": "bank-eur-op"
+          "slug": "bank-eur-op",
+          "id": "ebdedbbd-49a6-5e25-b31d-20b6d7118f51"
         },
         "accountName": "EUR-operationeel",
         "iban": "NL23ABNA0123456789",
@@ -216,7 +255,8 @@
         "@self": {
           "register": "shillinq",
           "schema": "BankAccount",
-          "slug": "bank-usd-exp"
+          "slug": "bank-usd-exp",
+          "id": "2d59595f-97a8-5e43-9b27-af619cbdf4bf"
         },
         "accountName": "USD-export",
         "iban": "NL45RABO9876543210",
@@ -231,7 +271,8 @@
         "@self": {
           "register": "shillinq",
           "schema": "BankAccount",
-          "slug": "bank-gbp-trd"
+          "slug": "bank-gbp-trd",
+          "id": "a576b1c7-e31c-53fd-a575-7611291bd5c2"
         },
         "accountName": "GBP-trade",
         "iban": "NL67BUNQ1234567890",
@@ -249,7 +290,7 @@
           "slug": "bal-eur-2026-05-21"
         },
         "balanceId": "bal-eur-2026-05-21",
-        "accountId": "bank-eur-op",
+        "accountId": "ebdedbbd-49a6-5e25-b31d-20b6d7118f51",
         "currency": "EUR",
         "balance": 45230.5,
         "previousBalance": 42150.0,
@@ -263,7 +304,7 @@
           "slug": "bal-usd-2026-05-21"
         },
         "balanceId": "bal-usd-2026-05-21",
-        "accountId": "bank-usd-exp",
+        "accountId": "2d59595f-97a8-5e43-9b27-af619cbdf4bf",
         "currency": "USD",
         "balance": 18750.0,
         "previousBalance": 20000.0,
@@ -277,7 +318,7 @@
           "slug": "bal-gbp-2026-05-21"
         },
         "balanceId": "bal-gbp-2026-05-21",
-        "accountId": "bank-gbp-trd",
+        "accountId": "a576b1c7-e31c-53fd-a575-7611291bd5c2",
         "currency": "GBP",
         "balance": 12340.75,
         "previousBalance": 11500.0,

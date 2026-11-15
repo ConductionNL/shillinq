@@ -3,6 +3,9 @@
 /**
  * Shillinq RematerialiseConvertedCalculations Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * `revive-declarative-calc-layer` converted 32 `x-openregister-calculations`
  * blocks from dead infix-string expressions to the JSON-AST dialect
  * `CalculationEvaluator` actually runs, and added `materialise: true` so
@@ -49,24 +52,24 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
+use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that re-saves every existing object on the 17 schemas whose
@@ -108,18 +111,34 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	];
 
 	/**
+	 * App config key holding the shillinq version this step last completed on without a failure.
+	 */
+	public const DONE_VERSION_KEY = 'rematerialise_converted_calculations_done_version';
+
+	/**
+	 * Saves and listings that failed during the current run.
+	 *
+	 * @var int
+	 */
+	private int $failures = 0;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param IAppConfig $appConfig App config holding the done-marker.
+	 * @param IAppManager $appManager App manager (installed shillinq version).
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocationInterface $registerLocation,
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly IAppConfig $appConfig,
+		private readonly IAppManager $appManager,
 	) {
 	}//end __construct()
 
@@ -147,8 +166,15 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 * @spec openspec/changes/revive-declarative-calc-layer/tasks.md#4-verification
 	 */
 	public function run(IOutput $output): void {
+		// One full pass per installed version: a repair without an upgrade has nothing new to materialise.
+		$version = $this->appManager->getAppVersion(AppIdentity::APP_ID);
+		if ($this->appConfig->getValueString(AppIdentity::APP_ID, self::DONE_VERSION_KEY, '') === $version) {
+			$output->info('Shillinq: calc rematerialisation already complete for ' . $version . ', skipped.');
+			return;
+		}
+
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
 			// Re-saving an object that carries a folder association goes through
 			// the Files layer, which checks the ACTING USER's folder access — a
@@ -174,6 +200,10 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 				'Shillinq: calc rematerialisation complete — ' . $totalResaved . ' object(s) re-saved across '
 				. count(self::SCHEMAS) . ' schema(s).'
 			);
+
+			if ($this->failures === 0) {
+				$this->appConfig->setValueString(AppIdentity::APP_ID, self::DONE_VERSION_KEY, $version);
+			}
 		} catch (\Throwable $e) {
 			// Backfill is best-effort: failing it must NOT block the app
 			// upgrade. Log + warn so an operator can re-run.
@@ -182,6 +212,8 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 				'Shillinq: RematerialiseConvertedCalculations failed',
 				['exception' => $e->getMessage()]
 			);
+		} finally {
+			$this->failures = 0;
 		}//end try
 
 	}//end run()
@@ -236,6 +268,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 		try {
 			$objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
 		} catch (\Throwable $e) {
+			$this->failures++;
 			$output->warning('Shillinq: could not list ' . $schema . ' objects for rematerialisation: ' . $e->getMessage());
 			$this->logger->warning(
 				'Shillinq: RematerialiseConvertedCalculations findAll failed',
@@ -268,6 +301,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 				);
 				$resaved++;
 			} catch (\Throwable $e) {
+				$this->failures++;
 				$id = (string)($arr['id'] ?? ($arr['uuid'] ?? 'unknown'));
 				$output->warning('Shillinq: failed to rematerialise ' . $schema . ' ' . $id . ': ' . $e->getMessage());
 				$this->logger->warning(

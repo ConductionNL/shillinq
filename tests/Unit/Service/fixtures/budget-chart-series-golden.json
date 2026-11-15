@@ -1,0 +1,948 @@
+{
+    "months": [
+        "2026-12",
+        "2027-01",
+        "2027-02",
+        "2027-03",
+        "2027-04",
+        "2027-05",
+        "2027-06",
+        "2027-07",
+        "2027-08",
+        "2027-09",
+        "2027-10",
+        "2027-11",
+        "2027-12",
+        "2028-01",
+        "2028-02",
+        "2028-03",
+        "2028-04",
+        "2028-05",
+        "2028-06",
+        "2028-07",
+        "2028-08"
+    ],
+    "accounts": [
+        {
+            "accountNumber": "1000",
+            "accountType": "revenue",
+            "trend": {
+                "2026-12": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-01": {
+                    "kind": "actual",
+                    "amount": -100000
+                },
+                "2027-02": {
+                    "kind": "actual",
+                    "amount": -110000
+                },
+                "2027-03": {
+                    "kind": "actual",
+                    "amount": -121000
+                },
+                "2027-04": {
+                    "kind": "actual",
+                    "amount": -133100
+                },
+                "2027-05": {
+                    "kind": "actual",
+                    "amount": -146410
+                },
+                "2027-06": {
+                    "kind": "actual",
+                    "amount": -161051
+                },
+                "2027-07": {
+                    "kind": "projected",
+                    "amount": -177156,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2027-08": {
+                    "kind": "projected",
+                    "amount": -194872,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2027-09": {
+                    "kind": "projected",
+                    "amount": -214359,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2027-10": {
+                    "kind": "projected",
+                    "amount": -235795,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2027-11": {
+                    "kind": "projected",
+                    "amount": -259374,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2027-12": {
+                    "kind": "projected",
+                    "amount": -285312,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-01": {
+                    "kind": "projected",
+                    "amount": -313843,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-02": {
+                    "kind": "projected",
+                    "amount": -345227,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-03": {
+                    "kind": "projected",
+                    "amount": -379750,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-04": {
+                    "kind": "projected",
+                    "amount": -417725,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-05": {
+                    "kind": "projected",
+                    "amount": -459497,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-06": {
+                    "kind": "projected",
+                    "amount": -505447,
+                    "rate": 0.10000000000000009,
+                    "validSteps": 5
+                },
+                "2028-07": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 5
+                },
+                "2028-08": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 5
+                }
+            },
+            "cumulative": {
+                "2026-12": 0,
+                "2027-01": -100000,
+                "2027-02": -210000,
+                "2027-03": -331000,
+                "2027-04": -464100,
+                "2027-05": -610510,
+                "2027-06": -771561,
+                "2027-07": -948717,
+                "2027-08": -1143589,
+                "2027-09": -1357948,
+                "2027-10": -1593743,
+                "2027-11": -1853117,
+                "2027-12": -2138429,
+                "2028-01": -2452272,
+                "2028-02": -2797499,
+                "2028-03": -3177249,
+                "2028-04": -3594974,
+                "2028-05": -4054471,
+                "2028-06": -4559918,
+                "2028-07": -4559918,
+                "2028-08": -4559918
+            },
+            "budgeted": {
+                "2026-12": 0,
+                "2027-01": 90000,
+                "2027-02": 90000,
+                "2027-03": 90000,
+                "2027-04": 90000,
+                "2027-05": 90000,
+                "2027-06": 90000,
+                "2027-07": 90000,
+                "2027-08": 90000,
+                "2027-09": 90000,
+                "2027-10": 90000,
+                "2027-11": 90000,
+                "2027-12": 90000,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgetedCumulative": {
+                "2026-12": 0,
+                "2027-01": 90000,
+                "2027-02": 180000,
+                "2027-03": 270000,
+                "2027-04": 360000,
+                "2027-05": 450000,
+                "2027-06": 540000,
+                "2027-07": 630000,
+                "2027-08": 720000,
+                "2027-09": 810000,
+                "2027-10": 900000,
+                "2027-11": 990000,
+                "2027-12": 1080000,
+                "2028-01": 1080000,
+                "2028-02": 1080000,
+                "2028-03": 1080000,
+                "2028-04": 1080000,
+                "2028-05": 1080000,
+                "2028-06": 1080000,
+                "2028-07": 1080000,
+                "2028-08": 1080000
+            }
+        },
+        {
+            "accountNumber": "1100",
+            "accountType": "assets",
+            "trend": {
+                "2026-12": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-01": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-02": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-03": {
+                    "kind": "actual",
+                    "amount": 25000
+                },
+                "2027-04": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-05": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-06": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-07": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-08": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-09": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-10": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-11": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-12": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-01": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-02": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-03": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-04": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-05": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-06": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-07": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-08": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                }
+            },
+            "cumulative": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 25000,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgeted": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgetedCumulative": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            }
+        },
+        {
+            "accountNumber": "4000",
+            "accountType": "expenses",
+            "trend": {
+                "2026-12": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-01": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-02": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-03": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-04": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-05": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-06": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-07": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-08": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-09": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-10": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-11": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2027-12": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-01": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-02": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-03": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-04": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-05": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-06": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-07": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                },
+                "2028-08": {
+                    "kind": "unprojectable",
+                    "reason": "no-history",
+                    "validSteps": 0
+                }
+            },
+            "cumulative": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgeted": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgetedCumulative": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            }
+        }
+    ],
+    "ledgerGroups": [
+        {
+            "ledgerGroupKey": "lg-1",
+            "name": "lg-1",
+            "memberAccountNumbers": [
+                "1000"
+            ],
+            "accountTypes": [
+                "revenue"
+            ],
+            "trend": {
+                "2026-12": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-01": {
+                    "kind": "actual",
+                    "amount": -100000,
+                    "partial": false
+                },
+                "2027-02": {
+                    "kind": "actual",
+                    "amount": -110000,
+                    "partial": false
+                },
+                "2027-03": {
+                    "kind": "actual",
+                    "amount": -121000,
+                    "partial": false
+                },
+                "2027-04": {
+                    "kind": "actual",
+                    "amount": -133100,
+                    "partial": false
+                },
+                "2027-05": {
+                    "kind": "actual",
+                    "amount": -146410,
+                    "partial": false
+                },
+                "2027-06": {
+                    "kind": "actual",
+                    "amount": -161051,
+                    "partial": false
+                },
+                "2027-07": {
+                    "kind": "projected",
+                    "amount": -177156,
+                    "partial": false
+                },
+                "2027-08": {
+                    "kind": "projected",
+                    "amount": -194872,
+                    "partial": false
+                },
+                "2027-09": {
+                    "kind": "projected",
+                    "amount": -214359,
+                    "partial": false
+                },
+                "2027-10": {
+                    "kind": "projected",
+                    "amount": -235795,
+                    "partial": false
+                },
+                "2027-11": {
+                    "kind": "projected",
+                    "amount": -259374,
+                    "partial": false
+                },
+                "2027-12": {
+                    "kind": "projected",
+                    "amount": -285312,
+                    "partial": false
+                },
+                "2028-01": {
+                    "kind": "projected",
+                    "amount": -313843,
+                    "partial": false
+                },
+                "2028-02": {
+                    "kind": "projected",
+                    "amount": -345227,
+                    "partial": false
+                },
+                "2028-03": {
+                    "kind": "projected",
+                    "amount": -379750,
+                    "partial": false
+                },
+                "2028-04": {
+                    "kind": "projected",
+                    "amount": -417725,
+                    "partial": false
+                },
+                "2028-05": {
+                    "kind": "projected",
+                    "amount": -459497,
+                    "partial": false
+                },
+                "2028-06": {
+                    "kind": "projected",
+                    "amount": -505447,
+                    "partial": false
+                },
+                "2028-07": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-08": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                }
+            },
+            "cumulative": {
+                "2026-12": 0,
+                "2027-01": -100000,
+                "2027-02": -210000,
+                "2027-03": -331000,
+                "2027-04": -464100,
+                "2027-05": -610510,
+                "2027-06": -771561,
+                "2027-07": -948717,
+                "2027-08": -1143589,
+                "2027-09": -1357948,
+                "2027-10": -1593743,
+                "2027-11": -1853117,
+                "2027-12": -2138429,
+                "2028-01": -2452272,
+                "2028-02": -2797499,
+                "2028-03": -3177249,
+                "2028-04": -3594974,
+                "2028-05": -4054471,
+                "2028-06": -4559918,
+                "2028-07": -4559918,
+                "2028-08": -4559918
+            },
+            "budgeted": {
+                "2026-12": 0,
+                "2027-01": 90000,
+                "2027-02": 90000,
+                "2027-03": 90000,
+                "2027-04": 90000,
+                "2027-05": 90000,
+                "2027-06": 90000,
+                "2027-07": 90000,
+                "2027-08": 90000,
+                "2027-09": 90000,
+                "2027-10": 90000,
+                "2027-11": 90000,
+                "2027-12": 90000,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgetedCumulative": {
+                "2026-12": 0,
+                "2027-01": 90000,
+                "2027-02": 180000,
+                "2027-03": 270000,
+                "2027-04": 360000,
+                "2027-05": 450000,
+                "2027-06": 540000,
+                "2027-07": 630000,
+                "2027-08": 720000,
+                "2027-09": 810000,
+                "2027-10": 900000,
+                "2027-11": 990000,
+                "2027-12": 1080000,
+                "2028-01": 1080000,
+                "2028-02": 1080000,
+                "2028-03": 1080000,
+                "2028-04": 1080000,
+                "2028-05": 1080000,
+                "2028-06": 1080000,
+                "2028-07": 1080000,
+                "2028-08": 1080000
+            }
+        },
+        {
+            "ledgerGroupKey": "kosten",
+            "name": "kosten",
+            "memberAccountNumbers": [
+                "4000",
+                "1100"
+            ],
+            "accountTypes": [
+                "expenses",
+                "assets"
+            ],
+            "trend": {
+                "2026-12": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-01": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-02": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-03": {
+                    "kind": "actual",
+                    "amount": 25000,
+                    "partial": true
+                },
+                "2027-04": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-05": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-06": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-07": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-08": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-09": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-10": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-11": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2027-12": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-01": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-02": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-03": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-04": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-05": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-06": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-07": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                },
+                "2028-08": {
+                    "kind": "unprojectable",
+                    "reason": "insufficient-data",
+                    "validSteps": 0
+                }
+            },
+            "cumulative": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 25000,
+                "2027-04": 25000,
+                "2027-05": 25000,
+                "2027-06": 25000,
+                "2027-07": 25000,
+                "2027-08": 25000,
+                "2027-09": 25000,
+                "2027-10": 25000,
+                "2027-11": 25000,
+                "2027-12": 25000,
+                "2028-01": 25000,
+                "2028-02": 25000,
+                "2028-03": 25000,
+                "2028-04": 25000,
+                "2028-05": 25000,
+                "2028-06": 25000,
+                "2028-07": 25000,
+                "2028-08": 25000
+            },
+            "budgeted": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            },
+            "budgetedCumulative": {
+                "2026-12": 0,
+                "2027-01": 0,
+                "2027-02": 0,
+                "2027-03": 0,
+                "2027-04": 0,
+                "2027-05": 0,
+                "2027-06": 0,
+                "2027-07": 0,
+                "2027-08": 0,
+                "2027-09": 0,
+                "2027-10": 0,
+                "2027-11": 0,
+                "2027-12": 0,
+                "2028-01": 0,
+                "2028-02": 0,
+                "2028-03": 0,
+                "2028-04": 0,
+                "2028-05": 0,
+                "2028-06": 0,
+                "2028-07": 0,
+                "2028-08": 0
+            }
+        }
+    ]
+}

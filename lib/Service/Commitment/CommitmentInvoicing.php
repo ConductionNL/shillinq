@@ -3,6 +3,9 @@
 /**
  * Commitment Invoicing
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Connects supplier invoices to the commitment of the order they were matched
  * to (planning-commitment-year-end, REQ-PCYE-002, REQ-PCYE-003):
  *
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Commitment;
 
 use DomainException;
+use OCA\Shillinq\Kernel\Contracts\CommitmentInvoicingInterface;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 
 /**
@@ -45,7 +46,7 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
-class CommitmentInvoicing {
+class CommitmentInvoicing implements CommitmentInvoicingInterface {
 	/**
 	 * States from which `factureren` moves a commitment to partially invoiced.
 	 *

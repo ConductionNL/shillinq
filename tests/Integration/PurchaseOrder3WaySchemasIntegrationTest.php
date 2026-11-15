@@ -287,6 +287,7 @@ final class PurchaseOrder3WaySchemasIntegrationTest extends TestCase {
 			'within_tolerance',
 			'exception_price',
 			'exception_quantity',
+			'exception_date',
 			'exception_missing_grn',
 			'exception_missing_po',
 			'fraud_alert',

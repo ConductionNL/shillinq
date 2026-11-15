@@ -1,0 +1,54 @@
+{
+    "noNotification": {
+        "result": false,
+        "logs": []
+    },
+    "noProof": {
+        "result": false,
+        "logs": []
+    },
+    "invoiceLineNoSent": {
+        "result": true,
+        "logs": []
+    },
+    "invoiceLineNoDue": {
+        "result": true,
+        "logs": []
+    },
+    "emailNoDue": {
+        "result": false,
+        "logs": []
+    },
+    "exactly14": {
+        "result": true,
+        "logs": []
+    },
+    "thirteen": {
+        "result": false,
+        "logs": []
+    },
+    "recordNoticeDays": {
+        "result": true,
+        "logs": []
+    },
+    "overrideWins": {
+        "result": false,
+        "logs": []
+    },
+    "sentAfterDue": {
+        "result": false,
+        "logs": []
+    },
+    "badDate": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "PreNotificationGuard: batch-inclusion check failed — denying (fail-closed)",
+                [
+                    "exception"
+                ]
+            ]
+        ]
+    }
+}

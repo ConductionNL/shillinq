@@ -3,6 +3,9 @@
 /**
  * Cross-Subsidy Detector (WMO REQ-WMO-007)
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Pure-logic detector for the 6 cross-subsidy risk scenarios plus the Phase 3
  * bevoordeling-risk scenario (REQ-WMO-012). Iterates a commercial activity
  * with its IKP, allocation, ABB and (optional) benchmark records, and returns
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -297,6 +297,23 @@ class CrossSubsidyDetector {
 			return false;
 		}
 
+		$values = $this->positiveAmounts(benchmarks: $benchmarks);
+
+		if ($values === []) {
+			return false;
+		}
+
+		return $appliedRate < ($this->median(values: $values) * $discountThreshold);
+	}//end detectBevoordelingRisk()
+
+	/**
+	 * The positive benchmark amounts.
+	 *
+	 * @param array<int,array<string,mixed>> $benchmarks MarketBenchmark records.
+	 *
+	 * @return list<float>
+	 */
+	private function positiveAmounts(array $benchmarks): array {
 		$values = [];
 		foreach ($benchmarks as $bench) {
 			if (is_array($bench) === false) {
@@ -309,10 +326,17 @@ class CrossSubsidyDetector {
 			}
 		}
 
-		if ($values === []) {
-			return false;
-		}
+		return $values;
+	}//end positiveAmounts()
 
+	/**
+	 * The median of a non-empty list of amounts.
+	 *
+	 * @param list<float> $values The amounts.
+	 *
+	 * @return float
+	 */
+	private function median(array $values): float {
 		sort($values);
 		$count = count($values);
 		if (($count % 2) === 1) {
@@ -321,8 +345,8 @@ class CrossSubsidyDetector {
 			$median = (($values[($count / 2) - 1] + $values[$count / 2]) / 2);
 		}
 
-		return $appliedRate < ($median * $discountThreshold);
-	}//end detectBevoordelingRisk()
+		return $median;
+	}//end median()
 
 	/**
 	 * Compose an AlertLog record (REQ-WMO-007).

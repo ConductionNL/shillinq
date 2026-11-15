@@ -3,6 +3,9 @@
 /**
  * DunningTickRunnerTest
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Task 3.1 of receivables-automatic-dunning: the daily job marks issued
  * invoices past their due date overdue and sends every overdue invoice the
  * stage that is due, for each administration with automatic reminders on, in
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -776,8 +776,8 @@ final class DunningTickRunnerTest extends TestCase {
 			 * @param int|string      $id            The id.
 			 * @param array|null      $_extend       Extends.
 			 * @param bool            $files         Files.
-			 * @param string|int|null $register      Register.
-			 * @param string|int|null $schema        Schema.
+			 * @param mixed           $register      Register.
+			 * @param mixed           $schema        Schema.
 			 * @param bool            $_rbac         Register RBAC.
 			 * @param bool            $_multitenancy Organisation scoping.
 			 * @param bool            $_render       Render.
@@ -789,8 +789,8 @@ final class DunningTickRunnerTest extends TestCase {
 				int|string $id,
 				?array $_extend = [],
 				bool $files = false,
-				string|int|null $register = null,
-				string|int|null $schema = null,
+				mixed $register = null,
+				mixed $schema = null,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 				bool $_render = true,

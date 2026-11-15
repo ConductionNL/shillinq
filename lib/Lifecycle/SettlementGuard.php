@@ -3,6 +3,9 @@
 /**
  * Settlement Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for dual-mode expense settlement
  * (expense-reimbursement-or-passthrough). Implements the cross-schema and
  * submission-time-immutability rules that the declarative OpenRegister DSL
@@ -42,7 +45,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Service\PassThroughMarkupResolver;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -80,7 +84,7 @@ class SettlementGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -156,35 +160,11 @@ class SettlementGuard {
 	 */
 	public function requireSettlementClassification(array $claim): bool {
 		try {
-			$claimMode = $this->normaliseMode(value: ($claim['settlementMode'] ?? null));
-			$claimId = (string)($claim['id'] ?? '');
-			$receipts = $this->loadReceipts(claimId: $claimId);
-
-			foreach ($receipts as $receipt) {
-				$mode = $this->normaliseMode(value: ($receipt['settlementMode'] ?? null));
-
-				// Mixed-mode rejection: a classified line must match the claim mode.
-				if ($mode !== null && $claimMode !== null && $mode !== $claimMode) {
-					$this->logger->info(
-						'SettlementGuard: mixed settlement mode — denying submit',
-						['claimId' => $claimId, 'claimMode' => $claimMode, 'receiptMode' => $mode]
-					);
+			foreach ($this->loadReceipts(claimId: (string)($claim['id'] ?? '')) as $receipt) {
+				if ($this->receiptClassified(claim: $claim, receipt: $receipt) === false) {
 					return false;
 				}
-
-				// Pass-through completeness: customer + AR account required.
-				if ($mode === 'pass-through') {
-					$customer = trim(string: (string)($receipt['linkedCustomerId'] ?? ''));
-					$account = trim(string: (string)($receipt['passthroughDebitAccountCode'] ?? ''));
-					if ($customer === '' || $account === '') {
-						$this->logger->info(
-							'SettlementGuard: pass-through receipt missing customer or AR account — denying submit',
-							['claimId' => $claimId, 'receiptId' => ($receipt['id'] ?? 'unknown')]
-						);
-						return false;
-					}
-				}
-			}//end foreach
+			}
 
 			return true;
 		} catch (\Throwable $e) {
@@ -196,6 +176,54 @@ class SettlementGuard {
 		}//end try
 
 	}//end requireSettlementClassification()
+
+	/**
+	 * Whether a receipt's mode agrees with the claim and a pass-through receipt is complete.
+	 *
+	 * @param array<string, mixed> $claim The ExpenseClaimEntry.
+	 * @param mixed $receipt The child Receipt.
+	 *
+	 * @return bool False, with the reason logged, for a mixed mode or an incomplete pass-through.
+	 */
+	private function receiptClassified(array $claim, mixed $receipt): bool {
+		$claimMode = $this->normaliseMode(value: ($claim['settlementMode'] ?? null));
+		$mode = $this->normaliseMode(value: ($receipt['settlementMode'] ?? null));
+
+		// Mixed-mode rejection: a classified line must match the claim mode.
+		if ($mode !== null && $claimMode !== null && $mode !== $claimMode) {
+			$this->logger->info(
+				'SettlementGuard: mixed settlement mode — denying submit',
+				['claimId' => (string)($claim['id'] ?? ''), 'claimMode' => $claimMode, 'receiptMode' => $mode]
+			);
+			return false;
+		}
+
+		return $mode !== 'pass-through' || $this->passThroughComplete(claim: $claim, receipt: $receipt);
+
+	}//end receiptClassified()
+
+	/**
+	 * Pass-through completeness: a customer and an AR account are required.
+	 *
+	 * @param array<string, mixed> $claim The ExpenseClaimEntry.
+	 * @param mixed $receipt The pass-through Receipt.
+	 *
+	 * @return bool False, with the receipt logged, when either is missing.
+	 */
+	private function passThroughComplete(array $claim, mixed $receipt): bool {
+		$customer = trim(string: (string)($receipt['linkedCustomerId'] ?? ''));
+		$account = trim(string: (string)($receipt['passthroughDebitAccountCode'] ?? ''));
+		if ($customer !== '' && $account !== '') {
+			return true;
+		}
+
+		$this->logger->info(
+			'SettlementGuard: pass-through receipt missing customer or AR account — denying submit',
+			['claimId' => (string)($claim['id'] ?? ''), 'receiptId' => ($receipt['id'] ?? 'unknown')]
+		);
+		return false;
+
+	}//end passThroughComplete()
 
 	/**
 	 * Authorisation for a post-submission settlement-mode change (REQ-ERP-011).
@@ -271,14 +299,8 @@ class SettlementGuard {
 			return null;
 		}
 
-		$amount = (float)($receipt['amountInBaseCurrency'] ?? 0.0);
-		$value = (float)($rule['markupValue'] ?? 0.0);
-
-		if (($rule['markupType'] ?? '') === 'fixedAmount') {
-			return round(num: $value, precision: 2);
-		}
-
-		return round(num: ($amount * $value), precision: 2);
+		// One rule with the submit-time lock (sales-time-and-expense-billing D3).
+		return (new PassThroughMarkupResolver())->markup(rule: $rule, cost: (float)($receipt['amountInBaseCurrency'] ?? 0.0));
 	}//end computeMarkupAmount()
 
 	/**
@@ -307,102 +329,46 @@ class SettlementGuard {
 			return null;
 		}
 
-		try {
-			$filters = ['administrationId' => $administrationId];
-			if ($fiscalYear > 0) {
-				$filters['effectiveFromYear'] = ['lte' => $fiscalYear];
-			}
+		$rules = $this->findMarkupRules(
+			objectService: $objectService,
+			customerId: $customerId,
+			administrationId: $administrationId,
+			fiscalYear: $fiscalYear
+		);
 
-			$rules = $objectService
+		if (is_array(value: $rules) === false || count($rules) === 0) {
+			return null;
+		}
+
+		return (new PassThroughMarkupResolver())->select(rules: $rules, customerId: $customerId, category: $category);
+	}//end matchMarkupRule()
+
+	/**
+	 * Read the administration's markup rules for the fiscal year; a failed lookup is logged and yields null.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $customerId The linked customer id (for the log).
+	 * @param string $administrationId The administration id.
+	 * @param int $fiscalYear The claim/receipt fiscal year.
+	 *
+	 * @return mixed The rules, or null when the lookup failed.
+	 *
+	 * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+	 */
+	private function findMarkupRules(object $objectService, string $customerId, string $administrationId, int $fiscalYear): mixed {
+		try {
+			return $objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'PassThroughMarkupRule')
-				->findAll(['filters' => $filters]);
+				->findAll(['filters' => PassThroughMarkupResolver::filters(administrationId: $administrationId, fiscalYear: $fiscalYear)]);
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'SettlementGuard: markup-rule lookup failed',
 				['customerId' => $customerId, 'exception' => $e->getMessage()]
 			);
 			return null;
-		}//end try
-
-		if (is_array(value: $rules) === false || count($rules) === 0) {
-			return null;
 		}
-
-		return $this->selectByPriority(rules: $rules, customerId: $customerId, category: $category);
-	}//end matchMarkupRule()
-
-	/**
-	 * Score a single rule against a target by specificity (REQ-ERP-005).
-	 *
-	 * Returns the priority tier (lower = more specific) or null when the rule
-	 * does not apply to the target:
-	 *   0 = customer + category, 1 = customer only, 2 = category-global,
-	 *   3 = global default.
-	 *
-	 * @param array<string, mixed> $rule The candidate rule.
-	 * @param string $customerId The target customer id.
-	 * @param string $category The target category.
-	 *
-	 * @return int|null The tier, or null when the rule does not match.
-	 */
-	private function ruleTier(array $rule, string $customerId, string $category): ?int {
-		$ruleCustomer = (string)($rule['targetCustomerId'] ?? '');
-		$ruleCategory = (string)($rule['targetCategory'] ?? '');
-		$customerMatches = ($ruleCustomer !== '' && $ruleCustomer === $customerId);
-		$categoryMatches = ($ruleCategory !== '' && $ruleCategory === $category);
-
-		// A rule scoped to a different customer never applies.
-		if ($ruleCustomer !== '' && $customerMatches === false) {
-			return null;
-		}
-
-		// A rule scoped to a different category never applies.
-		if ($ruleCategory !== '' && $categoryMatches === false) {
-			return null;
-		}
-
-		// Both narrowed to the target (or wildcard) — score by specificity:
-		// customer-wildcard adds 2, category-wildcard adds 1 (lower = more specific).
-		$tier = 0;
-		if ($customerMatches === false) {
-			$tier += 2;
-		}
-
-		if ($categoryMatches === false) {
-			$tier += 1;
-		}
-
-		return $tier;
-	}//end ruleTier()
-
-	/**
-	 * Pick the most specific applicable rule from a candidate list (REQ-ERP-005).
-	 *
-	 * @param array<int, array<string, mixed>> $rules Candidate rules.
-	 * @param string $customerId The target customer id.
-	 * @param string $category The target category.
-	 *
-	 * @return array<string, mixed>|null The best-matching rule, or null.
-	 */
-	private function selectByPriority(array $rules, string $customerId, string $category): ?array {
-		$best = null;
-		$bestTier = null;
-
-		foreach ($rules as $rule) {
-			$tier = $this->ruleTier(rule: $rule, customerId: $customerId, category: $category);
-			if ($tier === null) {
-				continue;
-			}
-
-			if ($bestTier === null || $tier < $bestTier) {
-				$best = $rule;
-				$bestTier = $tier;
-			}
-		}
-
-		return $best;
-	}//end selectByPriority()
+	}//end findMarkupRules()
 
 	/**
 	 * Aggregate dual-path totals over a claim's child receipts (REQ-ERP-003).
@@ -431,18 +397,10 @@ class SettlementGuard {
 			if ($mode === 'reimbursable') {
 				$totalReimbursable += $amount;
 			} elseif ($mode === 'pass-through') {
-				$markup = $this->computeMarkupAmount(receipt: $receipt);
-				if ($markup === null) {
-					$markup = (float)($receipt['markupAmountCalculated'] ?? 0.0);
-				}
+				$totalPassThrough += ($amount + $this->receiptMarkup(receipt: $receipt));
 
-				$totalPassThrough += ($amount + $markup);
-
-				$customer = (string)($receipt['linkedCustomerId'] ?? '');
-				if ($customer !== '' && in_array(needle: $customer, haystack: $customers, strict: true) === false) {
-					$customers[] = $customer;
-				}
-			}//end if
+				$customers = $this->withLinkedCustomer(customers: $customers, receipt: $receipt);
+			}
 		}//end foreach
 
 		return [
@@ -452,6 +410,43 @@ class SettlementGuard {
 		];
 
 	}//end aggregateClaimTotals()
+
+	/**
+	 * A pass-through receipt's markup: computed from its rule, else the stored calculation.
+	 *
+	 * @param array<string, mixed> $receipt The receipt.
+	 *
+	 * @return float The markup amount.
+	 *
+	 * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+	 */
+	private function receiptMarkup(array $receipt): float {
+		$markup = $this->computeMarkupAmount(receipt: $receipt);
+		if ($markup === null) {
+			$markup = (float)($receipt['markupAmountCalculated'] ?? 0.0);
+		}
+
+		return $markup;
+	}//end receiptMarkup()
+
+	/**
+	 * Add the receipt's linked customer to the unique customer list.
+	 *
+	 * @param array<int, string> $customers The customers so far.
+	 * @param array<string, mixed> $receipt The receipt.
+	 *
+	 * @return array<int, string> The customers.
+	 *
+	 * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+	 */
+	private function withLinkedCustomer(array $customers, array $receipt): array {
+		$customer = (string)($receipt['linkedCustomerId'] ?? '');
+		if ($customer !== '' && in_array(needle: $customer, haystack: $customers, strict: true) === false) {
+			$customers[] = $customer;
+		}
+
+		return $customers;
+	}//end withLinkedCustomer()
 
 	/**
 	 * Build the reimbursement notification payload on post (REQ-ERP-008).

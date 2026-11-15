@@ -9,6 +9,21 @@
   "components": {
     "schemas": {
       "TimeIntakeBatch": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ]
+        },
         "slug": "TimeIntakeBatch",
         "icon": "TrayArrowDown",
         "version": "0.1.0",

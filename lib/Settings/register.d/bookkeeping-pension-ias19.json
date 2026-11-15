@@ -281,6 +281,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Pension Plan is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ActuarialValuation": {
@@ -615,6 +634,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Actuarial Valuation is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PensionMovement": {
@@ -905,6 +943,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Pension Movement is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PensionAssumptionSensitivity": {
@@ -994,6 +1051,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Pension Assumption Sensitivity is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PensionAssetDetail": {
@@ -1067,6 +1143,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Pension Asset Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PensionDisclosureTabel": {
@@ -1180,6 +1275,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Pension Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },

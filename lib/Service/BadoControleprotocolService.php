@@ -3,6 +3,9 @@
 /**
  * BADO Controleprotocol Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol
  * computation + lifecycle guards (REQ-001, REQ-004, REQ-006, REQ-007, REQ-008).
  * Materialises the per-topic finding aggregation and the mechanically-derived
@@ -32,20 +35,18 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BadoControleprotocolServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes BADO finding aggregation + opinion and guards the protocol/finding
@@ -64,7 +65,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * aggregation/opinion derivation for the 7 BADO schemas; each guard is small
  * and the cohesion is by design.
  */
-class BadoControleprotocolService {
+class BadoControleprotocolService implements BadoControleprotocolServiceInterface {
 	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
@@ -434,19 +435,7 @@ class BadoControleprotocolService {
 	 * @return array<int,array<string,mixed>> Findings with a recomputed severity.
 	 */
 	private function classifiedFindings(string $protocolId, array $toleranceByTopic, float $materialityAmount): array {
-		$samples = $this->objects()
-			->setRegister($this->register())
-			->setSchema('AuditSample')
-			->findAll(['filters' => ['protocol' => $protocolId]]);
-
-		$sampleIds = [];
-		foreach ($samples as $sample) {
-			$id = (string)($sample['id'] ?? ($sample['@self']['id'] ?? ''));
-			if ($id !== '') {
-				$sampleIds[$id] = true;
-			}
-		}
-
+		$sampleIds = $this->protocolSampleIds(protocolId: $protocolId);
 		if (empty($sampleIds) === true) {
 			return [];
 		}
@@ -477,6 +466,31 @@ class BadoControleprotocolService {
 
 		return $classified;
 	}//end classifiedFindings()
+
+	/**
+	 * The ids of the protocol's AuditSamples, as a set.
+	 *
+	 * @param string $protocolId The Controleprotocol.id.
+	 *
+	 * @return array<string,true> The sample ids.
+	 */
+	private function protocolSampleIds(string $protocolId): array {
+		$samples = $this->objects()
+			->setRegister($this->register())
+			->setSchema('AuditSample')
+			->findAll(['filters' => ['protocol' => $protocolId]]);
+
+		$sampleIds = [];
+		foreach ($samples as $sample) {
+			$id = (string)($sample['id'] ?? ($sample['@self']['id'] ?? ''));
+			if ($id !== '') {
+				$sampleIds[$id] = true;
+			}
+		}
+
+		return $sampleIds;
+
+	}//end protocolSampleIds()
 
 	/**
 	 * Whether every AuditFinding for the protocol is agreed or resolved (REQ-008).
@@ -560,10 +574,9 @@ class BadoControleprotocolService {
 		// the legitimate owner as well as the attacker — measured on a
 		// two-account rig: owner 200 → 404. ObjectService::find() addresses the
 		// object by its identity and is the call the rest of the app uses.
-		$protocol = $this->objects()->find(
-			id: $protocolId,
-			register: $this->register(),
-			schema: 'Controleprotocol'
+		$protocol = ObjectIdentifier::findScoped(
+			scoped: $this->objects()->setRegister($this->register())->setSchema('Controleprotocol'),
+			id: $protocolId
 		);
 
 		if ($protocol === null) {
@@ -655,7 +668,7 @@ class BadoControleprotocolService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
