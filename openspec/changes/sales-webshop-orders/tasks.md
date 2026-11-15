@@ -27,6 +27,7 @@
 
 ## 4. Docs
 
-- [ ] 4.1 User guide page for connecting a shop through integriq and reading refused orders, and a release note. Verify: the page is in `docs/` and the note in the PR body.
+- [x] 4.1 User guide page for connecting a shop through integriq and reading refused orders, and a release note. Verify: the page is in `docs/` and the note in the PR body.
+  - Done: `docs/guides/webshop-orders.md` (connecting a shop, what happens to an order, the VAT routes, reading refused orders); the contract page `docs/Integrations/webshop-order-intake.md` gained the partial-refund fields and the VAT route; release note in `CHANGELOG.md` and in the PR body.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/sales-webshop-orders/tasks.md#task-N` on every new method, English source strings with Dutch translations.
