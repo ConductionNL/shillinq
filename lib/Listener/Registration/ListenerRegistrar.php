@@ -46,6 +46,7 @@ use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\InvoiceCommitmentListener;
+use OCA\Shillinq\Listener\ChartTemplateVersionListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\WebshopOrderListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
@@ -495,6 +496,14 @@ final class ListenerRegistrar {
 		// Interest declared up front: the handler's own
 		// `isLeaseContractSchema()` accepts `leasecontract` or
 		// `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
+		// ledger-multi-administration REQ-LMA-005: a template saved with a
+		// higher version queues the sync of the administrations following it.
+		$this->registerFilteredObjectListener(
+			dispatcher: $dispatcher,
+			event: ObjectUpdatedEvent::class,
+			listener: ChartTemplateVersionListener::class,
+			schemas: ['AdministrationTemplate']
+		);
 		$this->registerFilteredObjectListener(
 			dispatcher: $dispatcher,
 			event: ObjectCreatedEvent::class,
