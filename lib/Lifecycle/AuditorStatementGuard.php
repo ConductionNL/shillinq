@@ -3,6 +3,9 @@
 /**
  * Auditor Statement Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the AuditorStatement register
  * (bookkeeping-subsidie-verantwoording, T3 governance). The canApprove()
  * precondition is referenced from the AuditorStatement schema's
@@ -28,9 +31,6 @@
  *
  * @link https://conduction.nl
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
- *
  * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
  */
 
@@ -38,7 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -86,31 +86,7 @@ class AuditorStatementGuard {
 	 */
 	public function canApprove(string $statementId, ?array $object = null): bool {
 		try {
-			if ($object === null) {
-				$object = $this->resolveStatement(statementId: $statementId);
-			}
-
-			if ($object === null) {
-				return false;
-			}
-
-			$findings = ($object['findings'] ?? []);
-			if (is_array($findings) === false) {
-				return false;
-			}
-
-			foreach ($findings as $finding) {
-				if (is_array($finding) === false) {
-					return false;
-				}
-
-				$resolution = (string)($finding['resolution'] ?? 'open');
-				if ($resolution !== 'resolved') {
-					return false;
-				}
-			}
-
-			return true;
+			return $this->approvable(statementId: $statementId, object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AuditorStatementGuard: approve check failed — denying approve transition (fail-closed)',
@@ -119,6 +95,58 @@ class AuditorStatementGuard {
 			return false;
 		}//end try
 	}//end canApprove()
+
+	/**
+	 * Whether the statement exists and every finding on it is resolved.
+	 *
+	 * @param string                   $statementId The AuditorStatement.id.
+	 * @param array<string,mixed>|null $object      The AuditorStatement being transitioned.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When the statement lookup fails.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	private function approvable(string $statementId, array|null $object): bool {
+		if ($object === null) {
+			$object = $this->resolveStatement(statementId: $statementId);
+		}
+
+		if ($object === null) {
+			return false;
+		}
+
+		return $this->allFindingsResolved(findings: ($object['findings'] ?? []));
+	}//end approvable()
+
+	/**
+	 * Whether the findings are a list of resolved findings.
+	 *
+	 * @param mixed $findings The statement's findings.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	private function allFindingsResolved(mixed $findings): bool {
+		if (is_array($findings) === false) {
+			return false;
+		}
+
+		foreach ($findings as $finding) {
+			if (is_array($finding) === false) {
+				return false;
+			}
+
+			$resolution = (string)($finding['resolution'] ?? 'open');
+			if ($resolution !== 'resolved') {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allFindingsResolved()
 
 	/**
 	 * Resolve an AuditorStatement object array by id.
@@ -161,7 +189,7 @@ class AuditorStatementGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

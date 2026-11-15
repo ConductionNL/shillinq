@@ -1,0 +1,330 @@
+{
+    "noScope": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": []
+                }
+            }
+        ]
+    },
+    "onlyStart": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": []
+                }
+            }
+        ]
+    },
+    "nonArrayEntries": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "untagged": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "WBSOExportValidationGuard: entry missing wbsoTagId\/activityCodeId — denying validate",
+                {
+                    "entryId": "u3"
+                }
+            ]
+        ],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "noTag": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "WBSOExportValidationGuard: entry missing wbsoTagId\/activityCodeId — denying validate",
+                {
+                    "entryId": null
+                }
+            ]
+        ],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "allAllowed": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A2"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "codeUnknown": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A2"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "codeNotAllowed": {
+        "result": true,
+        "logs": [
+            [
+                "warning",
+                "WBSOExportValidationGuard: entry references a non-allowed WBSOActivityCode",
+                {
+                    "entryId": "u1",
+                    "activityCode": "A1"
+                }
+            ],
+            [
+                "warning",
+                "WBSOExportValidationGuard: entry references a non-allowed WBSOActivityCode",
+                {
+                    "entryId": "u2",
+                    "activityCode": "A2"
+                }
+            ]
+        ],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A2"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "codeFlagMissing": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A1"
+                    },
+                    "limit": 1
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A2"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "codeLookupDown": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            },
+            "register:wbso-reg",
+            "schema:WBSOActivityCode",
+            {
+                "findAll": {
+                    "filters": {
+                        "activityCode": "A1"
+                    },
+                    "limit": 1
+                }
+            }
+        ]
+    },
+    "entriesDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "WBSOExportValidationGuard: requireEligibleEntries check failed — denying validate (fail-closed)",
+                {
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:wbso-reg",
+            "schema:UrenRegistratie",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "date": {
+                            "gte": "2026-01-01",
+                            "lte": "2026-03-31"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

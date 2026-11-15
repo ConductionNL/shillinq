@@ -306,4 +306,61 @@ final class RevenueCutoffServiceTest extends TestCase {
 		self::assertSame(200.0, $row['cumulativeRecognised']);
 
 	}//end testComputeScopesToAdministration()
+
+	/**
+	 * Pin the whole cut-off over contracts with and without events, numeric
+	 * ids, undated, period, prior and future events, allocations and billing.
+	 *
+	 * @return void
+	 */
+	public function testComputeIsExactOverMixedData(): void {
+		$contracts = [
+			['contractNumber' => 'K-2', 'administrationId' => 'adm-1'],
+			['contractNumber' => '', 'administrationId' => 'adm-1'],
+			['contractNumber' => '100', 'administrationId' => 'adm-1'],
+			['contractNumber' => 'K-9', 'administrationId' => 'adm-2'],
+		];
+		$events = [
+			['contractId' => 'K-2', 'periodEnd' => '2026-03-31', 'recognisedAmount' => 100.005, 'administrationId' => 'adm-1'],
+			['contractId' => 'K-2', 'periodEnd' => '2026-02-28', 'recognisedAmount' => '50', 'administrationId' => 'adm-1'],
+			['contractId' => 'K-2', 'periodEnd' => '2026-04-30', 'recognisedAmount' => 999, 'administrationId' => 'adm-1'],
+			['contractId' => 'K-2', 'recognisedAmount' => 1, 'administrationId' => 'adm-1'],
+			['contractId' => 'K-3', 'periodEnd' => '2026-03-31', 'recognisedAmount' => 7, 'administrationId' => 'adm-1'],
+			['contractId' => '', 'periodEnd' => '2026-03-31', 'recognisedAmount' => 5, 'administrationId' => 'adm-1'],
+			['contractId' => 'K-9', 'periodEnd' => '2026-03-31', 'recognisedAmount' => 5, 'administrationId' => 'adm-2'],
+		];
+		$allocations = [
+			['contractId' => 'K-2', 'allocatedAmount' => 120, 'administrationId' => 'adm-1'],
+			['contractId' => 'K-2', 'allocatedAmount' => '30.5', 'administrationId' => 'adm-1'],
+			['contractId' => '100', 'allocatedAmount' => 10, 'administrationId' => 'adm-1'],
+			['contractId' => '', 'allocatedAmount' => 10, 'administrationId' => 'adm-1'],
+		];
+
+		$result = $this->buildService($contracts, $events, $allocations)->compute('adm-1', '2026-03-31', ['K-2' => 200.0, 'K-3' => 3]);
+
+		$row = static fn (string $id, float $price, float $cum, float $per, float $billed, float $remaining, float $asset, float $liability): array => [
+			'contractId' => $id,
+			'periodEnd' => '2026-03-31',
+			'transactionPriceAllocated' => $price,
+			'cumulativeRecognised' => $cum,
+			'periodRecognised' => $per,
+			'cumulativeBilled' => $billed,
+			'remainingAmount' => $remaining,
+			'contractAsset' => $asset,
+			'contractLiability' => $liability,
+			'administrationId' => 'adm-1',
+		];
+		self::assertSame(
+			[
+				'data' => [
+					$row('100', 10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0),
+					$row('K-2', 150.5, 151.01, 100.01, 200.0, 0.0, 0.0, 48.99),
+					$row('K-3', 0.0, 7.0, 7.0, 3.0, 0.0, 4.0, 0.0),
+				],
+				'total' => 3,
+			],
+			$result
+		);
+
+	}//end testComputeIsExactOverMixedData()
 }//end class

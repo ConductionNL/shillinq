@@ -1,0 +1,124 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GoodsReceiptNoteForm onSubmit > posts the note and its received lines, then opens it by @self id 1`] = `
+[
+  [
+    "/apps/shillinq/api/goods-receipt-notes",
+    {
+      "administrationId": "adm-1",
+      "carrier": "DHL",
+      "deliveryNoteReference": "DN-1",
+      "photos": [],
+      "poIds": [
+        "po-1",
+      ],
+    },
+  ],
+  [
+    "/apps/shillinq/api/goods-receipt-notes/grn-2/lines",
+    {
+      "administrationId": "adm-1",
+      "batchReference": "B1",
+      "poLineId": "l-1",
+      "quantityAccepted": "5",
+      "quantityReceived": "5",
+      "quantityRejected": 0,
+      "rejectionReason": "",
+    },
+  ],
+  [
+    "/apps/shillinq/api/goods-receipt-notes/grn-2/lines",
+    {
+      "administrationId": "adm-1",
+      "batchReference": "",
+      "poLineId": "l-4",
+      "quantityAccepted": 1,
+      "quantityReceived": 2,
+      "quantityRejected": 1,
+      "rejectionReason": "Broken",
+    },
+  ],
+]
+`;
+
+exports[`GoodsReceiptNoteForm onSubmit > posts the note and its received lines, then opens it by id 1`] = `
+[
+  [
+    "/apps/shillinq/api/goods-receipt-notes",
+    {
+      "administrationId": "adm-1",
+      "carrier": "DHL",
+      "deliveryNoteReference": "DN-1",
+      "photos": [],
+      "poIds": [
+        "po-1",
+      ],
+    },
+  ],
+  [
+    "/apps/shillinq/api/goods-receipt-notes/grn-1/lines",
+    {
+      "administrationId": "adm-1",
+      "batchReference": "B1",
+      "poLineId": "l-1",
+      "quantityAccepted": "5",
+      "quantityReceived": "5",
+      "quantityRejected": 0,
+      "rejectionReason": "",
+    },
+  ],
+  [
+    "/apps/shillinq/api/goods-receipt-notes/grn-1/lines",
+    {
+      "administrationId": "adm-1",
+      "batchReference": "",
+      "poLineId": "l-4",
+      "quantityAccepted": 1,
+      "quantityReceived": 2,
+      "quantityRejected": 1,
+      "rejectionReason": "Broken",
+    },
+  ],
+]
+`;
+
+exports[`GoodsReceiptNoteForm onSubmit > posts the note and its received lines, then opens it by number 1`] = `
+[
+  [
+    "/apps/shillinq/api/goods-receipt-notes",
+    {
+      "administrationId": "adm-1",
+      "carrier": "DHL",
+      "deliveryNoteReference": "DN-1",
+      "photos": [],
+      "poIds": [
+        "po-1",
+      ],
+    },
+  ],
+  [
+    "/apps/shillinq/api/goods-receipt-notes/GRN-3/lines",
+    {
+      "administrationId": "adm-1",
+      "batchReference": "B1",
+      "poLineId": "l-1",
+      "quantityAccepted": "5",
+      "quantityReceived": "5",
+      "quantityRejected": 0,
+      "rejectionReason": "",
+    },
+  ],
+  [
+    "/apps/shillinq/api/goods-receipt-notes/GRN-3/lines",
+    {
+      "administrationId": "adm-1",
+      "batchReference": "",
+      "poLineId": "l-4",
+      "quantityAccepted": 1,
+      "quantityReceived": 2,
+      "quantityRejected": 1,
+      "rejectionReason": "Broken",
+    },
+  ],
+]
+`;

@@ -1,0 +1,852 @@
+{
+	"not ready": {
+		"calls": [],
+		"returned": null,
+		"thrown": "Inventory scanner store not ready",
+		"pendingCount": 0,
+		"syncState": "pending"
+	},
+	"no db": {
+		"calls": [],
+		"returned": null,
+		"thrown": "Inventory scanner store not ready",
+		"pendingCount": 0,
+		"syncState": "pending"
+	},
+	"receive": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"A",
+				"L1",
+				5,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "A",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 5,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"receive a negative quantity": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"A",
+				"L1",
+				-2,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "A",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": -2,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"pick": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"B",
+				"L2",
+				-3,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "pick",
+					"sku": "B",
+					"location": "L2",
+					"toLocation": "(undefined)",
+					"orderLineId": "OL-1",
+					"quantity": 3,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"pick a negative quantity": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"B",
+				"L2",
+				-3,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "pick",
+					"sku": "B",
+					"location": "L2",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": -3,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"transfer": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"C",
+				"L1",
+				-4,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"applyDelta",
+				"db",
+				"C",
+				"L3",
+				4,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "transfer",
+					"sku": "C",
+					"location": "L1",
+					"toLocation": "L3",
+					"orderLineId": "(undefined)",
+					"quantity": -4,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 102
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"count with reconcile": {
+		"calls": [
+			[
+				"readStockQuantity",
+				"db",
+				"D",
+				"L1"
+			],
+			[
+				"applyDelta",
+				"db",
+				"D",
+				"L1",
+				3,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "count",
+					"sku": "D",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": null,
+					"physicalQuantity": 10,
+					"reconcile": true,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 102
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"count with a reconcile string": {
+		"calls": [
+			[
+				"readStockQuantity",
+				"db",
+				"D",
+				"L1"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "count",
+					"sku": "D",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": null,
+					"physicalQuantity": 10,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 7
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"count without reconcile": {
+		"calls": [
+			[
+				"readStockQuantity",
+				"db",
+				"D",
+				"L1"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "count",
+					"sku": "D",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": null,
+					"physicalQuantity": 2,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 7
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"count with a null physical quantity": {
+		"calls": [
+			[
+				"readStockQuantity",
+				"db",
+				"D",
+				"L1"
+			],
+			[
+				"applyDelta",
+				"db",
+				"D",
+				"L1",
+				-7,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "count",
+					"sku": "D",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": null,
+					"physicalQuantity": null,
+					"reconcile": true,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 102
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"unknown type": {
+		"calls": [
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "adjust",
+					"sku": "E",
+					"location": "(undefined)",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": null
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"inherited property name as type": {
+		"calls": [
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "constructor",
+					"sku": "E",
+					"location": "(undefined)",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": null
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"missing quantity": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"F",
+				"L1",
+				"(NaN)",
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "F",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": null,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"null quantity": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"F",
+				"L1",
+				"(-0)",
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "pick",
+					"sku": "F",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": null,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"no scheduler": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"G",
+				"L1",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "G",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"scheduler without triggerNow": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"G",
+				"L1",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "G",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"triggerNow rejects": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"G",
+				"L1",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "G",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 1,
+		"syncState": "pending"
+	},
+	"synced state with pending ops": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"H",
+				"L1",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "H",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 3,
+		"syncState": "pending"
+	},
+	"failed state with pending ops": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"H",
+				"L1",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "H",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			],
+			[
+				"readUnsyncedOps",
+				"db"
+			],
+			[
+				"triggerNow"
+			]
+		],
+		"returned": {
+			"transactionId": "tx-1",
+			"localQuantity": 101
+		},
+		"thrown": null,
+		"pendingCount": 2,
+		"syncState": "failed"
+	},
+	"queue write fails": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"J",
+				"L1",
+				1,
+				"2026-11-01T12:00:00.000Z"
+			],
+			[
+				"insertPendingOp",
+				"db",
+				{
+					"id": "op-tx-1",
+					"transactionId": "tx-1",
+					"type": "receive",
+					"sku": "J",
+					"location": "L1",
+					"toLocation": "(undefined)",
+					"orderLineId": "(undefined)",
+					"quantity": 1,
+					"physicalQuantity": null,
+					"reconcile": false,
+					"timestamp": "2026-11-01T12:00:00.000Z",
+					"synced": false
+				}
+			]
+		],
+		"returned": null,
+		"thrown": "transaction aborted",
+		"pendingCount": 0,
+		"syncState": "pending"
+	},
+	"local mutation fails": {
+		"calls": [
+			[
+				"applyDelta",
+				"db",
+				"I",
+				"L1",
+				-1,
+				"2026-11-01T12:00:00.000Z"
+			]
+		],
+		"returned": null,
+		"thrown": "quota exceeded",
+		"pendingCount": 0,
+		"syncState": "pending"
+	}
+}
