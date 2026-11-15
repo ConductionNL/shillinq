@@ -507,6 +507,25 @@ export function computeKpis(
 	{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries },
 	now = new Date(),
 ) {
+	return {
+		...ledgerKpis({ accounts, transactions, lines }, now),
+		...openItemKpis({ arInvoices, apTransactions }, now),
+		...billableKpis(hourEntries, now),
+		cashPosition: round2(cashPosition({ accounts, transactions, lines })),
+	}
+}
+
+/**
+ * The year-to-date turnover and margin KPIs.
+ *
+ * @param {object} ledger `{ accounts, transactions, lines }`.
+ * @param {object[]} ledger.accounts Account objects.
+ * @param {object[]} ledger.transactions GLTransaction objects.
+ * @param {object[]} ledger.lines GLLine objects.
+ * @param {Date} now Reference date.
+ * @return {{turnoverYtd: number, marginYtd: number, marginPctYtd: number}}
+ */
+function ledgerKpis({ accounts, transactions, lines }, now) {
 	const series = monthlyFinancialSeries({
 		accounts,
 		transactions,
@@ -515,22 +534,39 @@ export function computeKpis(
 	})
 	const turnoverYtd = round2(sum(series.revenue))
 	const marginYtd = round2(sum(series.margin))
+	return { turnoverYtd, marginYtd, marginPctYtd: percentOf(marginYtd, turnoverYtd) }
+}
+
+/**
+ * The open receivable and payable KPIs.
+ *
+ * @param {object} items `{ arInvoices, apTransactions }`.
+ * @param {object[]} items.arInvoices ARInvoice objects.
+ * @param {object[]} items.apTransactions APTransaction objects.
+ * @param {Date} now Reference date.
+ * @return {{openArAmount: number, openArCount: number, openApAmount: number, openApCount: number}}
+ */
+function openItemKpis({ arInvoices, apTransactions }, now) {
 	const openAr = openArRows(arInvoices, [], now)
 	const openAp = openApRows(apTransactions, [], now)
-	const billable = billableSeries(hourEntries, [monthKeyOf(now)])
-
 	return {
-		turnoverYtd,
-		marginYtd,
-		marginPctYtd: percentOf(marginYtd, turnoverYtd),
 		openArAmount: totalAmount(openAr),
 		openArCount: openAr.length,
 		openApAmount: totalAmount(openAp),
 		openApCount: openAp.length,
-		billableHours: billable.billable[0],
-		billablePct: billable.pct[0],
-		cashPosition: round2(cashPosition({ accounts, transactions, lines })),
 	}
+}
+
+/**
+ * The current month's billable hours KPIs.
+ *
+ * @param {object[]} hourEntries UrenRegistratie objects.
+ * @param {Date} now Reference date.
+ * @return {{billableHours: number, billablePct: number}}
+ */
+function billableKpis(hourEntries, now) {
+	const billable = billableSeries(hourEntries, [monthKeyOf(now)])
+	return { billableHours: billable.billable[0], billablePct: billable.pct[0] }
 }
 
 /**

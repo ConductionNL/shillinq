@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-self-service-widget/specs/bookings-self-service-widget/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -25,6 +28,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Covers customer input validation (REQ-WSW-006) and appointment creation with
@@ -628,7 +632,9 @@ class WidgetServiceTest extends TestCase {
 			 * @param bool                $_rbac Whether OpenRegister RBAC applies.
 			 * @return array<string,mixed>|null
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): ?array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): ?array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->rbacFlags[] = $_rbac;
 				$this->lastSaved = $object;
 				return $this->saved;

@@ -446,6 +446,8 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 			'description as a number'     => [['entry' => ['description' => 5]], 'description'],
 			'rateRef as a list'           => [['entry' => ['rateRef' => ['rc-1']]], 'rateRef'],
 			'entry projectRef as a float' => [['entry' => ['projectRef' => 1.5]], 'projectRef'],
+			'billingModel before rateCardId' => [['billingModel' => 1, 'rateCardId' => 2], 'billingModel'],
+			'currency before rateCardId'     => [['currency' => 978, 'rateCardId' => 2, 'notes' => 3], 'currency'],
 		];
 
 	}//end nonStringFields()

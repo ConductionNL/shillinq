@@ -627,6 +627,110 @@ final class GRIRClearingServiceTest extends TestCase {
 	}//end testPostGRIRForServiceReceiptAcceptNormalisesFieldsAndFansOut()
 
 	/**
+	 * Pins the fan-out envelope: a receipt without an id posts nothing, the
+	 * id is read from `@self` too, only the administration's own accepted
+	 * lines are posted, a line that does not post (no debit account) is counted as skipped with
+	 * its result kept, and the service receipt's number and date fall back to
+	 * its receipt number and period end or confirmation time.
+	 *
+	 * @return void
+	 */
+	public function testTheReceiptFanOutEnvelopeAndNormalisation(): void {
+		$os = new InMemoryObjectService();
+		$os->seed(
+			'PurchaseOrderLine',
+			[
+				['id' => 'poline-a', 'poId' => 'po-a', 'administrationId' => 'adm-1', 'unitPrice' => 1000, 'glAccount' => '1200'],
+				['id' => 'poline-b', 'poId' => 'po-b', 'administrationId' => 'adm-1', 'unitPrice' => 1000],
+			]
+		);
+		$line = static fn (string $id, string $parent, string $poLineId, float $accepted, string $administrationId = 'adm-1'): array => [
+			'id' => $id,
+			'grnId' => $parent,
+			'serviceReceiptId' => $parent,
+			'poLineId' => $poLineId,
+			'quantityAccepted' => $accepted,
+			'administrationId' => $administrationId,
+		];
+		$os->seed(
+			'GoodsReceiptLine',
+			[
+				$line('l-1', 'grn-1', 'poline-a', 2.0),
+				$line('l-2', 'grn-1', 'poline-b', 1.0),
+				$line('l-3', 'grn-1', 'poline-a', 0.0),
+				$line('l-4', 'grn-1', 'poline-a', 5.0, 'adm-2'),
+			]
+		);
+		$os->seed(
+			'SvcReceiptLine',
+			[
+				$line('s-1', 'svr-1', 'poline-a', 1.0),
+				$line('s-2', 'svr-2', 'poline-a', 1.0),
+			]
+		);
+		$service = $this->makeService(os: $os, config: ['register' => 'shillinq', GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910']);
+
+		self::assertSame(
+			['posted' => 0, 'skipped' => 0, 'results' => []],
+			$service->postGRIRForGoodsReceiptAccept(administrationId: 'adm-1', grn: ['grnNumber' => 'GRN-0'])
+		);
+
+		$result = $service->postGRIRForGoodsReceiptAccept(
+			administrationId: 'adm-1',
+			grn: ['@self' => ['id' => 'grn-1'], 'grnNumber' => 'GRN-1', 'receivedAt' => '2026-07-01']
+		);
+		self::assertSame(['posted', 'skipped', 'results'], array_keys($result));
+		self::assertSame(1, $result['posted']);
+		self::assertSame(2, $result['skipped']);
+		self::assertCount(2, $result['results']);
+		self::assertTrue($result['results'][0]['posted']);
+		self::assertSame(2000, $result['results'][0]['amountCents']);
+		self::assertFalse($result['results'][1]['posted']);
+
+		$service->postGRIRForServiceReceiptAccept(
+			administrationId: 'adm-1',
+			receipt: ['id' => 'svr-1', 'receiptNumber' => 'SVR-1', 'grnNumber' => '  ', 'confirmedAt' => '2026-07-09']
+		);
+		$service->postGRIRForServiceReceiptAccept(
+			administrationId: 'adm-1',
+			receipt: ['id' => 'svr-2', 'receiptNumber' => 'SVR-2', 'grnNumber' => 'KEEP-2', 'receivedAt' => '2026-07-03', 'periodEnd' => '2026-07-31']
+		);
+		$headers = array_slice($os->setSchema('GLTransaction')->findAll(), 1);
+		self::assertSame(['2026-07-09', '2026-07-03'], array_column($headers, 'postingDate'));
+		self::assertStringContainsString('SVR-1', (string)$headers[0]['transactionNumber']);
+		self::assertStringContainsString('KEEP-2', (string)$headers[1]['transactionNumber']);
+
+	}//end testTheReceiptFanOutEnvelopeAndNormalisation()
+
+	/**
+	 * Golden for the fan-out guard: an accepted line in an administration the
+	 * caller cannot access is refused, an empty administration too, and
+	 * nothing is posted.
+	 *
+	 * @return void
+	 */
+	public function testTheReceiptFanOutRefusesAnInaccessibleAdministration(): void {
+		foreach (['adm-2' => 'Administration not found', '' => 'administrationId is required'] as $administrationId => $message) {
+			$os = new InMemoryObjectService();
+			$os->seed('PurchaseOrderLine', [['id' => 'poline-a', 'poId' => 'po-a', 'administrationId' => (string)$administrationId, 'unitPrice' => 1000]]);
+			$os->seed(
+				'GoodsReceiptLine',
+				[['id' => 'l-1', 'grnId' => 'grn-1', 'poLineId' => 'poline-a', 'quantityAccepted' => 1.0, 'administrationId' => (string)$administrationId]]
+			);
+			$service = $this->makeService(os: $os, config: ['register' => 'shillinq', GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910']);
+			try {
+				$service->postGRIRForGoodsReceiptAccept(administrationId: (string)$administrationId, grn: ['id' => 'grn-1', 'grnNumber' => 'GRN-1']);
+				self::fail('Expected a refusal for "' . $administrationId . '"');
+			} catch (\RuntimeException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+
+			self::assertSame([], $os->setSchema('GLTransaction')->findAll());
+		}
+
+	}//end testTheReceiptFanOutRefusesAnInaccessibleAdministration()
+
+	/**
 	 * Grir-accrual-wiring REQ-003: settleGRIRForMatchedInvoice() resolves
 	 * the auto_approved/within_tolerance ThreeWayMatch for the invoice and
 	 * calls settleGRIRPosting(); it returns posted=false without throwing

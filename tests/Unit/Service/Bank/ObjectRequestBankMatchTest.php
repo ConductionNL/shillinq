@@ -19,6 +19,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -28,6 +31,9 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
@@ -39,13 +45,15 @@ use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * REQ-ORS-003, REQ-ORS-004.
@@ -112,7 +120,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			onRan: function (array $record, array $object): void {
 				if ($record['schema'] === 'JournalEntry' && $record['action'] === 'postDirect') {
 					// MaterialiseGlTransactionAction writes the back reference.
-					$this->store->setSchema('JournalEntry')->patchObject($record['objectId'], ['glTransactionId' => 'gl-' . $record['objectId']]);
+					$this->store->setSchema('JournalEntry')->patchObject(new ObjectPatch(objectId: $record['objectId'], data: ['glTransactionId' => 'gl-' . $record['objectId']]));
 				}
 
 				if ($record['schema'] !== 'ReconciliationMatch') {
@@ -124,11 +132,11 @@ final class ObjectRequestBankMatchTest extends TestCase {
 				$entity->setObject(array_merge($object, ['id' => $record['objectId']]));
 				$entity->setSchema('ReconciliationMatch');
 				$entity->setRegister('shillinq');
-				$this->listener->handle(new ObjectTransitionedEvent($entity, $record['action'], $record['from'], $record['to'], 'bookkeeper', 'shillinq', 'ReconciliationMatch'));
+				$this->listener->handle(new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: $record['action'], from: $record['from'], to: $record['to']), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ReconciliationMatch'), actor: new TransitionActor(userId: 'bookkeeper')));
 			}
 		);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);
@@ -144,7 +152,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			}
 		);
 		$logger = $this->createMock(LoggerInterface::class);
-		$manual = new ManualMatchService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger);
+		$manual = new ManualMatchService(objectService: $this->store, transitions: $runner, registerLocation: $settings, logger: $logger);
 		$settlements = new PaymentSettlementService();
 		$resolver = $this->createStub(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturnCallback(static fn (?object $entity): string => (string)$entity?->getSchema());
@@ -157,10 +165,10 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			manualMatch: $manual,
 			settlement: new ObjectRequestBankSettlement(
 				objectService: $this->store,
-				settings: $settings,
+				registerLocation: $settings,
 				settlements: $settlements,
 				revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $appConfig),
-				invoices: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger),
+				invoices: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
 				manualMatch: $manual,
 				logger: $logger,
 			),
@@ -245,7 +253,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 * @return array<string, mixed> The object.
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find($id, schema: $schema)->getObject();
+		return $this->store->find($id, new ObjectFindOptions(schema: $schema))->getObject();
 	}//end stored()
 
 	/**
@@ -370,7 +378,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
 	 */
 	public function testTheAppWiresTheListener(): void {
-		$registration = (string)file_get_contents(__DIR__ . '/../../../../lib/AppInfo/ObjectRequestSettlementRegistration.php');
+		$registration = (string)file_get_contents(__DIR__ . '/../../../../lib/Listener/Registration/ObjectRequestSettlementRegistration.php');
 
 		self::assertMatchesRegularExpression('/ObjectCreatedEvent::class,\s*listener: BankLineObjectRequestListener::class/', $registration);
 		self::assertMatchesRegularExpression('/ObjectTransitionedEvent::class,\s*listener: BankLineObjectRequestListener::class/', $registration);

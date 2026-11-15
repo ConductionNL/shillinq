@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\BankfeedIntakeService;
@@ -39,12 +41,13 @@ use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Bank\StatementIntakeService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-BCON-002, REQ-BCON-003.
@@ -126,7 +129,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 			$this->saved
 		);
 
-		$settings = $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq']);
+		$settings = $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']);
 		$logger = $this->createMock(LoggerInterface::class);
 		$settlementListener = null;
 		$engine = new LifecycleFaithfulTransitionEngine(
@@ -140,7 +143,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 				$entity = new ObjectEntity();
 				$entity->setObject($object);
 				$entity->setSchema('ReconciliationMatch');
-				$settlementListener->handle(new ObjectTransitionedEvent($entity, $record['action'], $record['from'], $record['to'], null, 'shillinq', 'ReconciliationMatch'));
+				$settlementListener->handle(new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: $record['action'], from: $record['from'], to: $record['to']), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ReconciliationMatch')));
 			}
 		);
 		$container = $this->createMock(ContainerInterface::class);
@@ -149,16 +152,16 @@ final class BankfeedIntakeServiceTest extends TestCase {
 		$runner = new ObjectTransitionRunner(container: $container);
 
 		$settlementListener = new ReconciliationMatchSettlementListener(
-			settlement: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger),
+			settlement: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
 			schemas: $this->createConfiguredMock(ListenerSchemaResolver::class, ['matchesSchema' => true]),
 			logger: $logger,
 		);
-		$matches = new ManualMatchService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger);
+		$matches = new ManualMatchService(objectService: $this->store, transitions: $runner, registerLocation: $settings, logger: $logger);
 		$intake = new BankfeedIntakeService(
 			objectService: $this->store,
-			intake: new StatementIntakeService(objectService: $this->store, settings: $settings, logger: $logger),
-			booker: new ExactMatchBooker(objectService: $this->store, matches: $matches, settings: $settings, logger: $logger),
-			settings: $settings,
+			intake: new StatementIntakeService(objectService: $this->store, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
+			booker: new ExactMatchBooker(objectService: $this->store, matches: $matches, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
+			registerLocation: $settings,
 			logger: $logger,
 		);
 		$this->listener = new BankfeedSyncedListener(
@@ -203,7 +206,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function rows(string $schema): array {
-		return array_map(static fn ($e): array => $e->getObject(), $this->store->setSchema($schema)->findAll([]) === [] ? [] : array_map(fn (array $r) => $this->store->find($r['id'], schema: $schema), $this->store->setSchema($schema)->findAll([])));
+		return array_map(static fn ($e): array => $e->getObject(), $this->store->setSchema($schema)->findAll([]) === [] ? [] : array_map(fn (array $r) => $this->store->find($r['id'], new ObjectFindOptions(schema: $schema)), $this->store->setSchema($schema)->findAll([])));
 
 	}//end rows()
 
@@ -220,7 +223,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 		self::assertSame('feed', $statements[0]['statementSource']);
 		self::assertSame('NL20INGB0001234567', $statements[0]['bankAccountIban']);
 		self::assertCount(12, $this->rows('BankStatementLine'));
-		self::assertSame('2026-09-28T06:00:00+00:00', $this->store->find('ba-ing', schema: 'BankAccount')->getObject()['lastSyncAt']);
+		self::assertSame('2026-09-28T06:00:00+00:00', $this->store->find('ba-ing', new ObjectFindOptions(schema: 'BankAccount'))->getObject()['lastSyncAt']);
 
 		foreach ($this->saved as $save) {
 			if (in_array($save['schema'], ['BankStatement', 'BankStatementLine', 'ReconciliationMatch'], true) === true) {
@@ -259,7 +262,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 	public function testExactPaymentSettlesItsInvoice(): void {
 		$this->listener->handle(self::syncedEvent());
 
-		self::assertSame('paid', $this->store->find('ar-0877', schema: 'ARInvoice')->getObject()['lifecycleState']);
+		self::assertSame('paid', $this->store->find('ar-0877', new ObjectFindOptions(schema: 'ARInvoice'))->getObject()['lifecycleState']);
 		$matches = $this->rows('ReconciliationMatch');
 		self::assertCount(1, $matches);
 		self::assertSame(ExactMatchBooker::ACTOR, $matches[0]['confirmedBy']);
@@ -275,8 +278,8 @@ final class BankfeedIntakeServiceTest extends TestCase {
 	public function testAmbiguousPaymentWaits(): void {
 		$this->listener->handle(self::syncedEvent());
 
-		self::assertSame('issued', $this->store->find('ar-abo-1', schema: 'ARInvoice')->getObject()['lifecycleState']);
-		self::assertSame('issued', $this->store->find('ar-abo-2', schema: 'ARInvoice')->getObject()['lifecycleState']);
+		self::assertSame('issued', $this->store->find('ar-abo-1', new ObjectFindOptions(schema: 'ARInvoice'))->getObject()['lifecycleState']);
+		self::assertSame('issued', $this->store->find('ar-abo-2', new ObjectFindOptions(schema: 'ARInvoice'))->getObject()['lifecycleState']);
 		$unmatched = array_filter($this->rows('BankStatementLine'), static fn (array $l): bool => $l['status'] === 'unmatched');
 		self::assertCount(11, $unmatched);
 

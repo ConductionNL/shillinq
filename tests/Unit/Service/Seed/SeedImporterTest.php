@@ -23,10 +23,11 @@ namespace OCA\Shillinq\Tests\Unit\Service\Seed;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for reading seed files and leaving out rows without a match.
@@ -49,7 +50,7 @@ final class SeedImporterTest extends TestCase {
 	 * @return SeedImporter
 	 */
 	private function importer(object $objectService): SeedImporter {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('books');
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
@@ -147,7 +148,9 @@ final class SeedImporterTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, mixed $register, mixed $schema): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->calls[] = 'save ' . $object['code'];
 				return $object;
 			}

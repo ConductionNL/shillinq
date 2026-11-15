@@ -35,7 +35,7 @@ use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCA\Shillinq\Service\Usage\MeterReadingRating;
@@ -50,6 +50,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-USB-001 and REQ-USB-002.
@@ -129,7 +130,7 @@ class SalesUsageBillingTest extends TestCase {
 		$all = $this->store->setSchema('MeterReading')->findAll();
 		$this->assertCount(($before + 2), $all);
 		foreach ($result['created'] as $id) {
-			$created = $this->store->find(id: $id, schema: 'MeterReading')->getObject();
+			$created = $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'MeterReading'))->getObject();
 			$this->assertSame('unrated', $created['status']);
 			$this->assertSame(self::PLAN, $created['ratePlanId'], 'the plan is found from the resource type');
 			unset($created['id']);
@@ -210,7 +211,7 @@ class SalesUsageBillingTest extends TestCase {
 		$this->assertCount(2, $lines);
 		$invoiceId = (string)$invoice['id'];
 		foreach ([self::SEPT_A, self::SEPT_B] as $id) {
-			$reading = $this->store->find(id: $id, schema: 'MeterReading')->getObject();
+			$reading = $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'MeterReading'))->getObject();
 			$this->assertSame('invoiced', $reading['status']);
 			$this->assertSame($invoiceId, $reading['invoiceId']);
 			unset($reading['id']);
@@ -235,7 +236,7 @@ class SalesUsageBillingTest extends TestCase {
 		}
 
 		$this->assertSame([], $this->store->setSchema('BillableInvoice')->findAll());
-		$this->assertSame('rated', $this->store->find(id: self::SEPT_A, schema: 'MeterReading')->getObject()['status']);
+		$this->assertSame('rated', $this->store->find(id: self::SEPT_A, options: new ObjectFindOptions(schema: 'MeterReading'))->getObject()['status']);
 
 	}//end testAnInvoicedReadingIsRefused()
 
@@ -267,7 +268,7 @@ class SalesUsageBillingTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $params = []): string => vsprintf($text, $params));
 
-		return new MeterReadingImportService($this->store, $this->settings(), $l10n);
+		return new MeterReadingImportService($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $l10n);
 
 	}//end importer()
 
@@ -284,10 +285,10 @@ class SalesUsageBillingTest extends TestCase {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return $settings;
@@ -321,7 +322,7 @@ class SalesUsageBillingTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
-			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->settings()),
+			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 		);
 
 	}//end generator()

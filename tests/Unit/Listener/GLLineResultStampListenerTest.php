@@ -25,16 +25,22 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCA\Shillinq\Repair\StampGlLineResults;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Ledger\GlLineResultStampsTest as Seed;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Posting, reversing and booking a source document stamp the lines; the repair step stamps history.
@@ -72,10 +78,10 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return GlLineResultStamps
 	 */
 	private function stamps(): GlLineResultStamps {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new GlLineResultStamps($this->store, $settings);
+		return new GlLineResultStamps($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']));
 
 	}//end stamps()
 
@@ -118,7 +124,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function line(string $id): array {
-		return $this->store->find(id: $id, schema: 'GLLine')->getObject();
+		return $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'GLLine'))->getObject();
 
 	}//end line()
 
@@ -130,7 +136,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	public function testThePostTransitionStampsTheLines(): void {
 		$transaction = $this->entity('GLTransaction', ['id' => Seed::TX_SEP, 'state' => 'posted']);
 
-		$this->listener()->handle(new ObjectTransitionedEvent($transaction, 'post', 'draft', 'posted', 'controller', 'shillinq', 'GLTransaction'));
+		$this->listener()->handle(new ObjectTransitionedEvent(object: $transaction, move: new TransitionMove(action: 'post', from: 'draft', to: 'posted'), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'GLTransaction'), actor: new TransitionActor(userId: 'controller')));
 
 		$this->assertSame(['pnl', true], [$this->line('l2')['accountClass'], $this->line('l2')['countsInResult']]);
 		$this->assertSame('balance', $this->line('l5')['accountClass']);
@@ -144,10 +150,10 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheReverseTransitionTakesTheLinesOut(): void {
 		$this->stamps()->stampTransaction(Seed::TX_SEP);
-		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], schema: 'GLTransaction');
+		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$transaction = $this->entity('GLTransaction', ['id' => Seed::TX_SEP, 'state' => 'reversed']);
 
-		$this->listener()->handle(new ObjectTransitionedEvent($transaction, 'reverse', 'posted', 'reversed', 'controller', 'shillinq', 'GLTransaction'));
+		$this->listener()->handle(new ObjectTransitionedEvent(object: $transaction, move: new TransitionMove(action: 'reverse', from: 'posted', to: 'reversed'), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'GLTransaction'), actor: new TransitionActor(userId: 'controller')));
 
 		$this->assertFalse($this->line('l1')['countsInResult']);
 
@@ -173,7 +179,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testOtherObjectsAreIgnored(): void {
 		$invoice = $this->entity('ARInvoice', ['id' => Seed::TX_SEP]);
-		$this->listener()->handle(new ObjectTransitionedEvent($invoice, 'issue', 'draft', 'posted', 'controller', 'shillinq', 'ARInvoice'));
+		$this->listener()->handle(new ObjectTransitionedEvent(object: $invoice, move: new TransitionMove(action: 'issue', from: 'draft', to: 'posted'), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ARInvoice'), actor: new TransitionActor(userId: 'controller')));
 		$this->listener()->handle(new ObjectCreatedEvent($this->entity('GLLine', $this->line('d1'))));
 
 		$this->assertSame([], $this->saved);
@@ -186,7 +192,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheRepairStepStampsHistory(): void {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('info')->with('Shillinq: 5 ledger line(s) stamped over 1 posted or reversed transaction(s).');
@@ -205,8 +211,8 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
-		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
+		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php') . (string)file_get_contents($root . '/lib/Listener/Registration/ListenerRegistrar.php');
+		$registration = (string)file_get_contents($root . '/lib/Listener/Registration/ReportingRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
 		$this->assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);

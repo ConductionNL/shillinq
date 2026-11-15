@@ -310,4 +310,86 @@ class HrmqCostRateAdapterTest extends TestCase {
 
 		self::assertArrayNotHasKey('alice', $rates);
 	}
+
+	/**
+	 * Pin the whole rate map and every hrmq call over duplicates, blanks,
+	 * unknown people, refusals, unusable totals and every row shape.
+	 *
+	 * @return void
+	 */
+	public function testRateMapAndHrmqCallsAreExact(): void {
+		$service = new class {
+			/**
+			 * Every resolve() call.
+			 *
+			 * @var array<int,array<int,mixed>>
+			 */
+			public array $calls = [];
+
+			/**
+			 * @return array<string, mixed> The resolved rate.
+			 */
+			public function resolve(array $employee, ?array $contract, string $period, array $extraAdditions): array {
+				$this->calls[] = [$employee, $contract, $period, $extraAdditions];
+				return match ((string)($employee['id'] ?? '')) {
+					'refuse' => throw new RuntimeException('no basis'),
+					'neg' => ['totalCentsPerHour' => -1],
+					'float' => ['totalCentsPerHour' => 12.5],
+					'zero' => ['totalCentsPerHour' => 0],
+					'none' => [],
+					default => ['totalCentsPerHour' => 100 + count($this->calls)],
+				};
+			}
+		};
+		$serialised = new class {
+			public function jsonSerialize(): array {
+				return ['id' => 'ser'];
+			}
+		};
+		$wrappedOnly = new class {
+			public function jsonSerialize(): string {
+				return 'x';
+			}
+
+			public function getObject(): array {
+				return ['id' => 'wrap'];
+			}
+		};
+		$objects = [
+			'alice' => ['id' => 'alice'],
+			'refuse' => ['id' => 'refuse'],
+			'neg' => ['id' => 'neg'],
+			'float' => ['id' => 'float'],
+			'zero' => ['id' => 'zero'],
+			'none' => ['id' => 'none'],
+			'ser' => $serialised,
+			'wrap' => $wrappedOnly,
+			'scalar' => 'not-a-row',
+		];
+		$contracts = [['id' => 'c-alice', 'employee' => 'alice'], ['id' => 'c-wrap', 'employee' => 'wrap']];
+		$additions = [['code' => 'pension']];
+
+		$rates = $this->adapter($service, $objects, $contracts)->ratesFor(
+			['alice', ' alice', 'alice', '', '  ', 'ghost', 'refuse', 'neg', 'float', 'zero', 'none', 'ser', 'wrap', 'scalar'],
+			'2026-03',
+			$additions
+		);
+
+		self::assertSame(['alice' => 102, 'zero' => 0, 'ser' => 108, 'wrap' => 109], $rates);
+		self::assertSame(
+			[
+				[['id' => 'alice'], ['id' => 'c-alice', 'employee' => 'alice'], '2026-03', $additions],
+				[['id' => 'alice'], ['id' => 'c-alice', 'employee' => 'alice'], '2026-03', $additions],
+				[['id' => 'refuse'], null, '2026-03', $additions],
+				[['id' => 'neg'], null, '2026-03', $additions],
+				[['id' => 'float'], null, '2026-03', $additions],
+				[['id' => 'zero'], null, '2026-03', $additions],
+				[['id' => 'none'], null, '2026-03', $additions],
+				[['id' => 'ser'], null, '2026-03', $additions],
+				[['id' => 'wrap'], ['id' => 'c-wrap', 'employee' => 'wrap'], '2026-03', $additions],
+			],
+			$service->calls
+		);
+
+	}//end testRateMapAndHrmqCallsAreExact()
 }

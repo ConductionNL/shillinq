@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\Shillinq\Service\PeriodCloseException;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 use OCA\Shillinq\Service\PeriodCloseService;
 use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -32,6 +32,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests the PeriodClose lifecycle orchestration + role enforcement.
@@ -190,7 +191,9 @@ final class PeriodCloseServiceTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
 				$this->saved = $object;
 				return $object;
 			}//end saveObject()

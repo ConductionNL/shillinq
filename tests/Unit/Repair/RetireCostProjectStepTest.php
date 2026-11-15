@@ -28,12 +28,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\RetireCostProjectStep;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for RetireCostProjectStep.
@@ -47,9 +48,9 @@ class RetireCostProjectStepTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -85,7 +86,7 @@ class RetireCostProjectStepTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->output = $this->createMock(IOutput::class);
@@ -496,7 +497,9 @@ class RetireCostProjectStepTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac = true, bool $_multitenancy = true): void {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): void {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saves[] = ['object' => $object, 'schema' => $schema];
 				// Simulate the saved dimension appearing in existingDimensions for subsequent code-exists checks.
 				$this->existingDimensions[] = $object;
@@ -509,7 +512,7 @@ class RetireCostProjectStepTest extends TestCase {
 			->willReturn($this->fakeObjectService);
 
 		return new RetireCostProjectStep(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);
