@@ -1,0 +1,72 @@
+{
+    "noLines": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "EliminationBalanceGuard: journal has no lines — denying create (fail-closed)",
+                {
+                    "eliminationId": "E-1"
+                }
+            ]
+        ]
+    },
+    "emptyLines": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "EliminationBalanceGuard: journal has no lines — denying create (fail-closed)",
+                {
+                    "eliminationId": "unknown"
+                }
+            ]
+        ]
+    },
+    "nonArrayLines": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "EliminationBalanceGuard: journal has no lines — denying create (fail-closed)",
+                {
+                    "eliminationId": "unknown"
+                }
+            ]
+        ]
+    },
+    "balanced": {
+        "result": true,
+        "logs": []
+    },
+    "unbalanced": {
+        "result": false,
+        "logs": [
+            [
+                "warning",
+                "EliminationBalanceGuard: lines do not balance — denying create",
+                {
+                    "eliminationId": "E-3",
+                    "debitCents": 1000,
+                    "creditCents": 999
+                }
+            ]
+        ]
+    },
+    "totalsAgree": {
+        "result": true,
+        "logs": []
+    },
+    "debitTotalOff": {
+        "result": false,
+        "logs": []
+    },
+    "creditTotalOff": {
+        "result": false,
+        "logs": []
+    },
+    "onlyJunk": {
+        "result": true,
+        "logs": []
+    }
+}

@@ -34,7 +34,7 @@ const { default: BudgetBBVMappingIndex } = await import(
  * @return {object} The instance.
  */
 function picker(administrationId) {
-	return {
+	const vm = {
 		administrationId,
 		modelValue: '',
 		accounts: [],
@@ -43,6 +43,12 @@ function picker(administrationId) {
 		t: (app, text) => text,
 		$emit: vi.fn(),
 	}
+	for (const mixin of GlAccountPicker.mixins ?? []) {
+		for (const [name, method] of Object.entries(mixin.methods ?? {})) {
+			vm[name] = method.bind(vm)
+		}
+	}
+	return vm
 }
 
 describe('administration-scoped account picker', () => {

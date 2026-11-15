@@ -1,0 +1,499 @@
+{
+	"BankingCashflowOverview": [
+		{
+			"id": "banking",
+			"label": "shillinq:Banking & Treasury",
+			"cards": [
+				{
+					"id": "Treasury",
+					"label": "shillinq:Treasury",
+					"route": "TreasuryDashboard"
+				},
+				{
+					"id": "BankAccounts",
+					"label": "shillinq:Bank Accounts",
+					"route": "BankAccounts"
+				},
+				{
+					"id": "CurrencyBalances",
+					"label": "shillinq:Currency Balances",
+					"route": "CurrencyBalances"
+				},
+				{
+					"id": "FXRates",
+					"label": "shillinq:FX Rates",
+					"route": "FXRates"
+				}
+			]
+		},
+		{
+			"id": "reconciliation",
+			"label": "shillinq:Reconciliation",
+			"cards": [
+				{
+					"id": "Reconciliations",
+					"label": "shillinq:Reconciliations",
+					"route": "Reconciliations"
+				},
+				{
+					"id": "VarianceReport",
+					"label": "shillinq:Variance Report",
+					"route": "VarianceReport"
+				},
+				{
+					"id": "UnmatchedItems",
+					"label": "shillinq:Unmatched Items",
+					"route": "UnmatchedItems"
+				}
+			]
+		},
+		{
+			"id": "cashflow",
+			"label": "shillinq:Cashflow",
+			"cards": [
+				{
+					"id": "CashflowDashboard",
+					"label": "shillinq:Cashflow Dashboard",
+					"route": "CashflowDashboard"
+				},
+				{
+					"id": "CashflowScenarios",
+					"label": "shillinq:Scenarios",
+					"route": "CashflowScenarios"
+				}
+			]
+		}
+	],
+	"BookkeepingOverview": [
+		{
+			"id": "ledger",
+			"label": "shillinq:Ledger & Journals",
+			"cards": [
+				{
+					"id": "GeneralLedger",
+					"label": "shillinq:General Ledger",
+					"route": "GeneralLedger"
+				},
+				{
+					"id": "ChartOfAccounts",
+					"label": "shillinq:Chart of Accounts",
+					"route": "ChartOfAccounts"
+				},
+				{
+					"id": "Journals",
+					"label": "shillinq:Manual Journals",
+					"route": "Journals"
+				},
+				{
+					"id": "Aansluitingen",
+					"label": "shillinq:Tie-outs",
+					"route": "Aansluitingen"
+				},
+				{
+					"id": "AansluitingResultaten",
+					"label": "shillinq:Tie-out results",
+					"route": "AansluitingResultaten"
+				}
+			]
+		},
+		{
+			"id": "dimensions",
+			"label": "shillinq:Dimensions & Projects",
+			"cards": [
+				{
+					"id": "AnalyticalDimensions",
+					"label": "shillinq:Analytical dimensions",
+					"route": "AnalyticalDimensions"
+				},
+				{
+					"id": "CostCenters",
+					"label": "shillinq:Cost centers",
+					"route": "AnalyticalDimensions",
+					"query": {
+						"dimensionType": "cost-center"
+					}
+				},
+				{
+					"id": "Projects",
+					"label": "shillinq:Projects",
+					"route": "Projects"
+				},
+				{
+					"id": "Utilisatie",
+					"label": "shillinq:Utilisation",
+					"route": "Utilisatie"
+				}
+			]
+		},
+		{
+			"id": "framework",
+			"label": "shillinq:Dual GAAP, IFRS & Fiscal Years",
+			"cards": [
+				{
+					"id": "AccountingStandardsPolicy",
+					"label": "shillinq:Standards policy",
+					"route": "AccountingStandardsPolicy"
+				},
+				{
+					"id": "AccountingFrameworks",
+					"label": "shillinq:Framework Configuration",
+					"route": "AccountingFrameworks"
+				},
+				{
+					"id": "LeaseRegister",
+					"label": "shillinq:Lease Register (IFRS 16)",
+					"route": "LeaseRegister"
+				},
+				{
+					"id": "RevenueContracts",
+					"label": "shillinq:Revenue Contracts (IFRS 15)",
+					"route": "RevenueContracts"
+				},
+				{
+					"id": "YearEndCloseChecklist",
+					"label": "shillinq:Year-end close checklist",
+					"route": "YearEndCloseChecklist"
+				}
+			]
+		},
+		{
+			"id": "consolidation",
+			"label": "shillinq:Consolidation",
+			"cards": [
+				{
+					"id": "ConsolidationGroups",
+					"label": "shillinq:Consolidation Groups",
+					"route": "ConsolidationGroups"
+				},
+				{
+					"id": "ConsolidationPeriods",
+					"label": "shillinq:Consolidation Periods",
+					"route": "ConsolidationPeriods"
+				},
+				{
+					"id": "ConsolidatedReports",
+					"label": "shillinq:Consolidated Reports",
+					"route": "ConsolidatedReports"
+				}
+			]
+		},
+		{
+			"id": "payroll",
+			"label": "shillinq:Payroll",
+			"cards": [
+				{
+					"id": "Werkgevers",
+					"label": "shillinq:Employers",
+					"route": "Werkgevers"
+				},
+				{
+					"id": "Werknemers",
+					"label": "shillinq:Employees",
+					"route": "Werknemers"
+				},
+				{
+					"id": "Loonstroken",
+					"label": "shillinq:Payslips",
+					"route": "Loonstroken"
+				},
+				{
+					"id": "Loonjournaalposten",
+					"label": "shillinq:Payroll journal entries",
+					"route": "Loonjournaalposten"
+				}
+			]
+		}
+	],
+	"PurchasingOverview": [
+		{
+			"id": "orders",
+			"label": "shillinq:Purchase Orders & Matching",
+			"cards": [
+				{
+					"id": "PurchaseOrders",
+					"label": "shillinq:Purchase Orders",
+					"route": "PurchaseOrders"
+				},
+				{
+					"id": "GoodsReceipts",
+					"label": "shillinq:Goods Receipts",
+					"route": "GoodsReceipts"
+				},
+				{
+					"id": "ThreeWayMatches",
+					"label": "shillinq:3-way Matches",
+					"route": "ThreeWayMatches"
+				},
+				{
+					"id": "ThreeWayMatchExceptions",
+					"label": "shillinq:Match Exceptions",
+					"route": "ThreeWayMatches"
+				},
+				{
+					"id": "VendorPerformanceIndex",
+					"label": "shillinq:Vendor performance",
+					"route": "VendorPerformanceIndex"
+				}
+			]
+		},
+		{
+			"id": "payable",
+			"label": "shillinq:Accounts Payable",
+			"cards": [
+				{
+					"id": "SupplierInvoices",
+					"label": "shillinq:Supplier Invoices",
+					"route": "SupplierInvoices"
+				},
+				{
+					"id": "APAgingT2",
+					"label": "shillinq:AP Aging",
+					"route": "APAgingT2"
+				},
+				{
+					"id": "PaymentRuns",
+					"label": "shillinq:Payment Runs",
+					"route": "PaymentRuns"
+				},
+				{
+					"id": "Receipts",
+					"label": "shillinq:Receipts",
+					"route": "Receipts"
+				},
+				{
+					"id": "ExpenseClaims",
+					"label": "shillinq:Expense Claims",
+					"route": "ExpenseClaims"
+				}
+			]
+		},
+		{
+			"id": "inventory",
+			"label": "shillinq:Inventory",
+			"cards": [
+				{
+					"id": "StockLevels",
+					"label": "shillinq:Stock Levels",
+					"route": "StockLevels"
+				},
+				{
+					"id": "StockMovements",
+					"label": "shillinq:Stock Movements",
+					"route": "StockMovements"
+				},
+				{
+					"id": "InventoryValuation",
+					"label": "shillinq:Inventory Valuation",
+					"route": "InventoryValuation"
+				}
+			]
+		},
+		{
+			"id": "commitments",
+			"label": "shillinq:Commitments & Contracts",
+			"cards": [
+				{
+					"id": "CommitmentsRegister",
+					"label": "shillinq:Commitments register",
+					"route": "CommitmentsRegister"
+				},
+				{
+					"id": "MijnContracten",
+					"label": "shillinq:TenderNed-sourced commitments",
+					"route": "CommitmentsRegister",
+					"query": {
+						"source": "tenderned"
+					}
+				},
+				{
+					"id": "Contracts",
+					"label": "shillinq:Procurement Contracts",
+					"route": "Contracts"
+				},
+				{
+					"id": "ContractObligations",
+					"label": "shillinq:Contract Obligations",
+					"route": "ContractObligations"
+				}
+			]
+		}
+	],
+	"SalesOverview": [
+		{
+			"id": "customers",
+			"label": "shillinq:Customers & Bookings",
+			"cards": [
+				{
+					"id": "Customers",
+					"label": "shillinq:Customers",
+					"route": "Customers"
+				},
+				{
+					"id": "Bookings",
+					"label": "shillinq:Bookings",
+					"route": "BookingList"
+				},
+				{
+					"id": "Deposits",
+					"label": "shillinq:Deposits",
+					"route": "Deposits"
+				}
+			]
+		},
+		{
+			"id": "invoicing",
+			"label": "shillinq:Invoicing",
+			"cards": [
+				{
+					"id": "BillableInvoices",
+					"label": "shillinq:Billable Invoices",
+					"route": "BillableInvoiceList"
+				},
+				{
+					"id": "RecurringInvoicing",
+					"label": "shillinq:Recurring Invoices",
+					"route": "RecurringInvoiceProfiles"
+				},
+				{
+					"id": "PaymentRequests",
+					"label": "shillinq:Payment requests",
+					"route": "PaymentRequests"
+				},
+				{
+					"id": "Orders",
+					"label": "shillinq:Orders",
+					"route": "Orders"
+				}
+			]
+		},
+		{
+			"id": "retainers",
+			"label": "shillinq:Retainers",
+			"cards": [
+				{
+					"id": "RetainerPools",
+					"label": "shillinq:Retainer Pools",
+					"route": "RetainerPools"
+				},
+				{
+					"id": "RetainerDrawdowns",
+					"label": "shillinq:Retainer Drawdowns",
+					"route": "RetainerDrawdowns"
+				},
+				{
+					"id": "RateCards",
+					"label": "shillinq:Rate Cards",
+					"route": "RateCards"
+				},
+				{
+					"id": "RateSchedules",
+					"label": "shillinq:Rate Schedules",
+					"route": "RateSchedules"
+				}
+			]
+		},
+		{
+			"id": "receivable",
+			"label": "shillinq:Accounts Receivable",
+			"cards": [
+				{
+					"id": "AccountsReceivable",
+					"label": "shillinq:Accounts Receivable",
+					"route": "AccountsReceivable"
+				},
+				{
+					"id": "ARAging",
+					"label": "shillinq:AR Aging",
+					"route": "ARAging"
+				}
+			]
+		}
+	],
+	"TaxesOverview": [
+		{
+			"id": "vat",
+			"label": "shillinq:VAT / BTW",
+			"cards": [
+				{
+					"id": "VATReturns",
+					"label": "shillinq:BTW returns",
+					"route": "VATReturns"
+				},
+				{
+					"id": "OssReturns",
+					"label": "shillinq:OSS returns",
+					"route": "OssReturns"
+				}
+			]
+		},
+		{
+			"id": "kor",
+			"label": "shillinq:KOR (Small Business Scheme)",
+			"cards": [
+				{
+					"id": "KorDashboard",
+					"label": "shillinq:KOR dashboard",
+					"route": "KorDashboard"
+				},
+				{
+					"id": "KorAanmelding",
+					"label": "shillinq:KOR registration",
+					"route": "KorDashboard",
+					"query": {
+						"status": "draft"
+					}
+				},
+				{
+					"id": "KorOpzegging",
+					"label": "shillinq:KOR cancellation",
+					"route": "KorDashboard",
+					"query": {
+						"status": "ACTIEF"
+					}
+				}
+			]
+		},
+		{
+			"id": "income-tax",
+			"label": "shillinq:Income Tax",
+			"cards": [
+				{
+					"id": "IbAangifte",
+					"label": "shillinq:IB return",
+					"route": "IbAangifte"
+				},
+				{
+					"id": "Vpb",
+					"label": "shillinq:Corporate tax (Vpb)",
+					"route": "VpbDeadlines"
+				},
+				{
+					"id": "TaxProvisions",
+					"label": "shillinq:Deferred tax",
+					"route": "TaxProvisions"
+				}
+			]
+		},
+		{
+			"id": "wbso",
+			"label": "shillinq:WBSO & R&D",
+			"cards": [
+				{
+					"id": "RDSubsidies",
+					"label": "shillinq:R&D grants",
+					"route": "RDSubsidies"
+				},
+				{
+					"id": "WBSOActivityCodes",
+					"label": "shillinq:WBSO Activity Codes",
+					"route": "WBSOActivityCodes"
+				},
+				{
+					"id": "InnovatieboxElections",
+					"label": "shillinq:Innovation box",
+					"route": "InnovatieboxElections"
+				}
+			]
+		}
+	]
+}

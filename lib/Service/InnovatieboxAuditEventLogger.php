@@ -3,6 +3,9 @@
 /**
  * Innovatiebox Audit Event Logger
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Append-only writer of `InnovatieboxAuditEvent` records (REQ-IBA-008 +
  * REQ-IBA-009). Every nexus calculation, profit-attribution write, year-end
  * finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check, and
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,7 +40,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\InnovatieboxAuditEventLoggerInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -52,21 +53,15 @@ use Throwable;
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
-class InnovatieboxAuditEventLogger {
+class InnovatieboxAuditEventLogger implements InnovatieboxAuditEventLoggerInterface {
+
 	/**
-	 * Event type constants — mirror the enum on the InnovatieboxAuditEvent
-	 * schema (lib/Settings/register.d/bookkeeping-innovatiebox-administratie.json).
+	 * The optional event fields, copied in this order when set.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	public const EVENT_NEXUS_CALCULATED = 'NexusCalculation.calculated';
-	public const EVENT_PROFIT_CREATED = 'IBProfitAttribution.created';
-	public const EVENT_PROFIT_FINALIZED = 'IBProfitAttribution.finalized';
-	public const EVENT_PROFIT_AMENDMENT_BLOCKED = 'IBProfitAttribution.amendment_attempt_blocked';
-	public const EVENT_LOSS_CREATED = 'CarryForwardLoss.created';
-	public const EVENT_LOSS_OFFSET_APPLIED = 'CarryForwardLoss.offset_applied';
+	private const OPTIONAL_FIELDS = ['financialYear', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'];
 	public const EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN = 'cross_cutting_prohibition_check_run';
-	public const EVENT_FORFAITAIR_CAP_APPLIED = 'flatRateCapApplied';
 
 	/**
 	 * Construct the logger.
@@ -100,56 +95,75 @@ class InnovatieboxAuditEventLogger {
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
 	 */
 	public function record(array $options): bool {
-		$eventType = (string)($options['event_type'] ?? '');
-		$administrationId = (string)($options['administrationId'] ?? '');
-
-		if ($eventType === '' || $administrationId === '') {
-			$this->logger->warning(
-				'InnovatieboxAuditEventLogger: missing required event_type or administrationId',
-				['options' => $options]
-			);
+		if ((string)($options['event_type'] ?? '') === '' || (string)($options['administrationId'] ?? '') === '') {
+			$this->logger->warning('InnovatieboxAuditEventLogger: missing required event_type or administrationId', ['options' => $options]);
 			return false;
 		}
 
-		$event = [
-			'event_type' => $eventType,
-			'event_timestamp' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
-			'administrationId' => $administrationId,
-		];
+		return $this->persist(event: $this->eventOf(options: $options));
+	}//end record()
 
+	/**
+	 * The event to append: type, UTC timestamp, administration, the acting
+	 * user when there is one, then every optional field that is set.
+	 *
+	 * @param array<string,mixed> $options Event payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function eventOf(array $options): array {
+		$event = [
+			'event_type' => (string)$options['event_type'],
+			'event_timestamp' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+			'administrationId' => (string)$options['administrationId'],
+		];
 		$user = $this->userSession->getUser();
 		if ($user !== null) {
 			$event['actor_uid'] = $user->getUID();
 		}
 
-		foreach (['financialYear', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'] as $optional) {
-			if (array_key_exists($optional, $options) === true && $options[$optional] !== null) {
-				$event[$optional] = $options[$optional];
+		return ($event + $this->optionalFields(options: $options));
+	}//end eventOf()
+
+	/**
+	 * The optional fields that are set, in OPTIONAL_FIELDS order.
+	 *
+	 * @param array<string,mixed> $options Event payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function optionalFields(array $options): array {
+		$fields = [];
+		foreach (self::OPTIONAL_FIELDS as $optional) {
+			if (isset($options[$optional]) === true) {
+				$fields[$optional] = $options[$optional];
 			}
 		}
 
+		return $fields;
+	}//end optionalFields()
+
+	/**
+	 * Append the event. Never let an audit-log write break the subject
+	 * schema's write path: the schema mutation is the source of legal truth,
+	 * the audit log is the defence — a failure is logged and answered false.
+	 *
+	 * @param array<string,mixed> $event The event.
+	 *
+	 * @return boolean
+	 */
+	private function persist(array $event): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService
-				->setRegister($this->register())
-				->setSchema('InnovatieboxAuditEvent')
-				->saveObject($event);
+			$objectService->setRegister($this->register())->setSchema('InnovatieboxAuditEvent')->saveObject($event);
 		} catch (Throwable $e) {
-			// Never let an audit-log write break the subject schema's write
-			// path; the schema mutation is the source of legal truth, the
-			// audit log is the defence. Log + return false.
-			$this->logger->warning(
-				'InnovatieboxAuditEventLogger: failed to persist audit event',
-				[
-					'event_type' => $eventType,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$context = ['event_type' => $event['event_type'], 'exception' => $e->getMessage()];
+			$this->logger->warning('InnovatieboxAuditEventLogger: failed to persist audit event', $context);
 			return false;
-		}//end try
+		}
 
 		return true;
-	}//end record()
+	}//end persist()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
@@ -157,7 +171,7 @@ class InnovatieboxAuditEventLogger {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

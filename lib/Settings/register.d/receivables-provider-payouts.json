@@ -5,18 +5,18 @@
     "change": "receivables-payouts-tab",
     "adr": "ADR-037 modular register fragment; ADR-022 apps consume OpenRegister, no own CRUD",
     "description": "ProviderPayout as designed in openspec/changes/receivables-provider-payouts/design.md (D1, Seed Data): one settlement of a payment provider (Mollie, Stripe) with its amounts and transaction lines. This fragment carries the record and its seeds for board ShDebiteurenbeheer's Uitbetalingen provider tab; the lifecycle, the unmatched notification, PaymentDevice and the posting settings follow with the rest of that change.",
-    "spec": "openspec/changes/receivables-payouts-tab/specs/bookkeeping-bank-reconciliation/spec.md"
+    "spec": "openspec/specs/bookkeeping-bank-reconciliation/spec.md"
   },
   "components": {
     "schemas": {
       "ProviderPayout": {
         "slug": "ProviderPayout",
         "icon": "BankTransferIn",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Provider payout",
         "description": "A settlement of a payment provider to the bank account: the amounts paid out and kept, and the payments in it, each matched to what it paid or still open.",
         "x-schema-org": "schema:MoneyTransfer",
-        "x-spec": "openspec/changes/receivables-payouts-tab/specs/bookkeeping-bank-reconciliation/spec.md",
+        "x-spec": "openspec/specs/bookkeeping-bank-reconciliation/spec.md",
         "type": "object",
         "required": [
           "administrationId",
@@ -115,6 +115,7 @@
                 "providerPaymentId": {
                   "type": "string",
                   "title": "Provider payment ID",
+                  "description": "The provider's own id for the payment, refund or chargeback.",
                   "example": "tr_8Kq2"
                 },
                 "type": {
@@ -130,17 +131,20 @@
                     "chargeback": "Chargeback"
                   },
                   "title": "Kind",
+                  "description": "Whether the line is a payment, a refund or a chargeback.",
                   "example": "payment"
                 },
                 "amount": {
                   "type": "number",
                   "title": "Amount",
+                  "description": "The amount of the line, before fees.",
                   "example": 60
                 },
                 "fee": {
                   "type": "number",
                   "nullable": true,
                   "title": "Fees",
+                  "description": "What the provider charged for the line, if anything.",
                   "example": 0.29
                 },
                 "status": {
@@ -154,6 +158,7 @@
                     "unmatched": "Unmatched"
                   },
                   "title": "State",
+                  "description": "Whether the line is matched to what it paid.",
                   "example": "unmatched"
                 },
                 "matchedObjectId": {
@@ -217,45 +222,31 @@
             "example": "gl-2026-10-07-0108"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who recorded a payout, matched its lines or changed its amounts, and when."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ]
         }
       }
     }

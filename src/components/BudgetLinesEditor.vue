@@ -370,42 +370,81 @@ export default {
 		 */
 		async save(row, col) {
 			const key = this.cellKey(row, col)
-			if (!(key in this.drafts)) {
-				return
-			}
+			if (!(key in this.drafts)) return
 			const current = this.rows[row]
 			const amount = euroToCents(this.drafts[key])
 			if (amount === null) {
-				this.message = t(
-					'shillinq',
-					'Enter an amount in euros, for example 206000.',
-				)
+				this.refuseAmount()
 				return
 			}
+			this.dropDraft(key)
+			if (amount === current.months[col]) return
+			await this.storeCell(row, { month: col + 1, amount, expected: current.months[col] })
+		},
+
+		/**
+		 * Remove a cell's draft.
+		 *
+		 * @param {string} key The cell key.
+		 */
+		dropDraft(key) {
 			const rest = { ...this.drafts }
 			delete rest[key]
 			this.drafts = rest
-			if (amount === current.months[col]) {
-				return
-			}
+		},
+
+		/**
+		 * Send a cell's new amount and the amount it started from, then merge the row.
+		 *
+		 * @param {number} row The row index.
+		 * @param {{month: number, amount: number, expected: number}} change The cell change.
+		 * @return {Promise<void>}
+		 */
+		async storeCell(row, change) {
+			const current = this.rows[row]
 			try {
-				const saved = await saveBudgetCell({
-					administrationId: this.administrationId,
-					annualBudgetId: this.annualBudgetId,
-					ledgerGroupId: current.ledgerGroupId,
-					month: col + 1,
-					amount,
-					expected: current.months[col],
-				})
+				const saved = await saveBudgetCell({ ...this.budgetScope(), ledgerGroupId: current.ledgerGroupId, ...change })
 				this.rows.splice(row, 1, { ...current, ...saved })
 				this.message = ''
 			} catch (error) {
-				this.message = refusal(
-					error,
-					t('shillinq', 'The amount could not be saved.'),
-				)
-				await this.load()
+				await this.saveRefused(error)
 			}
+		},
+
+		/**
+		 * The administration and budget every change is sent for.
+		 *
+		 * @return {{administrationId: string, annualBudgetId: string}} The scope.
+		 */
+		budgetScope() {
+			return {
+				administrationId: this.administrationId,
+				annualBudgetId: this.annualBudgetId,
+			}
+		},
+
+		/**
+		 * Refuse an amount that is not euros.
+		 */
+		refuseAmount() {
+			this.message = t(
+				'shillinq',
+				'Enter an amount in euros, for example 206000.',
+			)
+		},
+
+		/**
+		 * Show why a change was refused and reload the rows.
+		 *
+		 * @param {Error} error The failure.
+		 * @return {Promise<void>}
+		 */
+		async saveRefused(error) {
+			this.message = refusal(
+				error,
+				t('shillinq', 'The amount could not be saved.'),
+			)
+			await this.load()
 		},
 
 		/**
@@ -426,33 +465,30 @@ export default {
 		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 		 */
 		async spread() {
-			const row = this.spreadRow
 			const yearly = euroToCents(this.yearly)
 			if (yearly === null) {
-				this.message = t(
-					'shillinq',
-					'Enter an amount in euros, for example 206000.',
-				)
+				this.refuseAmount()
 				return
 			}
+			await this.storeSpread(this.spreadRow, yearly)
+		},
+
+		/**
+		 * Send a row's yearly amount and the months it started from, then close the form.
+		 *
+		 * @param {number} row The row index.
+		 * @param {number} yearly The yearly amount in cents.
+		 * @return {Promise<void>}
+		 */
+		async storeSpread(row, yearly) {
 			const current = this.rows[row]
 			try {
-				const saved = await spreadBudgetRow({
-					administrationId: this.administrationId,
-					annualBudgetId: this.annualBudgetId,
-					ledgerGroupId: current.ledgerGroupId,
-					yearly,
-					expected: current.months,
-				})
+				const saved = await spreadBudgetRow({ ...this.budgetScope(), ledgerGroupId: current.ledgerGroupId, yearly, expected: current.months })
 				this.rows.splice(row, 1, { ...current, ...saved })
 				this.spreadRow = null
 				this.message = ''
 			} catch (error) {
-				this.message = refusal(
-					error,
-					t('shillinq', 'The amount could not be saved.'),
-				)
-				await this.load()
+				await this.saveRefused(error)
 			}
 		},
 	},

@@ -28,7 +28,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
@@ -58,13 +58,13 @@ class SupplierInvoiceWarningListenerTest extends TestCase {
 		$records['SupplierInvoice'][] = $typed;
 		$this->saved = [];
 		$store = new InMemoryObjectServiceStub($records, $this->saved);
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$resolver = $this->createStub(ListenerSchemaResolver::class);
 		$resolver->method('schemaSlug')->willReturn('SupplierInvoice');
 
 		return new SupplierInvoiceWarningListener(
-			new SupplierInvoiceChecks($store, $settings),
+			new SupplierInvoiceChecks($store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 			$resolver,
 			$store,
 			$settings,
@@ -137,7 +137,7 @@ class SupplierInvoiceWarningListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheAppRegistersTheListener(): void {
-		$application = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$application = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php') . (string)file_get_contents(__DIR__ . '/../../../lib/Listener/Registration/ListenerRegistrar.php');
 
 		$this->assertMatchesRegularExpression(
 			'/registerFilteredObjectWriteListener\(\s*dispatcher: \$dispatcher,\s*listener: SupplierInvoiceWarningListener::class,\s*schemas: \[\'SupplierInvoice\'\]/',

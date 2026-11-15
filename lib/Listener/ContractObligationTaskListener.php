@@ -3,6 +3,9 @@
 /**
  * Contract Obligation Task Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Supplies the missing trigger for {@see \OCA\Shillinq\Service\ObligationTaskBridge::createTaskForObligation()}.
  *
  * REQ-CDC-005 ({@see openspec/specs/compliance-deadline-calendar/spec.md})
@@ -46,9 +49,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -58,9 +58,9 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\ObligationTaskBridge;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\ObligationTaskBridgeInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -93,9 +93,9 @@ class ContractObligationTaskListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
-	 * @param ObligationTaskBridge $bridge NC Tasks / Deck glue.
-	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param ObligationTaskBridgeInterface $bridge NC Tasks / Deck glue.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's published object
 	 *                                              surface (ADR-084), aliased in
@@ -104,9 +104,9 @@ class ContractObligationTaskListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
-		private readonly ObligationTaskBridge $bridge,
-		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly ObligationTaskBridgeInterface $bridge,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -129,45 +129,10 @@ class ContractObligationTaskListener implements IEventListener {
 		}
 
 		try {
-			$entity = $this->resolveEntity(event: $event);
-			if ($entity === null) {
-				return;
+			$obligation = $this->unlinkedObligation(event: $event);
+			if ($obligation !== null) {
+				$this->linkTask(obligation: $obligation);
 			}
-
-			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isObligationSchema(schema: $schema) === false) {
-				return;
-			}
-
-			$obligation = $entity->getObject();
-			if (is_array($obligation) === false) {
-				return;
-			}
-
-			// Re-entry guard — see the class docblock. This is what stops the
-			// write-back below from re-triggering this listener forever.
-			if ((string)($obligation['taskLinkStatus'] ?? '') === self::STATUS_LINKED) {
-				return;
-			}
-
-			$objectId = (string)($obligation['id'] ?? ($entity->getId() ?? ''));
-			if ($objectId === '') {
-				return;
-			}
-
-			$obligation['id'] = $objectId;
-
-			$result = $this->bridge->createTaskForObligation(obligation: $obligation);
-
-			$this->persist(id: $objectId, result: $result);
-
-			$this->logger->info(
-				'ContractObligationTaskListener: obligation task link attempted',
-				[
-					'obligationId' => $objectId,
-					'taskLinkStatus' => ($result['taskLinkStatus'] ?? 'unknown'),
-				]
-			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'ContractObligationTaskListener: task creation failed (fail-soft)',
@@ -176,6 +141,58 @@ class ContractObligationTaskListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The event's ContractObligation, id-stamped, when it has no linked task yet.
+	 *
+	 * @param Event $event OR object lifecycle event.
+	 *
+	 * @return array<string,mixed>|null The obligation, or null when it needs no task.
+	 */
+	private function unlinkedObligation(Event $event): array|null {
+		$entity = $this->resolveEntity(event: $event);
+		if ($entity === null || $this->isObligationSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+			return null;
+		}
+
+		$obligation = $entity->getObject();
+		// Re-entry guard — see the class docblock. This is what stops the
+		// write-back below from re-triggering this listener forever.
+		if (is_array($obligation) === false || (string)($obligation['taskLinkStatus'] ?? '') === self::STATUS_LINKED) {
+			return null;
+		}
+
+		$objectId = (string)($obligation['id'] ?? ($entity->getId() ?? ''));
+		if ($objectId === '') {
+			return null;
+		}
+
+		$obligation['id'] = $objectId;
+		return $obligation;
+
+	}//end unlinkedObligation()
+
+	/**
+	 * Create the obligation's task, write the link back and log the attempt.
+	 *
+	 * @param array<string,mixed> $obligation The id-stamped obligation.
+	 *
+	 * @return void
+	 */
+	private function linkTask(array $obligation): void {
+		$result = $this->bridge->createTaskForObligation(obligation: $obligation);
+
+		$this->persist(id: $obligation['id'], result: $result);
+
+		$this->logger->info(
+			'ContractObligationTaskListener: obligation task link attempted',
+			[
+				'obligationId' => $obligation['id'],
+				'taskLinkStatus' => ($result['taskLinkStatus'] ?? 'unknown'),
+			]
+		);
+
+	}//end linkTask()
 
 	/**
 	 * Pull the object entity off either supported event shape.
@@ -231,7 +248,7 @@ class ContractObligationTaskListener implements IEventListener {
 		}
 
 		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema(self::SCHEMA)
 			->updateObject($id, $updates);
 

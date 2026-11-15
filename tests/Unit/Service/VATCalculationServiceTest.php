@@ -119,4 +119,29 @@ final class VATCalculationServiceTest extends TestCase {
 
 	}//end testIsValidRate()
 
+
+	/**
+	 * Golden: rates grouped in first-seen order, the 21 % default, and the empty invoice.
+	 *
+	 * @return void
+	 */
+	public function testBreakdownGolden(): void {
+		self::assertSame(
+			[
+				'netCents' => 3001,
+				'vatCents' => 510,
+				'grossCents' => 3511,
+				'breakdown' => [
+					['rate' => 9.0, 'netCents' => 1000, 'vatCents' => 90, 'grossCents' => 1090],
+					['rate' => 21.0, 'netCents' => 2001, 'vatCents' => 420, 'grossCents' => 2421],
+				],
+			],
+			(new VATCalculationService())->calculateVAT([
+				['costAmountCents' => 1000, 'vatRate' => 9],
+				['costAmountCents' => 1000],
+				['costAmountCents' => '1001', 'vatRate' => '21'],
+			])
+		);
+		self::assertSame(['netCents' => 0, 'vatCents' => 0, 'grossCents' => 0, 'breakdown' => []], (new VATCalculationService())->calculateVAT([]));
+	}
 }//end class

@@ -1,0 +1,186 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BudgetBBVMappingDetail loadRecord > fills the form from the bare record 1`] = `
+{
+  "calls": 2,
+  "form": {
+    "administrationId": "adm-prop",
+    "allocationPercentage": 0,
+    "effectiveFrom": "2031-01-01",
+    "effectiveTo": "",
+    "glAccountNumber": "4100",
+    "programmeCode": "",
+    "status": "active",
+  },
+  "loadError": "",
+  "loading": false,
+  "record": {
+    "administrationId": null,
+    "allocationPercentage": null,
+    "glAccountNumber": "4100",
+  },
+}
+`;
+
+exports[`BudgetBBVMappingDetail loadRecord > fills the form from the object envelope 1`] = `
+{
+  "calls": 2,
+  "form": {
+    "administrationId": "adm-r",
+    "allocationPercentage": 25,
+    "effectiveFrom": "2026-02-01",
+    "effectiveTo": "2026-12-31",
+    "glAccountNumber": "4100",
+    "programmeCode": "P9",
+    "status": "draft",
+  },
+  "loadError": "",
+  "loading": false,
+  "record": {
+    "administrationId": "adm-r",
+    "allocationPercentage": 25,
+    "effectiveFrom": "2026-02-01",
+    "effectiveTo": "2026-12-31",
+    "glAccountNumber": "4100",
+    "programmeCode": "P9",
+    "status": "draft",
+  },
+}
+`;
+
+exports[`BudgetBBVMappingDetail loadRecord > fills the form from the result envelope 1`] = `
+{
+  "calls": 2,
+  "form": {
+    "administrationId": "adm-prop",
+    "allocationPercentage": 0,
+    "effectiveFrom": "2031-01-01",
+    "effectiveTo": "",
+    "glAccountNumber": "4100",
+    "programmeCode": "",
+    "status": "active",
+  },
+  "loadError": "",
+  "loading": false,
+  "record": {
+    "glAccountNumber": "4100",
+  },
+}
+`;
+
+exports[`BudgetBBVMappingDetail refreshAllocationProjection > allocation not a number 1`] = `
+{
+  "calls": [],
+  "feedback": {
+    "message": "Allocation must be between 0 % and 100 %.",
+    "severity": "error",
+  },
+  "total": -1,
+}
+`;
+
+exports[`BudgetBBVMappingDetail refreshAllocationProjection > bare list on create counts the own id 1`] = `
+{
+  "calls": [
+    [
+      "/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping",
+      {
+        "params": {
+          "glAccountNumber": "4000",
+          "status": "active",
+        },
+      },
+    ],
+  ],
+  "feedback": {
+    "message": "GL {gl} total: {sum} % — you can add up to {remaining} %. {"gl":"4000","sum":"85.00","remaining":"15.00"}",
+    "severity": "info",
+  },
+  "total": 85,
+}
+`;
+
+exports[`BudgetBBVMappingDetail refreshAllocationProjection > not a list 1`] = `
+{
+  "calls": [
+    [
+      "/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping",
+      {
+        "params": {
+          "glAccountNumber": "4000",
+          "status": "active",
+        },
+      },
+    ],
+  ],
+  "feedback": {
+    "message": "GL {gl} total: {sum} % — you can add up to {remaining} %. {"gl":"4000","sum":"0.00","remaining":"100.00"}",
+    "severity": "info",
+  },
+  "total": 0,
+}
+`;
+
+exports[`BudgetBBVMappingDetail refreshAllocationProjection > objects envelope, over 100 1`] = `
+{
+  "calls": [
+    [
+      "/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping",
+      {
+        "params": {
+          "glAccountNumber": "4000",
+          "status": "active",
+        },
+      },
+    ],
+  ],
+  "feedback": {
+    "message": "GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving. {"gl":"4000","pct":"105.00","over":"5.00"}",
+    "severity": "error",
+  },
+  "total": 55,
+}
+`;
+
+exports[`BudgetBBVMappingDetail refreshAllocationProjection > results envelope, within 100 1`] = `
+{
+  "calls": [
+    [
+      "/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping",
+      {
+        "params": {
+          "glAccountNumber": "4000",
+          "status": "active",
+        },
+      },
+    ],
+  ],
+  "feedback": {
+    "message": "GL {gl} total: {sum} % — you can add up to {remaining} %. {"gl":"4000","sum":"55.00","remaining":"45.00"}",
+    "severity": "info",
+  },
+  "total": 55,
+}
+`;
+
+exports[`BudgetBBVMappingDetail refreshAllocationProjection > with an administration 1`] = `
+{
+  "calls": [
+    [
+      "/index.php/apps/openregister/api/objects/shillinq/BudgetBBVMapping",
+      {
+        "params": {
+          "administrationId": "adm-9",
+          "glAccountNumber": "4000",
+          "status": "active",
+        },
+      },
+    ],
+  ],
+  "feedback": {
+    "message": "GL {gl} total: {sum} % — you can add up to {remaining} %. {"gl":"4000","sum":"0.00","remaining":"100.00"}",
+    "severity": "info",
+  },
+  "total": 0,
+}
+`;

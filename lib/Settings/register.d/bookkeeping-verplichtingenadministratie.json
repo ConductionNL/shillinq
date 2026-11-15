@@ -372,38 +372,6 @@
             ],
             "onApprove": "advanceTransition"
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "commitment-administrator": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "budget-holder": {
-              "scope": "programme",
-              "capabilities": [
-                "read"
-              ]
-            },
-            "finance-director": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "CommitmentLine": {
@@ -583,6 +551,29 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a CommitmentLine is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CommitmentMovement": {
@@ -698,6 +689,29 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "SpendingMandate": {
@@ -827,28 +841,32 @@
             "title": "Vereist Tweede Handtekening Boven"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-director": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Mandate is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ApprovalStep": {
@@ -952,6 +970,29 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a ApprovalStep is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CommitmentBudget": {
@@ -1064,33 +1105,32 @@
             "description": "Free budget snapshot (D9)."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "budget-holder": {
-              "scope": "programme",
-              "capabilities": [
-                "read"
-              ]
-            },
-            "finance-director": {
-              "scope": "administration",
-              "capabilities": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "scope": "administration",
-              "capabilities": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema): the flag was missing under the retired 'Budget' slug too."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

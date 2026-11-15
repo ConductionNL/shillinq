@@ -1,0 +1,278 @@
+{
+    "submit.empty": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "ExpenseClaimGuard: claim has no line items — denying submit",
+                {
+                    "claimId": "cl-0"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "submit.complete": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:p-1"
+        ]
+    },
+    "submit.blankCentre": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "ExpenseClaimGuard: item missing costCentreCode — denying transition",
+                {
+                    "claimId": "cl-1",
+                    "schema": "Receipt",
+                    "itemId": "r-2"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-2"
+        ]
+    },
+    "submit.missingItem": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "ExpenseClaimGuard: item missing costCentreCode — denying transition",
+                {
+                    "claimId": "cl-1",
+                    "schema": "MileageEntry",
+                    "itemId": "m-9"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-9"
+        ]
+    },
+    "submit.storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "ExpenseClaimGuard: requireCostCentresAndItems failed — denying submit (fail-closed)",
+                {
+                    "claimId": "cl-1",
+                    "exception": "items down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1"
+        ]
+    },
+    "post.openYear": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:p-1",
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "post.closedYear": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:p-1",
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "post.noYear": {
+        "result": true,
+        "logs": [
+            [
+                "warning",
+                "ExpenseClaimGuard: no FiscalYear covers claim fromDate — permitting post without period check",
+                {
+                    "claimId": "cl-1",
+                    "fromDate": "2026-03-01"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:p-1",
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "post.noItems": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "",
+                        "startDate": {
+                            "lte": "2026-01-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-01-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "post.yearsDown": {
+        "result": true,
+        "logs": [
+            [
+                "debug",
+                "ExpenseClaimGuard: FiscalYear register not present (T1 state) — posting permitted",
+                {
+                    "claimId": "cl-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:p-1",
+            "register:shillinq",
+            "schema:FiscalYear",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "startDate": {
+                            "lte": "2026-03-01"
+                        },
+                        "endDate": {
+                            "gte": "2026-03-01"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "post.blankCentre": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "ExpenseClaimGuard: item missing costCentreCode — denying transition",
+                {
+                    "claimId": "cl-1",
+                    "schema": "PerDiem",
+                    "itemId": "r-2"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Receipt",
+            "find:r-1",
+            "register:shillinq",
+            "schema:MileageEntry",
+            "find:m-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:p-1",
+            "register:shillinq",
+            "schema:PerDiem",
+            "find:r-2"
+        ]
+    }
+}
