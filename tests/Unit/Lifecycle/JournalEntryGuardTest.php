@@ -23,9 +23,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\LineDimensionCheck;
+use OCA\Shillinq\Lifecycle\PostingRefusedException;
 use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -88,6 +91,7 @@ class JournalEntryGuardTest extends TestCase {
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub(records: [])),
 			restrictions: $this->createMock(PostingRestrictionGuard::class),
+			dimensions: $this->createMock(LineDimensionCheck::class),
 		);
 
 	}//end setUp()
@@ -110,9 +114,119 @@ class JournalEntryGuardTest extends TestCase {
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($store),
 			restrictions: $this->createMock(PostingRestrictionGuard::class),
+			dimensions: $this->createMock(LineDimensionCheck::class),
 		);
 
 	}//end wireObjectService()
+
+	/**
+	 * Rebuild the guard with the real dimension check over these AnalyticalDimension rows.
+	 *
+	 * @param array<int,array<string,mixed>> $dimensions The administration's dimensions.
+	 *
+	 * @return void
+	 */
+	private function withDimensions(array $dimensions): void {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters)
+		);
+		$store = new DuckObjectServiceAdapter($this->buildObjectServiceStub(records: $dimensions));
+		$this->guard = new JournalEntryGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: $store,
+			restrictions: $this->createMock(PostingRestrictionGuard::class),
+			dimensions: new LineDimensionCheck(appConfig: $this->appConfig, objectService: $store, l10n: $l10n),
+		);
+	}//end withDimensions()
+
+	/**
+	 * A payroll journal whose third line names a cost centre the administration does not have.
+	 *
+	 * @param array<string,string> $codes The codes on the third line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function payrollJournal(array $codes): array {
+		return [
+			'administrationId' => 'adm-1',
+			'entryDate' => '2026-10-31',
+			'lines' => [
+				['accountNumber' => '4000', 'side' => 'debit', 'amount' => 6000.00, 'costCenterCode' => 'CC-100'],
+				['accountNumber' => '4000', 'side' => 'debit', 'amount' => 3000.00, 'costCenterCode' => 'CC-200'],
+				['accountNumber' => '4000', 'side' => 'debit', 'amount' => 1000.00, ...$codes],
+				['accountNumber' => '1600', 'side' => 'credit', 'amount' => 10000.00],
+			],
+		];
+	}//end payrollJournal()
+
+	/**
+	 * The administration's dimensions: two cost centres and a blocked project.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function dimensions(): array {
+		return [
+			['code' => 'CC-100', 'dimensionType' => 'cost-center', 'lifecycleState' => 'active', 'administrationId' => 'adm-1'],
+			['code' => 'CC-200', 'dimensionType' => 'cost-center', 'lifecycleState' => 'active', 'administrationId' => 'adm-1'],
+			['code' => 'P-2026-014', 'dimensionType' => 'project', 'lifecycleState' => 'blocked', 'administrationId' => 'adm-1'],
+		];
+	}//end dimensions()
+
+	/**
+	 * REQ-LJD-002: a cost centre no dimension of the administration carries is refused, naming the line and the code.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 */
+	public function testUnknownCostCentreIsRefused(): void {
+		$this->withDimensions(dimensions: self::dimensions());
+
+		$this->expectException(PostingRefusedException::class);
+		$this->expectExceptionMessage('Line 3: cost centre KP-900 does not exist or is not active in this administration');
+
+		$this->guard->canPost(journalEntryId: 'je-1', object: self::payrollJournal(codes: ['costCenterCode' => 'KP-900']));
+	}//end testUnknownCostCentreIsRefused()
+
+	/**
+	 * REQ-LJD-002: a project that exists but is blocked is refused.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 */
+	public function testBlockedProjectIsRefused(): void {
+		$this->withDimensions(dimensions: self::dimensions());
+
+		$this->expectException(PostingRefusedException::class);
+		$this->expectExceptionMessage('Line 3: project P-2026-014 does not exist or is not active in this administration');
+
+		$this->guard->canPost(journalEntryId: 'je-1', object: self::payrollJournal(codes: ['costCenterCode' => 'CC-100', 'projectCode' => 'P-2026-014']));
+	}//end testBlockedProjectIsRefused()
+
+	/**
+	 * REQ-LJD-002: lines without codes post as before, and known active codes post too.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 */
+	public function testLinesWithoutCodesStillPost(): void {
+		$this->withDimensions(dimensions: []);
+		$plain = [
+			'administrationId' => 'adm-1',
+			'lines' => [
+				['accountNumber' => '4500', 'side' => 'debit', 'amount' => 25.00],
+				['accountNumber' => '1000', 'side' => 'credit', 'amount' => 25.00],
+			],
+		];
+		self::assertTrue($this->guard->canPost(journalEntryId: 'je-1', object: $plain));
+
+		$this->withDimensions(dimensions: self::dimensions());
+		self::assertTrue($this->guard->canPost(journalEntryId: 'je-1', object: self::payrollJournal(codes: ['costCenterCode' => 'CC-200'])));
+	}//end testLinesWithoutCodesStillPost()
 
 	/**
 	 * A balanced 2-line journal supplied inline returns true per REQ-JE-007.

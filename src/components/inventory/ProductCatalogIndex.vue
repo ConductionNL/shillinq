@@ -125,8 +125,7 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { fetchEnvelope, isNoAdministration, rowsOf } from './catalogEnvelope.js'
 
 export default {
 	name: 'ProductCatalogIndex',
@@ -275,36 +274,46 @@ export default {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/inventory/products'),
-				)
-				const payload = response.data || {}
-				this.products = Array.isArray(payload.products)
-					? payload.products
-					: []
-				this.source = payload.source || 'local-cache'
-				this.authoritative = payload.authoritative === true
+				this.applyCatalog(await fetchEnvelope('/apps/shillinq/api/inventory/products'))
 			} catch (e) {
 				this.products = []
-				// 403 is not a failure, it is an answer: the caller holds no
-				// AdministrationMembership. Reporting it as "could not load"
-				// would send an operator hunting a broken endpoint instead of
-				// asking for access.
-				if (e?.response?.status === 403) {
-					this.error = this.t(
-						'shillinq',
-						'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
-					)
-					return
-				}
-
-				this.error = this.t(
-					'shillinq',
-					'Could not load the product catalog.',
-				)
+				this.error = this.catalogError(e)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Take the rows, the answering side and its authority from the envelope.
+		 *
+		 * @param {object} envelope The envelope.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
+		 */
+		applyCatalog(envelope) {
+			this.products = rowsOf(envelope, 'products')
+			this.source = envelope.source || 'local-cache'
+			this.authoritative = envelope.authoritative === true
+		},
+
+		/**
+		 * The message for a failed load.
+		 *
+		 * @param {Error} e The failure.
+		 * @return {string} The message.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
+		 */
+		catalogError(e) {
+			// 403 is not a failure, it is an answer: the caller holds no
+			// AdministrationMembership. Reporting it as "could not load"
+			// would send an operator hunting a broken endpoint instead of
+			// asking for access.
+			if (isNoAdministration(e)) {
+				return this.t(
+					'shillinq',
+					'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
+				)
+			}
+			return this.t('shillinq', 'Could not load the product catalog.')
 		},
 
 		/**

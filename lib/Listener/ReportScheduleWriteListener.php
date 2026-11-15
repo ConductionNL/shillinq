@@ -30,8 +30,8 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
-use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
+use OCA\Shillinq\Kernel\Contracts\ReportRecipientPolicyInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IUserSession;
@@ -69,13 +69,13 @@ class ReportScheduleWriteListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param ListenerSchemaResolver $schemaResolver Matches ReportSchedule in shillinq's register.
-	 * @param ReportRecipientPolicy  $policy         Who may receive the reports.
+	 * @param ListenerSchemaResolverInterface $schemaResolver Matches ReportSchedule in shillinq's register.
+	 * @param ReportRecipientPolicyInterface  $policy         Who may receive the reports.
 	 * @param IUserSession           $userSession    The caller; system saves pass.
 	 */
 	public function __construct(
-		private readonly ListenerSchemaResolver $schemaResolver,
-		private readonly ReportRecipientPolicy $policy,
+		private readonly ListenerSchemaResolverInterface $schemaResolver,
+		private readonly ReportRecipientPolicyInterface $policy,
 		private readonly IUserSession $userSession,
 	) {
 	}//end __construct()
@@ -95,6 +95,27 @@ class ReportScheduleWriteListener implements IEventListener {
 			return;
 		}
 
+		['entity' => $entity, 'before' => $before, 'owner' => $owner] = self::writeOf(event: $event, caller: $caller);
+		if ($this->isReportSchedule(entity: $entity) === false) {
+			return;
+		}
+
+		$error = $this->refusal(after: $entity->getObject(), before: $before, owner: $owner, caller: $caller);
+		if ($error !== null) {
+			$event->setErrors(['message' => $error, 'field' => 'recipients']);
+			$event->stopPropagation();
+		}
+	}//end handle()
+
+	/**
+	 * The object being written, its previous data and its owner (the caller for a new one).
+	 *
+	 * @param Event  $event  The creating or updating event.
+	 * @param string $caller The caller's uid.
+	 *
+	 * @return array{entity: mixed, before: mixed, owner: string}
+	 */
+	private static function writeOf(Event $event, string $caller): array {
 		$entity = null;
 		$before = null;
 		$owner  = $caller;
@@ -109,16 +130,19 @@ class ReportScheduleWriteListener implements IEventListener {
 			$owner  = (string)($old?->getOwner() ?? $caller);
 		}
 
-		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: 'ReportSchedule') === false) {
-			return;
-		}
+		return ['entity' => $entity, 'before' => $before, 'owner' => $owner];
+	}//end writeOf()
 
-		$error = $this->refusal(after: $entity->getObject(), before: $before, owner: $owner, caller: $caller);
-		if ($error !== null) {
-			$event->setErrors(['message' => $error, 'field' => 'recipients']);
-			$event->stopPropagation();
-		}
-	}//end handle()
+	/**
+	 * Whether the written object is a ReportSchedule.
+	 *
+	 * @param mixed $entity The object being written, or null.
+	 *
+	 * @return bool
+	 */
+	private function isReportSchedule(mixed $entity): bool {
+		return ($entity !== null && $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: 'ReportSchedule') === true);
+	}//end isReportSchedule()
 
 	/**
 	 * Why the save is refused, or null.

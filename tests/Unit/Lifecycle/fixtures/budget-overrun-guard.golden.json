@@ -1,0 +1,173 @@
+{
+    "noBudget": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "noTaskField": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "within": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Taakveld",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:Begrotingswijziging",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:GLLine",
+            {
+                "findAll": {
+                    "filters": {
+                        "taskFieldCode": "1.2",
+                        "side": "debit"
+                    }
+                }
+            }
+        ]
+    },
+    "exact": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Taakveld",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:Begrotingswijziging",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:GLLine",
+            {
+                "findAll": {
+                    "filters": {
+                        "taskFieldCode": "1.2",
+                        "side": "debit"
+                    }
+                }
+            }
+        ]
+    },
+    "over": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Taakveld",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:Begrotingswijziging",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:GLLine",
+            {
+                "findAll": {
+                    "filters": {
+                        "taskFieldCode": "1.2",
+                        "side": "debit"
+                    }
+                }
+            }
+        ]
+    },
+    "unknownTaskField": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:Taakveld",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:Begrotingswijziging",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:GLLine",
+            {
+                "findAll": {
+                    "filters": {
+                        "taskFieldCode": "9.9",
+                        "side": "debit"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "BudgetOverrunGuard: budget check failed — denying GL post (fail-closed)",
+                {
+                    "budgetId": "pb-1",
+                    "taskFieldCode": "1.2",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:Taakveld",
+            {
+                "findAll": {
+                    "filters": {
+                        "budgetId": "pb-1"
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -19,7 +19,7 @@ This specification defines the requirements for bookkeeping titel 9 jaarrekening
 
 @e2e exclude pure backend/compliance: Titel 9 jaarrekening — not browser-testable
 
-### REQ-T9-001: The system SHALL automatically determine groottecategorie per art. 2:395a–398 BW
+### Requirement: REQ-T9-001: The system SHALL automatically determine groottecategorie per art. 2:395a–398 BW
 
 The system MUST classify a commercial entity into one of four size categories (micro, klein, middelgroot, groot) based on the two-of-three criterion applied over two consecutive fiscal years: balanstotaal (balance sheet total), netto-omzet (net revenue), and gemiddeld aantal werknemers (average number of employees). Classification determines which jaarrekening sections are mandatory (e.g., micro files only verkorte balans; middelgroot+ files kasstroomoverzicht + bestuursverslag).
 
@@ -43,7 +43,7 @@ The system MUST classify a commercial entity into one of four size categories (m
 
 ---
 
-### REQ-T9-002: The system SHALL generate a Balans (balance sheet) conforming to art. 2:373 BW with wettelijke rubrieken and comparatief cijfers
+### Requirement: REQ-T9-002: The system SHALL generate a Balans (balance sheet) conforming to art. 2:373 BW with wettelijke rubrieken and comparatief cijfers
 
 The BalanceSheet entity MUST be generated from GL aggregations with the exact rubriek structure mandated by art. 2:373 BW (Titel 9 art. 2:373): activa side split into vaste activa (immateriële B.I, materiële B.II, financiële B.III) and vlottende activa (voorraden C.I, vorderingen C.II, effecten C.III, liquide middelen C.IV); passiva side split into eigen vermogen A, voorzieningen B, langlopende schulden C, kortlopende schulden D. Each rubriek line includes current-year amount, prior-year amount, and footnote references to linked toelichting-paragrafen.
 
@@ -67,7 +67,7 @@ The BalanceSheet entity MUST be generated from GL aggregations with the exact ru
 
 ---
 
-### REQ-T9-003: The system SHALL generate a Winst-en-Verliesrekening (P&L) using model A (categorisch) or E (functioneel), per art. 2:377 BW
+### Requirement: REQ-T9-003: The system SHALL generate a Winst-en-Verliesrekening (P&L) using model A (categorisch) or E (functioneel), per art. 2:377 BW
 
 The IncomeStatement entity MUST be generated according to the operator-selected model: Model A "categorisch" (art. 2:377 lid 2) groups costs by type (grond- en hulfstoffen, lonen, sociale lasten, afschrijvingen, etc.); Model E "functioneel" (lid 3) groups costs by function (kostprijs verkopen, verkoop- en distributiekosten, algemene beheerskosten). The model choice must be consistent year-on-year (stelselwijziging — change of accounting policy — is a disclosure requirement). All rubrieken follow art. 2:377 ordering; subtotals (bedrijfsresultaat, resultaat voor belasting) are calculated automatically.
 
@@ -91,7 +91,7 @@ The IncomeStatement entity MUST be generated according to the operator-selected 
 
 ---
 
-### REQ-T9-004: The system SHALL automatically generate wettelijk verplichte toelichting-paragrafen based on groottecategorie and GL content
+### Requirement: REQ-T9-004: The system SHALL automatically generate wettelijk verplichte toelichting-paragrafen based on groottecategorie and GL content
 
 The Note entity represents an individual toelichting-paragraaf (accounting note). The system MUST generate all mandatory notes per groottecategorie per RJ guidelines (RJ 210–272, 350, etc.), including: algemene grondslagen (basis of valuation and profit measurement), mutatieoverzicht materiële vaste activa (MVA mutatie-tabel per RJ 212), opbouw eigen vermogen (EV mutation matrix per RJ 240), uitsplitsing en condities schulden (debt schedule per RJ 250), niet-uit-balans-blijkende verplichtingen (off-balance-sheet commitments per art. 2:382), gebeurtenissen na balansdatum (post-balance-sheet events per RJ 160), and for middelgroot+ segmentinformatie (segment reporting per RJ 500-series) and bezoldigingen (director compensation per RJ 271).
 
@@ -121,7 +121,7 @@ The Note entity represents an individual toelichting-paragraaf (accounting note)
 
 ---
 
-### REQ-T9-005: The system SHALL generate a Kasstroomoverzicht (cash flow statement) per RJ 350 for middelgroot+ entities
+### Requirement: REQ-T9-005: The system SHALL generate a Kasstroomoverzicht (cash flow statement) per RJ 350 for middelgroot+ entities
 
 CashFlowStatement is mandatory only for middelgrote en grote rechtspersonen (middelgroot+); klein and micro may prepare it voluntarily. The statement MUST use the indirect method (standaard; direct method optional on request, with data-availability warnings). The structure MUST follow RJ 350: three main categories (operationele activiteiten, investeringsactiviteiten, financieringsactiviteiten), each with line items; bottom line reconciles to the change in liquide middelen on the balans.
 
@@ -145,7 +145,7 @@ CashFlowStatement is mandatory only for middelgrote en grote rechtspersonen (mid
 
 ---
 
-### REQ-T9-006: The system SHALL generate a Bestuursverslag (Director's Report) for middelgroot+ entities per art. 2:391 BW
+### Requirement: REQ-T9-006: The system SHALL generate a Bestuursverslag (Director's Report) for middelgroot+ entities per art. 2:391 BW
 
 DirectorReport entity is mandatory for middelgrote+ entities. The template MUST include six required sections per art. 2:391: (1) Algemeen (rechtsvorm, vestiging, activiteiten — auto-populated), (2) Financiële gang van zaken (auto-text with omzet, marge, resultaat YoY comparison + optional auto-charts), (3) Risico's en onzekerheden (template prompts with example categories), (4) Verwachte gang van zaken (toekomstparagraaf — operator-authored), (5) Personeel (gemiddeld aantal werknemers auto-populated from HR/administratie, ziekteverzuim if available), (6) Ondertekening (datum + bestuur-namen auto-populated). Additional optional sections: Onderzoeks- en ontwikkelings (R&D) if R&D costs are capitalized, ESG (milieu, duurzaamheid, sociaal) if entity is groot or CSRD-subject.
 
@@ -169,7 +169,7 @@ DirectorReport entity is mandatory for middelgrote+ entities. The template MUST 
 
 ---
 
-### REQ-T9-007: The system SHALL support an accountant-review workflow for middelgroot+ (mandatory) or klein (optional)
+### Requirement: REQ-T9-007: The system SHALL support an accountant-review workflow for middelgroot+ (mandatory) or klein (optional)
 
 The system SHALL satisfy this requirement: The system SHALL support an accountant-review workflow for middelgroot+ (mandatory) or klein (optional).
 
@@ -201,7 +201,7 @@ ReviewWorkflow schema orchestrates the progression: `concept` → `in-review` (a
 
 ---
 
-### REQ-T9-008: The system SHALL convert the final jaarrekening to SBR-XBRL format and support electronic filing at KVK via Digipoort
+### Requirement: REQ-T9-008: The system SHALL convert the final jaarrekening to SBR-XBRL format and support electronic filing at KVK via Digipoort
 
 The system SHALL satisfy this requirement: The system SHALL convert the final jaarrekening to SBR-XBRL format and support electronic filing at KVK via Digipoort.
 
@@ -227,7 +227,7 @@ The jaarrekening, once `vastgesteld` (approved by AV assembly) and ready for `ge
 
 ---
 
-### REQ-T9-009: The system SHALL apply wettelijke vrijstellingen (relief rules) for kleine entities
+### Requirement: REQ-T9-009: The system SHALL apply wettelijke vrijstellingen (relief rules) for kleine entities
 
 The system SHALL satisfy this requirement: The system SHALL apply wettelijke vrijstellingen (relief rules) for kleine entities.
 
@@ -253,7 +253,7 @@ Kleine rechtspersonen (klein category) benefit from verlichte regels (relief): v
 
 ---
 
-### REQ-T9-010: The system SHALL orchestrate the complete jaarrekening workflow with termijn-tracking and audit trail
+### Requirement: REQ-T9-010: The system SHALL orchestrate the complete jaarrekening workflow with termijn-tracking and audit trail
 
 The ReviewWorkflow and AnnualReport status progression is: `concept` (earliest form, updates as GL changes) → `opgemaakt` (bestuur-signed, immutable snapshot) → `in-review` (if accountant required) → `vastgesteld` (AV-approved, snapshot frozen) → `gedeponeerd` (KVK-filed, immutable final). The system MUST track wettelijke termijnen per art. 2:391 BW: opmaak by bestuur uiterlijk 5 months after fiscal-year-end (extendable by max 5 months to month 10 under request); vaststelling by AV uiterlijk 2 months after opmaak; deponering within 8 days after vaststelling; absolute deadline 12 months after fiscal-year-end. An audit trail (x-openregister-audit-trail-immutable) records every state transition, user, date, and any comments.
 

@@ -31,15 +31,17 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
+use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
 
 /**
  * Reads the payment requests on one subject across every page.
  *
  * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
  */
-final class PaymentRequestFinder {
+final class PaymentRequestFinder implements PaymentRequestFinderInterface {
 	/**
 	 * Rows per page.
 	 *
@@ -66,14 +68,14 @@ final class PaymentRequestFinder {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param ObjectPaymentRequestValidator $validator The subject key.
+	 * @param ObjectPaymentRequestValidatorInterface $validator The subject key.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly ObjectPaymentRequestValidator $validator,
+		private readonly ObjectPaymentRequestValidatorInterface $validator,
 		private readonly IAppConfig $appConfig,
 	) {
 	}//end __construct()

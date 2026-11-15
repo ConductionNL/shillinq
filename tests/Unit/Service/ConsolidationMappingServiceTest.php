@@ -277,4 +277,147 @@ final class ConsolidationMappingServiceTest extends TestCase {
 		);
 
 	}//end testFindActiveMappingNullOnEmptyInput()
+
+	/**
+	 * Pin the pick over every ordering of undated, dated, future, unparseable,
+	 * tied and wrapped candidates.
+	 *
+	 * @return void
+	 */
+	public function testPickMostRecentOverEveryOrdering(): void {
+		$asOf = new \DateTimeImmutable('2026-06-01');
+		$undatedA = ['n' => 'undatedA', 'validFrom' => ' '];
+		$undatedB = ['n' => 'undatedB'];
+		$jan = ['n' => 'jan', 'validFrom' => '2026-01-01'];
+		$janTie = ['n' => 'janTie', 'validFrom' => '2026-01-01T00:00:00'];
+		$mar = ['n' => 'mar', 'validFrom' => ' 2026-03-01 '];
+		$future = ['n' => 'future', 'validFrom' => '2026-06-02'];
+		$asOfDay = ['n' => 'asOf', 'validFrom' => '2026-06-01'];
+		$bad = ['n' => 'bad', 'validFrom' => 'not a date'];
+		$wrapped = new class {
+			public function getObject(): array {
+				return ['n' => 'wrapped', 'validFrom' => '2026-02-01'];
+			}
+		};
+		$wrappedScalar = new class {
+			public function getObject(): string {
+				return 'x';
+			}
+		};
+		$cases = [
+			[[], null],
+			[[$undatedA, $undatedB], 'undatedA'],
+			[[$undatedA, $jan], 'jan'],
+			[[$jan, $undatedA], 'jan'],
+			[[$jan, $janTie], 'jan'],
+			[[$janTie, $jan], 'janTie'],
+			[[$mar, $jan, $undatedB], 'mar'],
+			[[$future, $bad], null],
+			[[$future, $undatedB, $bad], 'undatedB'],
+			[[$jan, $asOfDay, $mar], 'asOf'],
+			[[$wrappedScalar, 'scalar', $wrapped, $jan], 'wrapped'],
+		];
+		foreach ($cases as $index => [$candidates, $expected]) {
+			$picked = $this->service->pickMostRecent(new \ArrayIterator($candidates), $asOf);
+			self::assertSame($expected, ($picked['n'] ?? null), 'case ' . $index);
+		}
+
+	}//end testPickMostRecentOverEveryOrdering()
+
+	/**
+	 * Pin rule application and the elimination-account fallbacks.
+	 *
+	 * @return void
+	 */
+	public function testRulesAndEliminationAccountsAreExact(): void {
+		$mapping = [
+			'rules' => ['junk', ['sourceAccount' => '1000', 'destinationAccount' => '2000'], ['sourceAccount' => '1100', 'destinationAccount' => ''], ['sourceAccount' => '1000', 'destinationAccount' => '9999'], ['sourceAccount' => 1200, 'destinationAccount' => 3000]],
+			'intercompanyEliminationAccount' => '7000',
+		];
+		self::assertSame(
+			[
+				'mapped' => [
+					['source' => '1000', 'destination' => '2000'],
+					['source' => '1100', 'destination' => '1100'],
+					['source' => '1200', 'destination' => '3000'],
+					['source' => '1300', 'destination' => '1300'],
+					['source' => '5', 'destination' => '5'],
+				],
+				'unmapped' => ['1100', '1300', '5'],
+			],
+			$this->service->applyMapping($mapping, ['1000', '', '1100', '1200', '1300', 5])
+		);
+		self::assertSame('', $this->service->applyAccountRule($mapping, ''));
+		self::assertSame('1000', $this->service->applyAccountRule(['rules' => 'none'], '1000'));
+		self::assertSame('1000', $this->service->applyAccountRule([], '1000'));
+		self::assertSame('E', $this->service->resolveEliminationAccount(['eliminationAccount' => 'E'], null));
+		self::assertSame('7000', $this->service->resolveEliminationAccount(['eliminationAccount' => ''], $mapping));
+		self::assertNull($this->service->resolveEliminationAccount([], null));
+		self::assertNull($this->service->resolveEliminationAccount([], ['intercompanyEliminationAccount' => '']));
+		self::assertNull($this->service->resolveEliminationAccount([], []));
+
+	}//end testRulesAndEliminationAccountsAreExact()
+
+	/**
+	 * Pin the lookup query, the failure log and the empty-id short-circuit.
+	 *
+	 * @return void
+	 */
+	public function testFindActiveMappingQueriesAndLogsExactly(): void {
+		$events = [];
+		$store = new class($events) {
+			public bool $fail = false;
+
+			public function __construct(private array &$events) {
+			}
+
+			public function setRegister(string $register): self {
+				$this->events[] = ['register', $register];
+				return $this;
+			}
+
+			public function setSchema(string $schema): self {
+				$this->events[] = ['schema', $schema];
+				return $this;
+			}
+
+			public function findAll(array $config): array {
+				$this->events[] = ['find', $config];
+				if ($this->fail === true) {
+					throw new \RuntimeException('down');
+				}
+				return [['n' => 'old', 'validFrom' => '2020-01-01'], ['n' => 'new', 'validFrom' => '2025-01-01']];
+			}
+		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($store);
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('');
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('error')->willReturnCallback(
+			function (string $message, array $context) use (&$events): void {
+				$events[] = ['error', $message, $context];
+			}
+		);
+		$service = new ConsolidationMappingService($container, $config, $logger);
+
+		self::assertNull($service->findActiveMapping('', 'm'));
+		self::assertNull($service->findActiveMapping('d', ''));
+		self::assertSame([], $events);
+		self::assertSame('new', $service->findActiveMapping('d', 'm', new \DateTimeImmutable('2026-01-01'))['n']);
+		self::assertSame('old', $service->findActiveMapping('d', 'm', new \DateTimeImmutable('2024-01-01'))['n']);
+		$store->fail = true;
+		self::assertNull($service->findActiveMapping('d', 'm'));
+		$query = ['filters' => ['sourceAdministrationId' => 'd', 'destinationAdministrationId' => 'm']];
+		self::assertSame(
+			[
+				['register', 'shillinq'], ['schema', 'ConsolidationMapping'], ['find', $query],
+				['register', 'shillinq'], ['schema', 'ConsolidationMapping'], ['find', $query],
+				['register', 'shillinq'], ['schema', 'ConsolidationMapping'], ['find', $query],
+				['error', 'ConsolidationMappingService: failed to lookup mappings', ['sourceAdministrationId' => 'd', 'destinationAdministrationId' => 'm', 'exception' => 'down']],
+			],
+			$events
+		);
+
+	}//end testFindActiveMappingQueriesAndLogsExactly()
 }//end class

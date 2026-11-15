@@ -3,6 +3,9 @@
 /**
  * Journal Entry Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guards for the JournalEntry register
  * (bookkeeping-journal-entries, T1 foundation). Two preconditions are
  * referenced from the JournalEntry schema's x-openregister-lifecycle
@@ -39,7 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -62,12 +65,14 @@ class JournalEntryGuard {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
+	 * @param LineDimensionCheck $dimensions The lines' cost centre, cost carrier and project codes (ledger-journal-line-dimensions).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly PostingRestrictionGuard $restrictions,
+		private readonly LineDimensionCheck $dimensions,
 	) {
 	}//end __construct()
 
@@ -97,7 +102,7 @@ class JournalEntryGuard {
 	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function canPost(string|array $journalEntryId, ?array $object = null): bool {
+	public function canPost(string|array $journalEntryId, array|null $object = null): bool {
 		if (is_array($journalEntryId) === true) {
 			$object = $journalEntryId;
 			$journalEntryId = (string)($journalEntryId['id'] ?? ($journalEntryId['@self']['id'] ?? ''));
@@ -105,59 +110,107 @@ class JournalEntryGuard {
 
 		try {
 			$lines = $this->resolveLines(journalEntryId: $journalEntryId, object: $object);
-			if (count($lines) < 2) {
-				return false;
-			}
-
-			$debitCents = 0;
-			$creditCents = 0;
-			foreach ($lines as $line) {
-				if (is_array($line) === false) {
-					return false;
-				}
-
-				$cents = (int)round((float)($line['amount'] ?? 0) * 100);
-				if ($cents < 0) {
-					return false;
-				}
-
-				if (($line['side'] ?? '') === 'debit') {
-					$debitCents += $cents;
-					continue;
-				}
-
-				if (($line['side'] ?? '') === 'credit') {
-					$creditCents += $cents;
-					continue;
-				}
-
-				// Unknown side value — fail closed.
-				return false;
-			}//end foreach
-
-			if ($debitCents <= 0 || $debitCents !== $creditCents) {
-				return false;
-			}
-
-			// A person may not post on a control account or a blocked
-			// combination; the refusal names which (ledger-booking-rules).
-			$this->restrictions->assertAllowed(
-				lines: array_values($lines),
-				administrationId: (string)($object['administrationId'] ?? ''),
-				postingDate: (string)($object['entryDate'] ?? ''),
-				sourceApp: (string)($object['sourceApp'] ?? '')
-			);
-			return true;
+			return $this->linesBalance(lines: $lines) && $this->bookable(lines: $lines, object: $object);
 		} catch (PostingRefusedException $e) {
 			throw $e;
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'JournalEntryGuard: post balance check failed — denying post transition (fail-closed)',
-				['journalEntryId' => $journalEntryId, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}//end try
+			return $this->denyPost(journalEntryId: $journalEntryId, error: $e);
+		}
 	}//end canPost()
+
+	/**
+	 * True when there are at least two lines, every one valid, and the
+	 * debit and credit cents are equal and positive (REQ-JE-007).
+	 *
+	 * @param array<int,mixed> $lines The embedded line rows.
+	 *
+	 * @return bool
+	 */
+	private function linesBalance(array $lines): bool {
+		if (count($lines) < 2) {
+			return false;
+		}
+
+		$cents = ['debit' => 0, 'credit' => 0];
+		foreach ($lines as $line) {
+			$amount = $this->lineCents(line: $line);
+			if ($amount === null) {
+				return false;
+			}
+
+			$cents[$line['side']] += $amount;
+		}
+
+		return $cents['debit'] > 0 && $cents['debit'] === $cents['credit'];
+	}//end linesBalance()
+
+	/**
+	 * A line's amount in integer cents, or null when the line is not an
+	 * array, is negative, or has a side other than debit or credit (fail closed).
+	 *
+	 * @param mixed $line One embedded line row.
+	 *
+	 * @return int|null
+	 */
+	private function lineCents(mixed $line): int|null {
+		if (is_array($line) === false) {
+			return null;
+		}
+
+		$cents = (int)round((float)($line['amount'] ?? 0) * 100);
+		if ($cents < 0 || in_array(($line['side'] ?? ''), ['debit', 'credit'], true) === false) {
+			return null;
+		}
+
+		return $cents;
+	}//end lineCents()
+
+	/**
+	 * A person may not post on a control account or a blocked combination,
+	 * nor name an unknown or inactive dimension on a line; the refusal names
+	 * which (ledger-booking-rules, ledger-journal-line-dimensions).
+	 *
+	 * @param array<int,mixed>         $lines  The balanced line rows.
+	 * @param array<string,mixed>|null $object The JournalEntry being posted.
+	 *
+	 * @return true
+	 * @throws PostingRefusedException When a line breaks a booking rule or names an unknown dimension.
+	 *
+	 * @spec openspec/changes/ledger-journal-line-dimensions/specs/bookkeeping-general-ledger/spec.md#requirement-posting-refuses-an-unknown-or-inactive-code-req-ljd-002
+	 */
+	private function bookable(array $lines, array|null $object): bool {
+		$this->restrictions->assertAllowed(
+			lines: array_values($lines),
+			administrationId: (string)($object['administrationId'] ?? ''),
+			postingDate: (string)($object['entryDate'] ?? ''),
+			sourceApp: (string)($object['sourceApp'] ?? '')
+		);
+		// A line's cost centre, cost carrier and project must be active
+		// dimensions of the administration (ledger-journal-line-dimensions
+		// REQ-LJD-002); the refusal names the line and the code.
+		$this->dimensions->assertKnown(
+			lines: array_values($lines),
+			administrationId: (string)($object['administrationId'] ?? ''),
+			postingDate: (string)($object['entryDate'] ?? '')
+		);
+		return true;
+	}//end bookable()
+
+	/**
+	 * Log a failed post check and deny the transition (fail-closed).
+	 *
+	 * @param string     $journalEntryId The JournalEntry.id.
+	 * @param \Throwable $error          What went wrong.
+	 *
+	 * @return false
+	 */
+	private function denyPost(string $journalEntryId, \Throwable $error): bool {
+		$this->logger->error(
+			'JournalEntryGuard: post balance check failed — denying post transition (fail-closed)',
+			['journalEntryId' => $journalEntryId, 'exception' => $error->getMessage()]
+		);
+		return false;
+	}//end denyPost()
 
 	/**
 	 * Returns true iff the journal's materialised GLTransaction is already reversed.
@@ -178,29 +231,12 @@ class JournalEntryGuard {
 	 */
 	public function canVoid(string $journalEntryId, ?array $object = null): bool {
 		try {
-			$glTransactionId = '';
-			if ($object !== null && isset($object['glTransactionId']) === true) {
-				$glTransactionId = (string)$object['glTransactionId'];
-			}
-
+			$glTransactionId = $this->glTransactionIdOf(object: $object);
 			if ($glTransactionId === '') {
 				return false;
 			}
 
-			$register = $this->resolveRegister();
-
-			$transactions = $this->objectService
-				->setRegister($register)
-				->setSchema('GLTransaction')
-				->findAll(['filters' => ['id' => $glTransactionId]]);
-
-			foreach ($transactions as $transaction) {
-				if (is_array($transaction) === true && ($transaction['state'] ?? '') === 'reversed') {
-					return true;
-				}
-			}
-
-			return false;
+			return $this->isReversed(glTransactionId: $glTransactionId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'JournalEntryGuard: void check failed — denying void transition (fail-closed)',
@@ -209,6 +245,52 @@ class JournalEntryGuard {
 			return false;
 		}//end try
 	}//end canVoid()
+
+	/**
+	 * The journal's materialised GLTransaction id, or ''.
+	 *
+	 * @param array<string,mixed>|null $object The JournalEntry object being transitioned.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+	 */
+	private function glTransactionIdOf(array|null $object): string {
+		$glTransactionId = '';
+		if ($object !== null && isset($object['glTransactionId']) === true) {
+			$glTransactionId = (string)$object['glTransactionId'];
+		}
+
+		return $glTransactionId;
+	}//end glTransactionIdOf()
+
+	/**
+	 * Whether the GLTransaction is in lifecycle state `reversed`.
+	 *
+	 * @param string $glTransactionId The GLTransaction id.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Throwable When the lookup fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+	 */
+	private function isReversed(string $glTransactionId): bool {
+		$register = $this->resolveRegister();
+
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['id' => $glTransactionId]]);
+
+		foreach ($transactions as $transaction) {
+			if (is_array($transaction) === true && ($transaction['state'] ?? '') === 'reversed') {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isReversed()
 
 	/**
 	 * Resolve the journal entry's embedded `lines`, preferring the supplied

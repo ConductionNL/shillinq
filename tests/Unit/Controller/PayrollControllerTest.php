@@ -328,4 +328,76 @@ final class PayrollControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
 
 	}//end testJournaalpostReturns500()
+	/**
+	 * The blank-check order and bodies, the clamped WKR, the arguments passed,
+	 * every failure body and log line, and the 401.
+	 *
+	 * @return void
+	 */
+	public function testCheckOrderArgumentsAndLogLines(): void {
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use (&$params): mixed {
+				return ($params[$key] ?? $default);
+			}
+		);
+		$logged = [];
+		$this->logger->method('error')->willReturnCallback(
+			static function (string $message, array $context) use (&$logged): void {
+				$logged[] = [$message, $context];
+			}
+		);
+		$params = ['periode_id' => 'p-1'];
+		self::assertSame(['error' => 'administration_id is verplicht en moet een geldige identifier zijn'], $this->controller->loonstrook()->getData());
+		$params = ['administration_id' => 'adm-1', 'periode_id' => 'p-1'];
+		self::assertSame(['error' => 'werknemer_id is verplicht en moet een geldige identifier zijn'], $this->controller->loonstrook()->getData());
+		$params = ['administration_id' => 'adm-1', 'werknemer_id' => 'e-1', 'periode_id' => 'a b'];
+		self::assertSame(['error' => 'periode_id is verplicht en moet een geldige identifier zijn'], $this->controller->loonstrook()->getData());
+		$this->canAccess = false;
+		$params = ['administration_id' => 'adm-1', 'periode_id' => 'p-1'];
+		self::assertSame(['error' => 'Administration not found'], $this->controller->journaalpost()->getData());
+		$this->canAccess = true;
+
+		$params = ['administration_id' => ' adm-1 ', 'werknemer_id' => ' e-1 ', 'periode_id' => ' p-1 ', 'eindheffingen_wkr' => '-5'];
+		$this->service->method('berekenLoonStrook')->with('adm-1', 'e-1', 'p-1')->willReturnOnConsecutiveCalls(
+			self::throwException(new \RuntimeException('no slip')),
+			self::throwException(new \LogicException('db'))
+		);
+		$this->service->expects(self::once())->method('berekenLHAfdracht')->with('adm-1', 'p-1', 0.0)->willThrowException(new \LogicException('lh'));
+		$this->service->method('bouwLoonjournaalpost')->with('adm-1', 'p-1')->willThrowException(new \LogicException('jp'));
+
+		$notFound = $this->controller->loonstrook();
+		self::assertSame(
+			[404, ['message' => 'Payslip not found for the given employee and period', 'error' => 'payroll-loonstrook-not-found']],
+			[$notFound->getStatus(), $notFound->getData()]
+		);
+		self::assertSame(['error' => 'Kon loonstrook niet berekenen'], $this->controller->loonstrook()->getData());
+		self::assertSame(['error' => 'Kon LH-afdracht niet berekenen'], $this->controller->lhAfdracht()->getData());
+		self::assertSame(['error' => 'Kon loonjournaalpost niet opbouwen'], $this->controller->journaalpost()->getData());
+		$context = static fn (string $e): array => ['administrationId' => 'adm-1', 'periodId' => 'p-1', 'exception' => $e];
+		self::assertSame(
+			[
+				['PayrollController: loonstrook not found', $context('no slip')],
+				['PayrollController: failed to compute loonstrook', $context('db')],
+				['PayrollController: failed to compute LH-afdracht', $context('lh')],
+				['PayrollController: failed to build journaalpost', $context('jp')],
+			],
+			$logged
+		);
+
+		$anonymous = $this->createMock(IUserSession::class);
+		$anonymous->method('getUser')->willReturn(null);
+		$controller = new PayrollController(
+			request: $this->request,
+			payrollService: $this->service,
+			userSession: $anonymous,
+			context: $this->context,
+			logger: $this->logger,
+			l10n: $this->l10n,
+		);
+		foreach ([$controller->loonstrook(), $controller->lhAfdracht(), $controller->journaalpost()] as $response) {
+			self::assertSame([401, ['error' => 'Not logged in']], [$response->getStatus(), $response->getData()]);
+		}
+
+	}//end testCheckOrderArgumentsAndLogLines()
 }//end class
