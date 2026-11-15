@@ -38,6 +38,7 @@ use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
+use OCA\Shillinq\Listener\AccountDeductibleShareListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
@@ -334,6 +335,16 @@ final class ListenerRegistrar {
 			$context->registerEventListener(
 				event: $preSaveEvent,
 				listener: FeeScheduleValidationListener::class
+			);
+		}
+
+		// REQ-TVRD-003: an account below 100 percent deductible names a
+		// private-share account. Accounts go straight into OpenRegister, so
+		// the pre-save veto is where the pair rule runs.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: AccountDeductibleShareListener::class
 			);
 		}
 

@@ -498,6 +498,22 @@
     [
         "registerEventListener",
         [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectCreatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\AccountDeductibleShareListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\AccountDeductibleShareListener'",
+            "0"
+        ]
+    ],
+    [
+        "registerEventListener",
+        [
             "'OCA\\\\OpenRegister\\\\Event\\\\ObjectTransitionedEvent'",
             "'OCA\\\\Shillinq\\\\Listener\\\\AnnualReportSignoffRequestListener'",
             "0"

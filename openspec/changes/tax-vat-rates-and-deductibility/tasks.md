@@ -32,8 +32,21 @@
 
 ## 3. Deductibility
 
-- [ ] 3.1 Add `deductiblePercentage` and `privateShareAccountNumber` to `Account` with the pair rule, and show them on the account detail page (REQ-TVRD-003). Verify: `npm run check:registers`; Playwright sets 70 percent on 4520.
-- [ ] 3.2 Add `deductiblePercentage` to `JournalEntry` and `APTransaction` cost lines and write the split in the posting mappers (REQ-TVRD-004). Verify: PHPUnit for 70 percent, 100 percent and a line override, each balancing.
+- [x] 3.1 Add `deductiblePercentage` and `privateShareAccountNumber` to `Account` with the pair rule, and show them on the account detail page (REQ-TVRD-003). Verify: `npm run check:registers`; Playwright sets 70 percent on 4520.
+      DONE: both fields in `register.d/tax-vat-rates-and-deductibility.json` (0 to 100, default 100; `check:registers`
+      passes). The pair rule runs on OpenRegister's pre-save events in `AccountDeductibleShareListener`: below 100
+      without a private-share account, the account as its own private-share account, or a value outside 0 to 100 is
+      refused with REQ-TVRD-003 (`AccountDeductibleShareListenerTest`, registrar and golden recording updated). The
+      account detail page shows both fields (`src/manifest.d/tax-vat-rates-and-deductibility.json`). The Playwright
+      run is a browser task, not done here.
+- [x] 3.2 Add `deductiblePercentage` to `JournalEntry` and `APTransaction` cost lines and write the split in the posting mappers (REQ-TVRD-004). Verify: PHPUnit for 70 percent, 100 percent and a line override, each balancing.
+      DONE: `lib/Service/Ledger/DeductibleShareSplitter.php` takes the line's percentage, else its account's, else 100;
+      `MaterialiseGlTransactionAction` posts the deductible share with its input VAT and the private share plus its VAT
+      on the private-share account with `taxTreatment` nonDeductible, for APInvoice, APTransaction and JournalEntry
+      lines (a journal line with a `taxCode` moves its private VAT out of input VAT). Refused by name when the account
+      names no private-share account. `MaterialiseGlTransactionDeductibleTest` (9: the 70/30 fuel bill, the 100 line
+      override, a 0 override, the administration's own account, a mixed invoice, the refusal, journal lines with and
+      without a tax code) and `DeductibleShareSplitterTest` (9).
 
 ## 4. End to end
 

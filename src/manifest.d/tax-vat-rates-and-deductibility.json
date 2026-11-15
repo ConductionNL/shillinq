@@ -1,0 +1,155 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-vat-rates-and-deductibility",
+    "adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
+    "description": "The deductible percentage and private-share account on the account detail page (REQ-TVRD-003). mergePages() replaces a page wholesale by id, so ChartOfAccountsDetail is a full copy of src/manifest.json with the two fields added after VAT Applicable: re-sync if the base page changes."
+  },
+  "pages": [
+    {
+      "id": "ChartOfAccountsDetail",
+      "route": "/chart-of-accounts/:id",
+      "type": "detail",
+      "title": "Account",
+      "config": {
+        "register": "shillinq",
+        "_note": "General-ledger account detail — a single Chart-of-Accounts line (number, type, VAT/Vpb flags, BBV variant, retention). GL posting lines list every movement booked to this account; audit trail evidences master-data changes for ledger integrity. tax-vat-rates-and-deductibility overlays this page from its own fragment to add the deductible percentage and the private-share account (REQ-TVRD-003).",
+        "relatedLists": [
+          {
+            "id": "account-lines",
+            "title": "GL postings",
+            "schema": "GLLine",
+            "filter": {
+              "accountNumber": "@self.id"
+            },
+            "columns": [
+              {
+                "key": "transactionId",
+                "label": "Transaction"
+              },
+              {
+                "key": "side",
+                "label": "D/C"
+              },
+              {
+                "key": "amount",
+                "label": "Amount (EUR)"
+              },
+              {
+                "key": "periodId",
+                "label": "Period"
+              },
+              {
+                "key": "description",
+                "label": "Description"
+              }
+            ]
+          }
+        ],
+        "aggregation": "accountBalance",
+        "auditTrail": true,
+        "schema": "Account",
+        "fields": [
+          {
+            "key": "accountNumber",
+            "label": "Account Number",
+            "type": "string"
+          },
+          {
+            "key": "name",
+            "label": "Name",
+            "type": "string"
+          },
+          {
+            "key": "accountType",
+            "label": "Account Type",
+            "type": "string"
+          },
+          {
+            "key": "currency",
+            "label": "Currency",
+            "type": "string"
+          },
+          {
+            "key": "parentAccountNumber",
+            "label": "Parent Account",
+            "type": "string"
+          },
+          {
+            "key": "administrationId",
+            "label": "Administration",
+            "type": "string"
+          },
+          {
+            "key": "lifecycleState",
+            "label": "Status",
+            "type": "string"
+          },
+          {
+            "key": "isClosingAccount",
+            "label": "Closing Account",
+            "type": "boolean"
+          },
+          {
+            "key": "vatApplicable",
+            "label": "VAT Applicable",
+            "type": "boolean"
+          },
+          {
+            "key": "deductiblePercentage",
+            "label": "Deductible percentage",
+            "type": "number"
+          },
+          {
+            "key": "privateShareAccountNumber",
+            "label": "Private-share account",
+            "type": "string"
+          },
+          {
+            "key": "description",
+            "label": "Description",
+            "type": "string"
+          }
+        ],
+        "lifecycleActions": true,
+        "indexRoute": "ChartOfAccounts",
+        "sidebarProps": {
+          "tabs": [
+            {
+              "id": "trend",
+              "label": "Trend",
+              "icon": "ChartLine",
+              "order": 95,
+              "widgets": [
+                {
+                  "type": "BudgetTrendChart",
+                  "props": {
+                    "scope": "account"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "audit",
+              "label": "Audit Trail",
+              "icon": "History",
+              "order": 90,
+              "widgets": [
+                {
+                  "type": "data",
+                  "componentName": "openregister-audit-trail",
+                  "props": {
+                    "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+                    "collapsed": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts"
+      }
+    }
+  ]
+}

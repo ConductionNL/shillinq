@@ -5660,6 +5660,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "tax-vat-rates-and-deductibility",
+					"id": "ChartOfAccountsDetail",
+					"route": "/chart-of-accounts/:id",
+					"type": "detail",
+					"title": "Account"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "Cashflow",
