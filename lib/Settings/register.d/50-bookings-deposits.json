@@ -370,35 +370,19 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "booking-operator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "admin": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_booking_operator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_booking_operator",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_booking_operator",
+            "shillinq_bookkeeper"
+          ]
         },
         "x-openregister-aggregations": {
           "byState": {

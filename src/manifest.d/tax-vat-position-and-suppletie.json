@@ -1,0 +1,167 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "tax-vat-position-and-suppletie",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "The BTW correction page with the steps of a supplementary return: Prepare, Download and File (REQ-VPS-002). A fragment page replaces the base page of the same id wholesale, so this carries the whole page."
+	},
+	"pages": [
+		{
+			"id": "BtwCorrectieDetail",
+			"route": "/belastingen/btw-correcties/:id",
+			"type": "detail",
+			"title": "BTW-correctie",
+			"config": {
+				"register": "shillinq",
+				"_note": "BTW correction detail — a supplementary VAT correction (suppletie) against an original return, with reason and adjustment amount. The supporting attachment lives under Files; audit trail evidences submission. tax-vat-position-and-suppletie overlays this page from its own fragment to add Prepare, Download and File (REQ-VPS-002).",
+				"auditTrail": true,
+				"schema": "VatCorrection",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reason",
+						"type": "string"
+					},
+					{
+						"key": "originalReturnId",
+						"label": "Original return",
+						"type": "string"
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correction amount",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Year",
+						"type": "number"
+					},
+					{
+						"key": "detectedAt",
+						"label": "Detected on",
+						"type": "string"
+					},
+					{
+						"key": "preparedAt",
+						"label": "Prepared on",
+						"type": "string"
+					},
+					{
+						"key": "thresholdExceeded",
+						"label": "Above EUR 1,000",
+						"type": "boolean"
+					},
+					{
+						"key": "filingDeadline",
+						"label": "File before",
+						"type": "string"
+					},
+					{
+						"key": "glCorrectionTransactionId",
+						"label": "Correction posting",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Filed on",
+						"type": "string"
+					},
+					{
+						"key": "digipoortMessageId",
+						"label": "Digipoort reference",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BtwCorrecties",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat",
+				"sections": [],
+				"actions": [
+					{
+						"id": "prepare-suppletie",
+						"label": "Prepare supplementary return",
+						"type": "handler",
+						"handler": "prepareSupplementaryReturn",
+						"icon": "FileDocumentEditOutline",
+						"visibleWhen": {
+							"field": "preparedAt",
+							"op": "empty"
+						},
+						"description": "Work out the differences per box against the filed return, decide against the EUR 1,000 threshold and stage the correction posting."
+					},
+					{
+						"id": "download-suppletie",
+						"label": "Download",
+						"type": "handler",
+						"handler": "downloadSupplementaryReturn",
+						"icon": "DownloadOutline",
+						"visibleWhen": {
+							"field": "preparedAt",
+							"op": "notEmpty"
+						},
+						"description": "Download the supplementary return with its differences per box."
+					},
+					{
+						"id": "file-suppletie",
+						"label": "File supplementary return",
+						"type": "handler",
+						"handler": "fileSupplementaryReturn",
+						"icon": "SendOutline",
+						"visibleWhen": {
+							"field": "preparedAt",
+							"op": "notEmpty"
+						},
+						"description": "Hand the supplementary return to Digipoort. While Digipoort is not connected it is downloaded so you can file it yourself."
+					}
+				]
+			}
+		}
+	]
+}

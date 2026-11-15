@@ -194,32 +194,21 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "publicRead": true,
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "BudgetBBVMapping": {
@@ -298,32 +287,21 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "publicRead": true,
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       }
     }

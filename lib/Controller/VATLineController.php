@@ -3,6 +3,9 @@
 /**
  * VAT Line Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-3 BTW-regel read-only API for the bookkeeping-vat-btw-filing
  * change (issue #127). Exposes the VAT lines belonging to one return
  * or one declaration:
@@ -31,17 +34,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,6 +57,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 class VATLineController extends Controller {
+	use AdministrationScopedListing;
+
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
 	/**
@@ -65,17 +67,17 @@ class VATLineController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param ContainerInterface $container DI container for OR's ObjectService.
 	 * @param IUserSession $session User session for the authentication guard.
-	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param AdministrationContextServiceInterface $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $session,
-		private readonly AdministrationContextService $context,
+		private readonly AdministrationContextServiceInterface $context,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -134,45 +136,18 @@ class VATLineController extends Controller {
 		// ADR-005 / REQ-MA-001. The query used to carry no administration term
 		// at all, so any authenticated user could read any tenant's VAT lines by
 		// quoting a return or declaration id. VATLine carries administrationId,
-		// so the scope is applied as an additional filter, one query per
-		// administration the caller is actually a member of. A caller with no
-		// memberships gets an empty scope and therefore an empty list.
+		// so the scope is applied as an additional filter (scopedRows()).
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$lines = [];
-			foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
-				$lines = array_merge(
-					$lines,
-					$objectService
-						->setRegister(register: 'shillinq')
-						->setSchema(schema: 'VATLine')
-						->findAll(
-							[
-								'filters' => [
-									$filterKey => $filterValue,
-									'administrationId' => $administrationId,
-								],
-							]
-						)
-				);
-			}
+			$lines = $this->scopedRows(schema: 'VATLine', filter: [$filterKey => $filterValue]);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VATLineController: failed to list VAT lines',
 				[$filterKey => $filterValue, 'exception' => $e->getMessage()]
 			);
-
 			return new JSONResponse(['error' => 'Failed to list VAT lines'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+		}
 
-		return new JSONResponse(
-			[
-				'data' => $lines,
-				'total' => count($lines),
-			],
-			Http::STATUS_OK
-		);
-
+		return self::listed(rows: $lines);
 	}//end findLines()
 
 	/**

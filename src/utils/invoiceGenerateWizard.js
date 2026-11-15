@@ -12,8 +12,6 @@ import { spawnDialog } from '@nextcloud/vue/functions/dialog'
 import InvoiceGenerateWizard from '../modals/InvoiceGenerateWizard.vue'
 import { loadBillableReadings } from './usageBilling.js'
 
-const REGISTER_SLUG = 'shillinq'
-
 /** Billing models InvoiceGenerationRequest accepts, in the order the select shows them. */
 export const BILLING_MODELS = Object.freeze([
 	't_and_m',
@@ -24,6 +22,17 @@ export const BILLING_MODELS = Object.freeze([
 	'usage',
 ])
 
+/** Source references the request carries only when they are set, in request order. */
+const OPTIONAL_REFERENCES = Object.freeze([
+	'projectId',
+	'rateCardId',
+	'retainerScheduleId',
+	'milestoneId',
+])
+
+/** Billing models whose request carries a fixed fee. */
+const FIXED_FEE_MODELS = Object.freeze(['fixed_fee', 'mixed'])
+
 /**
  * Header action: open the Generate invoices dialog.
  *
@@ -32,18 +41,6 @@ export const BILLING_MODELS = Object.freeze([
  */
 export function openInvoiceGenerateWizard() {
 	return spawnDialog(InvoiceGenerateWizard, {})
-}
-
-/**
- * Rows out of an OpenRegister list response.
- *
- * @param {object} response The axios response.
- * @return {Array<object>} The rows.
- */
-function rowsOf(response) {
-	const rows =
-		response?.data?.results ?? response?.data?.objects ?? response?.data ?? []
-	return Array.isArray(rows) ? rows : []
 }
 
 /**
@@ -57,69 +54,9 @@ export function idOf(row) {
 }
 
 /**
- * Whether an ISO date lies in the period, both ends included. An open end
- * does not limit.
- *
- * @param {string} date The date (YYYY-MM-DD, a longer ISO string is cut).
- * @param {string} fromDate The first day, or ''.
- * @param {string} toDate The last day, or ''.
- * @return {boolean} True when it does.
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
- */
-export function inPeriod(date, fromDate, toDate) {
-	const day = String(date || '').slice(0, 10)
-	if (day === '') {
-		return false
-	}
-	return (!fromDate || day >= fromDate) && (!toDate || day <= toDate)
-}
-
-/**
- * The time entries of a project in the period.
- *
- * @param {Array<object>} entries UrenRegistratie objects.
- * @param {string} projectId The project, or '' for every project.
- * @param {string} fromDate The first day.
- * @param {string} toDate The last day.
- * @return {Array<object>} The entries, oldest first.
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
- */
-export function timeEntriesFor(entries, projectId, fromDate, toDate) {
-	return entries
-		.filter((entry) => !projectId || String(entry.projectId || '') === projectId)
-		.filter((entry) => inPeriod(entry.date, fromDate, toDate))
-		.sort((a, b) => String(a.date).localeCompare(String(b.date)))
-}
-
-/**
- * The expense claims passed on to a customer, submitted in the period.
- *
- * @param {Array<object>} claims ExpenseClaimEntry objects.
- * @param {string} customerId The customer.
- * @param {string} fromDate The first day.
- * @param {string} toDate The last day.
- * @return {Array<object>} The claims.
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
- */
-export function passThroughClaimsFor(claims, customerId, fromDate, toDate) {
-	return claims.filter((claim) => {
-		const customers = Array.isArray(claim.passThroughCustomerIds)
-			? claim.passThroughCustomerIds.map(String)
-			: []
-		return (
-			customers.includes(customerId)
-			&& inPeriod(
-				claim.submittedDate || claim.toDate || claim.fromDate,
-				fromDate,
-				toDate,
-			)
-		)
-	})
-}
-
-/**
- * Load what the lines step offers: the time entries, the passed-on expense
- * claims and, for the usage model, the rated meter readings.
+ * Load what the lines step offers: the customer's time entries and passed-on
+ * expense claims, read on the server for the caller's administration, and,
+ * for the usage model, the rated meter readings.
  *
  * @param {object} source The source step: customerId, projectId, fromDate, toDate, billingModel.
  * @return {Promise<{timeEntries: Array<object>, expenses: Array<object>, readings: Array<object>}>} The candidates.
@@ -127,21 +64,19 @@ export function passThroughClaimsFor(claims, customerId, fromDate, toDate) {
  */
 export async function loadCandidates(source) {
 	const { customerId, projectId, fromDate, toDate, billingModel } = source
-	const list = (schema, params) =>
-		axios.get(
-			generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${schema}`),
-			{ params: { _limit: 500, ...params } },
-		)
-	const [entries, claims, readings] = await Promise.all([
-		list('UrenRegistratie', projectId ? { projectId } : {}),
-		list('ExpenseClaimEntry', {}),
+	const [lines, readings] = await Promise.all([
+		axios.get(generateUrl('/apps/shillinq/api/v1/invoices/billable-lines'), {
+			params: { customerId, projectId: projectId || '', fromDate, toDate },
+		}),
 		billingModel === 'usage'
 			? loadBillableReadings(customerId, fromDate, toDate)
 			: Promise.resolve([]),
 	])
 	return {
-		timeEntries: timeEntriesFor(rowsOf(entries), projectId, fromDate, toDate),
-		expenses: passThroughClaimsFor(rowsOf(claims), customerId, fromDate, toDate),
+		timeEntries: Array.isArray(lines.data?.timeEntries)
+			? lines.data.timeEntries
+			: [],
+		expenses: Array.isArray(lines.data?.expenses) ? lines.data.expenses : [],
 		readings,
 	}
 }
@@ -155,7 +90,7 @@ export async function loadCandidates(source) {
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
  */
 export function buildGenerateRequest(source, chosen) {
-	const request = {
+	return {
 		billingModel: source.billingModel,
 		customerId: source.customerId,
 		fromDate: source.fromDate,
@@ -166,26 +101,43 @@ export function buildGenerateRequest(source, chosen) {
 			source.billingModel === 'usage'
 				? [...(chosen.meterReadingIds || [])]
 				: [],
+		...optionalReferences(source),
+		...fixedFeeFields(source),
 	}
-	for (const key of [
-		'projectId',
-		'rateCardId',
-		'retainerScheduleId',
-		'milestoneId',
-	]) {
-		if (source[key]) {
-			request[key] = source[key]
-		}
-	}
+}
+
+/**
+ * The optional references the source sets (a falsy value is left out).
+ *
+ * @param {object} source The source step.
+ * @return {object} The set references.
+ */
+function optionalReferences(source) {
+	return Object.fromEntries(
+		OPTIONAL_REFERENCES.filter((key) => source[key]).map((key) => [
+			key,
+			source[key],
+		]),
+	)
+}
+
+/**
+ * `{ fixedFeeCents }` for a fixed-fee model with a positive, finite fee
+ * (a decimal comma is read as a point); otherwise an empty object.
+ *
+ * @param {object} source The source step.
+ * @return {object} The fixed-fee field, or nothing.
+ */
+function fixedFeeFields(source) {
 	const fee = Number(String(source.fixedFee ?? '').replace(',', '.'))
 	if (
-		['fixed_fee', 'mixed'].includes(source.billingModel)
-		&& Number.isFinite(fee)
-		&& fee > 0
+		!FIXED_FEE_MODELS.includes(source.billingModel)
+		|| !Number.isFinite(fee)
+		|| fee <= 0
 	) {
-		request.fixedFeeCents = Math.round(fee * 100)
+		return {}
 	}
-	return request
+	return { fixedFeeCents: Math.round(fee * 100) }
 }
 
 /**

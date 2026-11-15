@@ -53,22 +53,44 @@ final class LeafDescriptor {
 		'single-entity',
 	];
 
+	private string $id;
+
+	private string $label;
+
+	private string $icon;
+
+	private ?string $requiredApp;
+
+	private ?string $group;
+
+	private array $surfaces;
+
+	private ?string $referenceType;
+
+	private ?string $requiresPermission;
+
+	private string $renderMode;
+
 	/**
 	 * @param array<int, string> $kinds Kinds.
-	 * @param array<int, string> $surfaces Surfaces.
 	 */
 	public function __construct(
-		private string $id,
-		private string $label,
-		private string $icon,
+		LeafIdentity $identity,
 		private array $kinds,
-		private ?string $requiredApp = null,
-		private ?string $group = null,
-		private array $surfaces = [],
-		private ?string $referenceType = null,
-		private ?string $requiresPermission = null,
-		private string $renderMode = self::RENDER_MODE_COMPONENT,
+		?LeafAvailability $availability = null,
+		?LeafRendering $rendering = null,
 	) {
+		$availability = $availability ?? new LeafAvailability();
+		$rendering = $rendering ?? new LeafRendering();
+		$this->id = $identity->id;
+		$this->label = $identity->label;
+		$this->icon = $identity->icon;
+		$this->requiredApp = $availability->requiredApp;
+		$this->group = $identity->group;
+		$this->surfaces = $rendering->surfaces;
+		$this->referenceType = $rendering->referenceType;
+		$this->requiresPermission = $availability->requiresPermission;
+		$this->renderMode = $rendering->renderMode;
 	}//end __construct()
 
 	public function getId(): string {

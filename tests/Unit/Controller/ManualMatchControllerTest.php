@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\ManualMatchController;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
+use OCA\Shillinq\Kernel\Exception\ManualMatchRefusedException;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCP\IL10N;
 use OCP\IRequest;

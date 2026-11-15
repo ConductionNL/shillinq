@@ -418,37 +418,21 @@
             "description": "Sequential movement number unique per administration."
           }
         ],
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "inventory": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_inventory"
+          ]
         }
       }
     }

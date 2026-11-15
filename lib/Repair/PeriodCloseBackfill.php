@@ -3,6 +3,9 @@
 /**
  * Shillinq PeriodCloseBackfill Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Idempotent repair step that backfills `FiscalPeriod` records for every
  * known Administration record, ensuring the current calendar month + the
  * next twelve months exist in the open state (per
@@ -40,9 +43,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -50,13 +50,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that backfills forward-looking FiscalPeriod records for
@@ -77,12 +77,12 @@ class PeriodCloseBackfill implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocationInterface $settingsService,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
@@ -134,44 +134,13 @@ class PeriodCloseBackfill implements IRepairStep {
 					continue;
 				}
 
-				foreach ($horizon as $period) {
-					if ($this->fiscalPeriodExists(
-						objectService: $this->objectService,
-						registerSlug: $registerSlug,
-						periodId: $period['periodId'],
-						administrationId: $administrationId
-					) === true
-					) {
-						$skipped++;
-						continue;
-					}
-
-					$record = [
-						'periodId' => $period['periodId'],
-						'name' => $period['name'],
-						'administrationId' => $administrationId,
-						'startDate' => $period['startDate'],
-						'endDate' => $period['endDate'],
-						'fiscalYear' => $period['fiscalYear'],
-						'state' => 'open',
-						'reopenedHistory' => [],
-						'taskChecklistItems' => [],
-						'aiFlags' => [],
-					];
-
-					// Runs in the installer/repair context where no web user is
-					// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
-					// the backfill persists instead of throwing "User 'Anonymous'
-					// does not have permission to 'create'".
-					$this->objectService->saveObject(
-						object: $record,
-						register: $registerSlug,
-						schema: 'FiscalPeriod',
-						_rbac: false,
-						_multitenancy: false,
-					);
-					$created++;
-				}//end foreach
+				[$createdHere, $skippedHere] = $this->backfillAdministration(
+					registerSlug: $registerSlug,
+					horizon: $horizon,
+					administrationId: $administrationId
+				);
+				$created += $createdHere;
+				$skipped += $skippedHere;
 			}//end foreach
 
 			$output->info(
@@ -188,6 +157,76 @@ class PeriodCloseBackfill implements IRepairStep {
 		}//end try
 
 	}//end run()
+
+	/**
+	 * Create every missing horizon FiscalPeriod for one administration.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param array<int,array<string,mixed>> $horizon The periods to backfill.
+	 * @param string $administrationId The administration scope.
+	 *
+	 * @return array{0: int, 1: int} The created and skipped counts.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+	 */
+	private function backfillAdministration(string $registerSlug, array $horizon, string $administrationId): array {
+		$created = 0;
+		$skipped = 0;
+		foreach ($horizon as $period) {
+			if ($this->fiscalPeriodExists(
+				objectService: $this->objectService,
+				registerSlug: $registerSlug,
+				periodId: $period['periodId'],
+				administrationId: $administrationId
+			) === true
+			) {
+				$skipped++;
+				continue;
+			}
+
+			$record = $this->openFiscalPeriodRecord(period: $period, administrationId: $administrationId);
+
+			// Runs in the installer/repair context where no web user is
+			// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
+			// the backfill persists instead of throwing "User 'Anonymous'
+			// does not have permission to 'create'".
+			$this->objectService->saveObject(
+				object: $record,
+				register: $registerSlug,
+				schema: 'FiscalPeriod',
+				_rbac: false,
+				_multitenancy: false,
+			);
+			$created++;
+		}//end foreach
+
+		return [$created, $skipped];
+	}//end backfillAdministration()
+
+	/**
+	 * Build the open FiscalPeriod record for a horizon period.
+	 *
+	 * @param array<string,mixed> $period The horizon period.
+	 * @param string $administrationId The administration scope.
+	 *
+	 * @return array<string,mixed> The FiscalPeriod record.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-12
+	 */
+	private function openFiscalPeriodRecord(array $period, string $administrationId): array {
+		return [
+			'periodId' => $period['periodId'],
+			'name' => $period['name'],
+			'administrationId' => $administrationId,
+			'startDate' => $period['startDate'],
+			'endDate' => $period['endDate'],
+			'fiscalYear' => $period['fiscalYear'],
+			'state' => 'open',
+			'reopenedHistory' => [],
+			'taskChecklistItems' => [],
+			'aiFlags' => [],
+		];
+	}//end openFiscalPeriodRecord()
 
 	/**
 	 * Whether a FiscalPeriod record already exists for the given

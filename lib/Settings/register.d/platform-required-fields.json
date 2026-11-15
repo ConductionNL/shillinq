@@ -73,25 +73,24 @@
             "example": "active"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": ["create", "read", "update", "delete"]
-            },
-            "controller": {
-              "permissions": ["create", "read", "update"]
-            },
-            "bookkeeper": {
-              "permissions": ["read"]
-            },
-            "auditor": {
-              "permissions": ["read"]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,

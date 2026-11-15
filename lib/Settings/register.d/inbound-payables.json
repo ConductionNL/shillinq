@@ -61,12 +61,22 @@
           "callbackDeliveredAt": {"type": "string", "format": "date-time", "title": "App told at", "description": "When the last step reached the app's callback."},
           "callbackError": {"type": "string", "title": "Callback problem", "description": "Why the last step did not reach the app, if it did not."}
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {"permissions": ["read", "update"]},
-            "controller": {"permissions": ["create", "read", "update", "delete"]},
-            "auditor": {"permissions": ["read"]}
-          }
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

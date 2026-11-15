@@ -186,6 +186,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "FxRevaluationPosting is append-only audit evidence / ADR-022: original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }

@@ -30,7 +30,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\WidgetServiceInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +50,12 @@ use Psr\Log\LoggerInterface;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; deferred pending a dedicated refactor.
  */
-class WidgetService {
+class WidgetService implements WidgetServiceInterface {
+
+	/**
+	 * The widget payload fields read as trimmed strings.
+	 */
+	private const APPOINTMENT_FIELDS = ['serviceId', 'resourceId', 'startTime', 'endTime', 'customerName', 'customerEmail', 'customerPhone'];
 	/**
 	 * Construct the service with lazy DI of OR's ObjectService.
 	 *
@@ -72,7 +78,7 @@ class WidgetService {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -137,26 +143,7 @@ class WidgetService {
 			return [];
 		}
 
-		try {
-			$services = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('Service')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'isPublic' => true,
-						],
-						'limit' => 200,
-					]
-				);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'WidgetService: service lookup failed',
-				['exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$services = $this->publicServiceRecords(objectService: $objectService, administrationId: $administrationId);
 
 		$result = [];
 		foreach ($services as $service) {
@@ -165,36 +152,84 @@ class WidgetService {
 				continue;
 			}
 
-			$public = [
-				'serviceSlug' => (string)($service['@self']['slug'] ?? ($service['slug'] ?? '')),
-				'name' => (string)($service['name'] ?? ''),
-				'description' => ($service['description'] ?? null),
-				'durationMinutes' => (int)($service['duration'] ?? 0),
-			];
-
-			if ((bool)($service['priceVisible'] ?? false) === true) {
-				// `basePrice` is the property the Service schema actually
-				// DECLARES — and it is in its `required` list
-				// (bookings-service-catalog.json). `price` is declared by NO
-				// fragment, and OpenRegister's MagicMapper discards undeclared
-				// properties, so no stored Service can ever carry it. Reading
-				// `price` first therefore published 0.00 for EVERY service with
-				// priceVisible=true. Measured on a live instance: a Service
-				// saved with basePrice=125.50 renders `basePrice => 125.5` and
-				// `price => ABSENT`.
-				//
-				// `price` is retained only as a fallback for any object stored
-				// under an older schema revision that did declare it; it must
-				// stay SECOND, because the whole defect was ordering.
-				$public['price'] = (float)($service['basePrice'] ?? $service['price'] ?? 0);
-				$public['currency'] = (string)($service['currency'] ?? 'EUR');
-			}
-
-			$result[] = $public;
-		}//end foreach
+			$result[] = $this->publicServiceView(service: $service);
+		}
 
 		return $result;
 	}//end listPublicServices()
+
+	/**
+	 * The administration's Service records flagged isPublic, or none (logged) when the lookup fails.
+	 *
+	 * @param object $objectService    OR ObjectService.
+	 * @param string $administrationId The owning administration (tenant scope).
+	 *
+	 * @return iterable<mixed> The Service records.
+	 *
+	 * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-001
+	 */
+	private function publicServiceRecords(object $objectService, string $administrationId): iterable {
+		try {
+			return $objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('Service')
+				->findAll(
+					config: [
+						'filters' => [
+							'administrationId' => $administrationId,
+							'isPublic' => true,
+						],
+						'limit' => 200,
+					],
+					// The public widget has no Nextcloud session; its API key is the authentication.
+					_rbac: false,
+				);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'WidgetService: service lookup failed',
+				['exception' => $e->getMessage()]
+			);
+			return [];
+		}//end try
+	}//end publicServiceRecords()
+
+	/**
+	 * The public-safe view of one public service; the price only when priceVisible.
+	 *
+	 * @param array<string,mixed> $service The Service record.
+	 *
+	 * @return array<string,mixed> The public fields.
+	 *
+	 * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-001
+	 */
+	private function publicServiceView(array $service): array {
+		$public = [
+			'serviceSlug' => (string)($service['@self']['slug'] ?? ($service['slug'] ?? '')),
+			'name' => (string)($service['name'] ?? ''),
+			'description' => ($service['description'] ?? null),
+			'durationMinutes' => (int)($service['duration'] ?? 0),
+		];
+
+		if ((bool)($service['priceVisible'] ?? false) === true) {
+			// `basePrice` is the property the Service schema actually
+			// DECLARES — and it is in its `required` list
+			// (bookings-service-catalog.json). `price` is declared by NO
+			// fragment, and OpenRegister's MagicMapper discards undeclared
+			// properties, so no stored Service can ever carry it. Reading
+			// `price` first therefore published 0.00 for EVERY service with
+			// priceVisible=true. Measured on a live instance: a Service
+			// saved with basePrice=125.50 renders `basePrice => 125.5` and
+			// `price => ABSENT`.
+			//
+			// `price` is retained only as a fallback for any object stored
+			// under an older schema revision that did declare it; it must
+			// stay SECOND, because the whole defect was ordering.
+			$public['price'] = (float)($service['basePrice'] ?? $service['price'] ?? 0);
+			$public['currency'] = (string)($service['currency'] ?? 'EUR');
+		}
+
+		return $public;
+	}//end publicServiceView()
 
 	/**
 	 * Validate an email address against RFC 5322 (REQ-WSW-006).
@@ -282,38 +317,10 @@ class WidgetService {
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
 	public function createAppointment(string $administrationId, array $payload): array {
-		$serviceId = trim((string)($payload['serviceId'] ?? ''));
-		$resourceId = trim((string)($payload['resourceId'] ?? ''));
-		$startTime = trim((string)($payload['startTime'] ?? ''));
-		$endTime = trim((string)($payload['endTime'] ?? ''));
-		$name = trim((string)($payload['customerName'] ?? ''));
-		$email = trim((string)($payload['customerEmail'] ?? ''));
-		$phone = trim((string)($payload['customerPhone'] ?? ''));
-		$notes = (string)($payload['notes'] ?? '');
-
-		if ($serviceId === '' || $resourceId === '' || $startTime === '' || $endTime === '') {
-			return ['code' => 400, 'error' => 'missing_fields'];
-		}
-
-		// Server-side re-check (REQ-WSW-006). Name is deliberately excluded —
-		// see the docblock.
-		if ($this->validateEmail(email: $email) === false) {
-			return ['code' => 400, 'error' => 'invalid_email'];
-		}
-
-		if ($this->validatePhone(phone: $phone) === false) {
-			return ['code' => 400, 'error' => 'invalid_phone'];
-		}
-
-		if (mb_strlen($notes) > 500) {
-			return ['code' => 400, 'error' => 'notes_too_long'];
-		}
-
-		try {
-			$start = new DateTimeImmutable($startTime);
-			$end = new DateTimeImmutable($endTime);
-		} catch (\Throwable) {
-			return ['code' => 400, 'error' => 'invalid_start_time'];
+		$request  = $this->appointmentRequest(payload: $payload) + ['administrationId' => $administrationId];
+		$rejected = $this->rejectedRequest(request: $request);
+		if ($rejected !== null) {
+			return $rejected;
 		}
 
 		$objectService = $this->getObjectService();
@@ -321,107 +328,212 @@ class WidgetService {
 			return ['code' => 500, 'error' => 'service_unavailable'];
 		}
 
-		// The #491 gate: a caller who knows any serviceId must not be able to
-		// book a service the business never published. Fail-closed — an
-		// unresolvable catalogue denies rather than permits.
+		return $this->rejectedBooking(objectService: $objectService, request: $request)
+			?? $this->storeAppointment(objectService: $objectService, request: $request);
+	}//end createAppointment()
+
+	/**
+	 * The widget payload as trimmed strings, with the window parsed into UTC
+	 * (null when either time cannot be parsed).
+	 *
+	 * @param array<string,mixed> $payload Widget payload.
+	 *
+	 * @return array<string,mixed> The request fields.
+	 */
+	private function appointmentRequest(array $payload): array {
+		$request = ['notes' => (string)($payload['notes'] ?? '')];
+		foreach (self::APPOINTMENT_FIELDS as $field) {
+			$request[$field] = trim((string)($payload[$field] ?? ''));
+		}
+
+		$request['window'] = $this->requestWindow(request: $request);
+
+		return $request;
+	}//end appointmentRequest()
+
+	/**
+	 * The requested start and end in UTC, null when either cannot be parsed.
+	 *
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return array{start: DateTimeImmutable, end: DateTimeImmutable}|null
+	 */
+	private function requestWindow(array $request): ?array {
+		try {
+			$utc = new DateTimeZone('UTC');
+			return [
+				'start' => (new DateTimeImmutable($request['startTime']))->setTimezone($utc),
+				'end' => (new DateTimeImmutable($request['endTime']))->setTimezone($utc),
+			];
+		} catch (\Throwable) {
+			return null;
+		}
+	}//end requestWindow()
+
+	/**
+	 * The 400 response for a request that fails the boundary checks, in the
+	 * order the endpoint reports them (REQ-WSW-006 server-side re-check). The
+	 * name is deliberately not re-checked; see createAppointment().
+	 *
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return array<string,mixed>|null The rejection, null when the request passes.
+	 */
+	private function rejectedRequest(array $request): ?array {
+		$failed = [
+			'missing_fields' => in_array('', [$request['serviceId'], $request['resourceId'], $request['startTime'], $request['endTime']], true),
+			'invalid_email' => $this->validateEmail(email: $request['customerEmail']) === false,
+			'invalid_phone' => $this->validatePhone(phone: $request['customerPhone']) === false,
+			'notes_too_long' => mb_strlen($request['notes']) > 500,
+			'invalid_start_time' => $request['window'] === null,
+		];
+
+		$error = array_search(true, $failed, true);
+		if ($error === false) {
+			return null;
+		}
+
+		return ['code' => 400, 'error' => $error];
+	}//end rejectedRequest()
+
+	/**
+	 * The 404 or 409 response when the service is not published (the #491
+	 * gate, fail-closed) or the slot is no longer offered (the
+	 * server-authoritative REQ-WSW-003 re-check).
+	 *
+	 * @param object $objectService The OpenRegister object service.
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return array<string,mixed>|null The rejection, null when the booking may proceed.
+	 */
+	private function rejectedBooking(object $objectService, array $request): ?array {
 		$service = $this->findPublicService(
 			objectService: $objectService,
-			serviceId: $serviceId
+			serviceId: $request['serviceId'],
+			administrationId: $request['administrationId']
 		);
 		if ($service === null) {
 			return ['code' => 404, 'error' => 'service_not_found'];
 		}
 
-		$startUtc = $start->setTimezone(new DateTimeZone('UTC'));
-		$endUtc = $end->setTimezone(new DateTimeZone('UTC'));
-
-		// Server-authoritative availability re-check (REQ-WSW-003 race
-		// scenario). SlotService is the authority and already excludes
-		// confirmed appointments and out-of-hours times (REQ-WSW-002).
-		if ($this->isSlotOffered(
-			serviceId: $serviceId,
-			resourceId: $resourceId,
-			startTime: $startTime,
-			endTime: $endTime
-		) === false
-		) {
+		if ($this->isSlotOffered(request: $request) === false) {
 			return ['code' => 409, 'error' => 'slot_unavailable'];
 		}
 
-		$phoneValue = null;
-		if ($phone !== '') {
-			$phoneValue = $phone;
-		}
+		return null;
+	}//end rejectedBooking()
 
-		$notesValue = null;
-		if ($notes !== '') {
-			$notesValue = $notes;
-		}
-
-		// Canonical Appointment (bookings-create-appointment). A customer is a
-		// Nextcloud contact entity: the public widget has no authenticated user,
-		// so a deterministic guest customerId is derived from the captured email
-		// and the captured contact details are stored write-only (design D6).
-		//
-		// status = pending_confirmation, NOT confirmed. This is the customer
-		// self-service pathway (REQ-BCA-005 pathway 2 / REQ-BCF-010); the
-		// ConfirmationToken, the confirmation email and the
-		// CancelUnconfirmedAppointments job all key off this value, and
-		// creating the row already `confirmed` would bypass the whole
-		// bookings-confirm-flow capability.
-		$appointment = [
-			'administrationId' => $administrationId,
-			'appointmentId' => 'wsw-' . bin2hex(random_bytes(8)),
-			'serviceId' => $serviceId,
-			'resourceId' => $resourceId,
-			'customerId' => 'cust-anon-' . substr(hash('sha256', strtolower($email)), 0, 16),
-			'startTime' => $startUtc->format('Y-m-d\TH:i:s\Z'),
-			'endTime' => $endUtc->format('Y-m-d\TH:i:s\Z'),
-			'status' => 'pending_confirmation',
-			'customerName' => $name,
-			'customerEmail' => $email,
-			'customerPhone' => $phoneValue,
-			'notes' => $notesValue,
-			'source' => 'widget',
-		];
-
+	/**
+	 * Save the appointment, invalidate the cached slots of its date and
+	 * answer 201, or 500 when the save fails.
+	 *
+	 * @param object $objectService The OpenRegister object service.
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return array<string,mixed> The response.
+	 */
+	private function storeAppointment(object $objectService, array $request): array {
+		$appointment = $this->appointmentRecord(request: $request);
 		try {
-			$saved = $objectService->saveObject(
-				object: $appointment,
-				register: $this->getRegisterSlug(),
-				schema: 'Appointment',
-			);
+			$saved = $objectService->saveObject(object: $appointment, register: $this->getRegisterSlug(), schema: 'Appointment', _rbac: false);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'WidgetService: appointment save failed',
-				['exception' => $e->getMessage(), 'administrationId' => $administrationId]
-			);
+			$context = ['exception' => $e->getMessage(), 'administrationId' => $request['administrationId']];
+			$this->logger->error('WidgetService: appointment save failed', $context);
 			return ['code' => 500, 'error' => 'create_failed'];
 		}
 
 		$saved = $this->toArray(record: $saved);
+		$this->invalidateSlots(request: $request);
 
-		// Invalidate cached slots for the affected date so the next read updates.
+		return $this->createdResponse(saved: $saved, appointment: $appointment);
+	}//end storeAppointment()
+
+	/**
+	 * Invalidate the cached slots of the booked date so the next read updates.
+	 *
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return void
+	 */
+	private function invalidateSlots(array $request): void {
 		$this->slotService->invalidate(
-			serviceId: $serviceId,
-			resourceId: $resourceId,
-			date: $startUtc->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d')
+			serviceId: $request['serviceId'],
+			resourceId: $request['resourceId'],
+			date: $request['window']['start']->format('Y-m-d')
 		);
+	}//end invalidateSlots()
 
-		// Design D6: never echo customer PII back to the public API. The
-		// appointmentId / status / confirmationMessage keys and their values
-		// reproduce what the routed endpoint already returned, so delegating
-		// does not change the widget's contract.
+	/**
+	 * The canonical Appointment (bookings-create-appointment) for a widget request.
+	 *
+	 * A customer is a Nextcloud contact entity: the public widget has no
+	 * authenticated user, so a deterministic guest customerId is derived from
+	 * the captured email and the contact details are stored write-only (design
+	 * D6). The status is pending_confirmation, NOT confirmed: this is the
+	 * customer self-service pathway (REQ-BCA-005 pathway 2 / REQ-BCF-010); the
+	 * ConfirmationToken, the confirmation email and the
+	 * CancelUnconfirmedAppointments job all key off this value.
+	 *
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return array<string,mixed> The Appointment object.
+	 */
+	private function appointmentRecord(array $request): array {
+		return [
+			'administrationId' => $request['administrationId'],
+			'appointmentId' => 'wsw-' . bin2hex(random_bytes(8)),
+			'serviceId' => $request['serviceId'],
+			'resourceId' => $request['resourceId'],
+			'customerId' => 'cust-anon-' . substr(hash('sha256', strtolower($request['customerEmail'])), 0, 16),
+			'startTime' => $request['window']['start']->format('Y-m-d\TH:i:s\Z'),
+			'endTime' => $request['window']['end']->format('Y-m-d\TH:i:s\Z'),
+			'status' => 'pending_confirmation',
+		] + $this->customerFields(request: $request) + ['source' => 'widget'];
+	}//end appointmentRecord()
+
+	/**
+	 * The write-only customer fields; an empty phone or note is stored as null.
+	 *
+	 * @param array<string,mixed> $request The request fields.
+	 *
+	 * @return array<string,string|null>
+	 */
+	private function customerFields(array $request): array {
+		$fields = [
+			'customerName' => $request['customerName'],
+			'customerEmail' => $request['customerEmail'],
+			'customerPhone' => $request['customerPhone'],
+			'notes' => $request['notes'],
+		];
+		foreach (['customerPhone', 'notes'] as $optional) {
+			if ($fields[$optional] === '') {
+				$fields[$optional] = null;
+			}
+		}
+
+		return $fields;
+	}//end customerFields()
+
+	/**
+	 * The 201 response. Design D6: customer PII is never echoed back to the
+	 * public API; the keys and values reproduce what the routed endpoint
+	 * always returned.
+	 *
+	 * @param array<string,mixed>|null $saved The saved row, null when unreadable.
+	 * @param array<string,mixed> $appointment The object that was saved.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function createdResponse(?array $saved, array $appointment): array {
 		return [
 			'code' => 201,
 			'appointmentId' => (string)($saved['appointmentId'] ?? $appointment['appointmentId']),
 			'status' => (string)($saved['status'] ?? 'pending_confirmation'),
-			'startTime' => $startUtc->format('Y-m-d\TH:i:s\Z'),
-			'endTime' => $endUtc->format('Y-m-d\TH:i:s\Z'),
+			'startTime' => $appointment['startTime'],
+			'endTime' => $appointment['endTime'],
 			'confirmationMessage' => 'Your appointment was created. You will receive a confirmation email shortly.',
 		];
-
-	}//end createAppointment()
+	}//end createdResponse()
 
 	/**
 	 * Whether a serviceId names a service the business actually published.
@@ -440,16 +552,17 @@ class WidgetService {
 	 *
 	 * Fail-closed: an unresolvable catalogue denies rather than permits.
 	 *
-	 * @param string $serviceId The service to check.
+	 * @param string $serviceId        The service to check.
+	 * @param string $administrationId The administration the service must belong to.
 	 *
-	 * @return bool True when the service is public and active.
+	 * @return bool True when the service is public, active and in that administration.
 	 *
 	 * @psalm-return   bool
 	 * @phpstan-return bool
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	public function isPubliclyBookable(string $serviceId): bool {
+	public function isPubliclyBookable(string $serviceId, string $administrationId): bool {
 		$objectService = $this->getObjectService();
 		if ($objectService === null) {
 			return false;
@@ -457,11 +570,11 @@ class WidgetService {
 
 		return $this->findPublicService(
 			objectService: $objectService,
-			serviceId: $serviceId
+			serviceId: $serviceId,
+			administrationId: $administrationId
 		) !== null;
 
 	}//end isPubliclyBookable()
-
 
 	/**
 	 * Resolve a bookable public Service by its serviceId, or null.
@@ -472,21 +585,26 @@ class WidgetService {
 	 * caller who knew any serviceId could book a service the business never
 	 * published.
 	 *
-	 * @param object $objectService OR ObjectService.
-	 * @param string $serviceId The service to resolve.
+	 * A service of another administration than the widget key's is not
+	 * bookable either.
+	 *
+	 * @param object $objectService    OR ObjectService.
+	 * @param string $serviceId        The service to resolve.
+	 * @param string $administrationId The administration the service must belong to.
 	 *
 	 * @return array<string,mixed>|null The service row, or null when not bookable.
 	 */
-	private function findPublicService(object $objectService, string $serviceId): ?array {
+	private function findPublicService(object $objectService, string $serviceId, string $administrationId): ?array {
 		try {
 			$records = $objectService
 				->setRegister($this->getRegisterSlug())
 				->setSchema('Service')
 				->findAll(
-					[
+					config: [
 						'filters' => ['serviceId' => $serviceId],
 						'limit' => 1,
-					]
+					],
+					_rbac: false,
 				);
 		} catch (\Throwable $e) {
 			$this->logger->error(
@@ -497,24 +615,52 @@ class WidgetService {
 		}
 
 		foreach ($records as $record) {
-			$row = $this->toArray(record: $record);
-			if ($row === null) {
-				return null;
-			}
-
-			if ((bool)($row['isPublic'] ?? false) !== true) {
-				return null;
-			}
-
-			if ((string)($row['status'] ?? '') !== 'active') {
-				return null;
-			}
-
-			return $row;
+			return $this->bookableRow(record: $record, administrationId: $administrationId);
 		}
 
 		return null;
 	}//end findPublicService()
+
+	/**
+	 * The service row when it is public, active and of the given administration.
+	 *
+	 * @param mixed  $record           One Service record.
+	 * @param string $administrationId The administration the service must belong to.
+	 *
+	 * @return array<string,mixed>|null The service row, or null when not bookable.
+	 */
+	private function bookableRow(mixed $record, string $administrationId): array|null {
+		$row = $this->toArray(record: $record);
+		if ($row === null) {
+			return null;
+		}
+
+		if ((bool)($row['isPublic'] ?? false) !== true) {
+			return null;
+		}
+
+		if ($this->isActiveServiceOf(row: $row, administrationId: $administrationId) === false) {
+			return null;
+		}
+
+		return $row;
+	}//end bookableRow()
+
+	/**
+	 * Whether the service row is active and belongs to the given (non-empty) administration.
+	 *
+	 * @param array<string,mixed> $row              The Service row.
+	 * @param string              $administrationId The administration the service must belong to.
+	 *
+	 * @return bool True when bookable for that administration.
+	 */
+	private function isActiveServiceOf(array $row, string $administrationId): bool {
+		if ((string)($row['status'] ?? '') !== 'active') {
+			return false;
+		}
+
+		return $administrationId !== '' && (string)($row['administrationId'] ?? '') === $administrationId;
+	}//end isActiveServiceOf()
 
 	/**
 	 * Whether SlotService currently offers exactly this interval.
@@ -524,41 +670,45 @@ class WidgetService {
 	 * matching against it is the same check the routed endpoint performed.
 	 * Fail-closed: a lookup failure denies rather than permits.
 	 *
-	 * @param string $serviceId The service.
-	 * @param string $resourceId The resource.
-	 * @param string $startTime Candidate start, ISO 8601 UTC.
-	 * @param string $endTime Candidate end, ISO 8601 UTC.
+	 * @param array<string,mixed> $request The request: serviceId, resourceId and
+	 *                                     the candidate startTime and endTime
+	 *                                     (ISO 8601 UTC).
 	 *
 	 * @return bool
 	 */
-	private function isSlotOffered(
-		string $serviceId,
-		string $resourceId,
-		string $startTime,
-		string $endTime,
-	): bool {
+	private function isSlotOffered(array $request): bool {
 		try {
 			$check = $this->slotService->getAvailableSlots(
-				serviceId: $serviceId,
-				resourceId: $resourceId,
-				date: substr($startTime, 0, 10)
+				serviceId: $request['serviceId'],
+				resourceId: $request['resourceId'],
+				date: substr($request['startTime'], 0, 10)
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'WidgetService: slot availability check failed',
-				['exception' => $e->getMessage(), 'serviceId' => $serviceId]
-			);
+			$context = ['exception' => $e->getMessage(), 'serviceId' => $request['serviceId']];
+			$this->logger->error('WidgetService: slot availability check failed', $context);
 			return false;
 		}
 
-		foreach (($check['slots'] ?? []) as $slot) {
-			if ((string)($slot['startTime'] ?? '') === $startTime
-				&& (string)($slot['endTime'] ?? '') === $endTime
+		return $this->slotsInclude(slots: ($check['slots'] ?? []), request: $request);
+	}//end isSlotOffered()
+
+	/**
+	 * Whether a slot list holds exactly the requested interval.
+	 *
+	 * @param mixed $slots The offered slots.
+	 * @param array<string,mixed> $request The request with startTime and endTime.
+	 *
+	 * @return bool
+	 */
+	private function slotsInclude(mixed $slots, array $request): bool {
+		foreach ($slots as $slot) {
+			if ((string)($slot['startTime'] ?? '') === $request['startTime']
+				&& (string)($slot['endTime'] ?? '') === $request['endTime']
 			) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end isSlotOffered()
+	}//end slotsInclude()
 }//end class
