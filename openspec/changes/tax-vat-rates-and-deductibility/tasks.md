@@ -60,6 +60,8 @@
 
 ## 5. Docs
 
-- [ ] 5.1 Release note: tariffs now seeded, legacy codes mapped, the split and its default of 100. Verify: the note is in the PR body.
+- [x] 5.1 Release note: tariffs now seeded, legacy codes mapped, the split and its default of 100. Verify: the note is in the PR body.
+      DONE: the note is in `CHANGELOG.md` under Unreleased; the PR body is not edited by this build, so the note is
+      quoted in the build's last commit message for the reviewer to carry over.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/tax-vat-rates-and-deductibility/tasks.md#task-N` on every new method, Dutch and English strings for every label and message.
