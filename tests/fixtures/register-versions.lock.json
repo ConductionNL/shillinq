@@ -90,8 +90,16 @@
             "versionsSha256": "b6318eb2982bdafd95228b4a6fe1ac17be097fc52db71fea64dbda0373762cfb"
         },
         {
-            "appVersion": "0.5.7-unstable.20261114210000",
-            "versionsSha256": "eb73387c260faf2ded7afa4c242dc042b8f1e624bc377f8dc5b739e163a7b058"
+            "appVersion": "0.5.7-unstable.20261114220000",
+            "versionsSha256": "94596f1823024c3830be1bfa8322089ee4e2ceae5d0fde26ab6f201083276819"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115143000",
+            "versionsSha256": "2303fe6a1ccfdbc18ddaf7c055585ddeb3ca704b6707542074eb2ad053979ff4"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261115180000",
+            "versionsSha256": "c1705e9199c5d45c614922907afc1de453428703dcfea7dffb78d0d81b4bde25"
         }
     ],
     "versions": {
@@ -107,10 +115,11 @@
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
-        "schema:Administration": "0.2.0",
+        "schema:Administration": "0.3.0",
         "schema:AdministrationBackupRun": "0.1.0",
         "schema:AdministrationMembership": "0.1.0",
-        "schema:AdministrationMigration": "0.1.0",
+        "schema:AdministrationMigration": "0.2.0",
+        "schema:AdministrationTemplate": "0.1.0",
         "schema:AlertLog": "0.1.0",
         "schema:AlgemeenBelangBesluit": "0.1.0",
         "schema:AllocationRule": "0.1.0",
@@ -368,8 +377,8 @@
         "schema:InventoryVarianceReason": "0.1.0",
         "schema:Investering": "0.1.0",
         "schema:InvesteringsAftrek": "0.1.0",
-        "schema:InvesteringsaftrekClaim": "0.1.0",
-        "schema:InvestmentAsset": "0.1.0",
+        "schema:InvesteringsaftrekClaim": "0.2.0",
+        "schema:InvestmentAsset": "0.2.0",
         "schema:Invoice": "0.1.0",
         "schema:InvoiceBatch": "0.1.0",
         "schema:InvoiceLine": "0.1.0",

@@ -445,6 +445,18 @@ final class ReportGenerationServiceLookupTest extends TestCase {
 		);
 	}//end testElsewhereOnlyTheExactRecordedPathResolves()
 
+	public function testAHomeHoldingOnlyFoldersFallsBackToTheRecordedPath(): void {
+		$path = '/bob/files/Shillinq/Reports/adm-1/a.csv';
+		$home = $this->createMock(Folder::class);
+		$home->method('getById')->with(5)->willReturn([$this->createMock(Folder::class)]);
+		$root = $this->createMock(IRootFolder::class);
+		$root->method('getUserFolder')->with('alice')->willReturn($home);
+		$root->expects($this->once())->method('getById')->with(5)->willReturn([$this->file($path)]);
+
+		$this->assertSame($path, $this->service($this->container(null), [], $root)->resolveRecordFile(['fileId' => 5, 'filePath' => $path])?->getPath());
+		$this->assertSame([], $this->logger->messages());
+	}//end testAHomeHoldingOnlyFoldersFallsBackToTheRecordedPath()
+
 	public function testARecordWithoutAFileOrPathResolvesNothing(): void {
 		$root = $this->createMock(IRootFolder::class);
 		$root->expects($this->never())->method('getById');

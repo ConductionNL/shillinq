@@ -63,6 +63,9 @@ final class GuardRegistrar {
 		$this->bindOssPaymentReconciliation(context: $context);
 		$this->bindIntercompanyEliminationGuard(context: $context);
 		$this->bindBudgetScenarioModifierGuard(context: $context);
+		$this->bindXbrlInstanceValidationGuard(context: $context);
+		$this->bindXbrlDeliveryGuard(context: $context);
+		$this->bindXbrlFilingReferenceGuard(context: $context);
 	}//end register()
 
 	/**
@@ -385,4 +388,73 @@ final class GuardRegistrar {
 			}
 		);
 	}//end bindBudgetScenarioModifierGuard()
+
+	/**
+	 * Bind the `OCA\Shillinq\Guard\XbrlInstanceValidationGuard::requireValidInstance` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindXbrlInstanceValidationGuard(IRegistrationContext $context): void {
+		$context->registerService(
+			'OCA\Shillinq\Guard\XbrlInstanceValidationGuard::requireValidInstance',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(XbrlInstanceValidationGuard::class),
+					method: 'requireValidInstance',
+					denyMessage: 'The XBRL instance could not be checked against its entry point; it cannot be validated now.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+	}//end bindXbrlInstanceValidationGuard()
+
+	/**
+	 * Bind the `OCA\Shillinq\Guard\XbrlDeliveryGuard::requireDeliveryReference` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Structural composition root, no functional requirement.
+	 */
+	private function bindXbrlDeliveryGuard(IRegistrationContext $context): void {
+		$context->registerService(
+			'OCA\Shillinq\Guard\XbrlDeliveryGuard::requireDeliveryReference',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(XbrlDeliveryGuard::class),
+					method: 'requireDeliveryReference',
+					denyMessage: 'The filing could not be checked for its Digipoort delivery reference; it cannot be marked submitted now.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+	}//end bindXbrlDeliveryGuard()
+
+	/**
+	 * Bind the `OCA\Shillinq\Guard\XbrlDeliveryGuard::requireFilingReference` lifecycle guard tag.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-digipoort-filing/tasks.md#task-3.4
+	 */
+	private function bindXbrlFilingReferenceGuard(IRegistrationContext $context): void {
+		$context->registerService(
+			'OCA\Shillinq\Guard\XbrlDeliveryGuard::requireFilingReference',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(XbrlDeliveryGuard::class),
+					method: 'requireFilingReference',
+					denyMessage: 'The VAT return could not be checked for its Digipoort delivery reference; it cannot be marked submitted now.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+	}//end bindXbrlFilingReferenceGuard()
 }//end class
