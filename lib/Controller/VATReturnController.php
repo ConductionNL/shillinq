@@ -51,6 +51,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
@@ -559,7 +560,7 @@ class VATReturnController extends Controller {
 		}
 
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
+		$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(new ObjectDeletion(uuid: $returnId));
 
 		return new JSONResponse(['data' => ['id' => $returnId, 'deleted' => true]], Http::STATUS_OK);
 	}//end deleteAccessibleDraft()

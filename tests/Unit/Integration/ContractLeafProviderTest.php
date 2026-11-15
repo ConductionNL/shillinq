@@ -27,6 +27,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * Covers the scoping to the host object, the attention statuses, and that a
@@ -129,7 +130,7 @@ final class ContractLeafProviderTest extends TestCase {
 	public function testAHandlerSeesTheContractBehindTheCase(): void {
 		$provider = $this->makeProvider([$this->contract()]);
 
-		$listed = $provider->list('dossiq', 'Zaak', 'zaak-7');
+		$listed = $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'));
 
 		self::assertCount(1, $listed['items']);
 		$contract = $listed['items'][0];
@@ -148,7 +149,7 @@ final class ContractLeafProviderTest extends TestCase {
 	public function testAnExpiringContractIsReportedAsNeedingAttention(): void {
 		$provider = $this->makeProvider([$this->contract(['status' => 'expiring'])]);
 
-		$contract = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'][0];
+		$contract = $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['items'][0];
 
 		self::assertSame('expiring', $contract['status']);
 		self::assertTrue($contract['needsAttention']);
@@ -162,7 +163,7 @@ final class ContractLeafProviderTest extends TestCase {
 	public function testAnActiveContractIsNotFlagged(): void {
 		$provider = $this->makeProvider([$this->contract()]);
 
-		self::assertFalse($provider->list('dossiq', 'Zaak', 'zaak-7')['items'][0]['needsAttention']);
+		self::assertFalse($provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['items'][0]['needsAttention']);
 	}//end testAnActiveContractIsNotFlagged()
 
 	/**
@@ -175,7 +176,7 @@ final class ContractLeafProviderTest extends TestCase {
 	public function testAContractLinkedToAnotherCaseIsNotShown(): void {
 		$provider = $this->makeProvider([$this->contract([], 'zaak-99')]);
 
-		self::assertCount(0, $provider->list('dossiq', 'Zaak', 'zaak-7')['items']);
+		self::assertCount(0, $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['items']);
 	}//end testAContractLinkedToAnotherCaseIsNotShown()
 
 	/**
@@ -192,7 +193,7 @@ final class ContractLeafProviderTest extends TestCase {
 		$provider = $this->makeProvider([]);
 
 		try {
-			$provider->get('dossiq', 'Zaak', 'zaak-7', 'c-1');
+			$provider->get(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), 'c-1');
 			self::fail('The leaf answered for a contract the reader may not see.');
 		} catch (RuntimeException $e) {
 			self::assertStringContainsString('404', $e->getMessage());
@@ -211,7 +212,7 @@ final class ContractLeafProviderTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 
-		$provider->get('dossiq', 'Zaak', 'zaak-7', 'c-1');
+		$provider->get(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), 'c-1');
 	}//end testGetCannotReachAContractLinkedElsewhere()
 
 	/**
@@ -225,7 +226,7 @@ final class ContractLeafProviderTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 
-		$provider->create('dossiq', 'Zaak', 'zaak-7', ['contractNumber' => 'OVK-2026-0002']);
+		$provider->create(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'), ['contractNumber' => 'OVK-2026-0002']);
 	}//end testTheLeafRefusesToCreateAContract()
 
 	/**
@@ -240,7 +241,7 @@ final class ContractLeafProviderTest extends TestCase {
 		unset($bare['incurredCost'], $bare['remainingValue']);
 		$provider = $this->makeProvider([$bare]);
 
-		$contract = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'][0];
+		$contract = $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['items'][0];
 
 		self::assertNull($contract['incurredCost']);
 		self::assertNull($contract['remainingValue']);
@@ -257,7 +258,7 @@ final class ContractLeafProviderTest extends TestCase {
 			[$this->contract(['incurredCostComplete' => false, 'incurredCostUnreadableLinks' => 2])]
 		);
 
-		$contract = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'][0];
+		$contract = $provider->list(new ObjectRef(register: 'dossiq', schema: 'Zaak', id: 'zaak-7'))['items'][0];
 
 		self::assertFalse($contract['incurredCostComplete']);
 		self::assertSame(2, $contract['incurredCostUnreadableLinks']);

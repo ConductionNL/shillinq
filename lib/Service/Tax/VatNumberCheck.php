@@ -29,6 +29,8 @@ namespace OCA\Shillinq\Service\Tax;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\Contracts\VatNumberCheckInterface;
 use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\ViesService;
@@ -238,7 +240,13 @@ class VatNumberCheck implements VatNumberCheckInterface {
 	 * @return void
 	 */
 	private function patch(string $schema, string $id, array $fields): void {
-		$this->objectService->patchObject(objectId: $id, data: $fields, register: $this->settings->getRegisterSlug(), schema: $schema);
+		$this->objectService->patchObject(
+			new ObjectPatch(
+				objectId: $id,
+				data: $fields,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema)
+			)
+		);
 
 	}//end patch()
 }//end class
