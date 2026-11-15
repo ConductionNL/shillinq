@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\ContractRegistrar;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\MailDunningChannelAdapter;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
 use OCA\Shillinq\Service\KnownCostScheduleExpander;
@@ -47,7 +48,7 @@ use Psr\Container\ContainerInterface;
 use ReflectionProperty;
 
 /**
- * The registrar binds the contract set, the adapter ports and two factories.
+ * The registrar binds the contract set, the adapter ports and three factories.
  */
 #[CoversClass(ServiceRegistrar::class)]
 #[UsesClass(ContractRegistrar::class)]
@@ -99,7 +100,7 @@ final class ServiceRegistrarTest extends TestCase {
 	 */
 	public function testContractBindingsAreIncluded(): void {
 		self::assertSame(AansluitingService::class, $this->aliases[AansluitingServiceInterface::class]);
-		self::assertCount(209 + 25, $this->aliases);
+		self::assertCount(208 + 25, $this->aliases);
 
 	}//end testContractBindingsAreIncluded()
 
@@ -121,17 +122,18 @@ final class ServiceRegistrarTest extends TestCase {
 	}//end testPortsResolveToDefaultAdapters()
 
 	/**
-	 * Exactly two services are built by a factory.
+	 * Exactly three services are built by a factory; the Digipoort port is
+	 * one, because its binding picks the configured adapter at runtime.
 	 *
 	 * @return void
 	 */
-	public function testOnlyTheTwoFactoriesAreRegistered(): void {
+	public function testOnlyTheThreeFactoriesAreRegistered(): void {
 		self::assertSame(
-			[DoorsnijdingsVerbodValidator::class, PaymentProviderInterface::class],
+			[DoorsnijdingsVerbodValidator::class, DigipoortSbrAdapterInterface::class, PaymentProviderInterface::class],
 			array_keys($this->factories)
 		);
 
-	}//end testOnlyTheTwoFactoriesAreRegistered()
+	}//end testOnlyTheThreeFactoriesAreRegistered()
 
 	/**
 	 * The validator factory wires the config, object service and audit logger.
