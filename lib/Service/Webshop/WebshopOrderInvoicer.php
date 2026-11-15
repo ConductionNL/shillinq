@@ -69,12 +69,14 @@ class WebshopOrderInvoicer {
 	 * @param ObjectTransitionRunnerInterface $transitions   Runs the order's declared transitions.
 	 * @param IAppConfig                      $appConfig     App config for the register slug.
 	 * @param LoggerInterface                 $logger        Logger.
+	 * @param WebshopVatRoute                 $vatRoute      Decides the order's VAT route (REQ-SWO-003).
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ObjectTransitionRunnerInterface $transitions,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly WebshopVatRoute $vatRoute,
 	) {
 	}//end __construct()
 
@@ -109,7 +111,12 @@ class WebshopOrderInvoicer {
 			return $this->refuse(order: ['refusalReason' => $refusal] + $order, orderId: $orderId);
 		}
 
-		$built = self::invoiceLines(order: $order, channel: $channel);
+		$route = $this->vatRoute->routeFor(order: $order, invoiceDate: $today, adminId: (string)($channel['administrationId'] ?? ''));
+		if ($route['refusal'] !== null) {
+			return $this->refuse(order: ['refusalReason' => $route['refusal']] + $order, orderId: $orderId);
+		}
+
+		$built = self::invoiceLines(order: $order, channel: $channel, route: $route);
 		$computed = $built['grossCents'];
 		$stated = (int)round(((float)($order['totals']['gross'] ?? ($computed / 100))) * 100);
 		if (abs($computed - $stated) > self::TOTAL_TOLERANCE_CENTS) {
@@ -125,7 +132,7 @@ class WebshopOrderInvoicer {
 		$invoiceId = $this->writeInvoice(
 			invoice: self::invoice(
 				order: $order,
-				context: ['orderId' => $orderId, 'channel' => $channel, 'debtorId' => $debtorId, 'built' => $built, 'today' => $today]
+				context: ['orderId' => $orderId, 'channel' => $channel, 'debtorId' => $debtorId, 'built' => $built, 'today' => $today, 'route' => $route]
 			)
 		);
 
@@ -320,11 +327,6 @@ class WebshopOrderInvoicer {
 			return 'The order names another administration than its web shop channel.';
 		}
 
-		$country = strtoupper(trim((string)($order['buyer']['countryCode'] ?? 'NL')));
-		if ($country !== '' && $country !== 'NL') {
-			return sprintf('The buyer is in %s; orders to another country are not invoiced until their VAT route is set up.', $country);
-		}
-
 		return null;
 	}//end refusalOf()
 
@@ -335,14 +337,21 @@ class WebshopOrderInvoicer {
 	 * dividing out the rate, so the invoice total equals what the buyer paid.
 	 * Shipping is one more line at the highest rate of the order lines.
 	 *
-	 * @param array<string,mixed> $order   The order.
-	 * @param array<string,mixed> $channel Its channel.
+	 * The route (from WebshopVatRoute::routeFor()) maps each shop rate to the
+	 * rate the invoice charges: the destination rate of an OSS sale, whose
+	 * net is derived from what the buyer paid, or 0 under reverse charge,
+	 * whose net is the shop's price without its own VAT. Without a route a
+	 * line keeps the shop's rate.
+	 *
+	 * @param array<string,mixed>      $order   The order.
+	 * @param array<string,mixed>      $channel Its channel.
+	 * @param array<string,mixed>|null $route   The VAT route; null keeps the shop's rates.
 	 *
 	 * @return array{lines: array<int,array<string,mixed>>, netCents: int, vatCents: int, grossCents: int}
 	 *
-	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.1
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
 	 */
-	public static function invoiceLines(array $order, array $channel): array {
+	public static function invoiceLines(array $order, array $channel, ?array $route = null): array {
 		$includesVat = (($order['pricesIncludeVat'] ?? false) === true);
 		$lines = [];
 		$totals = ['net' => 0, 'vat' => 0];
@@ -362,10 +371,9 @@ class WebshopOrderInvoicer {
 					'name' => $name,
 					'quantity' => $quantity,
 					'unitPrice' => (float)($line['unitPrice'] ?? 0),
-					'rate' => $rate,
 					'includesVat' => $includesVat,
 					'account' => (string)($channel['revenueAccount'] ?? ''),
-				],
+				] + self::routedRate(shopRate: $rate, route: $route),
 				totals: $totals
 			);
 		}
@@ -383,10 +391,9 @@ class WebshopOrderInvoicer {
 					'name' => 'Shipping',
 					'quantity' => 1.0,
 					'unitPrice' => $shipping,
-					'rate' => $highestRate,
 					'includesVat' => $includesVat,
 					'account' => $account,
-				],
+				] + self::routedRate(shopRate: $highestRate, route: $route),
 				totals: $totals
 			);
 		}
@@ -395,13 +402,45 @@ class WebshopOrderInvoicer {
 	}//end invoiceLines()
 
 	/**
+	 * The rate a line charges, the rate its net is derived with, and its VAT category.
+	 *
+	 * @param float                    $shopRate The rate the shop applied, in percent.
+	 * @param array<string,mixed>|null $route    The VAT route; null keeps the shop's rate.
+	 *
+	 * @return array{rate: float, netRate: float, category: string}
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
+	 */
+	private static function routedRate(float $shopRate, ?array $route): array {
+		$rate = $shopRate;
+		$rates = (array)($route['rates'] ?? []);
+		$key = WebshopVatRoute::rateKey(rate: $shopRate);
+		if ($route !== null && array_key_exists($key, $rates) === true) {
+			$rate = (float)$rates[$key];
+		}
+
+		if (($route['route'] ?? '') === 'icp') {
+			return ['rate' => 0.0, 'netRate' => $shopRate, 'category' => 'K'];
+		}
+
+		$category = 'Z';
+		if ($rate > 0.0) {
+			$category = 'S';
+		}
+
+		return ['rate' => $rate, 'netRate' => $rate, 'category' => $category];
+	}//end routedRate()
+
+	/**
 	 * One invoice line, adding its net and VAT cents to the running totals.
 	 *
 	 * The spec holds the line number, the line text (name), the quantity, the
-	 * unit price as the shop sent it, the VAT rate in percent, whether the unit
-	 * price includes VAT (includesVat) and the revenue account.
+	 * unit price as the shop sent it, the VAT rate in percent the line charges
+	 * (rate), the rate its net is derived with when the price includes VAT
+	 * (netRate), its VAT category, whether the unit price includes VAT
+	 * (includesVat) and the revenue account.
 	 *
-	 * @param array<string,mixed>       $spec   The line: number, name, quantity, unitPrice, rate, includesVat, account.
+	 * @param array<string,mixed>       $spec   The line: number, name, quantity, unitPrice, rate, netRate, category, includesVat, account.
 	 * @param array{net: int, vat: int} $totals The running totals.
 	 *
 	 * @return array<string,mixed>
@@ -412,9 +451,12 @@ class WebshopOrderInvoicer {
 		$account = (string)$spec['account'];
 		$amountCents = (int)round($quantity * (float)$spec['unitPrice'] * 100);
 		$netCents = $amountCents;
-		$vatCents = (int)round($amountCents * $rate / 100);
 		if ($spec['includesVat'] === true) {
-			$netCents = (int)round($amountCents / (1 + ($rate / 100)));
+			$netCents = (int)round($amountCents / (1 + ((float)$spec['netRate'] / 100)));
+		}
+
+		$vatCents = (int)round($netCents * $rate / 100);
+		if ($spec['includesVat'] === true && $rate === (float)$spec['netRate']) {
 			$vatCents = ($amountCents - $netCents);
 		}
 
@@ -433,12 +475,9 @@ class WebshopOrderInvoicer {
 			'itemName' => (string)$spec['name'],
 			'netPrice' => $netPrice,
 			'netAmount' => ($netCents / 100.0),
-			'vatCategory' => 'Z',
+			'vatCategory' => (string)$spec['category'],
 			'vatRate' => $rate,
 		];
-		if ($rate > 0.0) {
-			$line['vatCategory'] = 'S';
-		}
 
 		if ($account !== '') {
 			$line['glAccount'] = $account;
@@ -452,10 +491,12 @@ class WebshopOrderInvoicer {
 	 *
 	 * The context holds the order's id (orderId), its channel, the
 	 * CustomerMaster to book on (debtorId), the lines and totals from
-	 * invoiceLines() (built) and the invoice date as Y-m-d (today).
+	 * invoiceLines() (built), the invoice date as Y-m-d (today) and the VAT
+	 * route (route): an OSS sale carries its ossContext for the OSS return, a
+	 * reverse-charged one the mention "Btw verlegd" in its VAT breakdown.
 	 *
 	 * @param array<string,mixed> $order   The order.
-	 * @param array<string,mixed> $context The invoice context: orderId, channel, debtorId, built, today.
+	 * @param array<string,mixed> $context The invoice context: orderId, channel, debtorId, built, today, route.
 	 *
 	 * @return array<string,mixed>
 	 *
@@ -501,6 +542,28 @@ class WebshopOrderInvoicer {
 		$reference = trim((string)($order['payment']['providerPaymentId'] ?? ''));
 		if ($reference !== '') {
 			$webshop['paymentReference'] = $reference;
+		}
+
+		$route = (array)($context['route'] ?? []);
+		if (($route['route'] ?? '') !== '') {
+			$webshop['vatRoute'] = (string)$route['route'];
+		}
+
+		if (is_array($route['ossContext'] ?? null) === true) {
+			$invoice['ossContext'] = $route['ossContext'];
+		}
+
+		if (($route['route'] ?? '') === 'icp') {
+			$mention = (string)($route['mention'] ?? WebshopVatRoute::REVERSE_CHARGE_MENTION);
+			$webshop['vatMention'] = $mention;
+			$invoice['vatBreakdown'] = [[
+				'category' => 'K',
+				'taxableAmount' => ($built['netCents'] / 100.0),
+				'taxAmount' => 0.0,
+				'rate' => 0.0,
+				'exemptionReasonCode' => 'VATEX-EU-IC',
+				'exemptionReasonText' => $mention,
+			]];
 		}
 
 		$invoice['webshop'] = $webshop;

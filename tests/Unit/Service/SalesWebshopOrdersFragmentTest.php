@@ -144,8 +144,13 @@ final class SalesWebshopOrdersFragmentTest extends TestCase {
 
 		$invoice = $schemas['ARInvoice'];
 		$this->assertSame(
-			['channelId', 'shopOrderId', 'orderId', 'buyerName', 'paymentReference'],
+			['channelId', 'shopOrderId', 'orderId', 'buyerName', 'paymentReference', 'vatRoute', 'vatMention'],
 			array_keys($invoice['properties']['webshop']['properties'])
+		);
+		$this->assertSame(['domestic', 'oss', 'icp'], $invoice['properties']['webshop']['properties']['vatRoute']['enum']);
+		$this->assertSame(
+			['destinationCountry', 'appliedVatRate', 'appliedRateCategory', 'tedbRateVersion', 'ossEligible', 'ossReportingPeriod'],
+			array_keys($invoice['properties']['ossContext']['properties'])
 		);
 		$this->assertArrayHasKey('invoiceType', $invoice['properties'], 'the merge keeps ARInvoice\'s own fields');
 		$this->assertArrayHasKey('slug', $invoice);

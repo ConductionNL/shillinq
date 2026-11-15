@@ -29,8 +29,12 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Kernel\Contracts\ListenerSchemaResolverInterface;
 use OCA\Shillinq\Kernel\Contracts\ObjectTransitionRunnerInterface;
+use OCA\Shillinq\Kernel\Contracts\ViesServiceInterface;
 use OCA\Shillinq\Listener\WebshopOrderListener;
+use OCA\Shillinq\Service\OssInvoiceRouter;
+use OCA\Shillinq\Service\OssRateResolver;
 use OCA\Shillinq\Service\Webshop\WebshopOrderInvoicer;
+use OCA\Shillinq\Service\Webshop\WebshopVatRoute;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -45,6 +49,9 @@ use RuntimeException;
 #[CoversClass(WebshopOrderInvoicer::class)]
 #[CoversClass(WebshopOrderListener::class)]
 #[UsesClass(ObjectIdentifier::class)]
+#[UsesClass(WebshopVatRoute::class)]
+#[UsesClass(OssInvoiceRouter::class)]
+#[UsesClass(OssRateResolver::class)]
 final class WebshopOrderInvoicerTest extends TestCase {
 
 	private const CHANNEL = 'c0ffee00-0000-4000-8000-00000000c001';
@@ -78,6 +85,13 @@ final class WebshopOrderInvoicerTest extends TestCase {
 	 * @var string
 	 */
 	private string $schema = '';
+
+	/**
+	 * The VAT ids VIES confirms.
+	 *
+	 * @var array<int,string>
+	 */
+	private array $validVatIds = [];
 
 	/**
 	 * Seed the channel of theehandelvandijk.nl.
@@ -176,8 +190,27 @@ final class WebshopOrderInvoicerTest extends TestCase {
 			transitions: $transitions,
 			appConfig: $config,
 			logger: $this->createStub(LoggerInterface::class),
+			vatRoute: $this->vatRoute(objectService: $objectService, config: $config),
 		);
 	}//end invoicer()
+
+	/**
+	 * The real VAT route over the store's EuVatRate rows and a VIES that confirms $validVatIds.
+	 *
+	 * @param ObjectServiceInterface $objectService The object service over the store.
+	 * @param IAppConfig             $config        The app config.
+	 *
+	 * @return WebshopVatRoute
+	 */
+	private function vatRoute(ObjectServiceInterface $objectService, IAppConfig $config): WebshopVatRoute {
+		$vies = $this->createMock(ViesServiceInterface::class);
+		$vies->method('validate')->willReturnCallback(
+			fn (string $administrationId, string $vatId, string $now = ''): array => ['vatId' => $vatId, 'valid' => in_array($vatId, $this->validVatIds, true)]
+		);
+		$rates = new OssRateResolver(appConfig: $config, objectService: $objectService);
+
+		return new WebshopVatRoute(router: new OssInvoiceRouter(rateResolver: $rates), rates: $rates, vies: $vies);
+	}//end vatRoute()
 
 	/**
 	 * The saves of one schema.
@@ -210,8 +243,9 @@ final class WebshopOrderInvoicerTest extends TestCase {
 		self::assertSame([16.42, 4.54], array_column($invoice['invoiceLines'], 'netAmount'));
 		self::assertSame(['8000', '8100'], array_column($invoice['invoiceLines'], 'glAccount'));
 		self::assertSame([9.0, 9.0], array_column($invoice['invoiceLines'], 'vatRate'));
+		self::assertArrayNotHasKey('ossContext', $invoice);
 		self::assertSame(
-			['channelId' => self::CHANNEL, 'shopOrderId' => '100231', 'orderId' => self::ORDER, 'buyerName' => 'J. Bakker', 'paymentReference' => 'tr_7Qw2'],
+			['channelId' => self::CHANNEL, 'shopOrderId' => '100231', 'orderId' => self::ORDER, 'buyerName' => 'J. Bakker', 'paymentReference' => 'tr_7Qw2', 'vatRoute' => 'domestic'],
 			$invoice['webshop']
 		);
 
@@ -257,7 +291,7 @@ final class WebshopOrderInvoicerTest extends TestCase {
 	}//end testOnlyTheSameChannelAndNumberIsADuplicate()
 
 	/**
-	 * Unknown channels, empty orders, foreign buyers, wrong totals and a missing collective debtor are refused with the reason.
+	 * Unknown channels, empty orders, buyers without a VAT route, wrong totals and a missing collective debtor are refused with the reason.
 	 *
 	 * @return void
 	 */
@@ -265,7 +299,8 @@ final class WebshopOrderInvoicerTest extends TestCase {
 		$cases = [
 			'The order names a web shop channel shillinq does not know.' => [self::order(overrides: ['channelId' => 'unknown']), []],
 			'The order has no lines.' => [self::order(overrides: ['lines' => []]), []],
-			'The buyer is in BE; orders to another country are not invoiced until their VAT route is set up.' => [self::order(overrides: ['buyer' => ['type' => 'consumer', 'name' => 'A', 'countryCode' => 'be']]), []],
+			'The buyer is in US; shillinq has no VAT route for a sale outside the EU.' => [self::order(overrides: ['buyer' => ['type' => 'consumer', 'name' => 'A', 'countryCode' => 'us']]), []],
+			'No BE VAT rate of category reduced1 is in force on 2026-11-12.' => [self::order(overrides: ['buyer' => ['type' => 'consumer', 'name' => 'A', 'countryCode' => 'BE']]), []],
 			'The order names another administration than its web shop channel.' => [self::order(overrides: ['administrationId' => 'adm-2']), []],
 			'The order lines add up to 22.85 but the order total is 23.85.' => [self::order(overrides: ['totals' => ['gross' => 23.85]]), []],
 			'The web shop channel has no collective debtor for consumer orders.' => [self::order(), ['consumerDebtorId' => '']],
@@ -478,6 +513,100 @@ final class WebshopOrderInvoicerTest extends TestCase {
 	}//end testOnlyAnIssuedInvoiceIsSettledAndOnlyOnce()
 
 	/**
+	 * The spec scenario: a consumer in Antwerpen paying prices including VAT
+	 * is invoiced at the Belgian rate through OSS, for what the buyer paid,
+	 * and the invoice is marked for the OSS return (REQ-SWO-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
+	 */
+	public function testABelgianConsumerIsInvoicedAtTheBelgianRateThroughOss(): void {
+		$this->seedChannel();
+		$this->store['EuVatRate'] = [
+			['id' => 'euvat-be-reduced1-2024', 'countryCode' => 'BE', 'rateCategory' => 'reduced1', 'ratePercentage' => 6.0, 'validFrom' => '2024-01-01', 'validUntil' => null],
+		];
+		$order = self::order(overrides: ['shopOrderId' => '100232', 'buyer' => ['type' => 'consumer', 'name' => 'L. Peeters', 'countryCode' => 'BE']]);
+
+		self::assertSame('invoiced', $this->invoicer()->handle(order: $order, orderId: self::ORDER, today: '2026-11-12'));
+
+		$invoice = $this->savesOf(schema: 'ARInvoice')[0][1];
+		self::assertSame([6.0, 6.0], array_column($invoice['invoiceLines'], 'vatRate'));
+		self::assertSame([16.89, 4.67], array_column($invoice['invoiceLines'], 'netAmount'));
+		self::assertSame([21.56, 1.29, 22.85], [$invoice['netAmount'], $invoice['vatAmount'], $invoice['grossAmount']]);
+		self::assertSame(
+			[
+				'destinationCountry' => 'BE',
+				'appliedVatRate' => 6.0,
+				'appliedRateCategory' => 'reduced1',
+				'tedbRateVersion' => 'euvat-be-reduced1-2024',
+				'ossEligible' => true,
+				'ossReportingPeriod' => '2026-Q4',
+			],
+			$invoice['ossContext']
+		);
+		self::assertSame('oss', $invoice['webshop']['vatRoute']);
+	}//end testABelgianConsumerIsInvoicedAtTheBelgianRateThroughOss()
+
+	/**
+	 * A business in another member state whose VAT id VIES confirms is
+	 * invoiced under reverse charge with the mention "Btw verlegd".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
+	 */
+	public function testAnEuBusinessWithAValidVatIdIsReverseCharged(): void {
+		$this->seedChannel();
+		$this->validVatIds = ['DE123456789'];
+		$order = self::order(overrides: [
+			'buyer' => ['type' => 'business', 'name' => 'K. Schmidt', 'companyName' => 'Teehaus Schmidt GmbH', 'vatId' => 'DE123456789', 'countryCode' => 'DE'],
+			'pricesIncludeVat' => false,
+			'lines' => [['description' => 'Darjeeling 1 kg', 'quantity' => 4, 'unitPrice' => 25.0, 'vatRate' => 9]],
+			'shipping' => 0,
+			'totals' => ['gross' => 100.0],
+		]);
+
+		self::assertSame('invoiced', $this->invoicer()->handle(order: $order, orderId: self::ORDER, today: '2026-11-12'));
+
+		$invoice = $this->savesOf(schema: 'ARInvoice')[0][1];
+		self::assertSame([100.0, 0.0, 100.0], [$invoice['netAmount'], $invoice['vatAmount'], $invoice['grossAmount']]);
+		self::assertSame([['K', 0.0]], array_map(null, array_column($invoice['invoiceLines'], 'vatCategory'), array_column($invoice['invoiceLines'], 'vatRate')));
+		self::assertSame(['icp', 'Btw verlegd'], [$invoice['webshop']['vatRoute'], $invoice['webshop']['vatMention']]);
+		self::assertSame('Btw verlegd', $invoice['vatBreakdown'][0]['exemptionReasonText']);
+		self::assertSame([100.0, 0.0], [$invoice['vatBreakdown'][0]['taxableAmount'], $invoice['vatBreakdown'][0]['taxAmount']]);
+		self::assertArrayNotHasKey('ossContext', $invoice);
+	}//end testAnEuBusinessWithAValidVatIdIsReverseCharged()
+
+	/**
+	 * A business in another member state whose VAT id VIES does not confirm
+	 * pays the destination rate through OSS, like a consumer.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-webshop-orders/tasks.md#task-2.3
+	 */
+	public function testAnEuBusinessWithoutAValidVatIdPaysTheDestinationRate(): void {
+		$this->seedChannel();
+		$this->store['EuVatRate'] = [
+			['id' => 'euvat-de-standard-2024', 'countryCode' => 'DE', 'rateCategory' => 'standard', 'ratePercentage' => 19.0, 'validFrom' => '2024-01-01', 'validUntil' => null],
+		];
+		$order = self::order(overrides: [
+			'buyer' => ['type' => 'business', 'name' => 'K. Schmidt', 'companyName' => 'Teehaus Schmidt GmbH', 'vatId' => 'DE999999999', 'countryCode' => 'DE'],
+			'pricesIncludeVat' => false,
+			'lines' => [['description' => 'Teapot', 'quantity' => 1, 'unitPrice' => 50.0, 'vatRate' => 21]],
+			'shipping' => 0,
+			'totals' => ['gross' => 59.50],
+		]);
+
+		self::assertSame('invoiced', $this->invoicer()->handle(order: $order, orderId: self::ORDER, today: '2026-11-12'));
+
+		$invoice = $this->savesOf(schema: 'ARInvoice')[0][1];
+		self::assertSame([50.0, 9.5, 59.5], [$invoice['netAmount'], $invoice['vatAmount'], $invoice['grossAmount']]);
+		self::assertSame(['DE', 'standard', 19.0], [$invoice['ossContext']['destinationCountry'], $invoice['ossContext']['appliedRateCategory'], $invoice['ossContext']['appliedVatRate']]);
+	}//end testAnEuBusinessWithoutAValidVatIdPaysTheDestinationRate()
+
+	/**
 	 * The listener hands a created WebshopOrder, stamped with a numeric schema id and its uuid, to the invoicer.
 	 *
 	 * @return void
@@ -551,7 +680,7 @@ final class WebshopOrderInvoicerTest extends TestCase {
 		$objectService->method('find')->willReturn(null);
 		$objectService->method('saveObject')->willReturn(new ObjectEntity());
 		$config = $this->createStub(IAppConfig::class);
-		$invoicer = new WebshopOrderInvoicer(objectService: $objectService, transitions: $transitions, appConfig: $config, logger: $this->createStub(LoggerInterface::class));
+		$invoicer = new WebshopOrderInvoicer(objectService: $objectService, transitions: $transitions, appConfig: $config, logger: $this->createStub(LoggerInterface::class), vatRoute: $this->vatRoute(objectService: $objectService, config: $config));
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->expects(self::once())->method('error')->with(
 			'WebshopOrderListener: the web shop order could not be invoiced',

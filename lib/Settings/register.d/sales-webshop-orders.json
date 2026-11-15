@@ -439,8 +439,74 @@
                                 "type": "string",
                                 "description": "The payment provider's id, kept for the payout match.",
                                 "title": "Payment reference"
+                            },
+                            "vatRoute": {
+                                "type": "string",
+                                "enum": [
+                                    "domestic",
+                                    "oss",
+                                    "icp"
+                                ],
+                                "description": "The VAT route the order was invoiced under: domestic at the line's own rate, oss at the destination member state's rate, icp under reverse charge.",
+                                "title": "VAT route"
+                            },
+                            "vatMention": {
+                                "type": "string",
+                                "description": "The mention a reverse-charged invoice carries, Btw verlegd.",
+                                "title": "VAT mention"
                             }
                         }
+                    },
+                    "ossContext": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Union OSS context of a web shop sale to a consumer in another EU member state: the destination rate applied, its category and EuVatRate row, and the OSS return period the invoice lands in (sales-webshop-orders REQ-SWO-003).",
+                        "properties": {
+                            "destinationCountry": {
+                                "type": "string",
+                                "description": "ISO 3166-1 alpha-2 destination member state.",
+                                "example": "FR",
+                                "title": "Destination Country"
+                            },
+                            "appliedVatRate": {
+                                "type": "number",
+                                "description": "VAT rate that was applied, as a percentage.",
+                                "example": 20.0,
+                                "title": "Applied VAT Rate"
+                            },
+                            "appliedRateCategory": {
+                                "type": "string",
+                                "enum": [
+                                    "standard",
+                                    "reduced1",
+                                    "reduced2",
+                                    "superReduced",
+                                    "parking",
+                                    "zero"
+                                ],
+                                "description": "Rate category that was applied.",
+                                "title": "Applied Rate Category"
+                            },
+                            "tedbRateVersion": {
+                                "type": "string",
+                                "description": "FK to the EuVatRate row that supplied the rate; preserves the audit trail across TEDB refreshes.",
+                                "example": "euvat-de-standard-2024",
+                                "title": "Tedb Rate Version"
+                            },
+                            "ossEligible": {
+                                "type": "boolean",
+                                "description": "True when this invoice counts toward the OSS threshold and feeds the OSS return.",
+                                "example": true,
+                                "title": "OSS Eligible"
+                            },
+                            "ossReportingPeriod": {
+                                "type": "string",
+                                "description": "The YYYY-Qn this invoice lands in for aangifte generation.",
+                                "example": "2026-Q2",
+                                "title": "OSS Reporting Period"
+                            }
+                        },
+                        "title": "OSS Context"
                     }
                 }
             },
