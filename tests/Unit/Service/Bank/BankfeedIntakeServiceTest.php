@@ -47,6 +47,7 @@ use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * REQ-BCON-002, REQ-BCON-003.
@@ -205,7 +206,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function rows(string $schema): array {
-		return array_map(static fn ($e): array => $e->getObject(), $this->store->setSchema($schema)->findAll([]) === [] ? [] : array_map(fn (array $r) => $this->store->find($r['id'], schema: $schema), $this->store->setSchema($schema)->findAll([])));
+		return array_map(static fn ($e): array => $e->getObject(), $this->store->setSchema($schema)->findAll([]) === [] ? [] : array_map(fn (array $r) => $this->store->find($r['id'], new ObjectFindOptions(schema: $schema)), $this->store->setSchema($schema)->findAll([])));
 
 	}//end rows()
 
@@ -222,7 +223,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 		self::assertSame('feed', $statements[0]['statementSource']);
 		self::assertSame('NL20INGB0001234567', $statements[0]['bankAccountIban']);
 		self::assertCount(12, $this->rows('BankStatementLine'));
-		self::assertSame('2026-09-28T06:00:00+00:00', $this->store->find('ba-ing', schema: 'BankAccount')->getObject()['lastSyncAt']);
+		self::assertSame('2026-09-28T06:00:00+00:00', $this->store->find('ba-ing', new ObjectFindOptions(schema: 'BankAccount'))->getObject()['lastSyncAt']);
 
 		foreach ($this->saved as $save) {
 			if (in_array($save['schema'], ['BankStatement', 'BankStatementLine', 'ReconciliationMatch'], true) === true) {
@@ -261,7 +262,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 	public function testExactPaymentSettlesItsInvoice(): void {
 		$this->listener->handle(self::syncedEvent());
 
-		self::assertSame('paid', $this->store->find('ar-0877', schema: 'ARInvoice')->getObject()['lifecycleState']);
+		self::assertSame('paid', $this->store->find('ar-0877', new ObjectFindOptions(schema: 'ARInvoice'))->getObject()['lifecycleState']);
 		$matches = $this->rows('ReconciliationMatch');
 		self::assertCount(1, $matches);
 		self::assertSame(ExactMatchBooker::ACTOR, $matches[0]['confirmedBy']);
@@ -277,8 +278,8 @@ final class BankfeedIntakeServiceTest extends TestCase {
 	public function testAmbiguousPaymentWaits(): void {
 		$this->listener->handle(self::syncedEvent());
 
-		self::assertSame('issued', $this->store->find('ar-abo-1', schema: 'ARInvoice')->getObject()['lifecycleState']);
-		self::assertSame('issued', $this->store->find('ar-abo-2', schema: 'ARInvoice')->getObject()['lifecycleState']);
+		self::assertSame('issued', $this->store->find('ar-abo-1', new ObjectFindOptions(schema: 'ARInvoice'))->getObject()['lifecycleState']);
+		self::assertSame('issued', $this->store->find('ar-abo-2', new ObjectFindOptions(schema: 'ARInvoice'))->getObject()['lifecycleState']);
 		$unmatched = array_filter($this->rows('BankStatementLine'), static fn (array $l): bool => $l['status'] === 'unmatched');
 		self::assertCount(11, $unmatched);
 

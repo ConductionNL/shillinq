@@ -31,6 +31,7 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * Tests for PublicSectorRecords::find without a payload id.
@@ -51,7 +52,9 @@ final class PublicSectorRecordsFindTest extends TestCase {
 		$os = $this->createMock(ObjectServiceInterface::class);
 		$os->expects($this->once())->method('setRegister')->with('shillinq')->willReturnSelf();
 		$os->expects($this->once())->method('setSchema')->with('Reserve')->willReturnSelf();
-		$os->expects($this->once())->method('find')->with('r-1')->willReturn($entity);
+		$os->expects($this->once())->method('find')->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'r-1',
+			]))->willReturn($entity);
 
 		$location = $this->createStub(RegisterLocation::class);
 		$location->method('getRegisterSlug')->willReturn('shillinq');

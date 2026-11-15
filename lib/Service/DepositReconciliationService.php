@@ -33,6 +33,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\DepositReconciliationServiceInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
@@ -245,9 +247,8 @@ class DepositReconciliationService implements DepositReconciliationServiceInterf
 	private function saveDeposit(string $registerSlug, array $deposit): void {
 		$this->objectService->saveObject(
 			object: $deposit,
-			register: $registerSlug,
-			schema: 'DepositPayment',
-			_rbac: false,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'DepositPayment')),
+			_rbac: false
 		);
 	}//end saveDeposit()
 

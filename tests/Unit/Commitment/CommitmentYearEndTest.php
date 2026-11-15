@@ -43,6 +43,8 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * Entering, invoicing, closing and carrying commitments (REQ-PCYE-001 to REQ-PCYE-004).
@@ -97,6 +99,7 @@ final class CommitmentYearEndTest extends TestCase {
 			 * @return object
 			 */
 			public function find(mixed $id, mixed ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				$slug = ['900' => 'SupplierInvoice', '901' => 'PurchaseOrder', '7' => 'shillinq'][(string)$id] ?? '';
 				return new class($slug) {
 					/**
@@ -176,7 +179,7 @@ final class CommitmentYearEndTest extends TestCase {
 		$commitment = $this->get('Commitment', $this->ids['v0114']);
 		$this->assertTrue($this->guard('canCommit')->check($commitment, 'aangaan', 'm.jansen')->isAllowed());
 
-		$this->store->setSchema('CommitmentLine')->patchObject($this->ids['line0114'], ['amount_excl_vat' => 8000000]);
+		$this->store->setSchema('CommitmentLine')->patchObject(new ObjectPatch(objectId: $this->ids['line0114'], data: ['amount_excl_vat' => 8000000]));
 		$refused = $this->guard('canCommit')->check($commitment, 'aangaan', 'm.jansen');
 		$this->assertFalse($refused->isAllowed());
 		$this->assertSame('The 2026 budget for programme 0.4 is EUR 20,000.00 short.', $refused->getMessage());
@@ -240,7 +243,7 @@ final class CommitmentYearEndTest extends TestCase {
 	 */
 	public function testAnInvoiceApprovedAsTheLastOneCloses(): void {
 		$this->engine->transition($this->ids['v0114'], 'aangaan');
-		$this->store->setSchema('SupplierInvoice')->patchObject($this->ids['invoice'], ['isLastInvoice' => true]);
+		$this->store->setSchema('SupplierInvoice')->patchObject(new ObjectPatch(objectId: $this->ids['invoice'], data: ['isLastInvoice' => true]));
 		$this->listener()->handle($this->approval());
 
 		$this->assertSame('closed', $this->get('Commitment', $this->ids['v0114'])['status']);

@@ -43,6 +43,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
 use ReflectionProperty;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A fake OpenRegister ObjectService for the lookups: records every call, answers what it was given.
@@ -107,7 +108,9 @@ final class FakeLookupObjectService {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema): mixed {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
 		$this->calls[] = 'save ' . $register . '/' . $schema . ' ' . (string)($object['status'] ?? '');
 		if ($this->failure !== null) {
 			throw $this->failure;
