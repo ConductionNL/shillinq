@@ -105,6 +105,30 @@ final class PaymentRunApprovalLock {
 	}//end digest()
 
 	/**
+	 * Whether a run was approved before the approval lock existed: it carries
+	 * none of the fields the lock stamps on approval (digest, approver, time).
+	 * Such a run has no digest to compare, and since the lock it can no longer
+	 * change, so its export goes ahead on the lines it holds. A run that carries
+	 * any approval stamp but no digest is not one of these, and stays refused.
+	 *
+	 * @param array<string,mixed> $run The payment run.
+	 *
+	 * @return bool True when the run predates the approval lock.
+	 *
+	 * @spec openspec/specs/payment-run-four-eyes/spec.md
+	 */
+	public function approvedBeforeLock(array $run): bool {
+		foreach (['approvedLinesDigest', 'approvedBy', 'approvedAt'] as $field) {
+			if ($this->canonical(value: ($run[$field] ?? null)) !== null) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end approvedBeforeLock()
+
+	/**
 	 * Return the locked fields a write changes on a run that has left `draft`.
 	 *
 	 * @param array<string,mixed> $old The run as stored.

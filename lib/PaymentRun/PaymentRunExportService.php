@@ -161,10 +161,18 @@ class PaymentRunExportService implements PaymentRunExportServiceInterface {
 			return ['error' => 'not-approved', 'state' => $state];
 		}
 
-		$approvedDigest = (string)($paymentRun['approvedLinesDigest'] ?? '');
-		if ($approvedDigest === '' || hash_equals($approvedDigest, $this->approvalLock->digest(run: $paymentRun)) === false) {
-			$this->logger->warning('PaymentRunExportService: run differs from what was approved', ['runNumber' => ($paymentRun['runNumber'] ?? '')]);
-			return ['error' => 'changed-after-approval'];
+		if ($this->approvalLock->approvedBeforeLock(run: $paymentRun) === true) {
+			// Approved before the lock stamped a digest; frozen since, so export the lines it holds.
+			$this->logger->info(
+				'PaymentRunExportService: run approved before the approval lock, exported without a digest',
+				['runNumber' => ($paymentRun['runNumber'] ?? '')]
+			);
+		} else {
+			$approvedDigest = (string)($paymentRun['approvedLinesDigest'] ?? '');
+			if ($approvedDigest === '' || hash_equals($approvedDigest, $this->approvalLock->digest(run: $paymentRun)) === false) {
+				$this->logger->warning('PaymentRunExportService: run differs from what was approved', ['runNumber' => ($paymentRun['runNumber'] ?? '')]);
+				return ['error' => 'changed-after-approval'];
+			}
 		}
 
 		$missing = $this->linesMissingCreditorIban(paymentRun: $paymentRun);

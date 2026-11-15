@@ -368,6 +368,44 @@ class PaymentRunExportServiceTest extends TestCase {
 	}//end testARunWithoutAnApprovalDigestIsRefused()
 
 	/**
+	 * A run approved before the approval lock carries no digest, approver or
+	 * approval time; it is exported on the lines it holds.
+	 *
+	 * @return void
+	 */
+	public function testARunApprovedBeforeTheLockIsExported(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		unset($run['approvedLinesDigest'], $run['approvedBy'], $run['approvedAt']);
+
+		$result = $service->export($run);
+
+		$this->assertArrayNotHasKey('error', $result);
+		$this->assertGreaterThan(0, $this->newFileCalls);
+		$this->assertSame($run['paymentLines'], $captured['paymentLines']);
+	}//end testARunApprovedBeforeTheLockIsExported()
+
+	/**
+	 * A run stamped with an approval time but no digest is not a pre-lock run
+	 * and stays refused.
+	 *
+	 * @return void
+	 */
+	public function testARunWithAnApprovalTimeButNoDigestIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		unset($run['approvedLinesDigest'], $run['approvedBy']);
+		$run['approvedAt'] = '2026-11-01T10:00:00Z';
+
+		$this->assertSame('changed-after-approval', $service->export($run)['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+	}//end testARunWithAnApprovalTimeButNoDigestIsRefused()
+
+	/**
 	 * F2-S1: the export pays exactly the approved lines.
 	 *
 	 * @return void
