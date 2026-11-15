@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\Migration\RevenueContractRenameMigrator;
 use OCA\Shillinq\Service\SettingsService;

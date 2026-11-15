@@ -168,11 +168,11 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 			}//end saveObject()
 
 			/**
-			 * @param \OCA\OpenRegister\Service\Object\ObjectDeletion $deletion The uuid to delete.
+			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The uuid to delete.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion): void {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
 				$id = $deletion->uuid;
 				$schema = (string)$this->schema;
 				unset($this->store[$schema][$id]);

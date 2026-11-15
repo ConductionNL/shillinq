@@ -36,8 +36,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Dunning;
 
 use DateTimeImmutable;
-use OCA\OpenRegister\Service\Object\ObjectDeletion;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\Shillinq\BackgroundJob\DunningTickJob;
 use OCA\Shillinq\Service\Dunning\DunningStageDefaultTexts;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;

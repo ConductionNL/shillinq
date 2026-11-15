@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ObjectDeletion stub mirroring OCA\OpenRegister\Service\Object\ObjectDeletion (openregister #9099).
+ * ObjectDeletion stub mirroring OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion (openregister #9099).
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -13,12 +13,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Object;
+namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 use OCP\IUser;
 
 /**
- * Stub for OCA\OpenRegister\Service\Object\ObjectDeletion used by shillinq tests.
+ * Stub for OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion used by shillinq tests.
  */
 final class ObjectDeletion {
 	/**

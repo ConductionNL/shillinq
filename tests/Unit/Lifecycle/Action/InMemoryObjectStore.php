@@ -139,7 +139,7 @@ final class InMemoryObjectStore {
 			}
 		);
 		$service->method('deleteObject')->willReturnCallback(
-			function (\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion): bool {
+			function (\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): bool {
 				$this->deleted[] = [(string)$deletion->target->schema, $deletion->uuid];
 				return true;
 			}
