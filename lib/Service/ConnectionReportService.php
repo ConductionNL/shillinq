@@ -73,7 +73,8 @@ class ConnectionReportService implements ConnectionReportServiceInterface {
 		// (tax-vat-position-and-suppletie REQ-VPS-002).
 		'digipoort-sbr' => [
 			'interface' => DigipoortSbrAdapterInterface::class,
-			'consequence' => 'No filing reaches Digipoort; a supplementary return is downloaded to file by hand.',
+			'consequence' => 'No VAT return, supplementary return or annual accounts reach Digipoort; '
+				.'Submit is refused and a supplementary return is downloaded to file by hand.',
 		],
 		'treasury-rates' => [
 			'interface' => TreasuryRateAdapterInterface::class,

@@ -1242,5 +1242,148 @@
         "entries"
       ]
     }
+  },
+  {
+    "id": "shillinq.receipt.book",
+    "name": "Book a receipt on an expense claim",
+    "description": "Book a captured receipt onto a draft expense claim of the same administration, as the receipt review screen does: the receipt is confirmed, any field you pass is recorded as a correction, and the booked account is fed back to the receipt reader. Use it when the user asks to book or add a receipt to their expense claim; find the receipt first with shillinq.Receipt.search (the capture made it from the photo) and the claim with shillinq.ExpenseClaimEntry.search. The claim must still be a draft, and a receipt already on another claim is refused. The receipt needs an amount, a currency, a date and a category; pass any it lacks.",
+    "scope": "create",
+    "reach": "user",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "administrationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+          "description": "The administration the receipt and the claim belong to."
+        },
+        "receiptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+          "description": "The receipt to book."
+        },
+        "claimId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+          "description": "The draft expense claim to book it on."
+        },
+        "amount": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "The amount on the receipt, in its currency.",
+          "minimum": 0
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The ISO 4217 currency code.",
+          "maxLength": 3
+        },
+        "receiptDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The date on the receipt, as YYYY-MM-DD.",
+          "maxLength": 32
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The expense category.",
+          "maxLength": 64
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What the expense was for.",
+          "maxLength": 2000
+        },
+        "vendorName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Who issued the receipt.",
+          "maxLength": 255
+        },
+        "costCentreCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The cost centre the expense is booked on.",
+          "maxLength": 64
+        },
+        "glAccount": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The general-ledger account the expense is booked on.",
+          "maxLength": 64
+        },
+        "receiptNumber": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The number printed on the receipt.",
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "administrationId",
+        "receiptId",
+        "claimId"
+      ]
+    }
+  },
+  {
+    "id": "shillinq.expense_claim.approve",
+    "name": "Decide on an expense claim",
+    "description": "Approve or reject a submitted expense claim, as the signed-in user, through the claim's approval workflow: whether you may decide it, and with how many approvers, is the workflow's own rule, so a refusal means it is not yours to decide. Use it when the user asks to approve or reject a specific expense claim; find it first with shillinq.ExpenseClaimEntry.search. Approving makes the claim ready to post; rejecting returns it to its submitter as a draft.",
+    "scope": "update",
+    "reach": "instance",
+    "readOnlyHint": false,
+    "destructiveHint": false,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "administrationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+          "description": "The administration the claim belongs to."
+        },
+        "claimId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+          "description": "The submitted expense claim."
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "rejected"
+          ],
+          "description": "The decision."
+        }
+      },
+      "required": [
+        "administrationId",
+        "claimId",
+        "decision"
+      ]
+    }
   }
 ]

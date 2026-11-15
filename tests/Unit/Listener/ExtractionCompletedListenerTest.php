@@ -645,7 +645,8 @@ final class ExtractionCompletedListenerTest extends TestCase {
 				container: $container,
 				userSession: $this->createMock(IUserSession::class),
 				appConfig: $appConfig,
-				logger: new NullLogger()
+				logger: new NullLogger(),
+				config: $this->createMock(\OCP\IConfig::class)
 			)
 		);
 
