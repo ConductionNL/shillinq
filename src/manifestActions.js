@@ -31,6 +31,7 @@ import {
 	openIntegriqConnections,
 	openIntegriqStore,
 } from './utils/integriqConnections.js'
+import { openRecalculateInvestmentDeductions } from './utils/investmentDeductionActions.js'
 import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
@@ -126,6 +127,8 @@ export const manifestActions = Object.freeze({
 	downloadSupplementaryReturn,
 	fileSupplementaryReturn,
 	openVatPositionLines,
+	// tax-investment-deduction-claims 2.1: Recalculate on Investment deductions.
+	openRecalculateInvestmentDeductions,
 })
 
 /**
