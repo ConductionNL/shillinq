@@ -178,6 +178,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
             ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
             ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+            ['name' => 'administrationTemplate#index', 'url' => '/api/administration-templates', 'verb' => 'GET'],
+            ['name' => 'administrationTemplate#saveAs', 'url' => '/api/administrations/{id}/template', 'verb' => 'POST'],
+            ['name' => 'administrationTemplate#seed', 'url' => '/api/administrations/{id}/seed-template', 'verb' => 'POST'],
             ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
             ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
@@ -209,6 +212,9 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
         // appointments (skipping availability/conflict violations).
             ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
             ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
+        // The XBRL file of an SBR filing, in any state (tax-digipoort-filing task 4.2).
+            ['name' => 'sbrFiling#download', 'url' => '/api/sbr-filings/{id}/xbrl', 'verb' => 'GET'],
+
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
