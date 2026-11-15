@@ -1,0 +1,96 @@
+{
+    "withDeposit": [
+        {
+            "administrationId": "adm-1",
+            "lineNumber": 1,
+            "lineType": "service",
+            "description": "Zaalhuur",
+            "quantity": 1,
+            "unitPrice": 10000,
+            "lineAmount": 10000,
+            "taxRate": 9,
+            "taxAmount": 900,
+            "grossAmount": 10900
+        },
+        {
+            "administrationId": "adm-1",
+            "lineNumber": 2,
+            "lineType": "deposit_credit",
+            "description": "Deposit Credit Applied",
+            "quantity": 1,
+            "unitPrice": -2500,
+            "lineAmount": -2500,
+            "taxRate": 0,
+            "taxAmount": 0,
+            "grossAmount": -2500
+        }
+    ],
+    "noDeposit": [
+        {
+            "administrationId": "adm-1",
+            "lineNumber": 1,
+            "lineType": "service",
+            "description": "Zaalhuur",
+            "quantity": 1,
+            "unitPrice": 10000,
+            "lineAmount": 10000,
+            "taxRate": 9,
+            "taxAmount": 900,
+            "grossAmount": 10900
+        }
+    ],
+    "negativeDeposit": [
+        {
+            "administrationId": "adm-1",
+            "lineNumber": 1,
+            "lineType": "service",
+            "description": "Zaalhuur",
+            "quantity": 1,
+            "unitPrice": 10000,
+            "lineAmount": 10000,
+            "taxRate": 9,
+            "taxAmount": 900,
+            "grossAmount": 10900
+        }
+    ],
+    "defaults": [
+        {
+            "administrationId": "",
+            "lineNumber": 1,
+            "lineType": "service",
+            "description": "Booking service",
+            "quantity": 1,
+            "unitPrice": 0,
+            "lineAmount": 0,
+            "taxRate": 21,
+            "taxAmount": 0,
+            "grossAmount": 0
+        },
+        {
+            "administrationId": "",
+            "lineNumber": 2,
+            "lineType": "deposit_credit",
+            "description": "Deposit Credit Applied",
+            "quantity": 1,
+            "unitPrice": -1,
+            "lineAmount": -1,
+            "taxRate": 0,
+            "taxAmount": 0,
+            "grossAmount": -1
+        }
+    ],
+    "oddCents": [
+        {
+            "administrationId": "",
+            "lineNumber": 1,
+            "lineType": "service",
+            "description": "Booking service",
+            "quantity": 1,
+            "unitPrice": 333,
+            "lineAmount": 333,
+            "taxRate": 21,
+            "taxAmount": 70,
+            "grossAmount": 403
+        }
+    ]
+}

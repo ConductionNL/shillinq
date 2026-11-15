@@ -37,36 +37,83 @@ function day(value) {
  * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.1
  */
 export function vatCheckMessage(result) {
-	const vatId = result.vatId
 	if (result.status === 'valid') {
-		return {
-			kind: 'success',
-			text: t('shillinq', 'VAT number {vatId} is valid (checked on {date}).', {
-				vatId,
-				date: day(result.lastValidAt),
-			}),
-		}
+		return validMessage(result)
 	}
 	if (result.status === 'invalid') {
-		return {
-			kind: 'error',
-			text: t(
-				'shillinq',
-				'VAT number {vatId} is not valid according to VIES.',
-				{ vatId },
-			),
-		}
+		return invalidMessage(result.vatId)
 	}
+	return unreachableMessage(result)
+}
+
+/**
+ * The message for a number VIES confirmed.
+ *
+ * @param {{vatId: string, lastValidAt: string|null}} result The outcome.
+ * @return {{kind: string, text: string}}
+ */
+function validMessage(result) {
+	return {
+		kind: 'success',
+		text: t('shillinq', 'VAT number {vatId} is valid (checked on {date}).', {
+			vatId: result.vatId,
+			date: day(result.lastValidAt),
+		}),
+	}
+}
+
+/**
+ * The message for a number VIES rejected.
+ *
+ * @param {string} vatId The number.
+ * @return {{kind: string, text: string}}
+ */
+function invalidMessage(vatId) {
+	return {
+		kind: 'error',
+		text: t('shillinq', 'VAT number {vatId} is not valid according to VIES.', {
+			vatId,
+		}),
+	}
+}
+
+/**
+ * The message when VIES could not be reached, with the last confirmation if there was one.
+ *
+ * @param {{vatId: string, lastValidAt: string|null}} result The outcome.
+ * @return {{kind: string, text: string}}
+ */
+function unreachableMessage(result) {
 	if (result.lastValidAt) {
-		return {
-			kind: 'warning',
-			text: t(
-				'shillinq',
-				'VIES cannot be reached. VAT number {vatId} was last valid on {date}.',
-				{ vatId, date: day(result.lastValidAt) },
-			),
-		}
+		return lastValidMessage(result)
 	}
+	return unconfirmedMessage(result.vatId)
+}
+
+/**
+ * The message when VIES could not be reached and the number was valid before.
+ *
+ * @param {{vatId: string, lastValidAt: string}} result The outcome.
+ * @return {{kind: string, text: string}}
+ */
+function lastValidMessage(result) {
+	return {
+		kind: 'warning',
+		text: t(
+			'shillinq',
+			'VIES cannot be reached. VAT number {vatId} was last valid on {date}.',
+			{ vatId: result.vatId, date: day(result.lastValidAt) },
+		),
+	}
+}
+
+/**
+ * The message when VIES could not be reached and the number was never confirmed.
+ *
+ * @param {string} vatId The number.
+ * @return {{kind: string, text: string}}
+ */
+function unconfirmedMessage(vatId) {
 	return {
 		kind: 'warning',
 		text: t(

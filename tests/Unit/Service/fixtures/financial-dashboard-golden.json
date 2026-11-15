@@ -1,0 +1,1098 @@
+{
+    "seriesRange": {
+        "result": {
+            "months": [
+                "2026-02",
+                "2026-03",
+                "2026-04"
+            ],
+            "revenue": [
+                0.0,
+                0.0,
+                360.0
+            ],
+            "costs": [
+                0.0,
+                750.0,
+                0.0
+            ],
+            "margin": [
+                0.0,
+                -750.0,
+                360.0
+            ],
+            "marginPct": [
+                null,
+                null,
+                100.0
+            ],
+            "billableHours": [
+                0.0,
+                0.0,
+                6.0
+            ],
+            "nonBillableHours": [
+                0.0,
+                2.0,
+                0.0
+            ],
+            "billablePct": [
+                null,
+                0.0,
+                100.0
+            ],
+            "cashIn": [
+                0.0,
+                0.0,
+                3060.0
+            ],
+            "cashOut": [
+                0.0,
+                750.0,
+                0.0
+            ],
+            "cashNet": [
+                0.0,
+                -750.0,
+                3060.0
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "UrenRegistratie",
+                []
+            ]
+        ]
+    },
+    "seriesFallback": {
+        "result": {
+            "months": [
+                "2025-05",
+                "2025-06",
+                "2025-07",
+                "2025-08",
+                "2025-09",
+                "2025-10",
+                "2025-11",
+                "2025-12",
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04"
+            ],
+            "revenue": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2100.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                360.0
+            ],
+            "costs": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                750.0,
+                0.0
+            ],
+            "margin": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2100.0,
+                0.0,
+                0.0,
+                0.0,
+                -750.0,
+                360.0
+            ],
+            "marginPct": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                100.0,
+                null,
+                null,
+                null,
+                null,
+                100.0
+            ],
+            "billableHours": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                6.0
+            ],
+            "nonBillableHours": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2.0,
+                0.0
+            ],
+            "billablePct": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0.0,
+                100.0
+            ],
+            "cashIn": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                3060.0
+            ],
+            "cashOut": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                750.0,
+                0.0
+            ],
+            "cashNet": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -750.0,
+                3060.0
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "UrenRegistratie",
+                []
+            ]
+        ]
+    },
+    "seriesEmptyRange": {
+        "result": {
+            "months": [
+                "2025-05",
+                "2025-06",
+                "2025-07",
+                "2025-08",
+                "2025-09",
+                "2025-10",
+                "2025-11",
+                "2025-12",
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04"
+            ],
+            "revenue": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2100.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                360.0
+            ],
+            "costs": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                750.0,
+                0.0
+            ],
+            "margin": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2100.0,
+                0.0,
+                0.0,
+                0.0,
+                -750.0,
+                360.0
+            ],
+            "marginPct": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                100.0,
+                null,
+                null,
+                null,
+                null,
+                100.0
+            ],
+            "billableHours": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                6.0
+            ],
+            "nonBillableHours": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                2.0,
+                0.0
+            ],
+            "billablePct": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0.0,
+                100.0
+            ],
+            "cashIn": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                3060.0
+            ],
+            "cashOut": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                750.0,
+                0.0
+            ],
+            "cashNet": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -750.0,
+                3060.0
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "UrenRegistratie",
+                []
+            ]
+        ]
+    },
+    "summaryRange": {
+        "result": {
+            "months": [
+                "2026-03",
+                "2026-04"
+            ],
+            "previousMonths": [
+                "2026-01",
+                "2026-02"
+            ],
+            "current": {
+                "turnover": 360.0,
+                "margin": -390.0,
+                "marginPct": -108.33,
+                "billableHours": 6.0,
+                "billablePct": 75.0,
+                "openDebtors": {
+                    "count": 10,
+                    "amount": 5535.0
+                },
+                "openCreditors": {
+                    "count": 2,
+                    "amount": 1452.0
+                },
+                "cashPosition": 2310.0
+            },
+            "previousPeriod": {
+                "turnover": 0.0,
+                "margin": 0.0,
+                "marginPct": null,
+                "billableHours": 0.0,
+                "billablePct": null
+            }
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "UrenRegistratie",
+                []
+            ],
+            [
+                "find",
+                "ARInvoice",
+                []
+            ],
+            [
+                "find",
+                "APTransaction",
+                []
+            ]
+        ]
+    },
+    "summaryFallback": {
+        "result": {
+            "months": [
+                "2025-05",
+                "2025-06",
+                "2025-07",
+                "2025-08",
+                "2025-09",
+                "2025-10",
+                "2025-11",
+                "2025-12",
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04"
+            ],
+            "previousMonths": [
+                "2024-05",
+                "2024-06",
+                "2024-07",
+                "2024-08",
+                "2024-09",
+                "2024-10",
+                "2024-11",
+                "2024-12",
+                "2025-01",
+                "2025-02",
+                "2025-03",
+                "2025-04"
+            ],
+            "current": {
+                "turnover": 2460.0,
+                "margin": 1710.0,
+                "marginPct": 69.51,
+                "billableHours": 6.0,
+                "billablePct": 75.0,
+                "openDebtors": {
+                    "count": 10,
+                    "amount": 5535.0
+                },
+                "openCreditors": {
+                    "count": 2,
+                    "amount": 1452.0
+                },
+                "cashPosition": 2310.0
+            },
+            "previousPeriod": {
+                "turnover": 0.0,
+                "margin": 0.0,
+                "marginPct": null,
+                "billableHours": 0.0,
+                "billablePct": null
+            }
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "UrenRegistratie",
+                []
+            ],
+            [
+                "find",
+                "ARInvoice",
+                []
+            ],
+            [
+                "find",
+                "APTransaction",
+                []
+            ]
+        ]
+    },
+    "widgetsAdm1": {
+        "result": {
+            "revenue": {
+                "month": "2026-04",
+                "thisMonth": 120.0,
+                "sameMonthLastYear": 0.0
+            },
+            "receivables": {
+                "count": 5,
+                "amount": 1845.0,
+                "overdueCount": 1,
+                "overdueAmount": 1210.0
+            },
+            "cashPosition": 770.0,
+            "resultByMonth": [
+                {
+                    "month": "2025-11",
+                    "result": 700.0
+                },
+                {
+                    "month": "2025-12",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-01",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-02",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-03",
+                    "result": -250.0
+                },
+                {
+                    "month": "2026-04",
+                    "result": 120.0
+                }
+            ],
+            "topCustomers": [
+                {
+                    "customerId": "c1",
+                    "name": "Alfa BV",
+                    "revenue": 1000.0
+                },
+                {
+                    "customerId": "c2",
+                    "name": "Bravo",
+                    "revenue": 500.0
+                },
+                {
+                    "customerId": "c3",
+                    "name": "c3",
+                    "revenue": 100.56
+                },
+                {
+                    "customerId": "",
+                    "name": "",
+                    "revenue": 60.0
+                },
+                {
+                    "customerId": "c6",
+                    "name": "c6",
+                    "revenue": 40.0
+                }
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "ARInvoice",
+                []
+            ],
+            [
+                "find",
+                "CustomerMaster",
+                []
+            ]
+        ]
+    },
+    "widgetsAdm2": {
+        "result": {
+            "revenue": {
+                "month": "2026-04",
+                "thisMonth": 0.0,
+                "sameMonthLastYear": 0.0
+            },
+            "receivables": {
+                "count": 5,
+                "amount": 3690.0,
+                "overdueCount": 1,
+                "overdueAmount": 2420.0
+            },
+            "cashPosition": 1540.0,
+            "resultByMonth": [
+                {
+                    "month": "2025-11",
+                    "result": 1400.0
+                },
+                {
+                    "month": "2025-12",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-01",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-02",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-03",
+                    "result": -500.0
+                },
+                {
+                    "month": "2026-04",
+                    "result": 0.0
+                }
+            ],
+            "topCustomers": [
+                {
+                    "customerId": "c1",
+                    "name": "Alfa BV",
+                    "revenue": 2000.0
+                },
+                {
+                    "customerId": "c2",
+                    "name": "Bravo",
+                    "revenue": 1000.0
+                },
+                {
+                    "customerId": "c3",
+                    "name": "c3",
+                    "revenue": 201.11
+                },
+                {
+                    "customerId": "",
+                    "name": "",
+                    "revenue": 120.0
+                },
+                {
+                    "customerId": "c6",
+                    "name": "c6",
+                    "revenue": 80.0
+                }
+            ]
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "ARInvoice",
+                []
+            ],
+            [
+                "find",
+                "CustomerMaster",
+                []
+            ]
+        ]
+    },
+    "widgetsForeign": {
+        "result": {
+            "revenue": {
+                "month": "2026-04",
+                "thisMonth": 0.0,
+                "sameMonthLastYear": 0.0
+            },
+            "receivables": {
+                "count": 0,
+                "amount": 0.0,
+                "overdueCount": 0,
+                "overdueAmount": 0.0
+            },
+            "cashPosition": 0.0,
+            "resultByMonth": [
+                {
+                    "month": "2025-11",
+                    "result": 0.0
+                },
+                {
+                    "month": "2025-12",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-01",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-02",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-03",
+                    "result": 0.0
+                },
+                {
+                    "month": "2026-04",
+                    "result": 0.0
+                }
+            ],
+            "topCustomers": []
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "ARInvoice",
+                []
+            ],
+            [
+                "find",
+                "CustomerMaster",
+                []
+            ]
+        ]
+    },
+    "cashAdm1": {
+        "result": {
+            "accounts": [
+                {
+                    "bankAccountId": "ba-1",
+                    "accountName": "",
+                    "iban": "NL01BANK0123456789",
+                    "ledgerAccountNumber": "",
+                    "ledgerBalance": 0.0,
+                    "bankBalance": null,
+                    "bankBalanceDate": null
+                }
+            ],
+            "other": 770.0,
+            "total": 770.0
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "BankAccount",
+                []
+            ],
+            [
+                "find",
+                "BankStatement",
+                []
+            ]
+        ]
+    },
+    "cashAdm2": {
+        "result": {
+            "accounts": [
+                {
+                    "bankAccountId": "ba-1",
+                    "accountName": "",
+                    "iban": "NL01BANK0123456789",
+                    "ledgerAccountNumber": "",
+                    "ledgerBalance": 0.0,
+                    "bankBalance": null,
+                    "bankBalanceDate": null
+                }
+            ],
+            "other": 1540.0,
+            "total": 1540.0
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "find",
+                "BankAccount",
+                []
+            ],
+            [
+                "find",
+                "BankStatement",
+                []
+            ]
+        ]
+    },
+    "failingLines": {
+        "result": {
+            "accounts": [
+                {
+                    "bankAccountId": "ba-1",
+                    "accountName": "",
+                    "iban": "NL01BANK0123456789",
+                    "ledgerAccountNumber": "",
+                    "ledgerBalance": 0.0,
+                    "bankBalance": null,
+                    "bankBalanceDate": null
+                }
+            ],
+            "other": 0.0,
+            "total": 0.0
+        },
+        "events": [
+            [
+                "find",
+                "Account",
+                []
+            ],
+            [
+                "find",
+                "GLTransaction",
+                []
+            ],
+            [
+                "find",
+                "GLLine",
+                []
+            ],
+            [
+                "error",
+                "FinancialDashboardService: schema fetch failed",
+                {
+                    "schema": "GLLine",
+                    "exception": "down GLLine"
+                }
+            ],
+            [
+                "find",
+                "BankAccount",
+                []
+            ],
+            [
+                "find",
+                "BankStatement",
+                []
+            ]
+        ]
+    },
+    "noStore": {
+        "result": {
+            "months": [
+                "2025-05",
+                "2025-06",
+                "2025-07",
+                "2025-08",
+                "2025-09",
+                "2025-10",
+                "2025-11",
+                "2025-12",
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04"
+            ],
+            "previousMonths": [
+                "2024-05",
+                "2024-06",
+                "2024-07",
+                "2024-08",
+                "2024-09",
+                "2024-10",
+                "2024-11",
+                "2024-12",
+                "2025-01",
+                "2025-02",
+                "2025-03",
+                "2025-04"
+            ],
+            "current": {
+                "turnover": 0.0,
+                "margin": 0.0,
+                "marginPct": null,
+                "billableHours": 0.0,
+                "billablePct": null,
+                "openDebtors": {
+                    "count": 0,
+                    "amount": 0.0
+                },
+                "openCreditors": {
+                    "count": 0,
+                    "amount": 0.0
+                },
+                "cashPosition": 0.0
+            },
+            "previousPeriod": {
+                "turnover": 0.0,
+                "margin": 0.0,
+                "marginPct": null,
+                "billableHours": 0.0,
+                "billablePct": null
+            }
+        },
+        "events": [
+            [
+                "warning",
+                "FinancialDashboardService: ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ],
+            [
+                "warning",
+                "FinancialDashboardService: ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ],
+            [
+                "warning",
+                "FinancialDashboardService: ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ],
+            [
+                "warning",
+                "FinancialDashboardService: ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ],
+            [
+                "warning",
+                "FinancialDashboardService: ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ],
+            [
+                "warning",
+                "FinancialDashboardService: ObjectService unavailable",
+                {
+                    "exception": "no OR"
+                }
+            ]
+        ]
+    }
+}

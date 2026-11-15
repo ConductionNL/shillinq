@@ -3,6 +3,9 @@
 /**
  * Unit tests for SupplierInvoiceService (slice 05 of bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers REQ-PO3W-004 (UBL ingestion) + REQ-PO3W-007 (OCR ingestion) +
  * REQ-SI-002 (lifecycle transitions):
  *  - parseUblInvoice maps header + lines from a minimal UBL Invoice XML;
@@ -30,9 +33,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -41,6 +41,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
@@ -129,7 +130,7 @@ final class SupplierInvoiceServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $this->logger,
 			objectService: $stub,
-			checks: new SupplierInvoiceChecks($stub, $settings),
+			checks: new SupplierInvoiceChecks($stub, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 			vatNumberCheck: $this->vatNumberCheck(store: $stub, settings: $settings, answer: $vies),
 		);
 
@@ -738,7 +739,7 @@ XML;
 		$clients = $this->createMock(IClientService::class);
 		$clients->method('newClient')->willReturn($client);
 
-		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $settings, $this->logger);
+		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $this->logger);
 
 	}//end vatNumberCheck()
 
@@ -781,4 +782,154 @@ XML;
 		self::assertSame([], $this->viesCalls);
 
 	}//end testADutchBillKeepsTheNumberWithoutACheck()
+	/**
+	 * Golden: the whole parsed shape of a UBL bill, with fallbacks and defaults.
+	 *
+	 * @return void
+	 */
+	public function testParseUblInvoiceGolden(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+		$xml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+    <cbc:ID> INV-G-1 </cbc:ID>
+    <cbc:IssueDate>2026-01-02</cbc:IssueDate>
+    <cac:AccountingSupplierParty>
+        <cac:Party>
+            <cbc:EndpointID schemeID="0106">12345678</cbc:EndpointID>
+            <cac:PartyTaxScheme><cbc:CompanyID>NL001234567B01</cbc:CompanyID></cac:PartyTaxScheme>
+        </cac:Party>
+    </cac:AccountingSupplierParty>
+    <cac:PaymentMeans>
+        <cac:PayeeFinancialAccount><cbc:ID>nl91 abna 0417 1643 00</cbc:ID></cac:PayeeFinancialAccount>
+    </cac:PaymentMeans>
+    <cac:LegalMonetaryTotal>
+        <cbc:LineExtensionAmount>10.005</cbc:LineExtensionAmount>
+    </cac:LegalMonetaryTotal>
+    <cac:InvoiceLine>
+        <cbc:ID>A-7</cbc:ID>
+        <cbc:InvoicedQuantity>1.5</cbc:InvoicedQuantity>
+        <cac:Item><cbc:Name>Named only</cbc:Name></cac:Item>
+        <cac:TaxTotal><cac:TaxSubtotal><cac:TaxCategory><cbc:Percent>9</cbc:Percent></cac:TaxCategory></cac:TaxSubtotal></cac:TaxTotal>
+    </cac:InvoiceLine>
+    <cac:InvoiceLine>
+        <cbc:ID>12</cbc:ID>
+        <cac:Item><cbc:Description>Free</cbc:Description></cac:Item>
+    </cac:InvoiceLine>
+</Invoice>
+XML;
+
+		self::assertSame(
+			[
+				'invoiceNumber' => 'INV-G-1',
+				'supplierId' => '12345678',
+				'invoiceDate' => '2026-01-02',
+				'dueDate' => '',
+				'currency' => 'EUR',
+				'totalExclVat' => 1001,
+				'totalVat' => 0,
+				'totalInclVat' => 0,
+				'paymentReference' => '',
+				'payeeIban' => 'NL91ABNA0417164300',
+				'supplierKvk' => '12345678',
+				'supplierVatNumber' => 'NL001234567B01',
+				'lines' => [
+					['lineNumber' => 1, 'productCode' => '', 'description' => 'Named only', 'quantity' => 1.5, 'unitPrice' => 0, 'lineExtension' => 0, 'vatRate' => 0.09],
+					['lineNumber' => 12, 'productCode' => '', 'description' => 'Free', 'quantity' => 0.0, 'unitPrice' => 0, 'lineExtension' => 0, 'vatRate' => 0.0],
+				],
+			],
+			$service->parseUblInvoice(ublXml: $xml)
+		);
+
+	}//end testParseUblInvoiceGolden()
+
+	/**
+	 * parseUblInvoice rejects an empty document before parsing it.
+	 *
+	 * @return void
+	 */
+	public function testParseUblInvoiceRejectsEmptyXml(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('UBL Invoice XML is empty');
+		$service->parseUblInvoice(ublXml: "  \n");
+
+	}//end testParseUblInvoiceRejectsEmptyXml()
+
+	/**
+	 * Golden: the normalised OCR payload, with its defaults and skipped lines.
+	 *
+	 * @return void
+	 */
+	public function testNormaliseOcrPayloadGolden(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+		$normalise = new \ReflectionMethod($service, 'normaliseOcrPayload');
+
+		self::assertSame(
+			[
+				'invoiceNumber' => 'OCR-1',
+				'supplierId' => 'sup-1',
+				'invoiceDate' => '2026-03-04',
+				'dueDate' => '',
+				'currency' => 'EUR',
+				'totalExclVat' => 1250,
+				'totalVat' => null,
+				'totalInclVat' => null,
+				'paymentReference' => 'P-1',
+				'lines' => [
+					['lineNumber' => 1, 'productCode' => 'X', 'description' => 'Thing', 'quantity' => 2.0, 'unitPrice' => 625, 'lineExtension' => null, 'vatRate' => 0.21],
+					['lineNumber' => 9, 'productCode' => '', 'description' => '', 'quantity' => 0.0, 'unitPrice' => null, 'lineExtension' => 0, 'vatRate' => 0.0],
+				],
+			],
+			$normalise->invoke(
+				$service,
+				[
+					'invoiceNumber' => ' OCR-1 ',
+					'supplierId' => 'sup-1',
+					'invoiceDate' => '2026-03-04 ',
+					'currency' => ' ',
+					'totalExclVat' => '12.50',
+					'totalVat' => '',
+					'totalInclVat' => 'n/a',
+					'paymentReference' => 'P-1',
+					'lines' => [
+						['productCode' => ' X ', 'description' => 'Thing', 'quantity' => '2', 'unitPrice' => 6.25, 'vatRate' => '0.21'],
+						'skip',
+						['lineNumber' => '9', 'lineExtension' => 0],
+					],
+				]
+			)
+		);
+
+	}//end testNormaliseOcrPayloadGolden()
+
+	/**
+	 * normaliseOcrPayload names the first missing identifier.
+	 *
+	 * @return void
+	 */
+	public function testNormaliseOcrPayloadRequiresInvoiceNumberThenSupplier(): void {
+		$saved = [];
+		$service = $this->buildService(data: [], saved: $saved, accessibleAdministrations: ['adm-1']);
+		$normalise = new \ReflectionMethod($service, 'normaliseOcrPayload');
+
+		try {
+			$normalise->invoke($service, ['invoiceNumber' => ' ', 'supplierId' => '']);
+			self::fail('expected a refusal');
+		} catch (\RuntimeException $e) {
+			self::assertSame('OCR payload is missing invoiceNumber', $e->getMessage());
+		}
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('OCR payload is missing supplierId');
+		$normalise->invoke($service, ['invoiceNumber' => 'I-1']);
+
+	}//end testNormaliseOcrPayloadRequiresInvoiceNumberThenSupplier()
+
 }//end class

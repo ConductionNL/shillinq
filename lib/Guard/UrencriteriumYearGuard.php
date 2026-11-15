@@ -3,6 +3,9 @@
 /**
  * Urencriterium Year Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the UrencriteriumYear save precondition.
  * Before any UrencriteriumYear record is persisted, this guard validates and
  * normalises the fiscal-compliance invariants that the declarative OpenRegister
@@ -35,15 +38,13 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\Kernel\Contracts\UrencriteriumYearGuardInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
  */
-class UrencriteriumYearGuard {
+class UrencriteriumYearGuard implements UrencriteriumYearGuardInterface {
 
 	/**
 	 * The regular urencriterium norm in hours (art. 3.6 lid 1 Wet IB 2001).
@@ -70,6 +71,17 @@ class UrencriteriumYearGuard {
 	 * The meewerkaftrek norm in hours.
 	 */
 	public const NORM_MEEWERK = 525;
+
+	/**
+	 * The recognised largely-enterprise criterion values.
+	 *
+	 * @var list<string>
+	 */
+	private const LARGELY_CRITERIA = [
+		'NON_APPLICABLE',
+		'LARGELY_ENTERPRISE',
+		'NON_LARGELY_ENTERPRISE',
+	];
 
 	/**
 	 * Construct the guard.
@@ -96,19 +108,7 @@ class UrencriteriumYearGuard {
 	 */
 	public function validateOnSave(array $year): bool {
 		try {
-			if ($this->hasValidNorm(year: $year) === false) {
-				return false;
-			}
-
-			if ($this->normMatchesBasis(year: $year) === false) {
-				return false;
-			}
-
-			if ($this->grotendeelsIsConsistent(year: $year) === false) {
-				return false;
-			}
-
-			return $this->thresholdStatusMatchesPrognose(year: $year);
+			return $this->passesChecks(year: $year);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'UrencriteriumYearGuard: validateOnSave failed — denying save (fail-closed)',
@@ -118,9 +118,22 @@ class UrencriteriumYearGuard {
 				]
 			);
 			return false;
-		}//end try
-
+		}
 	}//end validateOnSave()
+
+	/**
+	 * The checks in order, stopping at the first refusal: norm, norm basis, largely criterion, threshold status.
+	 *
+	 * @param array<string, mixed> $year The UrencriteriumYear object payload.
+	 *
+	 * @return bool
+	 */
+	private function passesChecks(array $year): bool {
+		return $this->hasValidNorm(year: $year) === true
+			&& $this->normMatchesBasis(year: $year) === true
+			&& $this->grotendeelsIsConsistent(year: $year) === true
+			&& $this->thresholdStatusMatchesPrognose(year: $year) === true;
+	}//end passesChecks()
 
 	/**
 	 * Determine the applicable doel-norm from an entrepreneur profile.
@@ -262,28 +275,53 @@ class UrencriteriumYearGuard {
 	 * @return bool True when the citation is consistent with the norm.
 	 */
 	private function normMatchesBasis(array $year): bool {
-		$norm = (int)($year['purposeNorm'] ?? 0);
+		$norm  = (int)($year['purposeNorm'] ?? 0);
 		$basis = (string)($year['normBasis'] ?? '');
-		$citeertLid5 = (str_contains($basis, 'lid 5') === true);
-
-		if ($norm === self::NORM_AO && $citeertLid5 === false) {
-			$this->logger->info(
-				'UrencriteriumYearGuard: 800-uren norm must cite art. 3.6 lid 5 — denying save',
-				['normBasis' => $basis]
-			);
-			return false;
+		if ($norm === self::NORM_AO) {
+			return $this->aoNormCitesLid5(basis: $basis);
 		}
 
-		if ($norm !== self::NORM_AO && $citeertLid5 === true) {
-			$this->logger->info(
-				'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
-				['purposeNorm' => $norm, 'normBasis' => $basis]
-			);
-			return false;
+		return $this->otherNormSkipsLid5(norm: $norm, basis: $basis);
+	}//end normMatchesBasis()
+
+	/**
+	 * The 800-uren norm must cite art. 3.6 lid 5.
+	 *
+	 * @param string $basis The cited norm basis.
+	 *
+	 * @return bool
+	 */
+	private function aoNormCitesLid5(string $basis): bool {
+		if (str_contains($basis, 'lid 5') === true) {
+			return true;
 		}
 
-		return true;
-	}//end normMatchesGrondslag()
+		$this->logger->info(
+			'UrencriteriumYearGuard: 800-uren norm must cite art. 3.6 lid 5 — denying save',
+			['normBasis' => $basis]
+		);
+		return false;
+	}//end aoNormCitesLid5()
+
+	/**
+	 * Any other norm must not cite art. 3.6 lid 5.
+	 *
+	 * @param int    $norm  The purpose norm.
+	 * @param string $basis The cited norm basis.
+	 *
+	 * @return bool
+	 */
+	private function otherNormSkipsLid5(int $norm, string $basis): bool {
+		if (str_contains($basis, 'lid 5') === false) {
+			return true;
+		}
+
+		$this->logger->info(
+			'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
+			['purposeNorm' => $norm, 'normBasis' => $basis]
+		);
+		return false;
+	}//end otherNormSkipsLid5()
 
 	/**
 	 * Verify the grotendeels-criterium value is internally consistent.
@@ -298,13 +336,7 @@ class UrencriteriumYearGuard {
 	 */
 	private function grotendeelsIsConsistent(array $year): bool {
 		$value = (string)($year['largelyCriterium'] ?? 'NON_APPLICABLE');
-		$allowed = [
-			'NON_APPLICABLE',
-			'LARGELY_ENTERPRISE',
-			'NON_LARGELY_ENTERPRISE',
-		];
-
-		if (in_array($value, $allowed, true) === false) {
+		if (in_array($value, self::LARGELY_CRITERIA, true) === false) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: grotendeelsCriterium has an unrecognised value — denying save',
 				['largelyCriterium' => $value]
@@ -332,24 +364,31 @@ class UrencriteriumYearGuard {
 			return true;
 		}
 
-		$expected = $this->bepaalDrempelStatus(
-			currentHours: (float)($year['currentHours'] ?? 0),
-			prognose: (float)$year['forecastYearEnd'],
-			norm: (int)($year['purposeNorm'] ?? self::NORM_REGULIER)
-		);
-
-		$actual = (string)($year['thresholdStatus'] ?? '');
+		$expected = $this->expectedThresholdStatus(year: $year);
+		$actual   = (string)($year['thresholdStatus'] ?? '');
 		if ($actual !== $expected) {
 			$this->logger->info(
 				'UrencriteriumYearGuard: drempelStatus does not match prognose/norm — denying save',
-				[
-					'actual' => $actual,
-					'expected' => $expected,
-				]
+				['actual' => $actual, 'expected' => $expected]
 			);
 			return false;
 		}
 
 		return true;
-	}//end drempelStatusMatchesPrognose()
+	}//end thresholdStatusMatchesPrognose()
+
+	/**
+	 * The threshold status the year's hours, prognose and norm imply.
+	 *
+	 * @param array<string, mixed> $year The UrencriteriumYear object payload, with a prognose.
+	 *
+	 * @return string
+	 */
+	private function expectedThresholdStatus(array $year): string {
+		return $this->bepaalDrempelStatus(
+			currentHours: (float)($year['currentHours'] ?? 0),
+			prognose: (float)$year['forecastYearEnd'],
+			norm: (int)($year['purposeNorm'] ?? self::NORM_REGULIER)
+		);
+	}//end expectedThresholdStatus()
 }//end class

@@ -139,10 +139,27 @@ export function toCsv(table) {
 			return value.toFixed(2)
 		}
 		const text = String(value)
-		return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text
+		return needsCsvQuotes(text) ? '"' + text.replaceAll('"', '""') + '"' : text
 	}
 	return table.map((row) => row.map(cell).join(',')).join('\n') + '\n'
 }
+
+/**
+ * Whether a CSV field holds a quote, a comma or a newline, and so must be quoted.
+ *
+ * @param {string} text The field.
+ * @return {boolean}
+ */
+function needsCsvQuotes(text) {
+	return text.includes('"') || text.includes(',') || text.includes('\n')
+}
+
+/** The XML declaration and the opening Workbook element of a SpreadsheetML file. */
+const WORKBOOK_OPEN =
+	'<?xml version="1.0" encoding="UTF-8"?>'
+	+ '<?mso-application progid="Excel.Sheet"?>'
+	+ '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"'
+	+ ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
 
 /**
  * The table as an Excel workbook in SpreadsheetML, which Excel and
@@ -154,36 +171,48 @@ export function toCsv(table) {
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 export function toSpreadsheetXml(table, sheetName) {
-	const escape = (text) =>
-		String(text)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-	const cell = (value) => {
-		if (value === null || value === undefined) {
-			return '<Cell/>'
-		}
-		if (typeof value === 'number') {
-			return '<Cell><Data ss:Type="Number">' + value + '</Data></Cell>'
-		}
-		return '<Cell><Data ss:Type="String">' + escape(value) + '</Data></Cell>'
-	}
 	const rows = table
-		.map((row) => '<Row>' + row.map(cell).join('') + '</Row>')
+		.map((row) => '<Row>' + row.map(xmlCell).join('') + '</Row>')
 		.join('')
 	return (
-		'<?xml version="1.0" encoding="UTF-8"?>'
-		+ '<?mso-application progid="Excel.Sheet"?>'
-		+ '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"'
-		+ ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+		WORKBOOK_OPEN
 		+ '<Worksheet ss:Name="'
-		+ escape(sheetName.slice(0, 31))
+		+ xmlEscape(sheetName.slice(0, 31))
 		+ '"><Table>'
 		+ rows
 		+ '</Table></Worksheet>'
 		+ '</Workbook>'
 	)
+}
+
+/**
+ * Text with the XML special characters escaped.
+ *
+ * @param {string|number|boolean} text The text.
+ * @return {string}
+ */
+function xmlEscape(text) {
+	return String(text)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replaceAll('"', '&quot;')
+}
+
+/**
+ * One SpreadsheetML cell: empty, a number, or escaped text.
+ *
+ * @param {string|number|null|undefined} value The value.
+ * @return {string}
+ */
+function xmlCell(value) {
+	if (value === null || value === undefined) {
+		return '<Cell/>'
+	}
+	if (typeof value === 'number') {
+		return '<Cell><Data ss:Type="Number">' + value + '</Data></Cell>'
+	}
+	return '<Cell><Data ss:Type="String">' + xmlEscape(value) + '</Data></Cell>'
 }
 
 /**

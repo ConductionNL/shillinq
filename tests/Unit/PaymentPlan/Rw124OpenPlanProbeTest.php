@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
-use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
+use OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +23,14 @@ use PHPUnit\Framework\TestCase;
  * stub's OpenRegister-like scope.
  *
  * @covers \OCA\Shillinq\PaymentPlan\PaymentPlanService
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanAllocator
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanMailer
+ * @uses   \OCA\Shillinq\Kernel\Exception\PaymentPlanRefusedException
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanSchedule
+ * @uses   \OCA\Shillinq\Service\DunningRunService
+ * @uses   \OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner
+ * @uses   \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Service\SettingsService
  */
 final class Rw124OpenPlanProbeTest extends TestCase {
 	use PaymentPlanFixture;

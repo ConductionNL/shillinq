@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentFinderInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 
@@ -40,7 +41,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
  */
-final class FinancialDocumentFinder {
+final class FinancialDocumentFinder implements FinancialDocumentFinderInterface {
 	/**
 	 * The schemas that hold financial documents, in the order they are read.
 	 *

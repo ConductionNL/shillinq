@@ -82,10 +82,8 @@ import { NcLoadingIcon } from '@nextcloud/vue'
 import {
 	CONTRACTS_DATA_LEAF,
 	formatAmount,
-	hostIdentity,
-	isResolvable,
-	readLeaf,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
 import { leafReportMixin } from './leafReport.js'
 
 /**
@@ -99,18 +97,7 @@ export default {
 		NcLoadingIcon,
 	},
 
-	mixins: [leafReportMixin],
-
-	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the contract is linked to. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
-	},
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	data() {
 		return {
@@ -166,22 +153,12 @@ export default {
 		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(identity, CONTRACTS_DATA_LEAF)
-				this.contracts = Array.isArray(envelope.items) ? envelope.items : []
-			} catch {
-				this.error = t('shillinq', 'The contract could not be read.')
-			} finally {
-				this.loading = false
-			}
+			await this.readHostLeaf(CONTRACTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.contracts = Array.isArray(envelope.items) ? envelope.items : []
+				},
+				failedText: () => t('shillinq', 'The contract could not be read.'),
+			})
 		},
 
 		/**
@@ -263,27 +240,11 @@ export default {
 }
 </script>
 
+<style scoped src="./leafPanel.css"></style>
+
 <style scoped>
 .shillinq-contract-panel {
 	padding: 8px;
-}
-
-.shillinq-leaf__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.shillinq-leaf__row {
-	border-bottom: 1px solid var(--color-border);
-	padding: 8px 0;
-}
-
-.shillinq-leaf__row-head {
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	font-weight: bold;
 }
 
 .shillinq-leaf__state {
@@ -300,13 +261,5 @@ export default {
 .shillinq-leaf__empty {
 	color: var(--color-text-maxcontrast);
 	margin: 4px 0;
-}
-
-.shillinq-leaf__error {
-	color: var(--color-error);
-}
-
-.shillinq-leaf__notice {
-	margin-top: 8px;
 }
 </style>

@@ -29,8 +29,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 
 /**
  * Logs the deferred publish; slice 09 swaps this binding for a real queue.
@@ -81,7 +82,7 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue {
 		$this->logger->warning(
 			'pipelinq timeline publish deferred (no persistent queue yet)',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'type' => $event->type(),
 				'externalId' => $event->externalId(),
 				'contactId' => $event->contactId(),

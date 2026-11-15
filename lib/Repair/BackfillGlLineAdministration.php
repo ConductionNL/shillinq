@@ -3,6 +3,9 @@
 /**
  * Shillinq BackfillGlLineAdministration Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Runs the `GLLine.administrationId` backfill (REQ-GLS-002) and — only if it
  * can then PROVE the result complete — opens the gate that lets
  * {@see \OCA\Shillinq\Service\SpendAnalyticsService} scope its category /
@@ -24,7 +27,7 @@
  * Not "the batch reported success". This step RE-READS every `GLLine` row from
  * the store after writing, and counts — as a total, not a sample — how many
  * still carry no scope. Only a count of exactly zero writes
- * {@see GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY}. The gate is a
+ * {@see GlLineAdministrationBackfillMigratorInterface::GATE_CONFIG_KEY}. The gate is a
  * measurement of the store, taken after the fact; the migrator's own return
  * value is a report, not proof.
  *
@@ -51,9 +54,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -61,11 +61,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\GlLineAdministrationBackfillMigratorInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
-use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
-use OCA\Shillinq\Service\SettingsService;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -84,8 +84,8 @@ class BackfillGlLineAdministration implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
-	 * @param GlLineAdministrationBackfillMigrator $migrator The pure migration core.
+	 * @param RegisterLocationInterface $registerLocation Where the register lives (slug + OpenRegister availability).
+	 * @param GlLineAdministrationBackfillMigratorInterface $migrator The pure migration core.
 	 * @param IAppConfig $appConfig App config — holds the completeness gate.
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
@@ -93,8 +93,8 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
-		private readonly GlLineAdministrationBackfillMigrator $migrator,
+		private readonly RegisterLocationInterface $registerLocation,
+		private readonly GlLineAdministrationBackfillMigratorInterface $migrator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
@@ -154,10 +154,10 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 */
 	private function runInner(IOutput $output): void {
 		try {
-			$registerSlug = $this->settingsService->getRegisterSlug();
+			$registerSlug = $this->registerLocation->getRegisterSlug();
 
-			$lines = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigrator::SCHEMA_GL_LINE);
-			$transactions = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigrator::SCHEMA_GL_TRANSACTION);
+			$lines = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigratorInterface::SCHEMA_GL_LINE);
+			$transactions = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigratorInterface::SCHEMA_GL_TRANSACTION);
 
 			try {
 				$report = $this->migrator->backfillBatch(glLines: $lines, glTransactions: $transactions);
@@ -214,7 +214,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 * @return void
 	 */
 	private function proveAndOpenGate(string $registerSlug, IOutput $output): void {
-		$reread = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigrator::SCHEMA_GL_LINE);
+		$reread = $this->readPayloads(registerSlug: $registerSlug, schema: GlLineAdministrationBackfillMigratorInterface::SCHEMA_GL_LINE);
 		$missing = $this->migrator->countMissingAdministrationId(glLines: $reread);
 
 		if ($missing > 0) {
@@ -228,13 +228,13 @@ class BackfillGlLineAdministration implements IRepairStep {
 		}
 
 		$this->appConfig->setValueString(
-			Application::APP_ID,
-			GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY,
-			GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION
+			AppIdentity::APP_ID,
+			GlLineAdministrationBackfillMigratorInterface::GATE_CONFIG_KEY,
+			GlLineAdministrationBackfillMigratorInterface::GATE_CONTRACT_VERSION
 		);
 
 		$output->info(
-			'Shillinq: GLLine administration scope gate OPEN (' . GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION
+			'Shillinq: GLLine administration scope gate OPEN (' . GlLineAdministrationBackfillMigratorInterface::GATE_CONTRACT_VERSION
 			. ') — re-read ' . count($reread) . ' line(s), 0 missing administrationId. '
 			. 'SpendAnalytics category / cost-centre / period views are now administration-scoped.'
 		);
@@ -270,7 +270,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 				$this->objectService->saveObject(
 					object: $row,
 					register: $registerSlug,
-					schema: GlLineAdministrationBackfillMigrator::SCHEMA_GL_LINE,
+					schema: GlLineAdministrationBackfillMigratorInterface::SCHEMA_GL_LINE,
 					uuid: $objectId,
 					_rbac: false,
 					_multitenancy: false,
@@ -316,8 +316,8 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 */
 	private function closeGate(): void {
 		$this->appConfig->setValueString(
-			Application::APP_ID,
-			GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY,
+			AppIdentity::APP_ID,
+			GlLineAdministrationBackfillMigratorInterface::GATE_CONFIG_KEY,
 			''
 		);
 	}//end closeGate()

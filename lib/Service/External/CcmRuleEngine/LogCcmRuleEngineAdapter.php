@@ -3,6 +3,9 @@
 /**
  * Dormant default CCM rule-engine adapter.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Records the would-be compile / evaluate intent to the structured
  * logger and returns a synthetic DEFERRED result so the surrounding
  * orchestration (FindingService::createFinding, AsyncRuleSweepJob,
@@ -29,9 +32,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
