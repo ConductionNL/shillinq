@@ -13,6 +13,7 @@
 // `Handler "openImportWizard" not found in context.handlers` (live pass S4).
 // So every handler is registered in both, from this one list.
 
+import { openSaveAdministrationTemplate } from './utils/administrationTemplateActions.js'
 import { openRepeatAppointment } from './utils/appointmentSeriesActions.js'
 import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
@@ -112,6 +113,8 @@ export const manifestActions = Object.freeze({
 	// Switch on reminders on an administration.
 	openDunningNextRun,
 	openDunningSwitchOn,
+	// ledger-multi-administration 3.2: Save as template on an administration.
+	openSaveAdministrationTemplate,
 	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
 	openPrepareVatReturn,
 	// tax-vat-position-and-suppletie: Check for corrections on a filed return,
