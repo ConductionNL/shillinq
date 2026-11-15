@@ -3,6 +3,9 @@
 /**
  * Object Identifier
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Resolves the OpenRegister identifier from whatever `ObjectService::saveObject()`
  * or `findAll()` handed back, in the ONE identifier space the rest of this app
  * joins on: the UUID.
@@ -66,9 +69,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-cycle-count/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -225,29 +225,56 @@ final class ObjectIdentifier {
 
 		$scope = array_intersect_key($scope, self::SCOPE_KEYS);
 
-		// Its own try/catch, deliberately — find() throws rather than
-		// returning null, so a shared catch would swallow the fallback.
+		$record = self::findById(scoped: $scoped, id: $id, scope: $scope);
+
+		return $record ?? self::findByProperty(scoped: $scoped, property: $fallbackProperty, id: $id, scope: $scope);
+	}//end findOne()
+
+	/**
+	 * The record found by id in the scoped schema, or null when there is none or find() throws.
+	 *
+	 * Its own try/catch, deliberately — find() throws rather than
+	 * returning null, so a shared catch would swallow the fallback.
+	 *
+	 * @param object               $scoped The ObjectService, already scoped to register and schema.
+	 * @param string               $id     The id or uuid.
+	 * @param array<string, mixed> $scope  The allowed scope named arguments.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private static function findById(object $scoped, string $id, array $scope): array|null {
 		$target = self::lookupTarget(scoped: $scoped);
 		try {
-			$found = $scoped->find($id, ...self::findArguments(target: $target, flags: $scope));
+			$found  = $scoped->find($id, ...self::findArguments(target: $target, flags: $scope));
 			$record = null;
 			if (self::isInSchema(found: $found, target: $target) === true) {
 				$record = self::record(candidate: $found);
 			}
 
-			if ($record !== null) {
-				return $record;
-			}
+			return $record;
 		} catch (Throwable $notAUuid) {
-			// Fall through to the property lookup below.
+			// Fall through to the property lookup.
+			return null;
 		}
+	}//end findById()
 
-		if ($fallbackProperty === null) {
+	/**
+	 * The first record whose property equals the id, or null when there is no property, no match, or findAll() throws.
+	 *
+	 * @param object               $scoped   The ObjectService, already scoped to register and schema.
+	 * @param string|null          $property The fallback property, or null for none.
+	 * @param string               $id       The value to match.
+	 * @param array<string, mixed> $scope    The allowed scope named arguments.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private static function findByProperty(object $scoped, string|null $property, string $id, array $scope): array|null {
+		if ($property === null) {
 			return null;
 		}
 
 		try {
-			$matches = $scoped->findAll(['filters' => [$fallbackProperty => $id], 'limit' => 1], ...$scope);
+			$matches = $scoped->findAll(['filters' => [$property => $id], 'limit' => 1], ...$scope);
 		} catch (Throwable $e) {
 			return null;
 		}
@@ -260,7 +287,7 @@ final class ObjectIdentifier {
 		}
 
 		return null;
-	}//end findOne()
+	}//end findByProperty()
 
 	/**
 	 * The record with this uuid in the service's register and schema, for a

@@ -29,16 +29,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\OpenRegister\Lifecycle\GuardResult;
-use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\Service\ServerWriteAuthority;
-
 /**
  * Lets an invoice leave `exception` only through an accepted three-way-match exception.
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.5
  */
-final class SupplierInvoiceExceptionApprovalGuard implements LifecycleGuardInterface {
+final class SupplierInvoiceExceptionApprovalGuard extends ServerWriteGrantGuard {
 
 	/**
 	 * The grant ExceptionResolutionService holds while it releases the invoice.
@@ -53,36 +49,4 @@ final class SupplierInvoiceExceptionApprovalGuard implements LifecycleGuardInter
 	 * @var string
 	 */
 	public const MESSAGE = 'An invoice in exception is approved by accepting its three-way-match exception with a motivation.';
-
-	/**
-	 * Construct the guard.
-	 *
-	 * @param ServerWriteAuthority $authority The request-scoped write grants.
-	 */
-	public function __construct(
-		private readonly ServerWriteAuthority $authority,
-	) {
-	}//end __construct()
-
-	/**
-	 * Allow the transition only under the acceptance grant.
-	 *
-	 * @param array<string, mixed> $object The invoice as it would be saved.
-	 * @param string               $action The transition, `approveException`.
-	 * @param string               $userId The caller.
-	 *
-	 * @return GuardResult
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
-	 *
-	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.5
-	 */
-	public function check(array $object, string $action, string $userId): GuardResult {
-		$id = (string)($object['id'] ?? ($object['@self']['id'] ?? ''));
-		if ($this->authority->holds(purpose: self::PURPOSE, objectId: $id) === true) {
-			return GuardResult::allow();
-		}
-
-		return GuardResult::deny(self::MESSAGE);
-	}//end check()
 }//end class

@@ -40,4 +40,9 @@ final class BcfSubmissionGuardTest extends TestCase {
 	public function testSubmitDeniedAboveThreshold(): void {
 		self::assertFalse($this->guard->requireApproval(['totalClaimAmount' => 8000, 'approvalThreshold' => 5000]));
 	}//end testSubmitDeniedAboveThreshold()
+
+	public function testAClaimWithoutAThresholdMayAlwaysBeSubmitted(): void {
+		$this->assertTrue($this->guard->requireApproval(['totalClaimAmount' => 1000000]));
+		$this->assertTrue($this->guard->requireApproval(['approvalThreshold' => null, 'totalClaimAmount' => 5]));
+	}//end testAClaimWithoutAThresholdMayAlwaysBeSubmitted()
 }//end class

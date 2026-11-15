@@ -28,12 +28,16 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
@@ -88,20 +92,20 @@ final class InvoiceSettlementServiceTest extends TestCase {
 	 *
 	 * @return InvoiceSettlementService
 	 */
-	private function service(): InvoiceSettlementService {
+	private function service(?LoggerInterface $logger = null): InvoiceSettlementService {
 		$engine = $this->engine;
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === ObjectTransitionRunner::ENGINE_CLASS);
 		$container->method('get')->willReturnCallback(static fn (string $id): object => $engine);
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new InvoiceSettlementService(
 			objectService: $this->store,
 			transitions: new ObjectTransitionRunner(container: $container),
-			settings: $settings,
-			logger: $this->createMock(LoggerInterface::class),
+			registerLocation: $settings,
+			logger: ($logger ?? $this->createMock(LoggerInterface::class)),
 		);
 
 	}//end service()
@@ -161,6 +165,36 @@ final class InvoiceSettlementServiceTest extends TestCase {
 		self::assertSame(['matchPartial', 'matchFull'], array_column($this->engine->ran, 'action'));
 
 	}//end testApTransactionFullAndPartial()
+
+	/**
+	 * The settlement guard sees the transaction as settling only during its own transition.
+	 *
+	 * @return void
+	 */
+	public function testTheTransactionIsSettlingOnlyDuringItsTransition(): void {
+		$seen = [];
+		$runner = $this->createMock(ObjectTransitionRunner::class);
+		$runner->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use (&$seen): void {
+				$seen[] = InvoiceSettlementService::isSettling(invoiceId: $objectId);
+			}
+		);
+		$settings = $this->createMock(RegisterLocation::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+		$service = new InvoiceSettlementService(
+			objectService: $this->store,
+			transitions: $runner,
+			registerLocation: $settings,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+
+		self::assertFalse(InvoiceSettlementService::isSettling(invoiceId: 'ap-issued'));
+		$service->settle(['targetType' => 'ap-invoice', 'targetRefs' => ['ap-issued'], 'isPartial' => false]);
+
+		self::assertSame([true], $seen);
+		self::assertFalse(InvoiceSettlementService::isSettling(invoiceId: 'ap-issued'));
+
+	}//end testTheTransactionIsSettlingOnlyDuringItsTransition()
 
 	/**
 	 * A partial match leaves a sales invoice issued: ARInvoice has no partially paid state.
@@ -242,7 +276,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 		$entity->setSchema('812');
 		$entity->setRegister('7');
 
-		$event = new ObjectTransitionedEvent($entity, 'confirm', 'pending', 'confirmed', 'admin', '7', '812');
+		$event = new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: 'confirm', from: 'pending', to: 'confirmed'), scope: new RegisterSchemaRef(register: '7', schema: '812'), actor: new TransitionActor(userId: 'admin'));
 		$listener->handle($event);
 		$listener->handle($event);
 
@@ -267,13 +301,13 @@ final class InvoiceSettlementServiceTest extends TestCase {
 		$match->setObject(['targetType' => 'ar-invoice', 'targetRefs' => ['ar-issued']]);
 		$match->setSchema('812');
 		$match->setRegister('7');
-		$listener->handle(new ObjectTransitionedEvent($match, 'reject', 'pending', 'rejected', 'admin', '7', '812'));
+		$listener->handle(new ObjectTransitionedEvent(object: $match, move: new TransitionMove(action: 'reject', from: 'pending', to: 'rejected'), scope: new RegisterSchemaRef(register: '7', schema: '812'), actor: new TransitionActor(userId: 'admin')));
 
 		$other = new ObjectEntity();
 		$other->setObject(['targetType' => 'ar-invoice', 'targetRefs' => ['ar-issued']]);
 		$other->setSchema('900');
 		$other->setRegister('7');
-		$listener->handle(new ObjectTransitionedEvent($other, 'confirm', 'pending', 'confirmed', 'admin', '7', '900'));
+		$listener->handle(new ObjectTransitionedEvent(object: $other, move: new TransitionMove(action: 'confirm', from: 'pending', to: 'confirmed'), scope: new RegisterSchemaRef(register: '7', schema: '900'), actor: new TransitionActor(userId: 'admin')));
 
 		self::assertSame('issued', $this->stateOf('ARInvoice', 'ar-issued', 'lifecycleState'));
 
@@ -325,10 +359,82 @@ final class InvoiceSettlementServiceTest extends TestCase {
 
 		return new ListenerSchemaResolver(
 			container: $container,
-			settingsService: $settings,
+			registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 			contract: $contract,
 			logger: $this->createMock(LoggerInterface::class),
 		);
 
 	}//end resolver()
+
+	/**
+	 * Characterisation: the outcome per invoice and every log record for a
+	 * full and a partial match over payable, settled and missing invoices.
+	 *
+	 * @return void
+	 */
+	public function testOutcomesAndRecordsArePinned(): void {
+		$logger = new class extends \Psr\Log\AbstractLogger {
+
+			/**
+			 * Captured records.
+			 *
+			 * @var array<int,array<int,mixed>>
+			 */
+			public array $records = [];
+
+			/**
+			 * Record a log call.
+			 *
+			 * @param mixed $level Level.
+			 * @param \Stringable|string $message Message.
+			 * @param array<string,mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, \Stringable|string $message, array $context = []): void {
+				$this->records[] = [(string)$level, (string)$message, $context];
+			}
+		};
+		$service = $this->service(logger: $logger);
+
+		$full = $service->settle(['targetType' => 'ar-invoice', 'targetRefs' => ['ar-issued', 'ar-paid', 'ar-missing']]);
+		$partial = $service->settle(['matchType' => 'ar-invoice', 'partial' => true, 'matchedObjectId' => ' ar-overdue ']);
+		$ap = $service->settle(['targetType' => 'ap-invoice', 'isPartial' => true, 'targetRefs' => ['ap-issued', '', 'ap-draft', 'ap-issued']]);
+
+		$this->assertSame(
+			[
+				'full' => [
+					'ar-issued' => ['outcome' => 'settled', 'transition' => 'mark-paid', 'reason' => ''],
+					'ar-paid' => ['outcome' => 'skipped', 'transition' => null, 'reason' => 'state paid is not payable'],
+					'ar-missing' => ['outcome' => 'failed', 'transition' => null, 'reason' => 'not found'],
+				],
+				'partial' => [
+					'ar-overdue' => ['outcome' => 'skipped', 'transition' => null, 'reason' => 'state overdue is not payable by a partial match'],
+				],
+				'ap' => [
+					'ap-issued' => ['outcome' => 'settled', 'transition' => 'matchPartial', 'reason' => ''],
+					'ap-draft' => ['outcome' => 'skipped', 'transition' => null, 'reason' => 'state draft is not payable by a partial match'],
+				],
+			],
+			['full' => $full, 'partial' => $partial, 'ap' => $ap]
+		);
+		$this->assertSame(
+			[
+				['info', 'InvoiceSettlementService: invoice left unchanged', ['invoiceId' => 'ar-paid', 'reason' => 'state paid is not payable']],
+				['warning', 'InvoiceSettlementService: invoice not found', ['schema' => 'ARInvoice', 'invoiceId' => 'ar-missing']],
+				[
+					'info',
+					'InvoiceSettlementService: invoice left unchanged',
+					['invoiceId' => 'ar-overdue', 'reason' => 'state overdue is not payable by a partial match'],
+				],
+				[
+					'info',
+					'InvoiceSettlementService: invoice left unchanged',
+					['invoiceId' => 'ap-draft', 'reason' => 'state draft is not payable by a partial match'],
+				],
+			],
+			$logger->records
+		);
+
+	}//end testOutcomesAndRecordsArePinned()
 }//end class

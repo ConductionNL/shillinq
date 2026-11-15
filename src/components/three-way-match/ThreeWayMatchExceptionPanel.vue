@@ -278,38 +278,12 @@ export default {
 		},
 
 		comparisonRows() {
-			const po = this.po || {}
-			const grn = this.grn || {}
-			const invoice = this.invoice || {}
+			const docs = this.comparedDocuments()
 			return [
-				{
-					field: 'reference',
-					label: this.t('shillinq', 'Reference'),
-					po: po.poNumber || '—',
-					grn: grn.grnNumber || '—',
-					invoice: invoice.invoiceNumber || '—',
-				},
-				{
-					field: 'date',
-					label: this.t('shillinq', 'Date'),
-					po: this.formatDate(po.expectedDeliveryDate),
-					grn: this.formatTimestamp(grn.receivedAt),
-					invoice: this.formatDate(invoice.invoiceDate),
-				},
-				{
-					field: 'amount',
-					label: this.t('shillinq', 'Amount (incl. VAT)'),
-					po: this.formatMoney(po.totalInclVat),
-					grn: '—',
-					invoice: this.formatMoney(invoice.totalInclVat),
-				},
-				{
-					field: 'vat',
-					label: this.t('shillinq', 'VAT'),
-					po: this.formatMoney(po.totalVat),
-					grn: '—',
-					invoice: this.formatMoney(invoice.totalVat),
-				},
+				{ field: 'reference', label: this.t('shillinq', 'Reference'), ...this.referenceCells(docs) },
+				{ field: 'date', label: this.t('shillinq', 'Date'), ...this.dateCells(docs) },
+				{ field: 'amount', label: this.t('shillinq', 'Amount (incl. VAT)'), ...this.moneyCells(docs, 'totalInclVat') },
+				{ field: 'vat', label: this.t('shillinq', 'VAT'), ...this.moneyCells(docs, 'totalVat') },
 			]
 		},
 
@@ -433,38 +407,104 @@ export default {
 
 		async submitResolution(path, extra) {
 			if (this.notes.trim() === '') {
-				this.actionError = this.t(
-					'shillinq',
-					'A motivation / reason is required.',
-				)
+				this.actionError = this.t('shillinq', 'A motivation / reason is required.')
 				return
 			}
 			this.submitting = true
 			this.actionError = ''
 			try {
-				const response = await axios.post(
-					generateUrl(`/apps/shillinq${path}`),
-					{
-						administrationId: this.administrationId,
-						matchId: this.id,
-						...extra,
-					},
-				)
-				// dispute returns {match, dispatch}; the others return the
-				// ThreeWayMatch directly.
-				if (response.data && response.data.match) {
-					this.match = response.data.match
-					this.dispatch = response.data.dispatch || null
-				} else {
-					this.match = response.data
-				}
-				this.notes = ''
+				await this.postResolution(path, extra)
 			} catch (e) {
-				this.actionError =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'Resolution failed')
+				this.actionError = e?.response?.data?.error || this.t('shillinq', 'Resolution failed')
 			} finally {
 				this.submitting = false
+			}
+		},
+
+		/**
+		 * Post the resolution and take the match the server returns.
+		 *
+		 * @param {string} path The resolution endpoint under the app.
+		 * @param {object} extra The resolution's own fields.
+		 * @return {Promise<void>}
+		 */
+		async postResolution(path, extra) {
+			const response = await axios.post(
+				generateUrl(`/apps/shillinq${path}`),
+				{
+					administrationId: this.administrationId,
+					matchId: this.id,
+					...extra,
+				},
+			)
+			this.applyResolution(response.data)
+			this.notes = ''
+		},
+
+		/**
+		 * Take the resolved match: a dispute returns {match, dispatch}, the
+		 * others return the ThreeWayMatch directly.
+		 *
+		 * @param {object|null} data The response body.
+		 */
+		applyResolution(data) {
+			if (data && data.match) {
+				this.match = data.match
+				this.dispatch = data.dispatch || null
+				return
+			}
+			this.match = data
+		},
+
+		/**
+		 * The three compared documents, each an empty object when missing.
+		 *
+		 * @return {{po: object, grn: object, invoice: object}} The documents.
+		 */
+		comparedDocuments() {
+			return { po: this.po || {}, grn: this.grn || {}, invoice: this.invoice || {} }
+		},
+
+		/**
+		 * The reference cells of the comparison.
+		 *
+		 * @param {{po: object, grn: object, invoice: object}} docs The documents.
+		 * @return {{po: string, grn: string, invoice: string}} The cells.
+		 */
+		referenceCells(docs) {
+			return {
+				po: docs.po.poNumber || '—',
+				grn: docs.grn.grnNumber || '—',
+				invoice: docs.invoice.invoiceNumber || '—',
+			}
+		},
+
+		/**
+		 * The date cells of the comparison.
+		 *
+		 * @param {{po: object, grn: object, invoice: object}} docs The documents.
+		 * @return {{po: string, grn: string, invoice: string}} The cells.
+		 */
+		dateCells(docs) {
+			return {
+				po: this.formatDate(docs.po.expectedDeliveryDate),
+				grn: this.formatTimestamp(docs.grn.receivedAt),
+				invoice: this.formatDate(docs.invoice.invoiceDate),
+			}
+		},
+
+		/**
+		 * The money cells of the comparison; the goods receipt carries none.
+		 *
+		 * @param {{po: object, grn: object, invoice: object}} docs The documents.
+		 * @param {string} key The amount field on the order and the invoice.
+		 * @return {{po: string, grn: string, invoice: string}} The cells.
+		 */
+		moneyCells(docs, key) {
+			return {
+				po: this.formatMoney(docs.po[key]),
+				grn: '—',
+				invoice: this.formatMoney(docs.invoice[key]),
 			}
 		},
 

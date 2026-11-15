@@ -20,6 +20,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -40,7 +43,7 @@ use OCA\Shillinq\Service\Asset\DepreciationScheduleService;
 use OCA\Shillinq\Service\Asset\FixedAssetDepreciation;
 use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Bank\LifecycleFaithfulTransitionEngine;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -402,7 +405,7 @@ class AssetsMethodChangeAndReserveTest extends TestCase {
 	}//end lineFor()
 
 	private function records(): AssetRecords {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('has')->willReturn(true);

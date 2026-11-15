@@ -30,7 +30,9 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\BankfeedIntakeService;
@@ -40,7 +42,7 @@ use OCA\Shillinq\Service\Bank\ManualMatchService;
 use OCA\Shillinq\Service\Bank\StatementIntakeService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -127,7 +129,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 			$this->saved
 		);
 
-		$settings = $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq']);
+		$settings = $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']);
 		$logger = $this->createMock(LoggerInterface::class);
 		$settlementListener = null;
 		$engine = new LifecycleFaithfulTransitionEngine(
@@ -141,7 +143,7 @@ final class BankfeedIntakeServiceTest extends TestCase {
 				$entity = new ObjectEntity();
 				$entity->setObject($object);
 				$entity->setSchema('ReconciliationMatch');
-				$settlementListener->handle(new ObjectTransitionedEvent($entity, $record['action'], $record['from'], $record['to'], null, 'shillinq', 'ReconciliationMatch'));
+				$settlementListener->handle(new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: $record['action'], from: $record['from'], to: $record['to']), scope: new RegisterSchemaRef(register: 'shillinq', schema: 'ReconciliationMatch')));
 			}
 		);
 		$container = $this->createMock(ContainerInterface::class);
@@ -150,16 +152,16 @@ final class BankfeedIntakeServiceTest extends TestCase {
 		$runner = new ObjectTransitionRunner(container: $container);
 
 		$settlementListener = new ReconciliationMatchSettlementListener(
-			settlement: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger),
+			settlement: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
 			schemas: $this->createConfiguredMock(ListenerSchemaResolver::class, ['matchesSchema' => true]),
 			logger: $logger,
 		);
-		$matches = new ManualMatchService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger);
+		$matches = new ManualMatchService(objectService: $this->store, transitions: $runner, registerLocation: $settings, logger: $logger);
 		$intake = new BankfeedIntakeService(
 			objectService: $this->store,
-			intake: new StatementIntakeService(objectService: $this->store, settings: $settings, logger: $logger),
-			booker: new ExactMatchBooker(objectService: $this->store, matches: $matches, settings: $settings, logger: $logger),
-			settings: $settings,
+			intake: new StatementIntakeService(objectService: $this->store, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
+			booker: new ExactMatchBooker(objectService: $this->store, matches: $matches, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
+			registerLocation: $settings,
 			logger: $logger,
 		);
 		$this->listener = new BankfeedSyncedListener(

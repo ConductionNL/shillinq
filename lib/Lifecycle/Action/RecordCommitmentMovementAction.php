@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
-use OCA\Shillinq\Service\Commitment\CommitmentLedger;
+use OCA\Shillinq\Kernel\Contracts\CommitmentLedgerInterface;
 use OCP\IUserSession;
 
 /**
@@ -44,11 +44,11 @@ class RecordCommitmentMovementAction implements LifecycleActionInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param CommitmentLedger $ledger      Movements, lines and budgets.
+	 * @param CommitmentLedgerInterface $ledger      Movements, lines and budgets.
 	 * @param IUserSession     $userSession The acting user.
 	 */
 	public function __construct(
-		private readonly CommitmentLedger $ledger,
+		private readonly CommitmentLedgerInterface $ledger,
 		private readonly IUserSession $userSession,
 	) {
 	}//end __construct()

@@ -27,9 +27,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
-use OCA\Shillinq\Service\FinancialDocumentActions;
-use OCA\Shillinq\Service\FinancialDocumentAuthoring;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentActionsInterface;
+use OCA\Shillinq\Kernel\Contracts\FinancialDocumentAuthoringInterface;
+use OCA\Shillinq\Kernel\Exception\FinancialDocumentActionRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,16 +48,16 @@ class FinancialDocumentActionController extends Controller {
 	 *
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
-	 * @param FinancialDocumentActions $actions The acts and their refusals.
-	 * @param FinancialDocumentAuthoring $authoring Starts a quote, a credit note or a payout.
+	 * @param FinancialDocumentActionsInterface $actions The acts and their refusals.
+	 * @param FinancialDocumentAuthoringInterface $authoring Starts a quote, a credit note or a payout.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly FinancialDocumentActions $actions,
-		private readonly FinancialDocumentAuthoring $authoring,
+		private readonly FinancialDocumentActionsInterface $actions,
+		private readonly FinancialDocumentAuthoringInterface $authoring,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 	}//end __construct()

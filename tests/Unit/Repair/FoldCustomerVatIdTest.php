@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Repair\FoldCustomerVatId;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\Migration\IOutput;
@@ -51,7 +51,7 @@ class FoldCustomerVatIdTest extends TestCase {
 				],
 			]
 		);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$step = new FoldCustomerVatId($store, $settings, $this->createMock(LoggerInterface::class));
 

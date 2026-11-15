@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Purchasing;
 
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -72,7 +72,7 @@ class SupplierInvoiceChecksTest extends TestCase {
 	 * @return SupplierInvoiceChecks
 	 */
 	private function checks(array $records): SupplierInvoiceChecks {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return new SupplierInvoiceChecks(new InMemoryObjectServiceStub($records), $settings);
@@ -115,13 +115,49 @@ class SupplierInvoiceChecksTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFailedLookupIsAPossibleDuplicate(): void {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willThrowException(new RuntimeException('register gone'));
 		$checks = new SupplierInvoiceChecks(new InMemoryObjectServiceStub([]), $settings);
 
 		$this->assertSame(SupplierInvoiceChecks::DUPLICATE_UNKNOWN, $checks->duplicateOf(self::ADMIN, self::DRUKKERIJ, '2026-0455'));
 
 	}//end testAFailedLookupIsAPossibleDuplicate()
+
+	/**
+	 * Without a known payee, the same stated supplier and number is a duplicate; blanks never match.
+	 *
+	 * @return void
+	 */
+	public function testAnUnresolvedSupplierIsMatchedByItsStatedIdentifierAndNumber(): void {
+		$records = self::records();
+		$records['SupplierInvoice'][] = [
+			'id' => 'si-0777', 'invoiceNumber' => 'F-777', 'supplierIdentifier' => 'NL999999999B01',
+			'administrationId' => self::ADMIN, 'statusCode' => 'received',
+		];
+		$checks = $this->checks($records);
+
+		$this->assertSame('si-0777', $checks->duplicateOfUnresolved(self::ADMIN, ' NL999999999B01 ', ' F-777 '));
+		$this->assertNull($checks->duplicateOfUnresolved(self::ADMIN, 'NL999999999B01', 'F-778'));
+		$this->assertNull($checks->duplicateOfUnresolved('adm-other', 'NL999999999B01', 'F-777'));
+		$this->assertNull($checks->duplicateOfUnresolved(self::ADMIN, 'NL999999999B01', '  '));
+		$this->assertNull($checks->duplicateOfUnresolved(self::ADMIN, '', 'F-777'));
+
+	}//end testAnUnresolvedSupplierIsMatchedByItsStatedIdentifierAndNumber()
+
+	/**
+	 * A failed lookup for an unresolved supplier is a possible duplicate, not none.
+	 *
+	 * @return void
+	 */
+	public function testAFailedLookupForAnUnresolvedSupplierIsAPossibleDuplicate(): void {
+		$settings = $this->createStub(RegisterLocation::class);
+		$settings->method('getRegisterSlug')->willThrowException(new RuntimeException('register gone'));
+		$checks = new SupplierInvoiceChecks(new InMemoryObjectServiceStub([]), $settings);
+
+		$this->assertSame(SupplierInvoiceChecks::DUPLICATE_UNKNOWN, $checks->duplicateOfUnresolved(self::ADMIN, 'NL999999999B01', 'F-777'));
+		$this->assertNull($checks->duplicateOfUnresolved(self::ADMIN, 'NL999999999B01', ''));
+
+	}//end testAFailedLookupForAnUnresolvedSupplierIsAPossibleDuplicate()
 
 	/**
 	 * An IBAN the payee or its qualification knows is fine, spaces and case aside.

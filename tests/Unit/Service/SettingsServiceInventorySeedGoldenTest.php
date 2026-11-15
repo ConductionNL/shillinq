@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -46,6 +47,7 @@ use Stringable;
  * @covers \OCA\Shillinq\Service\Seed\SeedImporter
  * @uses   \OCA\Shillinq\Service\Seed\SeedImport
  * @uses   \OCA\Shillinq\Service\Seed\SeedMessages
+ * @uses   \OCA\Shillinq\Service\RegisterLocation
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -158,7 +160,7 @@ final class SettingsServiceInventorySeedGoldenTest extends TestCase {
 
 		$service = new SettingsService(
 			appConfig: $appConfig,
-			appManager: $appManager,
+			registerLocation: new RegisterLocation(appConfig: $appConfig, appManager: $appManager),
 			container: $container,
 			groupManager: $this->createStub(IGroupManager::class),
 			userSession: $this->createStub(IUserSession::class),

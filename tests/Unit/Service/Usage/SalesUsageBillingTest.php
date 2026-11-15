@@ -36,7 +36,7 @@ use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCA\Shillinq\Service\Usage\MeterReadingRating;
@@ -268,7 +268,7 @@ class SalesUsageBillingTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $params = []): string => vsprintf($text, $params));
 
-		return new MeterReadingImportService($this->store, $this->settings(), $l10n);
+		return new MeterReadingImportService($this->store, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $l10n);
 
 	}//end importer()
 
@@ -285,10 +285,10 @@ class SalesUsageBillingTest extends TestCase {
 	/**
 	 * Settings answering the register slug.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
 		return $settings;
@@ -322,7 +322,7 @@ class SalesUsageBillingTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
-			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->settings()),
+			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 		);
 
 	}//end generator()
