@@ -5577,6 +5577,33 @@
 		{
 			"menu": [
 				{
+					"id": "InvoiceBatches",
+					"label": "Invoice batches",
+					"icon": "EmailFastOutline",
+					"route": "InvoiceBatches",
+					"order": 47
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatches",
+					"route": "/bookkeeping/invoice-batches",
+					"type": "index",
+					"title": "Invoice batches"
+				},
+				{
+					"_fragment": "sales-invoice-sending",
+					"id": "InvoiceBatchDetail",
+					"route": "/bookkeeping/invoice-batches/:id",
+					"type": "detail",
+					"title": "Invoice batch"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "MeterReadings",
 					"label": "Meter readings",
 					"icon": "Counter",

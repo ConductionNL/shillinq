@@ -99,7 +99,7 @@
         "icon": "EmailFastOutline",
         "version": "0.1.0",
         "title": "Invoice Batch",
-        "description": "A batch of sales invoices: a send batch mails the selected issued invoices in a queued job and records one outcome per invoice (sent, skipped with a reason, or failed with the error). The bookkeeper who asked is notified when it is done.",
+        "description": "A batch of sales invoices: a create batch writes one invoice per selected customer from one set of lines and may issue and send them; a send batch mails the selected issued invoices in a queued job. Each records one outcome per invoice or customer. The bookkeeper who asked is notified when it is done.",
         "x-spec": "openspec/changes/sales-invoice-sending/specs/bookkeeping-accounts-receivable-core/spec.md",
         "type": "object",
         "required": [
@@ -153,10 +153,22 @@
               "type": "string"
             },
             "title": "Invoices",
-            "description": "The invoices the batch sends, at most 200.",
+            "description": "The invoices the batch sends, or the invoices a create batch wrote, at most 200.",
             "example": [
               "inv-1",
               "inv-2"
+            ]
+          },
+          "customerIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "Customers",
+            "description": "The customers a create batch bills, one invoice each, at most 200.",
+            "example": [
+              "cust-korenaar",
+              "cust-voorbeeld"
             ]
           },
           "resend": {
@@ -166,19 +178,44 @@
             "description": "Whether an invoice that was already sent goes again.",
             "example": false
           },
+          "issue": {
+            "type": "boolean",
+            "default": false,
+            "title": "Issue",
+            "description": "Whether a create batch issues the invoices it writes; otherwise they stay drafts.",
+            "example": true
+          },
+          "send": {
+            "type": "boolean",
+            "default": false,
+            "title": "Send",
+            "description": "Whether a create batch sends the issued invoices by each customer's delivery method.",
+            "example": true
+          },
+          "sendBatchId": {
+            "type": "string",
+            "title": "Send batch",
+            "description": "The send batch a create batch queued for its invoices.",
+            "example": "inv-batch-2"
+          },
           "outcomes": {
             "type": "array",
             "title": "Outcomes",
-            "description": "One row per invoice: invoiceId, status (sent, skipped or failed) and the reason.",
+            "description": "One row per invoice (a send batch) or per customer (a create batch): customerId, invoiceId, status (created, existing, sent, skipped or failed) and the reason.",
             "items": {
               "type": "object",
               "properties": {
+                "customerId": {
+                  "type": "string"
+                },
                 "invoiceId": {
                   "type": "string"
                 },
                 "status": {
                   "type": "string",
                   "enum": [
+                    "created",
+                    "existing",
                     "sent",
                     "skipped",
                     "failed"

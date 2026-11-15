@@ -10,6 +10,8 @@ import axios from '@nextcloud/axios'
 import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { spawnDialog } from '@nextcloud/vue/functions/dialog'
+import InvoiceBatchCreateModal from '../modals/InvoiceBatchCreateModal.vue'
 import { fetchAdministrationContext } from '../api/administrationApi.js'
 
 /**
@@ -55,4 +57,15 @@ export async function sendSelectedInvoices(scope) {
 		showError(error?.response?.data?.error || t('shillinq', 'The invoices could not be queued for sending.'))
 		return undefined
 	}
+}
+
+/**
+ * Header action "New invoice batch" on Sales invoices and Invoice batches:
+ * one set of lines billed to every selected customer (REQ-SIS-004).
+ *
+ * @return {Promise<unknown>} The dialog's close payload: the created batch, or null.
+ * @spec openspec/changes/sales-invoice-sending/tasks.md#task-3.3
+ */
+export function openInvoiceBatchCreate() {
+	return spawnDialog(InvoiceBatchCreateModal, {})
 }

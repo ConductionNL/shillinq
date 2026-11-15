@@ -8229,6 +8229,20 @@
 						"description": "From hours, costs, meter readings and retainers"
 					},
 					{
+						"id": "new-invoice-batch",
+						"label": "New invoice batch",
+						"icon": "FileDocumentMultipleOutline",
+						"handler": "openInvoiceBatchCreate",
+						"description": "Bill the same lines to several customers at once, each due by their own payment term."
+					},
+					{
+						"id": "invoice-batches",
+						"label": "Invoice batches",
+						"type": "open-page",
+						"route": "InvoiceBatches",
+						"icon": "EmailFastOutline"
+					},
+					{
 						"id": "new-invoice",
 						"label": "New invoice",
 						"type": "open-form",
@@ -8283,7 +8297,9 @@
 						"action": "actions-menu",
 						"items": [
 							"new-down-payment-invoice",
-							"generate-invoices"
+							"generate-invoices",
+							"new-invoice-batch",
+							"invoice-batches"
 						]
 					},
 					{

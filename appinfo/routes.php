@@ -332,6 +332,8 @@ return \OCA\Shillinq\Middleware\Support\ApiPathAliases::withVersionedAliases(\OC
             ['name' => 'invoiceSending#send', 'url' => '/api/ar-invoices/{id}/send', 'verb' => 'POST'],
             // Sales-invoice-sending (REQ-SIS-003): send the selected invoices in a queued batch.
             ['name' => 'invoiceSending#sendBatch', 'url' => '/api/ar-invoices/send-batch', 'verb' => 'POST'],
+            // Sales-invoice-sending (REQ-SIS-004): one invoice per selected customer from one set of lines.
+            ['name' => 'invoiceBatch#create', 'url' => '/api/ar-invoices/batch', 'verb' => 'POST'],
 
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.

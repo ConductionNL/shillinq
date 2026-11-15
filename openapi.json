@@ -2043,6 +2043,43 @@
                 }
             }
         },
+        "/ar-invoices/batch": {
+            "post": {
+                "operationId": "invoice-batch-create",
+                "summary": "Create one ARInvoice per selected customer",
+                "description": "Write one ARInvoice per selected CustomerMaster of one administration from one set of lines. POST /api/ar-invoices/batch Body: { administrationId, batchId?, customerIds, charge: { invoiceDate, dueDate?, lines: [{ description, quantity, unitPrice, vatRate }] }, issue?, send? }. At most 200 customers. Each due date is the invoice date plus the customer's paymentTermDays unless the charge names a due date. Submitting the same batchId again writes only the invoices still missing. With issue the invoices are issued; with send (needs issue) they are queued for sending by each customer's delivery method. Answers 201 with the InvoiceBatch of kind create and an outcome per customer (created, existing, skipped or failed). Needs a signed-in Nextcloud user.",
+                "tags": [
+                    "invoice-sending"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The batch is written.",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/Problem400"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Problem401"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/Problem404"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/Problem500"
+                    }
+                }
+            }
+        },
         "/audit/export": {
             "get": {
                 "operationId": "compliance-export-export",
