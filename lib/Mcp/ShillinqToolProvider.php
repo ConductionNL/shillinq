@@ -74,6 +74,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 	 * @param McpBankTools          $bank           The bank-statement and reconciliation handlers.
 	 * @param McpInvoiceTools       $invoices       The invoicing handlers.
 	 * @param McpHoursTools         $hours          The hours handler.
+	 * @param McpExpenseTools       $expenses       The receipt and expense-claim handlers.
 	 */
 	public function __construct(
 		private readonly McpArgumentValidator $validator,
@@ -88,6 +89,7 @@ class ShillinqToolProvider implements IMcpToolProvider {
 		private readonly McpBankTools $bank,
 		private readonly McpInvoiceTools $invoices,
 		private readonly McpHoursTools $hours,
+		private readonly McpExpenseTools $expenses,
 	) {
 	}//end __construct()
 
@@ -203,6 +205,8 @@ class ShillinqToolProvider implements IMcpToolProvider {
 			'shillinq.invoice.send_einvoice' => $this->invoices->sendEInvoice(args: $arguments),
 			'shillinq.recurring_invoice.generate' => $this->invoices->generateRecurring(args: $arguments),
 			'shillinq.hours.book' => $this->hours->book(args: $arguments),
+			'shillinq.receipt.book' => $this->expenses->bookReceipt(args: $arguments),
+			'shillinq.expense_claim.approve' => $this->expenses->decideClaim(args: $arguments),
 			default => McpResult::error(code: 'unknown_tool', message: "Tool '{$toolId}' has no handler."),
 		};
 	}//end run()
