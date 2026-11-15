@@ -33,7 +33,7 @@ use OCA\Shillinq\Controller\BookingDepthController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -107,7 +107,7 @@ final class BookingSeriesCreateGoldenTest extends TestCase {
 			}
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($world['or']);
 		$settings->method('getRegisterSlug')->willReturn('books');
 

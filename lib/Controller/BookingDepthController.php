@@ -3,6 +3,9 @@
 /**
  * Booking Depth Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Reachable operator surface for the two bookings-depth capabilities:
  *
  *  1. POST /api/v1/appointments/{appointmentId}/no-show — records a no-show and
@@ -33,20 +36,17 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookings-recurring-series/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\NoShowFeeCaptureService;
-use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RecurringSeriesServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -71,24 +71,24 @@ class BookingDepthController extends Controller {
 	 *
 	 * @param \OCP\IRequest $request The request.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug, OR availability).
-	 * @param AdministrationContextService $context Auth + per-administration guard.
-	 * @param NoShowFeeCaptureService $noShowFee No-show fee capture seam.
-	 * @param RecurringSeriesService $series Recurring series expander/planner.
+	 * @param RegisterLocationInterface $settings Where the register lives (slug + OpenRegister availability).
+	 * @param AdministrationContextServiceInterface $context Auth + per-administration guard.
+	 * @param NoShowFeeCaptureServiceInterface $noShowFee No-show fee capture seam.
+	 * @param RecurringSeriesServiceInterface $series Recurring series expander/planner.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translation service for ADR-050 error-response messages.
 	 */
 	public function __construct(
 		\OCP\IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
-		private readonly AdministrationContextService $context,
-		private readonly NoShowFeeCaptureService $noShowFee,
-		private readonly RecurringSeriesService $series,
+		private readonly RegisterLocationInterface $settings,
+		private readonly AdministrationContextServiceInterface $context,
+		private readonly NoShowFeeCaptureServiceInterface $noShowFee,
+		private readonly RecurringSeriesServiceInterface $series,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -111,11 +111,33 @@ class BookingDepthController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function captureNoShow(string $appointmentId = ''): JSONResponse {
+		$appointmentId = trim($appointmentId);
+		$refusal       = $this->refuseNoShowRequest(appointmentId: $appointmentId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		try {
+			return $this->captureNoShowFor(appointmentId: $appointmentId);
+		} catch (Throwable $e) {
+			$this->logger->error('BookingDepthController: no-show capture failed', ['appointmentId' => $appointmentId, 'exception' => $e->getMessage()]);
+			return new JSONResponse(['error' => 'No-show capture failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+	}//end captureNoShow()
+
+	/**
+	 * Refuse a no-show capture without a caller, without an appointment id, or without OpenRegister.
+	 *
+	 * @param string $appointmentId The trimmed appointment id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the capture may proceed.
+	 */
+	private function refuseNoShowRequest(string $appointmentId): JSONResponse|null {
 		if ($this->context->currentUserId() === null) {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$appointmentId = trim($appointmentId);
 		if ($appointmentId === '') {
 			return new JSONResponse(['error' => 'appointmentId is required'], Http::STATUS_BAD_REQUEST);
 		}
@@ -124,51 +146,66 @@ class BookingDepthController extends Controller {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
-		try {
-			$appointment = $this->loadAppointment(appointmentId: $appointmentId);
-			if ($appointment === null) {
-				return new JSONResponse(['error' => 'Appointment not found'], Http::STATUS_NOT_FOUND);
-			}
+		return null;
 
-			// Security-endpoint-guards REQ-001: per-object tenant guard checked
-			// against the FETCHED target's own administrationId (never the
-			// caller-supplied appointmentId's implied scope).
-			if ($this->context->canAccess((string)($appointment['administrationId'] ?? '')) === false) {
-				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
-			}
+	}//end refuseNoShowRequest()
 
-			$outcome = $this->noShowFee->captureNoShowFee(appointment: $appointment);
-			$appointment = $outcome['appointment'];
+	/**
+	 * Capture the no-show fee for an appointment the caller may act on.
+	 *
+	 * @param string $appointmentId The appointment id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function captureNoShowFor(string $appointmentId): JSONResponse {
+		$appointment = $this->loadAppointment(appointmentId: $appointmentId);
+		if ($appointment === null) {
+			return new JSONResponse(['error' => 'Appointment not found'], Http::STATUS_NOT_FOUND);
+		}
 
-			// Mark the appointment as a no-show alongside the fee bookkeeping.
-			$appointment['status'] = 'no_show';
-			$appointment['cancelledReason'] = 'no_show';
+		// Security-endpoint-guards REQ-001: per-object tenant guard checked
+		// against the FETCHED target's own administrationId (never the
+		// caller-supplied appointmentId's implied scope).
+		if ($this->context->canAccess((string)($appointment['administrationId'] ?? '')) === false) {
+			return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
+		}
 
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$objectService->saveObject(
-				object: $appointment,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'Appointment',
-			);
+		$outcome     = $this->noShowFee->captureNoShowFee(appointment: $appointment);
+		$appointment = $this->markNoShow(appointment: $outcome['appointment']);
 
-			return new JSONResponse(
-				[
-					'charged' => $outcome['charged'],
-					'feeCents' => $outcome['feeCents'],
-					'noShowFeeStatus' => (string)($appointment['noShowFeeStatus'] ?? NoShowFeeCaptureService::STATUS_NONE),
-					'paymentIntentId' => (string)($appointment['noShowFeePaymentIntentId'] ?? ''),
-				],
-				Http::STATUS_OK,
-			);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BookingDepthController: no-show capture failed',
-				['appointmentId' => $appointmentId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'No-show capture failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}//end try
+		return new JSONResponse(
+			[
+				'charged' => $outcome['charged'],
+				'feeCents' => $outcome['feeCents'],
+				'noShowFeeStatus' => (string)($appointment['noShowFeeStatus'] ?? NoShowFeeCaptureServiceInterface::STATUS_NONE),
+				'paymentIntentId' => (string)($appointment['noShowFeePaymentIntentId'] ?? ''),
+			],
+			Http::STATUS_OK,
+		);
 
-	}//end captureNoShow()
+	}//end captureNoShowFor()
+
+	/**
+	 * Mark the appointment as a no-show alongside the fee bookkeeping, and save it.
+	 *
+	 * @param array<string, mixed> $appointment The appointment after the fee capture.
+	 *
+	 * @return array<string, mixed> The marked appointment.
+	 */
+	private function markNoShow(array $appointment): array {
+		$appointment['status']          = 'no_show';
+		$appointment['cancelledReason'] = 'no_show';
+
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$objectService->saveObject(
+			object: $appointment,
+			register: $this->settings->getRegisterSlug(),
+			schema: 'Appointment',
+		);
+
+		return $appointment;
+
+	}//end markNoShow()
 
 	/**
 	 * POST /api/v1/appointment-series

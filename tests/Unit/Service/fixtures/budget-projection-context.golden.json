@@ -1,0 +1,121 @@
+{
+    "withGroups": {
+        "accounts": {
+            "1000": {
+                "accountNumber": "1000",
+                "accountType": "assets"
+            },
+            "4000": {
+                "accountNumber": "4000",
+                "accountType": "expenses"
+            },
+            "8000": {
+                "accountNumber": "8000",
+                "accountType": ""
+            }
+        },
+        "windowByAccount": {
+            "4000": {
+                "months": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03"
+                ],
+                "values": [
+                    10000,
+                    0,
+                    5050
+                ]
+            },
+            "8000": {
+                "months": [
+                    "2026-03"
+                ],
+                "values": [
+                    -20000
+                ]
+            }
+        },
+        "lastActualMonthByAccount": {
+            "4000": "2026-03",
+            "8000": "2026-03"
+        },
+        "ledgerGroupEntries": [
+            {
+                "id": "g-1",
+                "slug": "",
+                "memberAccountNumbers": [
+                    "4000",
+                    "1000"
+                ]
+            },
+            {
+                "id": "g-2",
+                "slug": "",
+                "memberAccountNumbers": [
+                    "8000"
+                ]
+            }
+        ],
+        "ledgerGroupKeyToIndex": {
+            "g-1": 0,
+            "g-2": 1
+        }
+    },
+    "withoutGroups": {
+        "accounts": {
+            "1000": {
+                "accountNumber": "1000",
+                "accountType": "assets"
+            },
+            "4000": {
+                "accountNumber": "4000",
+                "accountType": "expenses"
+            },
+            "8000": {
+                "accountNumber": "8000",
+                "accountType": ""
+            }
+        },
+        "windowByAccount": {
+            "4000": {
+                "months": [
+                    "2026-01",
+                    "2026-02",
+                    "2026-03"
+                ],
+                "values": [
+                    10000,
+                    0,
+                    5050
+                ]
+            },
+            "8000": {
+                "months": [
+                    "2026-03"
+                ],
+                "values": [
+                    -20000
+                ]
+            }
+        },
+        "lastActualMonthByAccount": {
+            "4000": "2026-03",
+            "8000": "2026-03"
+        },
+        "ledgerGroupEntries": [],
+        "ledgerGroupKeyToIndex": []
+    },
+    "otherAdmin": {
+        "accounts": {
+            "9000": {
+                "accountNumber": "9000",
+                "accountType": "revenue"
+            }
+        },
+        "windowByAccount": [],
+        "lastActualMonthByAccount": [],
+        "ledgerGroupEntries": [],
+        "ledgerGroupKeyToIndex": []
+    }
+}

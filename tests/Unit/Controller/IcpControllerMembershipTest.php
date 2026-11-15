@@ -176,7 +176,7 @@ class IcpControllerMembershipTest extends TestCase {
 			userSession: $session,
 			logger: $logger,
 			objectService: $this->store,
-			administrations: new AdministrationContextService($container, $session, $config, $logger),
+			administrations: new AdministrationContextService($container, $session, $config, $logger, $this->createMock(\OCP\IConfig::class)),
 		);
 
 	}//end controller()

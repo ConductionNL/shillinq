@@ -355,4 +355,47 @@ final class PurchaseOrderApprovalControllerTest extends TestCase {
 	}//end testDecideUnexpectedFailureReturns500WithoutStackTrace()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * The check order and bodies, the "fully signed" conflict and the
+	 * failure log context.
+	 *
+	 * @return void
+	 */
+	public function testCheckOrderConflictAndFailureLog(): void {
+		$this->withParams(['administrationId' => ' adm-1 ', 'decision' => ' approve ', 'comment' => 'ok']);
+		$this->approvalService->method('recordApprovalDecision')->with('adm-1', 'po-1', 'approve', 'ok')
+			->willReturnOnConsecutiveCalls(
+				self::throwException(new \RuntimeException('chain fully signed')),
+				self::throwException(new \LogicException('db'))
+			);
+		$this->logger->expects($this->once())->method('error')->with(
+			'PurchaseOrderApprovalController: failed to record approval decision',
+			['administrationId' => 'adm-1', 'purchaseOrderId' => 'po-1', 'exception' => 'db']
+		);
+
+		$conflict = $this->controller()->decide(' po-1 ');
+		self::assertSame([409, ['error' => 'chain fully signed']], [$conflict->getStatus(), $conflict->getData()]);
+		$failed = $this->controller()->decide('po-1');
+		self::assertSame([500, ['error' => 'Could not record approval decision']], [$failed->getStatus(), $failed->getData()]);
+		self::assertSame(['error' => 'Purchase order id is required'], $this->controller()->decide('a/b')->getData());
+
+	}//end testCheckOrderConflictAndFailureLog()
+
+	/**
+	 * A refused administration is answered before the id or decision is checked.
+	 *
+	 * @return void
+	 */
+	public function testRefusedAdministrationBeforeIdAndDecision(): void {
+		$this->withParams(['administrationId' => 'adm-2']);
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('canAccess')->willReturn(false);
+		$this->administrationContext = $context;
+		$this->approvalService->expects($this->never())->method('recordApprovalDecision');
+
+		$response = $this->controller()->decide('a/b');
+
+		self::assertSame([404, ['error' => 'Purchase order not found']], [$response->getStatus(), $response->getData()]);
+
+	}//end testRefusedAdministrationBeforeIdAndDecision()
 }//end class

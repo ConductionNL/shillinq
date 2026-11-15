@@ -27,7 +27,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\BillableLinesServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Throwable;
@@ -37,7 +38,7 @@ use Throwable;
  *
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
  */
-class BillableLinesService {
+class BillableLinesService implements BillableLinesServiceInterface {
 
 	/**
 	 * The most rows read per schema.
@@ -81,6 +82,25 @@ class BillableLinesService {
 			$projects = array_values(array_intersect($projects, [$projectId]));
 		}
 
+		$timeEntries = $this->billableTimeEntries(administrationId: $administrationId, projects: $projects, fromDate: $fromDate, toDate: $toDate);
+		$expenses = $this->passedOnExpenses(administrationId: $administrationId, customerId: $customerId, fromDate: $fromDate, toDate: $toDate);
+
+		return ['timeEntries' => $timeEntries, 'expenses' => $expenses];
+	}//end forCustomer()
+
+	/**
+	 * The time entries on the projects in the period, by date.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param list<string> $projects The project ids.
+	 * @param string $fromDate The first day (YYYY-MM-DD), or ''.
+	 * @param string $toDate The last day (YYYY-MM-DD), or ''.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+	 */
+	private function billableTimeEntries(string $administrationId, array $projects, string $fromDate, string $toDate): array {
 		$timeEntries = array_values(
 			array_filter(
 				$this->rows(schema: 'UrenRegistratie', administrationId: $administrationId),
@@ -90,6 +110,22 @@ class BillableLinesService {
 		);
 		usort($timeEntries, static fn (array $a, array $b): int => strcmp((string)($a['date'] ?? ''), (string)($b['date'] ?? '')));
 
+		return $timeEntries;
+	}//end billableTimeEntries()
+
+	/**
+	 * The expense claims passed on to the customer in the period.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $customerId The customer.
+	 * @param string $fromDate The first day (YYYY-MM-DD), or ''.
+	 * @param string $toDate The last day (YYYY-MM-DD), or ''.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+	 */
+	private function passedOnExpenses(string $administrationId, string $customerId, string $fromDate, string $toDate): array {
 		$expenses = array_values(
 			array_filter(
 				$this->rows(schema: 'ExpenseClaimEntry', administrationId: $administrationId),
@@ -102,8 +138,8 @@ class BillableLinesService {
 			)
 		);
 
-		return ['timeEntries' => $timeEntries, 'expenses' => $expenses];
-	}//end forCustomer()
+		return $expenses;
+	}//end passedOnExpenses()
 
 	/**
 	 * The ids among those given that are not the customer's billable lines in
@@ -257,7 +293,7 @@ class BillableLinesService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

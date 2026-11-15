@@ -3,6 +3,9 @@
 /**
  * Supplier Invoice Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 05 of the bookkeeping-purchase-order-3way chain: server-authoritative
  * ingestion of supplier invoices from a Peppol-received UBL Invoice XML or a
  * PDF invoice processed through OCR (REQ-PO3W-004 + REQ-PO3W-007). Persists
@@ -35,23 +38,21 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\SupplierInvoiceServiceInterface;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
-use OCA\Shillinq\Service\Tax\VatNumberCheck;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -91,13 +92,7 @@ use OCA\Shillinq\Service\Tax\VatNumberCheck;
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
-class SupplierInvoiceService {
-	/**
-	 * Initial lifecycle state of a newly ingested invoice (REQ-SI-002).
-	 *
-	 * @var string
-	 */
-	public const STATUS_RECEIVED = 'received';
+class SupplierInvoiceService implements SupplierInvoiceServiceInterface {
 
 	/**
 	 * Source-format tag stored on the SupplierInvoice record indicating the
@@ -131,6 +126,17 @@ class SupplierInvoiceService {
 		'approved' => ['paid'],
 		'paid' => [],
 		'rejected' => [],
+	];
+
+	/**
+	 * The UBL namespaces XPath lookups use, by prefix.
+	 *
+	 * @var array<string,string>
+	 */
+	private const UBL_NAMESPACES = [
+		'inv' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+		'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+		'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
 	];
 
 	/**
@@ -190,13 +196,7 @@ class SupplierInvoiceService {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context = []): array {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Administration not found');
-		}
+		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Administration not found');
 
 		$parsed = $this->resolveSupplier(administrationId: $administrationId, parsed: $this->parseUblInvoice(ublXml: $ublXml));
 
@@ -213,15 +213,7 @@ class SupplierInvoiceService {
 			return $existing;
 		}
 
-		$peppolReceivedAt = trim((string)($context['peppolReceivedAt'] ?? ''));
-		if ($peppolReceivedAt === '') {
-			$peppolReceivedAt = $this->nowIso();
-		}
-
-		$ublSourceUri = trim((string)($context['ublSourceUri'] ?? ''));
-		if ($ublSourceUri === '' && isset($context['peppolMessageId']) === true) {
-			$ublSourceUri = 'peppol:' . trim((string)$context['peppolMessageId']);
-		}
+		[$peppolReceivedAt, $ublSourceUri] = $this->peppolProvenance(context: $context);
 
 		$record = array_merge(
 			$parsed,
@@ -457,6 +449,40 @@ class SupplierInvoiceService {
 		?string $linkedGrnLineId,
 		?string $linkedMatchId,
 	): array {
+		$this->assertAccessibleAdministration(administrationId: $administrationId);
+		$this->assertLinkTarget(invoiceId: $invoiceId, invoiceLineNumber: $invoiceLineNumber);
+
+		$invoice = $this->loadInvoiceToLink(administrationId: $administrationId, invoiceId: $invoiceId);
+		$link = new InvoiceLineLink(
+			lineNumber: $invoiceLineNumber,
+			fields: self::blankLinkIdsAsNull(
+				fields: [
+					'linkedPoLineId' => $linkedPoLineId,
+					'linkedPoId' => $linkedPoId,
+					'linkedGrnLineId' => $linkedGrnLineId,
+					'linkedMatchId' => $linkedMatchId,
+				]
+			)
+		);
+
+		$invoice['lines'] = self::linesWithLink(invoice: $invoice, link: $link);
+		$invoice['matchedPoIds'] = self::matchedPoIdsWith(invoice: $invoice, linkedPoId: $linkedPoId);
+		$invoice['consolidatedAt'] = $this->nowIso();
+
+		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
+	}//end linkInvoiceLineToPo()
+
+	/**
+	 * Refuse a missing administration, and one the caller cannot access as if
+	 * the invoice did not exist (ADR-005).
+	 *
+	 * @param string $administrationId Tenant scope (server-resolved).
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the administration is missing or not accessible.
+	 */
+	private function assertAccessibleAdministration(string $administrationId): void {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -464,7 +490,19 @@ class SupplierInvoiceService {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			throw new RuntimeException('Supplier invoice not found');
 		}
+	}//end assertAccessibleAdministration()
 
+	/**
+	 * Refuse a missing invoice id or a line number below 1.
+	 *
+	 * @param string $invoiceId         SupplierInvoice id.
+	 * @param int    $invoiceLineNumber 1-based line position.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the target cannot be a line.
+	 */
+	private function assertLinkTarget(string $invoiceId, int $invoiceLineNumber): void {
 		if ($invoiceId === '') {
 			throw new RuntimeException('Supplier invoice not found');
 		}
@@ -472,7 +510,19 @@ class SupplierInvoiceService {
 		if ($invoiceLineNumber < 1) {
 			throw new RuntimeException('Invalid invoiceLineNumber');
 		}
+	}//end assertLinkTarget()
 
+	/**
+	 * The administration's SupplierInvoice with this id.
+	 *
+	 * @param string $administrationId Tenant scope (server-resolved).
+	 * @param string $invoiceId        SupplierInvoice id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException When the invoice is not found in the administration.
+	 */
+	private function loadInvoiceToLink(string $administrationId, string $invoiceId): array {
 		$invoice = $this->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
@@ -484,85 +534,106 @@ class SupplierInvoiceService {
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
+		return $invoice;
+	}//end loadInvoiceToLink()
+
+	/**
+	 * The link fields with every empty-string id stored as NULL, so the JSON
+	 * document matches the slice-07 schema fragment exactly.
+	 *
+	 * @param array<string,string|null> $fields The link fields.
+	 *
+	 * @return array<string,string|null>
+	 */
+	private static function blankLinkIdsAsNull(array $fields): array {
+		return array_map(
+			static function (?string $id): ?string {
+				if ($id === '') {
+					return null;
+				}
+
+				return $id;
+			},
+			$fields
+		);
+	}//end blankLinkIdsAsNull()
+
+	/**
+	 * The invoice's lines with the link fields stamped on the line it targets
+	 * (by its lineNumber, or its 1-based position when it has none).
+	 *
+	 * @param array<string,mixed> $invoice The SupplierInvoice.
+	 * @param InvoiceLineLink     $link    The link to stamp.
+	 *
+	 * @return array<int|string,mixed>
+	 *
+	 * @throws \RuntimeException When no line has that number.
+	 */
+	private static function linesWithLink(array $invoice, InvoiceLineLink $link): array {
 		$lines = ($invoice['lines'] ?? []);
 		if (is_array($lines) === false) {
 			$lines = [];
 		}
 
-		$located = false;
 		foreach ($lines as $index => $line) {
 			if (is_array($line) === false) {
 				continue;
 			}
 
-			$candidateNumber = (int)($line['lineNumber'] ?? ((int)$index + 1));
-			if ($candidateNumber !== $invoiceLineNumber) {
-				continue;
+			if ((int)($line['lineNumber'] ?? ((int)$index + 1)) === $link->lineNumber) {
+				$lines[$index] = array_replace($line, $link->fields);
+				return $lines;
 			}
-
-			$normalisedPoLineId = $linkedPoLineId;
-			$normalisedPoId = $linkedPoId;
-			$normalisedGrnLineId = $linkedGrnLineId;
-			$normalisedMatchId = $linkedMatchId;
-			if ($normalisedPoLineId === '') {
-				$normalisedPoLineId = null;
-			}
-
-			if ($normalisedPoId === '') {
-				$normalisedPoId = null;
-			}
-
-			if ($normalisedGrnLineId === '') {
-				$normalisedGrnLineId = null;
-			}
-
-			if ($normalisedMatchId === '') {
-				$normalisedMatchId = null;
-			}
-
-			$line['linkedPoLineId'] = $normalisedPoLineId;
-			$line['linkedPoId'] = $normalisedPoId;
-			$line['linkedGrnLineId'] = $normalisedGrnLineId;
-			$line['linkedMatchId'] = $normalisedMatchId;
-			$lines[$index] = $line;
-			$located = true;
-			break;
-		}//end foreach
-
-		if ($located === false) {
-			throw new RuntimeException('Invoice line not found');
 		}
 
-		$invoice['lines'] = $lines;
+		throw new RuntimeException('Invoice line not found');
+	}//end linesWithLink()
 
-		// De-duplicated, insertion-order-preserving matchedPoIds.
-		$existingMatchedPoIds = ($invoice['matchedPoIds'] ?? []);
-		if (is_array($existingMatchedPoIds) === false) {
-			$existingMatchedPoIds = [];
+	/**
+	 * The invoice's matchedPoIds, de-duplicated with insertion order kept, and
+	 * the linked PO appended when it is new.
+	 *
+	 * @param array<string,mixed> $invoice    The SupplierInvoice.
+	 * @param string|null         $linkedPoId PurchaseOrder id (NULL on exception path).
+	 *
+	 * @return array<int,string>
+	 */
+	private static function matchedPoIdsWith(array $invoice, ?string $linkedPoId): array {
+		$matchedPoIds = self::distinctPoIds(poIds: ($invoice['matchedPoIds'] ?? []));
+		if ($linkedPoId !== null && $linkedPoId !== '' && in_array($linkedPoId, $matchedPoIds, true) === false) {
+			$matchedPoIds[] = $linkedPoId;
 		}
 
-		$matchedPoIds = [];
+		return $matchedPoIds;
+	}//end matchedPoIdsWith()
+
+	/**
+	 * The trimmed, non-empty, distinct PO ids of a stored matchedPoIds value,
+	 * in first-seen order; a value that is not a list yields none.
+	 *
+	 * @param mixed $poIds The stored matchedPoIds.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function distinctPoIds(mixed $poIds): array {
+		if (is_array($poIds) === false) {
+			return [];
+		}
+
+		$distinct = [];
 		$seen = [];
-		foreach ($existingMatchedPoIds as $existing) {
+		foreach ($poIds as $existing) {
 			$existingPoId = trim((string)$existing);
 			if ($existingPoId === '' || isset($seen[$existingPoId]) === true) {
 				continue;
 			}
 
-			$matchedPoIds[] = $existingPoId;
+			$distinct[] = $existingPoId;
 			$seen[$existingPoId] = true;
 		}
 
-		if ($linkedPoId !== null && $linkedPoId !== '' && isset($seen[$linkedPoId]) === false) {
-			$matchedPoIds[] = $linkedPoId;
-			$seen[$linkedPoId] = true;
-		}
-
-		$invoice['matchedPoIds'] = $matchedPoIds;
-		$invoice['consolidatedAt'] = $this->nowIso();
-
-		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
-	}//end linkInvoiceLineToPo()
+		return $distinct;
+	}//end distinctPoIds()
 
 	/**
 	 * Server-authoritative lifecycle transition for a persisted
@@ -591,13 +662,7 @@ class SupplierInvoiceService {
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function setStatus(string $administrationId, string $invoiceId, string $toStatus): array {
-		if ($administrationId === '') {
-			throw new RuntimeException('administrationId is required');
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			throw new RuntimeException('Supplier invoice not found');
-		}
+		$this->requireAccessibleAdministration(administrationId: $administrationId, deniedMessage: 'Supplier invoice not found');
 
 		if ($invoiceId === '') {
 			throw new RuntimeException('Supplier invoice not found');
@@ -615,6 +680,49 @@ class SupplierInvoiceService {
 		}
 
 		$fromStatus = (string)($invoice['statusCode'] ?? '');
+		$this->assertAllowedTransition(fromStatus: $fromStatus, toStatus: $toStatus);
+
+		$invoice['statusCode'] = $toStatus;
+		$invoice[$toStatus . 'At'] = $this->nowIso();
+
+		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
+	}//end setStatus()
+
+	/**
+	 * Require a non-empty administration the caller may access.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $deniedMessage The message when the caller has no access.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the id is empty or the administration is inaccessible.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function requireAccessibleAdministration(string $administrationId, string $deniedMessage): void {
+		if ($administrationId === '') {
+			throw new RuntimeException('administrationId is required');
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			throw new RuntimeException($deniedMessage);
+		}
+	}//end requireAccessibleAdministration()
+
+	/**
+	 * Require the status transition to be allowed.
+	 *
+	 * @param string $fromStatus The current status.
+	 * @param string $toStatus The target status.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException On an unknown current status or an illegal transition.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function assertAllowedTransition(string $fromStatus, string $toStatus): void {
 		if (isset(self::ALLOWED_TRANSITIONS[$fromStatus]) === false) {
 			throw new RuntimeException('Invalid current statusCode: ' . $fromStatus);
 		}
@@ -622,12 +730,30 @@ class SupplierInvoiceService {
 		if (in_array($toStatus, self::ALLOWED_TRANSITIONS[$fromStatus], true) === false) {
 			throw new RuntimeException('Illegal transition from ' . $fromStatus . ' to ' . $toStatus);
 		}
+	}//end assertAllowedTransition()
 
-		$invoice['statusCode'] = $toStatus;
-		$invoice[$toStatus . 'At'] = $this->nowIso();
+	/**
+	 * When the invoice arrived over Peppol (default now) and where its UBL came from.
+	 *
+	 * @param array<string,mixed> $context The ingestion context.
+	 *
+	 * @return array{0: string, 1: string} The received-at timestamp and the UBL source URI.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
+	 */
+	private function peppolProvenance(array $context): array {
+		$peppolReceivedAt = trim((string)($context['peppolReceivedAt'] ?? ''));
+		if ($peppolReceivedAt === '') {
+			$peppolReceivedAt = $this->nowIso();
+		}
 
-		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
-	}//end setStatus()
+		$ublSourceUri = trim((string)($context['ublSourceUri'] ?? ''));
+		if ($ublSourceUri === '' && isset($context['peppolMessageId']) === true) {
+			$ublSourceUri = 'peppol:' . trim((string)$context['peppolMessageId']);
+		}
+
+		return [$peppolReceivedAt, $ublSourceUri];
+	}//end peppolProvenance()
 
 	/**
 	 * Parse a UBL Invoice XML document into the structured field shape used
@@ -654,40 +780,98 @@ class SupplierInvoiceService {
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
 	public function parseUblInvoice(string $ublXml): array {
+		$xml = $this->loadUblXml(ublXml: $ublXml);
+		$invoiceNumber = $this->requireUblInvoiceNumber(xml: $xml);
+
+		return [
+			'invoiceNumber' => $invoiceNumber,
+			'supplierId' => $this->ublSupplierId(xml: $xml),
+			'invoiceDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:IssueDate'])),
+			'dueDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:DueDate'])),
+			'currency' => $this->ublCurrency(xml: $xml),
+		] + $this->ublTotals(xml: $xml)
+			+ $this->ublPayment(xml: $xml)
+			+ $this->ublSupplierRegistration(xml: $xml)
+			+ ['lines' => $this->ublLines(xml: $xml)];
+
+	}//end parseUblInvoice()
+
+	/**
+	 * Parse a UBL document and register the UBL Invoice, CBC and CAC namespaces.
+	 *
+	 * Libxml ≥ 2.9 disables external-entity loading by default (PHP 8);
+	 * simplexml_load_string is XXE-safe in our supported runtime
+	 * ([[nc-security-defaults]]).
+	 *
+	 * @param string $ublXml UBL Invoice XML document.
+	 *
+	 * @return SimpleXMLElement
+	 *
+	 * @throws \RuntimeException When the document is empty or not valid XML.
+	 */
+	private function loadUblXml(string $ublXml): SimpleXMLElement {
 		if (trim($ublXml) === '') {
 			throw new RuntimeException('UBL Invoice XML is empty');
 		}
 
-		// Libxml ≥ 2.9 disables external-entity loading by default (PHP 8);
-		// simplexml_load_string is XXE-safe in our supported runtime
-		// ([[nc-security-defaults]]).
 		$xml = simplexml_load_string($ublXml);
 		if ($xml === false) {
 			throw new RuntimeException('UBL Invoice XML is malformed');
 		}
 
-		// Register the canonical UBL Invoice + CBC + CAC namespaces so
-		// XPath lookups work regardless of the source document's prefix
-		// conventions.
-		$namespaces = $xml->getNamespaces(true);
-		foreach ([
-			'inv' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
-			'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-			'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-		] as $prefix => $uri
-		) {
+		$this->registerUblNamespaces(element: $xml, prefixes: ['inv', 'cbc', 'cac']);
+		return $xml;
+
+	}//end loadUblXml()
+
+	/**
+	 * Register the canonical UBL namespaces the element's document declares, so
+	 * XPath lookups work regardless of the source document's prefix conventions.
+	 *
+	 * @param SimpleXMLElement  $element  The element to search from.
+	 * @param array<int,string> $prefixes The prefixes to register, from UBL_NAMESPACES.
+	 *
+	 * @return void
+	 */
+	private function registerUblNamespaces(SimpleXMLElement $element, array $prefixes): void {
+		$namespaces = $element->getNamespaces(true);
+		foreach ($prefixes as $prefix) {
+			$uri = self::UBL_NAMESPACES[$prefix];
 			if (in_array($uri, $namespaces, true) === true) {
-				$xml->registerXPathNamespace($prefix, $uri);
+				$element->registerXPathNamespace($prefix, $uri);
 			}
 		}
 
-		$invoiceNumber = $this->xpathFirst(xml: $xml, paths: ['//cbc:ID', '/inv:Invoice/cbc:ID']);
-		$invoiceNumber = trim($invoiceNumber);
+	}//end registerUblNamespaces()
+
+	/**
+	 * The invoice number (cbc:ID), which a UBL bill must carry.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the invoice number is absent.
+	 */
+	private function requireUblInvoiceNumber(SimpleXMLElement $xml): string {
+		$invoiceNumber = trim($this->xpathFirst(xml: $xml, paths: ['//cbc:ID', '/inv:Invoice/cbc:ID']));
 		if ($invoiceNumber === '') {
 			throw new RuntimeException('UBL Invoice is missing InvoiceNumber (cbc:ID)');
 		}
 
-		$supplierId = trim(
+		return $invoiceNumber;
+
+	}//end requireUblInvoiceNumber()
+
+	/**
+	 * The supplier's party identification, else its endpoint id.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return string
+	 */
+	private function ublSupplierId(SimpleXMLElement $xml): string {
+		return trim(
 			$this->xpathFirst(
 				xml: $xml,
 				paths: [
@@ -697,20 +881,93 @@ class SupplierInvoiceService {
 			)
 		);
 
-		$currency = trim(
-			$this->xpathFirst(
-				xml: $xml,
-				paths: ['//cbc:DocumentCurrencyCode']
-			)
-		);
+	}//end ublSupplierId()
+
+	/**
+	 * The document currency, EUR when absent.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return string
+	 */
+	private function ublCurrency(SimpleXMLElement $xml): string {
+		$currency = trim($this->xpathFirst(xml: $xml, paths: ['//cbc:DocumentCurrencyCode']));
 		if ($currency === '') {
-			$currency = 'EUR';
+			return 'EUR';
 		}
 
+		return $currency;
+
+	}//end ublCurrency()
+
+	/**
+	 * The document totals in cents: excluding VAT, VAT, and payable.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array{totalExclVat:int,totalVat:int,totalInclVat:int}
+	 */
+	private function ublTotals(SimpleXMLElement $xml): array {
 		$totalExclVat = $this->xpathFirstFloat(xml: $xml, paths: ['//cac:LegalMonetaryTotal/cbc:LineExtensionAmount']);
 		$totalInclVat = $this->xpathFirstFloat(xml: $xml, paths: ['//cac:LegalMonetaryTotal/cbc:PayableAmount']);
 		$totalVat = $this->xpathFirstFloat(xml: $xml, paths: ['//cac:TaxTotal/cbc:TaxAmount']);
 
+		return [
+			'totalExclVat' => $this->toCents(amount: $totalExclVat),
+			'totalVat' => $this->toCents(amount: $totalVat),
+			'totalInclVat' => $this->toCents(amount: $totalInclVat),
+		];
+
+	}//end ublTotals()
+
+	/**
+	 * The payment reference and the payee IBAN (spaces removed, upper-cased).
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array{paymentReference:string,payeeIban:string}
+	 */
+	private function ublPayment(SimpleXMLElement $xml): array {
+		$iban = $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID']);
+
+		return [
+			'paymentReference' => trim($this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cbc:PaymentID'])),
+			'payeeIban' => strtoupper((string)preg_replace('/\s+/', '', $iban)),
+		];
+
+	}//end ublPayment()
+
+	/**
+	 * The supplier's KvK number and VAT number.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array{supplierKvk:string,supplierVatNumber:string}
+	 */
+	private function ublSupplierRegistration(SimpleXMLElement $xml): array {
+		$kvkPaths = [
+			'//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID',
+			'//cac:AccountingSupplierParty/cac:Party/cbc:EndpointID[@schemeID="0106"]',
+			'//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID="0106"]',
+		];
+
+		return [
+			'supplierKvk' => trim($this->xpathFirst(xml: $xml, paths: $kvkPaths)),
+			'supplierVatNumber' => trim(
+				$this->xpathFirst(xml: $xml, paths: ['//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID'])
+			),
+		];
+
+	}//end ublSupplierRegistration()
+
+	/**
+	 * The parsed cac:InvoiceLine elements, numbered from 1.
+	 *
+	 * @param SimpleXMLElement $xml The UBL document.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function ublLines(SimpleXMLElement $xml): array {
 		$lines = [];
 		$nodes = $xml->xpath('//cac:InvoiceLine');
 		if (is_array($nodes) === true) {
@@ -721,36 +978,9 @@ class SupplierInvoiceService {
 			}
 		}
 
-		return [
-			'invoiceNumber' => $invoiceNumber,
-			'supplierId' => $supplierId,
-			'invoiceDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:IssueDate'])),
-			'dueDate' => trim($this->xpathFirst(xml: $xml, paths: ['//cbc:DueDate'])),
-			'currency' => $currency,
-			'totalExclVat' => $this->toCents(amount: $totalExclVat),
-			'totalVat' => $this->toCents(amount: $totalVat),
-			'totalInclVat' => $this->toCents(amount: $totalInclVat),
-			'paymentReference' => trim($this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cbc:PaymentID'])),
-			'payeeIban' => strtoupper(
-				(string)preg_replace('/\s+/', '', $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID']))
-			),
-			'supplierKvk' => trim(
-				$this->xpathFirst(
-					xml: $xml,
-					paths: [
-						'//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID',
-						'//cac:AccountingSupplierParty/cac:Party/cbc:EndpointID[@schemeID="0106"]',
-						'//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID="0106"]',
-					]
-				)
-			),
-			'supplierVatNumber' => trim(
-				$this->xpathFirst(xml: $xml, paths: ['//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID'])
-			),
-			'lines' => $lines,
-		];
+		return $lines;
 
-	}//end parseUblInvoice()
+	}//end ublLines()
 
 	/**
 	 * Parse a single cac:InvoiceLine element into the embedded line shape.
@@ -763,55 +993,68 @@ class SupplierInvoiceService {
 	private function parseUblInvoiceLine(SimpleXMLElement $node, int $lineNumber): array {
 		// Re-register namespaces on the line node so XPath works against the
 		// element scope (some SimpleXML implementations require this).
-		$namespaces = $node->getNamespaces(true);
-		foreach ([
-			'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-			'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-		] as $prefix => $uri
-		) {
-			if (in_array($uri, $namespaces, true) === true) {
-				$node->registerXPathNamespace($prefix, $uri);
-			}
-		}
+		$this->registerUblNamespaces(element: $node, prefixes: ['cbc', 'cac']);
 
+		$description = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
+		$productCode = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
+		$unitPrice = $this->xpathFirstFloat(xml: $node, paths: ['cac:Price/cbc:PriceAmount']);
+		$lineExtension = $this->xpathFirstFloat(xml: $node, paths: ['cbc:LineExtensionAmount']);
+
+		return [
+			'lineNumber' => $this->ublLineNumber(node: $node, position: $lineNumber),
+			'productCode' => trim($productCode),
+			'description' => trim($description),
+			'quantity' => $this->xpathFirstFloat(xml: $node, paths: ['cbc:InvoicedQuantity']),
+			'unitPrice' => $this->toCents(amount: $unitPrice),
+			'lineExtension' => $this->toCents(amount: $lineExtension),
+			'vatRate' => $this->ublLineVatRate(node: $node),
+		];
+
+	}//end parseUblInvoiceLine()
+
+	/**
+	 * The line's own numeric cbc:ID, else its position in the document.
+	 *
+	 * @param SimpleXMLElement $node     The InvoiceLine node.
+	 * @param int              $position Position in the document (1-based).
+	 *
+	 * @return int
+	 */
+	private function ublLineNumber(SimpleXMLElement $node, int $position): int {
 		$idNode = $node->xpath('cbc:ID');
 		$rawLineId = '';
 		if (is_array($idNode) === true && isset($idNode[0]) === true) {
 			$rawLineId = trim((string)$idNode[0]);
 		}
 
-		$description = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
-		$productCode = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
-		$quantity = $this->xpathFirstFloat(xml: $node, paths: ['cbc:InvoicedQuantity']);
-		$unitPrice = $this->xpathFirstFloat(xml: $node, paths: ['cac:Price/cbc:PriceAmount']);
-		$lineExtension = $this->xpathFirstFloat(xml: $node, paths: ['cbc:LineExtensionAmount']);
+		if ($rawLineId !== '' && ctype_digit($rawLineId) === true) {
+			return (int)$rawLineId;
+		}
+
+		return $position;
+
+	}//end ublLineNumber()
+
+	/**
+	 * The line's VAT rate as a fraction (0.21): UBL Percent is expressed in
+	 * whole percent (21.0), the rest of the app uses the fraction.
+	 *
+	 * @param SimpleXMLElement $node The InvoiceLine node.
+	 *
+	 * @return float
+	 */
+	private function ublLineVatRate(SimpleXMLElement $node): float {
 		$vatRate = $this->xpathFirstFloat(
 			xml: $node,
 			paths: ['cac:Item/cac:ClassifiedTaxCategory/cbc:Percent', 'cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent']
 		);
-		// UBL Percent is expressed in whole-percent (21.0); store as the
-		// fraction the rest of the app already uses (0.21).
-		$vatRateFraction = 0.0;
 		if ($vatRate > 0.0) {
-			$vatRateFraction = ($vatRate / 100.0);
+			return ($vatRate / 100.0);
 		}
 
-		$resolvedLineNumber = $lineNumber;
-		if ($rawLineId !== '' && ctype_digit($rawLineId) === true) {
-			$resolvedLineNumber = (int)$rawLineId;
-		}
+		return 0.0;
 
-		return [
-			'lineNumber' => $resolvedLineNumber,
-			'productCode' => trim($productCode),
-			'description' => trim($description),
-			'quantity' => $quantity,
-			'unitPrice' => $this->toCents(amount: $unitPrice),
-			'lineExtension' => $this->toCents(amount: $lineExtension),
-			'vatRate' => $vatRateFraction,
-		];
-
-	}//end parseUblInvoiceLine()
+	}//end ublLineVatRate()
 
 	/**
 	 * Run a sequence of xpath candidates and return the first non-empty
@@ -870,61 +1113,106 @@ class SupplierInvoiceService {
 	 * @throws \RuntimeException When mandatory identifiers are missing.
 	 */
 	private function normaliseOcrPayload(array $ocrPayload): array {
-		$invoiceNumber = trim((string)($ocrPayload['invoiceNumber'] ?? ''));
-		$supplierId = trim((string)($ocrPayload['supplierId'] ?? ''));
-
-		if ($invoiceNumber === '') {
-			throw new RuntimeException('OCR payload is missing invoiceNumber');
-		}
-
-		if ($supplierId === '') {
-			throw new RuntimeException('OCR payload is missing supplierId');
-		}
-
-		$currency = trim((string)($ocrPayload['currency'] ?? 'EUR'));
-		if ($currency === '') {
-			$currency = 'EUR';
-		}
-
-		$totalExclVat = $this->toCentsLoose(value: ($ocrPayload['totalExclVat'] ?? null));
-		$totalVat = $this->toCentsLoose(value: ($ocrPayload['totalVat'] ?? null));
-		$totalInclVat = $this->toCentsLoose(value: ($ocrPayload['totalInclVat'] ?? null));
-
-		$lines = [];
-		if (isset($ocrPayload['lines']) === true && is_array($ocrPayload['lines']) === true) {
-			$lineNumber = 0;
-			foreach ($ocrPayload['lines'] as $rawLine) {
-				if (is_array($rawLine) === false) {
-					continue;
-				}
-
-				$lineNumber++;
-				$lines[] = [
-					'lineNumber' => ((int)($rawLine['lineNumber'] ?? $lineNumber)),
-					'productCode' => trim((string)($rawLine['productCode'] ?? '')),
-					'description' => trim((string)($rawLine['description'] ?? '')),
-					'quantity' => (float)($rawLine['quantity'] ?? 0),
-					'unitPrice' => $this->toCentsLoose(value: ($rawLine['unitPrice'] ?? null)),
-					'lineExtension' => $this->toCentsLoose(value: ($rawLine['lineExtension'] ?? null)),
-					'vatRate' => (float)($rawLine['vatRate'] ?? 0),
-				];
-			}
-		}
+		$invoiceNumber = $this->requiredOcrField(ocrPayload: $ocrPayload, field: 'invoiceNumber');
+		$supplierId = $this->requiredOcrField(ocrPayload: $ocrPayload, field: 'supplierId');
 
 		return [
 			'invoiceNumber' => $invoiceNumber,
 			'supplierId' => $supplierId,
 			'invoiceDate' => trim((string)($ocrPayload['invoiceDate'] ?? '')),
 			'dueDate' => trim((string)($ocrPayload['dueDate'] ?? '')),
-			'currency' => $currency,
-			'totalExclVat' => $totalExclVat,
-			'totalVat' => $totalVat,
-			'totalInclVat' => $totalInclVat,
+			'currency' => $this->ocrCurrency(ocrPayload: $ocrPayload),
+			'totalExclVat' => $this->toCentsLoose(value: ($ocrPayload['totalExclVat'] ?? null)),
+			'totalVat' => $this->toCentsLoose(value: ($ocrPayload['totalVat'] ?? null)),
+			'totalInclVat' => $this->toCentsLoose(value: ($ocrPayload['totalInclVat'] ?? null)),
 			'paymentReference' => trim((string)($ocrPayload['paymentReference'] ?? '')),
-			'lines' => $lines,
+			'lines' => $this->ocrLines(ocrPayload: $ocrPayload),
 		];
 
 	}//end normaliseOcrPayload()
+
+	/**
+	 * A mandatory OCR identifier, trimmed.
+	 *
+	 * @param array<string,mixed> $ocrPayload OCR payload.
+	 * @param string              $field      The identifier's field name.
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When the identifier is missing or blank.
+	 */
+	private function requiredOcrField(array $ocrPayload, string $field): string {
+		$value = trim((string)($ocrPayload[$field] ?? ''));
+		if ($value === '') {
+			throw new RuntimeException('OCR payload is missing ' . $field);
+		}
+
+		return $value;
+
+	}//end requiredOcrField()
+
+	/**
+	 * The OCR currency, EUR when absent or blank.
+	 *
+	 * @param array<string,mixed> $ocrPayload OCR payload.
+	 *
+	 * @return string
+	 */
+	private function ocrCurrency(array $ocrPayload): string {
+		$currency = trim((string)($ocrPayload['currency'] ?? 'EUR'));
+		if ($currency === '') {
+			return 'EUR';
+		}
+
+		return $currency;
+
+	}//end ocrCurrency()
+
+	/**
+	 * The OCR line items in the embedded line shape; non-array lines are skipped.
+	 *
+	 * @param array<string,mixed> $ocrPayload OCR payload.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function ocrLines(array $ocrPayload): array {
+		$lines = [];
+		if (isset($ocrPayload['lines']) === false || is_array($ocrPayload['lines']) === false) {
+			return $lines;
+		}
+
+		$lineNumber = 0;
+		foreach ($ocrPayload['lines'] as $rawLine) {
+			if (is_array($rawLine) === true) {
+				$lineNumber++;
+				$lines[] = $this->ocrLine(rawLine: $rawLine, lineNumber: $lineNumber);
+			}
+		}
+
+		return $lines;
+
+	}//end ocrLines()
+
+	/**
+	 * One OCR line item in the embedded line shape.
+	 *
+	 * @param array<string,mixed> $rawLine    The OCR line.
+	 * @param int                 $lineNumber Its position among the array lines (1-based).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function ocrLine(array $rawLine, int $lineNumber): array {
+		return [
+			'lineNumber' => ((int)($rawLine['lineNumber'] ?? $lineNumber)),
+			'productCode' => trim((string)($rawLine['productCode'] ?? '')),
+			'description' => trim((string)($rawLine['description'] ?? '')),
+			'quantity' => (float)($rawLine['quantity'] ?? 0),
+			'unitPrice' => $this->toCentsLoose(value: ($rawLine['unitPrice'] ?? null)),
+			'lineExtension' => $this->toCentsLoose(value: ($rawLine['lineExtension'] ?? null)),
+			'vatRate' => (float)($rawLine['vatRate'] ?? 0),
+		];
+
+	}//end ocrLine()
 
 	/**
 	 * Loose float-or-null to integer cents.
@@ -1037,7 +1325,7 @@ class SupplierInvoiceService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

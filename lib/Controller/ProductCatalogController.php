@@ -3,6 +3,9 @@
 /**
  * Product Catalog Controller
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The route half of the inventory product catalog (#860). Serves the two
  * read-only surfaces `/inventory/products` and `/inventory/product-attributes`
  * that `shillinq-product-vendor-to-pipelinq` REQ-SPVP-004 requires to stay
@@ -36,17 +39,14 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-008
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\ProductCatalogService;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\ProductCatalogServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -66,17 +66,17 @@ class ProductCatalogController extends Controller {
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request The request.
-	 * @param ProductCatalogService $catalogService Resolves the catalog.
+	 * @param ProductCatalogServiceInterface $catalogService Resolves the catalog.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		IRequest $request,
-		private readonly ProductCatalogService $catalogService,
+		private readonly ProductCatalogServiceInterface $catalogService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -101,25 +101,7 @@ class ProductCatalogController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function products(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$catalog = $this->catalogService->listProducts();
-			if ($catalog === null) {
-				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
-			}
-
-			return new JSONResponse($catalog);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'ProductCatalogController: product catalog lookup failed',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'catalog_unavailable'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
+		return $this->listing(list: fn (): ?array => $this->catalogService->listProducts(), lookup: 'product catalog');
 	}//end products()
 
 	/**
@@ -133,24 +115,46 @@ class ProductCatalogController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function productAttributes(): JSONResponse {
+		return $this->listing(list: fn (): ?array => $this->catalogService->listAttributes(), lookup: 'product attribute');
+	}//end productAttributes()
+
+	/**
+	 * Answer one listing: 401 without a session, 403 without an accessible
+	 * administration, the rows, or a logged 500 without internals.
+	 *
+	 * @param callable(): (array<string, mixed>|null) $list   The service listing.
+	 * @param string                                  $lookup What is looked up, for the log line.
+	 *
+	 * @return JSONResponse
+	 */
+	private function listing(callable $list, string $lookup): JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$attributes = $this->catalogService->listAttributes();
-			if ($attributes === null) {
-				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
-			}
-
-			return new JSONResponse($attributes);
+			return self::rowsResponse(rows: $list());
 		} catch (Throwable $e) {
 			$this->logger->error(
-				'ProductCatalogController: product attribute lookup failed',
+				'ProductCatalogController: ' . $lookup . ' lookup failed',
 				['exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'catalog_unavailable'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+	}//end listing()
 
-	}//end productAttributes()
+	/**
+	 * The rows, or the 403 when the caller has no accessible administration.
+	 *
+	 * @param array<string, mixed>|null $rows The listing.
+	 *
+	 * @return JSONResponse
+	 */
+	private static function rowsResponse(array|null $rows): JSONResponse {
+		if ($rows === null) {
+			return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+		}
+
+		return new JSONResponse($rows);
+	}//end rowsResponse()
 }//end class

@@ -4,6 +4,9 @@
  * Unit tests for BbvProgrammeBudgetService + BbvProgrammeBudgetReader — the
  * OpenRegister half of the provincies-BBV Compliance Dashboard (#866/#862).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ## What these tests are pointed at
  *
  * Not "does the arithmetic add up" — {@see BbvProgrammeBudgetCalculatorTest}
@@ -31,9 +34,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -606,4 +606,39 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 		$this->assertSame(600000.0, $envelope['trend']['cumulativeSpend'][2]);
 		$this->assertSame(600000.0, $envelope['trend']['cumulativeSpend'][11]);
 	}//end testTrendCoversTheWindowAndCarriesThePostedMonth()
+
+	/**
+	 * Golden: the full envelope for a spread of filter combinations and the GL
+	 * line facets, with the
+	 * wall clock masked. Regenerate with BBV_PROGRAMME_GOLDEN_WRITE=1.
+	 *
+	 * @return void
+	 */
+	public function testEnvelopesMatchGolden(): void {
+		$golden = __DIR__.'/fixtures/bbv-programme-budget-envelope.golden.json';
+		$service = $this->subject($this->seed());
+		$cases = [
+			'default' => $service->programmeBudgetVsActuals(),
+			'priorYear' => $service->programmeBudgetVsActuals(fiscalYear: 2025),
+			'filtered' => $service->programmeBudgetVsActuals(
+				fiscalYear: 2026,
+				programmes: ['mobiliteit', 'water'],
+				statuses: ['approved']
+			),
+			'noneSelected' => $service->programmeBudgetVsActuals(programmes: []),
+			'empty' => $this->subject([])->programmeBudgetVsActuals(),
+		];
+		$facets = $service->glLineFacets();
+		foreach ($cases as $name => $envelope) {
+			$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $envelope['generatedAt']);
+			$cases[$name]['generatedAt'] = '<masked>';
+		}
+
+		if (getenv('BBV_PROGRAMME_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, json_encode($cases + ['facets' => $facets], (JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION))."\n");
+		}
+
+		$expected = json_decode((string) file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR);
+		$this->assertSame(json_encode($expected, JSON_PRESERVE_ZERO_FRACTION), json_encode($cases + ['facets' => $facets], JSON_PRESERVE_ZERO_FRACTION));
+	}//end testEnvelopesMatchGolden()
 }//end class

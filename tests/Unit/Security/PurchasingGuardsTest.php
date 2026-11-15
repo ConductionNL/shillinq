@@ -18,7 +18,7 @@ use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
 use OCA\Shillinq\Listener\PurchaseOrderDecisionLockListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ServerWriteAuthority;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
@@ -100,7 +100,7 @@ final class PurchasingGuardsTest extends TestCase {
 						$entity = new ObjectEntity();
 						$entity->setRegister('shillinq');
 						$entity->setSchema('APTransaction');
-						$entity->setObject($row + ['administrationId' => 'adm-1']);
+						$entity->setObject($row + ['administrationId' => 'adm-1', 'supplierInvoiceId' => 'inv-1']);
 						return $entity;
 					}
 				}
@@ -109,7 +109,7 @@ final class PurchasingGuardsTest extends TestCase {
 		};
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$schemas = $this->createMock(ListenerSchemaResolver::class);
 		$schemas->method('matchesRegisterAndSchema')->willReturn(true);
@@ -118,8 +118,9 @@ final class PurchasingGuardsTest extends TestCase {
 
 	public function testInvoiceIsPaidOnlyWhenItsApTransactionIsPaid(): void {
 		$guard = $this->payGuard([['id' => 'ap-paid', 'state' => 'paid'], ['id' => 'ap-open', 'state' => 'issued']]);
-		self::assertTrue($guard->check(['apTransactionId' => 'ap-paid', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
-		self::assertFalse($guard->check(['apTransactionId' => 'ap-open', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
+		self::assertTrue($guard->check(['id' => 'inv-1', 'apTransactionId' => 'ap-paid', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
+		self::assertFalse($guard->check(['id' => 'inv-1', 'apTransactionId' => 'ap-open', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
+		self::assertFalse($guard->check(['id' => 'inv-2', 'apTransactionId' => 'ap-paid', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
 		self::assertFalse($guard->check(['apTransactionId' => 'ap-missing'], 'pay', 'ann')->isAllowed());
 		self::assertFalse($guard->check([], 'pay', 'ann')->isAllowed());
 	}
