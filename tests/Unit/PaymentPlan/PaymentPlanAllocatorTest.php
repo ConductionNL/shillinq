@@ -36,6 +36,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * The allocator over an in-memory store, with the transition runner and the
@@ -107,7 +108,7 @@ final class PaymentPlanAllocatorTest extends TestCase {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		$entity = $this->store->find(id: $id, schema: $schema);
+		$entity = $this->store->find(id: $id, options: new ObjectFindOptions(schema: $schema));
 		$this->assertNotNull($entity, $schema . ' ' . $id . ' is stored');
 		return $entity->getObject();
 

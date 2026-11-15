@@ -33,6 +33,7 @@ use OCA\Shillinq\Service\RegisterBinding;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * The office De Boer's template, its clients and a second version.
@@ -104,7 +105,11 @@ class ChartTemplateServiceTest extends TestCase {
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null) {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions()) {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$id = ($uuid ?? strtolower($this->schema) . '-' . (count($this->store[$this->schema] ?? []) + 1));
 				unset($object['id']);
 				$this->store[$this->schema][$id] = $object;
