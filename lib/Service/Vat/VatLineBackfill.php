@@ -41,6 +41,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Kernel\Contracts\VatLineBackfillInterface;
@@ -391,10 +393,11 @@ class VatLineBackfill implements VatLineBackfillInterface {
 		}
 
 		$this->objectService->patchObject(
-			objectId: $lineId,
-			data: $changes,
-			register: $register,
-			schema: 'GLLine',
+			new ObjectPatch(
+				objectId: $lineId,
+				data: $changes,
+				target: new ObjectFindTarget(register: $register, schema: 'GLLine')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

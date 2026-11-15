@@ -33,6 +33,7 @@ use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Tests\Support\LegacyObjectArgs;
 
 /**
  * A deleted invoice and another schema are ignored, changed warnings are
@@ -147,7 +148,12 @@ final class SupplierInvoiceWarningListenerFailSoftTest extends TestCase {
 			->with($this->callback(static fn (array $invoice): bool => $invoice['id'] === 'inv-1'))
 			->willReturn($warnings);
 		$this->objects->expects($this->once())->method('patchObject')
-			->with('inv-1', $warnings, 'shillinq', 'SupplierInvoice');
+			->with(...LegacyObjectArgs::with(method: 'patchObject', expected: [
+				'objectId' => 'inv-1',
+				'data' => $warnings,
+				'register' => 'shillinq',
+				'schema' => 'SupplierInvoice',
+			]));
 
 		$this->listener->handle(event: new ObjectCreatedEvent($this->invoice()));
 	}//end testChangedWarningsArePatchedByUuid()

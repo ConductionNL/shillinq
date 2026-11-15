@@ -45,6 +45,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for CBSSubmissionController's authorization guards.
@@ -222,7 +225,9 @@ class CBSSubmissionControllerTest extends TestCase {
 				return $this;
 			}
 
-			public function find(string $id, ?string $register = null, ?string $schema = null): mixed {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				foreach (($this->records[$this->currentSchema] ?? []) as $row) {
 					if (($row['id'] ?? '') === $id) {
 						return $row;
@@ -253,13 +258,16 @@ class CBSSubmissionControllerTest extends TestCase {
 				return $matched;
 			}
 
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$object['id'] ??= 'cbs-new';
 				$this->saved[] = $object;
 				return $object;
 			}
 
-			public function deleteObject(string $id): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$id = $deletion->uuid;
 				$this->deleted[] = $id;
 				return true;
 			}

@@ -42,6 +42,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\NoShowFeeCaptureServiceInterface;
@@ -199,8 +201,7 @@ class BookingDepthController extends Controller {
 		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		$objectService->saveObject(
 			object: $appointment,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'Appointment',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'Appointment'))
 		);
 
 		return $appointment;
@@ -401,11 +402,17 @@ class BookingDepthController extends Controller {
 			'generatedCount' => count($plan['generated']),
 			'skippedCount' => count($plan['skipped']),
 		];
-		$objectService->saveObject(object: $series, register: $registerSlug, schema: 'AppointmentSeries');
+		$objectService->saveObject(
+			object: $series,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AppointmentSeries'))
+		);
 
 		foreach ($plan['generated'] as $appointment) {
 			$appointment['appointmentId'] = $input['seriesId'] . '-' . ((int)$appointment['recurrenceIndex']);
-			$objectService->saveObject(object: $appointment, register: $registerSlug, schema: 'Appointment');
+			$objectService->saveObject(
+				object: $appointment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'Appointment'))
+			);
 		}
 	}//end storeSeries()
 

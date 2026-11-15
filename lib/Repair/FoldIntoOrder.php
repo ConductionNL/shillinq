@@ -55,6 +55,9 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCP\IGroupManager;
@@ -253,11 +256,12 @@ class FoldIntoOrder implements IRepairStep {
 
 				$objectService->saveObject(
 					object: $this->pruneNulls($order),
-					register: $registerSlug,
-					schema: self::TARGET,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: self::TARGET),
+						actor: new SaveActor(currentUser: $admin)
+					),
 					_rbac: false,
-					_multitenancy: false,
-					currentUser: $admin,
+					_multitenancy: false
 				);
 
 				$seen[$this->markerKey($sourceSchema, $migrationKey)] = true;

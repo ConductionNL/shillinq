@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
 use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
@@ -44,6 +46,7 @@ use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectRef;
 
 /**
  * Sends a payment link and records a settlement by other means.
@@ -191,8 +194,7 @@ class PaymentRequestActionController extends Controller {
 	private function saveRequest(array $request): void {
 		$this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA))
 		);
 	}//end saveRequest()
 
@@ -484,18 +486,13 @@ class PaymentRequestActionController extends Controller {
 	private function createLeges(string $register, string $schema, string $objectId, array $fee): JSONResponse {
 		$amount = ($fee['amount'] ?? null);
 		try {
-			$created = $this->leaf->create(
-				$register,
-				$schema,
-				$objectId,
-				[
+			$created = $this->leaf->create(ref: new ObjectRef(register: $register, schema: $schema, id: $objectId), payload: [
 					'requestType' => 'leges',
 					'amount' => (float)$amount,
 					'currency' => (string)($fee['currency'] ?? 'EUR'),
 					'description' => $this->describeFee(fee: $fee),
 					'legalBasis' => ($fee['legalBasis'] ?? null),
-				]
-			);
+				]);
 		} catch (\Throwable $e) {
 			return new JSONResponse(['error' => $e->getMessage()], $this->createFailureStatus(e: $e));
 		}
