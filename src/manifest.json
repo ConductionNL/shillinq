@@ -8212,7 +8212,7 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "ARInvoiceDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/send-invoices",
 				"headerActions": [
 					{
 						"id": "new-down-payment-invoice",

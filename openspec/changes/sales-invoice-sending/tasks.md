@@ -34,6 +34,7 @@
 
 ## 5. Docs
 
-- [ ] 5.1 User guide page for sending, batches and customer terms under `docs/`, and the release note. Verify: the page is linked from the `AccountsReceivable` `documentationUrl` and the note is in the PR body.
+- [x] 5.1 User guide page for sending, batches and customer terms under `docs/`, and the release note. Verify: the page is linked from the `AccountsReceivable` `documentationUrl` and the note is in the PR body.
+  - Done: `docs/guides/send-invoices.md` (customer terms and delivery method, sending one invoice, Send selected, New invoice batch with the three-customer example and the retry, recurring sends), linked from the `AccountsReceivable` and Invoice batches `documentationUrl` and from `create-invoices.md`. The release note is the `CHANGELOG.md` Unreleased entry.
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/sales-invoice-sending/tasks.md#task-N` on every new method, English source strings with Dutch translations for every new message, mail subject and body.
