@@ -152,7 +152,8 @@ final class PipelinqTimelineRetryJobEdgesTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(string $id): void {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+				$id = $deletion->uuid;
 				if (isset($this->failures['deleteObject']) === true) {
 					throw $this->failures['deleteObject'];
 				}

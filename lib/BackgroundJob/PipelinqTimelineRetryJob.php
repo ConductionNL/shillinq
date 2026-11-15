@@ -50,9 +50,10 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Kernel\AppIdentity;
-use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Contracts\PipelinqContactAdapterInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
 use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -507,7 +508,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$objectService
 				->setRegister($registerSlug)
 				->setSchema('TimelinePublishRetryEntry')
-				->deleteObject($entryId);
+				->deleteObject(deletion: new ObjectDeletion(uuid: $entryId));
 		} catch (Throwable $e) {
 			// Fail-soft — if the row already vanished a subsequent
 			// attempt will see the not-found path and treat it as drained.

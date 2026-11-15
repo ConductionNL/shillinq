@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Mcp;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -165,7 +166,7 @@ class McpVatReturnTools {
 			}
 
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
+			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(deletion: new ObjectDeletion(uuid: $returnId));
 		} catch (Throwable $e) {
 			return $this->failed(action: 'destroy', args: $args, exception: $e, message: 'Failed to delete VAT return');
 		}

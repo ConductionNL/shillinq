@@ -42,6 +42,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\AdministrationContextServiceInterface;
 use OCA\Shillinq\Kernel\Contracts\CBSExportServiceInterface;
@@ -433,7 +434,7 @@ class CBSSubmissionController extends Controller {
 				$this->objectService()
 					->setRegister($this->register())
 					->setSchema('CBSSubmission')
-					->deleteObject($id);
+					->deleteObject(deletion: new ObjectDeletion(uuid: $id));
 				return ['id' => $id, 'deleted' => true];
 			},
 			context: ['id' => $id],

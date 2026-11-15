@@ -72,6 +72,8 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\MaterialiseGlTransactionActionInterface;
 use OCA\Shillinq\Lifecycle\PostingStamps;
@@ -1000,14 +1002,18 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface, Materi
 		$register = $this->register();
 		foreach (array_filter($lineIds) as $lineId) {
 			try {
-				$this->objectService->deleteObject(uuid: $lineId, register: $register, schema: 'GLLine');
+				$this->objectService->deleteObject(
+					deletion: new ObjectDeletion(uuid: $lineId, target: new ObjectFindTarget(register: $register, schema: 'GLLine'))
+				);
 			} catch (\Throwable $e) {
 				$this->logger->error('MaterialiseGlTransactionAction: could not withdraw GL line ' . $lineId, ['exception' => $e->getMessage()]);
 			}
 		}
 
 		try {
-			$this->objectService->deleteObject(uuid: $transactionId, register: $register, schema: 'GLTransaction');
+			$this->objectService->deleteObject(
+				deletion: new ObjectDeletion(uuid: $transactionId, target: new ObjectFindTarget(register: $register, schema: 'GLTransaction'))
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('MaterialiseGlTransactionAction: could not withdraw GL transaction ' . $transactionId, ['exception' => $e->getMessage()]);
 		}

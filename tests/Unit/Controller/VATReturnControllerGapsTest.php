@@ -225,11 +225,12 @@ final class VATReturnControllerGapsTest extends TestCase {
 			/**
 			 * Delete.
 			 *
-			 * @param string $id Id.
+			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The object to delete.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id): void {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion): void {
+				$id = $deletion->uuid;
 				$this->calls[] = ['deleteObject', $id];
 				if ($this->failing === 'deleteObject') {
 					throw new RuntimeException('or down');

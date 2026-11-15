@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Asset;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RegisterLocation;
@@ -174,7 +175,9 @@ final class AssetRecordsTest extends TestCase {
 		$this->objects->expects($this->once())->method('patchObject')
 			->with('a-1', ['currentBookValue' => 450.0], 'shillinq', 'FixedAsset');
 		$this->objects->expects($this->once())->method('deleteObject')
-			->with('line-1', 'shillinq', 'DepreciationLine');
+			->with($this->callback(static fn (ObjectDeletion $deletion): bool => $deletion->uuid === 'line-1'
+				&& $deletion->target->register === 'shillinq'
+				&& $deletion->target->schema === 'DepreciationLine'));
 
 		$records = $this->records();
 		$records->patch('FixedAsset', 'a-1', ['currentBookValue' => 450.0]);

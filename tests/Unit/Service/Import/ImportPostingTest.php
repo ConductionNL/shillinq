@@ -307,28 +307,20 @@ final class ImportPostingTest extends TestCase {
 			/**
 			 * Refuse every delete.
 			 *
-			 * @param string          $uuid            The object.
-			 * @param string|int|null $register        The register.
-			 * @param string|int|null $schema          The schema.
+			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The object to delete.
 			 * @param bool            $_rbac           RBAC.
 			 * @param bool            $_multitenancy   Multitenancy.
 			 * @param bool            $_retentionSweep Retention sweep.
-			 * @param IUser|null      $currentUser     The user.
-			 * @param bool            $permanent       Permanent.
 			 *
 			 * @return bool
 			 *
 			 * @throws RuntimeException Always.
 			 */
 			public function deleteObject(
-				string $uuid,
-				string|int|null $register = null,
-				string|int|null $schema = null,
+				\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
-				bool $_retentionSweep = false,
-				?IUser $currentUser = null,
-				bool $permanent = false
+				bool $_retentionSweep = false
 			): bool {
 				throw new RuntimeException('locked');
 			}

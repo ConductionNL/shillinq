@@ -149,13 +149,14 @@ final class RetireSubsidieSchemaRetirementTest extends TestCase {
 			/**
 			 * Delete one object.
 			 *
-			 * @param string $id            The id.
+			 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion The object to delete.
 			 * @param bool   $_rbac         RBAC flag.
 			 * @param bool   $_multitenancy Multitenancy flag.
 			 *
 			 * @return void
 			 */
-			public function deleteObject(string $id, bool $_rbac, bool $_multitenancy): void {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): void {
+				$id = $deletion->uuid;
 				if (in_array($id, $this->failDeletes, true) === true) {
 					throw new RuntimeException('locked');
 				}

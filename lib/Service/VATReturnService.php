@@ -48,6 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\VATReturnServiceInterface;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
@@ -824,7 +825,7 @@ class VATReturnService implements VATReturnServiceInterface {
 		foreach ($lines as $line) {
 			$id = (string)($line['id'] ?? ($line['@self']['id'] ?? ''));
 			if ($id !== '') {
-				$this->objectService->setRegister($register)->setSchema('VATLine')->deleteObject($id);
+				$this->objectService->setRegister($register)->setSchema('VATLine')->deleteObject(deletion: new ObjectDeletion(uuid: $id));
 			}
 		}
 
@@ -835,7 +836,7 @@ class VATReturnService implements VATReturnServiceInterface {
 		foreach ($declarations as $declaration) {
 			$id = (string)($declaration['id'] ?? ($declaration['@self']['id'] ?? ''));
 			if ($id !== '') {
-				$this->objectService->setRegister($register)->setSchema('VATDeclaration')->deleteObject($id);
+				$this->objectService->setRegister($register)->setSchema('VATDeclaration')->deleteObject(deletion: new ObjectDeletion(uuid: $id));
 			}
 		}
 

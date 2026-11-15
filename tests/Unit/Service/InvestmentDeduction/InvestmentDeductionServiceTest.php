@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\InvestmentDeduction;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\Shillinq\Guard\InvesteringsaftrekEligibilityGuard;
 use OCA\Shillinq\Guard\KiaSchalenLookup;
 use OCA\Shillinq\Service\InvestmentDeduction\InvestmentDeductionService;
@@ -109,7 +110,8 @@ class InvestmentDeductionServiceTest extends TestCase {
 			}
 		);
 		$objects->method('deleteObject')->willReturnCallback(
-			function (string $uuid): bool {
+			function (ObjectDeletion $deletion): bool {
+				$uuid = $deletion->uuid;
 				$this->deleted[] = $this->schema . ':' . $uuid;
 				unset($this->store[$this->schema][$uuid]);
 
