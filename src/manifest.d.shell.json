@@ -5660,8 +5660,30 @@
 			]
 		},
 		{
-			"menu": [],
+			"menu": [
+				{
+					"id": "VatTariffs",
+					"label": "VAT rates",
+					"icon": "PercentOutline",
+					"route": "VatTariffs",
+					"order": 46
+				}
+			],
 			"pages": [
+				{
+					"_fragment": "tax-vat-rates-and-deductibility",
+					"id": "VatTariffs",
+					"route": "/belastingen/btw-tarieven",
+					"type": "index",
+					"title": "VAT rates"
+				},
+				{
+					"_fragment": "tax-vat-rates-and-deductibility",
+					"id": "VatTariffDetail",
+					"route": "/belastingen/btw-tarieven/:id",
+					"type": "detail",
+					"title": "VAT rate"
+				},
 				{
 					"_fragment": "tax-vat-rates-and-deductibility",
 					"id": "ChartOfAccountsDetail",

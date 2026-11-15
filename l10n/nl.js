@@ -7042,7 +7042,14 @@ OC.L10N.register(
         "Correction posting": "Correctieboeking",
         "Filed on": "Ingediend op",
         "Digipoort reference": "Digipoort-kenmerk",
-        "File supplementary return": "Suppletie indienen"
+        "File supplementary return": "Suppletie indienen",
+        "VAT rates": "Btw-tarieven",
+        "New VAT rate": "Nieuw btw-tarief",
+        "Statutory": "Wettelijk",
+        "Suggested account (RGS)": "Voorgestelde rekening (RGS)",
+        "All rates": "Alle tarieven",
+        "Deductible percentage": "Aftrekbaar percentage",
+        "Private-share account": "Rekening privédeel"
     },
     "nplurals=2; plural=(n != 1);"
 )

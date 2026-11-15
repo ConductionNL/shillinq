@@ -4862,7 +4862,14 @@ OC.L10N.register(
         "Correction posting": "Correction posting",
         "Filed on": "Filed on",
         "Digipoort reference": "Digipoort reference",
-        "File supplementary return": "File supplementary return"
+        "File supplementary return": "File supplementary return",
+        "VAT rates": "VAT rates",
+        "New VAT rate": "New VAT rate",
+        "Statutory": "Statutory",
+        "Suggested account (RGS)": "Suggested account (RGS)",
+        "All rates": "All rates",
+        "Deductible percentage": "Deductible percentage",
+        "Private-share account": "Private-share account"
     },
     "nplurals=2; plural=(n != 1);"
 )

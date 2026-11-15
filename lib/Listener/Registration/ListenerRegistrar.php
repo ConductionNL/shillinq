@@ -60,6 +60,7 @@ use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
+use OCA\Shillinq\Listener\VatTariffStatutoryLockListener;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -345,6 +346,11 @@ final class ListenerRegistrar {
 			$context->registerEventListener(
 				event: $preSaveEvent,
 				listener: AccountDeductibleShareListener::class
+			);
+			// REQ-TVRD-001: a person cannot change a statutory VAT tariff.
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: VatTariffStatutoryLockListener::class
 			);
 		}
 

@@ -40,6 +40,7 @@ use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\AccountDeductibleShareListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\VatTariffStatutoryLockListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
@@ -282,6 +283,8 @@ final class ListenerRegistrarTest extends TestCase {
 
 		self::assertContains([ObjectCreatingEvent::class, AccountDeductibleShareListener::class], $this->listeners);
 		self::assertContains([ObjectUpdatingEvent::class, AccountDeductibleShareListener::class], $this->listeners);
+		self::assertContains([ObjectCreatingEvent::class, VatTariffStatutoryLockListener::class], $this->listeners);
+		self::assertContains([ObjectUpdatingEvent::class, VatTariffStatutoryLockListener::class], $this->listeners);
 
 	}//end testAccountDeductibleShareRuleIsRegisteredOnBothPreSaveEvents()
 

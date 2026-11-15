@@ -11,7 +11,13 @@
 - [x] 1.2 Merge the two `VatTariff` declarations into the `register.d` one and remove the monolith copy (REQ-TVRD-001). Verify: `npm run check:registers`; re-import with no failed schemas.
       DONE: one declaration in `register.d/add-shillinq-bookkeeping-operations.json` (0.4.0) equal to the former
       merged schema plus `statutory`, the monolith copy removed; `VatTariffDeclarationTest`.
-- [ ] 1.3 Add pages `VatTariffs` and `VatTariffDetail` under Belastingen, with statutory records read-only (REQ-TVRD-001). Verify: Playwright adds mid-12 and cannot edit high.
+- [x] 1.3 Add pages `VatTariffs` and `VatTariffDetail` under Belastingen, with statutory records read-only (REQ-TVRD-001). Verify: Playwright adds mid-12 and cannot edit high.
+      DONE: both pages are manifest configuration in `src/manifest.d/tax-vat-rates-and-deductibility.json`
+      (`/belastingen/btw-tarieven`, the menu entry relocated under Taxes in `menu-layout.json`, labels in en/nl).
+      Read-only is enforced on the server: `VatTariffStatutoryLockListener` refuses a person's change to a statutory
+      tariff (also when the same write clears the mark) and a person's create that marks a tariff statutory; saves
+      without a user (the seeder, repair) pass (`VatTariffStatutoryLockListenerTest`, 6). Deleting a statutory record
+      is not vetoed: no pre-delete event is available to the app. The Playwright run is a browser task, not done here.
 
 ## 2. Calculation
 
