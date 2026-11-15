@@ -4,6 +4,9 @@
  * Integration test for the slice-08 exception resolution flow
  * (bookkeeping-purchase-order-3way).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Wires {@see ExceptionResolutionService} on top of an in-memory
  * OpenRegister ObjectService stub seeded with:
  *
@@ -38,9 +41,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

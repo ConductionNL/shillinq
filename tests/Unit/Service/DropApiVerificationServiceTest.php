@@ -108,4 +108,35 @@ final class DropApiVerificationServiceTest extends TestCase {
 
 	}//end testApplyVerification()
 
+	/**
+	 * Pin the success flag and message of every response class, and the
+	 * verifiedAt format (not its value, which is the current instant).
+	 *
+	 * @return void
+	 */
+	public function testEveryResponseClassIsPinned(): void {
+		$service = new DropApiVerificationService();
+		$cases = [
+			[null, 200, false, 'DROP API unavailable (no response)'],
+			['{}', null, false, 'DROP API unavailable (no response)'],
+			['', 500, false, 'DROP API error 500'],
+			['', 503, false, 'DROP API error 503'],
+			['{"results":{"bindings":[1]}}', 404, false, 'Gemeenteblad reference not found in DROP'],
+			['', 301, false, 'DROP API HTTP 301'],
+			['', 201, false, 'DROP API HTTP 201'],
+			['not json', 200, false, 'DROP API returned invalid JSON'],
+			['"scalar"', 200, false, 'DROP API returned invalid JSON'],
+			['{}', 200, false, 'No matching publication in DROP'],
+			['{"results":{"bindings":[]}}', 200, false, 'No matching publication in DROP'],
+			['{"results":{"bindings":"x"}}', 200, true, 'Verified'],
+			['{"results":{"bindings":[{"a":1}]}}', 200, true, 'Verified'],
+		];
+		foreach ($cases as $index => [$raw, $status, $success, $message]) {
+			$result = $service->parseResponse($raw, $status);
+			self::assertSame(['verifiedAt', 'success', 'message'], array_keys($result), 'case ' . $index);
+			self::assertSame([$success, $message], [$result['success'], $result['message']], 'case ' . $index);
+			self::assertMatchesRegularExpression('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+00:00$/', $result['verifiedAt']);
+		}
+
+	}//end testEveryResponseClassIsPinned()
 }//end class

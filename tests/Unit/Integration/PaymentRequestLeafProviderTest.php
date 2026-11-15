@@ -969,4 +969,139 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame([], $this->lastSaved(store: $store, schema: 'DebtorCredit'));
 		self::assertSame([], $runs);
 	}//end testCreditStaysOpenWhenItCannotBeBooked()
+	/**
+	 * `get` returns the request with that id on this object, as `list` projects it.
+	 *
+	 * @return void
+	 */
+	public function testGetReturnsTheRequestOnThisObject(): void {
+		$provider = $this->makeProvider([$this->storedRequest('pr-1', 'zaak-7'), $this->storedRequest('pr-2', 'zaak-7', 'paid')]);
+
+		$request = $provider->get('dossiq', 'Zaak', 'zaak-7', 'pr-2');
+
+		self::assertSame('pr-2', $request['id']);
+		self::assertSame('paid', $request['state']);
+		self::assertSame('https://pay.example/pr-2', $request['paymentLink']);
+	}//end testGetReturnsTheRequestOnThisObject()
+
+	/**
+	 * `list` carries a request's counter payments, and reads a settlements
+	 * value that is not a list as none.
+	 *
+	 * @return void
+	 */
+	public function testListCarriesSettlementsOnlyWhenTheyAreAList(): void {
+		$settled  = array_merge(
+			$this->storedRequest('pr-1', 'zaak-7'),
+			['settlements' => [['amount' => 250.0, 'at' => '2026-10-01T10:00:00Z', 'via' => 'counter']]]
+		);
+		$garbled  = array_merge($this->storedRequest('pr-2', 'zaak-7'), ['settlements' => 'cash']);
+		$provider = $this->makeProvider([$settled, $garbled]);
+
+		$items = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'];
+
+		self::assertSame($settled['settlements'], $items[0]['settlements']);
+		self::assertSame([], $items[1]['settlements']);
+	}//end testListCarriesSettlementsOnlyWhenTheyAreAList()
+
+	/**
+	 * With no row for the host object there is no fee to offer.
+	 *
+	 * @return void
+	 */
+	public function testNoFeeIsOfferedWithoutTheHostObject(): void {
+		self::assertNull($this->makeProvider([])->list('dossiq', 'Zaak', 'zaak-7')['fee']);
+	}//end testNoFeeIsOfferedWithoutTheHostObject()
+
+	/**
+	 * A fee lookup that fails offers no fee, and the requests are still listed.
+	 *
+	 * @return void
+	 */
+	public function testAFailingFeeLookupOffersNoFee(): void {
+		$rows  = [$this->storedRequest('pr-1', 'zaak-7')];
+		$inner = new class($rows) {
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int, array<string, mixed>> $rows The stored requests.
+			 */
+			public function __construct(private array $rows) {
+			}
+
+			/**
+			 * Select a register.
+			 *
+			 * @param string $register The register.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			/**
+			 * Select a schema.
+			 *
+			 * @param string $schema The schema.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * The requests; the host-object lookup by id fails.
+			 *
+			 * @param array<string, mixed> $params The query.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				if (isset($params['filters']['id']) === true) {
+					throw new RuntimeException('register unavailable');
+				}
+
+				return $this->rows;
+			}
+		};
+
+		$listed = $this->makeProvider(inner: $inner)->list('dossiq', 'Zaak', 'zaak-7');
+
+		self::assertNull($listed['fee']);
+		self::assertSame(['pr-1'], array_column($listed['items'], 'id'));
+	}//end testAFailingFeeLookupOffersNoFee()
+
+	/**
+	 * A due date given at create is kept on the request.
+	 *
+	 * @return void
+	 */
+	public function testCreateKeepsTheDueDate(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		$created = $provider->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'leges', 'amount' => 41.5, 'dueAt' => '2026-12-31']);
+
+		self::assertSame('2026-12-31', $created['dueAt']);
+		self::assertSame('2026-12-31', $this->saved[0]['dueAt']);
+	}//end testCreateKeepsTheDueDate()
+
+	/**
+	 * An invoice asked for without an invoice service is refused, and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceWithoutAnInvoiceServiceIsRefused(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		try {
+			$provider->create('dossiq', 'Zaak', 'zaak-7', ['requestType' => 'leges', 'amount' => 41.5, 'invoiceRequested' => true]);
+			self::fail('An invoice without an invoice service must be refused.');
+		} catch (RuntimeException $exception) {
+			self::assertSame('An invoice was requested, but no invoice service is available.', $exception->getMessage());
+		}
+
+		self::assertSame([], $this->saved);
+	}//end testAnInvoiceWithoutAnInvoiceServiceIsRefused()
 }//end class

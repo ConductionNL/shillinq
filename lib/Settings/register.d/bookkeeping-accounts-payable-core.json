@@ -74,7 +74,30 @@
             "description": "Dutch KvK number (8 digits).",
             "nullable": true,
             "example": "24502797",
-            "title": "KvK Number"
+            "title": "KvK Number",
+            "x-openregister-property-source": {
+              "provider": "kvk",
+              "mode": "default",
+              "config": {
+                "fill": {
+                  "name": "naam",
+                  "tradingName": "handelsnamen[0].naam",
+                  "address.street": "_embedded.hoofdvestiging.adressen[0].straatnaam",
+                  "address.houseNumber": {
+                    "join": [
+                      "_embedded.hoofdvestiging.adressen[0].huisnummer",
+                      "_embedded.hoofdvestiging.adressen[0].huisletter",
+                      "_embedded.hoofdvestiging.adressen[0].huisnummerToevoeging"
+                    ]
+                  },
+                  "address.postcode": "_embedded.hoofdvestiging.adressen[0].postcode",
+                  "address.city": "_embedded.hoofdvestiging.adressen[0].plaats",
+                  "address.country": {
+                    "value": "NL"
+                  }
+                }
+              }
+            }
           },
           "vatNumber": {
             "type": "string",
@@ -159,6 +182,12 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "dunningPolicyRef": {
             "type": "string",
@@ -469,6 +498,12 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the payment block was released; asked when a controller or treasurer releases it. The block reason is kept.",
+            "title": "Payment block release reason"
           },
           "writeOffReason": {
             "type": "string",

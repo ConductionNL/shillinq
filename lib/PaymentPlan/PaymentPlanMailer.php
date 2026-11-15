@@ -76,20 +76,11 @@ class PaymentPlanMailer {
 			'',
 			$this->l10n->t('Invoices:'),
 		];
-		foreach ($invoices as $invoice) {
-			$lines[] = '- ' . (string)($invoice['invoiceNumber'] ?? '') . ': ' . $this->money(amount: (float)($invoice['amountDue'] ?? 0));
-		}
+		$lines = array_merge($lines, $this->invoiceLines(invoices: $invoices));
 
 		$lines[] = '';
 		$lines[] = $this->l10n->t('Instalments:');
-		foreach ($instalments as $instalment) {
-			$lines[] = sprintf(
-				'%d. %s: %s',
-				(int)($instalment['instalmentNumber'] ?? 0),
-				(string)($instalment['dueDate'] ?? ''),
-				$this->money(amount: (float)($instalment['amount'] ?? 0))
-			);
-		}
+		$lines = array_merge($lines, $this->instalmentLines(instalments: $instalments));
 
 		$lines[] = '';
 		$lines[] = $this->l10n->t('Total: %s', [$this->money(amount: (float)($plan['totalAmount'] ?? 0))]);
@@ -103,6 +94,45 @@ class PaymentPlanMailer {
 		];
 
 	}//end confirmation()
+
+	/**
+	 * One line per invoice in the plan: its number and the amount due.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices The invoices.
+	 *
+	 * @return array<int,string> The lines.
+	 */
+	private function invoiceLines(array $invoices): array {
+		$lines = [];
+		foreach ($invoices as $invoice) {
+			$lines[] = '- ' . (string)($invoice['invoiceNumber'] ?? '') . ': ' . $this->money(amount: (float)($invoice['amountDue'] ?? 0));
+		}
+
+		return $lines;
+
+	}//end invoiceLines()
+
+	/**
+	 * One line per instalment: its number, due date and amount.
+	 *
+	 * @param array<int,array<string,mixed>> $instalments The instalments.
+	 *
+	 * @return array<int,string> The lines.
+	 */
+	private function instalmentLines(array $instalments): array {
+		$lines = [];
+		foreach ($instalments as $instalment) {
+			$lines[] = sprintf(
+				'%d. %s: %s',
+				(int)($instalment['instalmentNumber'] ?? 0),
+				(string)($instalment['dueDate'] ?? ''),
+				$this->money(amount: (float)($instalment['amount'] ?? 0))
+			);
+		}
+
+		return $lines;
+
+	}//end instalmentLines()
 
 	/**
 	 * The notice that the arrangement ended.

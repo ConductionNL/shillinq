@@ -3,6 +3,9 @@
 /**
  * Credit-note dispatch port for the 3-way-match exception workflow.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Slice 08 of the bookkeeping-purchase-order-3way chain — when the
  * crediteuren-administrateur files a dispute on an out-of-tolerance
  * ThreeWayMatch the exception workflow auto-generates a UBL CreditNote
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

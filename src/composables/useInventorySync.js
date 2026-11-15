@@ -202,6 +202,23 @@ export async function fetchLocations() {
 }
 
 /**
+ * The summary a synced cycle reports.
+ *
+ * @param {{applied: number, kept: number}} dl The download tally.
+ * @param {{accepted: number, duplicates: number, rejected: Array}} up The upload tally.
+ * @return {object} applied, kept, accepted, duplicates, rejected.
+ */
+function syncSummary(dl, up) {
+	return {
+		applied: dl.applied,
+		kept: dl.kept,
+		accepted: up.accepted,
+		duplicates: up.duplicates,
+		rejected: up.rejected,
+	}
+}
+
+/**
  * Create the background sync scheduler. The scheduler:
  *   - polls every `intervalMs` (default 30s) while the page is alive
  *   - skips the cycle if `navigator.onLine === false`
@@ -235,7 +252,52 @@ export function createSyncScheduler(db, opts = {}) {
 		typeof navigator === 'undefined' || navigator.onLine !== false
 
 	/**
+	 * Report the device offline; nothing is synced.
+	 */
+	function reportOffline() {
+		onStatus({
+			state: 'offline',
+			lastSyncedAt: getCursor(),
+			error: null,
+		})
+	}
+
+	/**
+	 * Download, then upload, keep the server cursor and report the summary.
+	 */
+	async function syncCycle() {
+		onStatus({ state: 'syncing', lastSyncedAt: getCursor(), error: null })
+		const dl = await syncDownload(db, getCursor())
+		const up = await syncUpload(db)
+		setCursor(dl.serverTimestamp)
+		backoffIndex = 0
+		onStatus({
+			state: 'synced',
+			lastSyncedAt: dl.serverTimestamp,
+			summary: syncSummary(dl, up),
+			error: null,
+		})
+	}
+
+	/**
+	 * Report a failed cycle with the next backoff delay, and step the backoff.
 	 *
+	 * @param {*} e The failure.
+	 */
+	function reportFailure(e) {
+		const delay =
+			BACKOFF_STEPS_MS[Math.min(backoffIndex, BACKOFF_STEPS_MS.length - 1)]
+		backoffIndex = Math.min(backoffIndex + 1, BACKOFF_STEPS_MS.length - 1)
+		onStatus({
+			state: 'failed',
+			lastSyncedAt: getCursor(),
+			error: e && e.message ? e.message : String(e),
+			retryInMs: delay,
+		})
+	}
+
+	/**
+	 * Run one sync cycle unless one is already in flight.
 	 */
 	async function runOnce() {
 		if (inFlight) {
@@ -244,40 +306,12 @@ export function createSyncScheduler(db, opts = {}) {
 		inFlight = true
 		try {
 			if (!isOnline()) {
-				onStatus({
-					state: 'offline',
-					lastSyncedAt: getCursor(),
-					error: null,
-				})
+				reportOffline()
 				return
 			}
-			onStatus({ state: 'syncing', lastSyncedAt: getCursor(), error: null })
-			const dl = await syncDownload(db, getCursor())
-			const up = await syncUpload(db)
-			setCursor(dl.serverTimestamp)
-			backoffIndex = 0
-			onStatus({
-				state: 'synced',
-				lastSyncedAt: dl.serverTimestamp,
-				summary: {
-					applied: dl.applied,
-					kept: dl.kept,
-					accepted: up.accepted,
-					duplicates: up.duplicates,
-					rejected: up.rejected,
-				},
-				error: null,
-			})
+			await syncCycle()
 		} catch (e) {
-			const delay =
-				BACKOFF_STEPS_MS[Math.min(backoffIndex, BACKOFF_STEPS_MS.length - 1)]
-			backoffIndex = Math.min(backoffIndex + 1, BACKOFF_STEPS_MS.length - 1)
-			onStatus({
-				state: 'failed',
-				lastSyncedAt: getCursor(),
-				error: e && e.message ? e.message : String(e),
-				retryInMs: delay,
-			})
+			reportFailure(e)
 		} finally {
 			inFlight = false
 		}

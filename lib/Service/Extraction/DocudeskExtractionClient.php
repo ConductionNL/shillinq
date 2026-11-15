@@ -3,6 +3,9 @@
 /**
  * Docudesk Extraction Client
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Change receipt-extraction-consume (REQ-RXC-005) — the ONLY outbound
  * coupling to docudesk: a single HTTP POST to docudesk's canonical
  * `POST /api/extraction/financial` endpoint (owned by docudesk's
@@ -44,15 +47,14 @@
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Extraction;
 
+use OCA\Shillinq\Kernel\Contracts\DocudeskExtractionClientInterface;
+use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IURLGenerator;
@@ -64,7 +66,7 @@ use Throwable;
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
-class DocudeskExtractionClient {
+class DocudeskExtractionClient implements DocudeskExtractionClientInterface {
 	/**
 	 * Docudesk route name for the financial extraction endpoint (NC
 	 * `{appId}.{controller}.{method}` convention for
@@ -120,13 +122,8 @@ class DocudeskExtractionClient {
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
 	public function requestExtraction(string $documentUri, string $docType): array {
-		try {
-			$url = $this->urlGenerator->linkToRouteAbsolute(self::ROUTE_NAME);
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed',
-				['exception' => $e->getMessage()]
-			);
+		$url = $this->routeUrl();
+		if ($url === null) {
 			return [
 				'success' => false,
 				'statusCode' => 0,
@@ -135,6 +132,20 @@ class DocudeskExtractionClient {
 			];
 		}
 
+		return $this->send(documentUri: $documentUri, docType: $docType, url: $url);
+
+	}//end requestExtraction()
+
+	/**
+	 * Send the extraction request; failures come back as an envelope.
+	 *
+	 * @param string $documentUri The docudesk source document URI.
+	 * @param string $docType     `receipt` or `supplier-invoice`.
+	 * @param string $url         The docudesk extraction URL.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
+	 */
+	private function send(string $documentUri, string $docType, string $url): array {
 		$client = $this->clientService->newClient();
 		$body = [
 			'documentUri' => $documentUri,
@@ -143,54 +154,124 @@ class DocudeskExtractionClient {
 		];
 
 		try {
-			$response = $client->post(
-				$url,
-				[
-					'timeout' => self::REQUEST_TIMEOUT_SECONDS,
-					'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
-					'headers' => [
-						'Content-Type' => 'application/json',
-						'Accept' => 'application/json',
-					],
-					'body' => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
-				]
-			);
-
-			$status = $response->getStatusCode();
-			$this->logger->info(
-				'DocudeskExtractionClient: extraction requested',
-				['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status]
-			);
-
-			return [
-				'success' => ($status >= 200 && $status < 300),
-				'statusCode' => $status,
-				'error' => null,
-				'extractionId' => $this->extractExtractionId(response: $response),
-			];
+			return $this->post(client: $client, url: $url, body: $body);
 		} catch (Throwable $e) {
-			$status = 0;
-			if (method_exists($e, 'getResponse') === true) {
-				$errorResponse = $e->getResponse();
-				if ($errorResponse !== null) {
-					$status = $errorResponse->getStatusCode();
-				}
-			}
+			return $this->requestFailed(e: $e, body: $body);
+		}
+	}//end send()
 
+	/**
+	 * The absolute docudesk extraction URL, or null (logged) when docudesk has no such route.
+	 *
+	 * @return string|null
+	 */
+	private function routeUrl(): string|null {
+		try {
+			$url = $this->urlGenerator->linkToRouteAbsolute(self::ROUTE_NAME);
+		} catch (Throwable $e) {
 			$this->logger->warning(
-				'DocudeskExtractionClient: extraction request failed',
-				['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status, 'exception' => $e->getMessage()]
+				'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed',
+				['exception' => $e->getMessage()]
 			);
+			return null;
+		}
 
-			return [
-				'success' => false,
-				'statusCode' => $status,
-				'error' => 'docudesk request failed',
-				'extractionId' => null,
-			];
-		}//end try
+		return $url;
+	}//end routeUrl()
 
-	}//end requestExtraction()
+	/**
+	 * POST the extraction request and build the outcome envelope.
+	 *
+	 * @param IClient $client NC HTTP client.
+	 * @param string                   $url    The docudesk extraction URL.
+	 * @param array<string,mixed>      $body   Request body: documentUri, docType, callbackEvent.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
+	 *
+	 * @throws Throwable When the request or the body encoding fails.
+	 */
+	private function post(IClient $client, string $url, array $body): array {
+		$response = $client->post(
+			$url,
+			[
+				'timeout' => self::REQUEST_TIMEOUT_SECONDS,
+				'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
+				'headers' => [
+					'Content-Type' => 'application/json',
+					'Accept' => 'application/json',
+				],
+				'body' => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+			]
+		);
+
+		return $this->requested(response: $response, body: $body);
+	}//end post()
+
+	/**
+	 * Log a sent request and build its outcome envelope.
+	 *
+	 * @param IResponse           $response The docudesk response.
+	 * @param array<string,mixed> $body     Request body: documentUri, docType, callbackEvent.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
+	 */
+	private function requested(IResponse $response, array $body): array {
+		$status = $response->getStatusCode();
+		$this->logger->info(
+			'DocudeskExtractionClient: extraction requested',
+			['documentUri' => $body['documentUri'], 'docType' => $body['docType'], 'status' => $status]
+		);
+
+		return [
+			'success' => ($status >= 200 && $status < 300),
+			'statusCode' => $status,
+			'error' => null,
+			'extractionId' => $this->extractExtractionId(response: $response),
+		];
+	}//end requested()
+
+	/**
+	 * Log a failed request and build its outcome envelope.
+	 *
+	 * @param Throwable           $e    The failure.
+	 * @param array<string,mixed> $body Request body: documentUri, docType, callbackEvent.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
+	 */
+	private function requestFailed(Throwable $e, array $body): array {
+		$status = $this->errorStatus(e: $e);
+
+		$this->logger->warning(
+			'DocudeskExtractionClient: extraction request failed',
+			['documentUri' => $body['documentUri'], 'docType' => $body['docType'], 'status' => $status, 'exception' => $e->getMessage()]
+		);
+
+		return [
+			'success' => false,
+			'statusCode' => $status,
+			'error' => 'docudesk request failed',
+			'extractionId' => null,
+		];
+	}//end requestFailed()
+
+	/**
+	 * The HTTP status carried by a failed request, or 0 when there is none.
+	 *
+	 * @param Throwable $e The failure.
+	 *
+	 * @return int
+	 */
+	private function errorStatus(Throwable $e): int {
+		$status = 0;
+		if (method_exists($e, 'getResponse') === true) {
+			$errorResponse = $e->getResponse();
+			if ($errorResponse !== null) {
+				$status = $errorResponse->getStatusCode();
+			}
+		}
+
+		return $status;
+	}//end errorStatus()
 
 	/**
 	 * Read the `financialExtraction` object id out of the synchronous

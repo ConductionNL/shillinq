@@ -82,10 +82,8 @@ import { NcLoadingIcon } from '@nextcloud/vue'
 import {
 	CONTRACTS_DATA_LEAF,
 	formatAmount,
-	hostIdentity,
-	isResolvable,
-	readLeaf,
 } from './leafApi.js'
+import { leafHostPanelMixin } from './leafHostPanel.js'
 import { leafReportMixin } from './leafReport.js'
 
 /**
@@ -99,18 +97,7 @@ export default {
 		NcLoadingIcon,
 	},
 
-	mixins: [leafReportMixin],
-
-	props: {
-		/** OpenRegister register id of the host object. */
-		register: { type: String, default: '' },
-		/** OpenRegister schema id of the host object. */
-		schema: { type: String, default: '' },
-		/** Id of the host object the contract is linked to. */
-		objectId: { type: [String, Number], default: '' },
-		/** Whole registry context, the fallback when the discrete props are absent. */
-		integrationContext: { type: Object, default: () => ({}) },
-	},
+	mixins: [leafReportMixin, leafHostPanelMixin],
 
 	data() {
 		return {
@@ -166,22 +153,12 @@ export default {
 		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		async load() {
-			const identity = hostIdentity(this.$props)
-			if (isResolvable(identity) === false) {
-				this.error = t('shillinq', 'This panel needs a record to stand on.')
-				return
-			}
-
-			this.loading = true
-			this.error = ''
-			try {
-				const envelope = await readLeaf(identity, CONTRACTS_DATA_LEAF)
-				this.contracts = Array.isArray(envelope.items) ? envelope.items : []
-			} catch {
-				this.error = t('shillinq', 'The contract could not be read.')
-			} finally {
-				this.loading = false
-			}
+			await this.readHostLeaf(CONTRACTS_DATA_LEAF, {
+				apply: (envelope) => {
+					this.contracts = Array.isArray(envelope.items) ? envelope.items : []
+				},
+				failedText: () => t('shillinq', 'The contract could not be read.'),
+			})
 		},
 
 		/**

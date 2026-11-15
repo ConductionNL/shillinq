@@ -3,6 +3,9 @@
 /**
  * Payment Request Leaf Provider
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The read and append half of `shillinq-payment-requests`, the leaf a case app
  * places on its own object to ask a citizen or a company for money. ADR-066
  * decision 2 is the whole point of the shape: the consuming app calls `list`
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -38,15 +38,18 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
-use OCA\Shillinq\Service\DebtorCreditService;
-use OCA\Shillinq\Service\FeeScheduleService;
-use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
-use OCA\Shillinq\Service\ObjectRequestInvoiceService;
-use OCA\Shillinq\Service\PaymentRequestPortalScope;
-use OCA\Shillinq\Service\PaymentActionAppGrant;
-use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Kernel\Contracts\DebtorCreditServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\FeeScheduleServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectPaymentRequestValidatorInterface;
+use OCA\Shillinq\Kernel\Contracts\ObjectRequestInvoiceServiceInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAppGrantInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentActionAuthorizerInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestFinderInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestLeafProviderInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
+use OCA\Shillinq\Kernel\Contracts\PaymentSettlementServiceInterface;
 use OCA\Shillinq\Service\PaymentRequestFinder;
-use OCA\Shillinq\Service\PaymentSettlementService;
+use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -55,20 +58,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
  */
-final class PaymentRequestLeafProvider implements IntegrationProvider {
-	/**
-	 * The leaf id, equal on both halves so gate-24 can pair them.
-	 *
-	 * @var string
-	 */
-	public const LEAF_ID = 'shillinq-payment-requests';
-
-	/**
-	 * The action a caller needs before a request may be raised.
-	 *
-	 * @var string
-	 */
-	public const ACTION_REQUEST = PaymentActionAuthorizer::ACTION_REQUEST;
+final class PaymentRequestLeafProvider implements IntegrationProvider, PaymentRequestLeafProviderInterface {
 
 	/**
 	 * The schema holding payment requests.
@@ -81,31 +71,31 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param ObjectPaymentRequestValidator $validator The conditional shape and the uniqueness invariant.
+	 * @param ObjectPaymentRequestValidatorInterface $validator The conditional shape and the uniqueness invariant.
 	 * @param IAppConfig $appConfig App config, for the register slug.
-	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries payment.request.
-	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
-	 * @param PaymentSettlementService $settlements Money that arrived another way, and the state it derives.
-	 * @param PaymentActionAppGrant $appGrant Whether a calling app carries payment.request (REQ-SOPR-010).
-	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
-	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
-	 * @param ?ObjectRequestInvoiceService $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
-	 * @param ?DebtorCreditService $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
+	 * @param PaymentActionAuthorizerInterface $authorizer Whether the caller carries payment.request.
+	 * @param FeeScheduleServiceInterface $feeSchedules The published fee for the host object's type.
+	 * @param PaymentSettlementServiceInterface $settlements Money that arrived another way, and the state it derives.
+	 * @param PaymentActionAppGrantInterface $appGrant Whether a calling app carries payment.request (REQ-SOPR-010).
+	 * @param PaymentRequestFinderInterface|null $finder Reads every page of requests on a subject; built on demand when absent.
+	 * @param PaymentRequestPortalScopeInterface $portalScope Gives a request without an invoice its portal scope.
+	 * @param ?ObjectRequestInvoiceServiceInterface $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
+	 * @param ?DebtorCreditServiceInterface $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly ObjectPaymentRequestValidator $validator,
+		private readonly ObjectPaymentRequestValidatorInterface $validator,
 		private readonly IAppConfig $appConfig,
-		private readonly PaymentActionAuthorizer $authorizer,
-		private readonly FeeScheduleService $feeSchedules,
-		private readonly PaymentSettlementService $settlements,
-		private readonly PaymentActionAppGrant $appGrant,
-		private readonly ?PaymentRequestFinder $finder = null,
-		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
-		private readonly ?ObjectRequestInvoiceService $invoices = null,
-		private readonly ?DebtorCreditService $credits = null,
+		private readonly PaymentActionAuthorizerInterface $authorizer,
+		private readonly FeeScheduleServiceInterface $feeSchedules,
+		private readonly PaymentSettlementServiceInterface $settlements,
+		private readonly PaymentActionAppGrantInterface $appGrant,
+		private readonly ?PaymentRequestFinderInterface $finder = null,
+		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
+		private readonly ?ObjectRequestInvoiceServiceInterface $invoices = null,
+		private readonly ?DebtorCreditServiceInterface $credits = null,
 	) {
 	}//end __construct()
 
@@ -419,13 +409,45 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		string $requestedBy,
 		bool $asSystem,
 	): array {
-		$subject = [
+		$subject = $this->subjectOf(register: $register, schema: $schema, objectId: $objectId, payload: $payload);
+		$request = $this->newRequest(subject: $subject, payload: $payload, requestedBy: $requestedBy);
+
+		$existing = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem);
+		$holders  = $this->finder()->withReference(reference: trim((string)($payload['paymentReference'] ?? '')), asSystem: true);
+		$this->validator->validate(request: $request, existing: $existing, referenceHolders: $holders);
+
+		return $this->finaliseRequest(request: $request, payload: $payload, requestedBy: $requestedBy, asSystem: $asSystem);
+	}//end append()
+
+	/**
+	 * The request's subject: the host object.
+	 *
+	 * @param string               $register The host object's register.
+	 * @param string               $schema   The host object's schema.
+	 * @param string               $objectId The host object's id.
+	 * @param array<string, mixed> $payload  The request fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function subjectOf(string $register, string $schema, string $objectId, array $payload): array {
+		return [
 			'type' => (string)($payload['subjectType'] ?? 'object'),
 			'register' => $register,
 			'schema' => $schema,
 			'id' => $objectId,
 		];
+	}//end subjectOf()
 
+	/**
+	 * The new, pending request built from the payload, stamped with its portal scope.
+	 *
+	 * @param array<string, mixed> $subject     The request's subject.
+	 * @param array<string, mixed> $payload     The request fields.
+	 * @param string               $requestedBy Who asked: a user id, or `app:<appId>`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function newRequest(array $subject, array $payload, string $requestedBy): array {
 		$request = [
 			'subjectKind' => 'object',
 			'subject' => $subject,
@@ -439,6 +461,20 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			'requestedBy' => $requestedBy,
 		];
 
+		// The customer portal lists a request without an invoice by its
+		// debtor's customer (REQ-SPPI-008).
+		return $this->portalScope->stamp(request: $this->withOptionalFields(request: $request, payload: $payload));
+	}//end newRequest()
+
+	/**
+	 * Copy the optional debtor and due date onto the request.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 * @param array<string, mixed> $payload The request fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withOptionalFields(array $request, array $payload): array {
 		if (isset($payload['debtor']) === true && is_array($payload['debtor']) === true) {
 			$request['debtor'] = $payload['debtor'];
 		}
@@ -447,8 +483,19 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			$request['dueAt'] = (string)$payload['dueAt'];
 		}
 
-		// The transfer reference the payer quotes, and whether an invoice is
-		// wanted behind the request (REQ-ORS-002).
+		return $this->withReferenceFields(request: $request, payload: $payload);
+	}//end withOptionalFields()
+
+	/**
+	 * The transfer reference the payer quotes, and whether an invoice is
+	 * wanted behind the request (REQ-ORS-002), plus the administration.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 * @param array<string, mixed> $payload The request fields.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withReferenceFields(array $request, array $payload): array {
 		$reference = trim((string)($payload['paymentReference'] ?? ''));
 		if ($reference !== '') {
 			$request['paymentReference'] = $reference;
@@ -463,20 +510,44 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			$request['administrationId'] = $administrationId;
 		}
 
-		// The customer portal lists a request without an invoice by its
-		// debtor's customer (REQ-SPPI-008).
-		$request = $this->portalScope->stamp(request: $request);
+		return $request;
+	}//end withReferenceFields()
 
-		$this->validator->validate(
-			request: $request,
-			existing: $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem),
-			referenceHolders: $this->finder()->withReference(reference: $reference, asSystem: true),
-		);
+	/**
+	 * Issue a requested invoice, apply open credit and save the validated request.
+	 *
+	 * @param array<string, mixed> $request     The validated request.
+	 * @param array<string, mixed> $payload     The request fields.
+	 * @param string               $requestedBy Who asked: a user id, or `app:<appId>`.
+	 * @param bool                 $asSystem    Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The created request.
+	 */
+	private function finaliseRequest(array $request, array $payload, string $requestedBy, bool $asSystem): array {
+		$request = $this->withRequestedInvoice(request: $request, administrationId: trim((string)($payload['administrationId'] ?? '')));
 
-		// An invoice asked for at create stands behind the request, so a
-		// capture settles it and books the income once (REQ-ORS-006). It is
-		// issued after the request is validated, so a refused request never
-		// leaves an invoice behind.
+		// The debtor's open credit pays the new request first (REQ-ORC-004).
+		if ($this->credits !== null) {
+			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
+		}
+
+		return $this->saveRequest(request: $request, asSystem: $asSystem);
+	}//end finaliseRequest()
+
+	/**
+	 * An invoice asked for at create stands behind the request, so a
+	 * capture settles it and books the income once (REQ-ORS-006). It is
+	 * issued after the request is validated, so a refused request never
+	 * leaves an invoice behind.
+	 *
+	 * @param array<string, mixed> $request          The validated request.
+	 * @param string               $administrationId The administration the invoice is issued in.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws RuntimeException When an invoice is requested but no invoice service is available.
+	 */
+	private function withRequestedInvoice(array $request, string $administrationId): array {
 		if (($request['invoiceRequested'] ?? false) === true) {
 			if ($this->invoices === null) {
 				throw new RuntimeException('An invoice was requested, but no invoice service is available.');
@@ -489,11 +560,18 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			);
 		}
 
-		// The debtor's open credit pays the new request first (REQ-ORC-004).
-		if ($this->credits !== null) {
-			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
-		}
+		return $request;
+	}//end withRequestedInvoice()
 
+	/**
+	 * Save the request and return it as an array.
+	 *
+	 * @param array<string, mixed> $request  The request.
+	 * @param bool                 $asSystem Write without the session's rights.
+	 *
+	 * @return array<string, mixed> The created request.
+	 */
+	private function saveRequest(array $request, bool $asSystem): array {
 		$saved = $this->objectService->saveObject(
 			object: $request,
 			register: $this->registerSlug(),
@@ -511,7 +589,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		}
 
 		return $created;
-	}//end append()
+	}//end saveRequest()
 
 	/**
 	 * The leaf appends; it never rewrites a request in place. A request changes
@@ -585,9 +663,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	/**
 	 * The request finder, injected or built on demand.
 	 *
-	 * @return PaymentRequestFinder The finder.
+	 * @return PaymentRequestFinderInterface The finder.
 	 */
-	private function finder(): PaymentRequestFinder {
+	private function finder(): PaymentRequestFinderInterface {
 		return ($this->finder ?? new PaymentRequestFinder(
 			objectService: $this->objectService,
 			validator: $this->validator,
