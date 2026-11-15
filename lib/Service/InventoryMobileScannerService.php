@@ -43,6 +43,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\Contracts\InventoryMobileScannerServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Psr\Container\ContainerInterface;
@@ -739,8 +741,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'GoodsReceipt',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'GoodsReceipt'))
 			);
 			return;
 		}//end if
@@ -777,8 +778,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'InventoryTransfer',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryTransfer'))
 			);
 			return;
 		}//end if
@@ -805,8 +805,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'OrderPick',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'OrderPick'))
 			);
 			return;
 		}//end if
@@ -835,8 +834,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'occurredAt' => $serverTimestamp,
 					'transactionId' => $transactionId,
 				],
-				register: $registerSlug,
-				schema: 'InventoryCount',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryCount'))
 			);
 
 			if ($reconcile === true) {
@@ -901,8 +899,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 					'lastModified' => $serverTimestamp,
 					'status' => 'active',
 				],
-				register: $registerSlug,
-				schema: 'InventoryStock',
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryStock'))
 			);
 			return;
 		}
@@ -915,8 +912,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 
 		$objectService->saveObject(
 			object: $current,
-			register: $registerSlug,
-			schema: 'InventoryStock',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'InventoryStock'))
 		);
 
 	}//end mutateStock()
@@ -1014,8 +1010,7 @@ class InventoryMobileScannerService implements InventoryMobileScannerServiceInte
 				'status' => $status,
 				'rejectionReason' => $rejectionReason,
 			],
-			register: $registerSlug,
-			schema: 'MobileScannerSyncBatch',
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'MobileScannerSyncBatch'))
 		);
 
 	}//end recordSyncBatch()

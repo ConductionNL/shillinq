@@ -42,6 +42,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\Shillinq\Kernel\AppIdentity;
 use OCA\Shillinq\Kernel\Contracts\InventoryScanServiceInterface;
 use OCP\IAppConfig;
@@ -539,8 +541,7 @@ class InventoryScanService implements InventoryScanServiceInterface {
 	private function saveObject(string $schema, array $object): void {
 		$this->objectService->saveObject(
 			object: $object,
-			register: $this->getRegisterSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->getRegisterSlug(), schema: $schema))
 		);
 
 	}//end saveObject()
