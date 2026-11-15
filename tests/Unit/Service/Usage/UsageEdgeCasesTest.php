@@ -38,6 +38,7 @@ use OCA\Shillinq\Service\UsageRatingCalculator;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectPatch;
 
 /**
  * Edges of the meter-reading import, billing and rating services.
@@ -150,7 +151,11 @@ class UsageEdgeCasesTest extends TestCase {
 		$store->method('setSchema')->with('MeterReading')->willReturnSelf();
 		$patched = [];
 		$store->method('patchObject')->willReturnCallback(
-			function (string $id, array $data, $register = null, $schema = null) use (&$patched): ObjectEntityInterface {
+			function (ObjectPatch $patch) use (&$patched): ObjectEntityInterface {
+				$id = $patch->objectId;
+				$data = $patch->data;
+				$register = $patch->target->register;
+				$schema = $patch->target->schema;
 				$patched[] = [$id, $data, $register, $schema];
 				return $this->createStub(ObjectEntityInterface::class);
 			}
