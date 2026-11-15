@@ -36,13 +36,16 @@ namespace OCA\Shillinq\Tests\Unit\Portal;
 
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCP\IConfig;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests for PortalAssertionVerifier.
  *
  * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
  */
+#[CoversClass(PortalAssertionVerifier::class)]
 class PortalAssertionVerifierTest extends TestCase {
 
 	/**
@@ -347,4 +350,55 @@ class PortalAssertionVerifierTest extends TestCase {
 		$this->assertNull($noSource->verify($this->mintAssertion(secret: self::SECRET)));
 
 	}//end testUnusableSecretFailsClosed()
+
+	/**
+	 * Correctly signed claims that do not decode to a JSON object are
+	 * refused, and the debug log names that reason (never the token).
+	 *
+	 * @return void
+	 */
+	public function testSignedNonObjectClaimsAreRejectedAndLogged(): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('debug')
+			->with('Shillinq: portal assertion rejected', ['reason' => 'malformed claims']);
+
+		$hPart = $this->b64UrlEncode(bytes: (string)json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
+		$cPart = $this->b64UrlEncode(bytes: 'not-json');
+		$sig   = $this->b64UrlEncode(bytes: hash_hmac('sha256', $hPart . '.' . $cPart, self::SECRET, true));
+
+		$verifier = new PortalAssertionVerifier(config: null, secretOverride: self::SECRET, logger: $logger);
+		$this->assertNull($verifier->verify($hPart . '.' . $cPart . '.' . $sig));
+
+	}//end testSignedNonObjectClaimsAreRejectedAndLogged()
+
+	/**
+	 * Each refusal logs its own reason once; a valid assertion logs nothing.
+	 *
+	 * @return void
+	 */
+	public function testRejectionReasonIsLoggedAndSuccessIsSilent(): void {
+		$reasons = [];
+		$logger  = $this->createMock(LoggerInterface::class);
+		$logger->method('debug')->willReturnCallback(
+			static function (string $message, array $context) use (&$reasons): void {
+				$reasons[] = $context['reason'];
+			}
+		);
+
+		$verifier = new PortalAssertionVerifier(config: null, secretOverride: self::SECRET, logger: $logger);
+
+		$this->assertIsArray($verifier->verify($this->mintAssertion(secret: self::SECRET)));
+		$this->assertSame([], $reasons);
+
+		$this->assertNull($verifier->verify($this->mintAssertion(secret: self::OTHER_SECRET)));
+		$this->assertNull($verifier->verify($this->mintAssertion(secret: self::SECRET, overrides: ['iss' => 'elsewhere'])));
+		$this->assertNull($verifier->verify('a.b'));
+		$this->assertSame(['signature mismatch', 'unexpected issuer', 'malformed structure'], $reasons);
+
+		$noSecret = new PortalAssertionVerifier(config: null, secretOverride: 'short', logger: $logger);
+		$this->assertNull($noSecret->verify($this->mintAssertion(secret: 'short')));
+		$this->assertSame('no usable signing secret', end($reasons));
+
+	}//end testRejectionReasonIsLoggedAndSuccessIsSilent()
 }//end class
