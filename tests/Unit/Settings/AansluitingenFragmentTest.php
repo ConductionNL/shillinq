@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -109,7 +112,7 @@ final class AansluitingenFragmentTest extends TestCase {
 
 		self::assertContains('vat-ledger-return', $schema['properties']['reconciliationType']['enum']);
 		self::assertContains('subledger-gl-control', $schema['properties']['reconciliationType']['enum']);
-		self::assertArrayHasKey('x-openregister-rbac', $schema);
+		self::assertArrayHasKey('authorization', $schema);
 	}//end testAansluitingSchemaShape()
 
 	/**

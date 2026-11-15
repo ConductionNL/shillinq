@@ -110,28 +110,20 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ]
         }
       },
       "AansluitingResult": {
@@ -380,27 +372,19 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ]
         }
       }
     },

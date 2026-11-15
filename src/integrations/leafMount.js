@@ -105,25 +105,53 @@ export function mountPairFor(loader) {
  * @return {?object} The registry, or null when there is no global to attach to.
  */
 export function sharedRegistry(globalRef) {
-	const target = globalRef || (typeof window !== 'undefined' ? window : null)
+	const target = globalRef || defaultGlobal()
 	if (target === null) {
 		return null
 	}
 
-	target.OCA = target.OCA || {}
-	target.OCA.OpenRegister = target.OCA.OpenRegister || {}
-
+	const openRegister = openRegisterNamespace(target)
 	if (
-		target.OCA.OpenRegister.integrations === undefined
-		|| target.OCA.OpenRegister.integrations === null
+		openRegister.integrations === undefined
+		|| openRegister.integrations === null
 	) {
-		target.OCA.OpenRegister.integrations = {
-			_queue: [],
-			register(entry) {
-				this._queue.push(entry)
-			},
-		}
+		openRegister.integrations = queueStub()
 	}
 
-	return target.OCA.OpenRegister.integrations
+	return openRegister.integrations
+}
+
+/**
+ * The browser window, or null outside a browser.
+ *
+ * @return {?object}
+ */
+function defaultGlobal() {
+	return typeof window !== 'undefined' ? window : null
+}
+
+/**
+ * The `OCA.OpenRegister` namespace on a global, created when absent.
+ *
+ * @param {object} target The global.
+ * @return {object} The namespace.
+ */
+function openRegisterNamespace(target) {
+	target.OCA = target.OCA || {}
+	target.OCA.OpenRegister = target.OCA.OpenRegister || {}
+	return target.OCA.OpenRegister
+}
+
+/**
+ * A registry stub that queues registrations until OpenRegister's bundle loads.
+ *
+ * @return {object}
+ */
+function queueStub() {
+	return {
+		_queue: [],
+		register(entry) {
+			this._queue.push(entry)
+		},
+	}
 }

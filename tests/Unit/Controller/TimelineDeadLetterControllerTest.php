@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use DateTimeZone;
 use OCA\Shillinq\Controller\TimelineDeadLetterController;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
@@ -190,10 +190,10 @@ final class TimelineDeadLetterControllerTest extends TestCase {
 	/**
 	 * Settings stub with OR available.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 

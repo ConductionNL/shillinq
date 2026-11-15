@@ -3,6 +3,9 @@
 /**
  * RvO (Rijksdienst voor Ondernemend Nederland) aanvraag port.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * RvO is the executive agency for Dutch entrepreneurial schemes —
  * it administers WBSO (R&D wage-tax credit), SnO (Speur- en
  * Ontwikkelingswerk), the investment-allowance schemes (KIA / EIA /
@@ -36,9 +39,6 @@
  *
  * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

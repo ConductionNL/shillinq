@@ -14,7 +14,7 @@
  GRN is created, every line is POSTed in sequence, and the form navigates to
  the GoodsReceiptNoteDetail view.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 -->
 <template>
 	<div class="grn-form">
@@ -189,6 +189,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
+import { createdRecordId } from '../../utils/createdRecordId.js'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -287,7 +288,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003 */
 		async loadOpenPurchaseOrders() {
 			try {
 				const response = await axios.get(
@@ -313,7 +314,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003 */
 		async refreshLines() {
 			if (this.selectedPoIds.length === 0) {
 				this.availableLines = []
@@ -409,56 +410,70 @@ export default {
 
 			this.submitting = true
 			try {
-				const photoIds = await this.uploadPhotosToDocudesk()
-				const grnResponse = await axios.post(
-					generateUrl('/apps/shillinq/api/goods-receipt-notes'),
-					{
-						administrationId: this.administrationId,
-						poIds: this.selectedPoIds,
-						carrier: this.carrier,
-						deliveryNoteReference: this.deliveryNoteReference,
-						photos: photoIds,
-					},
-				)
-				const grn = grnResponse.data || {}
-				const grnId =
-					grn.id || (grn['@self'] && grn['@self'].id) || grn.grnNumber
-				if (!grnId) {
-					throw new Error('Missing GRN id in response')
-				}
-
-				for (const line of this.availableLines) {
-					const state = this.lineState[line.id]
-					if (!state || Number(state.quantityReceived) <= 0) {
-						continue
-					}
-					await axios.post(
-						generateUrl(
-							`/apps/shillinq/api/goods-receipt-notes/${grnId}/lines`,
-						),
-						{
-							administrationId: this.administrationId,
-							poLineId: line.id,
-							quantityReceived: state.quantityReceived,
-							quantityAccepted:
-								state.quantityAccepted || state.quantityReceived,
-							quantityRejected: state.quantityRejected || 0,
-							rejectionReason: state.rejectionReason,
-							batchReference: state.batchReference,
-						},
-					)
-				}
-
-				this.$router.push({
-					name: 'GoodsReceiptNoteDetail',
-					params: { id: grnId },
-				})
+				await this.saveReceipt()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to save goods receipt')
 			} finally {
 				this.submitting = false
+			}
+		},
+
+		async saveReceipt() {
+			const photoIds = await this.uploadPhotosToDocudesk()
+			const grnId = await this.createGoodsReceiptNote(photoIds)
+			await this.postReceivedLines(grnId)
+
+			this.$router.push({
+				name: 'GoodsReceiptNoteDetail',
+				params: { id: grnId },
+			})
+		},
+
+		async createGoodsReceiptNote(photoIds) {
+			const grnResponse = await axios.post(
+				generateUrl('/apps/shillinq/api/goods-receipt-notes'),
+				{
+					administrationId: this.administrationId,
+					poIds: this.selectedPoIds,
+					carrier: this.carrier,
+					deliveryNoteReference: this.deliveryNoteReference,
+					photos: photoIds,
+				},
+			)
+			const grnId = createdRecordId(grnResponse.data || {}, 'grnNumber')
+			if (!grnId) {
+				throw new Error('Missing GRN id in response')
+			}
+			return grnId
+		},
+
+		async postReceivedLines(grnId) {
+			for (const line of this.availableLines) {
+				const state = this.lineState[line.id]
+				if (state && Number(state.quantityReceived) > 0) {
+					await axios.post(
+						generateUrl(
+							`/apps/shillinq/api/goods-receipt-notes/${grnId}/lines`,
+						),
+						this.receiptLinePayload(line, state),
+					)
+				}
+			}
+		},
+
+		receiptLinePayload(line, state) {
+			return {
+				administrationId: this.administrationId,
+				poLineId: line.id,
+				quantityReceived: state.quantityReceived,
+				quantityAccepted:
+					state.quantityAccepted || state.quantityReceived,
+
+				quantityRejected: state.quantityRejected || 0,
+				rejectionReason: state.rejectionReason,
+				batchReference: state.batchReference,
 			}
 		},
 	},

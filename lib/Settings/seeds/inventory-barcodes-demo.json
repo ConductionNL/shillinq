@@ -6,6 +6,7 @@
 	},
 	"barcodes": [
 		{
+			"productId": "DV-KAT-SENIOR-2KG",
 			"productSku": "DV-KAT-SENIOR-2KG",
 			"barcode": "5410317126589",
 			"barcodeType": "EAN",
@@ -17,6 +18,7 @@
 			"notes": "Unit barcode for individual 2kg bag"
 		},
 		{
+			"productId": "DV-KAT-SENIOR-2KG",
 			"productSku": "DV-KAT-SENIOR-2KG",
 			"barcode": "15410317126586",
 			"barcodeType": "GTIN",
@@ -28,6 +30,7 @@
 			"notes": "Carton of 4 bags"
 		},
 		{
+			"productId": "DV-KAT-SENIOR-2KG",
 			"productSku": "DV-KAT-SENIOR-2KG",
 			"barcode": "00123456789123456789",
 			"barcodeType": "SSCC",
@@ -39,6 +42,7 @@
 			"notes": "Pallet barcode (25 cartons = 100 individual bags)"
 		},
 		{
+			"productId": "VIT-C-1000MG-100CT",
 			"productSku": "VIT-C-1000MG-100CT",
 			"barcode": "OLD-VIT-001",
 			"barcodeType": "INTERNAL",
@@ -50,6 +54,7 @@
 			"notes": "Legacy internal code from prior ERP system (still in use in some locations)"
 		},
 		{
+			"productId": "VIT-C-1000MG-100CT",
 			"productSku": "VIT-C-1000MG-100CT",
 			"barcode": "012345678912",
 			"barcodeType": "UPC",

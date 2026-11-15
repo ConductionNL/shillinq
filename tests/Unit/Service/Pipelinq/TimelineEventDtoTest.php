@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
+use OCA\Shillinq\Kernel\Model\TimelineEventDto;
 use PHPUnit\Framework\TestCase;
 
 /**

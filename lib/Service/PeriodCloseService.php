@@ -3,6 +3,9 @@
 /**
  * Period Close Service
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Tier-2 guided period-close orchestration (REQ-PC-002, REQ-PC-006, REQ-PC-008).
  * Drives the open → closing → closed → audit-locked lifecycle on PeriodClose
  * records through the real OpenRegister ObjectService API (find / findAll /
@@ -28,9 +31,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -39,25 +39,21 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\AppIdentity;
+use OCA\Shillinq\Kernel\Contracts\PeriodCloseServiceInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Kernel\Exception\PeriodCloseException;
 
 /**
  * Orchestrates the PeriodClose lifecycle with server-side role enforcement.
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
  */
-class PeriodCloseService {
-	/**
-	 * Thrown-status sentinel for an authorization failure.
-	 *
-	 * @var string
-	 */
-	public const ERR_FORBIDDEN = 'forbidden';
+class PeriodCloseService implements PeriodCloseServiceInterface {
 
 	/**
 	 * Thrown-status sentinel for an invalid lifecycle state.
@@ -67,20 +63,6 @@ class PeriodCloseService {
 	public const ERR_INVALID_STATE = 'invalid-state';
 
 	/**
-	 * Thrown-status sentinel for a missing record.
-	 *
-	 * @var string
-	 */
-	public const ERR_NOT_FOUND = 'not-found';
-
-	/**
-	 * Thrown-status sentinel for a validation failure.
-	 *
-	 * @var string
-	 */
-	public const ERR_VALIDATION = 'validation';
-
-	/**
 	 * Construct the service.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -88,6 +70,7 @@ class PeriodCloseService {
 	 * @param SuspenseAgeingService $suspenseAgeing Suspense worklist ageing (close blocker, REQ-PCG-003).
 	 * @param LoggerInterface $logger Logger for diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param LeaseDisclosureService|null $leaseDisclosures Stores the period's IFRS 16 disclosure table on close (REQ-LD-008).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -95,6 +78,7 @@ class PeriodCloseService {
 		private readonly SuspenseAgeingService $suspenseAgeing,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?LeaseDisclosureService $leaseDisclosures = null,
 	) {
 	}//end __construct()
 
@@ -160,7 +144,30 @@ class PeriodCloseService {
 		$record = $this->requirePeriod(periodId: $periodId, administrationId: $administrationId);
 		$this->requireRole(userId: $userId, role: 'period-closer');
 
-		// Allow close from open (atomic open → closing → closed) or from closing.
+		$this->assertClosable(record: $record);
+		$this->assertSuspenseCleared(record: $record, administrationId: $administrationId);
+
+		$record = $this->markClosed(record: $record, userId: $userId, periodId: $periodId);
+
+		$closed = $this->persist(record: $record);
+		$this->storeLeaseDisclosures(record: $closed, administrationId: $administrationId, periodId: $periodId);
+
+		return $closed;
+	}//end closePeriod()
+
+	/**
+	 * Allow close from open (atomic open → closing → closed) or from closing,
+	 * once the mandatory checklist is resolved.
+	 *
+	 * @param array<string,mixed> $record The PeriodClose record.
+	 *
+	 * @return void
+	 *
+	 * @throws PeriodCloseException On an invalid state or an unresolved checklist.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+	 */
+	private function assertClosable(array $record): void {
 		$state = (string)($record['state'] ?? '');
 		if (in_array($state, ['open', 'closing'], true) === false) {
 			throw new PeriodCloseException(
@@ -175,28 +182,26 @@ class PeriodCloseService {
 				status: self::ERR_VALIDATION
 			);
 		}
+	}//end assertClosable()
 
-		// Payment-control-guards REQ-PCG-003: block the close while the
-		// bank-reconciliation suspense worklist is non-empty (unmatched /
-		// routed-to-suspense bank items). Scoped to the period's own
-		// administration, falling back to the caller's scope. Fail closed: an
-		// unreadable worklist blocks the close rather than being treated as empty.
+	/**
+	 * Payment-control-guards REQ-PCG-003: block the close while the
+	 * bank-reconciliation suspense worklist is non-empty (unmatched /
+	 * routed-to-suspense bank items). Scoped to the period's own
+	 * administration, falling back to the caller's scope.
+	 *
+	 * @param array<string,mixed> $record The PeriodClose record.
+	 * @param string $administrationId The caller's administration scope.
+	 *
+	 * @return void
+	 *
+	 * @throws PeriodCloseException While suspense items remain or the worklist cannot be read.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+	 */
+	private function assertSuspenseCleared(array $record, string $administrationId): void {
 		$suspenseScope = (string)($record['administrationId'] ?? $administrationId);
-		try {
-			$suspenseBlocked = $this->suspenseAgeing->hasUnresolvedItems(administrationId: $suspenseScope);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PeriodCloseService: suspense worklist could not be verified — blocking close (fail-closed)',
-				['administrationId' => $suspenseScope, 'exception' => $e->getMessage()]
-			);
-			throw new PeriodCloseException(
-				message: 'Cannot close the period: the bank-reconciliation suspense worklist could not be verified (fail-closed). '
-					. 'Retry once the reconciliation data is available.',
-				status: self::ERR_VALIDATION
-			);
-		}
-
-		if ($suspenseBlocked === true) {
+		if ($this->hasSuspenseItems(suspenseScope: $suspenseScope) === true) {
 			$summary = $this->suspenseAgeing->agedUnmatchedItems(administrationId: $suspenseScope);
 			throw new PeriodCloseException(
 				message: sprintf(
@@ -208,7 +213,48 @@ class PeriodCloseService {
 				status: self::ERR_VALIDATION
 			);
 		}
+	}//end assertSuspenseCleared()
 
+	/**
+	 * Whether the suspense worklist holds unresolved items. Fail closed: an
+	 * unreadable worklist blocks the close rather than being treated as empty.
+	 *
+	 * @param string $suspenseScope The administration to check.
+	 *
+	 * @return bool
+	 *
+	 * @throws PeriodCloseException When the worklist cannot be verified.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+	 */
+	private function hasSuspenseItems(string $suspenseScope): bool {
+		try {
+			return $this->suspenseAgeing->hasUnresolvedItems(administrationId: $suspenseScope);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PeriodCloseService: suspense worklist could not be verified — blocking close (fail-closed)',
+				['administrationId' => $suspenseScope, 'exception' => $e->getMessage()]
+			);
+			throw new PeriodCloseException(
+				message: 'Cannot close the period: the bank-reconciliation suspense worklist could not be verified (fail-closed). '
+					. 'Retry once the reconciliation data is available.',
+				status: self::ERR_VALIDATION
+			);
+		}
+	}//end hasSuspenseItems()
+
+	/**
+	 * Stamp the record closed and log it.
+	 *
+	 * @param array<string,mixed> $record The PeriodClose record.
+	 * @param string $userId The acting user id.
+	 * @param string $periodId The requested period id (for the log).
+	 *
+	 * @return array<string,mixed> The closed record.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+	 */
+	private function markClosed(array $record, string $userId, string $periodId): array {
 		$record['state'] = 'closed';
 		$record['closedAt'] = $this->now();
 		$record['closedBy'] = $userId;
@@ -218,8 +264,40 @@ class PeriodCloseService {
 			['periodId' => ($record['periodId'] ?? $periodId), 'closedBy' => $userId]
 		);
 
-		return $this->persist(record: $record);
-	}//end closePeriod()
+		return $record;
+	}//end markClosed()
+
+	/**
+	 * Store the closed period's IFRS 16 disclosure table (REQ-LD-008).
+	 *
+	 * The close itself is already saved: a disclosure that cannot be written is
+	 * logged, not allowed to report the close as failed. Closing the period again
+	 * after a reopen writes the table again.
+	 *
+	 * @param array<string,mixed> $record           The closed period.
+	 * @param string              $administrationId The caller's administration scope.
+	 * @param string              $periodId         The id the close was asked for.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/reporting-ifrs-calculations/specs/bookkeeping-lease-disclosures/spec.md
+	 */
+	private function storeLeaseDisclosures(array $record, string $administrationId, string $periodId): void {
+		if ($this->leaseDisclosures === null) {
+			return;
+		}
+
+		$administration = (string)($record['administrationId'] ?? $administrationId);
+		$period = (string)($record['periodId'] ?? $periodId);
+		try {
+			$this->leaseDisclosures->materialiseForPeriod(administrationId: $administration, fiscalPeriod: $period);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PeriodCloseService: the lease disclosure table could not be stored for the closed period',
+				['administrationId' => $administration, 'periodId' => $period, 'exception' => $e->getMessage()]
+			);
+		}
+	}//end storeLeaseDisclosures()
 
 	/**
 	 * Reopen a closed period: closed → open (REQ-PC-006, REQ-PC-008).
@@ -446,8 +524,25 @@ class PeriodCloseService {
 	private function find(string $periodId, string $administrationId): ?array {
 		$register = $this->register();
 
-		// Match on the business periodId within the administration first (the
-		// common case: the UI/route carries the business period identifier).
+		$found = $this->findByBusinessPeriod(register: $register, periodId: $periodId, administrationId: $administrationId);
+		if ($found !== null) {
+			return $found;
+		}
+
+		return $this->findByRecordId(register: $register, periodId: $periodId, administrationId: $administrationId);
+	}//end find()
+
+	/**
+	 * Match on the business periodId within the administration (the common
+	 * case: the UI/route carries the business period identifier).
+	 *
+	 * @param string $register The register slug.
+	 * @param string $periodId The business periodId.
+	 * @param string $administrationId The administration scope ('' for none).
+	 *
+	 * @return array<string,mixed>|null The record, or null when not found.
+	 */
+	private function findByBusinessPeriod(string $register, string $periodId, string $administrationId): array|null {
 		$filters = ['periodId' => $periodId];
 		if ($administrationId !== '') {
 			$filters['administrationId'] = $administrationId;
@@ -462,10 +557,22 @@ class PeriodCloseService {
 			return $this->normaliseRow(row: $found[0]);
 		}
 
-		// Fall back to the record-id lookup, still scoped to the administration.
-		// NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
-		// properties and the entity's `id` is not one, so this arm matched
-		// nothing for every value and the fallback never actually fell back.
+		return null;
+	}//end findByBusinessPeriod()
+
+	/**
+	 * Fall back to the record-id lookup, still scoped to the administration.
+	 * NOT findAll(['filters' => ['id' => …]]) — `filters` addresses JSON
+	 * properties and the entity's `id` is not one, so this arm matched
+	 * nothing for every value and the fallback never actually fell back.
+	 *
+	 * @param string $register The register slug.
+	 * @param string $periodId The PeriodClose record id (uuid).
+	 * @param string $administrationId The administration scope ('' for none).
+	 *
+	 * @return array<string,mixed>|null The record, or null when not found or of another administration.
+	 */
+	private function findByRecordId(string $register, string $periodId, string $administrationId): array|null {
 		$record = ObjectIdentifier::findOne(
 			scoped: $this->objectService
 				->setRegister($register)
@@ -481,7 +588,7 @@ class PeriodCloseService {
 		}
 
 		return null;
-	}//end find()
+	}//end findByRecordId()
 
 	/**
 	 * Normalise one OpenRegister result row into its data array.
@@ -560,7 +667,7 @@ class PeriodCloseService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

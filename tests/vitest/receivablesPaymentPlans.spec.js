@@ -50,10 +50,12 @@ describe('Agree a payment plan', () => {
 		)
 	})
 
-	it('shows the customer plans on the customer page, with a layout cell', () => {
+	it('shows the customer plans on the customer page, placed in its tab strip', () => {
 		const config = page(manifest.pages, 'CustomerDetail').config
 		expect(config.widgets.map((w) => w.id)).toContain('customer-payment-plans')
-		expect(config.layout.map((c) => c.widgetId)).toContain(
+		const panels = config.widgets.find((w) => w.type === 'tabs')
+		expect(config.layout.map((c) => c.widgetId)).toContain(panels.id)
+		expect(panels.content.tabs.map((t) => t.widgetId)).toContain(
 			'customer-payment-plans',
 		)
 	})

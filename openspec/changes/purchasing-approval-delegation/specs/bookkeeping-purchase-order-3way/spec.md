@@ -31,6 +31,26 @@ second approval chain on the order.
 - WHEN Jeroen Bakker opens the order page
 - THEN no Approve button is shown to him, and a direct call to approve the step is refused
 
+### Requirement: A matched supplier invoice above a threshold runs on an approval chain before payment (REQ-PAD-004)
+
+A supplier invoice that is matched, or whose exception is accepted, SHALL
+wait for a declared OpenRegister approval chain on its `approve` transition
+when its amount reaches a tier of that chain. Below the lowest tier the
+match itself approves it. A payment run SHALL only take approved invoices.
+
+#### Scenario: A large matched invoice waits for the controller
+
+- GIVEN a supplier invoice of EUR 18,547 matched within tolerance and a chain with a controller tier from EUR 10,000
+- WHEN the match completes
+- THEN the invoice stays in state matched with a pending controller step
+- AND the payment run proposal leaves it out until the controller approves
+
+#### Scenario: A small matched invoice is approved by the match
+
+- GIVEN a supplier invoice of EUR 450 matched within tolerance
+- WHEN the match completes
+- THEN the invoice moves to approved without an approval step
+
 ### Requirement: An approver hands a pending approval to a colleague (REQ-PAD-002)
 
 When the approval steps of a purchase order are OpenRegister tasks, the

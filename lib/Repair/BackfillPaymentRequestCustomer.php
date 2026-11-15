@@ -3,6 +3,9 @@
 /**
  * Backfill Payment Request Customer
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A payment request that stands on its own (leges on a case, a dwangsom, a
  * deposit) now carries its debtor's customer in `customerId`, so the customer
  * portal lists it and the debtor can pay it there (REQ-SOPR-005). Requests
@@ -26,9 +29,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -36,9 +36,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Kernel\Contracts\PaymentRequestPortalScopeInterface;
+use OCA\Shillinq\Kernel\Contracts\RegisterLocationInterface;
+use OCA\Shillinq\Kernel\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
-use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -63,16 +64,16 @@ class BackfillPaymentRequestCustomer implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The register slug.
+	 * @param RegisterLocationInterface $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface $logger The logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param PaymentRequestPortalScope $portalScope The stamping rule the writers share.
+	 * @param PaymentRequestPortalScopeInterface $portalScope The stamping rule the writers share.
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocationInterface $settingsService,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
+		private readonly PaymentRequestPortalScopeInterface $portalScope = new PaymentRequestPortalScope(),
 	) {
 	}//end __construct()
 

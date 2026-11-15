@@ -3,6 +3,9 @@
 /**
  * Contract Lifecycle Guard
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * ADR-031 exception-path lifecycle guard for the Contract schema. Provides two
  * single-purpose, fail-closed precondition methods referenced from the Contract
  * schema's x-openregister-lifecycle transitions in
@@ -27,10 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @spec openspec/specs/contract-lifecycle-management/spec.md
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
  * transitions.terminate.requires
  * (OCA\Shillinq\Lifecycle\ContractLifecycleGuard::requireTerminationReason).
  *
- * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+ * @spec openspec/specs/contract-lifecycle-management/spec.md
  */
 class ContractLifecycleGuard {
 	/**
@@ -72,7 +72,7 @@ class ContractLifecycleGuard {
 	 *
 	 * @return bool True when all mandatory activation fields are present.
 	 *
-	 * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+	 * @spec openspec/specs/contract-lifecycle-management/spec.md
 	 */
 	public function canActivate(array $contract): bool {
 		try {
@@ -113,7 +113,7 @@ class ContractLifecycleGuard {
 	 *
 	 * @return bool True when terminationReason is present.
 	 *
-	 * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+	 * @spec openspec/specs/contract-lifecycle-management/spec.md
 	 */
 	public function requireTerminationReason(array $contract): bool {
 		try {
